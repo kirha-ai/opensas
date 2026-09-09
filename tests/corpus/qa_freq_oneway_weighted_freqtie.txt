@@ -1,0 +1,9 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              c      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              c              4       30.77              4        30.77
+              a              3       23.08              7        53.85
+              b              3       23.08             10        76.92
+              d              3       23.08             13       100.00

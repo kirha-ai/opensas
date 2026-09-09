@@ -1,0 +1,14 @@
+data _null_;
+  length s $10;
+  s = "abcdef";
+  substr(s, 2, 3) = "XYZ";
+  put "s=" s;
+  length t $10;
+  t = "ABCDEFGHIJ";
+  substr(t, 4) = "wx";
+  put "t=" t;
+  length u $6;
+  u = "aaaaaa";
+  substr(u, 3, 4) = "QQ";
+  put "u=" u;
+run;

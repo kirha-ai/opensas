@@ -1,0 +1,13 @@
+data _null_;
+  f1=n(1,.,3,4); f2=nmiss(1,.,3,.); f3=cmiss(1,.,'x','');
+  g1=range(2,5,9); g2=largest(1,5,1,9,3); g3=largest(2,5,1,9,3);
+  g4=smallest(1,5,1,9,3); g5=sumabs(-3,4,-5);
+  m1=median(1,3,5,7); m2=median(1,2,3);
+  v1=var(2,4,6); v2=cv(2,4,6); v3=geomean(1,2,4);
+  v4=css(2,4,6); v5=uss(2,4,6); v6=ordinal(2,5,1,9,3);
+  put "n_nmiss_cmiss=" f1 f2 f3;
+  put "range_largest_smallest_sumabs=" g1 g2 g3 g4 g5;
+  put "median=" m1 m2;
+  put "var_cv_geomean=" v1 v2 v3;
+  put "css_uss_ordinal=" v4 v5 v6;
+run;

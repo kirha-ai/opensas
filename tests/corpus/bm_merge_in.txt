@@ -1,0 +1,5 @@
+S001 age=30 val=5.1 both
+S001 age=30 val=5.5 both
+S002 age=45 val=. dm_only
+S003 age=60 val=7.2 both
+S004 age=. val=9.9 lb_only

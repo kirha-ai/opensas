@@ -1,0 +1,10 @@
+id   name       score
+
+42   ALICE        100
+99                  .
+55   CAROLINE       .
+id   name       score
+
+42   ALICE        100
+99   BO             .
+55   CAROLINE       9

@@ -1,0 +1,2 @@
+rows_selected=3
+rows_deleted=1

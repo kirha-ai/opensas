@@ -1,0 +1,3 @@
+USUBJID  SEX  ALT  SBP
+01-001   M     30  120
+01-002   F     45  130

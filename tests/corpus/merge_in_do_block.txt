@@ -1,0 +1,18 @@
+k   av   bv
+
+.    .    .
+k   av   bv
+
+.    .    .
+                          The CONTENTS Procedure
+
+Data Set Name  o3
+Observations   0
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  av        Num     8
+3  bv        Num     8

@@ -1,0 +1,4 @@
+usubjid   source   ALT   AST
+
+S01       aval      30    25
+S02       aval      40    35

@@ -1,0 +1,17 @@
+data _null_;
+  ref = mdy(3,15,2020);
+  bm = intnx('month', ref, 0, 'b');
+  em = intnx('month', ref, 0, 'e');
+  mm = intnx('month', ref, 0, 'm');
+  sm = intnx('month', ref, 1, 's');
+  byr = intnx('year', ref, 0, 'b');
+  eyr = intnx('year', ref, 0, 'e');
+  length a $10 b $10 c $10 d $10 e $10 f $10;
+  a=put(bm,date9.); b=put(em,date9.); c=put(mm,date9.); d=put(sm,date9.); e=put(byr,date9.); f=put(eyr,date9.);
+  put "month_begin=" a;
+  put "month_end=" b;
+  put "month_mid=" c;
+  put "month_same_next=" d;
+  put "year_begin=" e;
+  put "year_end=" f;
+run;

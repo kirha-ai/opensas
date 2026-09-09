@@ -1,0 +1,16 @@
+full          trunc        dflt
+
+Christopher   Abcdefghij   Nathanie
+Bob           Xy           Al
+                          The CONTENTS Procedure
+
+Data Set Name  t
+Observations   2
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  dflt      Char    8
+1  full      Char   20
+2  trunc     Char   10

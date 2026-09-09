@@ -1,0 +1,4 @@
+n_output
+       3
+a=A k=K d=.
+a_present=1

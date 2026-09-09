@@ -1,0 +1,47 @@
+                          The CONTENTS Procedure
+
+Data Set Name  w1
+Observations   0
+Variables      2
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  v         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  w2
+Observations   0
+Variables      2
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  v         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  w3
+Observations   0
+Variables      2
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  v         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  w4
+Observations   0
+Variables      2
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  v         Num     8
+Obs   k   v2   w   x
+
+  1   .    .   .   .

@@ -1,0 +1,13 @@
+data _null_;
+  length sp $10 pc $8 pn $10 tn $1 tc $1;
+  sp=subpad('abcdef',2,3);
+  pc=putc('hi','$5.');
+  pn=putn(1234.5,'8.2');
+  in1=inputn('3.14','8.');
+  tn=typeof(42); tc=typeof('x');
+  put "subpad=[" sp "]";
+  put "putc=[" pc "]";
+  put "putn=[" pn "]";
+  put "inputn=" in1;
+  put "typeof=" tn tc;
+run;

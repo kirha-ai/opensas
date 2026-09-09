@@ -1,0 +1,4 @@
+Obs   USUBJID   AESEV      TRTEMFL
+
+  1   01-001    SEVERE     Y
+  4   01-004    MODERATE   Y

@@ -1,0 +1,10 @@
+data _null_;
+  n1=nvalid('abc'); n2=nvalid('1ab'); n3=nvalid('_x9');
+  ac=anycntrl(byte(9)); nc=notcntrl('a'); ac2=anycntrl('abc');
+  w1=findw('the cat sat','cat'); w2=findw('the cat sat','dog');
+  ii=intindex('MONTH','15MAR2020'd); iq=intindex('QTR','15MAR2020'd);
+  put "nvalid=" n1 n2 n3;
+  put "cntrl=" ac nc ac2;
+  put "findw=" w1 w2;
+  put "intindex=" ii iq;
+run;

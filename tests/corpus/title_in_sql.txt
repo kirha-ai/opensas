@@ -1,0 +1,11 @@
+Before PROC
+name  legs
+duck     2
+cat      4
+ant      6
+counted
+Changed Inside
+name
+cat
+ant
+counted

@@ -1,0 +1,5 @@
+caret-not
+tilde-not
+caret-ne
+tilde-ne
+word-not

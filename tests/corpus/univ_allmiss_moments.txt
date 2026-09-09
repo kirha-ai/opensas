@@ -1,0 +1,98 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              0  Sum Weights                    0
+Mean                           .  Sum Observations               .
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                 .  Corrected SS                   .
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           .  Std Deviation                  .
+Median                         .  Variance                       .
+Mode                           .  Range                          .
+                                  Interquartile Range            .
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+Sign           M         0    Pr >= |M|      .
+Signed Rank    S         0    Pr >= |S|      .
+
+                    Quantiles (Definition 5)
+
+              100% Max               .
+              99%                    .
+              95%                    .
+              90%                    .
+              75% Q3                 .
+              50% Median             .
+              25% Q1                 .
+              10%                    .
+              5%                     .
+              1%                     .
+              0% Min                 .
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              0  Sum Weights                    0
+Mean                           .  Sum Observations               .
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                 .  Corrected SS                   .
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           .  Std Deviation                  .
+Median                         .  Variance                       .
+Mode                           .  Range                          .
+                                  Interquartile Range            .
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+
+                    Quantiles (Definition 5)
+
+              100% Max               .
+              99%                    .
+              95%                    .
+              90%                    .
+              75% Q3                 .
+              50% Median             .
+              25% Q1                 .
+              10%                    .
+              5%                     .
+              1%                     .
+              0% Min                 .
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+

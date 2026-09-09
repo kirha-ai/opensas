@@ -1,0 +1,4 @@
+nvalid=1 0 1
+cntrl=1 1 0
+findw=5 0
+intindex=3 1

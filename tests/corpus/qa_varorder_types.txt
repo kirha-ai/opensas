@@ -1,0 +1,33 @@
+                          The CONTENTS Procedure
+
+Data Set Name  a
+Observations   2
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format     Informat  Label
+1  name      Char   20
+2  v         Num     8  DOLLAR8.2            Value label
+3  id        Num     8
+Obs   name                     v   id
+
+  1   abcdefghijklmno     $10.00    1
+  2   def                 $20.00    2
+                          The CONTENTS Procedure
+
+Data Set Name  b
+Observations   0
+Variables      4
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format     Informat  Label
+1  t         Num     8
+2  name      Char   20
+3  id        Num     8
+4  v         Num     8  DOLLAR8.2            Value label
+Obs   ghost   id
+
+  1       .    1
+  2       .    2

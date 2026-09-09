@@ -1,0 +1,6 @@
+nd  nv
+ 5   7
+c  ndc
+a    2
+b    2
+c    1

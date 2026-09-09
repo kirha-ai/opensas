@@ -1,0 +1,16 @@
+c    v          n
+abc  wxyz  123456
+too  xy        42
+xyz  abcd       7
+                          The CONTENTS Procedure
+
+Data Set Name  t
+Observations   3
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  c         Char    3
+3  n         Num     8
+2  v         Char    4

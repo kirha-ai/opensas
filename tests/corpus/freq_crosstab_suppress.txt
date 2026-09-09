@@ -1,0 +1,16 @@
+                        The FREQ Procedure
+
+                        Table of trt by resp
+
+              trt       resp
+
+              Frequency|
+              Col Pct  |N       |Y       |  Total
+              ---------+--------+--------+
+              DRUG     |      2 |      2 |      4
+                       |  40.00 |  66.67 |
+              ---------+--------+--------+
+              PLAC     |      3 |      1 |      4
+                       |  60.00 |  33.33 |
+              ---------+--------+--------+
+              Total           5        3        8

@@ -1,0 +1,4 @@
+qtr_s=YYQC4.
+qtr_l=YYQC6.
+month_l=MONYY7.
+week_s=WEEKDATX15.

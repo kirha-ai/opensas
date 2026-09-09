@@ -1,0 +1,5 @@
+Obs   TERM              pos   wpos
+
+  1   severe headache     8      0
+  2   mild nausea         0      0
+  3   head cold           1      1

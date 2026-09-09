@@ -1,0 +1,3 @@
+S001 M age=40 chol=190 bmi=24
+S002 F age=55 chol=210 bmi=.
+S003 M age=62 chol=. bmi=28

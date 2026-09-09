@@ -1,0 +1,26 @@
+                          The CONTENTS Procedure
+
+Data Set Name  NUM
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x1        Num     8
+2  x2        Num     8
+3  x3        Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  CHAR
+Observations   1
+Variables      5
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  XZREFNB1  Char  200
+2  XZREFNB2  Char  200
+3  XZREFNB3  Char  200
+4  XZREFNB4  Char  200
+5  XZREFNB5  Char  200

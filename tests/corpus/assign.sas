@@ -1,0 +1,16 @@
+data _null_;
+  a = 12;
+  b = 4;
+  s = a + b;
+  d = a - b;
+  p = a * b;
+  q = a / b;
+  pw = 2 ** 5;
+  neg = -a;
+  put "s=" s;
+  put "d=" d;
+  put "p=" p;
+  put "q=" q;
+  put "pw=" pw;
+  put "neg=" neg;
+run;

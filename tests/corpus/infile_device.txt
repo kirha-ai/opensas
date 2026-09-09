@@ -1,0 +1,4 @@
+T1 a=[foo ] b=[bar ]
+T2 a=[foo ] b=[bar ]
+T3 a=[foo ] b=[bar ]
+T4 a=[foo ] b=[bar ]

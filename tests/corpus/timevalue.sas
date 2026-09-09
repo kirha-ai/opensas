@@ -1,0 +1,12 @@
+data _null_;
+   b1 = timevalue("01jan2001"d, "01jan2000"d, 1000, "MONTH", "01jan2000"d, 10);
+   b2 = timevalue("01jan2001"d, "01jan2000"d, 1000, "MONTH", "01jan2000"d, 10, "01jul2000"d, 20);
+   b3 = timevalue("01jan2001"d, "01jan2000"d, 1000, "MONTH", "01jul2000"d, 20, "01jan2000"d, 10);
+   sy = timevalue("01jan2001"d, "01jan2000"d, 1000, "SEMIYEAR", "01jan2000"d, 8);
+   yr = timevalue("01jan2002"d, "01jan2000"d, 1000, "YEAR", "01jan2000"d, 5);
+   put b1=;
+   put b2=;
+   put b3=;
+   put sy=;
+   put yr=;
+run;

@@ -1,0 +1,7 @@
+up i=1
+up i=2
+up i=3
+down j=10
+down j=8
+down j=6
+sum s=9

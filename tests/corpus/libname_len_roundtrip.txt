@@ -1,0 +1,11 @@
+                          The CONTENTS Procedure
+
+Data Set Name  back
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  code      Char    8
+VARLEN(code)=8

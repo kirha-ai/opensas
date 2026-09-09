@@ -1,0 +1,4 @@
+Obs   USUBJID        rfst         wk4         mo3
+
+  1   01-001    15JAN2024   11FEB2024   01APR2024
+  2   01-002    01FEB2024   25FEB2024   01MAY2024

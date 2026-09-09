@@ -1,0 +1,7 @@
+recid   epoch
+
+    1   SCREENING
+    2   TREATMENT
+    3   SCREENING
+nrows
+    3

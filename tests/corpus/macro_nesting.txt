@@ -1,0 +1,4 @@
+FACT4=24
+SCOPE=fromInner
+PAIR1=1-9
+PAIR2=1-2

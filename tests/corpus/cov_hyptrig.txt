@@ -1,0 +1,2 @@
+sec_csc_cot=1 1 1
+arcosh_arsinh_artanh=0 0 0

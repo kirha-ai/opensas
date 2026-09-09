@@ -1,0 +1,3 @@
+pi=3.1416  ct=2  cc=4  cw=4  ic=3  iw=5
+ch=b  rt=ab  tn=2  mz=1  cn=22  cs=z
+wn=2  fn=100  fc=no  sx=R163  nl="a b"n

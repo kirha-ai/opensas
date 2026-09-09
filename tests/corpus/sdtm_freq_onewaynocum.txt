@@ -1,0 +1,6 @@
+                      The FREQ Procedure
+
+              ARM      Frequency     Percent
+              ---------------------------------
+              DRUG           3       50.00
+              PLACEBO        3       50.00

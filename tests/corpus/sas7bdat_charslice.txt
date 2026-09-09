@@ -1,0 +1,4 @@
+STUDYID    DOMAIN   ETCD   ELEMENT               TESTRL                  TEENRL
+
+STUDY-01   TE       SCRN   Screening             Informed consent date   First follow-up visit - 1 day
+STUDY-01   TE       FULT   Long-term Follow-up   First follow-up visit   End of the study

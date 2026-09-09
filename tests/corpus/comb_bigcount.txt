@@ -1,0 +1,5 @@
+allcomb-big a=1 b=3 c=2
+allperm-big x1=2 x2=1 x3=3
+lexperk-big p=3 q=2 r=1
+allcomb-bigk m=5 n=6
+allcomb-ok s=7 t=8 u=9

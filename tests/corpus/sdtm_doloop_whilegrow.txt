@@ -1,0 +1,3 @@
+Obs   dose   week
+
+  1    200      6

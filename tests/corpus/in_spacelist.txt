@@ -1,0 +1,5 @@
+Obs   USUBJID   VSTEST   keepfl   dropfl
+
+  1   01-001    Weight        1        0
+  2   01-002    Pulse         0        1
+  3   01-003    Height        1        0

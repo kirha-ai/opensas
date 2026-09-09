@@ -1,0 +1,12 @@
+id   _NAME_   _LABEL_       COL1
+
+ 1   sbp      Systolic BP    120
+ 1   dbp                      80
+ 2   sbp      Systolic BP    130
+ 2   dbp                      85
+id   _NAME_   COL1
+
+ 1   x          10
+ 1   y          20
+ 2   x          30
+ 2   y          40

@@ -1,0 +1,7 @@
+transtrn=a-b-c
+whichc=2
+trimn=[hi ]
+lengthc=5
+findc=4
+any=3 3 3
+not=3 3

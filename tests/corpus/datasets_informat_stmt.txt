@@ -1,0 +1,13 @@
+                          The CONTENTS Procedure
+
+Data Set Name  m
+Observations   1
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format    Informat  Label
+1  a         Num     8            8.2
+2  b         Num     8  DOLLAR8.  8.2
+3  c         Num     8
+4  d         Num     8            BEST12.

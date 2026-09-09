@@ -1,0 +1,14 @@
+data _null_;
+  t = 45045;
+  dt = 86400 + t;
+  hr = hour(t);
+  mi = minute(t);
+  se = second(t);
+  dp = datepart(dt);
+  tp = timepart(dt);
+  put "hr=" hr;
+  put "mi=" mi;
+  put "se=" se;
+  put "dp=" dp;
+  put "tp=" tp;
+run;

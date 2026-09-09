@@ -1,0 +1,9 @@
+C1 obs=1 + flowover spill: no row at all, not 1 2 .
+Obs   x   y   z
+
+C2 @@ odd count: one complete row only, no 2 3 .
+Obs   x   y
+
+  1   1   2
+1 2
+rounde2arg f1=0.04 f2=0.02 f3=2.68

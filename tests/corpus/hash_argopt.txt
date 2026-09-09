@@ -1,0 +1,7 @@
+plain rc=0
+opt rc=0
+plain k=1 v=one
+plain k=2 v=two
+plain k=3 v=three
+fout k=2 v=two
+fout k=3 v=three

@@ -1,0 +1,4 @@
+ d  band
+ 5  low
+15  mid
+25  hi

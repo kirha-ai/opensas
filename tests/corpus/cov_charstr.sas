@@ -1,0 +1,14 @@
+data _null_;
+  length ts $10 tr $10;
+  ts=transtrn('aXbXc','X','-'); h2=whichc('b','a','b','c');
+  tr=trimn('hi  '); h4=lengthc('hello'); h5=findc('abc123','123');
+  c1=anylower('ABc'); c2=anyspace('ab c'); c3=anyxdigit('ggaf');
+  c4=notalnum('ab*c'); c5=notlower('abC');
+  put "transtrn=" ts;
+  put "whichc=" h2;
+  put "trimn=[" tr "]";
+  put "lengthc=" h4;
+  put "findc=" h5;
+  put "any=" c1 c2 c3;
+  put "not=" c4 c5;
+run;

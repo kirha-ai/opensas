@@ -1,0 +1,14 @@
+data _null_;
+  length id $8 nm $8;
+  id=tzoneid();
+  nm=tzonename();
+  off=tzoneoff();
+  u=tzones2u(1893456000);
+  s=tzoneu2s(1893456000);
+  p=sysprod('base');
+  put "tzoneid=" id;
+  put "tzonename=" nm;
+  put "tzoneoff=" off;
+  put "s2u_u2s=" u s;
+  put "sysprod=" p;
+run;

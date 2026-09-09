@@ -1,0 +1,12 @@
+data _null_;
+  ;
+  total = 0;
+  ;;
+  do i = 1 to 3;
+    ;
+    total + i;
+  end;
+  if total > 3 then ; else total = -99;
+  put "total=" total;
+  ;
+run;

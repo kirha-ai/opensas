@@ -1,0 +1,6 @@
+Obs   src    USUBJID
+
+  1   DM     01-001
+  2   BOTH   01-002
+  3   BOTH   01-003
+  4   AE     01-004

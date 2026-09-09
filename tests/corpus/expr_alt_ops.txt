@@ -1,0 +1,13 @@
+bang-or
+brokenbar-or
+pipe-or
+notsign-not
+caret-not
+tilde-not
+bangconcat x=pq
+bbconcat y=pq
+pipeconcat z=pq
+w-bang c=5
+w-bb c=5
+w-not c=5
+w-not c=9

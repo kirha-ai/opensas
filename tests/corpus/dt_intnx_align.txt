@@ -1,0 +1,6 @@
+month_begin=01MAR2020
+month_end=31MAR2020
+month_mid=16MAR2020
+month_same_next=15APR2020
+year_begin=01JAN2020
+year_end=31DEC2020

@@ -1,0 +1,4 @@
+USUBJID  SEX  AGE  LBSTRESN
+01-001   M     45        30
+01-002   F     52        45
+01-003   M     38        55

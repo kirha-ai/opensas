@@ -1,0 +1,6 @@
+a=A  z=Z  u=_  p=.
+u<p
+p<a
+a<z
+z<n
+s=A

@@ -1,0 +1,4 @@
+B1 OK
+B2 LAST x=2
+B3 LAST x=2
+B4 OK

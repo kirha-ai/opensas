@@ -1,0 +1,3 @@
+AESOC    n_events  n_severe
+CARDIAC         2         1
+GI              4         0

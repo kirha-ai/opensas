@@ -1,0 +1,4 @@
+atan=0.7853981634
+divide=2.5
+fuzz=2
+compound=1157.625

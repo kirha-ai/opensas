@@ -1,0 +1,113 @@
+all-missing: sumwgt 0 = n 0; the data-requiring statistics stay missing
+n  nmiss  sumwgt  sum  css  uss  range  std  var  stderr  cv
+0      2       0    .    .    .      .    .    .       .   .
+zero-row table, column declared: sumwgt 0 = n 0
+n  sumwgt
+0       0
+CONTROL: one non-missing value — sumwgt tracks n, unchanged
+n  sumwgt  sum
+1       1    5
+CONTROL: sumwgt of an EXPRESSION takes the same rule
+sw_expr
+      0
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              0  Sum Weights                    0
+Mean                           .  Sum Observations               .
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                 .  Corrected SS                   .
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           .  Std Deviation                  .
+Median                         .  Variance                       .
+Mode                           .  Range                          .
+                                  Interquartile Range            .
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+Sign           M         0    Pr >= |M|      .
+Signed Rank    S         0    Pr >= |S|      .
+
+                    Quantiles (Definition 5)
+
+              100% Max               .
+              99%                    .
+              95%                    .
+              90%                    .
+              75% Q3                 .
+              50% Median             .
+              25% Q1                 .
+              10%                    .
+              5%                     .
+              1%                     .
+              0% Min                 .
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              1  Sum Weights                    1
+Mean                           5  Sum Observations               5
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                25  Corrected SS                   0
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           5  Std Deviation                  .
+Median                         5  Variance                       .
+Mode                           .  Range                          0
+                                  Interquartile Range            0
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+Sign           M       0.5    Pr >= |M| 1.0000
+Signed Rank    S       0.5    Pr >= |S| 1.0000
+
+                    Quantiles (Definition 5)
+
+              100% Max               5
+              99%                    5
+              95%                    5
+              90%                    5
+              75% Q3                 5
+              50% Median             5
+              25% Q1                 5
+              10%                    5
+              5%                     5
+              1%                     5
+              0% Min                 5
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   5    2                5    2

@@ -1,0 +1,4 @@
+Obs   USUBJID   VISITNUM   ALT   AST
+
+  1   01-001           1    30    25
+  2   01-001           2    40    28

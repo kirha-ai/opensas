@@ -1,0 +1,6 @@
+probit=1.9599639845 -1.959963985
+quant_norm=1.9599639845 7.0990713842
+bern_cdf=0.7 1 0
+bern_pdf=0.7 0.3 0
+bern_quant=0 1
+bern_bad=.

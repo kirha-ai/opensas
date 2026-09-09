@@ -1,0 +1,42 @@
+                     The FREQ Procedure
+
+                Number of Variable Levels
+
+           Variable    Levels
+           g                3
+           x                5
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              g      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              2       40.00              2        40.00
+              B              1       20.00              3        60.00
+              C              2       40.00              5       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1              1       20.00              1        20.00
+              2              1       20.00              2        40.00
+              3              1       20.00              3        60.00
+              4              1       20.00              4        80.00
+              5              1       20.00              5       100.00
+                     The FREQ Procedure
+
+                Number of Variable Levels
+
+           Variable    Levels
+           g                3
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              g      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              2       40.00              2        40.00
+              B              1       20.00              3        60.00
+              C              2       40.00              5       100.00

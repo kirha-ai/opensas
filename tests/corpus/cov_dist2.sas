@@ -1,0 +1,12 @@
+data _null_;
+  c1=cdf('NORMAL',0); c2=cdf('NORMAL',1.96);
+  sd=sdf('NORMAL',0); pd=pdf('NORMAL',0);
+  q1=quantile('NORMAL',0.975);
+  lp=logpdf('NORMAL',0);
+  jb=jbessel(0,0);
+  put "cdf=" c1 c2;
+  put "sdf_pdf=" sd pd;
+  put "quantile=" q1;
+  put "logpdf=" lp;
+  put "jbessel=" jb;
+run;

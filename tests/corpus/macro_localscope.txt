@@ -1,0 +1,3 @@
+IN dom=[AE] tmp=[working]
+OUT dom=[STUDYWIDE] tmp=[&tmp]
+GLOBAL=[survives]

@@ -1,0 +1,5 @@
+kw_if_ok
+kw_le_ok
+assign=x=A
+expr=p=.
+cmp_ok

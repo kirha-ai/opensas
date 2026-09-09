@@ -1,0 +1,6 @@
+x=1 from1=1 last=0 s=25
+x=2 from1=1 last=0 s=26
+x=3 from1=0 last=0 s=27
+x=4 from1=0 last=1 s=28
+KEEPME=6
+Alpha=5 gamma=15

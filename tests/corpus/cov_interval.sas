@@ -1,0 +1,10 @@
+data _null_;
+  is1=intseas('MONTH'); is2=intseas('QTR');
+  length ic $8;
+  ic=intcycle('MONTH'); it1=inttest('MONTH'); it2=inttest('NOPE');
+  gd=geodist(0,0,0,1);
+  put "intseas=" is1 is2;
+  put "intcycle=" ic;
+  put "inttest=" it1 it2;
+  put "geodist=" gd;
+run;

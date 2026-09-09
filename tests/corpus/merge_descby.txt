@@ -1,0 +1,14 @@
+desc k=3  x=30  y=300
+desc k=2  x=20  y=200
+desc k=1  x=10  y=.
+multi g=1  k=2  x=12  y=102
+multi g=1  k=1  x=11  y=101
+multi g=2  k=1  x=21  y=201
+m2m k=1  x=10  y=100
+m2m k=1  x=11  y=200
+m2m k=1  x=11  y=300
+o2m k=1  x=10  y=100
+o2m k=1  x=10  y=200
+o2m k=1  x=10  y=300
+o2m k=2  x=20  y=.
+o2m k=3  x=.  y=400

@@ -1,0 +1,7 @@
+stdize=-1 0 1
+lexcomb1 =1 2
+lexcomb2 =1 3
+lexcomb3 =1 4
+lexcomb4 =2 3
+lexcomb5 =2 4
+lexcomb6 =3 4

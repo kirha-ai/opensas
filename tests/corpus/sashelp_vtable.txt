@@ -1,0 +1,3 @@
+mem=ALPHA  type=DATA  nobs=2  nvar=1  last=0
+mem=BETA  type=DATA  nobs=1  nvar=3  last=1
+count=2

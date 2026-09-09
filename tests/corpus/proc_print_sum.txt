@@ -1,0 +1,6 @@
+name    amt
+
+Alice   100
+Bob     200
+        ===
+        300

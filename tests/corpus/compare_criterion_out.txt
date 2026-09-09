@@ -1,0 +1,58 @@
+
+                          The COMPARE Procedure
+  Comparison of b with c
+
+  Data Set Summary
+    b: 2 variables, 2 observations
+    c: 2 variables, 2 observations
+
+  Variables Summary
+    Variables in common: 2
+    In b only: 0
+    In c only: 0
+
+  Observation Summary
+    Observations in common: 2
+    In b only: 0
+    In c only: 0
+
+  Values Comparison Summary
+    Variables compared: 1
+    Variables all equal: 1
+    Variables with unequal values: 0
+    Total unequal values: 0
+
+  NOTE: No unequal values were found. All values compared are exactly equal.
+
+                          The COMPARE Procedure
+  Comparison of b with c
+
+  Data Set Summary
+    b: 2 variables, 2 observations
+    c: 2 variables, 2 observations
+
+  Variables Summary
+    Variables in common: 2
+    In b only: 0
+    In c only: 0
+
+  Observation Summary
+    Observations in common: 2
+    In b only: 0
+    In c only: 0
+
+  Values Comparison Summary
+    Variables compared: 1
+    Variables all equal: 0
+    Variables with unequal values: 1
+    Total unequal values: 1
+
+  Value Comparison Results
+
+    id=1  x: base=1.0000001 compare=1.0000002
+
+  NOTE: 1 unequal values found across 1 variable(s).
+Obs   id              x   _TYPE_   _OBS_
+
+  1    1      0.0000001   DIF          1
+  2    2   1.000089E-12   DIF          2

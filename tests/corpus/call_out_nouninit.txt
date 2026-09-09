@@ -1,0 +1,1 @@
+c1=abc  c2=xy  c3=p-q  nm=seed  u=3.2870751E-4

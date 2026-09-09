@@ -1,0 +1,8 @@
+pct_def=[   50%]
+comma_def=[ 1,235]
+dollar_def=[  $100]
+negp_def=[  (12)]
+commax_def=[ 1.235]
+pct8=[    7.5%]
+comma10=[  1,234.50]
+dollar12=[  $12,345.68]

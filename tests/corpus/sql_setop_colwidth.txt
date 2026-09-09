@@ -1,0 +1,52 @@
+narrow arm first — the wide value must survive whole
+b       lb
+ABC      3
+ABCDEF   6
+wide arm first — same result column width, same values
+b       lb
+ABCDEF   6
+ABC      3
+                          The CONTENTS Procedure
+
+Data Set Name  u_nw
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  b         Char    6
+                          The CONTENTS Procedure
+
+Data Set Name  u_wn
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  b         Char    6
+                          The CONTENTS Procedure
+
+Data Set Name  u_oc
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  b         Char    6
+Obs   b
+
+  1   ABC
+  2   ABCDEF
+Obs   b
+
+  1   ABC
+  2   ABCDEF
+except
+b
+ABCDEF
+intersect
+b
+ABCDEF

@@ -1,0 +1,12 @@
+data _null_;
+  d1=depsl(1,1000,10); d2=depsl(9/12,1000,10);
+  sy1=depsyd(1,1000,10); sy2=depsyd(2,1000,10);
+  as=daccsl(3,1000,10); asy=daccsyd(2,1000,10);
+  db1=depdb(1,1000,10,2); db2=depdb(10,1000,15,2);
+  adb=daccdb(2,1000,10,2);
+  put "depsl=" d1 d2;
+  put "depsyd=" sy1 sy2;
+  put "daccsl_daccsyd=" as asy;
+  put "depdb=" db1 db2;
+  put "daccdb=" adb;
+run;

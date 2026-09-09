@@ -1,0 +1,7 @@
+SE_INT=[3 ]
+SE_CEIL=[4 ]
+SE_FLOOR=[2 ]
+SE_BOOL=[1 ]
+QSCAN=[ae ]
+OPT debug=SET
+OPT verbose=off

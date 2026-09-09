@@ -1,0 +1,1 @@
+label=7 format=3 end=100 type=N

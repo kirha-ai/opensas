@@ -1,0 +1,8 @@
+single a=r1aaaa  end=0
+single a=r2bbbb  end=0
+single a=r3cccc  end=0
+single a=r4dddd  end=1
+slash  a=r1aaaa  b=r2bbbb  end=0
+slash  a=r3cccc  b=r4dddd  end=0
+hash   a=r1aaaa  b=r2bbbb  end=0
+hash   a=r3cccc  b=r4dddd  end=0

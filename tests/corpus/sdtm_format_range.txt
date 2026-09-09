@@ -1,0 +1,5 @@
+Obs   USUBJID   AGE   band
+
+  1   01-001     12   PED
+  2   01-002     45   ADULT
+  3   01-003     70   ELDERLY

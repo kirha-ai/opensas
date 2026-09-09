@@ -1,0 +1,8 @@
+i   x
+1  10
+2  20
+n
+2
+Obs   gone_exists   made_exists
+
+  1             0             1

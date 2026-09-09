@@ -1,0 +1,14 @@
+data _null_;
+  a = .A;
+  z = .Z;
+  u = ._;
+  p = .;
+  n = 5;
+  put "a=" a " z=" z " u=" u " p=" p;
+  if u < p then put "u<p";
+  if p < a then put "p<a";
+  if a < z then put "a<z";
+  if z < n then put "z<n";
+  s = a;
+  put "s=" s;
+run;

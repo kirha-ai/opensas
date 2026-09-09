@@ -1,0 +1,12 @@
+data _null_;
+  d = mdy(2,10,2020);
+  length me $10 mm $10 qe $10 ye $10;
+  me = put(intnx('month', d, 0, 'e'), date9.);
+  mm = put(intnx('month', d, 0, 'm'), date9.);
+  qe = put(intnx('qtr', d, 0, 'e'), date9.);
+  ye = put(intnx('year', d, 0, 'e'), date9.);
+  put "month_end=" me;
+  put "month_mid=" mm;
+  put "qtr_end=" qe;
+  put "year_end=" ye;
+run;

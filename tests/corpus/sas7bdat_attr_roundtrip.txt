@@ -1,0 +1,20 @@
+                          The CONTENTS Procedure
+
+Data Set Name  back
+Observations   1
+Variables      7
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable            Type  Len  Format  Informat  Label
+6  big                 Num     8
+2  code                Char    8          $8.       Subject Code
+4  dt                  Num     8  DATE9.            Visit Date
+1  longvariablename01  Num     8
+5  sm                  Num     8
+7  small               Num     8
+3  txt                 Char  300
+sm=K  l01=1  code=AB
+big=                           1E300
+small=                          1E-300
+dt=21DEC2022

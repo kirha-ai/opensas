@@ -1,0 +1,5 @@
+Obs   USUBJID   SEX   AGE   LBSTRESN
+
+  1   01-001    M      45         30
+  2   01-002    F      52         45
+  3   01-003    M      38         55

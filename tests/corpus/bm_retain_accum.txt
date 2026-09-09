@@ -1,0 +1,5 @@
+S001 amt=10 cumulative=10
+S001 amt=10 cumulative=20
+S001 amt=20 cumulative=40
+S002 amt=5 cumulative=5
+S002 amt=5 cumulative=10

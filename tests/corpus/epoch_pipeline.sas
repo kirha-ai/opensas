@@ -1,0 +1,101 @@
+/* BUG-epochoverproduce triage fixture: the full EPOCH-derivation pipeline shape
+   end-to-end on synthetic data — CALL SYMPUT -> %do bound, six prefixed/id
+   transposes, dtc2dt full+dead partial-date branches (compile-time PDV vars),
+   SE-window %do-OUTPUT matching, and the three-key OBSID merge. Exactly one
+   output row per event, correct EPOCH each. This chain took five dominoes
+   (deferred-step, existdisk, pdvcompilevars, transprefixid, chaincmp) to
+   light up; this fixture keeps it lit. */
+%macro probe;
+data SE;
+  length STUDYID USUBJID $10 EPOCH $12 SESTDTC SEENDTC $10;
+  STUDYID='S'; USUBJID='P1';
+  EPOCH='SCREENING'; SESTDTC='2020-01-01'; SEENDTC='2020-02-01'; output;
+  EPOCH='TREATMENT'; SESTDTC='2020-02-02'; SEENDTC='2020-03-01'; output;
+run;
+data EV;
+  length STUDYID USUBJID $10 EVDTC $10;
+  STUDYID='S'; USUBJID='P1';
+  EVDTC='2020-01-15'; output;   /* in SCREENING */
+  EVDTC='2020-02-10'; output;   /* in TREATMENT */
+run;
+proc sort data=EV out=TMP_1; by STUDYID USUBJID; run;
+data TMP_2;
+  set TMP_1; by STUDYID USUBJID;
+  retain OBSID; idall=1;
+  if first.USUBJID then OBSID=0;
+  OBSID=OBSID+1;
+  if length(EVDTC)=4 and index(EVDTC,'--')=0 then do;
+    EV_DT2 = mdy(1,1,substr(EVDTC,1,4));
+    EV_DTM2 = input(put(mdy(1,1,substr(EVDTC,1,4)),yymmdd10.)||"T00:00:00", e8601dt19.);
+    EV_DT3 = mdy(12,31,substr(EVDTC,1,4));
+    EV_DTM3 = input(put(mdy(12,31,substr(EVDTC,1,4)),yymmdd10.)||"T00:00:00", e8601dt19.);
+  end;
+  if length(EVDTC)=10 and index(EVDTC,'--')=0 then do;
+    EV_DT = input(EVDTC, yymmdd10.);
+    EV_DTM = input(trim(EVDTC)||"T00:00:00", e8601dt19.);
+  end;
+  format EV_DTM EV_DTM2 EV_DTM3 e8601dt19.;
+  format EV_DT EV_DT2 EV_DT3 date9.;
+run;
+data TMP_3;
+  set TMP_2; by idall;
+  retain maxid;
+  if first.idall then maxid=0;
+  if OBSID > maxid then maxid=OBSID;
+  if last.idall then CALL SYMPUT("MAXID",maxid);
+run;
+proc transpose data=TMP_2 out=TMP_EVDT prefix=dt_;   by STUDYID USUBJID; var EV_DT;   id OBSID; run;
+proc transpose data=TMP_2 out=TMP_EVDT2 prefix=dt2_; by STUDYID USUBJID; var EV_DT2;  id OBSID; run;
+proc transpose data=TMP_2 out=TMP_EVDT3 prefix=dt3_; by STUDYID USUBJID; var EV_DT3;  id OBSID; run;
+proc transpose data=TMP_2 out=TMP_EVDTM prefix=dtm_; by STUDYID USUBJID; var EV_DTM;  id OBSID; run;
+proc transpose data=TMP_2 out=TMP_EVDTM2 prefix=dtm2_; by STUDYID USUBJID; var EV_DTM2; id OBSID; run;
+proc transpose data=TMP_2 out=TMP_EVDTM3 prefix=dtm3_; by STUDYID USUBJID; var EV_DTM3; id OBSID; run;
+data TMP_SE;
+  set SE;
+  if length(SESTDTC)=10 and index(SESTDTC,'--')=0 then do;
+    SESTDT = input(SESTDTC, yymmdd10.);
+    SESTDTM = input(trim(SESTDTC)||"T00:00:00", e8601dt19.);
+  end;
+  if length(SEENDTC)=10 and index(SEENDTC,'--')=0 then do;
+    SEENDT = input(SEENDTC, yymmdd10.);
+    SEENDTM = input(trim(SEENDTC)||"T23:59:59", e8601dt19.);
+  end;
+  format SESTDTM SEENDTM e8601dt19.; format SESTDT SEENDT date9.;
+  keep STUDYID USUBJID EPOCH SESTDTC SEENDTC SESTDTM SESTDT SEENDTM SEENDT;
+run;
+proc sort data=TMP_SE; by STUDYID USUBJID; run;
+data TMP_5;
+  merge TMP_EVDT TMP_EVDT2 TMP_EVDT3 TMP_EVDTM TMP_EVDTM2 TMP_EVDTM3 TMP_SE;
+  by STUDYID USUBJID;
+  %do i = 1 %to &MAXID.;
+    if dtm_&i. ne . and SEENDTM ne . and SESTDTM<=dtm_&i.<=SEENDTM then do;
+      OBSID = &i.; output;
+    end;
+    if dtm_&i. ne . and SEENDTM = . and SESTDTM<=dtm_&i. then do;
+      OBSID = &i.; output;
+    end;
+    if dtm_&i. = . and dtm2_&i. ne . and SEENDTM ne . then do;
+      if SESTDTM<=dtm2_&i.<=SEENDTM and SESTDTM<=dtm3_&i.<=SEENDTM then do;
+        OBSID = &i.; output;
+      end;
+    end;
+    if dtm_&i. = . and dtm2_&i. ne . and SEENDTM = . then do;
+      if SESTDTM<=dtm2_&i. and SESTDTM<=dtm3_&i. then do;
+        OBSID = &i.; output;
+      end;
+    end;
+  %end;
+run;
+proc sort data=TMP_5; by STUDYID USUBJID OBSID; run;
+data EV_EPOCH;
+  merge TMP_2 TMP_5;
+  by STUDYID USUBJID OBSID;
+run;
+%mend probe;
+%probe;
+data _null_; set TMP_2 nobs=n; if _n_=1 then put 'N_TMP_2=' n; stop; run;
+data _null_; set TMP_EVDT nobs=n; if _n_=1 then put 'N_TMP_EVDT=' n; stop; run;
+data _null_; set TMP_5 nobs=n; if _n_=1 then put 'N_TMP_5=' n; stop; run;
+data _null_; set EV_EPOCH nobs=n; if _n_=1 then put 'N_FINAL=' n; stop; run;
+proc print data=TMP_5 noobs; var USUBJID OBSID EPOCH SESTDTC SEENDTC; run;
+proc print data=EV_EPOCH noobs; var USUBJID OBSID EVDTC EPOCH; run;

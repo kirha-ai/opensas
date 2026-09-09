@@ -1,0 +1,2 @@
+SYSDAY-TRIMMED=yes
+NCPU-OK=yes

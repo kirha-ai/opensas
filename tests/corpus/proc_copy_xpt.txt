@@ -1,0 +1,2 @@
+usubjid=S1 aeterm=HEADACHE
+usubjid=S2 aeterm=NAUSEA

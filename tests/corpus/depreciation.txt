@@ -1,0 +1,5 @@
+straight-line=2000
+straight-line frac period=75
+sum-of-years=3333.3333333
+double-declining yr1=4000
+double-declining yr10=36.779648624

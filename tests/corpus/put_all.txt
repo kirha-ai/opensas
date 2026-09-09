@@ -1,0 +1,2 @@
+name=Bob city=Rome age=42 _ERROR_=0 _N_=1
+name=Bob city=Rome

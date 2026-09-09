@@ -1,0 +1,5 @@
+ARM   SEX    EXDOSE
+
+DRUG  F         100
+      M          75
+PLAC  M           0

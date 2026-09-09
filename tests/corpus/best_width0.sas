@@ -1,0 +1,11 @@
+data _null_;
+  x = -12345;
+  y = put(x, best0.5);
+  put "neg=[" y "]";
+  p = put(12345, best0.5);
+  put "pos=[" p "]";
+  q = put(-1/3, best0.);
+  put "frac=[" q "]";
+  r = put(0, best0.);
+  put "zero=[" r "]";
+run;

@@ -1,0 +1,18 @@
+Group: A
+Var: Treatment Group | first=A
+g=A
+
+Obs   g   x
+
+  1   A   1
+  2   A   2
+End of A
+
+Group: B
+Var: Treatment Group | first=B
+g=B
+
+Obs   g   x
+
+  3   B   3
+End of B

@@ -1,0 +1,3 @@
+hit=[one ]
+miss=[  9 ]
+ex=[    9 ]

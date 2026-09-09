@@ -1,0 +1,49 @@
+p.554 one-to-one reading stops at the shortest source
+Common   Animal   Plant
+
+a        Ant      Apple
+b        Bird     Banana
+c        Cat      Coconut
+p.575 one-to-one merging reads every obs from every source
+Common   Animal   Plant
+
+a        Ant      Apple
+b        Bird     Banana
+c        Cat      Coconut
+d        Dog
+e        Eagle
+f        Frog
+p.583 many-to-many match-merge is NOT a Cartesian product (3x2 -> 3)
+k   x    y
+
+m   A1   B1
+m   A2   B2
+m   A3   B2
+p.583 the same rule with the sources reversed (2x3 -> 3)
+k   y    x
+
+m   B1   A1
+m   B2   A2
+m   B2   A3
+p.580 common var in a BY group present in one source only
+k   c    ua   ub
+
+1   B1   X1   Y1
+2   A2   X2
+p.559 length, p.560 format+label: all taken from the FIRST source
+Mileage   From Q1
+
+abcd          1.0
+abcd          2.0
+p.559 length, p.560 format+label: all taken from the FIRST source
+                          The CONTENTS Procedure
+
+Data Set Name  yearly
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  Account   Num     8  5.1               From Q1
+1  Mileage   Char    4

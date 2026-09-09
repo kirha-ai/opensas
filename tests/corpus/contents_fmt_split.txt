@@ -1,0 +1,6 @@
+NAME    TYPE   FORMAT   FORMATL   FORMATD
+
+amt        1   COMMA         12         2
+nm         2   $CHAR         10         0
+plain      1   BEST           0         0
+raw        1                  5         0

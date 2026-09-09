@@ -1,0 +1,6 @@
+gamma=24
+beta=0.0833333333
+std=2
+week=11
+cat=abcd
+missing_x=.  y=[ ]

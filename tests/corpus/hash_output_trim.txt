@@ -1,0 +1,8 @@
+concat rc=0
+k    d
+
+1   10
+opts rc=0
+k    d
+
+2   20

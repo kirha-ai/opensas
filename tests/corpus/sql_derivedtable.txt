@@ -1,0 +1,5 @@
+g  n
+A  2
+g  n  lab
+A  2  alpha
+B  1  bravo

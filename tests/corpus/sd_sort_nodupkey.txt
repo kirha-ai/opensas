@@ -1,0 +1,5 @@
+subjid   item   score
+
+S001     Q1         5
+S001     Q2         3
+S002     Q1         4

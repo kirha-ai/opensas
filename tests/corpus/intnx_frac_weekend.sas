@@ -1,0 +1,21 @@
+data _null_;
+  d = mdy(1, 15, 2020);
+  * BUG-intnxfracincr: SAS truncates the increment toward zero;
+  a = intnx("month", d, -0.5);  * trunc 0  → stays Jan: 21915;
+  b = intnx("month", d, -1.9);  * trunc -1 → 01DEC2019: 21884;
+  p = intnx("month", d, 0.7);   * positive unchanged: 21915;
+  q = intnx("month", d, 1);     * 01FEB2020: 21946;
+  put "a=" a a date9. " b=" b b date9.;
+  put "p=" p p date9. " q=" q q date9.;
+
+  fri = mdy(1, 3, 2020);
+  mon = mdy(1, 6, 2020);
+  * BUG-intnxweekendskip: custom weekend spec honoured;
+  w1 = intck("weekday1w", fri, mon); * Sunday-only weekend → 2;
+  w7 = intck("weekday7w", fri, mon); * Saturday-only weekend → 2;
+  wd = intck("weekday", fri, mon);   * default Sat+Sun → 1 (unchanged);
+  n1 = intnx("weekday1w", fri, 1);   * next working day = Sat 04JAN2020: 21918;
+  nd = intnx("weekday", fri, 1);     * next working day = Mon 06JAN2020: 21920;
+  put "w1=" w1 " w7=" w7 " wd=" wd;
+  put "n1=" n1 n1 date9. " nd=" nd nd date9.;
+run;

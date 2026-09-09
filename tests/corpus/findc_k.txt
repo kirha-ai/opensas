@@ -1,0 +1,5 @@
+kc1=4
+kc2=1
+kc3=4
+nok=1
+allin=0

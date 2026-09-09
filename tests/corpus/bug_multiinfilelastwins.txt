@@ -1,0 +1,16 @@
+aname   ax   bname   bx
+
+a1       1   b1      10
+a2       2   b2      20
+a3       3   b3      30
+k     v   d
+
+b1   10   7
+b2   20   8
+_n_=1  k=a1  v=1
+_n_=2  k=a2  v=2
+_n_=3  k=b1  v=10
+_n_=4  k=b2  v=20
+k=a1  v=1  e1=0  | k2=b1  v2=10  e2=0
+k=a2  v=2  e1=0  | k2=b2  v2=20  e2=0
+k=a3  v=3  e1=1  | k2=b3  v2=30  e2=0

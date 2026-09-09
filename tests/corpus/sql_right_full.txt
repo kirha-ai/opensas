@@ -1,0 +1,7 @@
+R aid=2  x=20  bid=2  y=200
+R aid=3  x=30  bid=3  y=300
+R aid=.  x=.  bid=4  y=400
+F aid=.  x=.  bid=4  y=400
+F aid=1  x=10  bid=.  y=.
+F aid=2  x=20  bid=2  y=200
+F aid=3  x=30  bid=3  y=300

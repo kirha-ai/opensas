@@ -1,0 +1,10 @@
+x
+
+1
+x
+
+1
+usubjid   aeterm
+
+S1        HEADACHE
+S2        NAUSEA

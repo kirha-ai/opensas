@@ -1,0 +1,3 @@
+MACEXIST=[1 ]
+MACEXIST_NO=[0 ]
+UNQUOTE=[5 plus one ]

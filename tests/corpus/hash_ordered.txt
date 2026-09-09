@@ -1,0 +1,6 @@
+asc k=10  v=ten
+asc k=20  v=twenty
+asc k=30  v=thirty
+desc k=30  v=thirty
+desc k=20  v=twenty
+desc k=10  v=ten

@@ -1,0 +1,3 @@
+Obs   total   mean_sq
+
+  1      55        11

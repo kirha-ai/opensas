@@ -1,0 +1,3 @@
+nofmterr in effect
+d=[5]
+       2

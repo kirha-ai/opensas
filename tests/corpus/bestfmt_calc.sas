@@ -1,0 +1,10 @@
+data _null_;
+  a = 0.1 + 0.2;
+  b = 1 / 3;
+  c = 2 / 3;
+  mean = (1 + 2 + 6) / 3;
+  big = 10 ** 20;
+  s = "ratio=" || b;
+  put "a=" a " b=" b " c=" c " mean=" mean " big=" big;
+  put s;
+run;

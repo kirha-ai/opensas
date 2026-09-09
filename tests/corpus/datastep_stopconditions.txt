@@ -1,0 +1,25 @@
+iterations=1
+cards dose=11
+cards dose=12
+cards dose=13
+halted dose=11
+halted dose=12
+joined dose=11
+joined dose=12
+joined dose=13
+joined dose=71
+joined dose=72
+zipa dose=11  site=7101
+zipa dose=12  site=7102
+zipb site=7101  dose=11
+zipb site=7102  dose=12
+site
+
+7101
+7102
+site
+
+7101
+7102
+quad seq=1
+quad seq=2

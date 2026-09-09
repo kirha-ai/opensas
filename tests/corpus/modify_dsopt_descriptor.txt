@@ -1,0 +1,46 @@
+D1 dsopt drop=y on the master: k x y all present, y = 100/200
+Obs   k    x     y
+
+  1   1   11   100
+  2   2   21   200
+D2 dsopt keep=k x on the master: y survives anyway
+Obs   k    x     y
+
+  1   1   11   100
+  2   2   21   200
+D3 dsopt rename=(x=xx) on the master: the column stays x
+Obs   k    x     y
+
+  1   1   11   100
+  2   2   21   200
+C1 control: drop= on a plain SET step still drops y
+Obs   k    x
+
+  1   1   10
+C2 control: a non-master output of a MODIFY step still honours drop=
+Obs   k    x    y
+
+  1   1   11   99
+C2 control: a non-master output of a MODIFY step still honours drop=
+Obs   k    x
+
+  1   1   11
+D4 dsopt where= on the master: all 3 rows survive, all 3 updated
+Obs   k    x
+
+  1   1   11
+  2   2   21
+  3   3   31
+E1 master named twice, drop= on the second mention: y survives
+Obs   k    x     y
+
+  1   1   11   100
+E2 same door, where=: both rows survive
+Obs   k    x
+
+  1   1   11
+  2   2   21
+E3 one-level vs two-level name for the same member: y still survives
+Obs   k    x     y
+
+  1   1   11   100

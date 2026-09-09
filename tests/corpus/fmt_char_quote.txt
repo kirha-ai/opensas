@@ -1,0 +1,5 @@
+quote8:  ["Hi"    ]
+quote.:  ["Hi"]
+upcase:  [HI      ]
+char4:   [Hi  ]
+plain8:  [Hi      ]

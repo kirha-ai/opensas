@@ -1,0 +1,5 @@
+Obs   AVAL   total   seq   lastfl
+
+  1     10       3     1        0
+  2     20       3     2        0
+  3     30       3     3        1

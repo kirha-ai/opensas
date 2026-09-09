@@ -1,0 +1,11 @@
+trt   param   _TYPE_   _FREQ_   mean   n
+
+                   0        4     25   4
+      ALT          1        2     20   2
+      AST          1        2     30   2
+A                  2        2     15   2
+B                  2        2     35   2
+A     ALT          3        1     10   1
+A     AST          3        1     20   1
+B     ALT          3        1     30   1
+B     AST          3        1     40   1

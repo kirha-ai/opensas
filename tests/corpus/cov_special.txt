@@ -1,0 +1,5 @@
+log1px=0 0.6931471806
+lfact_logbeta=4.7874917428 -2.48490665
+trigamma_ibessel=1.6449340667 1
+skew_kurt=0 -1.2
+rms_harmean=3.5355339059 1.7142857143

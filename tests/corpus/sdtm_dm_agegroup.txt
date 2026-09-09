@@ -1,0 +1,8 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              AGEGRP Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              40-64          2       33.33              2        33.33
+              <40            2       33.33              4        66.67
+              >=65           2       33.33              6       100.00

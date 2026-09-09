@@ -1,0 +1,18 @@
+byte(-1)        _error_=1  [ ]
+byte(999)       _error_=1  [ ]
+byte(.)         _error_=1  [ ]
+collate(-1)     _error_=1  [ ]
+collate(300)    _error_=1  [ ]
+collate(65,60)  _error_=1  [ ]
+collate(65,999) _error_=1  [ ]
+hashing bad     _error_=1  [ ]
+hmac bad        _error_=1  [ ]
+collate(.)      _error_=0  [ ]
+collate(,,56)   _error_=0
+collate(65,,0)  _error_=0  [ ]
+byte(80)=P         _error_=0
+collate(65,67)=ABC   _error_=0
+collate(65,65)=A     _error_=0
+collate(48,,10)=0123456789  _error_=0
+hashing md5=900150983CD24FB0D6963F7D28E17F72
+sqrt(-1)        _error_=1  .

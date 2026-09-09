@@ -1,0 +1,18 @@
+in show: i=1
+after link: i=1  x=10
+in show: i=2
+after link: i=2  x=20
+in show: i=3
+after link: i=3  x=30
+done
+in sub
+after link in do
+after if
+before skip i=1
+at skip i=1
+at skip i=2
+before skip i=3
+at skip i=3
+done2
+after link a=10
+at fin

@@ -1,0 +1,4 @@
+Obs   study     site     subj   sitenum
+
+  1   STUDY01   SITE02   003    02
+  2   STUDY01   SITE05   011    05

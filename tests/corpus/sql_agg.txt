@@ -1,0 +1,2 @@
+total  mean
+   60    20

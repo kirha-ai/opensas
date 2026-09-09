@@ -1,0 +1,110 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              6  Sum Weights                    6
+Mean                  1.83333333  Sum Observations              11
+Std Deviation         0.75277265  Variance              0.56666667
+Skewness              0.31256996  Kurtosis             -0.10380623
+Uncorrected SS                23  Corrected SS          2.83333333
+Coeff Variation      41.06032651  Std Error Mean        0.30731815
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                  1.83333333  Std Deviation         0.75277265
+Median                         2  Variance              0.56666667
+Mode                           2  Range                          2
+                                  Interquartile Range            1
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.96558759    Pr > |t|  0.0019
+Sign           M         3    Pr >= |M| 0.0313
+Signed Rank    S      10.5    Pr >= |S| 0.0313
+
+                    Quantiles (Definition 5)
+
+              100% Max               3
+              99%                    3
+              95%                    3
+              90%                    3
+              75% Q3                 2
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                3    6
+                   1    2                2    5
+                   2    3                2    4
+                   2    4                2    3
+                   2    5                1    2
+                                 The UNIVARIATE Procedure
+
+Variable:  y
+
+                           Moments
+
+N                              6  Sum Weights                    6
+Mean                         5.5  Sum Observations              33
+Std Deviation         0.37416574  Variance                    0.14
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS             182.2  Corrected SS                 0.7
+Coeff Variation       6.80301343  Std Error Mean        0.15275252
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         5.5  Std Deviation         0.37416574
+Median                       5.5  Variance                    0.14
+Mode                           .  Range                          1
+                                  Interquartile Range          0.6
+
+                    Tests for Location: Mu0=5
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 3.27326835    Pr > |t|  0.0221
+Sign           M       2.5    Pr >= |M| 0.0625
+Signed Rank    S       7.5    Pr >= |S| 0.0625
+
+                    Quantiles (Definition 5)
+
+              100% Max               6
+              99%                    6
+              95%                    6
+              90%                    6
+              75% Q3               5.8
+              50% Median           5.5
+              25% Q1               5.2
+              10%                    5
+              5%                     5
+              1%                     5
+              0% Min                 5
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   5    1                6    6
+                 5.2    2              5.8    5
+                 5.4    3              5.6    4
+                 5.6    4              5.4    3
+                 5.8    5              5.2    2

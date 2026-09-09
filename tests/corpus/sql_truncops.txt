@@ -1,0 +1,68 @@
+DATA step =: vs PROC SQL eqt
+Obs   name
+
+  1   TWOSTORY
+  2   TWO
+  3   TWOFOLD
+DATA step =: vs PROC SQL eqt
+name
+TWOSTORY
+TWO
+TWOFOLD
+DATA step ^=: vs PROC SQL net
+Obs   name
+
+  1   THREE
+DATA step ^=: vs PROC SQL net
+name
+THREE
+DATA step >: vs PROC SQL gtt
+Obs   name
+
+  1   TWOSTORY
+  2   TWO
+  3   TWOFOLD
+DATA step >: vs PROC SQL gtt
+name
+TWOSTORY
+TWO
+TWOFOLD
+DATA step <: vs PROC SQL ltt
+Obs   name
+
+  1   THREE
+DATA step <: vs PROC SQL ltt
+name
+THREE
+DATA step >=: vs PROC SQL get
+Obs   name
+
+  1   TWOSTORY
+  2   TWO
+  3   TWOFOLD
+DATA step >=: vs PROC SQL get
+name
+TWOSTORY
+TWO
+TWOFOLD
+DATA step <=: vs PROC SQL let
+Obs   name
+
+  1   TWOSTORY
+  2   TWO
+  3   TWOFOLD
+  4   THREE
+DATA step <=: vs PROC SQL let
+name
+TWOSTORY
+TWO
+TWOFOLD
+THREE
+zero-length: eqt with empty literal keeps nothing
+name
+a column named GET stays a column
+get
+ 10
+a column named GET stays a column
+get
+ 20

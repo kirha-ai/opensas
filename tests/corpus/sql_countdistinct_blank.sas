@@ -1,0 +1,12 @@
+data ae;
+  length id $8;
+  id="s1"; output;
+  id="s1"; output;
+  id="";   output;
+  id="s2"; output;
+  id="";   output;
+run;
+proc sql;
+  create table c as select count(distinct id) as n from ae;
+quit;
+data _null_; set c; put "distinct " n=; run;

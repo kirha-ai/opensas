@@ -1,0 +1,7 @@
+Obs   USUBJID   VISITNUM   NRIND    changed
+
+  1   01-001           1   NORMAL         0
+  2   01-001           2   NORMAL         0
+  3   01-001           3   HIGH           1
+  4   01-002           1   HIGH           0
+  5   01-002           2   NORMAL         1

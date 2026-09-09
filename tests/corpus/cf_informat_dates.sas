@@ -1,0 +1,11 @@
+data _null_;
+  a = input("15MAR2020", date9.);
+  b = input("03/15/2020", mmddyy10.);
+  c = input("2020-03-15", yymmdd10.);
+  d = input("15/03/2020", ddmmyy10.);
+  t = input("13:30:45", time8.);
+  length da $10;
+  da = put(a, date9.);
+  put "date9_in=" a "check=" da;
+  put "mmddyy=" b " yymmdd=" c " ddmmyy=" d " time=" t;
+run;

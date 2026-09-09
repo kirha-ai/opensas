@@ -1,0 +1,6 @@
+FIXED=[AAA; BBB ] len=8
+FIXED=[CCC DDD EEE ] len=11
+LIST=[AAA; ] len=4
+LIST=[CCC ] len=3
+MIX id=[01 ] name=[John Smith ]
+MIX id=[02 ] name=[Jane Doe ]

@@ -1,0 +1,12 @@
+data _null_;
+  a1=ceil(4.2); a2=ceil(-4.2);
+  b1=floor(4.8); b2=floor(-4.8);
+  c1=intz(4.9); c2=intz(-4.9);
+  d1=ceilz(5.0); d2=floorz(5.0);
+  e1=rounde(2.5); e2=rounde(3.5); e3=roundz(2.5);
+  put "ceil=" a1 a2;
+  put "floor=" b1 b2;
+  put "intz=" c1 c2;
+  put "ceilz_floorz=" d1 d2;
+  put "rounde_roundz=" e1 e2 e3;
+run;

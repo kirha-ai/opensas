@@ -1,0 +1,16 @@
+.zig-cache
+zig-out
+style
+.claude/worktrees/
+dist/
+output/
+
+web/sas.wasm
+
+# pi-subagents local run metadata
+.pi-subagents/
+
+# bug_filenamemidstep fixture outputs (regenerated every corpus run)
+/tests/corpus/includes/fmid_old.txt
+/tests/corpus/includes/fmid_new.txt
+/tests/corpus/includes/fmid2.txt

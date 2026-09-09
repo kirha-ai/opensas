@@ -1,0 +1,15 @@
+vis_1 =Screening
+vis_2 =Baseline
+vis_3 =Week 4
+vis_4 =Week 8
+vis_5 =Unscheduled
+arm_A=Placebo
+arm_B=Active
+arm_Z=Unknown
+grade_55 =Fail
+grade_65 =Pass
+grade_75 =Pass
+grade_85 =Distinction
+noother_9=  9
+noother_1=one
+vis_miss=Unscheduled

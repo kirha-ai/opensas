@@ -1,0 +1,4 @@
+x=10 running_total=10
+x=20 running_total=30
+x=. running_total=30
+x=30 running_total=60

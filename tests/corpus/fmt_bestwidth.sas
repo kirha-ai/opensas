@@ -1,0 +1,10 @@
+data _null_;
+  a = 1/3;
+  put "a def=[" a "] b12=[" a best12. "] b8=[" a best8. "] b6=[" a best6. "]";
+  b = 1234567.89;
+  put "b def=[" b "] b12=[" b best12. "] b8=[" b best8. "]";
+  c = 999999999999.9;
+  put "c def=[" c "] b12=[" c best12. "]";
+  d = 0.000012345;
+  put "d b8=[" d best8. "]";
+run;

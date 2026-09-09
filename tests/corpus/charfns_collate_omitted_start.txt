@@ -1,0 +1,4 @@
+ly=56 lz=56 same=1 digits=01234567 vtype=C
+la=66 last_a=65 lb=200 lc=200
+ldot=1 dot vtype=C
+_ERROR_=0

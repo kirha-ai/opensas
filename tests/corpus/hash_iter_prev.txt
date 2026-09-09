@@ -1,0 +1,11 @@
+last k=30  v=thirty
+prev k=20  v=twenty
+prev k=10  v=ten
+prev-before-first rc=1
+next-again k=20  v=twenty
+clear rc=0
+n-after-clear=0
+first-after-clear rc=1
+n-reused=1
+delete rc=0
+n-fresh=0

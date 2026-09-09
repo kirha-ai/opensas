@@ -1,0 +1,22 @@
+SUMMARY PRINT: listing appears
+                                     The SUMMARY Procedure
+
+                              Analysis Variable : x
+
+           N            Mean         Std Dev         Minimum         Maximum
+     -----------------------------------------------------------------------
+           3      20.0000000      10.0000000      10.0000000      30.0000000
+     -----------------------------------------------------------------------
+SUMMARY OUTPUT OUT=: silent, dataset created
+_TYPE_   _FREQ_    m
+
+     0        3   20
+MEANS still prints by default
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N            Mean         Std Dev         Minimum         Maximum
+     -----------------------------------------------------------------------
+           3      20.0000000      10.0000000      10.0000000      30.0000000
+     -----------------------------------------------------------------------

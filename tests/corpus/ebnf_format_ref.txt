@@ -1,0 +1,3 @@
+USERFMT=[Female ]
+DOLLAR=[ $1,234.50 ]
+WD=[   3.142 ]

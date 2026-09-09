@@ -1,0 +1,3 @@
+ARM      nsubj
+DRUG         2
+PLACEBO      1

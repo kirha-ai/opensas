@@ -1,0 +1,6 @@
+name=Al  flag=  f=blank
+name=Bo  flag=old  f=old
+name=Cy  flag=  f=blank
+name
+Al
+Cy

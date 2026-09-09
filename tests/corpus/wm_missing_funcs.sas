@@ -1,0 +1,10 @@
+data _null_;
+  x1 = 10; x2 = .; x3 = 20; x4 = .; x5 = 30;
+  s = sum(of x1-x5);
+  m = mean(of x1-x5);
+  nn = n(of x1-x5);
+  nm = nmiss(of x1-x5);
+  mn = min(of x1-x5);
+  mx = max(of x1-x5);
+  put "sum=" s " mean=" m " n=" nn " nmiss=" nm " min=" mn " max=" mx;
+run;

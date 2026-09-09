@@ -1,0 +1,8 @@
+5 in-range
+20 out-of-range
+YES -> ON
+Y -> ON
+no -> off
+col1=AGE
+col2=SEX
+col3=RACE

@@ -1,0 +1,9 @@
+down=10
+down=8
+down=6
+down=4
+down=2
+up=0
+up=3
+up=6
+up=9

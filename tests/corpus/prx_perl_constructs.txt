@@ -1,0 +1,10 @@
+la_pos=1
+la_neg=0
+named=4
+dotall=1
+nla_pos=1
+nla_neg=0
+ml_start=3
+ml_end=3
+ml_off=0
+posix=3

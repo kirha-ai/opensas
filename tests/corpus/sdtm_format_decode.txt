@@ -1,0 +1,5 @@
+Obs   AESEV      USUBJID   AESEVN
+
+  1   MILD       01-001         1
+  2   SEVERE     01-002         3
+  3   MODERATE   01-003         2

@@ -1,0 +1,13 @@
+Obs   nm
+
+  1   ABC
+  2   XYZ
+Obs    x
+
+  1   42
+Obs   a       b
+
+  1   hello   wor
+Obs   nm   x
+
+  1   AB   7

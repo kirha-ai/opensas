@@ -1,0 +1,4 @@
+Obs   USUBJID   ALT   AST   BILI
+
+  1   01-001     30    25      5
+  2   01-002     45    35      8

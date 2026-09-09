@@ -1,0 +1,4 @@
+GOOD x=1
+GOOD x=2
+GOOD x=3
+BAD y=.

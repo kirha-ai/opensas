@@ -1,0 +1,14 @@
+data _null_;
+  d = '15JAN2020'd;
+  b = intnx('month', d, 1, 'b');
+  m = intnx('month', d, 1, 'm');
+  e = intnx('month', d, 1, 'e');
+  s = intnx('month', d, 1, 's');
+  put b date9. / m date9. / e date9. / s date9.;
+  q = intck('qtr', '01JAN2020'd, '01JUL2020'd);
+  y = intck('year', '31DEC2019'd, '01JAN2020'd);
+  w = intck('week', '01JAN2020'd, '31JAN2020'd);
+  put q= y= w=;
+  dq = intck('dtqtr', '01JAN2020:00:00:00'dt, '01JUL2020:00:00:00'dt);
+  put dq=;
+run;

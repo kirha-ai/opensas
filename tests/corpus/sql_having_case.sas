@@ -1,0 +1,23 @@
+data d;
+  input g $ v;
+  datalines;
+a 10
+a 20
+b 5
+c 100
+;
+run;
+
+proc sql;
+  create table t as
+    select g, sum(v) as tot
+    from d
+    group by g
+    having case when sum(v) >= 30 then 1 else 0 end = 1
+    order by g;
+quit;
+
+data _null_;
+  set t;
+  put "g=" g " tot=" tot;
+run;

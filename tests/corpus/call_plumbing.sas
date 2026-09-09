@@ -1,0 +1,17 @@
+data _null_;
+  seed = 12345;
+  call ranuni(seed, u);
+  call ranuni(seed, u2);
+  ok = (u > 0 and u < 1 and u2 > 0 and u2 < 1 and u ne u2);
+  put "ranuni_ok=" ok;
+  a=3; b=1; c=2;
+  call sort(a, b, c);
+  put "sort_num=" a b c;
+  length p $6 q $6 r $6;
+  p="cherry"; q="apple"; r="banana";
+  call sort(p, q, r);
+  put "sort_char=" p q r;
+  x = 42;
+  call vname(x, nm);
+  put "vname=" nm;
+run;

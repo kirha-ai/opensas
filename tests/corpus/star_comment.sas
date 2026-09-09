@@ -1,0 +1,11 @@
+*________________________________________;
+* Aim : prove * comments are skipped. ;
+* A header line with : colons and words ;
+data _null_;
+  * a comment inside the step ;
+  x = 5;
+  y = 10;   * trailing comment after a statement ;
+  z = x + y;
+  put "sum=" z;
+run;
+* a trailing top-level comment ;

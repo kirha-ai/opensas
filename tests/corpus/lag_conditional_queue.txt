@@ -1,0 +1,5 @@
+x=1  lag=.  dif=.  cond=.
+x=5  lag=1  dif=4  cond=.
+x=2  lag=5  dif=-3  cond=.
+x=8  lag=2  dif=6  cond=.
+x=3  lag=8  dif=-5  cond=5

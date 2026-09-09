@@ -1,0 +1,7 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              complflFrequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              N              2       40.00              2        40.00
+              Y              3       60.00              5       100.00

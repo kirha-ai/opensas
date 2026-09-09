@@ -1,0 +1,32 @@
+                          The CONTENTS Procedure
+
+Data Set Name  numedge
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  hi        Num     8
+1  lo        Num     3
+                          The CONTENTS Procedure
+
+Data Set Name  charedge
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type    Len  Format  Informat  Label
+2  big       Char  32767
+1  one       Char      1
+                          The CONTENTS Procedure
+
+Data Set Name  lbl
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  v         Char    3                    LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL

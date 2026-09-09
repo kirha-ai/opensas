@@ -1,0 +1,5 @@
+htmlencode=a&lt;b&gt;&amp;c
+htmlencode_lt=a&lt;b>&c
+htmldecode=<a>&b
+urlencode=a%20b%26c
+urldecode=a b&c

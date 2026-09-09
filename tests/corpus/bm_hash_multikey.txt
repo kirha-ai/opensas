@@ -1,0 +1,5 @@
+subjid   visit   result       rc
+
+S001     V2      High          0
+S002     V1      Low           0
+S001     V9               160038

@@ -1,0 +1,4 @@
+usubjid   sbp   flag
+
+S02       145      1
+S03       132      1

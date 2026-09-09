@@ -1,0 +1,9 @@
+reg  prod    units    revenue
+
+E    A         1.5         30
+     B           3         30
+E                2         60
+W    A           4         40
+     B           5         50
+W              4.5         90
+                 3        150

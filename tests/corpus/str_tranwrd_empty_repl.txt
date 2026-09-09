@@ -1,0 +1,2 @@
+gotcha=[a b c ]
+right=[abc ]

@@ -1,0 +1,22 @@
+usubjid   visitnum   visit   svstdtc
+
+S01              1   SCR     2020-01-01
+S01              2   BL      2020-01-15
+S02              1   SCR     2020-02-01
+usubjid   visitnum   visit
+
+S01              1   SCR
+S01              2   BL
+S02              1   SCR
+usubjid   flag
+
+S01         99
+S01         88
+S02         77
+NAME       TYPE
+
+extra         1
+svstdtc       2
+usubjid       2
+visit         2
+visitnum      1

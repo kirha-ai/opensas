@@ -1,0 +1,7 @@
+mean_of_means
+
+ 36.666666667
+trt   n_subj
+
+A          4
+B          2

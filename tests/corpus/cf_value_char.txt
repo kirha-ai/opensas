@@ -1,0 +1,6 @@
+sex_M=Male
+sex_F=Female
+sex_blank=Missing
+sex_X=Other
+yn_Y=Yes
+yn_Z=Unknown

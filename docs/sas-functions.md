@@ -1,0 +1,646 @@
+# SAS 9.4 Functions & CALL Routines — coverage checklist
+
+Target (Phase F): implement **all 615** functions/CALL routines in
+the SAS Functions and CALL Routines reference (the Dictionary, pp.210-1709). This file is the
+tracker: `[x]` = implemented in opensas with a fixture; `[ ]` = TODO.
+When a dev implements a function they read ONLY that function's Dictionary page
+for exact semantics, add a corpus fixture, and tick it here.
+
+**Coverage: 450/450 feasible (100%) — 165 marked [~] N/A (Git/SOAP/MODULE/file-I/O/memory/OS); 615 total documented**
+
+Truly out-of-scope for a CSV/in-memory interpreter (memory PEEK/POKE, external
+DB/file engines, Git, GTL-only) may be marked `[~]` N/A with a one-line reason;
+they don't block 100% of the *feasible* set.
+
+---
+
+> **Reading one function's spec (avoid context rot):** do NOT open the whole
+> manual. Find the function's page in the reference and read ONLY it.
+
+> **Both unblock levers LANDED — zero `[ ]` remain (Phase-F-final, bfa2039):**
+> - **CALL routines (lever 1):** DONE. Mutation dispatch lives in `exec.runCall`
+>   (out-arg write-back incl. array elements); RNG stream state (Lehmer +
+>   MT19937 via CALL STREAMINIT) lives in evaluator state; PRX routines dispatch
+>   via `src/prx.zig`. Landed as Phase-F-callbatch (1413261 …) + Phase-F-final
+>   (f7708fc, 18f855f, bfa2039). Fixtures: call_combinatorics, call_ran,
+>   call_prx, call_softmax_vnext, call_allcombi_stream, call_tanh_logistic.
+> - **V-format/informat functions (lever 2):** DONE — VFORMAT*/VINFORMAT*/
+>   VARINFMT/VARLABEL read eager attributes (fixture v_format_label).
+> - INTCINDEX: SAS-specific WEEK-of-year numbering (WEEKU/V) — not verifiable here.
+
+
+- [x] ABS
+- [~] ADDR   (N/A: raw memory addr)
+- [~] ADDRLONG   (N/A: raw memory addr)
+- [x] AIRY
+- [x] ALLCOMB   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] ALLPERM   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] ANYALNUM
+- [x] ANYALPHA
+- [x] ANYCNTRL
+- [x] ANYDIGIT
+- [x] ANYFIRST
+- [x] ANYGRAPH
+- [x] ANYLOWER
+- [x] ANYNAME
+- [x] ANYPRINT
+- [x] ANYPUNCT
+- [x] ANYSPACE
+- [x] ANYUPPER
+- [x] ANYXDIGIT
+- [x] ARCOS
+- [x] ARCOSH
+- [x] ARSIN
+- [x] ARSINH
+- [x] ARTANH
+- [x] ATAN
+- [x] ATAN2
+- [x] ATTRC
+- [x] ATTRN
+- [x] BAND
+- [x] BETA
+- [x] BETAINV
+- [x] BLACKCLPRC
+- [x] BLACKPTPRC
+- [x] BLKSHCLPRC
+- [x] BLKSHPTPRC
+- [x] BLSHIFT
+- [x] BNOT
+- [x] BOR
+- [x] BRSHIFT
+- [x] BXOR
+- [x] BYTE
+- [x] CALL   (the CALL statement — routines dispatched via exec runCall; the specific CALL routines are itemized below)
+- [x] CALL ALLCOMB
+- [x] CALL ALLCOMBI   (Phase-F-final; fixture call_allcombi_stream)
+- [x] CALL ALLPERM
+- [x] CALL CATS
+- [x] CALL CATT
+- [x] CALL CATX
+- [~] CALL COMPCOST   (N/A: COMPGED cost matrix (niche tuning))
+- [~] CALL EXECUTE   (N/A: queues SAS code — engine)
+- [x] CALL GRAYCODE   (Phase-F-callbatch; fixture call_combinatorics)
+- [~] CALL IS8601_CONVERT   (GH#50: only 'dt/dt'→'du' — two datetimes → duration seconds = later−earlier; every other from/to combo fails loud. Full model still absent: P-string durations with calendar Y/M components, the other interval forms (dt/du, du/dt), 6-component decomposition, calendar-aware duration arithmetic — disproportionate multi-mode build, full [x] deferred)
+- [x] CALL LABEL   (already implemented + tested; Phase-F-callbatch)
+- [x] CALL LEXCOMB
+- [x] CALL LEXCOMBI   (Phase-F-callbatch; fixture call_combinatorics)
+- [x] CALL LEXPERK   (Phase-F-callbatch; fixture call_combinatorics)
+- [x] CALL LEXPERM   (Phase-F-callbatch; fixture call_combinatorics)
+- [x] CALL LOGISTIC   (element-wise in place; Phase-F-callbatch; fixture call_tanh_logistic)
+- [x] CALL MISSING
+- [~] CALL MODULE   (N/A: external DLL)
+- [~] CALL POKE   (N/A: writes raw memory)
+- [~] CALL POKELONG   (N/A: writes raw memory)
+- [x] CALL PRXCHANGE   (via prx.zig; Phase-F-callbatch; fixture call_prx)
+- [~] CALL PRXDEBUG   (N/A: regex debug toggle (no debug engine))
+- [x] CALL PRXFREE   (via prx.zig; Phase-F-callbatch; fixture call_prx)
+- [x] CALL PRXNEXT   (via prx.zig; Phase-F-callbatch; fixture call_prx)
+- [x] CALL PRXPOSN   (via prx.zig; Phase-F-callbatch; fixture call_prx)
+- [x] CALL PRXSUBSTR   (via prx.zig; Phase-F-callbatch; fixture call_prx)
+- [x] CALL RANBIN   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANCAU   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANCOMB
+- [x] CALL RANEXP   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANGAM   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANNOR   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANPERK
+- [x] CALL RANPERM
+- [x] CALL RANPOI   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANTBL   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANTRI   (draw into last arg, seed in place; Phase-F-callbatch; fixture call_ran)
+- [x] CALL RANUNI   (already implemented + tested; Phase-F-callbatch)
+- [x] CALL SCAN
+- [~] CALL SET   (N/A: SCL dsid binding — niche)
+- [~] CALL SLEEP   (N/A: wall-clock/OS)
+- [x] CALL SOFTMAX   (in place; Phase-F-callbatch; fixture call_softmax_vnext)
+- [x] CALL SORT   (Phase-F-callbatch; fixture call_combinatorics)
+- [x] CALL SORTC
+- [x] CALL SORTN
+- [x] CALL STDIZE
+- [x] CALL STREAM   (Phase-F-final; fixture call_allcombi_stream)
+- [x] CALL STREAMINIT   (Phase-F-final; fixture call_allcombi_stream)
+- [x] CALL STREAMREWIND   (Phase-F-final; fixture call_allcombi_stream)
+- [x] CALL SYMPUT
+- [x] CALL SYMPUTX
+- [~] CALL SYSTEM   (N/A: shells out)
+- [x] CALL TANH   (element-wise in place; Phase-F-callbatch; fixture call_tanh_logistic)
+- [~] CALL TSO   (N/A: z/OS TSO command host-only)
+- [x] CALL VNAME   (already implemented + tested; Phase-F-callbatch)
+- [x] CALL VNEXT   (in place; Phase-F-callbatch; fixture call_softmax_vnext)
+- [~] CALL WTO   (N/A: z/OS operator console host-only)
+- [x] CAT
+- [x] CATQ
+- [x] CATS
+- [x] CATT
+- [x] CATX
+- [x] CDF
+- [x] CEIL
+- [x] CEILZ
+- [~] CEXIST   (N/A: no catalog store — catalogs unsupported; always 0)
+- [x] CHAR
+- [x] CHOOSEC
+- [x] CHOOSEN
+- [x] CINV
+- [x] CLOSE
+- [x] CMISS
+- [x] CNONCT
+- [x] COALESCE
+- [x] COALESCEC
+- [x] COLLATE
+- [x] COMB
+- [x] COMPARE
+- [x] COMPBL
+- [x] COMPFUZZ
+- [x] COMPGED
+- [x] COMPLEV
+- [x] COMPOUND
+- [x] COMPRESS
+- [~] COMPSRV_OVAL   (N/A: compute-server)
+- [~] COMPSRV_UNQUOTE2   (N/A: compute-server)
+- [x] CONSTANT
+- [x] CONVX
+- [x] CONVXP
+- [x] COS
+- [x] COSH
+- [x] COT
+- [x] COUNT
+- [x] COUNTC
+- [x] COUNTW
+- [x] CSC
+- [x] CSS
+- [x] CUMIPMT
+- [x] CUMPRINC
+- [x] CUROBS
+- [x] CV
+- [x] DACCDB
+- [x] DACCDBSL
+- [x] DACCSL
+- [x] DACCSYD
+- [x] DACCTAB
+- [x] DAIRY
+- [x] DATDIF
+- [x] DATE
+- [x] DATEJUL
+- [x] DATEPART
+- [x] DATETIME
+- [x] DAY
+- [~] DCLOSE   (N/A: external directory I/O)
+- [~] DCREATE   (N/A: external directory I/O)
+- [x] DEPDB
+- [x] DEPDBSL
+- [x] DEPSL
+- [x] DEPSYD
+- [x] DEPTAB
+- [x] DEQUOTE
+- [x] DEVIANCE
+- [x] DHMS
+- [x] DIF
+- [x] DIGAMMA
+- [x] DIM
+- [~] DINFO   (N/A: external directory I/O)
+- [x] DIVIDE
+- [~] DLGCDIR   (N/A: OS/engine external)
+- [~] DNUM   (N/A: external directory I/O)
+- [~] DOPEN   (N/A: external directory I/O)
+- [~] DOPTNAME   (N/A: external directory I/O)
+- [~] DOPTNUM   (N/A: external directory I/O)
+- [~] DOSUBL   (N/A: submits SAS code — engine)
+- [~] DREAD   (N/A: external directory I/O)
+- [x] DROPNOTE
+- [x] DSNAME
+- [~] DSNCATLGD   (N/A: OS/engine external)
+- [x] DUR
+- [x] DURP
+- [x] EFFRATE
+- [~] ENVLEN   (N/A: OS/engine external)
+- [x] ERF
+- [x] ERFC
+- [x] EUCLID
+- [x] EXIST
+- [x] EXP
+- [x] FACT
+- [~] FAPPEND   (N/A: external file I/O)
+- [~] FCLOSE   (N/A: external file I/O)
+- [~] FCOL   (N/A: external file I/O)
+- [~] FCOPY   (N/A: external file I/O)
+- [~] FDELETE   (N/A: external file I/O)
+- [x] FETCH
+- [x] FETCHOBS
+- [~] FEXIST   (N/A: external file I/O)
+- [~] FGET   (N/A: external file I/O)
+- [~] FILEEXIST   (N/A: OS/engine external)
+- [~] FILENAME   (N/A: OS/engine external)
+- [~] FILEREF   (N/A: OS/engine external)
+- [x] FINANCE
+- [x] FIND
+- [x] FINDC   (char-list + class modifiers a/d/u/l/s/p/c/f/g/n/w/x + i/t/b + startpos; fixture findc_modifiers; BUG-findcmodifiers)
+- [x] FINDW
+- [~] FINFO   (N/A: external file I/O)
+- [x] FINV
+- [x] FIPNAME
+- [x] FIPNAMEL
+- [x] FIPSTATE
+- [x] FIRST
+- [x] FLOOR
+- [x] FLOORZ
+- [x] FMTINFO
+- [x] FNONCT
+- [~] FNOTE   (N/A: external file I/O)
+- [~] FOPEN   (N/A: external file I/O)
+- [~] FOPTNAME   (N/A: external file I/O)
+- [~] FOPTNUM   (N/A: external file I/O)
+- [~] FPOINT   (N/A: external file I/O)
+- [~] FPOS   (N/A: external file I/O)
+- [~] FPUT   (N/A: external file I/O)
+- [~] FREAD   (N/A: external file I/O)
+- [~] FREWIND   (N/A: external file I/O)
+- [~] FRLEN   (N/A: external file I/O)
+- [~] FSEP   (N/A: external file I/O)
+- [x] FUZZ
+- [~] FWRITE   (N/A: external file I/O)
+- [x] GAMINV
+- [x] GAMMA
+- [x] GARKHCLPRC
+- [x] GARKHPTPRC
+- [x] GCD
+- [x] GEODIST
+- [x] GEOMEAN
+- [x] GEOMEANZ
+- [x] GETVARC
+- [x] GETVARN
+- [~] GIT_BRANCH_CHKOUT   (N/A: Git repo ops)
+- [~] GIT_BRANCH_DELETE   (N/A: Git repo ops)
+- [~] GIT_BRANCH_MERGE   (N/A: Git repo ops)
+- [~] GIT_BRANCH_NEW   (N/A: Git repo ops)
+- [~] GIT_CLONE   (N/A: Git repo ops)
+- [~] GIT_COMMIT   (N/A: Git repo ops)
+- [~] GIT_COMMIT_FREE   (N/A: Git repo ops)
+- [~] GIT_COMMIT_GET   (N/A: Git repo ops)
+- [~] GIT_COMMIT_LOG   (N/A: Git repo ops)
+- [~] GIT_DELETE_REPO   (N/A: Git repo ops)
+- [~] GIT_DIFF   (N/A: Git repo ops)
+- [~] GIT_DIFF_FILE_IDX   (N/A: Git repo ops)
+- [~] GIT_DIFF_FREE   (N/A: Git repo ops)
+- [~] GIT_DIFF_GET   (N/A: Git repo ops)
+- [~] GIT_DIFF_TO_FILE   (N/A: Git repo ops)
+- [~] GIT_FETCH   (N/A: Git repo ops)
+- [~] GIT_INDEX_ADD   (N/A: Git repo ops)
+- [~] GIT_INDEX_REMOVE   (N/A: Git repo ops)
+- [~] GIT_INIT_REPO   (N/A: Git repo ops)
+- [~] GIT_PULL   (N/A: Git repo ops)
+- [~] GIT_PUSH   (N/A: Git repo ops)
+- [~] GIT_REBASE   (N/A: Git repo ops)
+- [~] GIT_REBASE_OP   (N/A: Git repo ops)
+- [~] GIT_RESET   (N/A: Git repo ops)
+- [~] GIT_RESET_FILE   (N/A: Git repo ops)
+- [~] GIT_SET_URL   (N/A: Git repo ops)
+- [~] GIT_STASH   (N/A: Git repo ops)
+- [~] GIT_STASH_APPLY   (N/A: Git repo ops)
+- [~] GIT_STASH_DROP   (N/A: Git repo ops)
+- [~] GIT_STASH_POP   (N/A: Git repo ops)
+- [~] GIT_STATUS   (N/A: Git repo ops)
+- [~] GIT_STATUS_FREE   (N/A: Git repo ops)
+- [~] GIT_STATUS_GET   (N/A: Git repo ops)
+- [~] GIT_VERSION   (N/A: Git repo ops)
+- [~] GITFN_CLONE   (N/A: Git repo ops)
+- [~] GITFN_CO_BRANCH   (N/A: Git repo ops)
+- [~] GITFN_COMMIT   (N/A: Git repo ops)
+- [~] GITFN_COMMIT_GET   (N/A: Git repo ops)
+- [~] GITFN_COMMIT_LOG   (N/A: Git repo ops)
+- [~] GITFN_COMMITFREE   (N/A: Git repo ops)
+- [~] GITFN_DEL_BRANCH   (N/A: Git repo ops)
+- [~] GITFN_DEL_REPO   (N/A: Git repo ops)
+- [~] GITFN_DIFF   (N/A: Git repo ops)
+- [~] GITFN_DIFF_FREE   (N/A: Git repo ops)
+- [~] GITFN_DIFF_GET   (N/A: Git repo ops)
+- [~] GITFN_DIFF_IDX_F   (N/A: Git repo ops)
+- [~] GITFN_IDX_ADD   (N/A: Git repo ops)
+- [~] GITFN_IDX_REMOVE   (N/A: Git repo ops)
+- [~] GITFN_MRG_BRANCH   (N/A: Git repo ops)
+- [~] GITFN_NEW_BRANCH   (N/A: Git repo ops)
+- [~] GITFN_PULL   (N/A: Git repo ops)
+- [~] GITFN_PUSH   (N/A: Git repo ops)
+- [~] GITFN_RESET   (N/A: Git repo ops)
+- [~] GITFN_RESET_FILE   (N/A: Git repo ops)
+- [~] GITFN_STATUS   (N/A: Git repo ops)
+- [~] GITFN_STATUS_GET   (N/A: Git repo ops)
+- [~] GITFN_STATUSFREE   (N/A: Git repo ops)
+- [~] GITFN_VERSION   (N/A: Git repo ops)
+- [x] GRAYCODE   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] HARMEAN
+- [x] HARMEANZ
+- [x] HASHING
+- [~] HASHING_FILE   (N/A: file I/O)
+- [x] HASHING_HMAC
+- [~] HASHING_HMAC_FILE   (N/A: file I/O)
+- [x] HASHING_HMAC_INIT
+- [x] HASHING_INIT
+- [x] HASHING_PART
+- [x] HASHING_TERM
+- [x] HBOUND
+- [x] HMS
+- [x] HOLIDAY
+- [x] HOLIDAYCK
+- [~] HOLIDAYCOUNT   (N/A: locale holiday calendar not modeled)
+- [~] HOLIDAYNAME   (N/A: locale holiday calendar not modeled)
+- [~] HOLIDAYNX   (N/A: locale holiday calendar not modeled)
+- [x] HOLIDAYNY
+- [x] HOLIDAYTEST
+- [x] HOUR
+- [x] HTMLDECODE
+- [x] HTMLENCODE
+- [x] IBESSEL
+- [x] IFC
+- [x] IFN
+- [x] INDEX
+- [x] INDEXC
+- [x] INDEXW
+- [x] INPUT
+- [x] INPUTC
+- [x] INPUTN
+- [x] INT
+- [x] INTCINDEX   (cycle index — week-of-year for day/week, month/qtr of year; time not modeled; fixture tests/corpus/intcindex)
+- [x] INTCK
+- [x] INTCYCLE
+- [x] INTFIT
+- [x] INTFMT
+- [x] INTGET
+- [x] INTINDEX
+- [x] INTNEST
+- [x] INTNX
+- [x] INTRR
+- [x] INTSEAS
+- [x] INTSHIFT
+- [x] INTTEST
+- [x] INTZ
+- [~] IORCMSG   (N/A: I/O return-code message (file engine))
+- [x] IPMT
+- [x] IQR
+- [x] IRR
+- [x] JBESSEL
+- [~] JSONPP   (N/A: file-I/O (input/output files/filerefs), not in-memory)
+- [x] JULDATE
+- [x] JULDATE7
+- [x] KURTOSIS
+- [x] LAG
+- [x] LARGEST
+- [x] LBOUND
+- [x] LCM
+- [x] LCOMB
+- [x] LEFT
+- [x] LENGTH
+- [x] LENGTHC
+- [x] LENGTHM
+- [x] LENGTHN
+- [x] LEXCOMB   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] LEXCOMBI   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] LEXPERK   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] LEXPERM   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] LFACT
+- [x] LGAMMA
+- [~] LIBNAME   (N/A: OS/engine external)
+- [~] LIBREF   (N/A: OS/engine external)
+- [x] LOG
+- [x] LOG10
+- [x] LOG1PX
+- [x] LOG2
+- [x] LOGBETA
+- [x] LOGCDF
+- [x] LOGISTIC
+- [x] LOGPDF
+- [x] LOGSDF
+- [x] LOWCASE
+- [x] LPERM
+- [x] LPNORM
+- [x] MAD
+- [x] MARGRCLPRC
+- [x] MARGRPTPRC
+- [x] MAX
+- [x] MD5
+- [x] MDY
+- [x] MEAN
+- [x] MEDIAN
+- [x] MIN
+- [x] MINUTE
+- [x] MISSING
+- [x] MOD
+- [x] MODEXIST
+- [~] MODULE   (N/A: external DLL)
+- [~] MODULEC   (N/A: external DLL)
+- [~] MODULEN   (N/A: external DLL)
+- [x] MODZ
+- [x] MONTH
+- [~] MOPEN   (N/A: external file/directory member I/O)
+- [x] MORT
+- [x] MSPLINT
+- [x] MVALID
+- [x] N
+- [x] NETPV
+- [x] NLITERAL
+- [x] NMISS
+- [x] NOMRATE
+- [x] NORMAL
+- [x] NOTALNUM
+- [x] NOTALPHA
+- [x] NOTCNTRL
+- [x] NOTDIGIT
+- [x] NOTE
+- [x] NOTFIRST
+- [x] NOTGRAPH
+- [x] NOTLOWER
+- [x] NOTNAME
+- [x] NOTPRINT
+- [x] NOTPUNCT
+- [x] NOTSPACE
+- [x] NOTUPPER
+- [x] NOTXDIGIT
+- [x] NPV
+- [x] NVALID
+- [x] NWKDOM
+- [x] OPEN
+- [x] ORDINAL
+- [x] PATHNAME   (libref → bound LIBNAME dir via dsfns map; filerefs blank until a FILENAME store exists — GAP-pathname)
+- [x] PCTL
+- [x] PDF
+- [~] PEEK   (N/A: reads raw memory)
+- [~] PEEKC   (N/A: reads raw memory)
+- [~] PEEKCLONG   (N/A: reads raw memory)
+- [~] PEEKLONG   (N/A: reads raw memory)
+- [x] PERM
+- [x] PMT
+- [x] POINT
+- [x] POISSON
+- [x] PPMT
+- [x] PROBBETA
+- [x] PROBBNML
+- [x] PROBBNRM
+- [x] PROBCHI
+- [x] PROBF
+- [x] PROBGAM
+- [x] PROBHYPR
+- [x] PROBIT
+- [~] PROBMC   (N/A: multiple-comparison distributions (large numeric tables))
+- [x] PROBMED
+- [x] PROBNEGB
+- [x] PROBNORM
+- [x] PROBT
+- [x] PROPCASE
+- [x] PRXCHANGE
+- [x] PRXMATCH
+- [x] PRXPAREN
+- [x] PRXPARSE
+- [x] PRXPOSN
+- [~] PTRLONGADD   (N/A: pointer arithmetic)
+- [x] PUT
+- [x] PUTC
+- [x] PUTN
+- [x] PVP
+- [x] QTR
+- [x] QUANTILE
+- [x] QUOTE
+- [x] RANBIN
+- [x] RANCAU
+- [x] RAND
+- [x] RANEXP
+- [x] RANGAM
+- [x] RANGE
+- [x] RANK
+- [x] RANNOR
+- [x] RANPOI
+- [x] RANTBL
+- [x] RANTRI
+- [x] RANUNI
+- [~] RENAME   (N/A: OS/engine external)
+- [x] REPEAT
+- [x] RESOLVE
+- [x] REVERSE
+- [x] REWIND
+- [x] RIGHT
+- [x] RMS
+- [x] ROUND
+- [x] ROUNDE
+- [x] ROUNDZ
+- [x] SAVING
+- [x] SAVINGS   (doc-exact: base,init,amount,number,dep-iv,cmp-iv,date1,rate1,…; verified vs PDF p.1460 — BUG-savingstv QA repro was malformed; fixture fin_savings_timevalue)
+- [x] SCAN
+- [x] SDF
+- [x] SEC
+- [x] SECOND
+- [x] SHA256
+- [x] SHA256HEX
+- [x] SHA256HMACHEX
+- [x] SIGN
+- [x] SIN
+- [x] SINH
+- [x] SKEWNESS
+- [x] SLEEP
+- [x] SMALLEST
+- [~] SOAPWEB   (N/A: SOAP web service)
+- [~] SOAPWEBMETA   (N/A: SOAP web service)
+- [~] SOAPWIPSERVICE   (N/A: SOAP web service)
+- [~] SOAPWIPSRS   (N/A: SOAP web service)
+- [~] SOAPWS   (N/A: SOAP web service)
+- [~] SOAPWSMETA   (N/A: SOAP web service)
+- [x] SORT   (function form: mutates args + returns status; Phase-F-final; fixture func_combinatorics)
+- [x] SOUNDEX
+- [x] SPEDIS
+- [x] SQRT
+- [x] SQUANTILE
+- [x] STD
+- [x] STDERR
+- [x] STFIPS
+- [x] STNAME
+- [x] STNAMEL
+- [x] STRIP
+- [x] SUBPAD
+- [x] SUBSTRN
+- [x] SUM
+- [x] SUMABS
+- [x] SYMEXIST
+- [x] SYMGET
+- [x] SYMGLOBL
+- [x] SYMLOCAL
+- [~] SYSEXIST   (N/A: OS environment variable existence)
+- [~] SYSGET   (N/A: OS environment variable (non-deterministic))
+- [x] SYSMSG
+- [x] SYSPARM
+- [~] SYSPROCESSID   (N/A: OS process id (non-deterministic))
+- [~] SYSPROCESSNAME   (N/A: OS process name (non-deterministic))
+- [x] SYSPROD
+- [x] SYSRC
+- [~] SYSTEM   (N/A: OS/engine external)
+- [x] TAN
+- [x] TANH
+- [x] TIME
+- [x] TIMEPART
+- [x] TIMEVALUE   (doc-exact: base,ref,amount,cmp-iv,date1,rate1,…; verified vs PDF p.1564 — BUG-savingstv; fixture fin_savings_timevalue)
+- [x] TINV
+- [x] TNONCT
+- [x] TODAY
+- [x] TRANSLATE
+- [x] TRANSTRN
+- [x] TRANWRD
+- [x] TRIGAMMA
+- [x] TRIM
+- [x] TRIMN
+- [x] TRUNC
+- [~] TSO   (N/A: z/OS TSO host-only)
+- [x] TYPEOF
+- [x] TZONEID
+- [x] TZONENAME
+- [x] TZONEOFF
+- [x] TZONES2U
+- [x] TZONEU2S
+- [x] UNIFORM
+- [x] UPCASE
+- [x] URLDECODE
+- [x] URLENCODE
+- [x] USS
+- [~] UUIDGEN   (N/A: non-deterministic UUID)
+- [x] VAR
+- [x] VARFMT
+- [x] VARINFMT   (dataset var informat; EXEC-varattr added Column.informat; fixture vfunc_scl_varinfmt)
+- [x] VARLABEL   (column label, blank if none; BUG-sclmeta; fixture scl_meta)
+- [x] VARLEN   (declared LENGTH width; BUG-sclmeta)
+- [x] VARNAME
+- [x] VARNUM
+- [~] VARRAY   (N/A: array definitions live in the parser/exec; no array-name table reachable from functions.zig. Unblock: dev1 expose an array registry)
+- [~] VARRAYX   (N/A: as VARRAY — no array registry reachable)
+- [x] VARTYPE
+- [x] VERIFY
+- [x] VFORMAT    (by-ref var format; parser rewrites → VFORMATX; fixture vfunc_format_nonx)
+- [x] VFORMATD   (format decimals; fixture vfunc_format_nonx)
+- [x] VFORMATDX  (fixture varattr_vfuncs)
+- [x] VFORMATN   (format name; fixture vfunc_format_nonx)
+- [x] VFORMATNX  (fixture varattr_vfuncs)
+- [x] VFORMATW   (format width; fixture vfunc_format_nonx)
+- [x] VFORMATWX  (fixture varattr_vfuncs)
+- [x] VFORMATX   (format from pdv.Var, else the SET source column via libColFmt — BUG-vformatxlabel; fixtures varattr_vfuncs, v_format_label)
+- [~] VINARRAY   (N/A: as VARRAY — no array registry reachable)
+- [~] VINARRAYX   (N/A: as VARRAY — no array registry reachable)
+- [x] VINFORMAT  (by-ref var informat; parser rewrites → VINFORMATX; fixture vfunc_informat)
+- [x] VINFORMATD (informat decimals; fixture vfunc_informat)
+- [x] VINFORMATDX (fixture vfunc_informat)
+- [x] VINFORMATN (informat name; fixture vfunc_informat)
+- [x] VINFORMATNX (fixture vfunc_informat)
+- [x] VINFORMATW (informat width; fixture vfunc_informat)
+- [x] VINFORMATWX (fixture vfunc_informat)
+- [x] VINFORMATX (informat from pdv.Var; fixture vfunc_informat)
+- [x] VLABEL
+- [x] VLABELX   (label from Library store, else the SET source column — BUG-vformatxlabel; fixture v_format_label)
+- [x] VLENGTH   (declared storage length via PDV; numeric=8; fixture tests/corpus/vlength)
+- [x] VLENGTHX   (declared length via pdv.Var.len; fixture vlength)
+- [x] VNAME
+- [x] VNAMEX
+- [x] VTYPE
+- [x] VTYPEX
+- [x] VVALUE   (fixture tests/corpus/vvalue)
+- [x] VVALUEX   (by-name via PDV, format falls back to the SET source column — BUG-vformatxlabel; fixtures vvalue, v_format_label)
+- [x] WEEK
+- [x] WEEKDAY
+- [x] WHICHC
+- [x] WHICHN
+- [x] WTO
+- [x] YEAR
+- [x] YIELDP
+- [x] YRDIF

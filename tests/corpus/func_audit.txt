@@ -1,0 +1,16 @@
+probnorm= 0.9750021
+probit=  1.959964
+tinv=  2.228139
+finv=  3.708265
+cinv=  11.07050
+band=8
+bxor=6
+blshift=16
+intnx_e=21974
+intck=2
+geomean= 2.00000
+harmean= 1.71429
+skewness= 1.69706
+kurtosis= 3.15200
+mad=1
+mod_neg=-1

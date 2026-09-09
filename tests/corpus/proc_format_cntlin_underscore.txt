@@ -1,0 +1,5 @@
+visitnum   vislbl
+
+       1   Screening
+       2   Treatment
+       3   Treatment

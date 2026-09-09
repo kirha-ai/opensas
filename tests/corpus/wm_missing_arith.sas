@@ -1,0 +1,10 @@
+data _null_;
+  a = .; b = 5;
+  add = a + b;
+  mul = a * b;
+  lt = (a < b);
+  gt = (a > b);
+  eq = (a = .);
+  put "add=" add " mul=" mul;
+  put "missing_lt_5=" lt " missing_gt_5=" gt " missing_eq_dot=" eq;
+run;

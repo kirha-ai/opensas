@@ -1,0 +1,12 @@
+data _null_;
+  base = mdy(1,1,2020);
+  length s0 $10 s1 $10 s2 $10 s3 $10;
+  s0 = put(base, date9.);
+  s1 = put(intnx('month', base, 3, 'b'), date9.);
+  s2 = put(intnx('day', base, 28, 's'), date9.);
+  s3 = put(intnx('week', base, 4, 'b'), date9.);
+  put "base=" s0;
+  put "plus3mo=" s1;
+  put "plus28d=" s2;
+  put "plus4wk=" s3;
+run;

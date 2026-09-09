@@ -1,0 +1,4 @@
+Obs   id       desc
+
+  1   01-001   01-001 on DRUG
+  2   02-011   02-011 on PLACEBO

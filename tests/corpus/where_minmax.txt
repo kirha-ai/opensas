@@ -1,0 +1,33 @@
+STMT 1 2
+STMT 3 1
+OPT  1 2
+OPT  3 1
+a   b
+
+1   2
+3   1
+a  b
+1  2
+3  1
+STMT-MAX 1 2
+OPT-MAX  1 2
+a   b
+
+1   2
+a  b
+1  2
+VAR-STMT 5 9 1
+VAR-STMT 4 7 3
+VAR-OPT  1 2 8
+VAR-OPT  4 7 3
+min   max   x
+
+  5     9   1
+  4     7   3
+min  max  x
+  5    9  1
+  4    7  3
+min  max  x
+  1    2  8
+  4    7  3
+VAR-INFIX 1 2 8

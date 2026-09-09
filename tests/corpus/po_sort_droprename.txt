@@ -1,0 +1,5 @@
+usubjid   aeterm     severity
+
+S01       Headache          1
+S01       Nausea            2
+S02       Fatigue           1

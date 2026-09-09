@@ -1,0 +1,7 @@
+Obs   USUBJID   AETERM     aeseq
+
+  1   01-001    HEADACHE       1
+  2   01-001    NAUSEA         2
+  3   01-001    RASH           3
+  4   01-002    FATIGUE        1
+  5   01-002    FEVER          2

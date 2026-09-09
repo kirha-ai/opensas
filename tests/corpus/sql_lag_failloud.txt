@@ -1,0 +1,3 @@
+x=10  lag=.  dif=.
+x=14  lag=10  dif=4
+x=19  lag=14  dif=5

@@ -1,0 +1,3 @@
+term_i=6
+term_j=-2
+boundonce_iters=3  term_k=4

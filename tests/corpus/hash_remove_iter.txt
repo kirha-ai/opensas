@@ -1,0 +1,11 @@
+visit k=1
+remove rc=1
+visit k=2
+remove rc=1
+visit k=3
+remove rc=1
+visit k=4
+remove rc=1
+visit k=5
+remove rc=1
+left in hash=5

@@ -1,0 +1,2 @@
+ARM      mean_bp
+PLACEBO      155

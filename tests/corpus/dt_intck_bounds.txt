@@ -1,0 +1,1 @@
+months=1  years=1  days=31  weeks=2  qtrs=3

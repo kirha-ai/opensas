@@ -1,0 +1,9 @@
+reg  prod    units    revenue    pct
+
+E    A           3         15
+     B           2         10
+E                5         25      5
+W    A           3         27
+     B           2         18
+W                5         45      9
+                10         70      7

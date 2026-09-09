@@ -1,0 +1,13 @@
+data _null_;
+  length he $30 he2 $30 hd $30 ue $30 ud $30;
+  he=htmlencode('a<b>&c');
+  he2=htmlencode('a<b>&c', 'lt');
+  hd=htmldecode('&lt;a&gt;&amp;b');
+  ue=urlencode('a b&c');
+  ud=urldecode('a%20b%26c');
+  put "htmlencode=" he;
+  put "htmlencode_lt=" he2;
+  put "htmldecode=" hd;
+  put "urlencode=" ue;
+  put "urldecode=" ud;
+run;

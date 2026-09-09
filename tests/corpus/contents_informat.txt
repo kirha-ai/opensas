@@ -1,0 +1,15 @@
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8          COMMA8.
+2  y         Num     8
+NAME   INFORMAT   INFORML   INFORMD
+
+x      COMMA            8         0
+y                       0         0

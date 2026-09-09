@@ -1,0 +1,3 @@
+elems=10 20 30 40 50
+bounds=-2 2 5
+negrange=1 4 -5 -2

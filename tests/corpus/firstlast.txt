@@ -1,0 +1,7 @@
+FIRST=A
+dept=A  sales=10
+dept=A  sales=20
+LAST=A
+FIRST=B
+dept=B  sales=30
+LAST=B

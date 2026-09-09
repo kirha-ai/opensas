@@ -1,0 +1,17 @@
+data _null_;
+  aa = anyalpha("123abc");
+  ad = anydigit("abc9");
+  au = anyupper("abCd");
+  ap = anypunct("ab.c");
+  na = notalpha("abc9");
+  nd = notdigit("99x");
+  cb = compbl("a    b   c");
+  c1 = compare("cat", "car");
+  c2 = compare("cat", "cat");
+  rk = rank("A");
+  bt = byte(66);
+  cl = collate(65, 70);
+  put "aa=" aa " ad=" ad " au=" au " ap=" ap;
+  put "na=" na " nd=" nd " c1=" c1 " c2=" c2 " rk=" rk;
+  put "cb=[" cb "]  bt=" bt " cl=" cl;
+run;

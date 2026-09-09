@@ -1,0 +1,5 @@
+Obs   SEX   USUBJID   ALT   AGE
+
+  1   M     01-001     30    45
+  2   F     01-002     45    52
+  3   M     01-003     55    38

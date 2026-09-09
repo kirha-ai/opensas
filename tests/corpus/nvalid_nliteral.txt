@@ -1,0 +1,2 @@
+n1=1 n2=1 n3=0 n4=0 n5=1 n6=1 n7=1 n8=0 n9=1 n10=0
+l1=abc l2="a b"n l3="2x"n l4='cats & dogs'n l5="it's"n

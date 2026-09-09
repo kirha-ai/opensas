@@ -1,0 +1,7 @@
+a=37800 fn=37800 agree=SAME
+a=53100 fn=53100 agree=SAME
+a=25200 fn=25200 agree=SAME
+a=48600 fn=48600 agree=SAME
+a=0 fn=0 agree=SAME
+a=37800 fn=37800 agree=SAME
+a=. fn=. agree=SAME

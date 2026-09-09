@@ -1,0 +1,5 @@
+Obs   TRTLBL    USUBJID   TRTCD
+
+  1   ACTIVE    01-001        1
+  2   PLACEBO   01-002        2
+  3   ACTIVE    01-003        1

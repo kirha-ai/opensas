@@ -1,0 +1,4 @@
+Obs   USUBJID   LBSTRESN        LBDT
+
+  1   01-001        30.0   26MAR2020
+  2   01-002        45.0   05APR2020

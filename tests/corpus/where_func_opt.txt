@@ -1,0 +1,6 @@
+out
+
+Fatal
+out
+
+RECOVERED

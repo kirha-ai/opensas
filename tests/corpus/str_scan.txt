@@ -1,0 +1,1 @@
+w1=alpha  w2=beta  w3=gamma

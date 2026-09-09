@@ -1,0 +1,8 @@
+deletes done, still running
+Obs   a
+
+  1   1
+  2   2
+Obs   b
+
+  1   7

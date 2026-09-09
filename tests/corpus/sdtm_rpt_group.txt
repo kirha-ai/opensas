@@ -1,0 +1,4 @@
+ARM        EXDOSE
+
+DRUG          150
+PLACEBO        25

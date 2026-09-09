@@ -1,0 +1,5 @@
+Obs   USUBJID   SEX   hasae
+
+  1   01-001    M         1
+  2   01-002    F         0
+  3   01-003    M         1

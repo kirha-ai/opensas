@@ -1,0 +1,11 @@
+coalesced full join
+k   x    y
+1  10    .
+2  20  200
+3   .  300
+unambiguous unqualified column
+ x    y
+20  200
+non-nested aggregates
+ s   m   p
+15  10  14

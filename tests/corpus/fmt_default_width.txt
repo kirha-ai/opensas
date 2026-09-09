@@ -1,0 +1,6 @@
+explicit=[UNMAT ] len=5
+default=[UNMAT ] len=5
+matched=[SHORT ]
+other=[Unknown ]
+plain_w10=[UNMATCHEDL ]
+plain_w20=[hi                   ]

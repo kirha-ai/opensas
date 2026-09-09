@@ -1,0 +1,11 @@
+                          The CONTENTS Procedure
+
+Data Set Name  r.d
+Label          Round Trip DS
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8

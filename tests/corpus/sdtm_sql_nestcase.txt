@@ -1,0 +1,4 @@
+USUBJID  cat
+01-001   LOW
+01-002   MID
+01-003   HIGH

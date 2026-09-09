@@ -1,0 +1,4 @@
+Obs   USUBJID   AESEV
+
+  2   01-002    SEVERE
+  4   01-004    SEVERE

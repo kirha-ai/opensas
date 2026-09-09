@@ -1,0 +1,6 @@
+USUBJID  PARAMCD    AVAL
+
+01-001   ALT          30
+01-001   AST          25
+01-002   ALT          45
+01-002   AST          35

@@ -1,0 +1,10 @@
+data _null_;
+  d = mdy(7, 4, 2026);
+  q = qtr(d);
+  nx = intnx('month', d, 1);
+  ny = year(nx);
+  nm = month(nx);
+  nd = day(nx);
+  put "q=" q;
+  put "nxyr=" ny " nxmo=" nm " nxdy=" nd;
+run;

@@ -1,0 +1,7 @@
+NEW file contains: [WROTE-HERE ]
+ctl ran, x=2
+midstep-ctl
+v
+
+7
+MIDPROC bind contains: [VIA-MIDPROC-BIND ]

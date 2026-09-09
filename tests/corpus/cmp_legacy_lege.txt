@@ -1,0 +1,7 @@
+le5=1 le3=1 le2=0 ge5=0 ge3=1 ge2=1
+chain_in=1 chain_out=0
+same=1
+cle=1 cge=0
+neg=-1 sndx=1
+IF-GE TAKEN
+IF-LE SKIPPED

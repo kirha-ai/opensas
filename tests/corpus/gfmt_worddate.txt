@@ -1,0 +1,11 @@
+WORDDATE=      July 4, 2020
+WEEKDATE=       Saturday, July 4, 2020
+WORDDATX=       4 July 2020
+WEEKDATX=        Saturday, 4 July 2020
+MONYY=JUL2020
+MONNAME=July     
+DOWNAME=Saturday 
+YEAR=2020
+MONTH= 7
+DAY= 4
+WEEKDAY=7

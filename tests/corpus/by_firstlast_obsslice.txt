@@ -1,0 +1,27 @@
+k   v   fk   lk
+
+1   1    1    0
+1   2    0    1
+k   v   fk   lk
+
+1   2    1    0
+1   3    0    1
+2   9    1    1
+Obs   x         y           z         fx   lx   fy   ly   fz   lz
+
+  1   apple     banana      coconut    1    0    1    0    1    0
+  2   apple     banana      coconut    0    0    0    1    0    1
+  3   apple     blueberry   citron     0    1    1    1    1    1
+  4   apricot   blueberry   citron     1    1    1    1    1    1
+a   c
+
+1   3
+a   c
+
+1   3
+a
+
+1
+a
+
+1

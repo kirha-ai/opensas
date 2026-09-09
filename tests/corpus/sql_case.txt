@@ -1,0 +1,3 @@
+x=5  grp=lo
+x=15  grp=mid
+x=25  grp=hi

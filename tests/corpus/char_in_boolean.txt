@@ -1,0 +1,14 @@
+lit0 F
+lit1 T
+litabc F
+lit25 T
+litblk F
+var0 F
+var25 T
+varabc F
+or T
+and F
+not T
+while0 n=0
+until m=2
+num T

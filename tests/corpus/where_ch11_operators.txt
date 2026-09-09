@@ -1,0 +1,73 @@
+product   country
+
+GRAPH     USA
+STAT      Canada
+GRAPH     Canada
+product   country
+
+STAT      Canada
+GRAPH     Canada
+empnum
+
+   500
+   750
+  1000
+empnum
+
+   500
+   750
+  1000
+empnum
+
+   100
+  1500
+empnum
+
+   100
+  1500
+state   n
+
+NC      1
+TX      2
+state   n
+
+NC      1
+TX      2
+state   n
+
+NC      1
+TX      2
+state   n
+
+TX      2
+CA      3
+TN      4
+ISNULL   name=[  ]
+ISMISS   idnum=.
+ISMISS   idnum=A
+ISMISS   idnum=Z
+LEDOTZ   idnum=.
+LEDOTZ   idnum=A
+LEDOTZ   idnum=Z
+NOTMISS  idnum=1
+NOTMISS  idnum=2
+SOUNDS   Schmitt
+SOUNDS   Smith
+SOUNDS   Smitt
+SOUNDS   Smythe
+PREFIX   Smith
+PREFIX   Smithson
+PREFIX   Smitt
+NEBRACK  Schmitt
+NEBRACK  Smithson
+NEBRACK  Smitt
+NEBRACK  Smythe
+BARENUM  Alpha
+invest      town
+
+VanHouten   Lyon
+VanDyke     Turin
+BYFILT   g=1  x=2  first=1  last=0
+BYFILT   g=1  x=3  first=0  last=1
+BYFILT   g=2  x=4  first=1  last=0
+BYFILT   g=2  x=5  first=0  last=1

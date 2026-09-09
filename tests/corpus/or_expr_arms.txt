@@ -1,0 +1,3 @@
+a=1 b=0 c=0 d=0 e=1 f=1
+bang-false ok
+bb-true ok

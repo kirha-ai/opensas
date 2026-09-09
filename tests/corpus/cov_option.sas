@@ -1,0 +1,15 @@
+data _null_;
+  F=100*exp(0.05);
+  bsc=blkshclprc(100, 1, 100, 0.05, 0.2);
+  bsp=blkshptprc(100, 1, 100, 0.05, 0.2);
+  blc=blackclprc(100, 1, F, 0.05, 0.2);
+  blp=blackptprc(100, 1, F, 0.05, 0.2);
+  gkc=garkhclprc(100, 1, 100, 0.05, 0, 0.2);
+  gkp=garkhptprc(100, 1, 100, 0.05, 0, 0.2);
+  mgc=margrclprc(100, 1, 90, 0.2, 0.3, 0.5);
+  mgp=margrptprc(100, 1, 90, 0.2, 0.3, 0.5);
+  put "blksh=" bsc bsp;
+  put "black=" blc blp;
+  put "garkh=" gkc gkp;
+  put "margr=" mgc mgp;
+run;

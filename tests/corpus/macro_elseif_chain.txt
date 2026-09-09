@@ -1,0 +1,10 @@
+g=A
+g=B
+g=C
+g=F
+g=A
+g=B
+g=C
+g=F
+r=POS
+r=NEG

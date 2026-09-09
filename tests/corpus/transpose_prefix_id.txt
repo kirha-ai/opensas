@@ -1,0 +1,4 @@
+STUDYID   USUBJID   _NAME_   dt_1   dt_2   dt_3
+
+S1        P1        EV_DT     100    200    300
+S1        P2        EV_DT     150    250      .

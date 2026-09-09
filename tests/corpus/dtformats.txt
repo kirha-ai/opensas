@@ -1,0 +1,5 @@
+dtdate9  =01JAN2020
+dtdate7  =01JAN20
+dtmonyy7 =JAN2020
+dtyear4  =2020
+dtwkdatx =Wednesday, 1 January 2020

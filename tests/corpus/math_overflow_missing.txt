@@ -1,0 +1,4 @@
+x=. xeq=1 xm=1
+d=. deq=1 dm=1
+g=. geq=1 gm=1
+c=7.3890560989 ceq=0 cm=0

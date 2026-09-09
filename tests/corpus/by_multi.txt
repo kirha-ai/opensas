@@ -1,0 +1,10 @@
+FP region=East  product=A
+row region=East  product=A  sales=10
+row region=East  product=A  sales=20
+LP region=East  product=A
+FP region=East  product=B
+row region=East  product=B  sales=30
+LP region=East  product=B
+FP region=West  product=A
+row region=West  product=A  sales=40
+LP region=West  product=A

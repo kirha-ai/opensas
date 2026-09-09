@@ -1,0 +1,4 @@
+v_char s=hi
+v_num k=5
+v_conv k=.
+v_retain r=ok

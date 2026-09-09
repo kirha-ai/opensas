@@ -1,0 +1,2 @@
+row=1  lag_g=[ ] lag_x=.
+row=2  lag_g=[A ] lag_x=10

@@ -1,0 +1,30 @@
+QA D-014 COMPARE
+
+                          The COMPARE Procedure
+  Comparison of a with b
+
+  Data Set Summary
+    a: 2 variables, 2 observations
+    b: 2 variables, 2 observations
+
+  Variables Summary
+    Variables in common: 2
+    In a only: 0
+    In b only: 0
+
+  Observation Summary
+    Observations in common: 2
+    In a only: 0
+    In b only: 0
+
+  Values Comparison Summary
+    Variables compared: 1
+    Variables all equal: 1
+    Variables with unequal values: 0
+    Total unequal values: 0
+
+  NOTE: No unequal values were found. All values compared are exactly equal.
+hoisted footnote
+Obs    z
+
+  1   42

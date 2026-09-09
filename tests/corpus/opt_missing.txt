@@ -1,0 +1,10 @@
+Obs   id   v   w
+
+  1    1   X   A
+  2    2   5   3
+X
+_
+Obs   id   v   w
+
+  1    1   .   A
+  2    2   5   3

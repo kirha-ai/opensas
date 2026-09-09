@@ -1,0 +1,6 @@
+  x     y
+
+  6    60
+  Total X    Mean Y
+
+        6        20

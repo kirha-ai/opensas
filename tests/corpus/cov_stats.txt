@@ -1,0 +1,5 @@
+n_nmiss_cmiss=3 2 2
+range_largest_smallest_sumabs=7 9 5 1 12
+median=4 2
+var_cv_geomean=4 50 2
+css_uss_ordinal=8 56 3

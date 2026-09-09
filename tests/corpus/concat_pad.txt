@@ -1,0 +1,5 @@
+len=6  lenC=6  val=<fox  ! >
+abcat=<x  y   > len=4  lenC=6
+lit=<a b > len=3
+plain=<xy! > len=3
+trim=<fox! > len=4

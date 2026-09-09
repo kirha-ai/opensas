@@ -1,0 +1,8 @@
+0  OUT
+1  IN
+2  IN
+3  IN
+4  OUT
+5  IN
+6  OUT
+char IN

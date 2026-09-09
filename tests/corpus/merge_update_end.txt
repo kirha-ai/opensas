@@ -1,0 +1,12 @@
+merge row  id=1
+merge row  id=2
+merge last id=3  x=30  y=300
+update row  id=1
+update row  id=2
+update row  id=3
+update last id=4  x=40
+id    x     y
+
+ 1   10   100
+ 2   20     .
+ 3   30   300

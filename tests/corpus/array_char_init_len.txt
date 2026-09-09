@@ -1,0 +1,2 @@
+explicit_len=xxx |yy |la1=3 la2=2
+inferred_len=aaaa |b |lb1=4 lb2=1

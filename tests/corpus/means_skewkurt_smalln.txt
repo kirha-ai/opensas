@@ -1,0 +1,16 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N        Skewness        Kurtosis
+     ---------------------------------------
+           2               .               .
+     ---------------------------------------
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N        Skewness        Kurtosis
+     ---------------------------------------
+           3       0.0000000               .
+     ---------------------------------------

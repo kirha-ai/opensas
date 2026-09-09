@@ -1,0 +1,5 @@
+Obs   USUBJID   AGE
+
+  1   SUBJ-1     41
+  2   SUBJ-2     42
+  3   SUBJ-3     43

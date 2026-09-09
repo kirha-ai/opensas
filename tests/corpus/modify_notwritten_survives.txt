@@ -1,0 +1,23 @@
+R1 RETURN: five rows, k=3 still 30 while its neighbours moved
+Obs   k    x
+
+  1   1   11
+  2   2   21
+  3   3   30
+  4   4   41
+  5   5   51
+R2 empty transaction: all five rows survive, all values unchanged
+Obs   k    x
+
+  1   1   10
+  2   2   20
+  3   3   30
+  4   4   40
+  5   5   50
+R3 duplicate master keys: first k=2 becomes 120, second stays 25
+Obs   k     x
+
+  1   1    10
+  2   2   120
+  3   2    25
+  4   3    30

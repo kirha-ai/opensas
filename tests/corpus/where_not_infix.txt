@@ -1,0 +1,56 @@
+STMT rust 2
+STMT go 5
+STMT go 1
+OPT  rust 2
+OPT  go 5
+OPT  go 1
+tool   level
+
+rust       2
+go         5
+go         1
+tool  level
+rust      2
+go        5
+go        1
+SND  go 5
+SND  go 1
+SNDO go 5
+SNDO go 1
+tool   level
+
+go         5
+go         1
+tool  level
+go        5
+go        1
+NE   rust 2
+NE   go 1
+EQ   rust 2
+LE   rust 2
+LE   go 1
+LT   rust 2
+LT   go 1
+GE   rust 5
+GE   rust 2
+GE   go 5
+GT   rust 5
+GT   rust 2
+GT   go 5
+tool  level
+rust      2
+go        1
+PAR  rust 2
+PAR  go 1
+IN   rust 2
+IN   go 1
+CON  go 5
+CON  go 1
+LIKE go 5
+LIKE go 1
+BTW  rust 2
+BTW  go 1
+ISM  rust 5
+ISM  rust 2
+ISM  go 5
+ISM  go 1

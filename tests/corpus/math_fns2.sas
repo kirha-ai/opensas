@@ -1,0 +1,13 @@
+data _null_;
+  g = gamma(5);
+  lg = round(lgamma(5), .0001);
+  b = round(beta(2, 3), .0001);
+  dg = round(digamma(1), .000001);
+  sd = round(std(2, 4, 4, 4, 5, 5, 7, 9), .0001);
+  wu = week('01jan2020'd);
+  we = week('31dec2020'd, 'w');
+  wv = week('01jan2006'd, 'v');
+  ct = cat("ab ", " cd");
+  put "g=" g " lg=" lg " b=" b " dg=" dg " sd=" sd;
+  put "wu=" wu " we=" we " wv=" wv " ct=[" ct "]";
+run;

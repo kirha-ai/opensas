@@ -1,0 +1,14 @@
+one  a=r1aaaa  end=0
+one  a=r2bbbb  end=0
+one  a=r3cccc  end=0
+one  a=r4dddd  end=0
+slsh a=r1aaaa  b=r2bbbb  end=0
+slsh a=r3cccc  b=r4dddd  end=0
+hfwd a=r1aaaa  b=r2bbbb  end=0
+hfwd a=r3cccc  b=r4dddd  end=0
+hbak a=r1aaaa  b=r2bbbb  end=0
+hbak a=r3cccc  b=r4dddd  end=0
+two1 a=r1aaaa  end=0
+two2 b=r2bbbb  end=0
+two1 a=r3cccc  end=0
+two2 b=r4dddd  end=0

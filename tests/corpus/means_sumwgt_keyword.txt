@@ -1,0 +1,26 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N             Sum  Sum of Weights            Mean
+     -------------------------------------------------------
+           3      60.0000000       3.0000000      20.0000000
+     -------------------------------------------------------
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N             Sum  Sum of Weights            Mean
+     -------------------------------------------------------
+           3      80.0000000       5.0000000      16.0000000
+     -------------------------------------------------------
+Obs   _TYPE_   _FREQ_   n    s   sw    m
+
+  1        0        3   3   80    5   16
+Obs   _TYPE_   _FREQ_   x_SumWgt
+
+  1        0        3          5
+Obs   g   n   sum   sw   uss   css     m
+
+  1   a   0     .    0     .     .     .
+  2   b   2     3    2     5   0.5   1.5

@@ -1,0 +1,10 @@
+having max
+ v
+30
+where subquery-agg
+ v
+30
+plain where
+ v
+ 9
+30

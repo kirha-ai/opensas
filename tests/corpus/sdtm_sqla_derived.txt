@@ -1,0 +1,3 @@
+ARM      peak
+DRUG      145
+PLACEBO   150

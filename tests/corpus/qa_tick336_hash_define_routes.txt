@@ -1,0 +1,20 @@
+R1 length      rc=0  v=10
+R2 retain      rc=0  v=10
+R3 array elem  rc=0  a2=10
+R4 call missing rc=0  v=10
+R5 if 0 set    rc=0  v=10
+R6 input       rc=0  v=70
+R7 dataset:    rc=0  v=20
+R8 attrib      rc=0  v=10
+P1 remove other key   pos=1  rc=0  n=2
+P2 remove via k       rc=0  n=2
+P3 never walked       rc=0  n=2
+P4 exhausted          rc=0  n=2
+P5 other hash         rc=0  n1=3  n2=2
+P6 after clear        rc=0  n=1
+P7 visit k=1  v=10
+P7 visit k=2  v=20
+P7 visit k=3  v=30
+P7 visit k=4  v=40
+P7 visit k=5  v=50
+P8 empty hash iter    rc=1

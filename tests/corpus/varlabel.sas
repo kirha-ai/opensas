@@ -1,0 +1,10 @@
+data _null_;
+  length nm $ 8;
+  label age = "Age in Years" nm = "Person Name";
+  age = 42;
+  nm = "Bob";
+  al = vlabel(age);
+  bl = vlabelx("nm");
+  an = vname(age);
+  put al= bl= an=;
+run;

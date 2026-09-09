@@ -1,0 +1,44 @@
+                          The CONTENTS Procedure
+
+Data Set Name  a
+Observations   3
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8  AGREL.
+                          The CONTENTS Procedure
+
+Data Set Name  b
+Observations   3
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8  AGREL.
+                          The CONTENTS Procedure
+
+Data Set Name  c
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8  AGREL.
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   3
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8  AGREL.

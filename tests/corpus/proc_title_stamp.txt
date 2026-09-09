@@ -1,0 +1,67 @@
+Hdr
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           2  Sum Observations               6
+Std Deviation                  1  Variance                       1
+Skewness                       0  Kurtosis                       .
+Uncorrected SS                14  Corrected SS                   2
+Coeff Variation               50  Std Error Mean        0.57735027
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           2  Std Deviation                  1
+Median                         2  Variance                       1
+Mode                           .  Range                          2
+                                  Interquartile Range            2
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 3.46410162    Pr > |t|  0.0742
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               3
+              99%                    3
+              95%                    3
+              90%                    3
+              75% Q3                 3
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                3    3
+                   2    2                2    2
+                   3    3                1    1
+ftr
+Hdr
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   3
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+ftr

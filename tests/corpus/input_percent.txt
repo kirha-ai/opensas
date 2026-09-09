@@ -1,0 +1,1 @@
+compliance=0.85  responder=1  none=0  frac=0.005

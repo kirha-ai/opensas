@@ -1,0 +1,3 @@
+VISIT  n  mean
+WEEK4  2   125
+WEEK8  2   123

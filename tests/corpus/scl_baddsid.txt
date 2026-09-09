@@ -1,0 +1,10 @@
+close_nan=-1
+close_huge=-1
+close_neg=-1
+attrn_nan=.
+getvarn_bad=.
+gv_nan_n=.
+gv_huge_n=.
+point_nan=-1
+fobs_huge=-1
+close_ok=0

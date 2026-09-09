@@ -1,0 +1,12 @@
+set: vlength=5  hex=40424CCCCC000000
+plain: vlength=5  hex=40424CCCCC000000
+                          The CONTENTS Procedure
+
+Data Set Name  c
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     5

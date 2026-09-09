@@ -1,0 +1,6 @@
+symget_let=letval
+symget_put=world
+symexist_yes=1
+symexist_no=0
+symglobl=1
+symlocal=0

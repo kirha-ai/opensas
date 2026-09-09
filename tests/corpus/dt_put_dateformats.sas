@@ -1,0 +1,12 @@
+data _null_;
+  d = mdy(3,15,2020);
+  dt = dhms(d, 9, 5, 0);
+  length s1 $12 s2 $12 s3 $12 s4 $24 s5 $12;
+  s1=put(d,date9.); s2=put(d,ddmmyy10.); s3=put(d,mmddyy10.);
+  s4=put(dt,datetime.); s5=put(d,yymmdd10.);
+  put "date9=" s1;
+  put "ddmmyy10=" s2;
+  put "mmddyy10=" s3;
+  put "datetime=" s4;
+  put "yymmdd10=" s5;
+run;

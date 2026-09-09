@@ -1,0 +1,12 @@
+USUBJID  AVAL
+01-003     30
+01-004     40
+Obs   n   rc   lst
+
+  1   4    0   10,20,30,40
+Obs   n
+
+  1   2
+Obs   n
+
+  1   2

@@ -1,0 +1,9 @@
+_TYPE_   _FREQ_   m   s
+
+     0        3   2   6
+_TYPE_   _FREQ_    mb
+
+     0        3   200
+_TYPE_   _FREQ_   ma
+
+     0        3    2

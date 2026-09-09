@@ -1,0 +1,3 @@
+sn=bcd  sn2=a  cs=ab  ct=[ a b ]
+q="ab"  dq=ab  tr=XYcXYc  v=3  rv=cba  rp=ababab
+pc=Hello World  ks=x  cq="x","y"

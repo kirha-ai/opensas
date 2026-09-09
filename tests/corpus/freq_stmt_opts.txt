@@ -1,0 +1,76 @@
+                     The FREQ Procedure
+
+                Number of Variable Levels
+
+           Variable    Levels
+           x                2
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              2              2       66.67              2        66.67
+              1              1       33.33              3       100.00
+Obs   x   COUNT        PERCENT
+
+  1   1       1   33.333333333
+  2   2       2   66.666666667
+                        The FREQ Procedure
+
+                        Table 1 of g by s
+                        Controlling for h=B
+
+              g         s
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |Y       |  Total
+              ---------+--------+
+              X        |      5 |      5
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           5        5
+                         100.00   100.00
+                        The FREQ Procedure
+
+                        Table 1 of g by s
+                        Controlling for h=A
+
+              g         s
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |Y       |  Total
+              ---------+--------+
+              X        |      0 |      0
+                       |   0.00 |   0.00
+                       |   0.00 |
+                       |   0.00 |
+              ---------+--------+
+              Total           0        0
+                           0.00   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of g by s
+                        Controlling for h=B
+
+              g         s
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |Y       |  Total
+              ---------+--------+
+              X        |      5 |      5
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           5        5
+                         100.00   100.00

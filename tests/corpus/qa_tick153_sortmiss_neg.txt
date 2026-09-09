@@ -1,0 +1,51 @@
+asc x=_
+asc x=.
+asc x=A
+asc x=A
+asc x=M
+asc x=Z
+asc x=-100
+asc x=-3
+asc x=-3
+asc x=0
+asc x=2
+asc x=5
+asc x=5
+desc x=5
+desc x=5
+desc x=2
+desc x=0
+desc x=-3
+desc x=-3
+desc x=-100
+desc x=Z
+desc x=M
+desc x=A
+desc x=A
+desc x=.
+desc x=_
+distinct x=_
+distinct x=.
+distinct x=A
+distinct x=M
+distinct x=Z
+distinct x=-100
+distinct x=-3
+distinct x=0
+distinct x=2
+distinct x=5
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              _              1        7.69              1         7.69
+              .              1        7.69              2        15.38
+              A              2       15.38              4        30.77
+              M              1        7.69              5        38.46
+              Z              1        7.69              6        46.15
+              -100           1        7.69              7        53.85
+              -3             2       15.38              9        69.23
+              0              1        7.69             10        76.92
+              2              1        7.69             11        84.62
+              5              2       15.38             13       100.00

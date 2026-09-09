@@ -1,0 +1,3 @@
+sortn_ofstar=1 2 3
+sortn_subscript=10 20 30
+ranuni_into_array in01=1 1 1  distinct=1

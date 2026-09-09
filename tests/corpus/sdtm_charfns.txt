@@ -1,0 +1,4 @@
+Obs   USUBJID   clean       disp                site
+
+  1   01-001    HEAD ACHE   01-001: HEAD ACHE   01
+  2   01-002    NAUSEA      01-002: NAUSEA      01

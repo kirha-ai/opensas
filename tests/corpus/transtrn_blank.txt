@@ -1,0 +1,4 @@
+r1=[X Y ] l1=3
+r2=[XY ] l2=2
+lengthc_empty=1
+eq_blank=yes

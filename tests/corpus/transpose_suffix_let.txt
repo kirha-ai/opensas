@@ -1,0 +1,7 @@
+g   _NAME_   P1_x   P2_x
+
+1   v          10     20
+2   v          30      .
+g   _NAME_   C1_s   C2_s
+
+1   v          20     30

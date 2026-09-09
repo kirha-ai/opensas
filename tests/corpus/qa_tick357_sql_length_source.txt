@@ -1,0 +1,35 @@
+s
+abc
+zzy
+s
+
+abcdef
+zzyyxx
+s
+abcdef
+zzyyxx
+                          The CONTENTS Procedure
+
+Data Set Name  q
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  s         Char    3
+s
+
+abc
+zzy
+s     n
+
+abc   3
+zzy   3
+s
+
+abc
+s
+
+abcdef
+zzyyxx

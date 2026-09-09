@@ -1,0 +1,8 @@
+usubjid   score   tgrp
+
+S01          55      0
+S02          70      1
+S03          62      1
+S04          88      2
+S05          91      2
+S06          47      0

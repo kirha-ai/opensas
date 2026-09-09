@@ -1,0 +1,29 @@
+Obs   Runner   Leg1   Leg2   Leg3   RunTotal
+
+  1   Mia         5      7      9         21
+  2   Noah        8      6      9         44
+  3   Ivy         7      8      6         65
+  4   Omar        9      9      8         91
+  5   Lena        6      7      7        111
+  6   Tobias      8      9     10        138
+                          The CONTENTS Procedure
+
+Data Set Name  race_points
+Observations   6
+Variables      5
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  Leg1      Num     8
+3  Leg2      Num     8
+4  Leg3      Num     8
+1  Runner    Char    8
+5  RunTotal  Num     8
+Obs   Runner   Pts   RunTotal
+
+  1   Mia        5          5
+  2   Noah       8         13
+Obs   Runner   Pts   Cnt
+
+  1   Mia        5     1

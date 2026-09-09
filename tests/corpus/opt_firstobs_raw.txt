@@ -1,0 +1,34 @@
+1 rows=3
+1 header skipped, no bogus observation
+name   age
+
+bob     42
+sue     37
+ann     29
+2 read _n_=1  name=bob age=42
+2 read _n_=2  name=sue age=37
+2 read _n_=3  name=ann age=29
+3 rows=2
+4 rows=2
+4 records 2..3 inclusive
+name   age
+
+bob     42
+sue     37
+5 rows=3  (3 = infile wins; 1 = composed)
+6 infile firstobs=2 rows=3
+6 infile obs=2 rows=2
+7 datalines rows=2
+7 datalines: first record skipped
+v
+
+2
+3
+8 unset rows=4
+8 unset: header IS data
+name   age
+
+name     .
+bob     42
+sue     37
+ann     29

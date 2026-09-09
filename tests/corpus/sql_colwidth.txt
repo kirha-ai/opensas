@@ -1,0 +1,42 @@
+DATA lengthc  a=3  b=4  c=10
+DATA vlength  a=3  b=4  c=10
+DATA length   a=3  b=2  c=5
+la  lb  lc
+ 3   4  10
+va  vb  vc
+ 3   4  10
+na  nb  nc
+ 3   2   5
+plain  aliased
+    4        4
+with_len
+       2
+computed
+       2
+aggregate
+        2
+case_arm
+       3
+literal
+      3
+vn
+ 8
+                          The CONTENTS Procedure
+
+Data Set Name  copied
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Char    3
+2  bb        Char    4
+3  c         Char   10
+AFTER lengthc a=3  bb=4  c=10
+DATA concat=[AB  ! ] trimmed=[AB! ]
+cat    tr
+AB  !  AB!
+DATA trunc 0 1 0 1 0 1
+e1  e2  e3  e4  e5  e6
+ 1   0   0   1   1   0

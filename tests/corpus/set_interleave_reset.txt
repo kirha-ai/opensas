@@ -1,0 +1,15 @@
+Interleaved inventory
+Obs   Code   Tool    Fruit
+
+  1   p      Awl
+  2   p              Mango
+  3   q      Rasp
+  4   q              Papaya
+  5   r      Saw
+  6   r              Apricot
+  7   s      Hoe
+  8   s              Mandarin
+  9   t      Plane
+ 10   t              Rambutan
+ 11   u      File
+ 12   u              Yam

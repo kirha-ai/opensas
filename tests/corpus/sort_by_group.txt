@@ -1,0 +1,8 @@
+start g=A
+  v=1
+  v=2
+end g=A
+start g=B
+  v=3
+  v=4
+end g=B

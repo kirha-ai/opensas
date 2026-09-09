@@ -1,0 +1,4 @@
+VISIT     n  mean_bp
+BASELINE  2      125
+WEEK4     2    126.5
+WEEK8     1      122

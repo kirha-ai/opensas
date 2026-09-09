@@ -1,0 +1,8 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              aesev  Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              MILD           3       50.00              3        50.00
+              MODERATE       2       33.33              5        83.33
+              SEVERE         1       16.67              6       100.00

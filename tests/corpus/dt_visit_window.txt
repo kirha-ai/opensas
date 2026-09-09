@@ -1,0 +1,4 @@
+S001 window_days=0
+S001 window_days=19
+S001 window_days=64
+S002 window_days=0

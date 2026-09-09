@@ -1,0 +1,22 @@
+hit  k=2  nm=two
+hit  k=1  nm=one
+miss k=7
+x=1  nm=two
+two items
+attr arith
+and-hit
+rc=0  nm=one
+n=2
+funcarg  a=0  nm=one
+funcargm b=160038
+attrarg  c=3
+nested   d=3
+ifarg hit nm=two
+inf a=14MAR2018
+inf b=1234.5
+inf c=[  hi  ]
+inf d=42
+inf e=12
+first k=1
+walk k=2  nm=two
+done

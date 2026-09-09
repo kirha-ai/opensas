@@ -1,0 +1,3 @@
+x=10  total=10
+x=.  total=10
+x=30  total=40

@@ -1,0 +1,3 @@
+Obs   severities
+
+  1   MILD, SEVERE, MODERATE

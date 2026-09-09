@@ -1,0 +1,11 @@
+add rc=0
+add rc=0
+add rc=0
+add rc=0
+walk k=1  v=10
+walk k=1  v=20
+walk k=1  v=40
+iter k=1  v=10
+iter k=1  v=20
+iter k=2  v=30
+iter k=1  v=40

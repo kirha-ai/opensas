@@ -1,0 +1,3 @@
+x=5  g=lo
+x=15  g=mid
+x=25  g=hi

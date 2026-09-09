@@ -1,0 +1,12 @@
+data _null_;
+  l1=lcm(4,6); l2=lcm(3,5); g1=gcd(12,18);
+  cl1=complev('kitten','sitting'); cl2=complev('cat','cat'); cl3=complev('cat','cot');
+  pn0=probnorm(0); pn1=probnorm(1.96);
+  pit=probit(0.975); lg=logistic(0); po=poisson(1,0);
+  put "lcm_gcd=" l1 l2 g1;
+  put "complev=" cl1 cl2 cl3;
+  put "probnorm=" pn0 pn1;
+  put "probit=" pit;
+  put "logistic=" lg;
+  put "poisson=" po;
+run;

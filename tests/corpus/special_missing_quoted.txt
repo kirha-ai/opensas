@@ -1,0 +1,1 @@
+eq_quoted=1   in_quoted=1   eq_literal_control=1   ne_plain=0

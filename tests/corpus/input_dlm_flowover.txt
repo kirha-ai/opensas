@@ -1,0 +1,26 @@
+1 p.145: two obs, obs2 = 69 63 2
+Obs   heat1   heat2   heat3
+
+  1      64      58      71
+  2      69      63       2
+2 p.145 DSD fix: three obs, obs2 = 69 . 63
+Obs   heat1   heat2   heat3
+
+  1      64      58      71
+  2      69       .      63
+  3       .       2       2
+3 MISSOVER keeps 4 5 .
+a   b   c
+
+1   2   3
+4   5   .
+4 TRUNCOVER keeps 4 5 .
+a   b   c
+
+1   2   3
+4   5   .
+5 satisfied: two obs, unchanged
+a   b   c
+
+1   2   3
+4   5   6

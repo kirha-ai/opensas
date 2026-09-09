@@ -1,0 +1,22 @@
+apple
+Banana
+cherry
+                          The CONTENTS Procedure
+
+Data Set Name  v
+Observations   1
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  Zebra     Num     8
+2  Apple     Num     8
+3  Mango     Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  v
+Observations   1
+Variables      3
+
+Apple Mango Zebra

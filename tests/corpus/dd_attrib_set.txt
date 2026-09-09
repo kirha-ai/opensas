@@ -1,0 +1,4 @@
+NAME      TYPE   LENGTH   VARNUM   FORMAT   FORMATL   FORMATD   INFORMAT   INFORML   INFORMD   LABEL
+
+usubjid      2        3        1                  0         0                    0         0
+sbp          1        8        2                  6         1                    0         0   Systolic BP

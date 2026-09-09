@@ -1,0 +1,10 @@
+data _null_;
+  a = 1234567;
+  b = -1234.5;
+  c = -0.05;
+  e = 3.5;
+  put a comma10.;
+  put b dollar10.2;
+  put c percent8.1;
+  put e z6.1;
+run;

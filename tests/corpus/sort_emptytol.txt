@@ -1,0 +1,5 @@
+pipeline survived
+Obs   g   v
+
+  1   a   1
+  2   b   2

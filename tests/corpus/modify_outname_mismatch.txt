@@ -1,0 +1,34 @@
+C1 matched
+id    x
+
+ 1   11
+ 2   21
+ 3   31
+C2 case-insensitive
+id    x
+
+ 1   12
+ 2   22
+ 3   32
+C3 work-qualified
+id    x
+
+ 1   13
+ 2   23
+ 3   33
+C4 master + extra output
+id    x
+
+ 1   14
+ 2   24
+ 3   34
+C5 master-as-extra, transaction not an output
+id     x
+
+ 1    14
+ 2   777
+ 3    34
+C5 transaction untouched
+id     x
+
+ 2   777

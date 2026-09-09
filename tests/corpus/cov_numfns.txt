@@ -1,0 +1,6 @@
+lcm_gcd=12 15 6
+complev=3 0 1
+probnorm=0.5 0.9750021049
+probit=1.9599639845
+logistic=0.5
+poisson=0.3678794412

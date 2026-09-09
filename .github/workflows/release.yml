@@ -1,0 +1,111 @@
+# AGT-release — on a published GitHub release: gate once, cross-compile all four
+# targets IN PARALLEL (matrix, one runner + isolated cache per target), then
+# fan in to attach binaries + SHA256SUMS. Was a single sequential job; the four
+# builds are independent so the matrix trades sum-of-four wall-clock for max-of-four.
+name: release
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write   # upload assets to the release
+
+jobs:
+  # Run the hermetic suites ONCE — never ship a binary from a red tree. The build
+  # matrix and publish only run if this is green.
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: gate (hermetic suites)
+        run: |
+          zig build test
+          zig build corpus
+          zig build programs
+
+  # One parallel job per target (same names as the Makefile). fail-fast cancels
+  # the siblings if any target fails, so a partial release is never published.
+  build:
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: true
+      matrix:
+        target: [arm, amd, windows, macos]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: cross-compile ${{ matrix.target }}
+        run: make ${{ matrix.target }}
+      - name: package ${{ matrix.target }}
+        # Two names per binary: versioned (audit trail / pinning) and STABLE
+        # (sas-<target>) so releases/latest/download/sas-<target> always resolves
+        # to the newest published build.
+        run: |
+          set -eu
+          mkdir -p out
+          t="${{ matrix.target }}"
+          bin=$(find "dist/$t" -type f \( -name 'sas' -o -name 'sas.exe' \) | head -1)
+          ext=""; case "$bin" in *.exe) ext=".exe";; esac
+          cp "$bin" "out/sas-${{ github.event.release.tag_name }}-$t$ext"
+          cp "$bin" "out/sas-$t$ext"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-${{ matrix.target }}
+          path: out/
+          if-no-files-found: error
+
+  # The web demo's wasm reactor. Not in the matrix above: it has no dist/<t>/sas
+  # layout and no OPT knob (target/optimize are fixed in build.zig).
+  wasm:
+    needs: gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: build wasm
+        run: make wasm
+      - name: package wasm
+        run: |
+          set -eu
+          mkdir -p out
+          cp web/sas.wasm "out/sas-${{ github.event.release.tag_name }}.wasm"
+          cp web/sas.wasm out/sas.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bin-wasm
+          path: out/
+          if-no-files-found: error
+
+  # Fan-in: collect every target's binaries, compute SHA256SUMS over all of them
+  # (one manifest across the whole release), and attach everything to the release.
+  publish:
+    needs: [build, wasm]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: staged   # each artifact lands under staged/bin-<target>/
+      - name: collect + checksum
+        run: |
+          set -eu
+          mkdir -p out
+          find staged -type f -exec cp {} out/ \;
+          (cd out && sha256sum * > SHA256SUMS)
+          ls -la out/
+      - name: attach binaries to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        # -R: this job has no checkout, so gh can't infer the repo from git context.
+        run: gh release upload "${{ github.event.release.tag_name }}" out/* --clobber -R "${{ github.repository }}"

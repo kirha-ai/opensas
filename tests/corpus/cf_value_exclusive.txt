@@ -1,0 +1,7 @@
+age10 =Child
+age18 =Young Adult
+age39 =Young Adult
+age40 =Middle Age
+age64 =Middle Age
+age65 =Senior
+age90 =Senior

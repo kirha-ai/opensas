@@ -1,0 +1,5 @@
+Obs   term
+
+  1   Head Ache
+  2   Nausea
+  3   Diarrhea Severe

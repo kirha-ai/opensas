@@ -1,0 +1,15 @@
+early   =[
+  x1x2final=100
+]
+plain   =[
+  y1y2y3final=4
+]
+by2     =[
+  z1z3z5final=7
+]
+downward=[
+  d5d4final=-8
+]
+nested  =[
+  [i1j1j2][i2j1j2][i3j1j2]final=4
+]

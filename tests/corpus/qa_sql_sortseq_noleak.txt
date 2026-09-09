@@ -1,0 +1,19 @@
+UNION keeps apple and APPLE as separate rows
+name
+Zebra
+apple
+Banana
+APPLE
+subquery IN stays byte-exact: only the two lowercase apple rows
+name   v
+apple  2
+apple  4
+self-join on a char key stays byte-exact
+n
+7
+MIN/MAX are lexical, not collated
+lo     hi
+APPLE  apple
+HAVING on a char group stays byte-exact: apple only, count 2
+name   n
+apple  2

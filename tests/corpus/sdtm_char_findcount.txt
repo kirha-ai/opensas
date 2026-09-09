@@ -1,0 +1,5 @@
+Obs   CODE        firstdig   ndigit   letters
+
+  1   LB001A2B3          3        5   LBAB
+  2   VS999              3        3   VS
+  3   NODIGITS           0        0   NODIGITS

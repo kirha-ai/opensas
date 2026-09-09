@@ -1,0 +1,5 @@
+usubjid   aval
+
+S02         18
+S03         42
+S04         65

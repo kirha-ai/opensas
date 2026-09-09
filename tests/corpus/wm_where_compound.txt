@@ -1,0 +1,5 @@
+trt   dose   age
+
+A       10    45
+A       20    60
+B       20    70

@@ -1,0 +1,6 @@
+NAME      LENGTH
+
+age            8
+country        3
+sex            1
+usubjid       10

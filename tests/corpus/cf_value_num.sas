@@ -1,0 +1,10 @@
+proc format;
+  value sev 1="Mild" 2="Moderate" 3="Severe" other="Unknown";
+run;
+data _null_;
+  length s $10;
+  do g = 1, 2, 3, 9;
+    s = put(g, sev.);
+    put "sev" g "=" s;
+  end;
+run;

@@ -1,0 +1,95 @@
+g=3
+
+g    x
+
+3   30
+
+g=2
+
+g    x
+
+2   20
+2   21
+
+g=1
+
+g    x
+
+1   10
+                                       The MEANS Procedure
+
+                                       g=3
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+      30.0000000
+     -----------
+
+                                       g=2
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+      20.5000000
+     -----------
+
+                                       g=1
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+      10.0000000
+     -----------
+DS g=3 x=30  f=1  l=1
+DS g=2 x=20  f=1  l=0
+DS g=2 x=21  f=0  l=1
+DS g=1 x=10  f=1  l=1
+a=1 b=3
+
+a   b    v
+
+1   3   13
+
+a=1 b=2
+
+a   b    v
+
+1   2   12
+
+a=2 b=1
+
+a   b    v
+
+2   1   21
+                                       The MEANS Procedure
+
+                                       g=2
+
+                              Analysis Variable : x
+
+           N             Sum
+     -----------------------
+           1      20.0000000
+     -----------------------
+
+                                       g=1
+
+                              Analysis Variable : x
+
+           N             Sum
+     -----------------------
+           1      10.0000000
+     -----------------------
+
+                                       g=2
+
+                              Analysis Variable : x
+
+           N             Sum
+     -----------------------
+           1      21.0000000
+     -----------------------

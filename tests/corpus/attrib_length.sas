@@ -1,0 +1,18 @@
+data EMPTY;
+  attrib AETERM label="Reported Term" length=$200;
+  attrib AESEV  label="Severity"      length=$10;
+  if 0;
+run;
+data OUT;
+  set EMPTY;
+  AETERM="HEADACHE SEVERE RECURRENT";
+  output;
+run;
+proc contents data=OUT; run;
+data DIRECT;
+  attrib TERM label="Term" length=$40;
+  TERM="HEADACHE SEVERE RECURRENT";
+  output;
+run;
+proc print data=DIRECT noobs; run;
+proc contents data=DIRECT; run;

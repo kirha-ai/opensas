@@ -1,0 +1,4 @@
+control hit  arm=placebo
+control miss
+control items
+control after

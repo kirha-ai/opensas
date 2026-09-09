@@ -1,0 +1,8 @@
+Joyce removed from hash object
+42 lit
+lit42
+[   42]
+   42lit
+k=Joyce lit
+Joyce 42
+42 Joyce

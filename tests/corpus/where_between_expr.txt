@@ -1,0 +1,37 @@
+ dose   weight
+
+80000    26000
+ dose   weight
+
+80000    26000
+ dose   weight
+
+80000    26000
+ dose  weight
+80000   26000
+ dose   weight
+
+80000    26000
+x
+
+1
+2
+3
+4
+x
+1
+2
+3
+4
+x
+
+5
+9
+x
+2
+3
+4
+x
+
+1
+3

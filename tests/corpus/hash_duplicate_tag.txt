@@ -1,0 +1,2 @@
+replace v=999
+all v=42  w=7

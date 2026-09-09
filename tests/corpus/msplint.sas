@@ -1,0 +1,15 @@
+data _null_;
+  y1=msplint(5, 1, 3, 20);
+  ln1=msplint(2.5, 2, 1, 4, 10, 40);
+  ln2=msplint(4, 2, 1, 4, 10, 40);
+  k1=msplint(10, 3, 10, 20, 30, 100, 200, 150);
+  k2=msplint(20, 3, 10, 20, 30, 100, 200, 150);
+  k3=msplint(30, 3, 10, 20, 30, 100, 200, 150);
+  m1=msplint(15, 3, 10, 20, 30, 100, 200, 150);
+  m2=msplint(25, 3, 10, 20, 30, 100, 200, 150);
+  mono=(m1>=100 and m1<=200 and m2>=150 and m2<=200);
+  put "n1=" y1;
+  put "linear=" ln1 ln2;
+  put "knots=" k1 k2 k3;
+  put "monotone=" mono;
+run;

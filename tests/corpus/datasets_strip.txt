@@ -1,0 +1,23 @@
+                          The CONTENTS Procedure
+
+Data Set Name  vs
+Label          Vital Signs
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8                    Systolic
+2  y         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  vs2
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Num     8
+2  b         Num     8          BEST12.

@@ -1,0 +1,12 @@
+reg  prod    units    revenue
+
+E    A           3         30
+     B           3         30
+E                6         60
+  region total units=6 revenue=60
+W    A           4         40
+     B           5         50
+W                9         90
+  region total units=9 revenue=90
+                15        150
+  GRAND revenue    $150.00

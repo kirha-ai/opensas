@@ -1,0 +1,3 @@
+dept=a  sz=big  n=2
+dept=b  sz=small  n=2
+dept=c  sz=big  n=1

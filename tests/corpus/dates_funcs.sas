@@ -1,0 +1,16 @@
+data _null_;
+  d0 = mdy(1, 1, 1960);
+  d1 = mdy(1, 1, 1961);
+  d2 = mdy(1, 1, 2020);
+  yr = year(d2);
+  mo = month(d2);
+  dy = day(d2);
+  wd = weekday(d0);
+  put "d0=" d0;
+  put "d1=" d1;
+  put "d2=" d2;
+  put "yr=" yr;
+  put "mo=" mo;
+  put "dy=" dy;
+  put "wd=" wd;
+run;

@@ -1,0 +1,3 @@
+n   mean   median            std   q1   q3   min   max
+
+8     45       45   24.494897428   25   65    10    80

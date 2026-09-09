@@ -1,0 +1,11 @@
+hex=.
+under=.
+binary=.
+comma=.
+dec=3.14
+sci=1000
+blank=42
+dot=5
+neg=-7
+in_hex=.
+in_sci=1000

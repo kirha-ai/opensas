@@ -1,0 +1,10 @@
+data NUM;
+  length x1-x3 8;
+  x1=1; x2=2; x3=3;
+run;
+proc contents data=NUM; run;
+data CHAR;
+  length XZREFNB1-XZREFNB5 $ 200;
+  XZREFNB1='x';
+run;
+proc contents data=CHAR; run;

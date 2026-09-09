@@ -1,0 +1,18 @@
+data _null_;
+  array a{3} a1-a3 (3 1 2);
+  call sortn(of a{*});
+  put "sortn_ofstar=" a1 a2 a3;
+  array b{3} b1-b3 (30 10 20);
+  call sortn(b{1}, b{2}, b{3});
+  put "sortn_subscript=" b1 b2 b3;
+  array r{3} r1-r3;
+  seed = 12345;
+  do i = 1 to 3;
+    call ranuni(seed, r{i});
+  end;
+  n1 = (r1 > 0 and r1 < 1);
+  n2 = (r2 > 0 and r2 < 1);
+  n3 = (r3 > 0 and r3 < 1);
+  distinct = (r1 ne r2 and r2 ne r3);
+  put "ranuni_into_array in01=" n1 n2 n3 " distinct=" distinct;
+run;

@@ -1,0 +1,15 @@
+Stacked inventory
+Obs   Code   Tool    Fruit      Count
+
+  1   p      Awl                    3
+  2   q      Rasp                   .
+  3   r      Saw                   12
+  4   s      Hoe                    8
+  5   t      Plane                  .
+  6   u      File                  41
+  7   v              Mango         63
+  8   w              Mandarin      48
+  9   x              Papaya         .
+ 10   y              Quince        19
+ 11   z              Plum           7
+ 12   zz             Cherry        82

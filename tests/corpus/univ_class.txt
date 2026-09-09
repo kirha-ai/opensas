@@ -1,0 +1,109 @@
+                                 The UNIVARIATE Procedure
+
+g=a
+Variable:  x
+
+                           Moments
+
+N                              2  Sum Weights                    2
+Mean                           2  Sum Observations               4
+Std Deviation         1.41421356  Variance                       2
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                10  Corrected SS                   2
+Coeff Variation      70.71067812  Std Error Mean                 1
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           2  Std Deviation         1.41421356
+Median                         2  Variance                       2
+Mode                           .  Range                          2
+                                  Interquartile Range            2
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         2    Pr > |t|  0.2952
+Sign           M         1    Pr >= |M| 0.5000
+Signed Rank    S       1.5    Pr >= |S| 0.5000
+
+                    Quantiles (Definition 5)
+
+              100% Max               3
+              99%                    3
+              95%                    3
+              90%                    3
+              75% Q3                 3
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                3    2
+                   3    2                1    1
+
+g=b
+Variable:  x
+
+                           Moments
+
+N                              2  Sum Weights                    2
+Mean                          15  Sum Observations              30
+Std Deviation         7.07106781  Variance                      50
+Skewness                       .  Kurtosis                       .
+Uncorrected SS               500  Corrected SS                  50
+Coeff Variation      47.14045208  Std Error Mean                 5
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                          15  Std Deviation         7.07106781
+Median                        15  Variance                      50
+Mode                           .  Range                         10
+                                  Interquartile Range           10
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         3    Pr > |t|  0.2048
+Sign           M         1    Pr >= |M| 0.5000
+Signed Rank    S       1.5    Pr >= |S| 0.5000
+
+                    Quantiles (Definition 5)
+
+              100% Max              20
+              99%                   20
+              95%                   20
+              90%                   20
+              75% Q3                20
+              50% Median            15
+              25% Q1                10
+              10%                   10
+              5%                    10
+              1%                    10
+              0% Min                10
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                  10    1               20    2
+                  20    2               10    1
+Obs   g    m   n
+
+  1   a    2   2
+  2   b   15   2

@@ -1,0 +1,11 @@
+g=1 x=10 tot=10 d=. l2=. FIRST.g=1 LAST.g=0
+g=1 x=20 tot=30 d=10 l2=. FIRST.g=0 LAST.g=0
+g=1 x=30 tot=60 d=10 l2=10 FIRST.g=0 LAST.g=1
+g=2 x=5 tot=5 d=. l2=20 FIRST.g=1 LAST.g=0
+g=2 x=15 tot=20 d=10 l2=30 FIRST.g=0 LAST.g=1
+mo=14 qt=4 wk=4 wd=22 nx=01JUN2020 dd=434
+zz=-5 band=neg 
+zz=0 band=low 
+zz=15 band=mid 
+zz=55 band=mid 
+zz=150 band=high

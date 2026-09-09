@@ -1,0 +1,25 @@
+
+                          The COMPARE Procedure
+  Comparison of base with comp
+
+  Data Set Summary
+    base: 2 variables, 3 observations
+    comp: 2 variables, 3 observations
+
+  Variables Summary
+    Variables in common: 2
+    In base only: 0
+    In comp only: 0
+
+  Observation Summary
+    Observations in common: 3
+    In base only: 0
+    In comp only: 0
+
+  Values Comparison Summary
+    Variables compared: 1
+    Variables all equal: 1
+    Variables with unequal values: 0
+    Total unequal values: 0
+
+  NOTE: No unequal values were found. All values compared are exactly equal.

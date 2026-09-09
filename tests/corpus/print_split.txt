@@ -1,0 +1,7 @@
+       Age at
+Obs   Visit 1   visit
+
+  1        42       1
+Age at*Visit 1   visit
+
+            42       1

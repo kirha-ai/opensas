@@ -1,0 +1,18 @@
+%let money  = %sysfunc(putn(1234.5, dollar10.2));
+%let pct    = %sysfunc(putn(0.75, percent8.1));
+%let comma  = %sysfunc(putn(1234567, comma12.));
+%let dt     = %sysfunc(putn(%sysfunc(mdy(1,15,2020)), date9.));
+%let nxt    = %sysfunc(intnx(month, %sysfunc(mdy(1,15,2020)), 1), date9.);
+%let up     = %sysfunc(putc(abc, $upcase.));
+%let band   = %sysfunc(band(12, 10));
+%let roundpi= %sysfunc(round(%sysfunc(constant(pi)), 0.01));
+data _null_;
+  put "money=&money";
+  put "pct=&pct";
+  put "comma=&comma";
+  put "dt=&dt";
+  put "nxt=&nxt";
+  put "up=&up";
+  put "band=&band";
+  put "roundpi=&roundpi";
+run;

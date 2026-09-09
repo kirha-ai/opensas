@@ -1,0 +1,38 @@
+control: no WEIGHT/FREQ -> n=4 nmiss=4
+control: no WEIGHT/FREQ -> n=4 nmiss=4
+n   nmiss
+
+4       4
+THE BUG: weight wt, no EXCLNPWGT -> n=3 nmiss=4 (row 7: x=7 PRESENT, only wt missing)
+THE BUG: weight wt, no EXCLNPWGT -> n=3 nmiss=4 (row 7: x=7 PRESENT, only wt missing)
+n   nmiss
+
+3       4
+nonpositive FREQ already matched list 2 -> n=3 nmiss=3, must not move
+nonpositive FREQ already matched list 2 -> n=3 nmiss=3, must not move
+n   nmiss
+
+3       3
+MEANS mirror, weight wt, no EXCLNPWGT -> N 3, N Miss 4
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N      N Miss
+     -------------------
+           3           4
+     -------------------
+MEANS, weight wt + EXCLNPWGT -> N 2, N Miss 2 (basis pre-excludes)
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N      N Miss
+     -------------------
+           2           2
+     -------------------
+MEANS OUT= + EXCLNPWGT -> n=2 nmiss=2, _FREQ_=4
+MEANS OUT= + EXCLNPWGT -> n=2 nmiss=2, _FREQ_=4
+_TYPE_   _FREQ_   n   nmiss
+
+     0        4   2       2

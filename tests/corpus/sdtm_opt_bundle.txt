@@ -1,0 +1,9 @@
+                                       The MEANS Procedure
+
+                            Analysis Variable : AVAL
+
+ARM           N            Mean
+-------------------------------
+DRUG          2     125.0000000
+PLACEBO       1     140.0000000
+-------------------------------

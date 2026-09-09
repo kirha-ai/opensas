@@ -1,0 +1,3 @@
+ARM      mild  severe
+DRUG        1       2
+PLACEBO     1       0

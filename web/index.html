@@ -1,0 +1,257 @@
+<!doctype html>
+<!-- opensas web demo — a single self-contained file. `zig build wasm` drops
+     sas.wasm next to this; serve the directory statically:
+       python3 -m http.server -d web
+     Everything runs client-side: the interpreter is the real opensas binary
+     compiled to wasm32-wasi, with a ~20-line WASI shim below (fd_write → the
+     log pane; every other syscall stubbed — the demo runs interpret(io=null),
+     the pure in-memory path, so no filesystem is ever touched). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>opensas — SAS in your browser</title>
+<style>
+  :root {
+    --bg: #0d1117; --panel: #161b22; --border: #30363d;
+    --text: #e6edf3; --dim: #8b949e; --accent: #0890fc;
+    --ok: #3fb950; --warn: #d29922; --err: #f85149;
+    /* accent ramp for the header gradient */
+    --k-pink: #e61d75; --k-magenta: #86054e;
+    --k-cyan: #0890fc; --k-indigo: #2c39e9;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    display: flex; flex-direction: column; min-height: 100vh;
+  }
+  header {
+    padding: 1.1rem 1.5rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+  }
+  header h1 { margin: 0; font-size: 1.35rem; font-weight: 700; }
+  header h1 span {
+    background-clip: text; -webkit-background-clip: text; color: transparent;
+  }
+  header h1 .o { background-image: linear-gradient(90deg, var(--k-pink), var(--k-magenta)); }
+  header h1 .s { background-image: linear-gradient(90deg, var(--k-cyan), var(--k-indigo)); }
+  header p { margin: 0; color: var(--dim); font-size: .9rem; }
+  main {
+    flex: 1; display: grid; gap: 1px; background: var(--border);
+    grid-template-columns: 1fr 1fr;
+  }
+  @media (max-width: 800px) { main { grid-template-columns: 1fr; } }
+  section { background: var(--bg); display: flex; flex-direction: column; min-height: 0; }
+  .bar {
+    /* fixed height so the example bar (with its button) and the listing bar align */
+    display: flex; align-items: center; gap: .6rem; height: 2.9rem;
+    flex: none; padding: 0 .9rem;
+    background: var(--panel); border-bottom: 1px solid var(--border);
+    font-size: .82rem; color: var(--dim);
+  }
+  .bar select {
+    background: var(--bg); color: var(--text); border: 1px solid var(--border);
+    border-radius: 6px; padding: .25rem .4rem; font-size: .82rem;
+  }
+  .bar button {
+    margin-left: auto; background: #238636; color: #fff; border: 0;
+    border-radius: 6px; padding: .35rem 1.1rem; font-size: .85rem;
+    font-weight: 600; cursor: pointer;
+  }
+  .bar button:hover { background: #2ea043; }
+  .bar button:disabled { background: var(--border); cursor: wait; }
+  kbd {
+    font: .75rem var(--mono); border: 1px solid var(--border);
+    border-radius: 4px; padding: 0 .3rem; color: var(--dim);
+  }
+  textarea, pre {
+    flex: 1; margin: 0; padding: .9rem; border: 0; resize: none;
+    background: var(--bg); color: var(--text);
+    font: 13px/1.55 var(--mono); white-space: pre; overflow: auto;
+    min-height: 14rem;
+  }
+  textarea { outline: none; caret-color: var(--accent); }
+  #log { color: var(--dim); min-height: 5rem; flex: 0 1 auto; }
+  #log .e { color: var(--err); }
+  #status { font-family: var(--mono); }
+  #status.ok { color: var(--ok); } #status.err { color: var(--err); }
+  #status.gap { color: var(--warn); }
+  footer {
+    padding: .7rem 1.5rem; border-top: 1px solid var(--border);
+    color: var(--dim); font-size: .8rem;
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="o">open</span><span class="s">sas</span></h1>
+</header>
+<main>
+  <section>
+    <div class="bar">
+      <label for="example">example</label>
+      <select id="example"></select>
+      <button id="runbtn" disabled>Run</button>
+      <kbd>⌘⏎</kbd>
+    </div>
+    <textarea id="src" spellcheck="false" autocomplete="off"></textarea>
+  </section>
+  <section>
+    <div class="bar">listing <span id="status"></span></div>
+    <pre id="out"></pre>
+    <div class="bar">log</div>
+    <pre id="log"></pre>
+  </section>
+</main>
+<script>
+const EXAMPLES = {
+  "DATA step + PROC PRINT": `data trial;
+  input subject $ arm $ height weight;
+  bmi = round(weight / ((height/100)**2), 0.1);
+  datalines;
+S001 DRUG 170 70
+S002 PLBO 182 82
+S003 DRUG 165 65
+S004 PLBO 178 90
+;
+run;
+
+title "Demo trial subjects";
+proc print data=trial noobs;
+run;`,
+  "PROC MEANS by group": `data vitals;
+  input arm $ sbp dbp;
+  datalines;
+DRUG 120 80
+DRUG 132 84
+DRUG 118 76
+PLBO 141 92
+PLBO 135 88
+;
+run;
+
+proc means data=vitals mean min max;
+  class arm;
+  var sbp dbp;
+run;`,
+  "Macro loop": `%macro fib(n);
+  %let a = 0; %let b = 1;
+  %do i = 1 %to &n;
+    data _null_;
+      put "fib(&i) = &b";
+    run;
+    %let c = %eval(&a + &b);
+    %let a = &b; %let b = &c;
+  %end;
+%mend;
+
+%fib(8)`,
+  "PROC SQL": `data ae;
+  input subject $ term $ severity $;
+  datalines;
+S001 HEADACHE MILD
+S001 NAUSEA MODERATE
+S002 HEADACHE SEVERE
+S003 FATIGUE MILD
+S003 NAUSEA MILD
+;
+run;
+
+proc sql;
+  select term, count(*) as n
+  from ae
+  group by term
+  order by n desc, term;
+quit;`,
+  "Formats + dates": `data _null_;
+  d = '19JUL2026'd;
+  put "date:      " d date9.;
+  put "weekday:   " d downame.;
+  put "quarter:   " d qtr.;
+  x = 1234567.891;
+  put "comma:     " x comma12.2;
+  put "dollar:    " x dollar12.;
+run;`,
+};
+
+const src = document.getElementById("src"), out = document.getElementById("out"),
+      log = document.getElementById("log"), status = document.getElementById("status"),
+      btn = document.getElementById("runbtn"), sel = document.getElementById("example");
+
+for (const name of Object.keys(EXAMPLES)) sel.add(new Option(name, name));
+sel.onchange = () => { src.value = EXAMPLES[sel.value]; runProgram(); };
+src.value = EXAMPLES[sel.value];
+
+// --- WASI shim: fd_write lands in the log pane, everything else is a stub.
+let wasm, stderrBuf = "";
+const dec = new TextDecoder(), enc = new TextEncoder();
+const wasi = new Proxy({
+  fd_write(fd, iovs, iovsLen, nwritten) {
+    const m = new DataView(wasm.memory.buffer);
+    let total = 0, text = "";
+    for (let i = 0; i < iovsLen; i++) {
+      const ptr = m.getUint32(iovs + i * 8, true), len = m.getUint32(iovs + i * 8 + 4, true);
+      text += dec.decode(new Uint8Array(wasm.memory.buffer, ptr, len));
+      total += len;
+    }
+    stderrBuf += text; // fds 1+2 both surface in the log pane
+    m.setUint32(nwritten, total, true);
+    return 0;
+  },
+  proc_exit(code) { throw new Error("exit " + code); },
+  random_get(ptr, len) {
+    crypto.getRandomValues(new Uint8Array(wasm.memory.buffer, ptr, len));
+    return 0;
+  },
+  clock_time_get(id, prec, ptr) {
+    new DataView(wasm.memory.buffer).setBigUint64(ptr, BigInt(Date.now()) * 1000000n, true);
+    return 0;
+  },
+}, { get: (t, name) => t[name] ?? (() => 52) }); // anything else → ENOSYS
+
+WebAssembly.instantiateStreaming(fetch("sas.wasm"), { wasi_snapshot_preview1: wasi })
+  .then(r => {
+    wasm = r.instance.exports;
+    if (wasm._initialize) wasm._initialize();
+    btn.disabled = false;
+    runProgram();
+  })
+  .catch(e => { log.textContent = "failed to load sas.wasm: " + e; });
+
+function runProgram() {
+  if (!wasm) return;
+  stderrBuf = "";
+  const bytes = enc.encode(src.value);
+  const ptr = wasm.alloc(bytes.length);
+  new Uint8Array(wasm.memory.buffer, ptr, bytes.length).set(bytes);
+  let rc;
+  const t0 = performance.now();
+  try { rc = wasm.run(ptr, bytes.length); }
+  catch (e) { rc = 2; stderrBuf += "\n" + e; }
+  const ms = (performance.now() - t0).toFixed(1);
+  out.textContent = dec.decode(new Uint8Array(wasm.memory.buffer, wasm.outPtr(), wasm.outLen()));
+  const diags = dec.decode(new Uint8Array(wasm.memory.buffer, wasm.logPtr(), wasm.logLen()));
+  log.innerHTML = "";
+  const span = document.createElement("span");
+  span.className = rc ? "e" : "";
+  span.textContent = (stderrBuf + diags) || "NOTE: no errors, no warnings.";
+  log.appendChild(span);
+  // BUG-wasmignoresabortrc: rc 3+ is D-009a — the SAS program's own ABORT rc, not
+  // an opensas gap. The old `rc === 1 ? … : "unsupported feature"` labelled every
+  // `abort return n` as a missing feature, which is the exact mis-routing D-009a
+  // warns about (and it never showed, because run() used to return 1 there).
+  const label = rc === 0 ? "ok" : rc === 1 ? "program error" : rc === 2 ? "unsupported feature" : `ABORT rc ${rc}`;
+  status.textContent = `· ${label} · ${ms} ms`;
+  status.className = rc === 0 ? "ok" : rc === 2 ? "gap" : "err";
+}
+
+btn.onclick = runProgram;
+addEventListener("keydown", e => {
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") { e.preventDefault(); runProgram(); }
+});
+</script>
+</body>
+</html>

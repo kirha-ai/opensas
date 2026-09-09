@@ -1,0 +1,19 @@
+ITER k=2  iorc=0
+one iteration per transaction row; unmatched master rows never visited
+k   stock
+
+1     100
+2     999
+3     300
+k=9  _iorc_=1230015
+k=9  _iorc_=-1230015
+consecutive unmatched transactions: _DSENMR then _DSEMTR, two iterations
+k    x
+
+1   10
+duplicate BY values in master and transaction match in order
+k     x
+
+1   110
+1   211
+2    20

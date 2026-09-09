@@ -1,0 +1,34 @@
+D1 same-name creating step + stop: 2 rows is CORRECT, not a bug
+Obs   k    x
+
+  1   1   11
+  2   2   21
+D2 source survives whole while the new data set is short
+Obs   k    x
+
+  1   1   10
+  2   2   20
+  3   3   30
+  4   4   40
+  5   5   50
+D2 source survives whole while the new data set is short
+Obs   k    x
+
+  1   1   11
+  2   2   21
+S1 sql update in place: k=1..3 moved, k=4,5 keep 40 and 50
+Obs   k    x
+
+  1   1   11
+  2   2   21
+  3   3   31
+  4   4   40
+  5   5   50
+S2 in-place sort: all five observations survive, ascending
+Obs   k    x
+
+  1   1   10
+  2   2   20
+  3   3   30
+  4   4   40
+  5   5   50

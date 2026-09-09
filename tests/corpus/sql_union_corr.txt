@@ -1,0 +1,10 @@
+uc b=10  c=100
+uc b=20  c=200
+uc b=30  c=300
+uac b=10  c=100
+uac b=20  c=200
+uac b=20  c=200
+uac b=20  c=200
+uac b=30  c=300
+ec b=10  c=100
+ic b=20  c=200

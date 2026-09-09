@@ -1,0 +1,6 @@
+pct_over=[12346%]
+negp_over=[******]
+e_over=[4.9E-324]
+e_stars=[*****]
+pct_in=[ 12.3%]
+negp_in=[   (1,234)]

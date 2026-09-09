@@ -1,0 +1,13 @@
+band=8
+bor=14
+bxor=6
+bnot0=4294967295
+bnot15=4294967280
+blshift=2147483648
+brshift=15
+bandmax=255
+bxormax=0
+bandneg=.
+bnotinf=.
+blshift32=.
+brshift33=.

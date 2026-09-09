@@ -1,0 +1,4 @@
+dept=A  name=Ann  age=25
+dept=A  name=Sue  age=30
+dept=B  name=Al  age=22
+dept=B  name=Tom  age=40

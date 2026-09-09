@@ -1,0 +1,15 @@
+Alanine   Aspartate   Bilirubin
+
+     30          25           1
+                          The CONTENTS Procedure
+
+Data Set Name  wide
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  ALT       Num     8                    Alanine
+2  AST       Num     8                    Aspartate
+3  BILI      Num     8                    Bilirubin

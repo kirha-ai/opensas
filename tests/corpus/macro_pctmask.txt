@@ -1,0 +1,5 @@
+STRPCT=[50%]
+STRAMP=[a&b]
+STRLPAREN=[a(b]
+STRCI=[95% CI]
+NRPCT=[50%]

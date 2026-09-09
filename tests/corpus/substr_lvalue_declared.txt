@@ -1,0 +1,4 @@
+omitted=[aXXXX ]
+shortrepl=[aZ    ]
+explicit=aX
+full=aZZde

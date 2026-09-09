@@ -1,0 +1,14 @@
+before n=4
+remove rc=0
+after n=1
+find rc=160038
+find2 rc=0  v=99
+absent rc=160038
+absent n=1
+remove2 rc=0
+empty n=0
+g remove rc=0
+g n=1
+g find rc=160038
+g find2 rc=0  v=20
+g absent rc=160038

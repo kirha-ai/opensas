@@ -1,0 +1,3 @@
+CODE=[a=1; b=2 ]
+LIST=[AE,CM;VS ]
+FRAG=[dom=LB; n=1 ]

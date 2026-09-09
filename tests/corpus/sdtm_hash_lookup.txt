@@ -1,0 +1,4 @@
+Obs   SEX   USUBJID   LBSTRESN
+
+  1   M     01-001          30
+  2   F     01-002          45

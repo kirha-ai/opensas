@@ -1,0 +1,12 @@
+data _null_;
+  e1=effrate('MONTH', 10); e2=effrate('QUARTER', 10);
+  n1=nomrate('MONTH', 10); n2=nomrate('QUARTER', 10);
+  sv=saving(12000, 100, .05/12, .);
+  ir=intrr(1, -100, 110);
+  nv=netpv(0.10, 1, -100, 110);
+  put "effrate=" e1 e2;
+  put "nomrate=" n1 n2;
+  put "saving=" sv;
+  put "intrr=" ir;
+  put "netpv=" nv;
+run;

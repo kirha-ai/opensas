@@ -1,0 +1,4 @@
+weekv_begin=28DEC2020
+yearv_begin=30DEC2019
+qtrv_begin=28SEP2020
+weekv_ck=2

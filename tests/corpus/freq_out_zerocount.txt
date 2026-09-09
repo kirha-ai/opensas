@@ -1,0 +1,9 @@
+Obs   x   COUNT   PERCENT
+
+  1   A       3      37.5
+  2   C       5      62.5
+Obs   x   COUNT   PERCENT
+
+  1   A       3      37.5
+  2   B       0         0
+  3   C       5      62.5

@@ -1,0 +1,7 @@
+inserted=2
+usubjid   aeterm
+
+S01       Headache
+S02       Nausea
+S03       Fatigue
+S03       Dizziness

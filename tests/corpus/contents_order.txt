@@ -1,0 +1,36 @@
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   1
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  name      Char   20
+2  city      Char   15
+3  age       Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   1
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  name      Char   20
+2  city      Char   15
+3  age       Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  age       Num     8
+2  city      Char   15
+1  name      Char   20

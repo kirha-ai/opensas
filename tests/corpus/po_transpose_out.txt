@@ -1,0 +1,4 @@
+usubjid   ALT   AST
+
+S01        30    25
+S02        40    35

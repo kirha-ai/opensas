@@ -1,0 +1,6 @@
+a=[abcde ]
+b=[abcde ]
+c=[bcde ]
+d=[ ]
+e=[a ]
+f=[bcd ]

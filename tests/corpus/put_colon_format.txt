@@ -1,0 +1,12 @@
+2,353.20 7.10
+6,231.00 121.00
+  2,353.20   7.10
+  6,231.00 121.00
+Shortest in Under 55 measures 51.3
+Shortest in Over 70 measures 72
+[      42]
+[42 ]
+[ab      ]
+[ab ]
+1 2 end
+<hi >. <

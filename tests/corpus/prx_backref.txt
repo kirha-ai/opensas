@@ -1,0 +1,5 @@
+abab=3
+dbl_hello=3
+dbl_world=0
+num_eq=1
+num_ne=0

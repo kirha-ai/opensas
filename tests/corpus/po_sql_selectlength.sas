@@ -1,0 +1,12 @@
+data sd; do i=1 to 4; x=i*100; c='abcdef'; output; end; run;
+proc sql;
+  create table q1 as select 1 as k, 'abc' as s length=1 from sd(obs=1);
+quit;
+proc print data=q1; run;
+proc contents data=q1; run;
+proc sql;
+  select c as t length=3 label='T col', x as n length=5 format=dollar10.2 from sd;
+quit;
+proc sql;
+  select sum(x) as tot length=3 from sd;
+quit;

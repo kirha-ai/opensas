@@ -1,0 +1,8 @@
+Obs   USUBJID   AVAL
+
+  1   01-002      60
+  2   01-004      75
+Obs   USUBJID   AVAL
+
+  1   01-001      30
+  2   01-003      45

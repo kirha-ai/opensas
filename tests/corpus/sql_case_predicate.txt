@@ -1,0 +1,6 @@
+usubjid   aval   status    grade
+
+S01          5   PRESENT   FLAG
+S02          .   MISSING   FLAG
+S03         42   PRESENT   FLAG
+S04         18   PRESENT   NORMAL

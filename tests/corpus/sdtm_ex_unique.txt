@@ -1,0 +1,5 @@
+Obs   USUBJID   EXTRT     EXDOSE
+
+  1   01-001    DRUG          50
+  2   01-002    DRUG         100
+  3   01-003    PLACEBO        0

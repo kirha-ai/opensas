@@ -1,0 +1,6 @@
+ci_a=4
+ci_ab=2
+trim=2
+plain=2
+plain2=2
+combo=4

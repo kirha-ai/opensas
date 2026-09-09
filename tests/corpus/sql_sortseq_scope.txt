@@ -1,0 +1,16 @@
+WHERE stays byte-exact: two lowercase apple rows, no APPLE
+name
+apple
+apple
+DISTINCT stays byte-exact: 4 rows, apple and APPLE both present
+name
+apple
+APPLE
+Banana
+Zebra
+GROUP BY stays byte-exact: APPLE 1, apple 2, Banana 1, Zebra 1
+name    n
+APPLE   1
+apple   2
+Banana  1
+Zebra   1

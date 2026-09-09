@@ -1,0 +1,5 @@
+S001 SCR sbp=130 baseline=1
+S001 BL sbp=128 baseline=0
+S001 W4 sbp=125 baseline=0
+S002 SCR sbp=140 baseline=1
+S002 BL sbp=138 baseline=0

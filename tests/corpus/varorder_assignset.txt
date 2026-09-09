@@ -1,0 +1,16 @@
+Obs   s    y   x   b
+
+  1   hi   1   1   2
+Obs   z   x   b
+
+  1   1   1   2
+line
+
+s,y,x,b
+hi,1,1,2
+Obs   w   u   i   c   x   b
+
+  1   9   .   3   2   1   2
+Obs   x   b   p
+
+  1   1   2   7

@@ -1,0 +1,7 @@
+Obs   lastpos    USUBJID   VISITNUM
+
+  1   SUPINE     01-001           1
+  2   SUPINE     01-001           2
+  3   STANDING   01-001           3
+  4   SITTING    01-002           1
+  5   SITTING    01-002           2

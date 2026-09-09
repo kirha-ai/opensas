@@ -1,0 +1,5 @@
+COLUMN    n=1  a=[AB ] b=[EF ]
+FORMATTED n=1  a=[AB ] b=[CD ]
+LIST      n=1  a=[AB ] b=[CDEFGH ]
+SHORT     n=1  a=[AB ] b=[B ]
+SHORT     n=2  a=[CD ] b=[DEF ]

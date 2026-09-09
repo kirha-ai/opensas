@@ -1,0 +1,8 @@
+usubjid   visit   sbp
+
+S01       week0   120
+S01       week4   118
+S01       week8   115
+S02       week0   130
+S02       week4   128
+S02       week8   125

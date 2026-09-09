@@ -1,0 +1,14 @@
+a           b  c
+x  01/15/2020  y
+                          The CONTENTS Procedure
+
+Data Set Name  t
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format     Informat  Label
+1  a         Char    5
+2  b         Num     8  MMDDYY10.            B label
+3  c         Char   20

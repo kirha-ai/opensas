@@ -1,0 +1,5 @@
+Obs   USUBJID   PARAMCD   inpanel
+
+  1   01-001    ALT             1
+  2   01-001    GGT             .
+  3   01-002    BILI            1

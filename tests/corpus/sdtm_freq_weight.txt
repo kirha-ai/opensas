@@ -1,0 +1,7 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              RESP   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              N             23       57.50             23        57.50
+              Y             17       42.50             40       100.00

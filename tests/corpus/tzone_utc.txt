@@ -1,0 +1,5 @@
+tzoneid=UTC
+tzonename=UTC
+tzoneoff=0
+s2u_u2s=1893456000 1893456000
+sysprod=1

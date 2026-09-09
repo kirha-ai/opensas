@@ -1,0 +1,8 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+  Lower Quartile          Median  Upper Quartile
+     -------------------------------------------
+       2.5000000       4.5000000       6.5000000
+     -------------------------------------------

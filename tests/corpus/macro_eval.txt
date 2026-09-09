@@ -1,0 +1,3 @@
+n=7 m=12
+x=5 r=big
+x=1 r=small

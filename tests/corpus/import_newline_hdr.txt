@@ -1,0 +1,8 @@
+NAME=[subjid ]
+NAME=[First_Name ]
+NAME=[_2nd ]
+NAME=[age ]
+NAME=[age0 ]
+ROW=[001 ][Rash on arm
+spreading to back ] age=34  age0=5
+ROW=[002 ][Nausea ] age=28  age0=7

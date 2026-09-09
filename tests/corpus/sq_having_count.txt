@@ -1,0 +1,4 @@
+usubjid   n_ae
+
+S01          3
+S03          2

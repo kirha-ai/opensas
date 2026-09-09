@@ -1,0 +1,43 @@
+x
+1
+5
+x
+1
+5
+x
+1
+5
+x
+1
+5
+x
+1
+5
+k  s
+a  1
+c  5
+x  st
+1  off
+3  on
+5  off
+x
+1
+5
+data-where notsign x=1
+data-where notsign x=5
+data-where caret    x=1
+data-where caret    x=5
+data-where tilde    x=1
+data-where tilde    x=5
+data-where diamond  x=1
+data-where diamond  x=5
+data-where mnemonic x=1
+data-where mnemonic x=5
+data-if notsign x=1
+data-if notsign x=5
+data-if caret    x=1
+data-if caret    x=5
+data-if tilde    x=1
+data-if tilde    x=5
+data-if mnemonic x=1
+data-if mnemonic x=5

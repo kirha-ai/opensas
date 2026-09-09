@@ -1,0 +1,6 @@
+T1-INSIDE=[a token]
+T1-OPEN=[&cgvar1]
+T2-INSIDE=[a token]
+T2-OPEN=[&cgvar2]
+T3-OPEN=[a token]
+T4-OPEN=[a token]

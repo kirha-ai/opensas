@@ -1,0 +1,11 @@
+name  dept
+ann     10
+bob     10
+cid     20
+dan     20
+dept
+  10
+  20
+id  dept  sal
+ 2    10  200
+ 4    20  500

@@ -1,0 +1,3 @@
+Obs   USUBJID   AESEV    SERIOUS
+
+  1   01-002    SEVERE   Y

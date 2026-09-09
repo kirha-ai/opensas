@@ -1,0 +1,27 @@
+byte(-1)      vtype=C
+byte(999)     vtype=C
+byte(.)       vtype=C
+collate(-1)   vtype=C
+collate(65,60) vtype=C
+collate(65,999) vtype=C
+collate(65,,0) vtype=C
+hashing bad   vtype=C
+hashing_hmac bad vtype=C
+subpad miss   vtype=C
+subpad hugepos vtype=C
+subpad hugelen vtype=C
+subpad pos0   vtype=C
+subpad posneg vtype=C
+subpad pos0 _error_=1
+          
+          
+          
+          
+          
+          
+byte(80)=P
+collate(65,67)=ABC
+collate(65,,3)=ABC
+hashing md5=900150983CD24FB0D6963F7D28E17F72
+subpad(2,3)=[bcd ]
+subpad(2,5)=[bc    ]

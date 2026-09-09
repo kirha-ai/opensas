@@ -1,0 +1,3 @@
+want x=10
+want x=20
+want x=30

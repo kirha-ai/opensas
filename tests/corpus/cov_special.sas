@@ -1,0 +1,11 @@
+data _null_;
+  a1=log1px(0); a2=log1px(1);
+  a3=lfact(5); a4=logbeta(2,3); a5=trigamma(1); a6=ibessel(0,0,0);
+  s1=skewness(1,2,3,4,5); s2=kurtosis(1,2,3,4,5);
+  s3=rms(3,4); s4=harmean(1,2,4);
+  put "log1px=" a1 a2;
+  put "lfact_logbeta=" a3 a4;
+  put "trigamma_ibessel=" a5 a6;
+  put "skew_kurt=" s1 s2;
+  put "rms_harmean=" s3 s4;
+run;

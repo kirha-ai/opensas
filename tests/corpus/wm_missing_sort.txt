@@ -1,0 +1,7 @@
+usubjid   aval
+
+S02          .
+S05          .
+S03         -2
+S01          5
+S04          8

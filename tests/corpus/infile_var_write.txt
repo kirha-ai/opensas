@@ -1,0 +1,8 @@
+P widget  199
+S store1  42
+P gadget  50
+edit a=[ABCDEFGH ] buf=[ABCDEFGH ]
+dead buf=[abcdefgh ]
+dead a=[abcdefgh ]
+rel mid=[XXX ]
+rel b=[bbb ] buf=[bbb ]

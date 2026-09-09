@@ -1,0 +1,18 @@
+id=3  x=_
+id=2  x=.
+id=4  x=A
+id=5  x=B
+id=1  x=Z
+dup x=_
+dup x=.
+dup x=A
+dup x=B
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              _              1       20.00              1        20.00
+              .              1       20.00              2        40.00
+              A              2       40.00              4        80.00
+              B              1       20.00              5       100.00

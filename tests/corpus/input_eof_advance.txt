@@ -1,0 +1,25 @@
+1 iter x=r1  y=r2
+1 one obs; NO r3/r3 row
+x    y
+
+r1   r2
+3 #2 past EOF: no obs
+a   b
+
+4 iter p=a  q=c
+4 dlm= advance past EOF: one obs
+p   q
+
+a   c
+4b dlm= #2 past EOF: no obs
+m   n
+
+5 even count: two obs, unchanged
+x    y
+
+r1   r2
+r3   r4
+6 truncover short record: c missing, obs kept
+a   b   c
+
+A   B

@@ -1,0 +1,11 @@
+weekdate=   Thursday, January 16, 2020
+weekdatx=    Thursday, 16 January 2020
+worddatx=   16 January 2020
+qtr=1
+qtrr=I
+yyq=2020Q1
+weekday=5
+month= 1
+day=16
+julian=20016
+yymmn=202001

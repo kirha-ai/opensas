@@ -1,0 +1,4 @@
+sev1 =Mild
+sev2 =Moderate
+sev3 =Severe
+sev9 =Unknown

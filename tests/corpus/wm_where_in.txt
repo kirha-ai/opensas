@@ -1,0 +1,4 @@
+usubjid   aesev    aerel
+
+S01       MILD         1
+S02       SEVERE       2

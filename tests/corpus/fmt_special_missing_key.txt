@@ -1,0 +1,5 @@
+a=[One ]
+b=[Special A ]
+c=[        B ]
+d=[        . ]
+e=[Bee ]

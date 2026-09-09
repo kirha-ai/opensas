@@ -1,0 +1,2 @@
+same-step=[&n ]
+next-step=[42]

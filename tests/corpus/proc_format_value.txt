@@ -1,0 +1,8 @@
+id=1  slab=Male  agrp=Pediatric  clab=Yes
+id=2  slab=Female  agrp=Adult  clab=No
+id=3  slab=Unknown  agrp=Senior  clab=Yes
+Obs   id       sex         age   comp   slab      agrp        clab
+
+  1    1      Male   Pediatric   Yes    Male      Pediatric   Yes
+  2    2    Female       Adult   No     Female    Adult       No
+  3    3   Unknown      Senior   Yes    Unknown   Senior      Yes

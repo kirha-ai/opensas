@@ -1,0 +1,4 @@
+NAME      TYPE   LENGTH   VARNUM   FORMAT   FORMATL   FORMATD   INFORMAT   INFORML   INFORMD   LABEL
+
+usubjid      2        3        1                  0         0                    0         0
+aval         1        8        2                  6         2                    0         0   Lab Value

@@ -1,0 +1,11 @@
+                          The CONTENTS Procedure
+
+Data Set Name  l.prec
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  X         Char    8                    Sidecar Label X
+2  Y         Char    8                    File Label Y

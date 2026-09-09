@@ -1,0 +1,18 @@
+data d;
+  do g = 1 to 3;
+    do j = 1 to 5;
+      v = g*10 + j;
+      output;
+    end;
+  end;
+run;
+proc sort data=d; by g; run;
+data sums;
+  set d;
+  by g;
+  retain tot 0;
+  if first.g then tot = 0;
+  tot + v;
+  if last.g then output;
+run;
+proc print data=sums; var g tot; run;

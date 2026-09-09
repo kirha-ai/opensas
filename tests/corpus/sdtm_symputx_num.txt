@@ -1,0 +1,5 @@
+Obs   dose   adjusted
+
+  1     10         25
+  2     20         50
+  3     40        100

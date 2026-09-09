@@ -1,0 +1,7 @@
+WORKSHOP: 1=[R ] 2=[SAS ]
+GENDER: f=[Female ] m=[Male ]
+Obs   id   workshop   gender   q1   q2   q3   q4
+
+  1    1          R   Female    1    1    5    1
+  2    2        SAS   Female    2    1    4    1
+  3    3          R   Female    2    2    4    3

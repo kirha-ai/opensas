@@ -1,0 +1,4 @@
+Obs   USUBJID   ALTchg   ASTchg
+
+  1   01-001         5        5
+  2   01-002        -5       10

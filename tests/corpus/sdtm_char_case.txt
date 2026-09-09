@@ -1,0 +1,3 @@
+Obs   u                 l                 p
+
+  1   MIXED CASE TEXT   mixed case text   Mixed Case Text

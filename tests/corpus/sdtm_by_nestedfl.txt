@@ -1,0 +1,5 @@
+Obs   USUBJID   PARAMCD   AVAL
+
+  1   01-001    ALT         40
+  2   01-001    AST         25
+  3   01-002    ALT         50

@@ -1,0 +1,4 @@
+d1 a=xyz
+d2 b=3.14
+d3 c=hello n=42
+d4 r=ok

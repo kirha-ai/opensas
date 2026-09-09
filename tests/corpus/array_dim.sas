@@ -1,0 +1,11 @@
+data _null_;
+  array a{5} a1-a5 (10 20 30 40 50);
+  total = 0;
+  do i = 1 to dim(a);
+    total = total + a{i};
+  end;
+  d = dim(a);
+  lb = lbound(a);
+  hb = hbound(a);
+  put "d=" d " lb=" lb " hb=" hb " total=" total;
+run;

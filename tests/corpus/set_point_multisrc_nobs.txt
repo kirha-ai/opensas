@@ -1,0 +1,16 @@
+1 without point n=5
+1 with    point n=5
+2 p=1  x=10
+2 p=2  x=20
+2 p=3  x=30
+2 p=4  x=40
+2 p=5  x=50
+3 obs3 =30
+3 obs4 =40
+4 p=1  x=10
+4 p=2  x=20
+4 p=3  x=30
+4 p=4  x=40
+4 p=5  x=50
+5 single n=3  x=20
+6 CONT x=.

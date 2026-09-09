@@ -1,0 +1,12 @@
+g   id   _TYPE_   _FREQ_    m   cnt
+
+     4        0        4   25     4
+A    2        1        2   15     2
+B    4        1        2   35     2
+g   iid   y   _TYPE_   _FREQ_     m
+
+A   B2    9        0        2   1.5
+B   C1    7        0        1     3
+id   _TYPE_   _FREQ_   m
+
+ 2        0        3   2

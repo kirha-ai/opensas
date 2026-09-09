@@ -1,0 +1,12 @@
+data _null_;
+  d  = '01JAN2020'd;
+  tm = '13:45:30't;
+  dt = '01JAN1960:00:01:00'dt;
+  b  = '1010'b;
+  h  = '534153'x;
+  sm = .A;
+  'my var'n = 7;
+  nl = 'my var'n;
+  put "d=" d " tm=" tm " dt=" dt " b=" b;
+  put "h=" h " sm=" sm " nl=" nl;
+run;

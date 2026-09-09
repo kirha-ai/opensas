@@ -1,0 +1,4 @@
+usubjid   age
+
+S02        60
+S04        70

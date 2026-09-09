@@ -1,0 +1,6 @@
+POINT= direct access in a DO loop
+ v
+
+10
+20
+30

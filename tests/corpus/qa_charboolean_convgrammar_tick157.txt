@@ -1,0 +1,15 @@
+plus5 T
+dot5 T
+num5dot T
+comma F
+zeros F
+e3 T
+pad7 T
+hex F
+junk F
+numgt T
+numx T
+nummiss F
+numzero F
+numsmiss F
+numneg T

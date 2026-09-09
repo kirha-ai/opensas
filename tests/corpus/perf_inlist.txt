@@ -1,0 +1,14 @@
+x=1 hit=0 big=0
+x=2 hit=1 big=0
+x=3 hit=1 big=0
+x=4 hit=0 big=0
+x=5 hit=1 big=0
+x=6 hit=0 big=0
+x=7 hit=1 big=0
+x=8 hit=0 big=0
+x=9 hit=0 big=1
+x=10 hit=0 big=1
+x=11 hit=1 big=1
+x=12 hit=0 big=1
+short=1
+cin=1

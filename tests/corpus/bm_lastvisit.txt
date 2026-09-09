@@ -1,0 +1,4 @@
+subjid   visit   wt
+
+S001     V3      71
+S002     V2      66

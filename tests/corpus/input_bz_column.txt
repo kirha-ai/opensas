@@ -1,0 +1,2 @@
+bzcol=1200  plaincol=12
+bzcol=0  plaincol=.

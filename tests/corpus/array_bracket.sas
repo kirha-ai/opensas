@@ -1,0 +1,18 @@
+data _null_;
+  array a[3] a1-a3;
+  a[1] = 5;
+  a[2] = 10;
+  a[3] = 15;
+  d = dim(a);
+  s = sum(of a[*]);
+  x2 = a[2];
+  put "bracket_dim_sum_a2=" d s x2;
+  array b[2] (7 8);
+  b1v = b[1];
+  b2v = b[2];
+  put "bracket_init=" b1v b2v;
+  array c{2} c1-c2;
+  c{1} = 99;
+  cv = c[1];
+  put "brace_decl_bracket_ref=" cv;
+run;

@@ -1,0 +1,24 @@
+Obs   x    v
+
+  1   1   10
+  2   2   20
+  3   3   30
+Obs   x    v
+
+  1   1   99
+                          The CONTENTS Procedure
+
+Data Set Name  keep1
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Num     8  8.2
+2  b         Num     8
+datasets positive control
+Obs   a
+
+  1   3
+still mid-step

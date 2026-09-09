@@ -1,0 +1,5 @@
+a=[ello ]
+b=[ello ]
+c=[llo ]
+d=[hello ]
+e=[ell ]

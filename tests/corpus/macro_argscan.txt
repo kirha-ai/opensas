@@ -1,0 +1,2 @@
+x=Other, specify
+A=[COF1 ] B=[COVAL_ ] C=[200 ]

@@ -1,0 +1,132 @@
+                        The FREQ Procedure
+
+                        Table 1 of s by r
+                        Controlling for g=Z
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |0       |  Total
+              ---------+--------+--------+
+              X        |      2 |      0 |      2
+                       |  66.67 |   0.00 |  66.67
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              Y        |      0 |      1 |      1
+                       |   0.00 |  33.33 |  33.33
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Total           2        1        3
+                          66.67    33.33   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of s by r
+                        Controlling for g=A
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |  Total
+              ---------+--------+
+              Y        |      2 |      2
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           2        2
+                         100.00   100.00
+                        The FREQ Procedure
+
+                        Table 1 of s by r
+                        Controlling for g=Z
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |0       |  Total
+              ---------+--------+--------+
+              X        |      2 |      0 |      2
+                       |  66.67 |   0.00 |  66.67
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              Y        |      0 |      1 |      1
+                       |   0.00 |  33.33 |  33.33
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Total           2        1        3
+                          66.67    33.33   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of s by r
+                        Controlling for g=A
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |  Total
+              ---------+--------+
+              Y        |      2 |      2
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           2        2
+                         100.00   100.00
+                        The FREQ Procedure
+
+                        Table 1 of s by r
+                        Controlling for g=A
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |  Total
+              ---------+--------+
+              Y        |      2 |      2
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           2        2
+                         100.00   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of s by r
+                        Controlling for g=Z
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              X        |      0 |      2 |      2
+                       |   0.00 |  66.67 |  66.67
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Y        |      1 |      0 |      1
+                       |  33.33 |   0.00 |  33.33
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              Total           1        2        3
+                          33.33    66.67   100.00

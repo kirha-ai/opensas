@@ -1,0 +1,6 @@
+a=BCD
+b=BCDE
+c=BCD
+d=ELLO
+e=b
+f=ELL

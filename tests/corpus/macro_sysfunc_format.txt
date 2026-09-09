@@ -1,0 +1,8 @@
+money= $1,234.50
+pct=   75.0%
+comma=   1,234,567
+dt=15JAN2020
+nxt=01FEB2020
+up=ABC
+band=8
+roundpi=3.14

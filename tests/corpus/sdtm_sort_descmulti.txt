@@ -1,0 +1,7 @@
+Obs   ARM       USUBJID   AVAL
+
+  1   DRUG      01-002     145
+  2   DRUG      01-004     130
+  3   DRUG      01-001     120
+  4   PLACEBO   01-005     150
+  5   PLACEBO   01-003     138

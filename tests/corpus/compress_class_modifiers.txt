@@ -1,0 +1,11 @@
+kn=abcd
+kl=bdf
+ku=ACE
+kd=123
+ka=Abc
+kf=a_b
+rp=abc
+rs=abc
+rd=ab
+bad=
+badtype=C

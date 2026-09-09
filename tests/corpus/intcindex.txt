@@ -1,0 +1,5 @@
+day=36
+week=36
+month=3
+qtr=3
+day2=15

@@ -1,0 +1,5 @@
+Obs   USUBJID   PARAMN   AVAL   high
+
+  1   01-001         1     45      1
+  2   01-002         2     30      0
+  3   01-003         3    200      1

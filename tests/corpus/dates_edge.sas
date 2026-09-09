@@ -1,0 +1,13 @@
+data _null_;
+  leap = mdy(2, 29, 2020);
+  d1 = mdy(3, 1, 2020);
+  gap = d1 - leap;
+  eom = mdy(1, 31, 1960);
+  neg = mdy(12, 31, 1959);
+  q = qtr(mdy(7, 15, 2020));
+  put "leap=" leap;
+  put "gap=" gap;
+  put "eom=" eom;
+  put "neg=" neg;
+  put "q=" q;
+run;

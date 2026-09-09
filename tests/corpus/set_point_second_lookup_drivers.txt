@@ -1,0 +1,57 @@
+Obs   k   p   q    b
+
+  1   1   9   7   10
+  2   2   8   6   20
+Obs   k    v
+
+  1   1   20
+  2   2   40
+Obs   a    b
+
+  1   1   10
+  2   2   20
+  3   3   30
+  4   4   40
+NOBS_ON_LOOKUP=4
+NOBS_ON_LOOKUP=4
+Obs   a    b
+
+  1   1   10
+  2   2   20
+NOBS_ON_DRIVER=2
+NOBS_ON_DRIVER=2
+Obs   a    b
+
+  1   1   10
+  2   2   20
+Obs   a   x
+
+  1   1   5
+  2   2   6
+Obs   a   p   xx
+
+  1   1   1    5
+  2   2   2    6
+Obs   a   f    b
+
+  1   1   1   20
+  2   2   1   10
+Obs   a    b
+
+  1   1   10
+  2   1   10
+  3   2   20
+  4   2   20
+Obs   a    b   tot
+
+  1   1   10    10
+  2   2   20    30
+Obs   a    b   tot
+
+  1   1   10    10
+  2   2   20    30
+line
+
+k,p,q,b
+1,9,7,10
+2,8,6,20

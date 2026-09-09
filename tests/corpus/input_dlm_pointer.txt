@@ -1,0 +1,22 @@
+ATAT n=1  a=x
+ATAT n=2  a=y
+ATAT n=3  a=z
+ATAT n=4  a=p
+ATAT n=5  a=q
+SLASH a=[A ] b=[D ]
+HASH a=[A ] b=[D ]
+Obs   a   b
+
+  1   A   B
+  2   D   E
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Char    5
+2  b         Char    5

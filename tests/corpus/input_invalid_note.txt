@@ -1,0 +1,7 @@
+STMT: x=.  y=5  _ERROR_=1  _N_=1
+STMT: x=10  y=20  _ERROR_=0  _N_=2
+NONCONF: dt=.  _error_=1
+QQ: x=.  y=5  _ERROR_=0
+Q: x=.  y=5  _ERROR_=1
+DLM: a=.  b=2  _ERROR_=1
+COL: a=.  b=45  _ERROR_=1

@@ -1,0 +1,9 @@
+name     sales
+
+Alice      100
+Bob        200
+Name       Amount    ID
+
+Alice      100.00     1
+           150.00     1
+Bob        200.00     2

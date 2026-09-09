@@ -1,0 +1,41 @@
+s
+
+JohnSmith
+s
+
+JohnSmith
+s
+
+JohnSmith
+s
+JohnSmith
+s
+
+JohnSmith
+s
+
+JohnSmith
+s
+
+JohnSmith
+s
+JohnSmith
+fullname    lastname
+
+JohnSmith   Smith
+JohnSmith   Jones
+fullname    lastname
+
+JohnSmith   Smith
+MaryJones   Jones
+fullname    lastname
+
+JohnSmith   Smith
+MaryJones   Jones
+x
+
+a_b
+axb
+x
+a_b
+axb

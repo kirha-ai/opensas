@@ -1,0 +1,6 @@
+lt ok
+gt ok
+ne ok
+le ok
+ge ok
+eq ok

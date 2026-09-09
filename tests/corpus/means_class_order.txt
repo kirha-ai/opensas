@@ -1,0 +1,30 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+g       N            Mean
+-------------------------
+c       1       5.0000000
+b       3       4.3333333
+a       2       3.0000000
+-------------------------
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+g       N            Mean
+-------------------------
+b       3       4.3333333
+a       2       3.0000000
+c       1       5.0000000
+-------------------------
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+g       N            Mean
+-------------------------
+b       3       4.3333333
+a       2       3.0000000
+c       1       5.0000000
+-------------------------

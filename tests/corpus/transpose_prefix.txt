@@ -1,0 +1,4 @@
+usubjid   _NAME_   visit1   visit2   visit3
+
+S01       aval         10       20       30
+S02       aval         40       50        .

@@ -1,0 +1,4 @@
+Obs   USUBJID   _NAME_     ALT   AST
+
+  1   01-001    LBSTRESN    30    25
+  2   01-002    LBSTRESN    45    35

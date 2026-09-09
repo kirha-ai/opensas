@@ -1,0 +1,5 @@
+SYM sa=3  sb=5
+WORD wa=3  wb=5
+PREC pa=6  pb=8
+CHAIN ch=4
+MISS m=.  n=5

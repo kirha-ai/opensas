@@ -1,0 +1,2 @@
+USUBJID  total
+01-001       5

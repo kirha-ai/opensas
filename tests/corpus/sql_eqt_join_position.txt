@@ -1,0 +1,18 @@
+1. explicit ON — "JOIN criteria" beyond doubt
+itag  otag
+PQR   PQ
+ZW    ZW
+2. comma-join WHERE — the join criteria per p.341, a WHERE per the TIP
+itag  otag
+PQR   PQ
+ZW    ZW
+3. sub-setting WHERE vs a literal — the doc-CONFIRMED half
+tag
+PQR
+4. sub-setting WHERE, column vs column, one table
+tag
+PQR
+ZW
+5. CONTROL: plain = , no truncation — what reading (A) would make 1
+itag  otag
+ZW    ZW

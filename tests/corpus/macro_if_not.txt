@@ -1,0 +1,6 @@
+r1=OK
+r2=TRUE
+r3=OK
+r4=OK
+r5=OK
+r6=EXISTS

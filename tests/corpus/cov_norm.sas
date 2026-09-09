@@ -1,0 +1,10 @@
+data _null_;
+  e1=euclid(3,4); e2=euclid(1,2,2);
+  l1=lpnorm(2,3,4); l2=lpnorm(1,3,4); l3=lpnorm(3,0,0,2);
+  d1=deviance('NORMAL',3,1); d2=deviance('GAMMA',2,1);
+  ai=airy(0);
+  put "euclid=" e1 e2;
+  put "lpnorm=" l1 l2 l3;
+  put "deviance=" d1 d2;
+  put "airy=" ai;
+run;

@@ -1,0 +1,4 @@
+USUBJID    v  flag
+01-001   120  HIGH
+01-002    90  OK
+01-003    80  OK

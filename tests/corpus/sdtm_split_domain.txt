@@ -1,0 +1,10 @@
+Obs   DOMAIN   USUBJID   VAL
+
+  1   AE       01-001      1
+  2   AE       01-002      2
+Obs   DOMAIN   USUBJID   VAL
+
+  1   VS       01-001    120
+Obs   DOMAIN   USUBJID   VAL
+
+  1   LB       01-002     30

@@ -1,0 +1,14 @@
+data have;
+  do i = 1 to 3; x = i*10; output; end;
+run;
+data want;
+  do k = 1 to nobs;
+    set have point=k nobs=nobs;
+    output;
+  end;
+  stop;
+run;
+data _null_;
+  set want;
+  put "want " x=;
+run;

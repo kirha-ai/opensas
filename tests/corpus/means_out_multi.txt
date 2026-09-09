@@ -1,0 +1,8 @@
+_TYPE_   _FREQ_    mx    my   nx   ny
+
+     0        4   2.5   250    4    4
+g   _TYPE_   _FREQ_    ax    ay
+
+         0        4   2.5   250
+A        1        2     2   200
+B        1        2     3   300

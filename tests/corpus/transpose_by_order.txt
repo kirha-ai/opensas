@@ -1,0 +1,4 @@
+Obs   subj   _NAME_   COL1   COL2
+
+  1      1   val        10     30
+  2      2   val        20      .

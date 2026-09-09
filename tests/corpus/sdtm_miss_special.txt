@@ -1,0 +1,5 @@
+Obs   disp   USUBJID   AVAL
+
+  1   OK     01-001      45
+  2   ND     01-002       A
+  3   OK     01-003      30

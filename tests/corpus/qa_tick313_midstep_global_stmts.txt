@@ -1,0 +1,90 @@
+prt
+id    x
+
+ 1   10
+prt
+_NAME_   COL1
+
+x          10
+prt
+
+                          The COMPARE Procedure
+  Comparison of d with e
+
+  Data Set Summary
+    d: 2 variables, 1 observations
+    e: 2 variables, 1 observations
+
+  Variables Summary
+    Variables in common: 2
+    In d only: 0
+    In e only: 0
+
+  Observation Summary
+    Observations in common: 1
+    In d only: 0
+    In e only: 0
+
+  Values Comparison Summary
+    Variables compared: 2
+    Variables all equal: 2
+    Variables with unequal values: 0
+    Total unequal values: 0
+
+  NOTE: No unequal values were found. All values compared are exactly equal.
+uni
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              1  Sum Weights                    1
+Mean                          10  Sum Observations              10
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS               100  Corrected SS                   0
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                          10  Std Deviation                  .
+Median                        10  Variance                       .
+Mode                           .  Range                          0
+                                  Interquartile Range            0
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+Sign           M       0.5    Pr >= |M| 1.0000
+Signed Rank    S       0.5    Pr >= |S| 1.0000
+
+                    Quantiles (Definition 5)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                   10
+              75% Q3                10
+              50% Median            10
+              25% Q1                10
+              10%                   10
+              5%                    10
+              1%                    10
+              0% Min                10
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                  10    1               10    1
+uni
+id          x
+
+ 1      10.00

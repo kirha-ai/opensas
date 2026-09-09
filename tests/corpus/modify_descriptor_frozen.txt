@@ -1,0 +1,84 @@
+C1 new var absent, its value still applied
+id     x
+
+ 1   109
+ 2   119
+C1 new var absent, its value still applied
+                          The CONTENTS Procedure
+
+Data Set Name  d1
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8
+C2 p.253 Example 3: summed, nwstock absent
+partno   instock
+
+K89R          89
+M4J7         119
+C3 drop ignored: y and its values survive
+id    x     y
+
+ 1   11   100
+ 2   21   200
+C4 rename ignored: column is still x
+                          The CONTENTS Procedure
+
+Data Set Name  d4
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  x         Num     8
+C5 format survives, value updated
+       amt
+
+ $3,000.00
+C5 format survives, value updated
+                          The CONTENTS Procedure
+
+Data Set Name  fm
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format      Informat  Label
+1  amt       Num     8  DOLLAR10.2            Amount
+C6 master mst FROZEN: no extra
+                          The CONTENTS Procedure
+
+Data Set Name  mst
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  id        Num     8
+2  v         Num     8
+C6 side is new: full PDV, has extra
+id    v   extra
+
+ 1   50      42
+ 2   60      42
+C6 side is new: full PDV, has extra
+                          The CONTENTS Procedure
+
+Data Set Name  side
+Observations   2
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  extra     Num     8
+1  id        Num     8
+2  v         Num     8

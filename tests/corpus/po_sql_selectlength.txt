@@ -1,0 +1,21 @@
+Obs   k   s
+
+  1   1   a
+                          The CONTENTS Procedure
+
+Data Set Name  q1
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  s         Char    1
+t             n
+abc     $100.00
+abc     $200.00
+abc     $300.00
+abc     $400.00
+ tot
+1000

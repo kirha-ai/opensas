@@ -1,0 +1,16 @@
+                          The CONTENTS Procedure
+
+Data Set Name  a
+Observations   8
+Variables      7
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format    Informat  Label
+3  gender    Char    8  $GENDER
+1  id        Num     8
+4  q1        Num     8                      The instructor was well prepared
+5  q2        Num     8                      The instructor communicated well
+6  q3        Num     8                      The course material was helpful
+7  q4        Num     8                      Overall, I found the workhsop useful
+2  workshop  Num     8  WORKSHOP

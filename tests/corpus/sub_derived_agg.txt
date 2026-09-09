@@ -1,0 +1,3 @@
+max_of_max   avg_of_max
+
+        60           35

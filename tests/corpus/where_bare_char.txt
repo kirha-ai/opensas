@@ -1,0 +1,26 @@
+city   flag
+
+Oslo      1
+Lima      1
+city   flag
+
+Oslo      1
+Lima      1
+city  flag
+Oslo     1
+Lima     1
+city   flag
+
+Oslo      1
+Lima      1
+city   flag
+
+Oslo      1
+Lima      1
+s
+
+0
+q
+7
+IF-TRUE 7
+BARENUM Ann

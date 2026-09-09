@@ -1,0 +1,18 @@
+data _null_;
+  d = mdy(3,15,2020);
+  length dy $10 wk $10 sm $10 mo $10 qt $10 sy $10 yr $10;
+  dy = put(intnx('day', d, 10, 'b'), date9.);
+  wk = put(intnx('week', d, 1, 'b'), date9.);
+  sm = put(intnx('semimonth', d, 1, 'b'), date9.);
+  mo = put(intnx('month', d, 1, 'b'), date9.);
+  qt = put(intnx('qtr', d, 1, 'b'), date9.);
+  sy = put(intnx('semiyear', d, 1, 'b'), date9.);
+  yr = put(intnx('year', d, 1, 'b'), date9.);
+  put "day+10=" dy;
+  put "week+1=" wk;
+  put "semimonth+1=" sm;
+  put "month+1=" mo;
+  put "qtr+1=" qt;
+  put "semiyear+1=" sy;
+  put "year+1=" yr;
+run;

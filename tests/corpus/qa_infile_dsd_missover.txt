@@ -1,0 +1,4 @@
+name=Smith, John a=1 b=. c=3
+name=Doe, Jane a=4 b=5 c=.
+x=10 y=20 z=.
+x=30 y=40 z=50

@@ -1,0 +1,6 @@
+                      The FREQ Procedure
+
+              color    Frequency     Percent
+              ---------------------------------
+              blue           1       25.00
+              red            3       75.00

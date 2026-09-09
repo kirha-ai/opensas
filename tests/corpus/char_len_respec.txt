@@ -1,0 +1,4 @@
+a vlen=20  x=[abcdefghij ]
+b vlen=20  x=[abcdefghij ]
+c vlen=5  x=[abcde ]
+p vlen=5  y=[abcde ]

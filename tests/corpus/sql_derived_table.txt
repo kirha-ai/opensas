@@ -1,0 +1,10 @@
+subjid   mx
+
+S001     30
+S002     40
+n
+
+5
+maxmax
+
+    40

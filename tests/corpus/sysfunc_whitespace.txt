@@ -1,0 +1,5 @@
+r1=a_b_c
+r2=a b c
+r3=[    ]
+r4=[ih  ]
+n1=ABC n2=6

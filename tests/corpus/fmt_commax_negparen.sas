@@ -1,0 +1,11 @@
+data _null_;
+  a = 1234567.89;
+  b = -1234;
+  c = -1234567.89;
+  put "commax=" a commax15.2;
+  put "dollarx=" a dollarx15.2;
+  put "negp1=" b negparen10.;
+  put "negp2=" c negparen15.2;
+  put "negp3=" a negparen15.2;
+  put "nlnum=" a nlnum15.2;
+run;

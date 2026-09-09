@@ -1,0 +1,5 @@
+name=abc | len=3
+name= | len=.
+len=3  name=abc  tail=XYZ
+len=5  name=abcde  tail=XYZ
+len=0  name=  tail=abcXYZ

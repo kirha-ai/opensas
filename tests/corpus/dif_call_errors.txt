@@ -1,0 +1,5 @@
+valid-dif x=10  d=.
+valid-dif x=14  d=4
+valid-dif x=19  d=5
+difchar _error_=1
+call-missing a=.  b=.

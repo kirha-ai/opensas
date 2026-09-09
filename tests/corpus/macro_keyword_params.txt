@@ -1,0 +1,4 @@
+RPT dom=AE lib=work keep=usubjid
+RPT dom=CM lib=work keep=usubjid aeterm
+RPT dom=VS lib=raw keep=usubjid
+RPT dom=LB lib=raw keep=lbtest

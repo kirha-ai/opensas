@@ -1,0 +1,6 @@
+VARLABEL(usubjid)=Unique Subject
+VARFMT(age)=3.
+Obs   usubjid   age
+
+  1   S1         34
+  2   S2         28

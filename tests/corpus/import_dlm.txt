@@ -1,0 +1,5 @@
+name    age   code
+
+Ann      30   007
+Bob      25   010
+Carol    41   021

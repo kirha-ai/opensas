@@ -1,0 +1,5 @@
+NRSTR=[&a ]
+LOCAL G=[0 ] L=[1 ]
+GLOBAL G=[1 ] L=[0 ]
+QLOW=[abc ]
+QSUB=[&b ]

@@ -1,0 +1,9 @@
+Obs   The Amount   qty
+
+  1       1234.5     3
+Obs      amt   qty
+
+  1   1234.5     3
+The Amount   Quantity
+
+    1234.5          3

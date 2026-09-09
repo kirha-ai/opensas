@@ -1,0 +1,4 @@
+dims=2 3
+hb=2 3  lb=1 1
+negbounds=-2 2 5
+plain=4 1 4

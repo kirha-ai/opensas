@@ -1,0 +1,6 @@
+Obs    v   flag   cat
+
+  1    5      0   LOW
+  2   15      1   HIGH
+  3    .      0   LOW
+  4   25      1   HIGH

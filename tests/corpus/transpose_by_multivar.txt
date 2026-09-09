@@ -1,0 +1,6 @@
+grp   _NAME_   COL1
+
+A     m1         10
+A     m2         20
+B     m1         30
+B     m2         40

@@ -1,0 +1,9 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+g       N            Mean
+-------------------------
+A       3      20.0000000
+B       2     150.0000000
+-------------------------

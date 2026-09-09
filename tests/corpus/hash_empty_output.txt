@@ -1,0 +1,12 @@
+empty rc=0
+                          The CONTENTS Procedure
+
+Data Set Name  empty_out
+Observations   0
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  name      Char    1
+nods rc=1

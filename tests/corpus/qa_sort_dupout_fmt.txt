@@ -1,0 +1,20 @@
+k       x
+
+1     One
+2   Three
+3       5
+k   X Label
+
+1       Two
+2     Three
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  x         Num     8  GRP.              X Label

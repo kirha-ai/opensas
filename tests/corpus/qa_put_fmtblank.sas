@@ -1,0 +1,10 @@
+data _null_;
+  a=1; b=2;
+  put a 4. b 4.;
+  put a b;
+  put a 4. b;
+  d=mdy(1,6,2020); d2=mdy(3,18,2020);
+  format d d2 date9.;
+  put d= d2=;
+  put d d2;
+run;

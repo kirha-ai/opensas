@@ -1,0 +1,6 @@
+caught-sqrt
+x=[. ]
+caught-mod
+y=[. ]
+clean
+a=[4 ] b=[1 ]

@@ -1,0 +1,4 @@
+count=3 max=30
+keeplist=AGE SEX RACE
+hilo=30 1
+range=30 1 2

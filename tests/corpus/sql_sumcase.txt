@@ -1,0 +1,2 @@
+grp soc=A mild=1 frac=0.5
+grp soc=B mild=2 frac=1

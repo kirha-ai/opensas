@@ -1,0 +1,35 @@
+allperm1 =1 2 3  rc=0
+allperm2 =1 3 2  rc=2
+allperm3 =3 1 2  rc=1
+allperm4 =3 2 1  rc=1
+allperm5 =2 3 1  rc=1
+allperm6 =2 1 3  rc=1
+allcomb1 =1 2  rc=0
+allcomb2 =2 3  rc=1
+allcomb3 =1 3  rc=2
+lexperm1 =1 2 3  rc=0
+lexperm2 =1 3 2  rc=2
+lexperm3 =2 1 3  rc=1
+lexperm4 =2 3 1  rc=1
+lexperm5 =3 1 2  rc=1
+lexperm6 =3 2 1  rc=1
+lexperk1 =1 2  rc=0
+lexperk2 =1 3  rc=2
+lexperk3 =2 1  rc=1
+lexperk4 =2 3  rc=1
+lexperk5 =3 1  rc=1
+lexperk6 =3 2  rc=1
+lexcomb1 =1 2  rc=0
+lexcomb2 =1 3  rc=2
+lexcomb3 =2 3  rc=1
+lexcombi1 =1 2  rc=1
+lexcombi2 =1 3  rc=2
+lexcombi3 =1 4  rc=2
+lexcombi4 =2 3  rc=1
+lexcombi5 =2 4  rc=2
+lexcombi6 =3 4  rc=1
+gray1 =1 0 0  k=1
+gray2 =1 1 0  k=2
+gray3 =0 1 0  k=1
+gray4 =0 1 1  k=2
+sort_array=1 2 3  j=1

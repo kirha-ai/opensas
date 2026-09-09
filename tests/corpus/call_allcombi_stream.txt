@@ -1,0 +1,9 @@
+allcombi1 =1 2
+allcombi2 =2 3
+allcombi3 =1 3
+allcombi4 =3 4
+allcombi5 =2 4
+allcombi6 =1 4
+streaminit= 0.0523636
+rewind= 0.0523636
+stream99= 0.4039781

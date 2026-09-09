@@ -1,0 +1,16 @@
+                          The CONTENTS Procedure
+
+Data Set Name  back
+Observations   2
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  age       Num     8  3.
+2  grp       Char    3
+1  name      Char   20          $20.      Full Name
+4  wt        Num     8  8.2               Weight (kg)
+VARINFMT(name)=$20.
+VARLEN(name)=20
+VARFMT(wt)=8.2

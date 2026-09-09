@@ -1,0 +1,31 @@
+Obs   s     n
+
+  1   abc   1
+  2   abc   2
+  3   pq    3
+  4   wxy   4
+  5         5
+                          The CONTENTS Procedure
+
+Data Set Name  fbase
+Observations   5
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  n         Num     8
+1  s         Char    3
+READBACK=[abc ] len=3
+READBACK=[abc ] len=3
+READBACK=[pq ] len=2
+READBACK=[wxy ] len=3
+READBACK=[ ] len=0
+line
+
+s,n
+abc,1
+abc,2
+pq,3
+wxy,4
+,5

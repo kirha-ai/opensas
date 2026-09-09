@@ -1,0 +1,4 @@
+n1=20
+linear=25 40
+knots=100 200 150
+monotone=1

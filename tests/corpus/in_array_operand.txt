@@ -1,0 +1,6 @@
+found=0
+found=1
+found=0
+found=1
+hit=1 first=1 miss=0 chit=1 cmiss=0 nhit=1 nmiss=0 thit=1 tmiss=0
+hasmiss=1 nomiss=0 pfx=1 nopfx=0

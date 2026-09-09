@@ -1,0 +1,3 @@
+MASKED=x&y z
+UNDEF=[  ]
+INDIRECT=x&y z

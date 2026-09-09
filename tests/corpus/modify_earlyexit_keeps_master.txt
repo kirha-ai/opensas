@@ -1,0 +1,62 @@
+F1 rows=5
+F1 stop@1: 5 rows, ALL unmodified
+k    x
+
+1   10
+2   20
+3   30
+4   40
+5   50
+F1b rows=5
+F1b stop@3: 11 21 30 40 50
+k    x
+
+1   11
+2   21
+3   30
+4   40
+5   50
+F3 rows=5
+F3 delete@3: k=3 survives at 30
+k    x
+
+1   11
+2   21
+3   30
+4   41
+5   51
+F4 rows=5
+F4 replace twice: 5 rows, not 10
+k    x
+
+1   11
+2   21
+3   31
+4   41
+5   51
+F5 rows=2
+F5 replace+remove: k=2 removed
+k    x
+
+1   10
+3   30
+anchor return@2: k=2 stays 20, others edited
+k    x
+
+1   11
+2   20
+3   31
+control: all rows edited
+k    x
+
+1   11
+2   21
+3   31
+control remove rows=2
+control: remove@2 deletes
+k    x
+
+1   10
+3   30
+control set-stop rows=2
+boundary same-name set-stop rows=2

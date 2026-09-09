@@ -1,0 +1,12 @@
+data _null_;
+  array w{3} $ w1-w3 ("apple" "banana" "cherry");
+  array u{3} $ u1-u3;
+  do i = 1 to 3;
+    u{i} = upcase(w{i});
+  end;
+  second = w{2};
+  joined = catx("-", u1, u2, u3);
+  put "u1=" u1 " u3=" u3;
+  put "second=" second;
+  put "joined=" joined;
+run;

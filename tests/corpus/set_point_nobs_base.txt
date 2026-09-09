@@ -1,0 +1,11 @@
+WHERE NOBS=5
+OBS2 i=1  v=1
+OBS2 i=2  v=2
+OBS2 i=3  v=3
+OBS2 i=4  v=4
+OBS2 i=5  v=5
+GLOBAL i=1  v=1
+GLOBAL i=2  v=2
+GLOBAL i=3  v=3
+GLOBAL i=4  v=4
+GLOBAL i=5  v=5

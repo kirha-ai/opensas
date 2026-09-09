@@ -1,0 +1,9 @@
+band    n   mean
+
+Mid     2     40
+Old     2     40
+Young   2     25
+parity   n
+
+     0   3
+     1   3

@@ -1,0 +1,4 @@
+name=Alice  vlength=20
+code=A1  vlengthx=5
+name=Bob  vlength=20
+code=B22  vlengthx=5

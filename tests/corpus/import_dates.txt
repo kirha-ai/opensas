@@ -1,0 +1,24 @@
+                          The CONTENTS Procedure
+
+Data Set Name  imp
+Observations   2
+Variables      9
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format       Informat     Label
+1  id        Num     8
+2  visit     Num     8  YYMMDD10.    YYMMDD10.
+3  refdt     Num     8  DATE9.       DATE9.
+4  mon       Num     8  MONYY7.      MONYY7.
+5  dtm       Num     8  DATETIME18.  DATETIME18.
+6  tm        Num     8  TIME8.       TIME8.
+7  slashdt   Char   10
+8  mixed     Char   10
+9  site      Char    6
+id        visit       refdt       mon                  dtm         tm   slashdt      mixed        site
+
+ 1   2024-03-05   05MAR2024   MAR2024   06JAN2016:10:04:26   10:30:00   03/05/2024   2024-03-05   Site A
+ 2   2024-12-31   10MAY2014   JAN2001   07FEB2017:23:59:59    9:05:00   11/12/2024   not a date   Site B
+2024-03-06 64
+2025-01-01 365

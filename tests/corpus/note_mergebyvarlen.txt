@@ -1,0 +1,7 @@
+M k=AB x=1 y=2 first=1 last=0
+M k=AB x=1 y=3 first=0 last=1
+S k=AB x=1 y=. first=1 last=0
+S k=AB x=. y=2 first=0 last=0
+S k=AB x=. y=3 first=0 last=1
+L k=ABC x=1 y=2 first=1 last=1
+L k=ABD x=. y=3 first=1 last=1

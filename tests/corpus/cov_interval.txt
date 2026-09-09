@@ -1,0 +1,4 @@
+intseas=12 4
+intcycle=YEAR
+inttest=1 0
+geodist=111.19492664

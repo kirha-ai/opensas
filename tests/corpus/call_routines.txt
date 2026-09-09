@@ -1,0 +1,8 @@
+sortn=1 2 3
+sortn_miss=. 4 8
+sortc=apple banana cherry
+scan=7 5
+scan_neg=5 1
+cats=abc
+catt=a bc
+catx=x|5|z

@@ -1,0 +1,15 @@
+m=30
+i
+1
+2
+3
+Row  i   x
+  1  1  10
+  2  2  20
+  3  3  30
+NOTE: Statement transforms to:
+  select i, x from d;
+i   x
+1  10
+2  20
+3  30

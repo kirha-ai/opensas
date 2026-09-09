@@ -1,0 +1,5 @@
+Obs   grade   USUBJID   AESEV
+
+  1       1   01-001    MILD
+  2       3   01-002    SEVERE
+  3       2   01-003    MODERATE

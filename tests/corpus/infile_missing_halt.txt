@@ -1,0 +1,9 @@
+control z=100
+control z=200
+control z=300
+control z=400
+control z=500
+control z=600
+control z=700
+mixed id=1  z=100
+mixed id=2  z=200

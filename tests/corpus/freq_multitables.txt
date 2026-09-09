@@ -1,0 +1,52 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              g      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              2       40.00              2        40.00
+              B              3       60.00              5       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              h      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              X              2       40.00              2        40.00
+              Y              3       60.00              5       100.00
+                      The FREQ Procedure
+
+              g        Frequency     Percent
+              ---------------------------------
+              A              2       40.00
+              B              3       60.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              h      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              X              2       40.00              2        40.00
+              Y              3       60.00              5       100.00
+                        The FREQ Procedure
+
+                        Table of g by h
+
+              g         h
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |X       |Y       |  Total
+              ---------+--------+--------+
+              A        |      1 |      1 |      2
+                       |  20.00 |  20.00 |  40.00
+                       |  50.00 |  50.00 |
+                       |  50.00 |  33.33 |
+              ---------+--------+--------+
+              B        |      1 |      2 |      3
+                       |  20.00 |  40.00 |  60.00
+                       |  33.33 |  66.67 |
+                       |  50.00 |  66.67 |
+              ---------+--------+--------+
+              Total           2        3        5
+                          40.00    60.00   100.00

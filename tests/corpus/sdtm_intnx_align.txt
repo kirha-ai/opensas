@@ -1,0 +1,4 @@
+Obs   USUBJID      mstart        mend
+
+  1   01-001    01JAN2024   31JAN2024
+  2   01-002    01FEB2024   29FEB2024

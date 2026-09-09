@@ -1,0 +1,10 @@
+                          The CONTENTS Procedure
+
+Data Set Name  W
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  X         Num     8

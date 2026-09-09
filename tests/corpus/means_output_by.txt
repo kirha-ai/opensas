@@ -1,0 +1,8 @@
+g   _TYPE_   _FREQ_    m   cnt
+
+a        0        2   15     2
+b        0        2   40     2
+g   um   un
+
+a   15    2
+b   40    2

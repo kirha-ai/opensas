@@ -1,0 +1,5 @@
+usubjid   arm       aval
+
+S01       Active     5.1
+S02       Placebo    7.3
+S03       Active       .

@@ -1,0 +1,9 @@
+s     k   t
+
+abc   1   abcX
+s     k   t
+
+abc   1   abcX
+s     k   t
+
+abc   1   abc       X

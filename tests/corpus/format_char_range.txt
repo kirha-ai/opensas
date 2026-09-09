@@ -1,0 +1,6 @@
+B=lo
+E=hi
+Z=?
+AB=lo
+C=no
+Bx=ltC

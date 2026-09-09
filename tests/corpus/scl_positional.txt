@@ -1,0 +1,6 @@
+note=3
+rewind_then_fetch=10
+point_then_fetch=30  curobs=3
+dropnote=0
+dsname=WORK.NUMS
+close=0

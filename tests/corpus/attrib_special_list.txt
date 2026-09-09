@@ -1,0 +1,48 @@
+                          The CONTENTS Procedure
+
+Data Set Name  a
+Observations   0
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  c         Char    1
+2  x         Num     8  BEST8.
+3  y         Num     8  BEST8.
+                          The CONTENTS Procedure
+
+Data Set Name  b
+Observations   0
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Char    1
+2  n         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  c
+Observations   0
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  p         Num     8  8.2     8.2
+2  q         Num     8  8.2     8.2
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   0
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  n         Num     8
+1  s         Char    8  $8.
+    x   d
+
+21929   1

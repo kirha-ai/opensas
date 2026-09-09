@@ -1,0 +1,11 @@
+dept  sal  gtot
+A     100   300
+A     200   300
+B     300   600
+B     100   600
+B     200   600
+dept    s
+A     300
+B     600
+dept    s
+B     600

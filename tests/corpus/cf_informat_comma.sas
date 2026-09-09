@@ -1,0 +1,12 @@
+data _null_;
+  a = input("1,234,567", comma12.);
+  b = input("$1,500.50", dollar12.2);
+  c = input("150", 5.2);
+  d = input("-2,500", comma8.);
+  e = input("3.14159", 4.);
+  put "comma=" a;
+  put "dollar=" b;
+  put "impl_dec=" c;
+  put "neg_comma=" d;
+  put "width4=" e;
+run;

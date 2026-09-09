@@ -1,0 +1,14 @@
+data _null_;
+  ci=cinv(0.5,2);      pc=probchi(ci,2);
+  gi=gaminv(0.5,1);    pg=probgam(gi,1);
+  bi=betainv(0.3,1,1); pb=probbeta(bi,1,1);
+  ti=tinv(0.975,10);   pt=probt(ti,10);
+  fi=finv(0.95,3,10);  pf=probf(fi,3,10);
+  bn1=probbnml(0.5,2,0); bn2=probbnml(0.5,2,2);
+  put "cinv_rt=" ci pc;
+  put "gaminv_rt=" gi pg;
+  put "betainv_rt=" bi pb;
+  put "tinv_rt=" ti pt;
+  put "finv_rt=" fi pf;
+  put "probbnml=" bn1 bn2;
+run;

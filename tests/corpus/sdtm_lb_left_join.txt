@@ -1,0 +1,4 @@
+USUBJID  SEX  LBSTRESN
+01-001   M          30
+01-002   F           .
+01-003   M          55

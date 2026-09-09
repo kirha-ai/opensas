@@ -1,0 +1,6 @@
+usubjid   _NAME_   COL1
+
+S01       param1   Normal
+S01       param2   High
+S02       param1   Low
+S02       param2   Normal

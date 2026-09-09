@@ -1,0 +1,11 @@
+T1-OK-reached-landing
+T2-OK-reached-ender
+T3-OK-leg1
+T3-OK-leg2
+T4-OK-body-survived-null-target
+T5-OK-body-survived-bad-label
+T6-OK-goto-not-taken
+T6-OK-tail
+T6-OK-tail
+T7-OK-label-came-from-symput
+END

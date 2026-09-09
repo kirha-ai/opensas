@@ -1,0 +1,4 @@
+charvars=Y Z
+col=X type=num
+col=Y type=char
+col=Z type=char

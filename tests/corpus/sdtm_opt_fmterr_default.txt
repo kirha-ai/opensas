@@ -1,0 +1,3 @@
+Obs   USUBJID   AVAL   s
+
+  1   01-001      45   45

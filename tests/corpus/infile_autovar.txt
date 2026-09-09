@@ -1,0 +1,9 @@
+RAW=[10 20 ]
+RAW=[30 40 ]
+Obs    a    b   raw
+
+  1   10   20   10 20
+  2   30   40   30 40
+E=[p q r ] x=p
+E=[p q r ] x=q
+E=[p q r ] x=r

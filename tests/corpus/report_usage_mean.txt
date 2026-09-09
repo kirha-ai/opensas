@@ -1,0 +1,4 @@
+Dept    Average
+
+A           200
+B           600

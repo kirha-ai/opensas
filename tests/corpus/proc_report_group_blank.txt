@@ -1,0 +1,11 @@
+ARM   SEX    EXDOSE
+
+DRUG  F         100
+      M          75
+PLAC  M           0
+reg  prod    units
+
+E    A           1
+     B           2
+W    B           3
+     C           4

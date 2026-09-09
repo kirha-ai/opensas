@@ -1,0 +1,5 @@
+fmt=[DOLLAR10.2 ]
+lbl=[The Amount ]
+val=[ $1,234.50 ]
+in_fmt=[COMMA8.2 ]
+in_lbl=[Zed ]

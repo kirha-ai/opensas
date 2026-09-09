@@ -1,0 +1,6 @@
+dept  sal
+a     300
+b     400
+dept  sal
+a     300
+b     400

@@ -1,0 +1,108 @@
+                        The FREQ Procedure
+
+                        Table 1 of s by r
+                        Controlling for g=1
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              X        |      0 |      1 |      1
+                       |   0.00 |  50.00 |  50.00
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Y        |      1 |      0 |      1
+                       |  50.00 |   0.00 |  50.00
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of s by r
+                        Controlling for g=2
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              Y        |      1 |      1 |      2
+                       |  50.00 |  50.00 | 100.00
+                       |  50.00 |  50.00 |
+                       | 100.00 | 100.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00
+                        The FREQ Procedure
+
+                        Table 1 of s by r
+                        Controlling for g=.
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              X        |      1 |      1 |      2
+                       |  50.00 |  50.00 | 100.00
+                       |  50.00 |  50.00 |
+                       | 100.00 | 100.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of s by r
+                        Controlling for g=1
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              X        |      0 |      1 |      1
+                       |   0.00 |  50.00 |  50.00
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Y        |      1 |      0 |      1
+                       |  50.00 |   0.00 |  50.00
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00
+
+                        The FREQ Procedure
+
+                        Table 3 of s by r
+                        Controlling for g=2
+
+              s         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |0       |1       |  Total
+              ---------+--------+--------+
+              Y        |      1 |      1 |      2
+                       |  50.00 |  50.00 | 100.00
+                       |  50.00 |  50.00 |
+                       | 100.00 | 100.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00

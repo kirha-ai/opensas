@@ -1,0 +1,3 @@
+Obs   n   mean   sum   css    uss   var
+
+  1   3     16    80   320   1600   160

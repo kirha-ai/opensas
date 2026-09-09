@@ -1,0 +1,11 @@
+                          The CONTENTS Procedure
+
+Data Set Name  both
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8                    From A
+2  y         Num     8                    Only B

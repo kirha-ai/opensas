@@ -1,0 +1,3 @@
+Obs   nday   nweek   nmonth   nqtr   nyear
+
+  1    288      41        9      3       1

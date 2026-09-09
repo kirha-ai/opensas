@@ -1,0 +1,19 @@
+j2 id=1  av=10  bv=100
+j2 id=2  av=20  bv=200
+j2 id=2  av=20  bv=201
+j2 id=2  av=21  bv=200
+j2 id=2  av=21  bv=201
+j2 id=.  av=99  bv=999
+j2r id=2  av=20  bv=200
+j2r id=2  av=20  bv=201
+j2r id=2  av=21  bv=200
+j2r id=2  av=21  bv=201
+j2r id=.  av=99  bv=999
+j3 id=1  av=10  bv=100  cv=1000
+j3 id=2  av=20  bv=200  cv=2000
+j3 id=2  av=20  bv=201  cv=2000
+j3 id=2  av=21  bv=200  cv=2000
+j3 id=2  av=21  bv=201  cv=2000
+j4 k=a  xv=1  yv=10
+j4 k=b  xv=2  yv=20
+j4 k=b  xv=2  yv=21

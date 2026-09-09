@@ -1,0 +1,167 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  Score
+
+                           Moments
+
+N                             30  Sum Weights                   30
+Mean                 83.66666667  Sum Observations            2510
+Std Deviation        11.08068631  Variance             122.7816092
+Skewness             -1.72891772  Kurtosis              5.92089521
+Uncorrected SS            213564  Corrected SS        3560.66666667
+Coeff Variation      13.24384818  Std Error Mean        2.02304728
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                 83.66666667  Std Deviation        11.08068631
+Median                      84.5  Variance             122.7816092
+Mode                          81  Range                         57
+                                  Interquartile Range           10
+
+Note: The mode displayed is the smallest of 3 modes with a count of 4.
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 41.35675295    Pr > |t|  <.0001
+Sign           M        15    Pr >= |M| <.0001
+Signed Rank    S     232.5    Pr >= |S| <.0001
+
+                    Quantiles (Definition 5)
+
+              100% Max              99
+              99%                   99
+              95%                   97
+              90%                   97
+              75% Q3                90
+              50% Median          84.5
+              25% Q1                80
+              10%                 73.5
+              5%                    69
+              1%                    42
+              0% Min                42
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                  42   16               99    4
+                  69   24               97   22
+                  72   25               97   21
+                  75   15               97   10
+                  76   14               97    2
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              5  Sum Weights                    5
+Mean                           3  Sum Observations              15
+Std Deviation         1.58113883  Variance                     2.5
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS                55  Corrected SS                  10
+Coeff Variation      52.70462767  Std Error Mean        0.70710678
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           3  Std Deviation         1.58113883
+Median                         3  Variance                     2.5
+Mode                           .  Range                          4
+                                  Interquartile Range            2
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 4.24264069    Pr > |t|  0.0132
+Sign           M       2.5    Pr >= |M| 0.0625
+Signed Rank    S       7.5    Pr >= |S| 0.0625
+
+                    Quantiles (Definition 5)
+
+              100% Max               5
+              99%                    5
+              95%                    5
+              90%                    5
+              75% Q3                 4
+              50% Median             3
+              25% Q1                 2
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                5    5
+                   2    2                4    4
+                   3    3                3    3
+                   4    4                2    2
+                   5    5                1    1
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              5  Sum Weights                   21
+Mean                  1.95238095  Sum Observations              41
+Std Deviation         2.17671662  Variance              4.73809524
+Skewness              0.47381112  Kurtosis             -0.27706291
+Uncorrected SS                99  Corrected SS         18.95238095
+Coeff Variation      111.4903634  Std Error Mean        0.47499851
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                  1.95238095  Std Deviation         2.17671662
+Median                         2  Variance              4.73809524
+Mode                           1  Range                          2
+                                  Interquartile Range            2
+
+Note: The mode displayed is the smallest of 2 modes with a count of 2.
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 4.1102886    Pr > |t|  0.0147
+
+                    Quantiles (Definition 5)
+
+              100% Max               3
+              99%                    3
+              95%                    3
+              90%                    3
+              75% Q3                 3
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                3    5
+                   1    2                2    4
+                   2    3                2    3
+                   2    4                1    2
+                   3    5                1    1

@@ -1,0 +1,44 @@
+f=x           
+                          The CONTENTS Procedure
+
+Data Set Name  e
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format    Informat  Label
+1  f         Char   12  $CHAR12.
+Flavor=CherryPie!
+                          The CONTENTS Procedure
+
+Data Set Name  ex42
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  Flavor    Char   10  $10.
+g=abc
+                          The CONTENTS Procedure
+
+Data Set Name  g15
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char   15          $15.
+x=    3.50
+                          The CONTENTS Procedure
+
+Data Set Name  n
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8  8.2

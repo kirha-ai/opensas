@@ -1,0 +1,6 @@
+nn  sw  s
+ 2   2  3
+nn  sw  s
+ 0   0  .
+nn  nm  c  mn  mx
+ 2   0  2  ab  cd

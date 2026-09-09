@@ -1,0 +1,3 @@
+id=1  dtc=1  visitdy=22  visitnum=2002
+id=1  dtc=1  visitdy=.  visitnum=2002
+id=1  dtc=1  visitdy=.  visitnum=2002

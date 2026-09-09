@@ -1,0 +1,3 @@
+x missing
+s blank
+other=7

@@ -1,0 +1,10 @@
+data _null_;
+  d1 = mdy(1, 1, 2020);
+  d2 = mdy(12, 31, 2020);
+  months = intck("month", d1, d2);
+  years = intck("year", d1, d2);
+  q = qtr(d2);
+  nx = intnx("month", d1, 3);
+  put "months=" months " years=" years " q=" q;
+  put "nx=" nx " nxfmt=" nx date9.;
+run;

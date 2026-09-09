@@ -1,0 +1,3 @@
+Obs   study      site
+
+  1   PROTO-01   SITE-A

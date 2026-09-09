@@ -1,0 +1,3 @@
+VARINFMT=comma8.
+VARFMT=dollar10.2
+VARLABEL=Ex

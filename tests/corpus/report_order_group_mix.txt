@@ -1,0 +1,6 @@
+region  prod    sales
+
+East    A           5
+        B          11
+West    A          14
+        B           8

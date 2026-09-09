@@ -1,0 +1,4 @@
+Obs   name     age
+
+  1   Alfred    14
+  2   Alice     13

@@ -1,0 +1,12 @@
+open-code positive control
+name   v
+
+a      1
+b      2
+allowlist fixture
+open-code positive control
+name   v
+
+b      2
+a      1
+allowlist fixture

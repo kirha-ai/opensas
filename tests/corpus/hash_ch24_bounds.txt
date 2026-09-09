@@ -1,0 +1,12 @@
+p615 find rc=0
+p615 d=Odyssey
+first rc=0  k=1  n8=10
+next  rc=0  k=2  n8=20
+past-last rc=1  k=2  n8=20
+past-last-again rc=1  k=2  n8=20
+reenter rc=0  k=1  n8=10
+empty first rc=1  k=7  v=77
+empty last  rc=1  k=7  v=77
+empty find  rc=160038
+empty check rc=160038
+empty num=0

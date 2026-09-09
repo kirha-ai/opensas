@@ -1,0 +1,3 @@
+usubjid   age
+
+S03        30

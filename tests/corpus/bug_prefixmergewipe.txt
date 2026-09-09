@@ -1,0 +1,17 @@
+Obs   pre   id    v     w   post
+
+  1     .    1   10   100     10
+  2    10    2   20     .     20
+  3    20    3    .   300      .
+Obs   pre   id    v   post
+
+  1     .    1   10     10
+  2    10    2   99     99
+  3    99    3   30     30
+o3 ITER pre=.  v=.  w=.
+o3 ITER pre=10  v=10  w=100
+o3 ITER pre=20  v=20  w=200
+Obs   id    v
+
+  1    1   10
+  2    2   20

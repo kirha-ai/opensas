@@ -1,0 +1,16 @@
+data _null_;
+  se=stderr(1,2,3,4,5);
+  pc=pctl(50,1,2,3,4,5); pc2=pctl(25,1,2,3,4,5);
+  md=mad(1,2,3,4,5); iq=iqr(1,2,3,4,5);
+  bn=probbnrm(0,0,0);
+  h1=probhypr(4,2,2,2); h2=probhypr(4,2,2,0);
+  ng=probnegb(0.5,1,0);
+  cg=compged('cat','cot');
+  put "stderr=" se;
+  put "pctl=" pc pc2;
+  put "mad_iqr=" md iq;
+  put "probbnrm=" bn;
+  put "probhypr=" h1 h2;
+  put "probnegb=" ng;
+  put "compged=" cg;
+run;

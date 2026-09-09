@@ -1,0 +1,7 @@
+grp x=5 y=under10
+grp x=9 y=under10
+grp x=10 y=teens
+grp x=15 y=teens
+grp x=20 y=twentyplus
+grp x=25 y=twentyplus
+ex 0=      0  5=gt0to10  10=gt0to10

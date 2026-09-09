@@ -1,0 +1,14 @@
+Obs   nm
+
+  1   Christop
+  2   Bob
+  3   Alexandr
+Obs   nm
+
+  1   Christopher
+Obs   nm
+
+  1   Christopher
+Obs   nm         x
+
+  1   Christop   5

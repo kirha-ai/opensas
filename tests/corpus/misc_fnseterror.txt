@@ -1,0 +1,8 @@
+caught-pos
+a=[hello ]
+caught-len
+b=[ello ]
+caught-dom
+c=[. ]
+clean
+d=[ell ]

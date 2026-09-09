@@ -1,0 +1,5 @@
+brace i=1  val=5
+brace i=2  val=10
+brace i=3  val=15
+bracket-all 1 2 3
+elem c[2]=2

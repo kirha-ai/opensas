@@ -1,0 +1,6 @@
+year2020=22446
+year2019=22081
+semiyear=22446
+qtr=22446
+month=22446
+feb29clamp=22339

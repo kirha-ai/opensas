@@ -1,0 +1,11 @@
+
+      Frequency Missing = 3
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              grade  Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              3              3       50.00              3        50.00
+              5              3       50.00              6       100.00
+
+      Frequency Missing = 5

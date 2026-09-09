@@ -1,0 +1,4 @@
+usubjid   sysbp   diabp
+
+S01         120      80
+S02         130      85

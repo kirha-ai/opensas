@@ -1,0 +1,5 @@
+Obs   USUBJID   AETERM     AESEV
+
+  1   01-001    HEADACHE   MILD
+  2   01-001    NAUSEA     MODERATE
+  3   01-002    RASH       MILD

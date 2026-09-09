@@ -1,0 +1,8 @@
+asc k=1 v=one
+asc k=2 v=two
+asc k=3 v=three
+asc k=10 v=ten
+desc k=10 v=ten
+desc k=3 v=three
+desc k=2 v=two
+desc k=1 v=one

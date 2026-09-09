@@ -1,0 +1,10 @@
+Obs   name    score1   score2
+
+  1   Riley     1132     1187
+COMMA3+CHAR3 a=23  b=[ABC ]
+TIME8+CHAR3 t=45296  tag=[XYZ ]
+HEX4+CHAR3 h=50338  tag=[XYZ ]
+PCT5+CHAR3 p=0.45  tag=[XYZ ]
+T212: c3=23  c4=-23  bz=2300  z=9
+AGREE: stmt=1234  fn=1234
+COLON: a=23  b=[ABC ]

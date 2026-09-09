@@ -1,0 +1,11 @@
+ci=0
+cl=0
+cil=0
+cn=1
+cc=2
+xn=.
+xc=.
+yn=2
+k=[0123456789 ]
+kalen=191
+kahead=ABC

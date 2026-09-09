@@ -1,0 +1,15 @@
+data _null_;
+  array a{3} x1-x3 (1 2 3);
+  array b{3} y1-y3 (1 2);
+  array c{2} $ c1-c2 ('x' 'y');
+  d = dim(a); lo = lbound(a); hi = hbound(a);
+  s1 = sum(of a{*}); s2 = sum(of a[*]);
+  do i = 1 to dim(a);
+    a{i} = a{i} * 10;
+  end;
+  do over a;
+    a = a + 1;
+  end;
+  put "exact_fewer_char=" x1 x2 x3 y1 y2 y3 c1 c2;
+  put "dim_bounds_of=" d lo hi s1 s2;
+run;

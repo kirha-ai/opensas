@@ -1,0 +1,13 @@
+data _null_;
+  name = "  Jane Doe  ";
+  u = upcase("hello");
+  l = lowcase("WORLD");
+  len = length("cat");
+  sub = substr("abcdefg", 3, 2);
+  t = strip(name);
+  put "u=" u;
+  put "l=" l;
+  put "len=" len;
+  put "sub=" sub;
+  put "t=" t;
+run;

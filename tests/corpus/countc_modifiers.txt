@@ -1,0 +1,5 @@
+digits=3
+upper=3
+lower=9
+lit=3
+notdigit=2

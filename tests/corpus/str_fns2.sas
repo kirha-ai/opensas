@@ -1,0 +1,18 @@
+data _null_;
+  sn = substrn("abcde", 2, 3);
+  sn2 = substrn("abcde", -1, 3);
+  cs = cats(" a ", " b ");
+  ct = catt(" a ", " b ");
+  q = quote("ab");
+  dq = dequote(q);
+  tr = translate("abcabc", "XY", "ab");
+  v = verify("abc", "ab");
+  rv = reverse("abc");
+  rp = repeat("ab", 2);
+  pc = propcase("hello world");
+  ks = kstrip("  x  ");
+  cq = catq("acs", "x", "y");
+  put "sn=" sn " sn2=" sn2 " cs=" cs " ct=[" ct "]";
+  put "q=" q " dq=" dq " tr=" tr " v=" v " rv=" rv " rp=" rp;
+  put "pc=" pc " ks=" ks " cq=" cq;
+run;

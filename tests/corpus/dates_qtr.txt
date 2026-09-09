@@ -1,0 +1,2 @@
+q=3
+nxyr=2026  nxmo=8  nxdy=1

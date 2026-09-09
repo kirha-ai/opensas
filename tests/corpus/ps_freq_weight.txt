@@ -1,0 +1,7 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              arm    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              Active        12       60.00             12        60.00
+              Placebo        8       40.00             20       100.00

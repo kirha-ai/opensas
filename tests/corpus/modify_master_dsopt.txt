@@ -1,0 +1,49 @@
+1 keep= on the master: 3 rows, y bumped
+  y    z
+
+101    5
+102   10
+103   15
+1b freeze holds with options: 2 vars, no brandnew
+                          The CONTENTS Procedure
+
+Data Set Name  f
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  y         Num     8
+2  z         Num     8
+2 work.d(keep=q): 2 rows, 8 and 9
+q
+
+8
+9
+4 where=: 10 untouched, 21, 31 — 3 rows
+ x
+
+10
+21
+31
+5 firstobs=2 obs=3: 10 21 31 40
+k    v
+
+1   10
+2   21
+3   31
+4   40
+6 where + stop: 10 21 30 40
+k    v
+
+1   10
+2   21
+3   30
+4   40
+7 where + remove k=3: k=1,2,4 remain
+k    v
+
+1   10
+2   20
+4   40

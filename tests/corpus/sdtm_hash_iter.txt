@@ -1,0 +1,3 @@
+code=1  label=ACTIVE
+code=2  label=PLACEBO
+code=3  label=SCREENFAIL

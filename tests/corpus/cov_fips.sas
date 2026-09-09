@@ -1,0 +1,11 @@
+data _null_;
+  length f1 $15 f2 $15 f3 $2 f5 $15 f6 $15;
+  f1=fipname(6); f2=fipnamel(6); f3=fipstate(6);
+  f4=stfips('CA'); f5=stname('CA'); f6=stnamel('CA');
+  put "fipname=" f1;
+  put "fipnamel=" f2;
+  put "fipstate=" f3;
+  put "stfips=" f4;
+  put "stname=" f5;
+  put "stnamel=" f6;
+run;

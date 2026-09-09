@@ -1,0 +1,11 @@
+local slots2 outer blanks are stripped away
+slots2=!5!
+y2=!987.25!
+gtab-open=[val]
+gshadow-inside=[LOCALVAL]
+gshadow-open=[GLOBALVAL]
+ltab-inside=[only-local]
+ltab-open=[KEEPME]
+lopen=[x]
+ftab-open=[NEW][NEW]
+gvar-open=[from-var]

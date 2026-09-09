@@ -1,0 +1,55 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                           5000  Sum Weights                 5000
+Mean                      2500.5  Sum Observations        12502500
+Std Deviation       1443.52000333  Variance                 2083750
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS       41679167500  Corrected SS         10416666250
+Coeff Variation      57.72925428  Std Error Mean       20.41445566
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                      2500.5  Std Deviation       1443.52000333
+Median                    2500.5  Variance                 2083750
+Mode                           .  Range                       4999
+                                  Interquartile Range         2500
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 122.48673398    Pr > |t|  <.0001
+Sign           M      2500    Pr >= |M| <.0001
+Signed Rank    S   6251250    Pr >= |S| <.0001
+
+                    Quantiles (Definition 5)
+
+              100% Max            5000
+              99%               4950.5
+              95%               4750.5
+              90%               4500.5
+              75% Q3            3750.5
+              50% Median        2500.5
+              25% Q1            1250.5
+              10%                500.5
+              5%                 250.5
+              1%                  50.5
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1             5000 5000
+                   2    2             4999 4999
+                   3    3             4998 4998
+                   4    4             4997 4997
+                   5    5             4996 4996

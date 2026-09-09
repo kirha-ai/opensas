@@ -1,0 +1,6 @@
+para x=1 y=10
+para x=2 y=20
+para x=3 y=30
+look x=1 tot=99
+look x=2 tot=99
+look x=3 tot=99

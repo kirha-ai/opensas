@@ -1,0 +1,10 @@
+g=0  sum=105  n=6
+g=1  sum=81  n=6
+g=2  sum=87  n=6
+g=3  sum=93  n=6
+g=4  sum=99  n=6
+g=0  count=6  pct=20
+g=1  count=6  pct=20
+g=2  count=6  pct=20
+g=3  count=6  pct=20
+g=4  count=6  pct=20

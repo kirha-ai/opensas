@@ -1,0 +1,10 @@
+proc format;
+  value ctcae 0="Grade 0" 1-2="Grade 1-2" 3-4="Grade 3-4" 5="Grade 5";
+run;
+data _null_;
+  length s $10;
+  do v = 0, 1, 2, 3, 4, 5;
+    s = put(v, ctcae.);
+    put "v" v "=" s;
+  end;
+run;

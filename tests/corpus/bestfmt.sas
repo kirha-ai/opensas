@@ -1,0 +1,18 @@
+data _null_;
+  a = 0.1 + 0.2;
+  b = 1/3;
+  c = 2/3;
+  d = 0.1 * 3;
+  e = 10/4;
+  f = 1000000 * 1.1;
+  g = -1/3;
+  h = 3 * 2;
+  put "a=" a;
+  put "b=" b;
+  put "c=" c;
+  put "d=" d;
+  put "e=" e;
+  put "f=" f;
+  put "g=" g;
+  put "h=" h;
+run;

@@ -1,0 +1,10 @@
+data _null_;
+  a = 2 + 3 * 4;
+  b = (2 + 3) * 4;
+  c = 2 ** 3 ** 2;
+  d = 10 - 4 - 3;
+  put "a=" a;
+  put "b=" b;
+  put "c=" c;
+  put "d=" d;
+run;

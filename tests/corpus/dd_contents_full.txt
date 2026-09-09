@@ -1,0 +1,5 @@
+NAME      TYPE   LENGTH   VARNUM   FORMAT   FORMATL   FORMATD   INFORMAT   INFORML   INFORMD   LABEL
+
+usubjid      2        4        1                  0         0                    0         0
+arm          2        8        2                  0         0                    0         0
+age          1        8        3                  3         0                    0         0   Age (y)

@@ -1,0 +1,7 @@
+n_val   n_miss   n_rows
+
+    4        2        6
+param   n_val   n_miss
+
+ALT         2        2
+AST         2        0

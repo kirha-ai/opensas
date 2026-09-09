@@ -1,0 +1,5 @@
+subpad=[bcd ]
+putc=[hi    ]
+putn=[ 1234.50 ]
+inputn=3.14
+typeof=N C

@@ -1,0 +1,11 @@
+RFICDTC=abc
+                          The CONTENTS Procedure
+
+Data Set Name  L
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  SITEID    Char   10                    Site

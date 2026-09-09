@@ -1,0 +1,3 @@
+x=10  total=10  prev=.
+x=20  total=30  prev=10
+x=30  total=60  prev=20

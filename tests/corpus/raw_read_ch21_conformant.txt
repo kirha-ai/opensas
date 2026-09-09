@@ -1,0 +1,70 @@
+tag=right x=23
+tag=notalign x=23
+tag=left x=23
+tag=leadzero x=23
+tag=decpoint x=23
+tag=enot1 x=23
+tag=enot2 x=23
+tag=negative x=-23
+comma2341=2341  paren23=-23  hexC4A2=50338
+implied=12.34  explicit=12.5
+charw=[  ab ] plainw=[ab ]
+Obs   PatientID   Week1   Week8   Week16   loss
+
+  1   2477          195     177      163     32
+  2   2431          220     213      198     22
+Obs   PatientID   Week1   Week8   Week16   loss
+
+  1   24;77         195     177      163     32
+  2   24;31         220     213      198     22
+Obs   name        score1   score2
+
+  1   Riley         1132     1187
+  2   Henderson     1015     1102
+Obs   name        score2   score1
+
+  1   Riley         1132      987
+  2   Henderson     1015     1102
+Obs   name        score1   score2
+
+  1   Riley         1132     1187
+  2   Henderson     1015     1102
+Obs   name    score1   score2
+
+  1   Riley     1132     1187
+Obs   x   y
+
+  1   1   2
+  2   3   4
+  3   5   6
+  4   7   8
+Obs   a   b   c   d
+
+  1   1   2   .   .
+  2   3   4   3   4
+Obs   kind   name    num
+
+  1   N      alice     .
+  2   X               42
+  3   N      bob       .
+v=10  done=0
+v=20  done=0
+Obs    v
+
+  1   10
+  2   20
+Obs     x    y
+
+  1   101    5
+  2   102   10
+Obs   x
+
+  1   1
+  2   2
+Obs   a   b   c
+
+  1   x   .   3
+  2   y   2   .
+  3   z   .   .
+a=1  b=2
+a=3  b=4

@@ -1,0 +1,4 @@
+Obs   USUBJID   VSSTRESN   baseline   chg
+
+  1   01-001         118        120    -2
+  2   01-002         128        130    -2

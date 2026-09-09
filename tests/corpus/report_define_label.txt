@@ -1,0 +1,4 @@
+Department    Total
+
+A               300
+B               500

@@ -1,0 +1,4 @@
+low y=  $42.50
+high y=big
+yn_Y z=Yes
+yn_other z="?"

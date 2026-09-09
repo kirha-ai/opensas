@@ -1,0 +1,54 @@
+
+                          The COMPARE Procedure
+  Comparison of prod with qc
+
+  Data Set Summary
+    prod: 3 variables, 3 observations
+    qc: 3 variables, 3 observations
+
+  Variables Summary
+    Variables in common: 1
+    In prod only: 2
+    In qc only: 2
+
+  Observation Summary
+    Observations in common: 3
+    In prod only: 0
+    In qc only: 0
+
+  Values Comparison Summary
+    Variables compared: 2
+    Variables all equal: 1
+    Variables with unequal values: 1
+    Total unequal values: 1
+
+  Value Comparison Results
+
+    Obs 2  height with ht: base=170 compare=171
+
+  NOTE: 1 unequal values found across 1 variable(s).
+
+                          The COMPARE Procedure
+  Comparison of prod with qc
+
+  Data Set Summary
+    prod: 3 variables, 3 observations
+    qc: 3 variables, 3 observations
+
+  Variables Summary
+    Variables in common: 1
+    In prod only: 2
+    In qc only: 2
+
+  Observation Summary
+    Observations in common: 3
+    In prod only: 0
+    In qc only: 0
+
+  Values Comparison Summary
+    Variables compared: 1
+    Variables all equal: 1
+    Variables with unequal values: 0
+    Total unequal values: 0
+
+  NOTE: No unequal values were found. All values compared are exactly equal.

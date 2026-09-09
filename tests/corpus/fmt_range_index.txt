@@ -1,0 +1,26 @@
+adj x=-1 y=oth
+adj x=0 y=d0
+adj x=9 y=d0
+adj x=9.5 y=oth
+adj x=10 y=d1
+adj x=19 y=d1
+adj x=20 y=d2
+adj x=29 y=d2
+adj x=30 y=oth
+exb x=0 y=a
+exb x=5 y=a
+exb x=7 y=b
+exb x=10 y=b
+exb x=12 y=c
+exb x=15 y=oth
+hilo x=-100 y=neg
+hilo x=-0.5 y=neg
+hilo x=0 y=pos
+hilo x=100 y=pos
+mix x=1 y=one
+mix x=15 y=teens
+mix x=25 y=twentyfive
+mix x=30 y=oth
+nooth x=25 y=x
+nooth x=99 y=*
+adjmiss y=oth

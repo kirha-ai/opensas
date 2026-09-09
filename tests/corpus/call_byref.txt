@@ -1,0 +1,4 @@
+named=1 2 3
+subscript=10 20 30
+ofstar=3 4 5
+ranuni_in01=1 vname=a

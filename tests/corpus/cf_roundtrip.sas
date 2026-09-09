@@ -1,0 +1,14 @@
+data _null_;
+  d = mdy(3,15,2020);
+  length ds $10;
+  ds = put(d, date9.);
+  d2 = input(ds, date9.);
+  dmatch = (d = d2);
+  put "date_roundtrip=" ds " match=" dmatch;
+  n = 1234567.89;
+  length ns $16;
+  ns = put(n, comma16.2);
+  n2 = input(ns, comma16.2);
+  nmatch = (n = n2);
+  put "comma_roundtrip=" ns " match=" nmatch;
+run;

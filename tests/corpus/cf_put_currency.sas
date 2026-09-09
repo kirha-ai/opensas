@@ -1,0 +1,11 @@
+data _null_;
+  length s1 $14 s2 $14 s3 $14 s4 $14;
+  s1 = put(1500.5, dollar12.2);
+  s2 = put(1234567, comma12.);
+  s3 = put(-2500.75, dollar12.2);
+  s4 = put(1000000, comma14.2);
+  put "dollar=[" s1 "]";
+  put "comma=[" s2 "]";
+  put "neg_dollar=[" s3 "]";
+  put "comma_dec=[" s4 "]";
+run;

@@ -1,0 +1,4 @@
+Obs   ARM    _TYPE_   _FREQ_   total   avg
+
+  1   DRUG        1        3     210    70
+  2   PLAC        1        1       0     0

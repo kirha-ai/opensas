@@ -1,0 +1,7 @@
+g   _TYPE_   _FREQ_     m
+
+A        0        2    15
+B        0        2   150
+_TYPE_   _FREQ_      m
+
+     0        4   82.5

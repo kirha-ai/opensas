@@ -1,0 +1,4 @@
+seed1_draw1=0.1343642441
+seed1_draw2=0.8474337369
+reseed_reproducible=1
+seed123_draw1=0.0523635989

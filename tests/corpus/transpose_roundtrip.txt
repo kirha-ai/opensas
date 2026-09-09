@@ -1,0 +1,6 @@
+usubjid   param   COL1
+
+S01       ALT       30
+S01       AST       25
+S02       ALT       40
+S02       AST       35

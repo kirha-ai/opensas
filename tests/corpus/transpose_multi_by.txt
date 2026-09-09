@@ -1,0 +1,4 @@
+study   usubjid   ALT   AST
+
+ST      S01        30    25
+ST      S02        40    35

@@ -1,0 +1,4 @@
+id   sev
+
+ 1   SEVERE
+ 3   MODERATE

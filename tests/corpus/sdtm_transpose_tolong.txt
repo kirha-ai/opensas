@@ -1,0 +1,8 @@
+Obs   USUBJID   param   COL1
+
+  1   01-001    SBP      120
+  2   01-001    DBP       80
+  3   01-001    HR        72
+  4   01-002    SBP      130
+  5   01-002    DBP       85
+  6   01-002    HR        68

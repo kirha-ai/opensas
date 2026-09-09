@@ -1,0 +1,20 @@
+ARM=DRUG
+
+Obs   USUBJID   EXDOSE
+
+  1   01-001        50
+  2   01-002       100
+                ======
+                   150
+
+ARM=PLACEBO
+
+Obs   USUBJID   EXDOSE
+
+  3   01-003         0
+  4   01-004         0
+                ======
+                     0
+
+                ======
+                   150

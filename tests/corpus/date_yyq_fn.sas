@@ -1,0 +1,10 @@
+data _null_;
+  q1 = yyq(2020, 1);
+  q2 = yyq(2020, 2);
+  q3 = yyq(2020, 3);
+  q4 = yyq(2020, 4);
+  bad = yyq(2020, 5);
+  put q1 date9. " " q2 date9. " " q3 date9. " " q4 date9.;
+  put q3 yyq6.;
+  if missing(bad) then put "bad=missing";
+run;

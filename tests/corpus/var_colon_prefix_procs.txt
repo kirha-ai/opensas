@@ -1,0 +1,227 @@
+                          The MEANS Procedure
+
+Variable     N            Mean
+--------------------------------------
+y            3      20.0000000
+x2           3       4.0000000
+x1           3       5.0000000
+x10          3       6.0000000
+--------------------------------------
+                                       The MEANS Procedure
+
+                             Analysis Variable : x1
+
+c2  c1       N            Mean
+------------------------------
+a   b        1             2.0
+a   c        1             5.0
+b   b        1             8.0
+------------------------------
+                                 The UNIVARIATE Procedure
+
+Variable:  x2
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           4  Sum Observations              12
+Std Deviation                  3  Variance                       9
+Skewness                       0  Kurtosis                       .
+Uncorrected SS                66  Corrected SS                  18
+Coeff Variation               75  Std Error Mean        1.73205081
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           4  Std Deviation                  3
+Median                         4  Variance                       9
+Mode                           .  Range                          6
+                                  Interquartile Range            6
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 2.30940108    Pr > |t|  0.1472
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               7
+              99%                    7
+              95%                    7
+              90%                    7
+              75% Q3                 7
+              50% Median             4
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                7    3
+                   4    2                4    2
+                   7    3                1    1
+
+Variable:  x1
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           5  Sum Observations              15
+Std Deviation                  3  Variance                       9
+Skewness                       0  Kurtosis                       .
+Uncorrected SS                93  Corrected SS                  18
+Coeff Variation               60  Std Error Mean        1.73205081
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           5  Std Deviation                  3
+Median                         5  Variance                       9
+Mode                           .  Range                          6
+                                  Interquartile Range            6
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 2.88675135    Pr > |t|  0.1020
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               8
+              99%                    8
+              95%                    8
+              90%                    8
+              75% Q3                 8
+              50% Median             5
+              25% Q1                 2
+              10%                    2
+              5%                     2
+              1%                     2
+              0% Min                 2
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   2    1                8    3
+                   5    2                5    2
+                   8    3                2    1
+
+Variable:  x10
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           6  Sum Observations              18
+Std Deviation                  3  Variance                       9
+Skewness                       0  Kurtosis                       .
+Uncorrected SS               126  Corrected SS                  18
+Coeff Variation               50  Std Error Mean        1.73205081
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           6  Std Deviation                  3
+Median                         6  Variance                       9
+Mode                           .  Range                          6
+                                  Interquartile Range            6
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 3.46410162    Pr > |t|  0.0742
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               9
+              99%                    9
+              95%                    9
+              90%                    9
+              75% Q3                 9
+              50% Median             6
+              25% Q1                 3
+              10%                    3
+              5%                     3
+              1%                     3
+              0% Min                 3
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   3    1                9    3
+                   6    2                6    2
+                   9    3                3    1
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x2     Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1              1       33.33              1        33.33
+              4              1       33.33              2        66.67
+              7              1       33.33              3       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x1     Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              2              1       33.33              1        33.33
+              5              1       33.33              2        66.67
+              8              1       33.33              3       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x10    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              3              1       33.33              1        33.33
+              6              1       33.33              2        66.67
+              9              1       33.33              3       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              y      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              10             1       33.33              1        33.33
+              20             1       33.33              2        66.67
+              30             1       33.33              3       100.00
+------------
+|    | x1  |
+|    | Sum |
+|----+-----|
+|c2  |     |
+|a   |   7 |
+|b   |   8 |
+------------
+------------
+|    | x1  |
+|    | Sum |
+|----+-----|
+|c1  |     |
+|b   |  10 |
+|c   |   5 |
+------------

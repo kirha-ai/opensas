@@ -1,0 +1,6 @@
+usubjid   etcd   sestdtc
+
+S01       SCRN   2018-09-13
+S01       FULT   2019-04-11
+S02       SCRN   2018-09-13
+S02       FULT   2019-03-28

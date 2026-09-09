@@ -1,0 +1,6 @@
+                      The FREQ Procedure
+
+              CAT      Frequency     Percent
+              ---------------------------------
+              NONRESPONDER  42       70.00
+              RESPONDER     18       30.00

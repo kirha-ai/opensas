@@ -1,0 +1,5 @@
+b=member
+z=nonmember
+B=nonmember
+c=member
+z=nonmember

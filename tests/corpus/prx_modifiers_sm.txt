@@ -1,0 +1,5 @@
+s-dotall: MATCH
+s-plain: NO
+m-anchor: MATCH
+m-plain: NO
+m-dollar: MATCH

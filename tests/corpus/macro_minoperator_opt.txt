@@ -1,0 +1,9 @@
+b=member
+q=nonmember
+B=nonmember
+v1=1
+v2=0
+a=member
+z=nonmember
+q=is-q
+b=not-q

@@ -1,0 +1,1 @@
+x=TUMOR y=1 z=1 p=0 q=1

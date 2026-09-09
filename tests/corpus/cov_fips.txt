@@ -1,0 +1,6 @@
+fipname=CALIFORNIA
+fipnamel=California
+fipstate=CA
+stfips=6
+stname=CALIFORNIA
+stnamel=California

@@ -1,0 +1,5 @@
+collide k=AB x=1 y=2 ina=1 inb=1
+collide k=AB x=1 y=3 ina=1 inb=1
+ctrl k=AB x=1 y=.
+ctrl k=ABC x=9 y=2
+ctrl k=ABD x=. y=3

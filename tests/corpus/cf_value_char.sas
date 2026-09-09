@@ -1,0 +1,13 @@
+proc format;
+  value $sexf "M"="Male" "F"="Female" " "="Missing" other="Other";
+  value $ynf "Y"="Yes" "N"="No" other="Unknown";
+run;
+data _null_;
+  length s $8 y $8;
+  s=put("M",$sexf.); put "sex_M=" s;
+  s=put("F",$sexf.); put "sex_F=" s;
+  s=put(" ",$sexf.); put "sex_blank=" s;
+  s=put("X",$sexf.); put "sex_X=" s;
+  y=put("Y",$ynf.); put "yn_Y=" y;
+  y=put("Z",$ynf.); put "yn_Z=" y;
+run;

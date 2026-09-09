@@ -1,0 +1,6 @@
+year=MONTH
+dtyear=DTMONTH
+minute=DTMINUTE
+qtr=MONTH
+dttenday=DTTENDAY
+weekday=WEEKDAY

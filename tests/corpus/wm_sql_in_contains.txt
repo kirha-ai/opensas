@@ -1,0 +1,4 @@
+usubjid   aeterm
+
+S01       Headache
+S03       HeadPain

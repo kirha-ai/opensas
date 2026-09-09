@@ -1,0 +1,15 @@
+type_invalidcount=C
+          
+|
+type_oob=C
+type_zero=C
+type_neg=C
+type_huge=C
+type_empty=C
+          
+          
+          
+          
+          
+|
+a=a  b=b  c=c  w2=b  m4=b

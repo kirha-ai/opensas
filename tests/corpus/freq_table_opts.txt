@@ -1,0 +1,7 @@
+                      The FREQ Procedure
+
+                                   Cumulative
+              g      Frequency     Frequency
+              -------------------------------
+              a              3              3
+              b              4              7

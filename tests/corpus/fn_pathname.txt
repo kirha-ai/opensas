@@ -1,0 +1,1 @@
+p=tests/programs/sas7bdat_read/inputs ok=1 u=1

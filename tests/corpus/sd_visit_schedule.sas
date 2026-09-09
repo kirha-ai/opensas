@@ -1,0 +1,12 @@
+data _null_;
+  base = mdy(1,6,2020);
+  length v1 $10 v2 $10 v3 $10 v4 $10;
+  v1 = put(base, date9.);
+  v2 = put(intnx('week', base, 4, 's'), date9.);
+  v3 = put(intnx('week', base, 12, 's'), date9.);
+  v4 = put(intnx('month', base, 6, 's'), date9.);
+  put "baseline=" v1;
+  put "week4=" v2;
+  put "week12=" v3;
+  put "month6=" v4;
+run;

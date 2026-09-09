@@ -1,0 +1,18 @@
+data _null_;
+  s = sum(1, 2, 3, 4);
+  m = mean(10, 20, 30);
+  mn = min(5, 2, 8);
+  mx = max(5, 2, 8);
+  a = abs(-7);
+  i = int(9.8);
+  r = round(2.5);
+  q = sqrt(81);
+  put "s=" s;
+  put "m=" m;
+  put "mn=" mn;
+  put "mx=" mx;
+  put "a=" a;
+  put "i=" i;
+  put "r=" r;
+  put "q=" q;
+run;

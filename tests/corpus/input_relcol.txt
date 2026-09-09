@@ -1,0 +1,3 @@
+x=abcd  y=123
+name=Mary  age=30  code=777
+st=NY  rest=345

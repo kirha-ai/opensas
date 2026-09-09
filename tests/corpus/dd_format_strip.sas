@@ -1,0 +1,12 @@
+data fin;
+  amt=1500; format amt dollar10.2;
+  pct=0.25; format pct percent8.1;
+  rate=3.5; format rate 6.2;
+run;
+proc datasets library=work nolist;
+  modify fin;
+    attrib _all_ format=;
+quit;
+proc contents data=fin out=meta noprint; run;
+proc sort data=meta out=metas; by varnum; run;
+proc print data=metas noobs; run;

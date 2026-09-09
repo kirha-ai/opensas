@@ -1,0 +1,4 @@
+trt   n   mean   max
+
+A     2    5.7   6.3
+B     2      8   8.8

@@ -1,0 +1,15 @@
+data have;
+  label x = "The X Value";
+  x = 42; output;
+run;
+data want;
+  set have;
+  y = x + 1;
+  label y = "X Plus One";
+run;
+data _null_;
+  set want;
+  a = vlabel(x);
+  b = vlabel(y);
+  put "persist " a= b=;
+run;

@@ -1,0 +1,4 @@
+usubjid   V1       V2
+
+S01       Normal   High
+S02       Low      Normal

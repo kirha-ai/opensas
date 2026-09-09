@@ -1,0 +1,3 @@
+Obs   USUBJID   AVAL   doubled
+
+  1   01-001      10        20

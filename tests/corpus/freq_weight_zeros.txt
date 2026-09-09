@@ -1,0 +1,23 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              cat    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              4       57.14              4        57.14
+              B              3       42.86              7       100.00
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              cat    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              4       57.14              4        57.14
+              B              3       42.86              7       100.00
+              C              0        0.00              7       100.00
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              cat    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              Alpha          0        0.00              0         0.00
+              Mid            3       42.86              3        42.86
+              Zed            4       57.14              7       100.00

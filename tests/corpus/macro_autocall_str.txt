@@ -1,0 +1,5 @@
+[hi]
+[hix]
+[a b c]
+[a &b c]
+[ONE][ONE]

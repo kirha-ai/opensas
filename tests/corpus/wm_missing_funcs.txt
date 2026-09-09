@@ -1,0 +1,1 @@
+sum=60  mean=20  n=3  nmiss=2  min=10  max=30

@@ -1,0 +1,21 @@
+S1 a=r1aaaa  end=0
+S1 a=r2bbbb  end=0
+S1 a=r3cccc  end=0
+S2 a=r1aaaa  end=0
+S2 a=r2bbbb  end=0
+S3 a=r3cccc  end=0
+S4 HEADER name=smith
+S4 DETAIL amt=12.5
+S4 DETAIL amt=100
+S5 a=[AB ] b=[ ]
+S5 a=[AB ] b=[CDEF ]
+S6 T a=[ ]
+S6 T a=[EFGH ]
+S6 M a=[ ]
+S6 M a=[EFGH ]
+S7 x=aa  y=r1
+S7 a=AA  b=BB
+S8 val=[abc ]
+S8 val=[defgh ]
+S9 a=r1aaaa  b=r2bbbb  buf=[r2bbbb ]
+S9 a=r3cccc  b=r4dddd  buf=[r4dddd ]

@@ -1,0 +1,15 @@
+Obs   name    age
+
+  1   Alice    30
+  2   Bob      25
+                          The CONTENTS Procedure
+
+Data Set Name  people
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  age       Num     8
+1  name      Char    5

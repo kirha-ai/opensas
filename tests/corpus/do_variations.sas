@@ -1,0 +1,13 @@
+data _null_;
+  do i = 1 to 3;
+    put "up i=" i;
+  end;
+  do j = 10 to 6 by -2;
+    put "down j=" j;
+  end;
+  s = 0;
+  do k = 1 to 5 by 2;
+    s = s + k;
+  end;
+  put "sum s=" s;
+run;

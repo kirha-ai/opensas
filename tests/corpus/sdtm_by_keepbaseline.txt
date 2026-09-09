@@ -1,0 +1,5 @@
+Obs   USUBJID   VISITNUM   AVAL
+
+  1   01-001           1    120
+  2   01-002           1    130
+  3   01-003           1    118

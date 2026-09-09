@@ -1,0 +1,3 @@
+Obs   s_date      s_monyy   s_dow
+
+  1   04JUL2024   JUL2024   Thursday

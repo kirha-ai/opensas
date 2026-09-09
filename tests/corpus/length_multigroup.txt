@@ -1,0 +1,16 @@
+a=12345678 c=1.5 d2=7
+                          The CONTENTS Procedure
+
+Data Set Name  d
+Observations   1
+Variables      6
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  a         Char    8
+2  b         Char    8
+3  c         Num     4
+4  d1        Num     8
+5  d2        Num     8
+6  d3        Num     8

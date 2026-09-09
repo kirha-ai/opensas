@@ -1,0 +1,22 @@
+A1 [WORK.ONE] [2]
+A2 [WORK.TWO] [2]
+A3 [WORK.THREE] [2]
+GUARD: PROCESS 2 obs
+viaref built via syslast: WORK.THREE rows
+x
+
+1
+2
+N1 after-_null_ [WORK.VIAREF] [2]
+Z1 real-zero [WORK.EMPTYDS] [0]
+Q1 sql-create-table [WORK.SQLT] [2]
+M1 means-out [WORK.MEANOUT] [1]
+A4 append-creates-base [WORK.NEWBASE] [2]
+print creates nothing
+x
+
+1
+2
+P1 after-print [WORK.NEWBASE] [2]
+T1 [WORK.MIXEDCASE] [3]
+E1 before-fail [WORK.MARKER] [1]

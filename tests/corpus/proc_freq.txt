@@ -1,0 +1,7 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              grp    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              A              2       40.00              2        40.00
+              B              3       60.00              5       100.00

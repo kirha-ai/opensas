@@ -1,0 +1,4 @@
+ranuni_ok=1
+sort_num=1 2 3
+sort_char=apple banana cherry
+vname=x

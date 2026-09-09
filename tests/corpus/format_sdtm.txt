@@ -1,0 +1,4 @@
+S001 sex=Male age=Adult race=WHITE
+S002 sex=Female age=Pediatric race=BLACK
+S003 sex=Female age=Elderly race=ASIAN
+S004 sex=Unknown age=Adult race=OTHER

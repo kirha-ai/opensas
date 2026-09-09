@@ -1,0 +1,14 @@
+data _null_;
+  length k 8 v $8;
+  declare hash h();
+  h.defineKey("k");
+  h.defineData("k","v");
+  h.defineDone();
+  k=10; v="ten";    h.add();
+  k=20; v="twenty"; h.add();
+  k=30; v="thirty"; h.add();
+  declare hiter hi("h");
+  rc=hi.first(); put "first k=" k " v=" v;
+  rc=hi.next();  put "next k=" k " v=" v;
+  rc=hi.last();  put "last k=" k " v=" v;
+run;

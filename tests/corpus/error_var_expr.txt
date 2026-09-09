@@ -1,0 +1,3 @@
+row=1  conv err=1
+row=1  divz err=1
+row=2  divz err=1

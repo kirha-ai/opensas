@@ -1,0 +1,6 @@
+IN-PROC TITLE
+id    x
+
+ 1   10
+ 2   20
+MID-DATA FOOT

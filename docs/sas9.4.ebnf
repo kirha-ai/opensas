@@ -1,0 +1,1164 @@
+(* ===========================================================================
+   SAS 9.4 — EBNF Grammar
+   ---------------------------------------------------------------------------
+   A grammar for the SAS 9.4 language (Base SAS): the DATA step, global
+   statements, the PROC step (with the common procedures), PROC SQL, and the
+   macro language.
+
+   Notation (ISO/IEC 14977 EBNF):
+       =         defines a rule            ;    terminates a rule
+       |         alternation               [ ]  optional (zero or one)
+       { }       repetition (zero or more) ( )  grouping
+       "abc"     terminal / literal        (* *) comment
+       KEYWORDS are case-insensitive in SAS; written UPPER here for clarity.
+       Whitespace between tokens is insignificant except where noted
+       (column input, datalines). Statements end with ';'.
+
+   Sources:
+     - SAS 9.4 Language Reference: Concepts, 6th Ed. (lexical rules ch.3,
+       expressions & operator precedence ch.6 Table 6.6, WHERE ch.11).
+     - SAS 9.4 DATA Step Statements: Reference; Global Statements: Reference;
+       Data Set Options: Reference; SQL Procedure; Macro Language: Reference.
+     - Cross-checked against the opensas interpreter's tested parser.
+
+   Scope: Base SAS core. NOT covered here: the ~300 statistical/reporting
+   procedures beyond those listed, ODS, SAS/GRAPH, component objects beyond
+   hash, DS2/FedSQL, and platform-specific engines. The '(* opensas *)'
+   markers flag productions the opensas interpreter currently implements.
+   =========================================================================== *)
+
+
+(* === 0. PROGRAM STRUCTURE ================================================= *)
+
+program        = { global_statement | data_step | proc_step | macro_construct } ;  (* opensas *)
+
+step_boundary  = "RUN" ";" | "QUIT" ";" ;   (* opensas *)
+               (* also implicitly ended by the next DATA/PROC statement —
+                  fixture step_implicit_boundary *)
+
+
+(* === 1. LEXICAL GRAMMAR =================================================== *)
+
+(* 1.1 Comments — two forms, both skipped by the lexer *)
+comment        = "/*" { any_char } "*/"                 (* opensas *)
+               | "*" { any_char - ";" } ";" ;           (* statement comment;
+                                                           only at stmt start *)
+
+(* 1.2 Names (identifiers). SAS names: letter/underscore then letters, digits,
+       underscores; <= 32 chars; case-insensitive. VALIDVARNAME=ANY allows a
+       name literal 'name'n. *)
+name           = ( letter | "_" ) { letter | digit | "_" } ;   (* opensas *)
+name_literal   = "'" { any_char } "'" "n"                          (* opensas *)
+               | '"' { any_char } '"' "n" ;
+sas_name       = name | name_literal ;                             (* opensas *)
+two_level_name = sas_name "." sas_name ;   (* libref.member *)      (* opensas *)
+
+letter         = "A" | ... | "Z" | "a" | ... | "z" ;              (* opensas *)
+digit          = "0" | ... | "9" ;                                (* opensas *)
+
+(* 1.3 Numeric constants *)
+number         = digit { digit } [ "." { digit } ] [ exponent ]
+               | "." digit { digit } [ exponent ] ;                (* opensas *)
+exponent       = ( "E" | "e" ) [ "+" | "-" ] digit { digit } ;   (* opensas *)
+hex_number     = digit { hexdigit } ( "x" | "X" ) ;  (* opensas *)
+                 (* numeric hex constant: leads with a digit 0-9 (so `Fx` stays a
+                 name), 1-16 hex digits, trailing X. Language Reference: Concepts "Numeric Constants …
+                 Hexadecimal". The '534153'x string form is the separate
+                 hex_const production. Fixture hex_number. *)
+
+(* 1.4 String and typed literals. A quoted string with a trailing letter is a
+       typed constant (Concepts Table 6.2). Doubled quote = escaped quote. *)
+string         = "'" { any_char - "'" | "''" } "'"                 (* opensas *)
+               | '"' { any_char - '"' | '""' } '"' ;
+date_const     = string "d" ;   (* '01JAN2004'd  -> SAS date   *)   (* opensas *)
+time_const     = string "t" ;   (* '9:25:19pm't  -> SAS time   *)   (* opensas *)
+datetime_const = string ( "dt" ) ; (* '18JAN2005:9:27:05am'dt   *)  (* opensas *)
+bit_const      = string "b" ;   (* '00100000'b   bit testing   *)   (* opensas *)
+hex_const      = string "x" ;   (* '534153'x     hex -> bytes  *)   (* opensas *)
+
+(* 1.5 Missing values *)
+missing        = "."                                              (* opensas *)
+               | "." letter        (* special missing .A - .Z *) (* opensas: sorts ._ < . < .A..Z < number; displays as the letter *)
+               | "._" ;                                          (* opensas *)
+
+(* 1.6 Operators & punctuation (see 5. Expressions for precedence) *)
+operator       = "**" | "*" | "/" | "+" | "-"                     (* opensas *)
+               | "||" | "!!" | "¦¦"              (* concatenation — all three lex *)
+               | "="  | "^=" | "~=" | "<" | "<=" | ">" | ">="        (* opensas *)
+               | "=<" | "=>"      (* legacy LE / GE spellings — opensas *)
+               | "<>" | "><"                    (* MAX / MIN — opensas *)
+               | "&"  | "|" | "^" | "~"                           (* opensas *)
+               | "!" | "¦" | "¬" | "¬="      (* ALL FOUR LEX as aliases — `!` and
+                 `¦` are OR spellings, `¬` is NOT (GAP-whereorbang e952dbfc),
+                 and `¬=` is ONE .ne token by maximal munch (BUG-sqlnotequalunicode
+                 11f854d7; Language Reference: Concepts p.219 Table 11.3 lists `^= ~= ¬= <>` as the NE
+                 spellings). What fails loud ("unexpected character") is any
+                 OTHER 0xC2-led glyph — never a silent mis-read. *)
+               | mnemonic_op ;
+mnemonic_op    = "EQ"|"NE"|"LT"|"LE"|"GT"|"GE"|"IN"|"AND"|"OR"|"NOT"|"MIN"|"MAX" ; (* opensas *)
+punct          = ";" | "(" | ")" | "," | "{" | "}" | "[" | "]"    (* opensas *)
+               | "$" | ":" | "@" | "@@" ;              (* {} [] for arrays *)
+
+
+(* === 2. GLOBAL STATEMENTS ================================================= *)
+(* Executed immediately; valid between steps. Selected core set. *)
+
+global_statement =                                               (* opensas *)
+     libname_stmt | filename_stmt | include_stmt | options_stmt | title_stmt
+   | footnote_stmt | ods_stmt | x_stmt | run_stmt | missing_stmt ;
+   (* missing_stmt is IN this list so the Phase-G gate can see it, but it is
+     NOT marked — opensas rejects it at every site today (see below). *)
+
+libname_stmt   = "LIBNAME" libref [ engine ] [ '"' path '"' | "'" path "'" ]
+                 { libname_option } ";" ;                          (* opensas *)
+                 (* engine is VALIDATED against an allowlist in the
+                   parseLibnames pre-pass (NOTE-libnameengine): BASE and its
+                   documented alias V9 (native dir/.sas7bdat — "V9 is an alias
+                   for the BASE engine", Procedures Guide p.1032) and XPORT
+                   (transport files, Procedures Guide p.531); anything else —
+                   incl. doc-named but unimplemented engines (CVP/JMP/JSON/
+                   WebDAV, Statements Ref p.221) — FAILS LOUD with SAS's own
+                   "The <eng> engine cannot be found." Member format is still
+                   sniffed from the extension (csv/xpt/sas7bdat). Fixture
+                   libname_engine. *)
+libref         = name ;                                           (* opensas *)
+libname_option = "ACCESS" "=" ( "READONLY" | "TEMP" )             (* opensas: ACCESS=READONLY is ENFORCED
+                 — a write to the lib errors "read-only library" (audit probe);
+                 ACCESS=TEMP accepted (behaves read-write) *)
+               | name "=" value ;                                 (* opensas: COMPRESS=/REUSE=
+                 accepted inert (on-disk storage properties a reader is transparent
+                 to — opensas holds datasets in memory and writes csv/xpt through
+                 its own drivers); anything else FAILS LOUD in the parseLibnames
+                 whole-program pre-pass (GAP-libnameopt) — the audit's typo risk
+                 is closed: `acces=readonly` now errors instead of silently leaving
+                 the lib unprotected, and `bogusopt=1` no longer runs clean
+                 (captured-diagnostics test in src/main.zig). Fixture
+                 global_stmt_opts. *)
+
+filename_stmt  = "FILENAME" fileref [ device ] [ quoted_path ]
+                 { name "=" value } ";" ;                          (* opensas: fileref registration
+                 honored — a later INFILE/FILE naming the fileref resolves the path
+                 (fixture filename_infile, GAP-filenameref); a device other than
+                 DISK fails loud; forms with no path stay accepted-inert. Trailing
+                 name=value options (GAP-filenameopt): LRECL= / TERMSTR=CRLF|CR|
+                 LF|NL / RECFM=V accepted inert — the full-line reader splits on
+                 \n and trims \r, observing none of them (GH#64 ISS-infilelrecl
+                 reasoning); RECFM=<fixed-length> and any unknown option FAIL
+                 LOUD naming it (captured-diagnostics test in src/main.zig).
+                 Fixture global_stmt_opts. POSITION: valid mid-step too —
+                 main.segments hoists it out of a DATA/PROC step and EXECUTES it
+                 before the step (SAS: a global statement takes effect when
+                 encountered, during step compilation), so a mid-step re-bind
+                 is real (BUG-filenamemidstep, fixture bug_filenamemidstep);
+                 PROC SQL self-parses and stays loud on it (GAP-titleinsql
+                 exclusion). *)
+
+include_stmt   = ( "%INCLUDE" | "%INC" ) ( quoted_path | fileref )
+                 [ "/" { include_option } ] ";" ;                  (* opensas *)
+                 (* the macro preprocessor reads the file and splices its source in
+                   place (recursively expanded); a missing file degrades to a NOTE,
+                   not an error; trailing options are swallowed (see include_option).
+                   Handled in src/macro.zig handleInclude(). Fixture include_basic. *)
+include_option = "SOURCE2" | "NOSOURCE" | name [ "=" value ] ;    (* opensas: parsed and swallowed —
+                 SOURCE2's source echo is not modelled (audit probe: %include "f"
+                 / source2; runs, echoes nothing extra). Accepted-inert → NOT marked. *)
+
+missing_stmt   = "MISSING" letter { letter } ";" ;
+                 (* declares the characters raw numeric input reads as special
+                   missing values (.A-.Z) — a documented statement (Language Reference: Concepts
+                   printed p.519, a worked example shown TWICE), valid in open
+                   code and inside a DATA step; real SAS runs it clean.
+                   opensas today REJECTS it everywhere (GAP-inputlow-tick287
+                   F9, probes): open code → "statement missing is not valid in
+                   open code" rc 1 (site: main.zig); DATA step → "expected '='
+                   in assignment" rc 1 (site: parser.zig parseStmtRaw →
+                   parseAssign fall-through). Loud, but the DATA-step message
+                   names the WRONG construct (it is not an assignment) and
+                   BOTH rcs are the wrong class per D-009b(i): a gap on valid
+                   SAS is rc 2. Parse sites are parser.zig/main.zig — reported,
+                   not fixed (wrong-owner files for that ticket).
+                   NOT implemented, NOT marked. *)
+
+options_stmt   = "OPTIONS" { name [ "=" value ] } ";" ;           (* opensas *)
+                 (* honored: FMERR/NOFMERR, NOTES/NONOTES, YEARCUTOFF=, OBS=/FIRSTOBS=
+                   (global read bound — fixture global_obs_firstobs, BUG-globalobs),
+                   MISSING=, LINESIZE=/PAGESIZE= (LS=/PS=), DKRICOND=/DKROCOND=,
+                   BYLINE/NOBYLINE, VALIDVARNAME=; a ~70-name allowlist of genuinely
+                   unobservable display/log/session options is accepted inert
+                   (main.zig isInertOption, BUG-optionsstmtswallow); MINOPERATOR/
+                   MINDELIMITER= act at macro scan time (BUG-minoperatoropt, fixture
+                   macro_minoperator_opt); anything else FAILS LOUD "system option X
+                   is not recognized" (audit probe) *)
+title_stmt     = "TITLE" [ digit ] [ string ] ";" ;               (* opensas *)
+                 (* TITLE1..10 accumulate as state, printed atop each PROC
+                   PRINT/FREQ/MEANS/REPORT/TABULATE/SQL listing; also settable
+                   inside PROC SQL (GAP-titleinsql landed, fixture title_in_sql);
+                   an unnumbered TITLE cancels higher lines, `title;` clears all
+                   (bug_titlecancel, global_title) *)
+footnote_stmt  = "FOOTNOTE" [ digit ] [ string ] ";" ;            (* opensas *)
+                 (* FOOTNOTE1..10 likewise, printed below the listing
+                   (bug_titlecancel, title_in_sql) *)
+ods_stmt       = "ODS" { any_token } ";" ;                        (* opensas: destination open/close
+                 (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5 [CLOSE], _ALL_ CLOSE) and the
+                 results/graphics/escapechar toggles are accepted as listing no-ops
+                 — opensas renders to ONE output stream (main.zig); ODS OUTPUT/
+                 SELECT/EXCLUDE/TRACE FAIL LOUD by name (audit probe: ods select
+                 all; → "ODS select is not supported yet"). NOT marked: no ODS
+                 semantics execute — the accepted forms are deliberate no-ops. *)
+x_stmt         = "X" [ ( name | string ) { name | string } ] ";" ;  (* opensas: parsed,
+                 accepted inert — the shell command is NOT executed (audit probe:
+                 x "echo …"; runs clean, no command runs). Accepted-inert by
+                 design → NOT marked. The command words may be quoted OR bare
+                 (`x mkdir "/tmp/d";`) — the open-code recognizer (main.zig
+                 isXStmt) and the mid-step one (parser.zig's x/dm arm) accept the
+                 SAME forms, because the two disagreeing made one statement loud
+                 in open code and silent mid-step (BUG-xstmtopencodesplit, GH#83).
+                 Inert but NO LONGER SILENT anywhere (D-022, BUG-xstmtsilentnoop):
+                 mid-step AND open-code X emit `NOTE: X statement not executed …`
+                 — a NOTE, so the rc stays 0 and a program that legitimately
+                 carries an X is not errhalted (D-014). Fixture x_dm_note. *)
+run_stmt       = "RUN" ";" ;                                      (* opensas *)
+
+
+(* === 3. DATA STEP ======================================================== *)
+
+data_step      = data_stmt { ds_statement } step_boundary ;       (* opensas *)
+
+data_stmt      = "DATA" [ dataset { dataset } ] ";" ;             (* opensas *)
+dataset        = ( sas_name | two_level_name | "_NULL_" )
+                 [ "(" ds_option { ds_option } ")" ] ;             (* opensas *)
+
+(* 3.1 Data set options (in DATA/SET/MERGE/OUTPUT and PROC dataset refs) *)
+ds_option      = "KEEP"   "=" var_list                            (* opensas *)
+               | "DROP"   "=" var_list                            (* opensas *)
+               | "RENAME" "=" "(" { var "=" var } ")"             (* opensas *)
+               | "WHERE"  "=" "(" expression ")"                  (* opensas *)
+               | "IN"     "=" var                                 (* opensas *)
+               | "FIRSTOBS" "=" number                             (* opensas: 1-based first obs read *)
+               | "OBS"    "=" number                               (* opensas: last obs NUMBER read (upper bound) *)
+               ;   (* the supported set is exactly KEEP/DROP/RENAME/WHERE/IN/
+                 FIRSTOBS/OBS (io.zig applyDsOptions): any other name= option —
+                 incl. KEY=, WHEREUP=, LABEL=, or a typo like WEHRE= — FAILS LOUD
+                 "dataset option X= is not supported" (BUG-wheredsoptswallow).
+                 The former name=value catch-all was deleted with that fix: it
+                 was the grammar-level sanction for silently swallowed options. *)
+
+(* 3.2 DATA-step statements *)
+ds_statement   =                                                 (* opensas *)
+     assignment_stmt | sum_stmt | if_then_stmt | select_stmt
+   | do_stmt | do_iter_stmt | do_while_stmt | do_until_stmt | do_over_stmt
+   | set_stmt | merge_stmt | by_stmt | update_stmt | modify_stmt
+   | input_stmt | datalines_stmt | infile_stmt | put_stmt | putlog_stmt | file_stmt
+   | output_stmt | return_stmt | delete_stmt | stop_stmt | abort_stmt
+   | retain_stmt | array_stmt | length_stmt | label_stmt
+   | format_stmt | informat_stmt | attrib_stmt
+   | keep_stmt | drop_stmt | rename_stmt | where_stmt | subset_if_stmt
+   | call_stmt | link_stmt | goto_stmt | declare_stmt | hash_method_stmt
+   | new_stmt | null_stmt ;
+
+assignment_stmt = variable [ "{" expression "}" ] "=" expression ";" ; (* opensas *)
+sum_stmt       = variable "+" expression ";" ;   (* accumulator, auto-retain *) (* opensas *)
+
+if_then_stmt   = "IF" expression "THEN" ds_statement                (* opensas *)
+                 [ "ELSE" ds_statement ] ;
+subset_if_stmt = "IF" expression ";" ;   (* subsetting IF *)         (* opensas *)
+
+select_stmt    = "SELECT" [ "(" expression ")" ] ";"                (* opensas *)
+                   { "WHEN" "(" expression { "," expression } ")" ds_statement }
+                   [ "OTHERWISE" ds_statement ]
+                 "END" ";" ;
+
+do_stmt        = "DO" ";" { ds_statement } "END" ";" ;              (* opensas *)
+do_iter_stmt   = "DO" var "=" do_spec { "," do_spec } ";"          (* opensas *)
+                   { ds_statement } "END" ";" ;
+do_spec        = expression [ "TO" expression ] [ "BY" expression ]  (* opensas *)
+                 [ "WHILE" "(" expression ")" | "UNTIL" "(" expression ")" ] ;
+do_while_stmt  = "DO" "WHILE" "(" expression ")" ";"               (* opensas *)
+                   { ds_statement } "END" ";" ;
+do_until_stmt  = "DO" "UNTIL" "(" expression ")" ";"               (* opensas *)
+                   { ds_statement } "END" ";" ;
+do_over_stmt   = "DO" "OVER" array_name ";"                        (* opensas *)
+                   { ds_statement } "END" ";" ;
+
+set_stmt       = "SET" [ dataset { dataset } ]                     (* opensas: multiple datasets
+                   concatenate; POINT=/NOBS=/END= honored (fixtures set_stmt_order,
+                   set_stmt_order_point, dowloop) — but KEY= below FAILS LOUD, so
+                   the production is NOT marked *)
+                 [ "POINT" "=" var ] [ "NOBS" "=" var ] [ "END" "=" var ]
+                 [ "KEY" "=" var ]   (* parsed, then FAILS LOUD "set KEY= (indexed
+                   access) is not supported yet" — no index layer (GAP-modifykey,
+                   Language Reference: Concepts p.552, pp.598-608); NOT implemented *)
+                 ";" ;
+merge_stmt     = "MERGE" dataset { dataset } ";" ;                 (* opensas *)
+by_stmt        = "BY" [ "DESCENDING" ] var                        (* opensas: DESCENDING
+                   (per-variable — Statements ref p.39-43, Example 2 p.43) and
+                   NOTSORTED (statement-wide, contiguous-run grouping, p.41)
+                   honored in BOTH the DATA step and the PROC statement: one
+                   shared scanner (parser.scanByList) feeds both, so the
+                   contexts cannot disagree (GAP-procbydescending, tick356 F2,
+                   closed). Sortedness is checked per key — descending input
+                   under BY DESCENDING, ascending otherwise — and NOTSORTED
+                   drops the check. GROUPFORMAT still FAILS LOUD
+                   (GAP-bygroupformat — exec groups on raw values; also
+                   DATA-step-only syntax, p.40 restriction). NOT implemented *)
+                 { [ "DESCENDING" ] var } [ "NOTSORTED" ] [ "GROUPFORMAT" ] ";" ;
+update_stmt    = "UPDATE" dataset dataset                          (* opensas *)
+                 [ "UPDATEMODE" "=" ( "MISSINGCHECK" | "NOMISSINGCHECK" ) ]
+                 ";" ;
+                 (* parsed + executed — master+transaction, keyed by BY (exec.zig
+                   buildUpdate/updateNext). UPDATEMODE= honored: MISSINGCHECK
+                   (default) keeps the master on a missing transaction value,
+                   NOMISSINGCHECK lets the missing overwrite; special missings
+                   (.A) overwrite in both modes; any other value fails loud.
+                   Fixtures update_master, update_updatemode (GAP-updatemode
+                   landed). *)
+modify_stmt    = "MODIFY" dataset [ dataset ]                     (* opensas: master + transaction,
+                   keyed by BY — edits the master in place (fixtures
+                   modify_by_p595, modify_by_transdriven) — but KEY= below FAILS
+                   LOUD, so the production is NOT marked *)
+                 [ "KEY" "=" var ]   (* parsed, then FAILS LOUD "modify KEY= (indexed
+                   access) is not supported yet" (GAP-modifykey, Language Reference: Concepts p.565);
+                   NOT implemented *)
+                 ";" ;
+
+input_stmt     = "INPUT" { input_item } [ "@" | "@@" ] ";" ;       (* opensas *)
+input_item     = var [ "$" ] [ informat_ref ]      (* list input *)   (* opensas *)
+               | var [ "$" ] column_range           (* column input *) (* opensas *)
+               | var informat_ref                   (* formatted *)     (* opensas *)
+               (* on any of the three var arms above, between the var and its
+                 informat: "?" | "??" suppress the invalid-data NOTE (and
+                 _ERROR_=1) on a bad field (GAP-inputstmtqq, fixtures
+                 input_qq_anydt, input_invalid_note), and ":" informat_ref is
+                 MODIFIED list input — token-then-informat, not fixed-width
+                 (fixtures input_coloninformat_width/_at/_at_oob) — opensas *)
+               | var "-" name                        (* numbered range
+                 `input Score1-Score3;` — shared expandRange helper
+                 (GAP-inputnumrange, fixture input_numrange) *)   (* opensas *)
+               | name "{" expression "}"             (* array-element target
+                 `input v{i}` (GAP-inputarrayelem, fixture input_array_elem) *) (* opensas *)
+               | var "&"                             (* documented list
+                 modifier (Statements p.193: values with embedded blanks) —
+                 FAILS LOUD rc 2 as a named gap (GAP-inputmods, audit probe).
+                 NOT implemented, NOT marked *)
+               | var "~"                             (* documented list
+                 modifier (quoted values) — same named-gap class, rc 2
+                 (GAP-inputmods). NOT implemented, NOT marked *)
+               | var "="                             (* named input `x=` —
+                 same named-gap class, rc 2 (GAP-inputmods). NOT implemented,
+                 NOT marked *)
+               | "@" number | "@" name | "@" "(" expression ")" | "+" number  (* column pointers *)  (* opensas *)
+               | "@" string                          (* column pointer to just
+                 past the next occurrence of the literal in the record
+                 (GAP-inputatstring, fixture input_at_string) *)   (* opensas *)
+               | "+" name | "+" "(" expression ")"    (* documented relative
+                 pointer forms (Statements Table 2.3) — named gaps, rc 2
+                 (GAP-inputpointerguard, fixture input_ptr_novar).
+                 NOT implemented, NOT marked *)
+               | "#" name | "#" "(" expression ")"    (* documented line
+                 pointer forms (same table) — named gaps, rc 2
+                 (GAP-inputpointerguard, fixture input_hashvar).
+                 NOT implemented, NOT marked *)
+               | "#" number | "/" | "@" | "@@" ;     (* opensas: @col, +n, #n
+                                                  and / all move the read cursor
+                                                  (a BACKWARD #n revisits an earlier
+                                                  record of the group — fixtures
+                                                  input_hashline_backward,
+                                                  input_hashline_backward_mode);
+                                                  trailing @@ holds the line across
+                                                  iterations (multiple obs per line);
+                                                  a single trailing @ holds it for the
+                                                  next INPUT in the same iteration
+                                                  (released at the top of the step) *)
+column_range   = number [ "-" number ] ;                            (* opensas *)
+               (* the documented trailing DECIMALS parameter `input x 1-5 .2;`
+                 (Statements: column input, d = implied decimal places) is
+                 VALID SAS opensas rejects — today with the misleading rc-1
+                 "expected ';' after input" fall-through, the parse site's
+                 column arm never consuming the parameter
+                 (GAP-inputlow-tick287 F10; site is parser.zig, reported not
+                 fixed — wrong-owner file). NOT marked: it used to ride this
+                 production's marker with no passing fixture — the exact
+                 false-marker class the Phase-G gate counts. *)
+informat_ref   = [ "$" ] name [ number ] [ "." [ number ] ] ;         (* opensas *)
+
+datalines_stmt = ( "DATALINES" | "CARDS" ) ";" data_lines ";" ;    (* opensas *)
+data_lines     = { raw_text_line } ";" ;   (* opensas *)
+                 (* raw until a line with only ';' — every datalines fixture *)
+
+infile_stmt    = "INFILE" ( fileref | quoted_path | "DATALINES" )   (* opensas *)
+                 { infile_option } ";" ;
+                 (* a FILENAME-registered fileref resolves to its path
+                   (filename_infile); a quoted path reads the external text file
+                   line by line; DATALINES reads the inline stream
+                   (infile_datalines_plain, incl. options after DATALINES) *)
+infile_option  = "DLM" "=" value | "DELIMITER" "=" value | "DSD"   (* opensas: honored — DLM is
+                 a LIST of single-char delimiters (BUG-dlmmultichar; the multi-char
+                 DLMSTR= form fails loud); DSD quotes/merges per SAS (file_dlm_dsd) *)
+               | "FIRSTOBS" "=" number | "OBS" "=" number          (* opensas: honored
+                 (fixture infile_obs_ls) *)
+               | "LINESIZE" "=" number | "LS" "=" number           (* opensas: honored —
+                 caps each record at n columns (FEAT-infileobslinesize, fixture
+                 infile_obs_ls) *)
+               | "END" "=" name                             (* opensas: honored — temp flag,
+                 1 on the last record (FEAT-infileend, fixtures infile_end,
+                 infile_end_multirec, infile_end_extfile_multirec) *)
+               | "MISSOVER" | "TRUNCOVER"                          (* opensas: honored — a short
+                 record sets the remaining vars missing (TRUNCOVER keeps a partial
+                 last field); FLOWOVER (default) and STOPOVER (loud error at record
+                 end) also honored — BUG-infilemissover *)
+               | "FLOWOVER"                                     (* opensas: honored, the
+                 default (fixtures input_dlm_flowover, input_flowover_column) *)
+               | "STOPOVER"                                     (* opensas: honored — a short
+                 record is a LOUD data error, rc 1 (fixture infile_stopover,
+                 GAP-inputlow-tick287 F12) *)
+               | "LRECL" "=" number                            (* accepted-INERT: records
+                 are read whole, so logical record length has no runtime effect
+                 (ISS-infilelrecl; fixture infile_lrecl pins the parse).
+                 Accepted-inert → NOT marked (the include_option convention) *)
+               | "NOPAD"                                        (* accepted-inert: the
+                 documented DEFAULT of the PAD|NOPAD entry (printed p.135) —
+                 opensas never pads, so the option asks for exactly what happens
+                 (D-018). Accepted-inert → NOT marked *)
+               | "PAD" | "DLMSTR" "=" value                    (* documented but NOT
+                 implemented (printed p.135 / p.128) — NAMED gaps, rc 2
+                 (GAP-ebnfholes-tick356, split off the rc-1 typo catch-all;
+                 fixtures rc_infile_pad, infile_pad_failsloud, rc_infile_dlmstr).
+                 NOT marked *)
+               | "UNBUFFERED" | "UNBUF"                         (* documented (printed
+                 p.138) but NOT implemented — named gap, rc 2 (GAP-infileoptrc,
+                 fixture rc_infile_unbuffered). NOT marked *)
+               | "EOF" "=" name | "EOV" "=" name                (* documented (printed
+                 p.130) but NOT implemented — named gaps, rc 2 (GAP-infileoptrc /
+                 GAP-infileeov, fixtures rc_infile_eof, rc_infile_eov).
+                 NOT marked *)
+               | "EXPANDTABS" | "NOEXPANDTABS" | "RECFM" "=" value
+               | "FILEVAR" "=" name | "LENGTH" "=" name | "ENCODING" "=" value
+                 (* documented INFILE options (Statements: INFILE; the
+                   GAP-inputlow-tick287 F11 batch) that CORRECTLY fail loud by
+                   name — but today via the rc-1 unknown-option catch-all below,
+                   so the rc CLASS is the DEC-abortrcvsD009 open bug (a gap
+                   exiting 1 vs D-009's 2); re-classing is parser.zig work,
+                   not this grammar's. NOT implemented, NOT marked *)
+               | name [ "=" value ] ;                            (* NOT implemented: any
+                 UNKNOWN option fails loud by name at rc 1 (audit probes;
+                 BUG-infilemissover's fail-loud wall — a swallowed record-boundary
+                 option silently corrupts data). NOT marked *)
+
+put_stmt       = "PUT" { put_item } ";" ;                          (* opensas *)
+put_item       = expression [ ":" ] [ format_ref ] [ "-R" | "-L" ] | string | var "=" [ format_ref ] [ "-R" | "-L" ]  (* opensas *)
+               | "@" number | "@" "(" expression ")"                     (* opensas *)
+               | "+" number | "#" number                            (* opensas: relative
+                 column and absolute line pointers (GAP-putcolptr, fixture
+                 put_colptr). #n is FORWARD-only — a backward move fails loud
+                 at parse time "put: #n cannot move to an earlier line", rc 1
+                 (parser.zig; audit probe GAP-inputlow-tick287 F11); an
+                 oversized pointer target (>32767) fails loud (BUG-putptroom,
+                 fixture put_ptr_cap) *)
+               | "@" name                                          (* documented
+                 @numeric-variable (Statements p.269, Table 2.5) — named gap,
+                 rc 2 (GAP-putptrslice, fixture put_atvar; write it @(var)
+                 instead). NOT implemented, NOT marked *)
+               | "@" string                                        (* @'string' string
+                 search is an INPUT-only pointer control (Table 2.3, not PUT's
+                 Table 2.5) — real SAS rejects it: USER error, rc 1, deliberately
+                 NOT re-tagged a gap (GAP-putptrslice, fixture put_at_string).
+                 NOT marked *)
+               | "@" | "@@"                                        (* trailing line-hold
+                 specifiers (Table 2.5) — named gap, rc 2 (GAP-putptrslice,
+                 fixture put_at_hold). NOT implemented, NOT marked *)
+               | "/" | "_ALL_" | var "=" ;
+               (* expression, string, var= named form (put_named), "/" newline,
+                 "_ALL_" (put_all), @n column pointer (forward-only, put_colptr),
+                 @(expr) column pointer evaluated per PUT and clamped by the SAME
+                 io.clampCol as @n/@var/INPUT's @(expr) (GAP-atexpression-put,
+                 fixture put_atexpression),
+                 "-R"/"-L" right/left field justification (put_align, GAP-putalign
+                 landed),
+                 ":" MODIFIED LIST OUTPUT (GAP-putcolonformat landed, fixture
+                 put_colon_format) — Statements printed p.297's syntax slot
+                 `variable < : | ~> format.` and p.298: "All leading and trailing
+                 blanks are deleted, and each value is followed by a single
+                 blank". Distinct from INPUT's ":" (p.193), which governs where
+                 READING stops; the volumes never equate them.
+                 @(character-expression) and "-C" center FAIL LOUD; the
+                 modifier's only documented sibling "~" (p.298 — quotes the
+                 value, requires FILE DSD) is a NAMED gap arm, rc 2 (fixture
+                 rc_put_tilde_modifier) — the lexer keeps the source byte on
+                 the caret token, so a "^" typo in the same slot stays the
+                 rc-1 catch-all (rc_put_caret_typo, GAP-puttildemodifier). *)
+putlog_stmt    = "PUTLOG" { put_item } ";" ;                       (* opensas *)
+                 (* PUT that always targets the SAS log; identical item syntax,
+                   reuses parsePut — fixture putlog *)
+file_stmt      = "FILE" ( fileref | quoted_path | "PRINT" | "LOG" ) (* opensas *)
+                 { file_option } ";" ;
+                 (* a fileref resolves via FILENAME (filename_infile); a quoted
+                   path — `put` writes to that external file; PRINT/LOG route to
+                   the listing/log (file_print_log) *)
+file_option    = "DLM" "=" value | "DELIMITER" "=" value | "DSD"   (* opensas: honored —
+                 DLM= sets the PUT list separator and DSD quotes values
+                 (file_dlm_dsd, BUG-fileopts) *)
+               | "MOD" | "PRINT" | "FOOTNOTES" | "NOFOOTNOTES"     (* documented FILE
+                 options (Statements: FILE — MOD appends to an existing file,
+                 PRINT routes print-formatted output, FOOTNOTES|NOFOOTNOTES
+                 toggles the footnote lines; the GAP-inputlow-tick287 F11 batch)
+                 that CORRECTLY fail loud by name — but today via the rc-1
+                 unknown-option catch-all below, so the rc CLASS is the
+                 DEC-abortrcvsD009 open bug (a gap exiting 1 vs D-009's 2);
+                 re-classing is parser.zig work, not this grammar's.
+                 NOT implemented, NOT marked *)
+               | name [ "=" value ] ;                            (* NOT implemented: an
+                 unknown FILE option fails loud "FILE option X is not supported"
+                 at rc 1 (BUG-fileopts's fail-loud wall — a swallowed DLM=/DSD
+                 silently misformats the output file). NOT marked *)
+
+output_stmt    = "OUTPUT" { dataset } ";" ;                        (* opensas *)
+return_stmt    = "RETURN" ";" ;                                   (* opensas *)
+delete_stmt    = "DELETE" ";" ;                                    (* opensas *)
+stop_stmt      = "STOP" ";" ;                                      (* opensas *)
+abort_stmt     = "ABORT" [ "ABEND" | "RETURN" ] [ number ] ";" ;   (* opensas: every arm
+                   honored, incl. the optional-rc-after-RETURN arm — `abort return;`
+                   (no n) is legal SAS (Statements Ref printed p.16, marker "=== pdf
+                   27 ==="; the doc's own z/OS example runs it bare, printed p.19)
+                   and takes the no-n error-condition default rc 1, ABEND-no-n's
+                   exec-side default (GAP-ebnfholes-tick356, fixture
+                   abort_return_norc). A NON-number after RETURN stays a loud typo.
+                   NOLIST / CANCEL are outside this grammar body and still fail loud. *)
+                 (* terminates processing like STOP — abort; (ctl_abort), abort
+                   return 3; (abort_rc) and abort abend; all end the run; the rc
+                   IS the process exit code (probes: abend 4 → exit 4, return 3
+                   → exit 3 — SAS-batch-like, an ABORT-shaped exception to the
+                   D-009 0/1/2 contract; the old "not propagated" claim here was
+                   STALE — findings tick356) *)
+
+retain_stmt    = "RETAIN" { var [ initial_value ] } ";" ;          (* opensas *)
+                 (* a bare single value seeds ALL vars (GH#51); a parenthesised
+                   (v1 v2 …) binds STRICTLY positionally — fewer values leaves the
+                   rest missing, MORE is an error (GAP-retainpareninit landed,
+                   fixture retain_paren_init); numbered ranges expand (by_retain);
+                   special-missing inits work (`retain t .A`) *)
+initial_value  = constant | "(" { constant } ")" ;                 (* opensas *)
+                 (* RETAIN + ARRAY parenthesised inits; constant = number |
+                   string | missing (incl. special .A-.Z) *)
+
+array_stmt     = "ARRAY" array_name                               (* opensas *)
+                 "{" ( number | "*" ) "}" [ "$" [ number ] ]
+                 [ var_list ] [ "(" { constant } ")" ] ";" ;
+                 (* {} may also be [] or () *)
+
+length_stmt    = "LENGTH" { ( var | special_var_list | var "-" var ) { var | special_var_list | var "-" var } [ "$" ] number } ";" ;  (* opensas *)
+                 (* several var-groups per statement, mixed $/numeric, var1-varN
+                   numbered range expands (GH#32) — fixture length_multigroup.
+                   A special_var_list group names no NEW variable (p.24 list,
+                   never a var of its own — BUG-speciallistphantom, GH#79): the
+                   vars it names are established (first length wins) or not yet
+                   born, so the statement seeds nothing — fixture attrib_special_list
+                   case B *)
+label_stmt     = "LABEL" { var "=" string } ";" ;                 (* opensas *)
+format_stmt    = "FORMAT" { ( var | special_var_list ) { var | special_var_list } [ format_ref ] } ";" ;     (* opensas *)
+informat_stmt  = "INFORMAT" { ( var | special_var_list ) { var | special_var_list } [ informat_ref ] } ";" ; (* opensas *)
+                 (* a special_var_list "variable" expands against the PDV and the
+                   ref attaches per member — `format _all_ 8.2;` formats every var
+                   (fixture attrib_special_list case C), and the omitted-ref removal
+                   over `_ALL_` clears them all (case E). The num/char format-type
+                   guard runs per member: `format _all_ best8.;` over a PDV holding
+                   a CHARACTER variable is LOUD rc 1 (attrib_special_conflict) —
+                   SAS errors that attach whichever way the variable is named. *)
+                 (* the OMITTED ref is the documented removal form, not a typo:
+                   printed p.112 "To disassociate a format from a variable, use the
+                   variable in a FORMAT statement without specifying a format … In a
+                   DATA step, place this FORMAT statement after the SET statement",
+                   worked at printed p.115 Ex.3 (`format x;`). Implemented
+                   (BUG-formatremoval; fixtures format_removal, attrib_empty_value
+                   cases A/B) — and it is the route a DATA-step `attrib v format=;`
+                   is now told to use. ponytail: the cleared FORMAT rides a "$."
+                   sentinel, so PROC CONTENTS shows `$.` where SAS shows blank *)
+attrib_stmt    = "ATTRIB" { ( var | special_var_list ) { var | special_var_list } attrib } ";" ;  (* opensas *)
+                 (* a special_var_list group (_ALL_/_NUMERIC_/_CHARACTER_) is the
+                   p.24 name list ATTRIB delegates to at printed p.34 ("any form
+                   that SAS allows"): FORMAT=/INFORMAT=/LABEL= apply per member
+                   and the keyword mints NO variable of its own — it used to seed
+                   a phantom `_all_ Num 8` column at rc 0 (BUG-speciallistphantom,
+                   GH#79; fixtures attrib_special_list, attrib_special_conflict) *)
+attrib         = "LENGTH" "=" [ "$" ] number | "FORMAT" "=" format_ref (* opensas *)
+               | "INFORMAT" "=" informat_ref | "LABEL" "=" string ;
+               (* all four clauses APPLY: LENGTH= types+sizes (attrib_length);
+                 FORMAT= renders, and a $ format with no LENGTH= types char at the
+                 spec width (attrib_char_format, BUG-attribfmttype); INFORMAT=
+                 rides onto the variable like the INFORMAT statement
+                 (attrib_informat, BUG-attribinformat); LABEL= shows in CONTENTS,
+                 and a label-only ATTRIB does NOT type the var (attrib_label_type,
+                 GH#11).
+                 The operand of FORMAT=/INFORMAT= is REQUIRED — printed p.34 gives
+                 `FORMAT=format` / `INFORMAT=informat` unbracketed, next to the
+                 bracketed `LENGTH=<$>length`, and `format=;` appears nowhere in the
+                 Statements Ref. The empty spelling is PROC DATASETS MODIFY only
+                 (Procedures Guide p.691 Ex.1, `attrib _all_ format=;` — honoured
+                 there, fixtures dd_format_strip / proc_datasets_contents), which
+                 printed p.36 keeps out of the DATA step: "You can use ATTRIB in a
+                 PROC step, but the rules are different." So a DATA-step
+                 `attrib v format=;` FAILS LOUD at rc 1 (it was a silent rc-0 no-op
+                 that kept the old format — BUG-attribemptyvaluenoop, D-002); the
+                 documented removal is the bare format_stmt/informat_stmt below
+                 (p.112, worked p.115 Ex.3). Fixture attrib_empty_value *)
+
+keep_stmt      = "KEEP"   var_list ";" ;                           (* opensas *)
+drop_stmt      = "DROP"   var_list ";" ;                           (* opensas *)
+rename_stmt    = "RENAME" { var "=" var } ";" ;                    (* opensas *)
+where_stmt     = "WHERE"  expression ";" ;                         (* opensas *)
+                 (* also the WHERE-only operators BETWEEN/CONTAINS(?)/LIKE/
+                   IS [NOT] NULL|MISSING, accepted here via the predicate desugar
+                   (this grammar lists them under sql_pred; fixtures
+                   where_ch11_operators, where_between_expr, where_contains,
+                   where_like, set_where_isnull); BUT the word forms MIN/MAX are
+                   refused in a WHERE predicate — loud (GAP-whereminmax), and
+                   single "!" as OR is not lexed (GAP-whereorbang) — see
+                   minmax_expr / or_expr *)
+
+call_stmt      = "CALL" name "(" [ arg_list ] ")" ";" ;            (* opensas *)
+                 (* ~45 routines execute: MISSING, SYMPUT/SYMPUTX, SORTN/SORTC/
+                   SORT, SCAN, CATS/CATT/CATX, the combinatorics family
+                   (ALLCOMB/ALLCOMBI/ALLPERM/GRAYCODE/LEXCOMB/LEXCOMBI/LEXPERK/
+                   LEXPERM/RANCOMB/RANPERK/RANPERM), the RAN* random streams +
+                   STREAMINIT/STREAM/STREAMREWIND, the PRX* family, EXECUTE,
+                   LABEL, VNAME/VNEXT, LOGISTIC/SOFTMAX/TANH/STDIZE/IS8601_CONVERT
+                   (fixtures call_routines + the call_* family); an UNKNOWN
+                   routine FAILS LOUD "CALL X() is not supported" and aborts the
+                   step (NOTE-callnohalt) — like function_call, the generic
+                   dispatch + loud unknowns earns the marker *)
+link_stmt      = "LINK" name ";" ;                                (* opensas *)
+goto_stmt      = ( "GO" "TO" | "GOTO" ) name ";" ;                (* opensas *)
+null_stmt      = ";" ;                                            (* opensas *)
+
+(* 3.3 Hash / component objects (DATA step component objects) *)
+declare_stmt   = ( "DECLARE" | "DCL" ) "HASH" object_name           (* opensas *)
+                 [ "(" { hash_arg } ")" ] ";"
+               | ( "DECLARE" | "DCL" ) "HITER" object_name          (* opensas *)
+                 "(" string ")" ";" ;
+hash_arg       = ( "DATASET" | "ORDERED" | "MULTIDATA" | "DUPLICATE" | "HASHEXP" )
+                 ":" ( string | number ) [ "," ] ;   (* opensas: DATASET (rows loaded
+                   at DEFINEDONE), ORDERED (sorted iteration/OUTPUT), MULTIDATA
+                   (multiple records per key; FIND_NEXT walks them), DUPLICATE
+                   ('r'eplace / 'e'rror / default keep-first) are all honored;
+                   HASHEXP accepted as a benign sizing hint, not honored *)
+               | ( "SUMINC" | "KEYSUM" ) ":" ( string | number ) [ "," ] ;
+                 (* NOT implemented — SUMINC: fails loud (no SUM/SUMDUP key
+                   summaries); KEYSUM: fails loud as an undefined argument tag *)
+hash_method_stmt = object_name "." method "(" [ arg_list ] ")" [ ";" ] ; (* opensas *)
+hash_attr_ref  = object_name "." ( "NUM_ITEMS" | "ITEM_SIZE" ) [ "(" ")" ] ; (* opensas *)
+                 (* the attribute form (Language Reference: Concepts p.623, GAP-hashnumitems): parenless
+                   (`n = h.num_items;`) or with empty parens, as an assignment RHS
+                   or a DO-loop bound; NUM_ITEMS is the live entry count
+                   (hash_attr_numitems), ITEM_SIZE an approximate per-item byte
+                   width (hash_attr_itemsize); passing an argument fails loud *)
+new_stmt       = variable "=" "_NEW_" ( "HASH" "(" [ hash_arg { hash_arg } ] ")"
+                                      | "HITER" "(" string ")" ) ";" ;   (* opensas *)
+                 (* opensas: `h = _new_ hash(...)` desugars to the same AST as
+                   declare hash (GAP-hashnew, test in parser.zig), and
+                   `hi = _new_ hiter('h')` desugars to the declare-hiter form
+                   (GAP-hashnewhiter, ac818263 — Language Reference: Concepts p.624 states the
+                   equivalence; the two spellings share one AST and one exec
+                   path, pinned by expectEqualDeep in the parser test and by an
+                   end-to-end first()/next() iteration probe). Any other _new_
+                   target (javaobj) fails loud — outside this grammar body. *)
+method         = "DEFINEKEY" | "DEFINEDATA" | "DEFINEDONE"        (* opensas *)
+               | "ADD" | "FIND" | "REPLACE" | "REMOVE" | "OUTPUT" (* opensas *)
+               | "CHECK" | "NEXT" | "FIRST" | "LAST"   (* opensas: all supported incl. LAST (exec.zig hashIterMove .last; fixture hash_iter_last) *)
+               | "PREV" | "FIND_NEXT"                          (* opensas: PREV walks a
+                   descending hiter step; FIND_NEXT continues a MULTIDATA key's
+                   records (exec.zig hashOp) *)
+               | "CLEAR" | "DELETE" ;                          (* opensas: CLEAR empties
+                   the object (it stays usable); DELETE retires the OBJECT itself —
+                   later ops fail loud "not declared" (GAP-hashitermethods) *)
+
+special_var_list = "_ALL_" | "_NUMERIC_" | "_CHARACTER_" ;   (* opensas: the canonical
+                 variable name lists (Statements Ref printed p.24) — resolved
+                 against the PDV wherever a statement takes variables (RETAIN/
+                 KEEP/DROP, ARRAY/OF, FORMAT/INFORMAT/LENGTH/ATTRIB), never a
+                 variable of their own (BUG-retainspecial, BUG-keepdropspecial,
+                 BUG-speciallistphantom) *)
+var_list       = var { [ "," ] var } | var "-" var        (* numbered range v1-vn *)  (* opensas:
+                 comma/space list + numbered range in KEEP/DROP/ARRAY/OF context
+                 (eg_var_list, put_var_range) *)
+               | name ":" ;                               (* opensas: prefix list —
+                 honored in DROP/KEEP (drop_colon), PROC DATASETS
+                 (datasets_delete_colon), the OF function context
+                 (GAP-ofcolonprefix: sum(of x:) — the parser defers to eval as a
+                 synthetic __ofprefix arg, expanded against the runtime PDV;
+                 fixtures of_colon_prefix, of_colon_prefix_nomatch) and PROC
+                 PRINT's var/id/sum (GAP-varcolonprefix: collectNames keeps
+                 "pfx:", expandVarList expands it against the dataset in PDV
+                 order; fixtures var_colon_prefix, var_colon_prefix_nomatch) *)
+var            = sas_name ;   (* opensas *)
+variable       = sas_name ;   (* opensas *)
+array_name     = name ;   (* opensas *)
+object_name    = name ;   (* opensas *)
+
+
+(* === 4. EXPRESSIONS ====================================================== *)
+(* Precedence & associativity per Concepts Table 6.6. Lowest-binding rule
+   first; each level descends to the next. Group I is right-associative. *)
+
+expression     = or_expr ;                                        (* opensas *)
+
+or_expr        = and_expr   { ( "|" | "!" | "¦" | "OR"  ) and_expr } ;   (* Group VII *) (* opensas *)
+                          (* every spelling honored: "!" and "¦" lex to the pipe
+                            token (GAP-whereorbang landed — the old "not lexed —
+                            loud" note here was STALE); fixtures expr_alt_ops +
+                            or_expr_arms, in IF and WHERE alike *)
+and_expr       = not_expr   { ( "&" | "AND" )       not_expr } ;   (* Group VI  *) (* opensas *)
+not_expr       = [ "NOT" | "^" | "~" | "¬" ] compare_expr ;        (* prefix    *) (* opensas *)
+                          (* all four spellings honored — "¬" lexes to the caret
+                            token (the old "not lexed — loud" note was STALE);
+                            fixtures expr_alt_ops + not_expr_arms *)
+compare_expr   = concat_expr [ ( compare_op [ ":" ] ) concat_expr  (* Group V   *) (* opensas *)
+                            | in_test ] ;
+compare_op     = "=" | "EQ" | "^=" | "~=" | "NE" | "<" | "LT"    (* opensas *)
+               | "<=" | "LE" | ">" | "GT" | ">=" | "GE"
+               | "=<" | "=>"   (* opensas: the LEGACY spellings of LE / GE, still
+                          accepted "for compatibility with previous releases of
+                          SAS" (Language Reference: Concepts p.127 Table 6.4 fn.2/3). Same tokens as
+                          <= / >=, so precedence + chaining are shared; the same
+                          footnotes exclude them from a WHERE clause, and the
+                          exclusion covers the WHOLE PROC SQL surface (295181bb
+                          — SQL Procedure ref Table 8.2, printed p.403-404,
+                          carries no "=<"/"=>" at all); opensas is LOUD in both.
+                          Fixture cmp_legacy_lege *)
+               | "=*" ;   (* opensas: sounds-like — works in WHERE, PROC SQL and a
+                          DATA-step IF (GAP-soundslike) *)
+in_test        = [ "NOT" ] "IN" [ ":" ]                            (* opensas *)
+                 ( "(" in_value { [ "," ] in_value } ")" | array_name ) ;
+                 (* opensas: `IN:` is the colon prefix modifier — every member
+                    compare truncates to the shorter operand, reusing the `=:`
+                    desugar so the two colon forms agree, zero-length rule
+                    included (Language Reference: Concepts p.127; p.130 "IN: comparison"). Fixture
+                    in_colon_prefix; `IN:` over an M:N range is loud.
+                    An ARRAY NAME right operand searches the array's elements
+                    (Language Reference: Concepts p.128 numeric / p.130 character, Example Code
+                    6.2/6.3) — fixture in_array_operand. A `{*} _numeric_`
+                    array is loud (members known only at run time). *)
+in_value       = expression | expression ":" expression ; (* M:N inclusive range → lhs>=M and lhs<=N *) (* opensas *)
+
+concat_expr    = add_expr   { ( "||" | "!!" | "¦¦" ) add_expr } ;  (* Group IV *) (* opensas *)
+add_expr       = mul_expr   { ( "+" | "-" )         mul_expr } ;   (* Group III *) (* opensas *)
+mul_expr       = minmax_expr{ ( "*" | "/" )      minmax_expr } ;   (* Group II  *) (* opensas *)
+minmax_expr    = power_expr { ( "><" | "<>" | "MIN" | "MAX" ) power_expr } ;
+                                                                  (* Group I *) (* opensas *)
+                 (* in an ordinary expression: `><` (MIN) / `<>` (MAX) and the
+                   MIN/MAX infix word forms — binds tighter than * / , looser
+                   than ** ; left-assoc; a missing value ranks lowest (unlike the
+                   min()/max() FUNCTIONS, which ignore missing). GAP-minmaxop
+                   landed (fixtures minmax_operators, minmax_group1). In a WHERE
+                   predicate the WORD forms MIN/MAX are REFUSED — loud
+                   (GAP-whereminmax); the symbols stay WHERE-special: `<>` means
+                   NE there and `><` fails loud, both by design (BUG-wherene,
+                   Language Reference: Concepts p.225 Note) *)
+power_expr     = unary_expr [ "**" power_expr ] ;   (* ** right-assoc *) (* opensas *)
+unary_expr     = [ "+" | "-" ] postfix_expr ;       (* unary prefix *) (* opensas *)
+
+postfix_expr   = primary { "{" expression "}"       (* array subscript {} [] () *) (* opensas *)
+                         | "[" expression "]"
+                         | "(" expression ")" } ;  (* "(" only when primary names a declared array *)
+primary        = number | string                                  (* opensas *)
+               | date_const | time_const | datetime_const
+               | bit_const | hex_const | missing
+               | function_call
+               | hash_expr
+               | variable
+               | "(" expression ")" ;
+
+hash_expr      = object_name "." ( method "(" [ arg_list ] ")"     (* opensas *)
+                                 | "NUM_ITEMS" | "ITEM_SIZE" ) ;
+                 (* A method call / attribute read is an ordinary numeric OPERAND,
+                   not only a statement: SAS 9.4 Component Objects: Reference
+                   printed p.84 (REMOVE Method example) writes
+                   `do while (hi.next() = 0);`. Implemented by HOISTING the call
+                   to a `__hashattr_N` temp emitted as a hash_method_stmt just
+                   before the enclosing statement (re-primed per iteration for a
+                   WHILE/UNTIL header), so the call happens once, in SAS order,
+                   and the operand reads the temp. Covers every DATA-step
+                   expression position — IF/SELECT-WHEN/DO WHILE/DO UNTIL guards,
+                   assignment RHS with arithmetic, a hash_arg value, and a
+                   function_call argument (fixture hash_in_expr).
+                   NOT available in a where_expr or a PROC SQL predicate: those
+                   sub-parsers opt out and the method call stays a loud parse
+                   error (no doc example places one there, and a WHERE is
+                   engine-evaluated, not PDV-evaluated). *)
+
+function_call  = name "(" [ arg_list ] ")" ;                       (* opensas *)
+arg_list       = ( expression | ) { "," ( expression | ) }         (* opensas *)
+                 | "OF" var_list ;
+                 (* omitted args allowed: f(a,,c) — fixture compress_class_modifiers.
+                   OF expands a var list — ranges (x1-x3), name lists, a{*}, and
+                   _NUMERIC_/_CHARACTER_/_ALL_ (resolved at run time; array_of_sum);
+                   NB the name: prefix form of var_list is NOT honored here — see
+                   var_list *)
+
+(* Array-bounds functions: the array NAME argument is resolved to the array's
+   element count at PARSE time (arrays do not survive to eval). Bounds are
+   1-based, so DIM = HBOUND = count and LBOUND = 1; the optional dimension arg
+   is accepted (1-D arrays only). Fixes `do i=1 to dim(a)` looping zero times. *)
+bound_call     = ( "DIM" | "HBOUND" | "LBOUND" )                   (* opensas *)
+                 "(" array_name [ "," expression ] ")" ;
+
+
+(* === 5. PROC STEP ======================================================== *)
+
+proc_step      = "PROC" proc_name [ proc_opts ]  ";"              (* opensas *)
+                 { proc_statement } step_boundary ;
+proc_name      = name ;                                           (* opensas *)
+                 (* dispatched case-insensitively to the PROC handler; an unknown
+                   PROC fails loud "PROC X is not supported" *)
+proc_opts      = { "DATA" "=" dataset | "OUT" "=" dataset         (* opensas: DATA=/OUT= honored *)
+                 | name [ "=" value ] } ;                          (* opensas: unknown-option
+                 handling CONVERGED on fail-loud across every PROC (GAP-procopts;
+                 was the audit's internal inconsistency — PRINT failed loud while
+                 MEANS silently skipped `proc means data=d bogusopt=3;`, and
+                 RANK/DELETE/DATASETS/EXPORT/IMPORT had their own silent elses).
+                 Every loud arm names the option (captured-diagnostics test in
+                 src/proc.zig); legitimately-inert options are ENUMERATED per
+                 PROC — MEANS SUMSIZE=/THREADS, DATASETS NOLIST/NODETAILS/
+                 MEMTYPE=DATA, EXPORT REPLACE, IMPORT GUESSINGROWS= (whole-column
+                 type inference = MAX). Positive-control fixture
+                 proc_opts_allowlist. *)
+proc_statement = generic_proc_stmt ;                             (* opensas *)
+generic_proc_stmt = name { token } ";" ;   (* opensas *)
+                 (* each PROC handler scans its own sub-statement tokens up to `;` *)
+
+(* 5.1 PROC PRINT *)
+proc_print     = "PROC" "PRINT" [ "DATA" "=" dataset ]            (* opensas *)
+                 [ "NOOBS" ] [ "LABEL" ] ";"
+                 { "VAR" var_list ";"
+                 | "BY" var_list ";"
+                 | "SUM" var_list ";"
+                 | "ID" var_list ";"
+                 | "WHERE" expression ";" } step_boundary ;
+
+(* 5.2 PROC SORT *)
+proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
+                 [ "OUT" "=" dataset ] [ "NODUPKEY" | "NODUP" ] ";"
+                 "BY" { [ "DESCENDING" ] var } ";" step_boundary ;
+
+(* 5.3 PROC MEANS / SUMMARY *)
+proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
+                 { stat_keyword } [ "NWAY" | "NOPRINT" ] ";"
+                 { "VAR"   var_list ";"
+                 | "CLASS" var_list ";"
+                 | "BY"    var_list ";"
+                 | "OUTPUT" "OUT" "=" dataset { output_stat } ";" }
+                 step_boundary ;
+stat_keyword   = "N"|"MEAN"|"STD"|"MIN"|"MAX"|"SUM"|"MEDIAN"|"P25"|"P75"  (* opensas *)
+               | "RANGE"|"NMISS"|"STDERR"|"CV"|"VAR"|"MAXDEC" "=" number ; (* opensas *)
+               (* all rendered as columns — means_statorder exercises P25/P50/P75/
+                 RANGE/CV/STDERR (and beyond: P90/P95/P99/QRANGE/MODE/CSS/USS);
+                 P25/P50/P75 alias Q1/median/Q3; NMISS in means_maxdec_nmiss;
+                 MAXDEC=n (0–8) sets the printed decimals (means_maxdec) *)
+output_stat    = stat_keyword "=" var_list ;                      (* opensas *)
+                 (* OUTPUT OUT= builds a summary dataset, one column per stat=
+                   (fixtures means_output_id, means_output_names) *)
+
+(* 5.4 PROC FREQ *)
+proc_freq      = "PROC" "FREQ" [ "DATA" "=" dataset ] ";"         (* opensas *)
+                 { "TABLES" table_request { table_option } ";"
+                 | "BY" var_list ";" } step_boundary ;
+table_request  = var { "*" var } ;                               (* opensas *)
+                 (* one var → one-way table; `a*b` → two-way crosstab
+                   (freq_crosstabpct); `a*b*c` → three-way (freq_nway_out) *)
+table_option   = "/" | "NOCUM" | "NOPERCENT" | "MISSING" | "LIST"  (* opensas: NOCUM drops the
+                 cumulative columns, NOPERCENT the percent column, MISSING counts
+                 missings (freq_missing); OUT= is honored via the generic form
+                 (freq_nway_out). LIST: DOCUMENTED no-op on one-way tables — the
+                 SAS 9.4 TABLES-statement doc scopes LIST to "two-way to n-way
+                 tables", a one-way table being list-form already (rendered
+                 byte-identically with and without it, fixture
+                 freq_list_report_usage); on n-way requests LIST FAILS LOUD —
+                 no silent grid substitute (NOTE-freqlistfmt, captured test) *)
+               | name [ "=" value ] ;                             (* opensas: association/exact/
+                 cell-statistic options FAIL LOUD (refusing to emit a table
+                 without the requested statistics, FREQ-hardening) and any other
+                 unknown option FAILS LOUD naming it (GAP-freqignoreopt) — the
+                 chain has a real final else (GAP-tableopt) *)
+
+(* 5.5 PROC TRANSPOSE *)
+proc_transpose = "PROC" "TRANSPOSE" [ "DATA" "=" dataset ]        (* opensas *)
+                 [ "OUT" "=" dataset ] [ "PREFIX" "=" name ]
+                 [ "NAME" "=" name ] ";"
+                 { "VAR" var_list ";" | "ID" var ";"
+                 | "BY" var_list ";" | "COPY" var_list ";" }
+                 step_boundary ;
+
+(* 5.6 PROC REPORT / TABULATE (structure) *)
+proc_report    = "PROC" "REPORT" [ "DATA" "=" dataset ] [ "NOWD" ] ";" (* opensas *)
+                 { "COLUMN" { var } ";"
+                 | "DEFINE" var "/" { report_usage } [ string ] ";" }
+                 step_boundary ;
+report_usage   = "DISPLAY"|"ANALYSIS"|"GROUP"|"ORDER"|"ACROSS"|"SUM"|"MEAN" ; (* opensas: GROUP
+                 collapses rows; SUM/MEAN pick the analysis stat (SUM default for a
+                 numeric); DISPLAY/ANALYSIS shown as-is (ANALYSIS is the usage
+                 marker, the stat word carries the stat); ORDER sorts ascending on
+                 the underlying value and blanks repeats (qa_report_order_num) —
+                 all four usages HONOURED, enumeration per GAP-reportusage.
+                 NOT marked: ACROSS FAILS LOUD "UNSUPPORTED: PROC REPORT ACROSS"
+                 (probe-verified still loud, the arm names it; captured test
+                 BUG-reportacross) — the crosstab layout itself is unimplemented,
+                 so the marker stays off until ACROSS renders *)
+proc_tabulate  = "PROC" "TABULATE" [ "DATA" "=" dataset ] ";"     (* opensas *)
+                 { "CLASS" var_list ";" | "VAR" var_list ";"
+                 | "TABLE" tab_expr ";" } step_boundary ;
+tab_expr       = { any_token } ;   (* NOT marked: QA tick336 proved the marker FALSE —
+                   `table g;`, `table x;`, `table x*mean;`, `table g*i, x*sum;` and
+                   `table (g i), x*sum;` ALL FAIL LOUD. Only `table <rowvar>[ all],
+                   <var>*<stat...>` and the 3-dim form render. `*` works in the COLUMN
+                   dimension and is UNIMPLEMENTED in the ROW dimension, so the old
+                   annotation's "* crosses" was too broad. *)
+                 (* TABLE dimension tokens scanned to `;` — the expression drives the
+                   rendered grid: comma separates dimensions, * crosses, var*stat
+                   picks the cell statistic (proc_tabulate: `table region,
+                   sales*sum;`; tabulate_stat, tabulate_pct) *)
+
+
+(* === 6. PROC SQL ========================================================= *)
+
+proc_sql       = "PROC" "SQL" [ "NOPRINT" | "NUMBER" ]  ";"       (* opensas *)
+                 { sql_statement } step_boundary ;   (* QUIT ends it *)
+
+sql_statement  = select_query ";"                                (* opensas *)
+               | "CREATE" "TABLE" dataset "AS" select_query ";"  (* opensas *)
+               | "CREATE" "TABLE" dataset "(" col_def { "," col_def } ")" ";" (* opensas *)
+               | "INSERT" "INTO" dataset insert_body ";"         (* opensas *)
+               | "DELETE" "FROM" dataset [ "WHERE" sql_expr ] ";" (* opensas *)
+               | "UPDATE" dataset "SET" { assign } [ "WHERE" sql_expr ] ";" (* opensas *)
+               | "DROP" "TABLE" dataset ";"                      (* opensas: accepted, no-op *)
+               | title_stmt | footnote_stmt ;                    (* opensas: GAP-titleinsql — TITLE/FOOTNOTE inside PROC SQL update the shared state, stamped atop/below each SELECT listing *)
+
+select_query   = select_core { set_op select_core } [ order_by_clause ] ; (* opensas *)
+set_op         = "UNION" [ "ALL" ] | "INTERSECT" | "EXCEPT" | "OUTER" "UNION" [ "CORR" | "CORRESPONDING" ] ; (* opensas *)
+                 (* UNION [ALL] (sdtm_sql_union, sdtm_sql_union_all), INTERSECT
+                   (sdtm_sql_intersect), EXCEPT (sdtm_sql_except); OUTER UNION
+                   [CORR] concatenates rows keeping all columns, CORR overlays
+                   same-named (po_sql_outerunion) *)
+select_core    = "SELECT" [ "DISTINCT" ] select_list              (* opensas *)
+                 "FROM" table_ref { "," table_ref } { join_clause }
+                 [ "WHERE"  sql_expr ]
+                 [ "GROUP" "BY" sql_expr { "," sql_expr } ]
+                 [ "HAVING" sql_expr ] ;
+select_list    = "*" | select_col { "," select_col } ;            (* opensas *)
+select_col     = ( "*" | table "." "*" | sql_expr ) [ [ "AS" ] alias ] ; (* opensas *)
+table_ref      = ( dataset | "(" select_query ")" ) [ [ "AS" ] alias ] ; (* opensas *)
+join_clause    = [ "INNER" | "LEFT" [ "OUTER" ] | "RIGHT" [ "OUTER" ]
+                 | "FULL" [ "OUTER" ] | "CROSS" ] "JOIN" table_ref
+                 [ "ON" sql_expr ] ;                               (* opensas *)
+order_by_clause = "ORDER" "BY" order_item { "," order_item } ;    (* opensas *)
+order_item     = ( sql_expr | number ) [ "ASC" | "DESC" ] ;       (* opensas *)
+
+sql_expr       = sql_or ;                                          (* opensas *)
+sql_or         = sql_and { "OR"  sql_and } ;                       (* opensas *)
+sql_and        = sql_not { "AND" sql_not } ;                       (* opensas *)
+sql_not        = [ "NOT" ] sql_pred ;                             (* opensas *)
+sql_pred       = sql_val [ ( compare_op ) sql_val                 (* opensas — and
+                          in PROC SQL "<>" is NE, never the DATA-step MAX
+                          operator: SQL Procedure ref Table 8.2 (printed
+                          p.403-404) Group 7 "¬=, ^=, <>, ne — does not equal".
+                          It had been reaching the parser as .max_op, so
+                          `where x <> 3` kept EVERY row (HIGH silent wrong
+                          data, fixed 295181bb; fixture sql_ne_diamond) *)
+                         | [ "NOT" ] "IN" "(" ( select_query | sql_val
+                                                { "," sql_val } ) ")"
+                         | [ "NOT" ] "BETWEEN" sql_val "AND" sql_val (* opensas *)
+                         | "IS" [ "NOT" ] ( "NULL" | "MISSING" )   (* opensas *)
+                         | [ "NOT" ] "LIKE" sql_val                (* opensas *)
+                         | [ "NOT" ] "CONTAINS" sql_val ] ;        (* opensas *)
+sql_val        = sql_term { ( "+" | "-" | "*" | "/" | "||" ) sql_term } ; (* opensas *)
+sql_term       = number | string | "*"                            (* opensas *)
+               | "CALCULATED" alias
+               | case_expr
+               | agg_func "(" [ "DISTINCT" ] ( "*" | sql_expr ) ")"
+               | name "(" [ arg_list ] ")"          (* scalar function *)
+               | [ table "." ] column
+               | "(" ( sql_expr | select_query ) ")" ;
+agg_func       = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX" | "MEAN" (* opensas *)
+               | "N" | "NMISS" | "STD" | "VAR" ;
+case_expr      = "CASE" [ sql_expr ]                              (* opensas *)
+                 { "WHEN" sql_expr "THEN" sql_expr }
+                 [ "ELSE" sql_expr ] "END" ;
+col_def        = column datatype [ column_attr ] ;               (* opensas *)
+                 (* char/varchar -> char, else numeric; attrs per column_attr
+                   (fixture sql_coldef_attrs) *)
+insert_body    = [ "(" column { "," column } ")" ]               (* opensas *)
+                 ( "VALUES" "(" value { "," value } ")"
+                   { "VALUES" "(" value { "," value } ")" }
+                 | select_query ) ;
+assign         = column "=" sql_expr ;                           (* opensas *)
+alias          = sas_name ;                                       (* opensas *)
+table          = sas_name ;                                       (* opensas *)
+column         = sas_name ;                                       (* opensas *)
+
+
+(* === 7. MACRO LANGUAGE =================================================== *)
+(* The macro processor runs as a preprocessor: macro triggers (%name, &name)
+   are resolved to text that is then compiled. *)
+
+macro_construct = macro_def | macro_stmt ;                        (* opensas *)
+
+macro_def      = "%MACRO" macro_name                              (* opensas *)
+                 [ "(" macro_param { "," macro_param } ")" ]
+                 [ "/" macro_opt ] ";"
+                 { macro_body_item }
+                 "%MEND" [ macro_name ] ";" ;
+macro_param    = name [ "=" [ value ] ] ;                         (* opensas *)
+macro_opt      = "STMT" | "CMD" | name [ "=" value ] ;            (* NOT marked: PARMBUFF/NOPARMBUFF
+                 and MINOPERATOR/NOMINOPERATOR + MINDELIMITER= are HONOURED
+                 (macro_parmbuff_kw, macro_minoperator_opt; the OPTIONS-statement
+                 system form too, BUG-minoperatoropt) and NOSECURE is the accepted
+                 default — but STORE/SECURE/DES=/CMD/STMT and any unknown word
+                 FAIL LOUD at the definition, named in the ERROR, the macro left
+                 undefined (D-002, GAP-macroopts; macro_opts_failsloud), and
+                 fail-loud alternatives are not marked *)
+
+macro_body_item = macro_stmt | text_with_triggers ;              (* opensas *)
+
+macro_stmt     =
+     "%LET" macro_var "=" [ macro_text ] ";"                      (* opensas *)
+   | "%PUT" [ macro_text ] ";"                                    (* opensas: resolves &/% then writes a NOTE to the log *)
+   | "%GOTO" macro_label ";"                                      (* opensas: early-return; process() skips output to the matching %LABEL: *)
+   | "%RETURN" ";"                                                (* opensas: stops the current macro at once — nothing after it runs; control returns to the caller *)
+   | macro_label ":"                                              (* opensas: a %GOTO target label; inert on fall-through *)
+   | "%IF" macro_expr "%THEN" macro_action                        (* opensas *)
+       [ "%ELSE" macro_action ]
+   | "%DO" ";" { macro_body_item } "%END" ";"                     (* opensas *)
+   | "%DO" macro_var "=" macro_expr "%TO" macro_expr
+       [ "%BY" macro_expr ] ";" { macro_body_item } "%END" ";"    (* opensas *)
+   | "%DO" ( "%WHILE" | "%UNTIL" ) "(" macro_expr ")" ";"           (* opensas *)
+       { macro_body_item } "%END" ";"
+   | "%GLOBAL" macro_var { macro_var } ";"                          (* opensas *)
+   | "%LOCAL"  macro_var { macro_var } ";"                          (* opensas *)
+   | macro_call ;
+macro_action   = macro_stmt | "%DO" ";" { macro_body_item } "%END" ";" ; (* opensas *)
+
+macro_call     = "%" macro_name [ "(" [ macro_arg { "," macro_arg } ] ")" ] ; (* opensas *)
+macro_arg      = [ name "=" ] macro_text ;                        (* opensas *)
+
+(* Macro expression: arithmetic/logical over resolved text; %EVAL / %SYSEVALF
+   force numeric evaluation. *)
+macro_expr     = macro_text ;                                     (* opensas *)
+
+(* Macro variable reference and macro-function calls resolve inline *)
+macro_var_ref  = "&" { "&" } macro_name [ "." ] ;                 (* opensas *)
+macro_function = "%" macro_fn "(" macro_text { "," macro_text } ")" ; (* opensas *)
+macro_fn       = "EVAL" | "SYSEVALF" | "STR" | "NRSTR" | "QUOTE"
+               | "BQUOTE" | "NRBQUOTE" | "SUPERQ" | "UNQUOTE"
+               | "SUBSTR" | "QSUBSTR" | "SCAN" | "QSCAN"
+               | "UPCASE" | "QUPCASE" | "LOWCASE" | "INDEX" | "LENGTH"
+               | "SYSFUNC" | "QSYSFUNC"
+               | "SYMEXIST" | "SYMGLOBL" | "SYSMACEXIST" ;        (* opensas *)
+               (* every member resolves — one probe each in fixture macro_fns_all:
+                 EVAL, SYSEVALF; the masking family STR/NRSTR/QUOTE/BQUOTE/
+                 NRBQUOTE/SUPERQ/UNQUOTE (masking is a no-op in this
+                 source-to-source pass — only whether &/% resolve differs);
+                 SUBSTR/QSUBSTR, SCAN/QSCAN, UPCASE/QUPCASE, LOWCASE, INDEX,
+                 LENGTH; SYSFUNC/QSYSFUNC route to the DATA-step function table
+                 (string + numeric fns, + an optional output format);
+                 SYMEXIST/SYMGLOBL/SYSMACEXIST *)
+macro_var      = name ;                                           (* opensas *)
+macro_name     = name ;                                           (* opensas *)
+macro_label    = name ;                                           (* opensas *)
+macro_text     = { text_char | macro_var_ref | macro_function } ; (* opensas *)
+
+
+(* === 8. COMMON TERMINALS (informal) ====================================== *)
+format_ref     = [ "$" ] name [ number ] "." [ number ] ;   (* opensas *)
+                 (* e.g. DOLLAR12.2, a `$`-prefixed user format ($sx.), and a bare
+                   w.d — the generic ref resolves any built-in (the gfmt_* fixture
+                   family) or a PROC FORMAT name (fmt_special_missing_key) *)
+
+(* --- Built-in write formats & read informats opensas resolves by name -------
+   `format_ref`/`informat_ref` above are generic (any `name`, so user-defined
+   VALUE formats parse too). These productions enumerate the built-in names the
+   engine actually renders/reads — each carries a fixture (tests/corpus/gfmt_*).
+   Names not listed (COMMAX/DOLLARX/NEGPAREN, B8601DT) parse but don't render
+   SAS-correctly yet, so they are deliberately NOT marked. *)
+numeric_format = ( "F" | "COMMA" | "DOLLAR" ) [ number [ "." number ] ] "." ; (* opensas *)
+sci_format     = ( "Z" | "E" | "BEST" | "PERCENT" ) [ number [ "." number ] ] "." ; (* opensas *)
+date_format    = ( "DATE" | "MMDDYY" | "DDMMYY" | "YYMMDD" ) [ number ] "." ; (* opensas *)
+julqtr_format  = ( "JULIAN" | "YYMMN" | "QTR" | "QTRR" | "YYQ" | "YYQC" )
+                 [ number ] "." ;                                            (* opensas *)
+worddate_format = ( "WORDDATE" | "WEEKDATE" | "WORDDATX" | "WEEKDATX" | "MONYY"
+                 | "MONNAME" | "DOWNAME" | "YEAR" | "MONTH" | "DAY" | "WEEKDAY" )
+                 [ number ] "." ;                                            (* opensas *)
+time_format    = ( "TIME" | "TIMEAMPM" | "TOD" | "DATETIME" ) [ number ] "." ; (* opensas *)
+hex_format     = [ "$" ] "HEX" [ number ] "." ;                             (* opensas *)
+date_informat  = ( "DATE" | "YYMMDD" | "MMDDYY" | "DDMMYY" ) [ number ] "." ; (* opensas *)
+datetime_informat = ( "DATETIME" | "E8601DT" | "TIME" | "HHMMSS" ) [ number ] "." ; (* opensas *)
+numeric_informat  = ( "COMMA" | "DOLLAR" ) [ number [ "." number ] ] "."
+                 | number "." number ;                                      (* opensas *)
+datatype       = ( "CHAR" | "VARCHAR" | "NUMERIC" | "INTEGER" | "FLOAT" (* opensas *)
+                 | "DATE" ) [ "(" number ")" ] ;
+                 (* char/varchar -> char storage, else numeric. The (n) width
+                 IS enforced for char/varchar: a too-long value truncates on
+                 INSERT/UPDATE and CONTENTS reports the declared width
+                 (sql_charwidth_trunc); a numeric (p,s) is precision/scale
+                 metadata — SAS stores numerics as doubles regardless *)
+column_attr    = "NOT" "NULL" | "INFORMAT" "=" informat_ref       (* opensas *)
+               | "FORMAT" "=" format_ref | "LABEL" "=" string ;
+                 (* NOT NULL is constraint-enforced on INSERT/UPDATE; FORMAT=
+                 renders and LABEL= shows in CONTENTS (sql_coldef_attrs);
+                 INFORMAT= is APPLIED to VALUES/UPDATE character input with the
+                 INPUT() function's semantics — '15JAN2020' under date9. reads
+                 the SAS day, $upcase. case-folds (sql_informat_applied) *)
+value          = number | string | name ;                        (* opensas *)
+constant       = number | string | missing ;                     (* opensas *)
+engine         = name ;    device = name ;    fileref = name ;    (* opensas *)
+quoted_path    = string ;  path = { any_char } ;                  (* opensas *)
+hexdigit       = digit | "A" | "B" | "C" | "D" | "E" | "F"        (* opensas *)
+                       | "a" | "b" | "c" | "d" | "e" | "f" ;
+                 (* in the '..'x string form (typed_const) and the 0FFx numeric
+                   form (hex_number) *)
+any_char       = ? any character ? ;                              (* opensas *)
+any_token      = ? any token except ';' ? ;                       (* opensas *)
+token          = ? any token ? ;                                  (* opensas *)
+text_char      = ? any character that is not a macro trigger ? ;  (* opensas *)
+text_with_triggers = { text_char | macro_var_ref | macro_call | macro_function } ; (* opensas *)
+raw_text_line  = ? a physical line of raw data ? ;                (* opensas *)
+
+
+(* ===========================================================================
+   COVERAGE NOTE — opensas
+
+   Implemented (marked (* opensas *) above): the full DATA step (assignment,
+   sum, if/then/else, select/when, all DO forms incl. DO OVER, set/merge/by,
+   input/datalines, formatted & column INPUT (@col/+n/#n pointers, w.d incl.
+   implied decimal, column ranges, `/` line advance, single trailing `@` and
+   `@@` line holds, PUT `@n` column pointer,
+   date/time/datetime informats in the INPUT statement), INFILE/FILE external
+   file I/O, UPDATE (incl. UPDATEMODE=) and MODIFY by BY key, put, output, delete, stop, abort,
+   return, LINK/GOTO, retain, arrays incl. char, length, label, attrib,
+   format/informat, keep/drop/rename/where, CALL MISSING/SYMPUT/SYMPUTX, hash
+   objects); the complete expression grammar with SAS precedence & missing-value
+   semantics; CSV/XPORT/sas7bdat-backed LIBNAME (incl. a libref pointed straight
+   at a .xpt/.sas7bdat file) + two-level names + dataset options
+   (keep/drop/rename/where); PROC PRINT/SORT/MEANS/FREQ/TRANSPOSE/REPORT/
+   TABULATE; PROC SQL (select, INNER/LEFT/RIGHT/FULL joins, set ops, subqueries,
+   CASE, group/having, order by, aggregates, create table, insert); and the
+   macro language (%let/&var, %macro/%mend, %if/%do, %eval,
+   %scan/%substr/%upcase/%lowcase, %sysfunc/%sysevalf).
+
+   Every (* opensas *) marker above is probe-verified end-to-end. Alternatives
+   that parse but FAIL LOUD rather than execute — set/modify KEY=, BY
+   GROUPFORMAT, hash SUMINC:/KEYSUM:, the word forms MIN/MAX inside a WHERE
+   predicate, the single-character "!" / "¦" / "¬" operator spellings — are
+   NOT marked; each is called out in its production's comment. Both the INPUT
+   statement and the input() function read date/time/datetime informats (incl.
+   E8601DT).
+
+   Out of scope (never intended for this grammar, per the header): PROCs beyond
+   the list above — the ~300 statistical/reporting procedures, ODS, SAS/GRAPH,
+   DS2/FedSQL, component objects beyond hash, and platform engines.
+
+   Accepted-but-inert by design (see each production's comment for the exact
+   behavior and probe): ODS destination open/close + results toggles and the X
+   statement (no-ops on a single output stream / no shell), FILENAME trailing
+   name=value options, the ~70-option OPTIONS allowlist (main.zig isInertOption),
+   and FREQ's TABLES / LIST. Audit 2026-07-25: every marker above was re-verified
+   against a fresh binary — 33 of the 53 previously unmarked productions earned
+   the marker; the 20 that did not carry a precise NOT-marked note naming the
+   missing or inert member.
+   =========================================================================== *)

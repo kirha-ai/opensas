@@ -1,0 +1,5 @@
+comma=1234567
+dollar=1500.5
+impl_dec=1.5
+neg_comma=-2500
+width4=3.14

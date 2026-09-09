@@ -1,0 +1,7 @@
+substr=6  6
+posn1=6  2
+posn2=9  3
+change=aXbXcX
+next1=2  3
+next2=4
+freed=.

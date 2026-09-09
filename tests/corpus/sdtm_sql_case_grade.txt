@@ -1,0 +1,4 @@
+USUBJID  LBSTRESN  grade
+01-001         30  NORMAL
+01-002          5  LOW
+01-003         50  HIGH

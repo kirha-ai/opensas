@@ -1,0 +1,2 @@
+sortn:a=. b=1 c=2 d=3
+sortc:p=appl q=date r=fig s=pear

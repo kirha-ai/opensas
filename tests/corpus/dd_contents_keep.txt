@@ -1,0 +1,6 @@
+NAME       TYPE   LENGTH
+
+aval          1        8
+param         2        6
+usubjid       2        4
+visitnum      1        8

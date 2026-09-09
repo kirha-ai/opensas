@@ -1,0 +1,3 @@
+Obs   a   b   c   v1   v2   v3   m     x   y
+
+  1   0   .   .    1    2    3   JAN   5   5

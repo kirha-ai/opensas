@@ -1,0 +1,7 @@
+stderr=0.7071067812
+pctl=3 2
+mad_iqr=1 2
+probbnrm=0.25
+probhypr=1 0.1666666667
+probnegb=0.5
+compged=100

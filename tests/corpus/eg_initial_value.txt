@@ -1,0 +1,1 @@
+array_init=10 20 30  retain_init_accum=20

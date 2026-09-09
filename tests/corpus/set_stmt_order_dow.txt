@@ -1,0 +1,6 @@
+DOW loop: one row per BY group
+k    v     s
+
+1   20    30
+2   40   100
+3   50   150

@@ -1,0 +1,6 @@
+Obs   USUBJID   site   subj   armu
+
+  1   01-001    01     001    DRUG
+  2   01-002    01     002    PLACEBO
+  3   02-011    02     011    DRUG
+  4   02-012    02     012    PLACEBO

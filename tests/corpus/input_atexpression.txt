@@ -1,0 +1,8 @@
+pos=cde
+zero=xyz
+neg=qwe
+comp=abc
+trunc=abc
+cn=abc
+cv=abc
+cvn=qwe

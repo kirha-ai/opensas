@@ -1,0 +1,11 @@
+substrn_0_3=[ab ]
+substrn_neg=[a ]
+subpad=[bc   ]
+anyalpha=4
+anyalpha_start=3
+anyalpha_back=3
+notalpha=4
+dequote=[a"b ]
+quote=["hi " ]
+propcase=[O'brien ]
+verify=4

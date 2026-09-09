@@ -1,0 +1,3 @@
+_N_=1 keepv=AA-K prevc= x=aa
+_N_=2 keepv=AA-K prevc=aa# x=bb
+_N_=3 keepv=AA-K prevc=bb# x=cc

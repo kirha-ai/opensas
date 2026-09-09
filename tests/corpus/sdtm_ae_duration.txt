@@ -1,0 +1,5 @@
+Obs   USUBJID          st          en   dur   stmon
+
+  1   01-001    01JAN2024   05JAN2024     5       1
+  2   01-002    10FEB2024   10FEB2024     1       2
+  3   01-003    15MAR2024   20MAR2024     6       3

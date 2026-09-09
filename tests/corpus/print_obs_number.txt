@@ -1,0 +1,23 @@
+Obs   name      sex   age
+
+  2   Alice     F      13
+  3   Barbara   F      13
+  4   Carol     F      14
+Obs   name      sex   age
+
+  3   Barbara   F      13
+  4   Carol     F      14
+  5   Henry     M      14
+Obs   name      sex   age
+
+  2   Alice     F      13
+  3   Barbara   F      13
+  4   Carol     F      14
+Obs   name    sex   age
+
+  4   Carol   F      14
+name      sex   age
+
+Alice     F      13
+Barbara   F      13
+Carol     F      14

@@ -1,0 +1,8 @@
+a{2}=2
+a{2,}=2
+a{2,3}=2
+digits{3}=3
+literal=0
+boundary=5
+nonboundary=2
+phone=6

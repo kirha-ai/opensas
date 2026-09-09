@@ -1,0 +1,16 @@
+data _null_;
+   effrate   = finance('effrate', 0.0525, 4);
+   nomrate   = finance('nomrate', 0.08, 4);
+   disc      = finance('disc', mdy(1,25,2007), mdy(6,15,2007), 97.975, 100, 1);
+   intrate   = finance('intrate', mdy(1,25,2007), mdy(6,15,2007), 97.975, 100, 1);
+   received  = finance('received', mdy(2,15,2008), mdy(5,15,2008), 1000000, 0.0575, 2);
+   pricedisc = finance('pricedisc', mdy(2,15,2008), mdy(11,15,2017), 0.0525, 100, 0);
+   yielddisc = finance('yielddisc', mdy(2,15,2008), mdy(11,15,2016), 95.04287, 100, 0);
+   put effrate=;
+   put nomrate=;
+   put disc=;
+   put intrate=;
+   put received=;
+   put pricedisc=;
+   put yielddisc=;
+run;

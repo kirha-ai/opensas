@@ -1,0 +1,4 @@
+Obs   grp      x
+
+  1   LOW     10
+  2   HIGH   100

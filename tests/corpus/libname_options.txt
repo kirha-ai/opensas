@@ -1,0 +1,1 @@
+libname options accepted

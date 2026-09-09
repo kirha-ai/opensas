@@ -1,0 +1,4 @@
+label_age=[Age Years ]
+label_name=[ ]
+len_name=10
+nobs=2

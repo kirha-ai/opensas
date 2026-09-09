@@ -1,0 +1,4 @@
+usubjid   mx
+
+S01       30
+S02       60

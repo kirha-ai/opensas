@@ -1,0 +1,5 @@
+keep id=1  v=10
+keep id=1  v=20
+keep id=2  v=30
+dup  id=1  v=10
+dup  id=2  v=30

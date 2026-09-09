@@ -1,0 +1,9 @@
+iter first k=1  v=10
+controls hh=5  h2=6  hiter=7  innermost=12
+hh   h2   hiter   innermost
+
+ 5    6       7          12
+later step z=12
+h   hi   inner    z
+
+3    4       5   12

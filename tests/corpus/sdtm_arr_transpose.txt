@@ -1,0 +1,8 @@
+Obs   param   USUBJID   aval
+
+  1   SBP     01-001     120
+  2   DBP     01-001      80
+  3   HR      01-001      72
+  4   SBP     01-002     130
+  5   DBP     01-002      85
+  6   HR      01-002      68

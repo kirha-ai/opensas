@@ -1,0 +1,7 @@
+reg    units
+
+E          3
+W          4
+           7
+    Total
+                                                                                                                                   clamped

@@ -1,0 +1,6 @@
+x=1 y=9
+x=2 y=9
+x=1 y=5
+prec x=1 y=9
+prec x=2 y=9
+prec x=1 y=5

@@ -1,0 +1,12 @@
+exist=1 0
+open_gt0=1
+attrn=3 3
+attrc=emp
+varnum=2
+varname=name
+vartype=C N
+varfmt=dollar8.
+fetch_curobs=0 1
+getvar=30 Alice
+fetchobs=0 Carol 60000
+close=0

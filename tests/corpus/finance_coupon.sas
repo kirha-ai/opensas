@@ -1,0 +1,14 @@
+data _null_;
+   pcd = put(finance('couppcd', mdy(1,25,2007), mdy(11,15,2008), 2, 1), mmddyy10.);
+   ncd = put(finance('coupncd', mdy(1,25,2007), mdy(11,15,2008), 2, 1), date7.);
+   num = finance('coupnum',    mdy(1,25,2007), mdy(11,15,2008), 2, 1);
+   dys = finance('coupdays',   mdy(1,25,2007), mdy(11,15,2008), 2, 1);
+   snc = finance('coupdaysnc', mdy(1,25,2007), mdy(11,15,2008), 2, 1);
+   dbs = finance('coupdaybs',  mdy(12,30,1994), mdy(11,29,1997), 4, 2);
+   put pcd=;
+   put ncd=;
+   put num=;
+   put dys=;
+   put snc=;
+   put dbs=;
+run;

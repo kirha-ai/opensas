@@ -1,0 +1,5 @@
+sp  avg1  rng   ah
+30     5    6  2.5
+g  gsp
+a  106
+b  114

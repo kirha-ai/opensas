@@ -1,0 +1,16 @@
+Updated Inventory Data Set Sorted by PartNumber
+Obs   PartNumber   PartName   Amount_in_Stock          Price   ReceivedDate
+
+  1   AA11         hammer                  55          32.26     01/01/2020
+  2   BB22         wrench                  21          17.35     01/01/2020
+  3   BC85         clamp                   80           9.55     08/16/1999
+  4   BV1E         timer                   56          34.50     01/01/2020
+  5   CC33         socket                   7          22.19     01/01/2020
+  6   JD03         switch                 383          13.99     01/09/2000
+  7   K89R         seal                    40         245.00     01/01/2020
+  8   KJ66         cutter                  16          19.77     01/01/2020
+  9   LK43         filter                 121          10.99     05/19/1999
+ 10   M4J7         sander                  98          45.88     06/20/1998
+ 11   MN21         brace                   43          27.87     08/10/1999
+ 12   NCF3         valve                  198          24.50     03/20/1999
+ 13   UYN7         rod                    211          11.55     09/09/1999

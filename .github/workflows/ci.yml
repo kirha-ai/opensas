@@ -1,0 +1,24 @@
+# AGT-ci — independent gate: the manager must not self-attest green.
+# Runs the three hermetic suites on every push/PR to main.
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: unit tests
+        run: zig build test
+      - name: conformance corpus
+        run: zig build corpus
+      - name: program fixtures
+        run: zig build programs

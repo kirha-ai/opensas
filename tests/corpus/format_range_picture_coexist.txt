@@ -1,0 +1,6 @@
+B=low
+X=xtra
+E=high
+Q=?
+  4.0
+n2=two

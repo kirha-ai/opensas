@@ -1,0 +1,24 @@
+Obs   m    p
+
+  1   1   99
+  2   2   99
+  3   3   99
+Obs   m    p
+
+  1   1   99
+  2   2   99
+  3   3   99
+                          The CONTENTS Procedure
+
+Data Set Name  c1
+Observations   0
+Variables      2
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  bv        Num     8
+2  z         Num     8
+Obs   bv   z
+
+  1    .   1

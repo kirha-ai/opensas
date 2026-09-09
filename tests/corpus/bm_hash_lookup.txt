@@ -1,0 +1,5 @@
+subjid   arm          rc
+
+S003     Active        0
+S001     Active        0
+S099              160038

@@ -1,0 +1,3 @@
+reassign i=101
+normal j=11
+jump k=5

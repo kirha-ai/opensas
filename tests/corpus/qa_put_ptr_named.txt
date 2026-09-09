@@ -1,0 +1,5 @@
+name=Bob n=7
+         Bob
+d=15JUN2021
+Bob
+7

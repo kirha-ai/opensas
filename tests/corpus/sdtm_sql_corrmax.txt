@@ -1,0 +1,3 @@
+ARM      USUBJID  AVAL
+DRUG     01-002     55
+PLACEBO  01-003     40

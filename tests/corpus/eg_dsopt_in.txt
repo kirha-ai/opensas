@@ -1,0 +1,3 @@
+id=1 a
+id=2 both
+id=3 b

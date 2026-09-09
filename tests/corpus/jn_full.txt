@@ -1,0 +1,6 @@
+dmid   lbid   arm       aval
+
+S01    S01    Active     5.1
+S02    S02    Placebo    7.3
+S03           Active       .
+       S04               9.9

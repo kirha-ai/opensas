@@ -1,0 +1,2 @@
+valid=22
+trunc=21

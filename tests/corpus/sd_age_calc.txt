@@ -1,0 +1,3 @@
+S001 age_intck=39 age_yrdif=39
+S002 age_intck=39 age_yrdif=39
+S003 age_intck=20 age_yrdif=20

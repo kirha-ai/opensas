@@ -1,0 +1,8 @@
+Obs   USUBJID   vsparam   COL1
+
+  1   01-001    SYSBP      120
+  2   01-001    DIABP       80
+  3   01-001    PULSE       72
+  4   01-002    SYSBP      135
+  5   01-002    DIABP       88
+  6   01-002    PULSE       68

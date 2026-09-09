@@ -1,0 +1,6 @@
+_TYPE_   _FREQ_    m
+
+     0        3   20
+_TYPE_   _FREQ_    s
+
+     0        3   10

@@ -1,0 +1,2 @@
+grp=1 _NAME_=y V1=10 V2=20 keepme=999
+grp=2 _NAME_=y V1=30 V2=. keepme=777

@@ -1,0 +1,2 @@
+t1=1 t2=2 t3=3
+_temp_cnt_1=15 _temp_cnt_2=100

@@ -1,0 +1,7 @@
+x=0 g=LOW
+x=5 g=LOW
+x=9 g=LOW
+x=10 g=MID
+x=15 g=MID
+x=20 g= 20
+x=99 g= 99

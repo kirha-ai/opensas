@@ -1,0 +1,6 @@
+STUDYID,DOMAIN,ETCD,ELEMENT,TESTRL,TEDUR
+CDISC01,TE,EOS,End of Study,Study Termination,P1D
+CDISC01,TE,PLACEBO,Treatment Placebo,Randomized to Placebo,P24W
+CDISC01,TE,SCREEN,Screening,Informed Consent,P12W
+CDISC01,TE,WOND10,Treatment 10 mg Miracle Drug,Randomized to 10 mg,P24W
+CDISC01,TE,WOND20,Treatment 20 mg Miracle Drug,Randomized to 20 mg,P24W

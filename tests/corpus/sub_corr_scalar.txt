@@ -1,0 +1,4 @@
+usubjid   aval
+
+S01         30
+S02         60

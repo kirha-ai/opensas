@@ -1,0 +1,5 @@
+Obs   USUBJID   age   band
+
+  1   01-001     68   SENIOR
+  2   01-002     33   ADULT
+  3   01-003     14   PED

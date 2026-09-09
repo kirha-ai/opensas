@@ -1,0 +1,4 @@
+trt   _TYPE_   _FREQ_   mean   min   max
+
+A          1        2    119   118   120
+B          1        2    129   128   130

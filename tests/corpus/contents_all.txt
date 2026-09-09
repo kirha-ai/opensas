@@ -1,0 +1,23 @@
+                          The CONTENTS Procedure
+
+Data Set Name  work.dm
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  age       Num     8
+1  subjid    Char    6
+                          The CONTENTS Procedure
+
+Data Set Name  work.vs
+Observations   2
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  aval      Num     8
+2  param     Char    4
+1  subjid    Char    6

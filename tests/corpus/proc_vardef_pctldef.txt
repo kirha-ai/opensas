@@ -1,0 +1,346 @@
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+           N            Mean        Variance         Std Dev Coeff of Variation       Std Error
+     ------------------------------------------------------------------------------------------
+           5       6.0000000       8.0000000       2.8284271         47.1404521       1.2649111
+     ------------------------------------------------------------------------------------------
+                                       The MEANS Procedure
+
+                              Analysis Variable : x
+
+        Variance         Std Dev
+     ---------------------------
+      10.0000000       3.1622777
+     ---------------------------
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              5  Sum Weights                    5
+Mean                           6  Sum Observations              30
+Std Deviation         2.82842712  Variance                       8
+Skewness                       .  Kurtosis                       .
+Uncorrected SS               220  Corrected SS                  40
+Coeff Variation      47.14045208  Std Error Mean        1.26491106
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           6  Std Deviation         2.82842712
+Median                         6  Variance                       8
+Mode                           .  Range                          8
+                                  Interquartile Range            4
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 4.74341649    Pr > |t|  0.0090
+Sign           M       2.5    Pr >= |M| 0.0625
+Signed Rank    S       7.5    Pr >= |S| 0.0625
+
+                    Quantiles (Definition 5)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                   10
+              75% Q3                 8
+              50% Median             6
+              25% Q1                 4
+              10%                    2
+              5%                     2
+              1%                     2
+              0% Min                 2
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   2    1               10    5
+                   4    2                8    4
+                   6    3                6    3
+                   8    4                4    2
+                  10    5                2    1
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              5  Sum Weights                    5
+Mean                           6  Sum Observations              30
+Std Deviation         3.16227766  Variance                      10
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               220  Corrected SS                  40
+Coeff Variation      52.70462767  Std Error Mean        1.41421356
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           6  Std Deviation         3.16227766
+Median                         6  Variance                      10
+Mode                           .  Range                          8
+                                  Interquartile Range            4
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 4.24264069    Pr > |t|  0.0132
+Sign           M       2.5    Pr >= |M| 0.0625
+Signed Rank    S       7.5    Pr >= |S| 0.0625
+
+                    Quantiles (Definition 5)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                   10
+              75% Q3                 8
+              50% Median             6
+              25% Q1                 4
+              10%                    2
+              5%                     2
+              1%                     2
+              0% Min                 2
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   2    1               10    5
+                   4    2                8    4
+                   6    3                6    3
+                   8    4                4    2
+                  10    5                2    1
+                                 The UNIVARIATE Procedure
+
+Variable:  y
+
+                           Moments
+
+N                             10  Sum Weights                   10
+Mean                         5.5  Sum Observations              55
+Std Deviation         3.02765035  Variance              9.16666667
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               385  Corrected SS                82.5
+Coeff Variation      55.04818826  Std Error Mean        0.95742711
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         5.5  Std Deviation         3.02765035
+Median                         5  Variance              9.16666667
+Mode                           .  Range                          9
+                                  Interquartile Range            5
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.74456265    Pr > |t|  0.0003
+Sign           M         5    Pr >= |M| 0.0020
+Signed Rank    S      27.5    Pr >= |S| 0.0020
+
+                    Quantiles (Definition 1)
+
+              100% Max              10
+              99%                  9.9
+              95%                  9.5
+              90%                    9
+              75% Q3               7.5
+              50% Median             5
+              25% Q1               2.5
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1               10   10
+                   2    2                9    9
+                   3    3                8    8
+                   4    4                7    7
+                   5    5                6    6
+                                 The UNIVARIATE Procedure
+
+Variable:  y
+
+                           Moments
+
+N                             10  Sum Weights                   10
+Mean                         5.5  Sum Observations              55
+Std Deviation         3.02765035  Variance              9.16666667
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               385  Corrected SS                82.5
+Coeff Variation      55.04818826  Std Error Mean        0.95742711
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         5.5  Std Deviation         3.02765035
+Median                         5  Variance              9.16666667
+Mode                           .  Range                          9
+                                  Interquartile Range            6
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.74456265    Pr > |t|  0.0003
+Sign           M         5    Pr >= |M| 0.0020
+Signed Rank    S      27.5    Pr >= |S| 0.0020
+
+                    Quantiles (Definition 2)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                    9
+              75% Q3                 8
+              50% Median             5
+              25% Q1                 2
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1               10   10
+                   2    2                9    9
+                   3    3                8    8
+                   4    4                7    7
+                   5    5                6    6
+                                 The UNIVARIATE Procedure
+
+Variable:  y
+
+                           Moments
+
+N                             10  Sum Weights                   10
+Mean                         5.5  Sum Observations              55
+Std Deviation         3.02765035  Variance              9.16666667
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               385  Corrected SS                82.5
+Coeff Variation      55.04818826  Std Error Mean        0.95742711
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         5.5  Std Deviation         3.02765035
+Median                       5.5  Variance              9.16666667
+Mode                           .  Range                          9
+                                  Interquartile Range          5.5
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.74456265    Pr > |t|  0.0003
+Sign           M         5    Pr >= |M| 0.0020
+Signed Rank    S      27.5    Pr >= |S| 0.0020
+
+                    Quantiles (Definition 4)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                  9.9
+              75% Q3              8.25
+              50% Median           5.5
+              25% Q1              2.75
+              10%                  1.1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1               10   10
+                   2    2                9    9
+                   3    3                8    8
+                   4    4                7    7
+                   5    5                6    6
+                                 The UNIVARIATE Procedure
+
+Variable:  y
+
+                           Moments
+
+N                             10  Sum Weights                   10
+Mean                         5.5  Sum Observations              55
+Std Deviation         3.02765035  Variance              9.16666667
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               385  Corrected SS                82.5
+Coeff Variation      55.04818826  Std Error Mean        0.95742711
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         5.5  Std Deviation         3.02765035
+Median                       5.5  Variance              9.16666667
+Mode                           .  Range                          9
+                                  Interquartile Range            5
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.74456265    Pr > |t|  0.0003
+Sign           M         5    Pr >= |M| 0.0020
+Signed Rank    S      27.5    Pr >= |S| 0.0020
+
+                    Quantiles (Definition 5)
+
+              100% Max              10
+              99%                   10
+              95%                   10
+              90%                  9.5
+              75% Q3                 8
+              50% Median           5.5
+              25% Q1                 3
+              10%                  1.5
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1               10   10
+                   2    2                9    9
+                   3    3                8    8
+                   4    4                7    7
+                   5    5                6    6

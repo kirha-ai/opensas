@@ -1,0 +1,74 @@
+ub  mv
+AB   2
+CD   2
+                          The CONTENTS Procedure
+
+Data Set Name  r_re
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  mv        Num     8
+1  ub        Char    2
+REMERGE set ub=[AB ] lengthc=2
+REMERGE set ub=[CD ] lengthc=2
+b   ub  mv
+AB  AB   1
+CD  CD   2
+                          The CONTENTS Procedure
+
+Data Set Name  r_gr
+Observations   2
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  b         Char    4
+3  mv        Num     8
+2  ub        Char    2
+GROUPED set ub=[AB ] lengthc=2
+GROUPED set ub=[CD ] lengthc=2
+                          The CONTENTS Procedure
+
+Data Set Name  r_plain
+Observations   2
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  ub        Char    2
+l
+2
+2
+having char alias, remerge — one row
+ub  mv
+AB   2
+having char alias, grouped — one row
+b   ub  mv
+CD  CD   2
+control: having numeric computed alias
+b   vv  mv
+CD  20   2
+control: having aggregate alias
+b   mv
+CD   2
+control: having char CASE alias (caseResultType already typed it char)
+b   w    mv
+AB  one   1
+                          The CONTENTS Procedure
+
+Data Set Name  r_num
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  mv        Num     8
+1  vv        Num     8
+NUMERIC set vv=10  mv=2
+NUMERIC set vv=20  mv=2

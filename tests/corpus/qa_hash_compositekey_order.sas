@@ -1,0 +1,18 @@
+data _null_;
+  length s $3;
+  declare hash h(ordered:'a');
+  rc = h.definekey('k','s');
+  rc = h.definedata('k','s','v');
+  rc = h.definedone();
+  k=2; s='b'; v=1; rc=h.add();
+  k=1; s='z'; v=2; rc=h.add();
+  k=1; s='a'; v=3; rc=h.add();
+  k=2; s='a'; v=4; rc=h.add();
+  k=10; s='a'; v=5; rc=h.add();
+  declare hiter it('h');
+  rc = it.first();
+  do while (rc = 0);
+    put k= s= v=;
+    rc = it.next();
+  end;
+run;

@@ -1,0 +1,28 @@
+S1 id=1 x=91 w=100
+S1 id=1 x=12 w=100
+S1 id=2 x=92 w=200
+S1 id=2 x=93 w=201
+S2 id=1 ia=1 ib=0  f=1  l=1
+S2 id=2 ia=0 ib=1  f=1  l=1
+S2 id=3 ia=1 ib=1  f=1  l=1
+S2 id=4 ia=0 ib=1  f=1  l=1
+S3 x=9 y=2 z=8
+S3 x=3 y=4 z=.
+S3 x=5 y=6 z=.
+S4 x=9 y=2 z=8
+S5 id=1 x=10 y=[cc ]
+S5 id=2 x=99 y=[. ]
+S6 D g=3 v=1  f=1  l=0
+S6 D g=3 v=2  f=0  l=1
+S6 D g=1 v=3  f=1  l=1
+S6 N g=a v=1  f=1  l=0
+S6 N g=a v=2  f=0  l=1
+S6 N g=b v=3  f=1  l=1
+S6 N g=a v=4  f=1  l=1
+S7 g=1 v=1  f=1  l=0
+S7 g=1 v=3  f=0  l=1
+S7 g=2 v=4  f=1  l=1
+S8 g=1 v=3 s=6
+S8 g=2 v=4 s=4
+S9 k=1 v=111
+S9 k=2 v=222

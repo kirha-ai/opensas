@@ -1,0 +1,1 @@
+badrate=. future=1225.6785391 badamt=. badn=. zeroamt=0

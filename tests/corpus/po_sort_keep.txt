@@ -1,0 +1,5 @@
+usubjid   visit   svstdtc      visitnum
+
+S01       SCR     2020-01-01          1
+S01       BL      2020-01-15          2
+S02       SCR     2020-02-01          1

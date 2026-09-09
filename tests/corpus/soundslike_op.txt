@@ -1,0 +1,8 @@
+smith-smythe TRUE
+smith-jones FALSE
+id   name
+
+ 1   Smith
+ 2   Smyth
+ 4   Smithe
+ 5   Schmidt

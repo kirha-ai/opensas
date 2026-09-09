@@ -1,0 +1,13 @@
+proc format;
+  value $g 'A'-'C'='lo' 'D'-'F'='hi' other='?';
+  value $x 'A'-<'C'='ltC' other='no';
+run;
+data _null_;
+  length r $4;
+  r=put('B',$g.);  put "B=" r;
+  r=put('E',$g.);  put "E=" r;
+  r=put('Z',$g.);  put "Z=" r;
+  r=put('AB',$g.); put "AB=" r;
+  r=put('C',$x.);  put "C=" r;
+  r=put('B',$x.);  put "Bx=" r;
+run;

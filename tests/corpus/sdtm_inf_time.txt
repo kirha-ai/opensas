@@ -1,0 +1,4 @@
+Obs   VSTPT             t
+
+  1   PREDOSE     8:30:00
+  2   POSTDOSE   14:15:30

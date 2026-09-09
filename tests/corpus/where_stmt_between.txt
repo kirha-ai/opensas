@@ -1,0 +1,15 @@
+grp    n
+
+B     10
+C     20
+grp   n
+
+      .
+grp   n
+
+      .
+grp    n
+
+A      5
+D     25
+       .

@@ -1,0 +1,7 @@
+Obs   v1   v2   v3
+
+  1   11   22   33
+MIXED: [ab ][cd ] 123 456
+PARITY: v{i}=7
+PARITY: v{i}=8
+PARITY: v{i}=9

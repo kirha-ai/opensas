@@ -1,0 +1,2 @@
+grp=A  total=60
+grp=B  total=20

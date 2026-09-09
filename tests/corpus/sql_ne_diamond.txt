@@ -1,0 +1,19 @@
+x
+1
+5
+x
+1
+5
+x
+1
+k  s
+a  1
+c  5
+x  tag
+1  keep
+5  keep
+x  st   flag
+1  off     1
+3  on      0
+5  off     1
+m=7

@@ -1,0 +1,6 @@
+NAME      TYPE
+
+age          1
+arm          2
+sex          2
+usubjid      2

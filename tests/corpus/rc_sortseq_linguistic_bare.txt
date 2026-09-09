@@ -1,0 +1,12 @@
+linguistic: apple Banana Zebra
+Obs   n
+
+  1   apple
+  2   Banana
+  3   Zebra
+ascii: Banana Zebra apple
+Obs   n
+
+  1   Banana
+  2   Zebra
+  3   apple

@@ -1,0 +1,12 @@
+data _null_;
+  x1 = 1; x2 = 2; x3 = 3;
+  r = sum(of x1-x3);
+  m = mean(of x1 x2 x3);
+  put "r=" r " m=" m;
+run;
+data _null_;
+  a = 10; b = 20; c = 30;
+  n = sum(of _numeric_);
+  mx = max(of a b c);
+  put "n=" n " mx=" mx;
+run;

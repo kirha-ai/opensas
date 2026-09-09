@@ -1,0 +1,2 @@
+add=.  mul=.
+missing_lt_5=1  missing_gt_5=0  missing_eq_dot=1

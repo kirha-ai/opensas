@@ -1,0 +1,12 @@
+data _null_;
+  d = mdy(6,1,2021);
+  dt = dhms(d, 14, 30, 15);
+  t = hms(14, 30, 15);
+  length dts $20 dps $10 tps $10;
+  dts = put(dt, datetime.);
+  dps = put(datepart(dt), date9.);
+  tps = put(timepart(dt), time8.);
+  put "datetime=" dts;
+  put "datepart=" dps " timepart=" tps;
+  put "hms=" t;
+run;

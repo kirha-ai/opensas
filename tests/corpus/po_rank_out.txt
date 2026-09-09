@@ -1,0 +1,6 @@
+usubjid   rank
+
+S01          2
+S02          3
+S03          1
+S04          4

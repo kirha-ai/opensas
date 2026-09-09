@@ -1,0 +1,12 @@
+data _null_;
+  length a $30 b $30 c $30;
+  a = "pre";
+  call catx("-", a, "x", "", "y", "z");
+  b = "";
+  call catx(",", b, "p", 7, "  ", "q");
+  c = "";
+  call catx("/", c, "", " ", "");
+  put "append=" a;
+  put "skipblank=" b;
+  put "allblank=[" c "]";
+run;

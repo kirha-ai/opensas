@@ -1,0 +1,12 @@
+data _null_;
+  a = mdy(1, 1, 2020);
+  b = mdy(1, 1, 2021);
+  yrs = intck('year', a, b);
+  mos = intck('month', a, b);
+  das = intck('day', a, b);
+  nx = intnx('month', a, 2);
+  put "yrs=" yrs;
+  put "mos=" mos;
+  put "das=" das;
+  put "nx=" nx;
+run;

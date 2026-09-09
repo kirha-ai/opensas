@@ -1,0 +1,4 @@
+euclid=5 3
+lpnorm=5 7 2
+deviance=4 0.6137056389
+airy=0.3550280539

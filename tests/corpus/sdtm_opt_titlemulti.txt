@@ -1,0 +1,6 @@
+Protocol PROTO-01
+Table 14.1: Demographics
+Obs   USUBJID   AGE
+
+  1   01-001     45
+  2   01-002     52

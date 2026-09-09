@@ -1,0 +1,26 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              sz     Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              Small          3       42.86              3        42.86
+              Medium         2       28.57              5        71.43
+              Large          2       28.57              7       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              grp    Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1              4       57.14              4        57.14
+              2              3       42.86              7       100.00
+                                       The MEANS Procedure
+
+                             Analysis Variable : grp
+
+sz           N            Mean
+------------------------------
+Small        3       1.3333333
+Medium       2       1.5000000
+Large        2       1.5000000
+------------------------------

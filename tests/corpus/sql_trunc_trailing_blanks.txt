@@ -1,0 +1,14 @@
+DATA eq blanks = 0
+DATA eq plain  = 1
+DATA gt blanks = 1
+DATA ne blanks = 1
+sql_eq_blanks
+            1
+sql_eq_plain
+           1
+sql_ne_blanks
+            0
+sql_ge_blanks
+            1
+sql_lt_plain
+           1

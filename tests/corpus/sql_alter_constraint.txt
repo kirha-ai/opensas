@@ -1,0 +1,88 @@
+                          The CONTENTS Procedure
+
+Data Set Name  m1
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m2
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m3
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m4
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m5
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m6
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+2  y         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m7
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  x         Num     8
+2  y         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  m8
+Observations   1
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+3  w         Char    4
+1  x         Num     8
+2  z         Num     8
+Obs   x
+
+  1   1
+  2   7

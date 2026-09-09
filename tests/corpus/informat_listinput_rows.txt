@@ -1,0 +1,7 @@
+Obs   x     y
+
+  1   abc   5
+  2   def   6
+ROW abc       y=5
+ROW def       y=6
+LAST=[def ]
