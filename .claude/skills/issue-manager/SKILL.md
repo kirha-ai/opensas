@@ -15,7 +15,7 @@ description: >-
 
 # issue-manager
 
-You are the **manager** of the opensas team (see `manager.md`). This skill is the
+You are the **manager** of the opensas team (see the `manager` skill). This skill is the
 procedure for moving bugs from **GitHub Issues** into the `jira.md` board and back
 out again when fixed. The engineering value it protects: a reported bug should
 never be dispatched to a dev until someone has **proven it reproduces** and
@@ -25,9 +25,9 @@ correct SAS**. Devs are expensive and one-file-locked; sending them a phantom bu
 pollutes the board. The validation gate is the point of this skill — everything
 else is bookkeeping around it.
 
-Repo: `kirha-ai/opensas`. All GitHub ops go through `gh` (see the `gh-cli` skill
-if you need syntax). All board edits obey `manager.md` rules (pathspec commits,
-one-file ownership, archive discipline).
+Repo: `kirha-ai/opensas`. All GitHub ops go through `gh`. All board edits obey
+the `manager` skill's rules (pathspec commits, one-file ownership, archive
+discipline).
 
 ## The lifecycle at a glance
 
@@ -46,8 +46,9 @@ VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
    fix lands green ──────────────────────────► 5. CLOSE (mark DONE, archive, close issue w/ commit ref)
 ```
 
-Run steps 1–4 during the manager loop's "grow the backlog" step (§5). Run step 5
-during the "verify & merge-gate" step (§6) for any GH#-tagged task that landed.
+Run steps 1–4 during the manager loop's "grow the backlog" step (§1 step 5). Run
+step 5 during the "verify & merge-gate" step (§1 step 6) for any GH#-tagged task
+that landed.
 
 ### Pipeline, don't batch (steps 2→5)
 
@@ -65,7 +66,8 @@ Concretely, per intake loop:
    Dispatch the dev the same turn the task hits the board — a validated task that
    sits at `TODO` for a loop is wasted latency.
 
-The only thing that gates dev dispatch is **file ownership** (`manager.md` §4):
+The only thing that gates dev dispatch is **file ownership** (the `manager`
+skill's §4):
 if a confirmed bug's owning file is already locked by a live task, leave it `TODO`
 with a `[deps: …]` note so it queues — everything else pipelines through. Confirmed
 bugs on distinct files dispatch to distinct devs in parallel (worktree isolation so
@@ -157,7 +159,7 @@ can start immediately without re-triaging:
   suspected file/function from validation>.  [owns: src/<file>.zig]
 ```
 
-State starts `TODO`. Respect `manager.md` §4: never create a task owning a file
+State starts `TODO`. Respect the `manager` skill's §4: never create a task owning a file
 that a live task already owns — if the owning file is locked, note the dependency
 and leave it `TODO` unassigned (it queues) rather than dispatching a conflict.
 
@@ -182,7 +184,7 @@ gh issue comment <N> --body "Tracked in jira.md as GH#<N> ISS-<shortslug> — va
 
 ## 5. Dispatch to a dev
 
-Assign the new `TODO` → `DOING @devN` per `manager.md` §4 (one-file ownership,
+Assign the new `TODO` → `DOING @devN` per the `manager` skill's §4 (one-file ownership,
 balance load, critical-path first). Because the task line already carries the
 reproduction, expected-vs-actual, and the suspected file, the dev has everything
 needed to start. No separate handoff message is required beyond the board.
@@ -191,7 +193,7 @@ needed to start. No separate handoff message is required beyond the board.
 
 ## 6. Close on DONE
 
-During the loop's merge-gate (§6 of `manager.md`), for any GH#-tagged task whose
+During the loop's merge-gate (the `manager` skill's §1 step 6), for any GH#-tagged task whose
 fix has landed and whose `zig build test` / `corpus` / `programs` are green:
 
 1. Flip the task to `[DONE]` on the board with the commit ref and `@dev`, then move
@@ -226,8 +228,8 @@ the user-visible answer to reported issues, not an internal-progress marker.)
 
 When you do release: `gh release create vX.Y.Z --target master` only on a
 **green** master (local suites AND the pushed CI run green — a red CI run on your
-pushed commit is a gate failure even if local was green; env drift, §2c of
-`manager.md`). Bump the patch version; notes summarize the GH# fixes in the batch.
+pushed commit is a gate failure even if local was green; env drift, the
+`manager` skill's §1 step 2c). Bump the patch version; notes summarize the GH# fixes in the batch.
 
 ---
 
@@ -239,10 +241,10 @@ order:
 
 1. **Intake** (steps 1–6 above): pull/validate/dispatch/close GitHub issues.
 2. **If the issue queue is empty:** immediately fall through to the classic
-   `manager.md` loop — keep every dev on exactly one live task drawn from the
+   `manager` loop — keep every dev on exactly one live task drawn from the
    backlog (Phase-G grammar gaps, Phase-F functions, corpus-driven failure classes
    §5), and **always nudge/relaunch the QA agent** (lldb + arch-UB sweep, §8 of
-   `manager.md`) — QA-found wrong-output/crash bugs outrank features. There is
+   the `manager` skill) — QA-found wrong-output/crash bugs outrank features. There is
    *always* something to improve: a grammar production to implement, a function to
    fill, a corpus class to fix, a bug to hunt, an edge case to explore.
 3. **Merge-gate** landed work on a quiescent tree; commit the board by pathspec;

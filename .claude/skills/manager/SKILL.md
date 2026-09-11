@@ -26,6 +26,13 @@ true. The devs consume `jira.md`; you own it. The QA role (§8) triages failures
 and hunts bugs with lldb. The devs and QA are **subagents** you drive with the
 `Agent` tool (§7).
 
+**Notation.** Two numbering systems live in this file and do NOT share numbers.
+`§N` (§1–§9, incl. §8b/§8c) always means a top-level SECTION of this manual.
+The per-tick checklist inside §1 is written `step N` (0–9, with sub-steps
+2b/2c/5b/5c) and cited from outside as `§1 step N`. So "(§4)" = the section
+*Assignment rules*; "(§1 step 6)" = the loop's merge-gate step. **A bare `§N`
+is never a loop step.**
+
 **North star:** run every program valid under **SAS 9.4** (DATA step first, then
 the PROCs and macro language). Progress is measured by the conformance corpus
 (§5), not by vibes.
@@ -49,7 +56,7 @@ markers). Phases complete when the grammar note is empty AND the checklist is
 ## 1. The loop (one iteration)
 
 You run the loop in a **single persistent session**, driven by **background-task
-completion notifications** (§7): dispatch work, wait for a subagent to report,
+completion notifications** (§7 Driving devs): dispatch work, wait for a subagent to report,
 gate it, dispatch the next. Each iteration:
 
 0. **Baseline (first loop only).** Commit any untracked *source* before fanning
@@ -58,10 +65,10 @@ gate it, dispatch the next. Each iteration:
    never `git add -A` (a teammate may have half-done WIP in the shared tree).
 1. **Sense.** Read `jira.md`. Run `git log --oneline -20` and `zig build test`.
    Note what merged since last loop, what's green/red, what each dev is on. For
-   liveness, use the subagent task list / completion notifications (§7).
-2. **Reconcile.** Update every task's state (§3) to match reality. A task whose
+   liveness, use the subagent task list / completion notifications (§7 Driving devs).
+2. **Reconcile.** Update every task's state (§3 Task states) to match reality. A task whose
    file exists and whose test passes is `DONE` regardless of the board. A `DOING`
-   task whose subagent died with no commit is **stalled** → recover (§7).
+   task whose subagent died with no commit is **stalled** → recover (§7 Driving devs).
 2b. **Archive discipline.** Any line you mark `DONE` moves to `jira-archive.md`
    the SAME tick (append; devs never read it). The snapshot paragraph carries ONE
    tick only — prior ticks live in `git log -p -- jira.md`. jira.md stays under
@@ -75,16 +82,17 @@ gate it, dispatch the next. Each iteration:
 3. **Unblock.** For each `BLOCKED` task, if its deps are now `DONE`, flip to
    `TODO`. If a dep is wrong/missing, file it as a new task.
 4. **Assign — never idle.** Ensure each active dev has exactly one `TODO`→`DOING`
-   task, respecting deps and one-file ownership (§4). Prefer critical-path tasks.
-   Dispatch = spawn/continue a subagent (§7). **The instant a dev finishes and its
-   task is gated (§6), spawn its next task in the SAME tick** — there must ALWAYS
-   be dev agents live in the background. A dev that just reported is a free slot,
+   task, respecting deps and one-file ownership (§4 Assignment rules). Prefer
+   critical-path tasks. Dispatch = spawn/continue a subagent (§7 Driving devs).
+   **The instant a dev finishes and its task is gated (step 6), spawn its next
+   task in the SAME tick** — there must ALWAYS be dev agents live in the
+   background. A dev that just reported is a free slot,
    not a stopping point: refill it before you do anything else. Zero live devs is
    a failure state, not a resting state (only exception: the tree is red with a
    fix already assigned, §6).
 5. **Grow the backlog.** If fewer than ~2 `TODO` per dev remain, generate the
-   next batch from the corpus (§5) — highest-frequency failing SAS feature,
-   decomposed into file-owned tasks.
+   next batch from the corpus (§5 The conformance corpus) — highest-frequency
+   failing SAS feature, decomposed into file-owned tasks.
 5b. **GitHub issues — check & prioritize EVERY loop.** Invoke the `issue-manager`
    skill to pull new open issues, run each through the reproduce + SAS-doc
    validation gate, and create confirmed bugs as `GH#`-tagged tasks (marking taken
@@ -105,10 +113,10 @@ gate it, dispatch the next. Each iteration:
    missing or gets wrong vs the SAS 9.4 doc. Both are read-only-ish (file, don't
    fix — same discipline as QA/§8b). perf skips filing constant-factor wins while
    the tree is red (correctness first); the doc-finder runs regardless (pure
-   doc-vs-impl comparison). Their findings become dev tasks (§5b ordering: bugs
+   doc-vs-impl comparison). Their findings become dev tasks (step 5b ordering: bugs
    ahead of features ahead of perf/taste).
 6. **Verify & merge-gate.** Any dev-completed task: confirm its test exists and
-   `zig build test` is green *including* it, on a **quiescent tree** (see §7 —
+   `zig build test` is green *including* it, on a **quiescent tree** (see §7 Driving devs —
    **NEVER write the gate as `zig build test 2>&1 | tail -N; echo "exit=$?"` — `$?`
    after a pipeline is the exit status of `tail`, which always succeeds, so that
    form reports `exit=0` even when the test step FAILED.** It silently hid a red
@@ -120,7 +128,7 @@ gate it, dispatch the next. Each iteration:
    `set -o pipefail` first. **The corpus/programs counts are self-reporting
    (`P/Q passing`) so read the NUMBERS too — `1603/1604` and `1604/1604` differ by
    one character.**
-   another dev's uncommitted WIP can make the tree transiently red; that is not a
+   But another dev's uncommitted WIP can make the tree transiently red; that is not a
    gate failure). Green → `DONE`. Red (from THIS task) → bounce to the dev with
    the failing output, state `REVIEW`. For a `GH#`-tagged task that just landed
    green, close its issue per the `issue-manager` skill.
@@ -162,10 +170,10 @@ gate it, dispatch the next. Each iteration:
 
 **Never stop the loop.** You do not exit while there is work the team could do.
 If the board looks empty, you have not looked hard enough: grow it (§5 corpus,
-§5b issues, §5c perf, Phase-F/G). The only idle state is *waiting on a completion
+step 5b issues, step 5c perf, Phase-F/G). The only idle state is *waiting on a completion
 notification while devs run in the background* — that is the loop working, not the
 loop ending. When a notification arrives, gate it and immediately refill that dev
-(§4). There must always be agents in the background; a tick that leaves zero live
+(§4 Assignment rules). There must always be agents in the background; a tick that leaves zero live
 devs with assignable work remaining is a bug in your loop, not a finish line.
 
 ---
@@ -233,6 +241,22 @@ The engine. Without it "run every SAS 9.4 program" is untestable.
 
 ---
 
+## 6. Don't-spin discipline
+
+- If `zig build test` is red and no dev is assigned to fix it, that fix is the
+  **only** thing you assign this loop.
+- If a task has bounced `REVIEW`→`DOING` twice, stop reassigning: re-scope it
+  (split it, or fix its dep) rather than looping the same failure.
+- Track two counters in the loop summary: corpus `P/Q` and open `BLOCKED` count.
+  If `P` hasn't moved in 3 loops, something upstream is wrong — diagnose instead
+  of assigning more leaf tasks.
+- Never exit the loop. You wait on the next completion notification (that is the
+  loop *running*, not stopping); you do not busy-wait or poll subagent transcripts,
+  and you do not declare "nothing to do" — refill the freed dev, grow the backlog,
+  keep agents live in the background.
+
+---
+
 ## 7. Driving devs
 
 The devs and QA are **background subagents** launched with the `Agent` tool
@@ -249,7 +273,7 @@ three moves:
   + `docs/` carry all the state a dev needs.
 - **Sense** liveness from **completion notifications** (status `completed` /
   `failed`) and the task list — not from console output. Completion is git +
-  tests (§1/§6), never the agent's own say-so.
+  tests (§1 step 6), never the agent's own say-so.
 
 **Dispatch (step 4).** After you set a task to `DOING @devN` on the board, spawn
 its dev. The charter is the whole handoff — keep it self-contained because the
@@ -324,7 +348,7 @@ commit. On a `failed` notification (or any dead agent):
    drops the task.
 
 **Completion.** Comes from the completion notification + a green `zig build test`
-on a quiescent tree (§1/§6), NOT from the agent's self-report alone — verify. A
+on a quiescent tree (§1 step 6), NOT from the agent's self-report alone — verify. A
 dev that reports DONE but whose test is red (its own fault) is a `REVIEW` bounce:
 `SendMessage` the failing output back to that agent, or relaunch with the failure
 noted.
@@ -514,18 +538,3 @@ tests/programs fixtures pass." Never assign a dev to a refactor while any
 feature/bug/fixture is failing — functionality first, cleanup after. When
 everything is green, run one "quality loop" to burn down the queued Taste tasks.
 
----
-
-## 6. Don't-spin discipline
-
-- If `zig build test` is red and no dev is assigned to fix it, that fix is the
-  **only** thing you assign this loop.
-- If a task has bounced `REVIEW`→`DOING` twice, stop reassigning: re-scope it
-  (split it, or fix its dep) rather than looping the same failure.
-- Track two counters in the loop summary: corpus `P/Q` and open `BLOCKED` count.
-  If `P` hasn't moved in 3 loops, something upstream is wrong — diagnose instead
-  of assigning more leaf tasks.
-- Never exit the loop. You wait on the next completion notification (that is the
-  loop *running*, not stopping); you do not busy-wait or poll subagent transcripts,
-  and you do not declare "nothing to do" — refill the freed dev, grow the backlog,
-  keep agents live in the background.

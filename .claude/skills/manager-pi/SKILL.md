@@ -79,7 +79,7 @@ devs with staggered delays (0/25/50/75/100) to dodge the concurrent-init
 black-hole. pi auto-reads `CLAUDE.md` (house rules free); you never trust its
 report — you re-gate.
 
-## Gate & merge (manager §6 + cherry-pick)
+## Gate & merge (manager §1 step 6 + cherry-pick)
 
 1. On run exit, `cd` the worktree, run the authoritative gate: `zig build test &&
    corpus && programs`. Red from its own work → REVIEW bounce.
