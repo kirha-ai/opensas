@@ -29,12 +29,19 @@ QA/perf/doc-finder. Only feature/bug-fix devs move to pi.
 
 ## Audit lane — all three live, concurrent
 
+At loop start, run `mkdir -p docs/findings`. This is an idempotent local scratch
+directory ignored by Git: create it if absent and leave it alone if present.
+Files under `docs/findings/` are never staged or committed; never use
+`git add -f` for them.
+
 perf, doc-finder, QA run in parallel with the pi devs and each other. Relaunch
 each the tick it reports, on a fresh surface; never gate a relaunch on a dev
-landing. Each writes only its own `docs/findings/<role>-tickN.md` + `tests/corpus/`
-fixtures (commit by pathspec) — **GREEN fixtures only**: a RED fixture asserting
-not-yet-implemented behavior breaks the shared `zig build corpus` gate every dev
-lands against (tick-133); the repro goes in the `.md`, the fixture lands green when
+landing. Each writes only its own local
+`docs/findings/<role>-tickN.md`. The manager copies actionable findings into
+`jira.md`. Audit agents may also add `tests/corpus/` fixtures, committed by
+explicit pathspec only when GREEN: a RED fixture asserting not-yet-implemented
+behavior breaks the shared `zig build corpus` gate every dev lands against
+(tick-133); the repro goes in the ignored `.md`, and the fixture lands green when
 a dev fixes it.
 
 - **File-only while pi devs are live** — never edit a `src/*.zig` a live pi dev owns.
