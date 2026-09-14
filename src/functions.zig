@@ -889,38 +889,63 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
     // INPUTN/INPUTC are the runtime-informat variants of INPUT (the informat is a
     // char expression) — our INPUT already takes the informat as a value, so they
     // share the path. ponytail: no forced numeric/char return-type distinction.
-    if (eqi(name, "input") or eqi(name, "inputn") or eqi(name, "inputc")) {
-        if (args.len != 2) return badArity(ev, name, "2", args.len);
+    // A `?`/`??`-modified call arrives desugared (parser_expr parseCall) and is
+    // resolved to base+level by inputNameAndLevel.
+    if (inputNameAndLevel(name)) |in| {
+        if (args.len != 2) return badArity(ev, in.base, "2", args.len);
         const s = try toStr(ev, args[0]); // the DATA: an implicit num→char here DOES note
         // a bare-numeric spec (`input(x, 4.)`) auto-converts 12-wide right-justified
         // (BUG-numcharwidth) — trim back to the spec text, and coerce it SILENTLY:
         // `input("123", 8.)` used to log a num→char NOTE for the `8.` (QA tick356 F4).
         const spec = try specText(ev, args[1]); // the informat (a char spec)
+        format.read_noted = false; // fresh per read, the way io.zig's readNum clears it
         const v = readInformat(spec, s);
-        // GH#5 ISS-informatfallback: when the informat did not LOAD,
-        // readInformat has just emitted the loud "was not found or could not
-        // be loaded" ERROR and read MISSING. Language Reference: Concepts
-        // p.518 "How SAS Handles Invalid Data" adds two more mandatory
-        // actions — print the invalid-data NOTE and set _ERROR_ to 1 — and
-        // those live HERE, where the Evaluator is (readInformat is a pure
-        // spec→value helper also called from sql.zig, which gets the missing
-        // value only). The INPUT STATEMENT twin of this block is io.zig's
-        // noteInvalidNum; the two informat entry points now agree on all four
-        // p.518 actions. A blank / `.` / special-missing source stays SILENT:
-        // that is a legitimate missing, not invalid data (same guard
-        // noteInvalidNum draws). ponytail: ast.Call nodes carry no source
-        // span, so the NOTE omits SAS's "at line N column M" tail rather than
-        // freeze a 0/0 — GH#78 / NOTE-invalidnumdataloc precedent.
-        const fld = std.mem.trim(u8, s, " \t");
-        if (informatUnloaded(spec) and fld.len != 0 and
+        // GH#5 + GH#4a ISS-inputfninvalid — ONE invalid-data rule for the whole
+        // family, covering BOTH classes: the informat did not LOAD (readInformat
+        // has just printed the loud "was not found or could not be loaded"
+        // ERROR), or a KNOWN informat could not read the non-blank source into
+        // a value (`input('abc', 4.)` was a SILENT missing here). Language
+        // Reference: Concepts p.518 "How SAS Handles Invalid Data": the value is
+        // MISSING (readInformat's return), the invalid-data NOTE prints,
+        // _ERROR_=1. The function's own `?`/`??` modifiers (INPUT(source,
+        // <?|??> informat.), Functions and CALL Routines Reference printed
+        // pp.1038-39) scale the report: `?` keeps _ERROR_=1 but suppresses the
+        // NOTE (doc Example 3 prints _ERROR_=1 under `?`); `??` silences both.
+        // Blank / `.` / special-missing source stays SILENT at every level — a
+        // legitimate missing, not invalid data (io.zig noteInvalidNum's guard;
+        // that function is the INPUT STATEMENT twin of this block). The
+        // invalid-data NOTE is readNumeric's own when it emitted one (the
+        // embedded-blank plain-w.d class — format.read_noted, one NOTE per
+        // invalid value, io.zig's dedupe); else it is this block's
+        // "Invalid argument to function INPUT." ponytail: ast.Call carries no
+        // source span, so the NOTE omits SAS's "at line N column M" tail rather
+        // than freeze a 0/0 (GH#78 precedent); readNumeric's own NOTE prints
+        // from format.zig regardless of the modifiers — io.zig's noteInvalidNum
+        // gates only ITS note too, so both paths leak it alike under `?`/`??`.
+        // The invalid-data judgment applies to the field the informat actually
+        // READ: the fn entry (format.readNumeric) slices to the spec width w
+        // first, so `input(123, 8.)` renders the number 12-wide right-justified
+        // and the 8-wide informat reads its blank LEFT edge — a legitimate
+        // blank-field missing, never invalid data (QA tick356 F4 caught the
+        // false NOTE here). Mirror that slice; io.zig's formatted statement
+        // reads judge the same w columns.
+        const ps = format.parseSpec(spec);
+        const eff = if (ps.w > 0 and ps.w < s.len) s[0..ps.w] else s;
+        const fld = std.mem.trim(u8, eff, " \t");
+        if (v.isMissing() and fld.len != 0 and
             !std.mem.eql(u8, fld, ".") and Value.parseSpecialMissing(fld) == null)
         {
-            // Real SAS names the function UPPERCASE whatever the call's case
-            // (and the in-file NOTE family — MORT/SAVING/COMPOUND — spells it
-            // that way too), so derive it instead of echoing `name`.
-            const fname = if (eqi(name, "inputn")) "INPUTN" else if (eqi(name, "inputc")) "INPUTC" else "INPUT";
-            note(ev, "Invalid argument to function {s}.", .{fname});
-            try ev.setError();
+            if (in.lvl < 2) {
+                if (in.lvl == 0 and !format.read_noted) {
+                    // Real SAS names the function UPPERCASE whatever the call's
+                    // case (and the in-file NOTE family — MORT/SAVING/COMPOUND
+                    // — spells it that way too), so derive it from the base
+                    // instead of echoing the (possibly desugared) name.
+                    const fname = if (eqi(in.base, "inputn")) "INPUTN" else if (eqi(in.base, "inputc")) "INPUTC" else "INPUT";
+                    note(ev, "Invalid argument to function {s}.", .{fname});
+                }
+                try ev.setError();
+            }
             return Value.missing;
         }
         // Named `$` informats post-process the verbatim read (readInformat has no
@@ -3866,6 +3891,30 @@ fn informatUnloaded(spec: []const u8) bool {
     return !format.isKnownInformat(format.parseSpec(spec).name);
 }
 
+/// GH#4a: resolve an INPUT-family call name to its base (`input`/`inputn`/
+/// `inputc`) and its `?`/`??` suppress level. The parser desugars a modified
+/// call to `__<base>q` / `__<base>qq` (parser_expr parseCall) because eval's
+/// call_fn boundary forwards name+args only (eval.zig evalCall) — the level,
+/// which ast.Call.qq also records, has to ride the NAME (`__assignc` pattern).
+/// Returns null for every other name, so dispatch falls through.
+fn inputNameAndLevel(name: []const u8) ?struct { base: []const u8, lvl: u2 } {
+    var nm = name;
+    var lvl: u2 = 0;
+    if (std.ascii.startsWithIgnoreCase(nm, "__")) {
+        nm = nm[2..];
+        if (std.ascii.endsWithIgnoreCase(nm, "qq")) {
+            lvl = 2;
+            nm = nm[0 .. nm.len - 2];
+        } else if (std.ascii.endsWithIgnoreCase(nm, "q")) {
+            lvl = 1;
+            nm = nm[0 .. nm.len - 1];
+        } else return null; // some other `__` internal name, not ours
+    }
+    if (eqi(nm, "input") or eqi(nm, "inputn") or eqi(nm, "inputc"))
+        return .{ .base = nm, .lvl = lvl };
+    return null;
+}
+
 /// Convert `s` under informat `spec` (e.g. "date9.", "yymmdd10.", "comma8.").
 /// Dates yield a SAS day number; COMMA/DOLLAR strip separators; everything else
 /// parses as a plain number. Unparseable input → missing; an informat that is
@@ -5109,6 +5158,76 @@ test "GH#5 ISS-informatfallback: INPUT() on an unloaded informat reads MISSING +
     try t.expectEqual(@as(f64, 2025), ok.num);
     try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
     try t.expectEqual(@as(usize, 2), h.diags.count()); // only the two NOTEs above
+
+    format.g_fmt_error = false; // reset module state for other tests
+}
+
+test "GH#4a ISS-inputfninvalid: ? keeps _ERROR_=1 without the NOTE, ?? silences both; a known informat failing on data is invalid too" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // Doc Example 3 (Functions-ref INPUT, printed p.1039) prints _ERROR_=1
+    // UNDER `?`: the modifier scales the REPORT, not the invalidity. The
+    // desugared name is what the parser's `?` form evaluates as.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    format.g_fmt_error = false;
+    format.g_test_last_err = "";
+    const q = try dispatch(&e, "__inputq", &.{ strV("2025"), strV("zzznotreal.") });
+    try t.expect(q.isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 0), h.diags.count()); // the GH#5 NOTE suppressed
+    try t.expect(std.mem.indexOf(u8, format.g_test_last_err, "was not found") != null); // loud ERROR stays
+
+    // `??` silences both — the observation is not flagged at all.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    const qq = try dispatch(&e, "__inputqq", &.{ strV("2025"), strV("zzznotreal.") });
+    try t.expect(qq.isMissing());
+    try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 0), h.diags.count());
+
+    // The rider: a KNOWN informat failing on non-blank data is invalid data
+    // too — NOTE + _ERROR_=1 at level 0 (`input('abc', 4.)` was a SILENT
+    // missing with _ERROR_=0 before GH#4a).
+    try h.pdv.set("_error_", .{ .num = 0 });
+    const r = try dispatch(&e, "input", &.{ strV("abc"), strV("4.") });
+    try t.expect(r.isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 1), h.diags.count());
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[0].message, "Invalid argument to function INPUT") != null);
+
+    // When readNumeric emits its OWN invalid-data NOTE (the embedded-blank
+    // class) that note IS the invalid-data NOTE — no second one (format
+    // .read_noted dedupe, io.zig's rule) — but _ERROR_ still sets.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    const r2 = try dispatch(&e, "input", &.{ strV("1 2"), strV("4.") });
+    try t.expect(r2.isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 1), h.diags.count()); // still only the 'abc' note
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[0].message, "Invalid argument to function INPUT") != null);
+    try t.expectEqualStrings("Invalid numeric data, '1 2'.", format.g_test_last_note);
+
+    // `?` on the rider: NOTE suppressed, _ERROR_=1; `??`: both silent.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    _ = try dispatch(&e, "__inputq", &.{ strV("abc"), strV("4.") });
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 1), h.diags.count());
+    try h.pdv.set("_error_", .{ .num = 0 });
+    _ = try dispatch(&e, "__inputqq", &.{ strV("abc"), strV("4.") });
+    try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 1), h.diags.count());
+
+    // A width-slice BLANK read is not invalid data: `input(123, 8.)` renders
+    // the number 12-wide right-justified and the 8-wide informat reads its
+    // blank LEFT edge — a legitimate silent missing (QA tick356 F4's exact
+    // shape; the judgment is on the field the informat read, not the whole
+    // rendered string).
+    try h.pdv.set("_error_", .{ .num = 0 });
+    _ = try dispatch(&e, "input", &.{ numV(123), strV("8.") });
+    try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 2), h.diags.count()); // the legit num→char conversion NOTE…
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[1].message, "converted to character") != null); // …and nothing else
 
     format.g_fmt_error = false; // reset module state for other tests
 }

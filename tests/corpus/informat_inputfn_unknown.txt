@@ -3,3 +3,11 @@ ERRORVAR=1
 c=[. ] d=[. ] e=[. ]
 g=[. ]
 f=[2025 ]
+Q=[. ]
+Q_ERR=1
+R=[. ]
+R_ERR=0
+S=[. ] T=[. ]
+ST_ERR=1
+U=[. ]
+U_ERR=0

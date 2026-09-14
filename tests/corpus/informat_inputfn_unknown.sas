@@ -33,3 +33,36 @@ data _null_;
   f = input('2025', 4.);
   put "f=[" f "]";
 run;
+
+/* GH#4a ISS-inputfninvalid: the `?`/`??` modifiers are part of the call
+   (INPUT(source, <?|??> informat.), Functions-ref printed pp.1038-39).
+   `?` suppresses the invalid-data NOTE but keeps _ERROR_=1 (doc Example 3
+   prints _ERROR_=1 under `?`); `??` silences both. The loud informat-not-
+   loaded ERROR is NOT invalid-data messaging — it fires at every level. */
+data _null_;
+  q = input('2025', ? zzznotreal.);
+  put "Q=[" q "]";
+  if _error_ then put "Q_ERR=1"; else put "Q_ERR=0";
+run;
+data _null_;
+  r = input('2025', ?? zzznotreal.);
+  put "R=[" r "]";
+  if _error_ then put "R_ERR=1"; else put "R_ERR=0";
+run;
+
+/* rider: a KNOWN informat failing on non-blank data is invalid data too —
+   `input('abc', 4.)` used to be a SILENT missing with _ERROR_=0 on this
+   path. Level 0 notes + flags; `?` keeps the flag; `??` silences both, and
+   does NOT clear a flag an earlier error raised (the executor resets
+   _ERROR_ per iteration, as the step boundary below shows). */
+data _null_;
+  s = input('abc', 4.);
+  t = input('abc', ? 4.);
+  put "S=[" s "] T=[" t "]";
+  if _error_ then put "ST_ERR=1"; else put "ST_ERR=0";
+run;
+data _null_;
+  u = input('abc', ?? 4.);
+  put "U=[" u "]";
+  if _error_ then put "U_ERR=1"; else put "U_ERR=0";
+run;

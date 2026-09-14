@@ -827,14 +827,25 @@ pub const Parser = struct {
     fn parseCall(self: *Parser, name_tok: Token) Error!*const ast.Expr {
         _ = self.advance(); // consume '('
         var args: std.ArrayList(ast.Expr) = .empty;
+        var qq: u2 = 0; // `?`/`??` count before the informat (INPUT family, GH#4a)
         if (!self.check(.rparen)) {
             while (true) {
                 // INPUT error-suppression modifier `?`/`??` precedes the informat
-                // arg (`input(x, ?? best.)`): `?` skips the invalid-data message, `??`
-                // also skips _ERROR_. opensas input() is already silent-missing on bad
-                // data, so drop the marker and parse the informat/expr that follows
-                // (works for name informats AND numeric `w.d` — BUG-inputqq).
-                while (self.check(.question)) _ = self.advance();
+                // arg (`input(x, ?? best.)`): `?` suppresses the invalid-data NOTE
+                // but keeps _ERROR_=1, `??` silences both (Functions and CALL
+                // Routines Reference, INPUT, printed pp.1038-39; doc Example 3
+                // prints _ERROR_=1 under `?`). Was dropped here with a
+                // "silent-missing is correct" claim the doc falsifies
+                // (BUG-inputqq): the count now rides into functions.zig — for
+                // the INPUT family the call NAME gains the `__…q`/`__…qq`
+                // desugar at the return below, because eval's call_fn boundary
+                // forwards name+args only (eval.zig evalCall; the `__assignc`
+                // pattern). Other calls keep the historical drop-and-forget:
+                // the modifier is meaningless to them.
+                while (self.check(.question)) {
+                    _ = self.advance();
+                    if (qq < 2) qq += 1;
+                }
                 // an omitted positional arg (`compress(x, , "kd")`) — the slot
                 // before a comma or `)` is empty. Emit an empty-string default so
                 // the arg *count* is preserved (the function decides how to
@@ -906,9 +917,18 @@ pub const Parser = struct {
                 }
             }
         }
+        // GH#4a: the counted `?`/`??` markers reach functions.zig through the
+        // call NAME (see the marker-loop comment above for why the AST field
+        // alone cannot cross eval's call_fn boundary). ast.Call.qq records the
+        // count in the node itself.
+        var call_name = name_tok.text;
+        if (qq > 0 and isInputFamily(name_tok.text)) {
+            call_name = try std.fmt.allocPrint(self.arena, "__{s}{s}", .{ name_tok.text, if (qq == 2) "qq" else "q" });
+        } else qq = 0;
         return self.mk(.{ .call = .{
-            .name = name_tok.text,
+            .name = call_name,
             .args = try args.toOwnedSlice(self.arena),
+            .qq = qq,
         } });
     }
 
@@ -1021,6 +1041,15 @@ fn isBoundFn(name: []const u8) bool {
     return std.ascii.eqlIgnoreCase(name, "dim") or
         std.ascii.eqlIgnoreCase(name, "hbound") or
         std.ascii.eqlIgnoreCase(name, "lbound");
+}
+
+/// The INPUT family, whose informat argument accepts the `?`/`??`
+/// error-suppression modifiers (Functions-ref INPUT, printed pp.1038-39;
+/// INPUTN/INPUTC share the entry).
+fn isInputFamily(name: []const u8) bool {
+    return std.ascii.eqlIgnoreCase(name, "input") or
+        std.ascii.eqlIgnoreCase(name, "inputn") or
+        std.ascii.eqlIgnoreCase(name, "inputc");
 }
 
 /// SAS word-form operators (case-insensitive). `NOT` is handled as a prefix in
@@ -1245,6 +1274,43 @@ test "colon-modified comparison desugars to substrn(both,1,min(lengthc both)) op
 
     // no colon → still a plain comparison (regression guard)
     try std.testing.expect((try parseSrc(a, &diags, "x = 'T'")).binary.op == .eq);
+}
+
+test "INPUT ?/?? desugars the call name and records Call.qq (GH#4a BUG-inputqq)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+
+    // `input('2025', ?? zzznotreal.)` evaluates as __inputqq(...): eval's
+    // call_fn boundary forwards name+args only (eval.zig evalCall), so the
+    // suppress level rides the NAME — the `__assignc` desugar pattern. The
+    // informat argument parses clean of the markers either way.
+    const qq = try parseSrc(a, &diags, "input('2025', ?? zzznotreal.)");
+    try std.testing.expectEqualStrings("__inputqq", qq.call.name);
+    try std.testing.expectEqual(@as(u2, 2), qq.call.qq);
+    try std.testing.expectEqual(@as(usize, 2), qq.call.args.len);
+    try std.testing.expectEqualStrings("zzznotreal.", qq.call.args[1].str);
+
+    // a single `?` — one marker, one q.
+    const q = try parseSrc(a, &diags, "input(x, ? date9.)");
+    try std.testing.expectEqualStrings("__inputq", q.call.name);
+    try std.testing.expectEqual(@as(u2, 1), q.call.qq);
+
+    // unmodified calls keep their name; other functions never desugar (the
+    // markers stay historical drop-and-forget there).
+    const plain = try parseSrc(a, &diags, "input(x, best.)");
+    try std.testing.expectEqualStrings("input", plain.call.name);
+    try std.testing.expectEqual(@as(u2, 0), plain.call.qq);
+    const put = try parseSrc(a, &diags, "put(x, ? best.)");
+    try std.testing.expectEqualStrings("put", put.call.name);
+    try std.testing.expectEqual(@as(u2, 0), put.call.qq);
+
+    // case-insensitive family match, numeric w.d spec (the marker comment's
+    // BUG-inputqq shape).
+    const up = try parseSrc(a, &diags, "INPUTN(x, ?? 4.)");
+    try std.testing.expectEqualStrings("__INPUTNqq", up.call.name);
+    try std.testing.expectEqual(@as(u2, 2), up.call.qq);
 }
 
 test "precedence: 1 + 2 * 3 → add(1, mul(2, 3))" {
