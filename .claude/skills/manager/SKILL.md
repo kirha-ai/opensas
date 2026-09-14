@@ -9,8 +9,9 @@ description: >-
   "grow the backlog from the corpus", "run an optimization loop", "perf audit",
   or when picking up mid-loop after a dev reports. The manager does NOT write
   feature code; it drives dev/QA/perf subagents (the Agent tool), runs the
-  merge-gate (zig build test/corpus/programs), moves DONE tasks to
-  jira-archive.md, and is the ONLY agent that pushes master. For GitHub-issue
+  merge-gate (zig build test/corpus/programs), removes gated DONE tasks from
+  jira.md, and is the ONLY agent that pushes the current human-created working
+  branch. It never pushes or merges a protected branch. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
   step 5b of this loop). One rotating audit slot alternates the perf agent (§8b —
   profiles real programs, files measured PERF-* tickets) with the doc-finder (§8c
@@ -27,7 +28,7 @@ and hunts bugs with lldb. The devs and QA are **subagents** you drive with the
 `Agent` tool (§7).
 
 **Notation.** Two numbering systems live in this file and do NOT share numbers.
-`§N` (§1–§9, incl. §8b/§8c) always means a top-level SECTION of this manual.
+`§N` (§1–§8, incl. §8b/§8c) always means a top-level SECTION of this manual.
 The per-tick checklist inside §1 is written `step N` (0–9, with sub-steps
 2b/2c/5b/5c) and cited from outside as `§1 step N`. So "(§4)" = the section
 *Assignment rules*; "(§1 step 6)" = the loop's merge-gate step. **A bare `§N`
@@ -59,7 +60,11 @@ You run the loop in a **single persistent session**, driven by **background-task
 completion notifications** (§7 Driving devs): dispatch work, wait for a subagent to report,
 gate it, dispatch the next. Each iteration:
 
-0. **Baseline (first loop only).** Commit any untracked *source* before fanning
+0. **Baseline (first loop only).** Confirm `git branch --show-current` names a
+   human-created working branch and is NOT `main` or `master`. If HEAD is detached
+   or the current branch is protected, do not commit, dispatch, switch branches,
+   or push: ask the human to create/check out a working branch, then resume.
+   Commit any untracked *source* before fanning
    out — untracked files are invisible to git and a dev's rework can silently
    delete them (this cost us the original `lexer.zig`). Use an explicit pathspec,
    never `git add -A` (a teammate may have half-done WIP in the shared tree).
@@ -69,16 +74,21 @@ gate it, dispatch the next. Each iteration:
 2. **Reconcile.** Update every task's state (§3 Task states) to match reality. A task whose
    file exists and whose test passes is `DONE` regardless of the board. A `DOING`
    task whose subagent died with no commit is **stalled** → recover (§7 Driving devs).
-2b. **Archive discipline.** Any line you mark `DONE` moves to `jira-archive.md`
-   the SAME tick (append; devs never read it). The snapshot paragraph carries ONE
-   tick only — prior ticks live in `git log -p -- jira.md`. jira.md stays under
-   ~200 lines, no exceptions.
-2c. **CI check.** `gh run list --branch master --limit 3` — a red CI run on a
-   commit you pushed is a gate failure even if local suites were green (env
-   drift). Diagnose before assigning anything else. Since pushes are batched
-   (step 8), CI fires once per batch, so a red run indicts a RANGE of commits,
-   not one: bisect with the local per-landing gate rather than guessing. Skip
-   this check on ticks where you did not push — there is nothing new to see.
+2b. **Completed-task removal.** Any task that passes the authoritative gate is
+   removed from `jira.md` the SAME tick. Before removing it, remove its ID from
+   every dependent task's `[deps: …]`; if that clears the last dependency, flip
+   the dependent task to `TODO`. Do not retain `[DONE]` lines and do not maintain
+   a separate archive file: `git log -p -- jira.md` is the audit trail. The
+   snapshot paragraph carries ONE tick only. jira.md stays under ~200 lines, no
+   exceptions. For a `GH#` task, defer removal until its green fix has been pushed
+   to the remote working branch and the issue has closed successfully; follow the
+   `issue-manager` ordering so a push/API failure cannot orphan the issue.
+2c. **Branch-safety check.** Re-check the current branch before every dispatch,
+   board commit, cherry-pick, or push. It must still be the same non-protected
+   working branch captured at step 0. Never switch to, commit on, push to, merge
+   into, or force-update `main`/`master`. Pull-request CI runs later, after the
+   human stops the manager and opens the PR; local suite gates are authoritative
+   during the manager loop.
 3. **Unblock.** For each `BLOCKED` task, if its deps are now `DONE`, flip to
    `TODO`. If a dep is wrong/missing, file it as a new task.
 4. **Assign — never idle.** Ensure each active dev has exactly one `TODO`→`DOING`
@@ -102,7 +112,7 @@ gate it, dispatch the next. Each iteration:
    answer or crash) outranks corpus feature gaps and ties with QA bugs — queue it
    at the FRONT of the backlog, ahead of Phase-F/G leaf work, so the next freed dev
    picks it up first. Order the board: red-tree fix > QA/GH# wrong-answer bugs >
-   critical-path features > corpus gaps > perf/taste.
+   critical-path features > corpus gaps > perf.
 5c. **Audit lane — perf ⇄ doc-finder, ALWAYS exactly one live, alternating.**
    Keep a single background audit agent alive at all times, **alternating** each
    cycle: launch perf (§8b), and when it reports, launch the doc-finder (§8c);
@@ -114,7 +124,7 @@ gate it, dispatch the next. Each iteration:
    fix — same discipline as QA/§8b). perf skips filing constant-factor wins while
    the tree is red (correctness first); the doc-finder runs regardless (pure
    doc-vs-impl comparison). Their findings become dev tasks (step 5b ordering: bugs
-   ahead of features ahead of perf/taste).
+   ahead of features ahead of perf).
 6. **Verify & merge-gate.** Any dev-completed task: confirm its test exists and
    `zig build test` is green *including* it, on a **quiescent tree** (see §7 Driving devs —
    **NEVER write the gate as `zig build test 2>&1 | tail -N; echo "exit=$?"` — `$?`
@@ -131,44 +141,49 @@ gate it, dispatch the next. Each iteration:
    But another dev's uncommitted WIP can make the tree transiently red; that is not a
    gate failure). Green → `DONE`. Red (from THIS task) → bounce to the dev with
    the failing output, state `REVIEW`. For a `GH#`-tagged task that just landed
-   green, close its issue per the `issue-manager` skill.
-7. **Write.** Commit the updated `jira.md` (+ `jira-archive.md`) with a one-line
+   green, close its issue only after the fix has been pushed to the remote working
+   branch, per the `issue-manager` skill.
+7. **Write.** Commit the updated `jira.md` with a one-line
    summary: `manager: tick N — merged X, assigned Y, corpus P/Q passing`. Pathspec
    only.
-8. **Push — BATCHED, every 20-30 commits (user directive 2026-07-25).** Do NOT
-   push every tick. Every push fires a GitHub Actions run, so let commits
-   accumulate locally and push once the batch is worth a CI run:
-   - Count what's waiting: `git rev-list --count origin/master..master`.
-   - **< 20 → do not push.** Say the count in your tick summary and move on.
-   - **20-30 → push** (`git push origin master`), provided `zig build test`
-     **and** corpus **and** programs are green on a quiescent tree. Red → hold
-     the whole batch; never push red.
-   - **A known HIGH regression does NOT hold the batch — push anyway and FLAG it**
-     (corrected tick335 by the user: I had invented a hold rule here and sat on 41
-     commits for ~8 ticks; the directive is 20-30, full stop). If an audit agent has
-     confirmed a HIGH defect in an unpushed commit, push on schedule and name the
-     defect plus its in-flight fix in the tick summary. The suites being green is
-     the push condition; known-but-unfixed defects are a *reporting* duty, not a
-     brake. Only genuinely red suites hold a push.
-   - **> 30 → push at the next green gate**, don't let it drift further.
-   - **Push immediately regardless of count** if: the user asks; you are cutting
-     a release (a tag needs its commits upstream); or the local branch holds
-     work you cannot afford to lose (before a risky history operation).
-   Local commits are the safety net between pushes — every landing is still
-   committed by pathspec the same tick, and the merge-gate still runs per
-   landing. Batching changes only when the remote learns about it. You are the
-   **only** agent that pushes `master`; devs commit locally, never push.
+8. **Push every green landing to the CURRENT WORKING BRANCH.** NEVER push
+   `main`/`master`.
+   - Capture the branch with `branch=$(git branch --show-current)` and refuse to
+     continue if it is empty, `main`, or `master`.
+   - If an upstream exists, require it to be exactly `origin/$branch`; a mismatched
+     upstream is a stop-and-report condition, never a reason to guess a push
+     target.
+   - After each authoritative green gate and scoped landing/board commit, push
+     with `git push -u origin HEAD` on the first push and `git push origin HEAD`
+     thereafter. A red or non-quiescent tree is never pushed.
+   - A known-but-unfixed defect whose existing suites remain green is a reporting
+     duty, not a push blocker; name it and its in-flight fix in the tick summary.
+   - For a completed `GH#` task, a successful working-branch push is required
+     before closing the issue. Push the green fix first; only after the issue
+     closes, remove its jira line, commit that board update, and push the board
+     commit. Follow the `issue-manager` ordering exactly; a failed fix push or
+     close leaves both the issue and its jira task open.
+   You are the **only** agent that pushes the current working branch; devs commit
+   locally, never push. The manager never creates a PR and never merges one.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
-   run the next iteration. This never ends: each dev report is the trigger for the
-   next tick (gate → refill that dev → sense → assign). The session stays alive
-   with agents running in the background indefinitely — you do not "finish".
+   run the next iteration. Until the human explicitly stops the manager, each dev
+   report is the trigger for the next tick (gate → refill that dev → sense →
+   assign). The session stays alive with agents running in the background; it
+   does not declare itself "finished".
    **Safety-net ticker:** at manager start, arm an explicit recurring re-entry with
    the `loop` skill — `/loop 10m /manager` — so the loop still ticks (sense →
    reconcile → refill idle devs → grow backlog) even if no completion notification
    arrives (a dev silently died, or the backlog emptied). Notifications drive the
    fast path; `/loop` guarantees it never stalls.
+   **Human stop/handoff.** Only the human decides when the batch is ready. When
+   explicitly asked to stop, stop dispatching, wait for or safely stop live work,
+   run all three suites on the quiescent working branch, push all remaining
+   commits to that same branch, and report the branch name and tip SHA. Do NOT
+   create a PR, merge, release, or touch `main`/`master`. The
+   human then opens the PR, reviews it, waits for PR CI, and merges manually.
 
-**Never stop the loop.** You do not exit while there is work the team could do.
+**Never self-stop the loop.** Until the human explicitly stops the manager, you
+do not exit while there is work the team could do.
 If the board looks empty, you have not looked hard enough: grow it (§5 corpus,
 step 5b issues, step 5c perf, Phase-F/G). The only idle state is *waiting on a completion
 notification while devs run in the background* — that is the loop working, not the
@@ -187,8 +202,8 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
   failure — hold, don't bounce.
 - **`git add -A` while any dev has uncommitted WIP.** Subagents share ONE working
   tree; `-A` sweeps a teammate's half-done (or staged) files into your commit.
-  **Always commit with an explicit pathspec: `git commit jira.md jira-archive.md
-  -m …`** — that commits only those files regardless of what else is staged.
+  **Always commit with an explicit pathspec: `git commit jira.md -m …`** — that
+  commits only the board regardless of what else is staged.
 - Assign two live tasks that touch the same file (§4).
 - Let the backlog outrun reality — keep ~2 `TODO` per dev queued; the corpus
   decides the rest.
@@ -198,7 +213,9 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 ## 3. Task states
 
 `TODO` → assignable. `DOING @dev` → claimed. `REVIEW` → dev says done, awaiting
-your gate. `DONE` → tested & merged. `BLOCKED [deps: …]` → waiting.
+your gate. `DONE` → tested & merged, transient within the current tick only;
+clear dependent references and remove it per step 2b. `BLOCKED [deps: …]` →
+waiting.
 
 Line format: `- [STATE] ID — one-line title  [owns: src/foo.zig]  [deps: A1]  @dev2`.
 Keep the existing `jira.md` structure; just annotate state.
@@ -357,7 +374,8 @@ noted.
 `tests/**/expected/*.txt|*.csv` golden to make its own change pass is the classic
 way a regression hides. When a dev's commit touches a golden, diff it and confirm
 the change is SAS-correct (e.g. removed rows genuinely should be removed), not a
-convenience edit. Record the verification in the archive line.
+convenience edit. Record the verification in the manager tick commit message or,
+for a GitHub issue, in its closing comment.
 
 **Advanced: Workflow tool for batch fan-out.** For deterministic multi-dev
 orchestration over a work-list (e.g. a Phase-F function batch, or "one dev per
@@ -513,28 +531,4 @@ task; documented-deviation false alarms → close with the `decisions.md` citati
 Point each new pass at a DIFFERENT doc surface so coverage advances (grammar
 productions → function library → statement options → PROC semantics → macro),
 and tell it the one or two surfaces most worth auditing next.
-
----
-
-## 9. Taste agent (advisory only)
-
-A read-only agent that raises code quality by borrowing idioms from famous Zig
-projects cloned under `style/` (e.g. `style/tigerbeetle`, `style/ghostty`). It
-**never edits code**. Its only output is `refacto-suggestion.md` at the repo root.
-
-**Job:** study the references in `style/` (style docs AND real source patterns),
-review `src/*.zig` against them, propose concrete refactors. Each suggestion:
-`file:line`, what to change, the reference idiom (cite the project/doc), a
-before→after sketch, a priority. Ranked, deduped, curated — not a firehose.
-
-**Hard constraints:** never touch `src/`, `jira.md`, or any test; never commit
-code; never push. May only write/commit `refacto-suggestion.md` (`taste: …`,
-locally). Respect the repo's **ponytail** ethos — lazy/minimal is a feature; do
-NOT suggest defensive bloat.
-
-**GATE (user policy): no Taste refactors until the code is fully functional.** A
-greenlit Taste suggestion is filed `BLOCKED` behind "all corpus + all
-tests/programs fixtures pass." Never assign a dev to a refactor while any
-feature/bug/fixture is failing — functionality first, cleanup after. When
-everything is green, run one "quality loop" to burn down the queued Taste tasks.
 

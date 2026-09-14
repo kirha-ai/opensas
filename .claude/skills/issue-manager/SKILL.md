@@ -5,11 +5,12 @@ description: >-
   tasks for the opensas SAS interpreter. Use this whenever the manager needs to
   intake, triage, validate, dispatch, or close GitHub issues — e.g. "check the
   open issues", "pull new bugs from GitHub", "any new issues to work on", "triage
-  issue #7", "close the fixed issues", or during the manager loop's backlog step.
+  GitHub issue #<N>", "close the fixed issues", or during the manager loop's backlog step.
   Handles the full lifecycle: fetch open issues, gate each through a reproduce +
   SAS-doc validation step, create confirmed bugs as GH#-tagged tasks in jira.md,
   mark taken issues with the `ongoing` label so they are never pulled twice,
-  dispatch to a dev with reproduction instructions, and close issues on DONE.
+  dispatch to a dev with reproduction instructions, and close issues after their
+  green fix is pushed to the remote working branch.
   This skill is for the manager agent only; devs consume the resulting jira.md task.
 ---
 
@@ -26,8 +27,8 @@ pollutes the board. The validation gate is the point of this skill — everythin
 else is bookkeeping around it.
 
 Repo: `kirha-ai/opensas`. All GitHub ops go through `gh`. All board edits obey
-the `manager` skill's rules (pathspec commits, one-file ownership, archive
-discipline).
+the `manager` skill's rules (pathspec commits, one-file ownership, completed-task
+removal).
 
 ## The lifecycle at a glance
 
@@ -43,12 +44,14 @@ VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
    │
    └─ NEEDS-INFO ─► comment asking for a minimal repro, leave open, do NOT label
                                                  │
-   fix lands green ──────────────────────────► 5. CLOSE (mark DONE, archive, close issue w/ commit ref)
+   fix lands green ──► push working branch ──► 5. CLOSE (close issue w/ branch+commit, remove task)
 ```
 
-Run steps 1–4 during the manager loop's "grow the backlog" step (§1 step 5). Run
-step 5 during the "verify & merge-gate" step (§1 step 6) for any GH#-tagged task
-that landed.
+Run lifecycle-diagram steps 1–4 during the manager skill's GitHub-issue intake
+(manager §1 step 5b). Run lifecycle-diagram step 5 — CLOSE (close the issue with
+the working branch + commit, then remove the task) — during the manager skill's
+verify & merge-gate (manager §1 step 6), after the green fix has been pushed to
+the remote working branch.
 
 ### Pipeline, don't batch (steps 2→5)
 
@@ -86,12 +89,12 @@ Pull open issues that are **not yet taken**. The `ongoing` label
 gh issue list --state open --search '-label:ongoing' --json number,title,labels,body
 ```
 
-Cross-check against the board as a belt-and-suspenders dedupe — every issue already
-on the board carries its `GH#` id, so an issue whose number already appears in
-`jira.md` (or `jira-archive.md`) has been taken even if the label is missing:
+Cross-check against the board as a belt-and-suspenders dedupe — every open issue
+already on the board carries its `GH#` id, so an issue whose number already
+appears in `jira.md` has been taken even if the label is missing:
 
 ```bash
-grep -oE 'GH#[0-9]+' jira.md jira-archive.md | sort -u
+grep -oE 'GH#[0-9]+' jira.md | sort -u
 ```
 
 If nothing new: say so in one line and stop. Don't re-triage taken issues.
@@ -150,8 +153,8 @@ Act on the verdict:
 
 Add confirmed bugs under the **`### ★ GITHUB ISSUES`** section of `jira.md`
 (matching the existing format). The task line **keeps the `GH#` id** (that is how
-step 5 closes the right issue) and **embeds the validated reproduction** so the dev
-can start immediately without re-triaging:
+step 6 closes the right issue) and **embeds the validated reproduction** so the
+dev can start immediately without re-triaging:
 
 ```
 - [TODO] GH#<N> ISS-<shortslug> — <one-line bug summary>. Repro: <minimal SAS
@@ -163,7 +166,7 @@ State starts `TODO`. Respect the `manager` skill's §4: never create a task owni
 that a live task already owns — if the owning file is locked, note the dependency
 and leave it `TODO` unassigned (it queues) rather than dispatching a conflict.
 
-Keep `jira.md` under ~200 lines (archive discipline still applies).
+Keep `jira.md` under ~200 lines (completed-task removal still applies).
 
 ---
 
@@ -191,55 +194,62 @@ needed to start. No separate handoff message is required beyond the board.
 
 ---
 
-## 6. Close on DONE
+## 6. Close on pushed DONE
 
-During the loop's merge-gate (the `manager` skill's §1 step 6), for any GH#-tagged task whose
-fix has landed and whose `zig build test` / `corpus` / `programs` are green:
+During the loop's merge-gate (the `manager` skill's §1 step 6), for any GH#-tagged
+task whose fix has landed and whose `zig build test` / `corpus` / `programs` are
+green:
 
-1. Flip the task to `[DONE]` on the board with the commit ref and `@dev`, then move
-   the line to `jira-archive.md` the same tick (archive discipline).
-2. Close the issue with the commit reference so the audit trail is complete:
+1. Keep the task in `jira.md` and the issue open until the fix commit has been
+   pushed successfully to the current remote working branch. A local-only commit
+   is not closeable because its SHA does not yet exist on GitHub.
+2. Close the issue with the working branch and commit reference:
 
 ```bash
-gh issue close <N> --comment "Fixed in <commit-sha> (<one-line>). Fixture: tests/corpus/<name>. Suites green: test 0, corpus X/X, programs Y/Y."
+gh issue close <N> --comment "Fixed on branch <working-branch> in <commit-sha> (<one-line>). Fixture: tests/corpus/<name>. Local suites green: test 0, corpus X/X, programs Y/Y. This branch will be merged through a human-reviewed PR."
 ```
 
-The `ongoing` label can stay (the issue is closed, so it drops out of the open
-list anyway). Never close an issue whose fix hasn't gone green — that is the same
-merge-gate rule as the board.
+3. Remove the task line from `jira.md` in the same tick. Do not retain a `[DONE]`
+   line or copy it to a separate archive; the issue and `git log -p -- jira.md`
+   preserve the audit trail.
+4. Commit the `jira.md` removal by explicit pathspec and push that board commit to
+   the same working branch.
+
+The `ongoing` label can stay because a closed issue drops out of the open intake
+query. If the fix push fails, do not close the issue or remove the task. If issue
+closure fails, likewise leave the task in place and retry/report the GitHub
+failure rather than losing the board↔issue link.
 
 ---
 
-## 7. Release — ONLY for GitHub-issue batches, never for local tickets
+## 7. Protected-branch, PR, and release boundary
 
-**A release is cut only after a batch of GitHub ISSUES was fixed + landed green
-this cycle.** The trigger is "the demanded issues are cleared," not "the tree
-changed." Concretely, cut a release iff BOTH hold:
+The manager does **none** of the following:
 
-1. **≥1 GitHub issue was closed-on-fix this cycle** (step 6 ran for a real `GH#`),
-   AND
-2. the open-issue queue is now empty AND nothing GH#-tagged is in flight.
+- push or merge directly to `main`/`master`;
+- create or merge a pull request;
+- create a release or tag.
 
-If the only work that landed is **local backlog** (jira.md tasks with no `GH#` id —
-Phase-G gaps, QA bugs, follow-ups, `SAS7BDAT-*`, etc.), **do NOT cut a release.**
-Local tickets ride along and ship with the *next* GitHub-issue release. (This rule
-exists because a release was once cut for a local-only ticket — wrong; releases are
-the user-visible answer to reported issues, not an internal-progress marker.)
+When the human stops the manager, the manager gates and pushes the current
+human-created working branch and reports its branch name, tip SHA, included GH#
+issues, and suite counts. The human then opens the PR, reviews it, waits for PR
+CI, and merges manually into the protected branch. Fixed issues have already
+been closed by step 6 after their green commits became available on the remote
+working branch.
 
-When you do release: `gh release create vX.Y.Z --target master` only on a
-**green** master (local suites AND the pushed CI run green — a red CI run on your
-pushed commit is a gate failure even if local was green; env drift, the
-`manager` skill's §1 step 2c). Bump the patch version; notes summarize the GH# fixes in the batch.
+If the human later chooses to release, that is a separate human-controlled action
+performed manually from GitHub after the merged PR's CI is green.
 
 ---
 
-## 8. Never stop — the manager loop is continuous
+## 8. Never self-stop — the manager loop continues until human handoff
 
 **The manager must never idle-exit while there is backlog.** An empty GitHub-issue
 queue is NOT "done" — it means switch to backlog work, not stop. Every loop, in
 order:
 
-1. **Intake** (steps 1–6 above): pull/validate/dispatch/close GitHub issues.
+1. **Intake** (steps 1–6 above): pull, validate, dispatch, and close confirmed
+   GitHub issues after their fixes are green and pushed.
 2. **If the issue queue is empty:** immediately fall through to the classic
    `manager` loop — keep every dev on exactly one live task drawn from the
    backlog (Phase-G grammar gaps, Phase-F functions, corpus-driven failure classes
@@ -248,9 +258,11 @@ order:
    *always* something to improve: a grammar production to implement, a function to
    fill, a corpus class to fix, a bug to hunt, an edge case to explore.
 3. **Merge-gate** landed work on a quiescent tree; commit the board by pathspec;
-   push if green; release only per §7.
-4. **Loop again** — do not stop and wait to be re-invoked. The only time you pause
-   is when the tree is green, every dev has a live task, and you are genuinely
+   push only the current non-protected working branch if green; perform the
+   protected-branch handoff in §7 when the human stops the manager.
+4. **Loop again** — do not stop and wait to be re-invoked unless the human
+   explicitly requests the protected-branch handoff in §7. Otherwise, the only
+   time you pause is when the tree is green, every dev has a live task, and you are genuinely
    waiting on a completion notification — and even then you resume the moment one
    lands. "Nothing new in GitHub" is never a reason to halt; the backlog is the
    floor of work, not the ceiling.
@@ -267,13 +279,17 @@ gaps, exploring, improving — in parallel with whatever is in flight.
   `CONFIRMED`.
 - **The docs outrank the reporter.** A confident bug report describing non-SAS
   behavior is `NOT-A-BUG`. Cite the doc every time.
-- **One `GH#` id per issue, forever.** It links board ↔ GitHub; keep it on the task
-  through DONE and archive so step 6 closes the right issue.
-- **Obey manager git rules:** pathspec commits only (`git commit jira.md jira-archive.md -m "..."`),
-  never `git add -A`, never push a red tree. Commit message: `manager: <what> — one line`.
+- **One `GH#` id per open issue.** It links board ↔ GitHub; keep it on the task
+  until step 6 pushes the green working-branch fix, closes the issue, and removes
+  the task. GitHub and the board's Git history preserve the link afterward.
+- **Obey manager git rules:** pathspec commits only (`git commit jira.md -m "..."`),
+  never `git add -A`, never push a red tree or a protected branch. Commit message:
+  `manager: <what> — one line`.
 - **Don't touch feature code.** This skill only reads `src/` to locate the owning
   file for the task; the dev writes the fix.
-- **Release only for GitHub-issue batches (§7).** Never cut a release for a
-  local-only ticket (no `GH#`). Local backlog ships with the next issue release.
-- **Never idle-exit (§8).** Empty issue queue → switch to backlog + QA, keep
-  looping. The manager is always working; it does not stop and wait to be poked.
+- **Human owns PR/merge/release (the protected-branch handoff in §7).** The
+  manager may close a fixed issue only after its green fix is pushed to the
+  current non-protected working branch.
+- **Never idle-exit (the continuous-loop rule in §8).** Empty issue queue →
+  switch to backlog + QA and keep looping until the human requests the
+  protected-branch handoff.

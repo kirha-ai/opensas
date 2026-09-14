@@ -1,7 +1,7 @@
 # opensas — house rules (auto-loaded for every agent)
 
-SAS 9.4 interpreter in Zig. You are one agent of a team (3 devs, QA, taste,
-manager) sharing ONE working tree. Your task comes from `jira.md` (only lines
+SAS 9.4 interpreter in Zig. You are one agent of a team (3 devs, QA, manager)
+sharing ONE working tree. Your task comes from `jira.md` (only lines
 tagged with your role).
 
 ## Git — the rules that prevent lost work
@@ -9,7 +9,10 @@ tagged with your role).
 - Commit ONLY with an explicit pathspec: `git commit src/foo.zig tests/... -m "..."`.
   NEVER `git add -A`, `git add .`, `git commit -a` — you will sweep a teammate's
   half-done work into your commit (this destroyed work twice).
-- NEVER push. The manager is the only agent that pushes main.
+- Dev/QA/perf/doc-finder agents NEVER push. The manager may push only the current
+  human-created working branch; it must never commit or push directly to protected
+  `main`/`master`, create/merge a PR, or merge the protected branch. The human
+  stops the manager, opens the PR, reviews it, waits for PR CI, and merges manually.
 - Commit message format: `<role>: DONE <TASK-ID> — one line` (or `<role>: file <ID> ...`
   when filing). One concern per commit.
 - Never rebase/amend/reset pushed history. Divergence → tell the manager.

@@ -72,8 +72,23 @@ these caused real regressions (see D-001).
   are inconsistent (1 vs 2)** — D-009 says a gap is 2, and some gaps exit 1.
   That is a conformance bug against our own contract, not a doc problem; it
   needs a dev pass to make every gap path agree.
-- D-010 The board carries OPEN work only; DONE lines move to jira-archive.md
-  the same tick; snapshot = one tick (AGT-archive/AGT-ticklog).
+- D-010 The board carries OPEN work only; after a task passes the authoritative
+  gate, clear its ID from dependent tasks (unblocking any whose last dependency
+  is now satisfied), then remove its line from `jira.md` the same tick. Do not
+  retain DONE lines or maintain a separate archive file:
+  `git log -p -- jira.md` is the audit trail; snapshot = one tick (AGT-ticklog).
+- D-023 **PROTECTED BRANCHES ARE HUMAN-MERGED THROUGH PRS** (team decision
+  2026-09-14). Before running the manager, a human creates and checks out a
+  non-protected working branch. The manager commits there and may push only that
+  current branch; it never switches to, commits on, pushes to, force-updates, or
+  merges `main`/`master`, and it never creates or merges a PR. After every
+  authoritative green landing, the manager pushes the current working branch. A
+  fixed GitHub issue closes only after its green fix commit is successfully
+  pushed there, with branch + SHA in the closing comment; a failed push leaves
+  the issue and jira task open. When the human stops the manager, it gates and
+  pushes any remaining working-branch commits, then reports the branch and tip
+  SHA. The human opens the PR, reviews it, waits for PR-triggered CI, and merges
+  manually. Releases/tags are also human-controlled.
 - D-011 **NO CONFIDENTIAL DATA IN THE TREE** (user decision 2026-08-17, at
   open-sourcing; supersedes the old "repo stays private" ruling). No client
   name, study identifier, subject data or client-derived program logic anywhere
@@ -240,11 +255,11 @@ these caused real regressions (see D-001).
 - D-019 **REPRODUCE BEFORE YOU DISPATCH — AN ID GREP IS NOT ENOUGH** (2026-07-29
   tick410, after SIX stale board lines in one session, one batch that was 100%
   stale, and two double-dispatches earlier in the week). The existing pre-dispatch
-  check is: grep `jira-archive.md` and `git log` for the ticket ID. **That check
-  passes cleanly on an already-fixed ticket**, because a fix often lands under a
-  DIFFERENT id — the dev finds the real root, names it after that, and the
-  originating line is never closed. All five tickets in the tick306 exec batch
-  greped clean and all five were already fixed by later landings. So the rule is:
+  check was: grep the completed-task history and `git log` for the ticket ID.
+  **That check passes cleanly on an already-fixed ticket**, because a fix often
+  lands under a DIFFERENT id — the dev finds the real root, names it after that,
+  and the originating line is never closed. All five tickets in the tick306 exec
+  batch greped clean and all five were already fixed by later landings. So the rule is:
   **for any ticket older than roughly ten landings, RUN ITS REPRO on a
   clean-rebuilt binary before writing the charter.** It costs one build; a wrong
   dispatch costs a 30-60 minute dev slot and, worse, produces a confident dev
@@ -332,13 +347,9 @@ these caused real regressions (see D-001).
   lesson: **an audit is a program, and its bugs look exactly like results.** Anything
   a sweep reports should be reproducible by the checked thing's own definition, not by
   a grep that resembles it.
-  **AND A STANDING FACT ABOUT BASELINES (tick444): `origin/main` IS ROUTINELY INSIDE
-  THE RANGE A SWEEP NEEDS TO AUDIT.** Three consecutive sweeps found the pushed tip
-  sitting within the wave under audit, because pushes here are BATCHED every 20-30
-  commits while landings are continuous. A sweep that takes `origin/main` as its
-  baseline therefore compares a couple of commits instead of twenty. **The baseline to
-  use is the head of the PREVIOUS sweep** — no gap, no double coverage — and it must be
-  verified an ancestor with `merge-base --is-ancestor` rather than assumed.
+  For audit sweeps, **the baseline is the head of the PREVIOUS sweep** — no gap,
+  no double coverage — and it must be verified an ancestor with
+  `merge-base --is-ancestor` rather than assumed.
 - D-015a **AN UNDATED RESTRICTION IS NOT EVIDENCE AGAINST A DATED FEATURE
   STATEMENT** (2026-07-29 tick409, offered by @coder-f4 as a D-015 corollary while
   REVERTING ITS OWN LANDED COMMIT from two ticks earlier). D-015 says do not
