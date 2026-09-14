@@ -274,6 +274,12 @@ const StepCtx = struct {
     line_off: usize = 0,
 };
 
+/// The doc's step-halt NOTE, shared verbatim by the FAILING step (GH#3
+/// ISS-steperrhalt NOTE parity) and by each syntax-check-skipped step
+/// (BUG-errhalt). Trailing period per Language Reference: Concepts Ch.8
+/// Examples 8.2/8.4/8.8 — the log's old bare wording dropped it.
+const step_halt_note = "The SAS System stopped processing this step because of errors.";
+
 /// Run one slice of already-expanded source: tokenize, split into steps, execute
 /// each (or apply a global statement), then feed any CALL SYMPUT vars it created
 /// back into the macro session. `allow_anon` runs an unframed token stream as a
@@ -350,19 +356,39 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
             // chunks and the CALL EXECUTE queue check ctx.ended below.
             ctx.ended = true;
             break;
-        } else if (ctx.diags.hasStepErrors()) {
+        } else if (ctx.diags.hasStepErrors() and ctx.diags.syntax_check) {
             // Syntax-check mode (BUG-errhalt): after any STEP ERROR, later
             // DATA/PROC steps are skipped — real SAS batch behavior. A truncated
             // intermediate must not flow on into a plausible-looking clinical
             // dataset (a real MH run wrote 310 wrong obs to TARGET; CLIN-failloud).
-            try ctx.diags.note(0, "The SAS System stopped processing this step because of errors", .{});
+            // GH#3 ISS-steperrhalt: `options nosyntaxcheck;` opts OUT for the rest
+            // of the run (D-024) — the gate then never fires and the steps below
+            // run. Global statements still apply while steps are being skipped
+            // (branch above), so a mid-program toggle takes effect immediately.
+            try ctx.diags.note(0, step_halt_note, .{});
         } else {
+            // GH#3 ISS-steperrhalt: under NOSYNTAXCHECK the run continues past an
+            // earlier step's error, so spend the stale step-errors FIRST —
+            // exec.zig's compile gates and commitOut's not-replaced rule key on
+            // hasStepErrors() believing anything older was already skipped here.
+            // The diagnostics stay recorded: the log and the exit code are
+            // unchanged (fail loud), only the poison is spent. A no-op under the
+            // default, where this branch is unreachable with live step errors
+            // (the gate above skips instead).
+            if (!ctx.diags.syntax_check) ctx.diags.spendStepErrors();
             const step_toks = try sas.macro.bindStepVars(a, toks[seg.start..seg.end], &ctx.lib.macro_vars, ctx.diags);
             // PROC COPY runs here, not in runProc: it needs the CURRENT libref
             // bindings and Io to write through them eagerly (GAP-proccopy).
             if (step_toks.len > 1 and eqi(step_toks[0].text, "proc") and eqi(step_toks[1].text, "copy")) {
                 try runProcCopy(ctx, step_toks);
             } else try runStep(a, ctx.out, ctx.lib, ctx.diags, step_toks, ctx.globals, ctx.io);
+            // NOTE parity (GH#3 ISS-steperrhalt): real SAS ends the FAILING step
+            // ITSELF with the same NOTE the later skipped steps get (Language
+            // Reference: Concepts Ch.8 Examples 8.2/8.4/8.8) — opensas used to
+            // print it only for the SKIPPED ones. Reaching this branch proves no
+            // step error was live at entry (the gate skips otherwise;
+            // NOSYNTAXCHECK spent them), so a NOTE here is THIS step's own.
+            if (ctx.diags.hasStepErrors()) try ctx.diags.note(0, step_halt_note, .{});
         }
     }
     // CALL EXECUTE drain (FEAT-callexecute): the current step(s) finished — now
@@ -1337,6 +1363,19 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 i += 1;
             } else if (eqi(t.text, "notes")) {
                 diags.suppress_notes = false;
+                i += 1;
+            } else if (eqi(t.text, "nosyntaxcheck")) {
+                // GH#3 ISS-steperrhalt: `options nosyntaxcheck;` opts OUT of the
+                // post-step-error stop-all for the rest of the run — later
+                // independent steps execute (the NON-batch half of Language
+                // Reference: Concepts pp.170/177-178, which is what the issue's
+                // SAS Studio reporter saw). The DEFAULT stays the batch stop-all
+                // (BUG-errhalt, CLIN-failloud, D-024): clinical runs keep failing
+                // loud unless the program asks out, and the run still exits 1.
+                diags.syntax_check = false;
+                i += 1;
+            } else if (eqi(t.text, "syntaxcheck")) {
+                diags.syntax_check = true; // re-arm the stop-all (the default)
                 i += 1;
             } else if (eqi(t.text, "yearcutoff")) {
                 // `options yearcutoff=<n>;` — wire the shared YEARCUTOFF span
@@ -4216,6 +4255,116 @@ test "BUG-errhalt: a DATA-step ERROR poisons downstream steps (syntax-check mode
     try std.testing.expect(diags.hasErrors()); // captured diagnostic (D-003)
     try std.testing.expect(std.mem.indexOf(u8, out.items, "before") != null); // pre-error ran
     try std.testing.expect(std.mem.indexOf(u8, out.items, "after") == null); // post-error skipped
+}
+
+/// Count whole `NOTE:` lines matching the doc's step-halt wording (trailing
+/// period included) in a rendered log. GH#3's parity assertions need a COUNT,
+/// not just a presence: 2 = failing step + one skipped step (default), 1 =
+/// failing step alone (NOSYNTAXCHECK, later steps really ran).
+fn countStepHaltNotes(log: []const u8) usize {
+    const note = "NOTE: " ++ step_halt_note;
+    var n: usize = 0;
+    var it = std.mem.splitScalar(u8, log, '\n');
+    while (it.next()) |line| if (std.mem.eql(u8, line, note)) {
+        n += 1;
+    };
+    return n;
+}
+
+test "GH#3 ISS-steperrhalt: the FAILING step ends with the doc's step-halt NOTE; the default stop-all is unchanged" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    // Same shape as the BUG-errhalt pin above: the SET-BY step errors, "after"
+    // must stay skipped — this program sets NO option, so the default (batch
+    // stop-all, syntax_check ON) is what runs.
+    try interpret(a, &out, &diags,
+        "data a; input k; datalines;\n1\n3\n;\nrun;\n" ++
+            "data b; input k; datalines;\n2\n1\n;\nrun;\n" ++
+            "data m; set a b; by k; run;\n" ++
+            "data _null_; put \"after\"; run;\n", null);
+    try std.testing.expect(diags.hasErrors()); // captured diagnostic (D-003)
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "after") == null); // default: later steps skipped
+
+    // Parity: the failing step (`data m`) now ends itself with the SAME NOTE the
+    // skipped step gets — exactly two, in the doc's wording, trailing period
+    // included (Language Reference: Concepts Ch.8 Examples 8.2/8.4/8.8). Before
+    // the fix the log carried only the skipped step's NOTE.
+    try std.testing.expectEqual(@as(usize, 2), countStepHaltNotes(try diags.render()));
+}
+
+test "GH#3 ISS-steperrhalt: OPTIONS NOSYNTAXCHECK lets later independent steps run — loudly (rc 1), in either position" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // The issue's repro shape: a step errors on an input that does not exist,
+    // then TWO independent DATA steps and a PROC PRINT. Under the default they
+    // are all skipped; with `options nosyntaxcheck;` they all run.
+    const src =
+        "data src; input x; datalines;\n1\n2\n;\nrun;\n" ++
+        "data gone; set no_such_ds; run;\n" ++
+        "data _null_; put \"independent-one\"; run;\n" ++
+        "proc print data=src; run;\n" ++
+        "data _null_; put \"independent-two\"; run;\n";
+
+    { // control: the DEFAULT still stops everything after the failing step
+        var diags2 = sas.diag.Diagnostics.init(a);
+        var out2: std.ArrayList(u8) = .empty;
+        resetRcSignals();
+        try interpret(a, &out2, &diags2, src, null);
+        try std.testing.expect(diags2.hasErrors());
+        try std.testing.expectEqual(@as(u8, 1), testRc(&diags2));
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "independent-one") == null);
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "independent-two") == null);
+        // failing step + three skipped steps
+        try std.testing.expectEqual(@as(usize, 4), countStepHaltNotes(try diags2.render()));
+    }
+
+    { // option BEFORE the failing step: the later steps run, and STILL fail loud
+        var diags2 = sas.diag.Diagnostics.init(a);
+        var out2: std.ArrayList(u8) = .empty;
+        resetRcSignals();
+        try interpret(a, &out2, &diags2, "options nosyntaxcheck;\n" ++ src, null);
+        try std.testing.expect(diags2.hasErrors()); // the failing step's ERROR stands
+        try std.testing.expectEqual(@as(u8, 1), testRc(&diags2)); // rc 1 — never silent
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "independent-one") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "independent-two") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "Obs") != null); // the PRINT really printed
+        // exactly ONE step-halt NOTE — the failing step's own (parity); the
+        // independent steps RAN, so none of them was skipped into a NOTE
+        try std.testing.expectEqual(@as(usize, 1), countStepHaltNotes(try diags2.render()));
+    }
+
+    { // option AFTER the failing step: global statements still apply while the
+        // default mode is skipping, so the toggle takes effect mid-program
+        var diags2 = sas.diag.Diagnostics.init(a);
+        var out2: std.ArrayList(u8) = .empty;
+        resetRcSignals();
+        try interpret(a, &out2, &diags2,
+            "data src; input x; datalines;\n1\n;\nrun;\n" ++
+                "data gone; set no_such_ds; run;\n" ++
+                "options nosyntaxcheck;\n" ++
+                "data _null_; put \"late-independent\"; run;\n", null);
+        try std.testing.expect(diags2.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "late-independent") != null);
+        try std.testing.expectEqual(@as(usize, 1), countStepHaltNotes(try diags2.render()));
+    }
+
+    { // `options syntaxcheck;` re-arms the default mid-program
+        var diags2 = sas.diag.Diagnostics.init(a);
+        var out2: std.ArrayList(u8) = .empty;
+        resetRcSignals();
+        try interpret(a, &out2, &diags2,
+            "options nosyntaxcheck;\n" ++
+                "data src; input x; datalines;\n1\n;\nrun;\n" ++
+                "options syntaxcheck;\n" ++
+                "data gone; set no_such_ds; run;\n" ++
+                "data _null_; put \"rearmed-stops\"; run;\n", null);
+        try std.testing.expect(diags2.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "rearmed-stops") == null); // stop-all is back
+    }
 }
 
 test "GAP-errgatereplaces: a stopped step does not REPLACE an existing member, still CREATES a new one, and MODIFY is exempt" {

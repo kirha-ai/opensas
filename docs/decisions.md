@@ -381,3 +381,39 @@ these caused real regressions (see D-001).
   the one that actually moved this cycle: 158/204 -> 185/205. Corollary: a git tag
   annotation cannot be corrected without force-moving a pushed tag, which this project
   does not do — so fix the GitHub release body and state the discrepancy openly.
+- D-024 **THE POST-STEP-ERROR STOP-ALL IS BATCH'S DEFAULT AND STAYS THE DEFAULT —
+  `OPTIONS SYNTAXCHECK|NOSYNTAXCHECK` IS THE DOC-MANDATED CONTROL, NOT A DEFAULT
+  FLIP — AND THE FAILING STEP GETS THE SAME HALT NOTE THE SKIPPED STEPS GET**
+  (2026-09-14, GH#3 ISS-steperrhalt, manager ruling on the issue). Language
+  Reference: Concepts pp.170/177-178 make error-stop MODE-DEPENDENT: the non-batch
+  half (SAS Studio, windowing) stops only the failing step — which is what the
+  issue's reporter observed — while the batch half skips every later step. opensas
+  MODELS BATCH, so the stop-all remains the DEFAULT (the BUG-errhalt rationale: a
+  truncated intermediate must not flow on into a plausible-looking clinical
+  dataset — a real MH run wrote 310 wrong obs to TARGET; CLIN-failloud, D-002).
+  The option is the documented control, wired exactly like NONOTES/FMTERR in
+  handleGlobal (`diags.syntax_check`, default ON): `options nosyntaxcheck;` lets
+  later independent steps run for the rest of the run — in either position, since
+  global statements still apply while steps are being skipped — and `options
+  syntaxcheck;` re-arms mid-program. The option changes WHICH steps run, never
+  the exit code: a NOSYNTAXCHECK run with a step error still exits 1.
+  **Mechanics worth keeping:** exec.zig's compile gates and commitOut's
+  not-replaced rule key on hasStepErrors() believing main already skipped
+  anything older ("hasStepErrors() is this step's alone", exec.zig). Letting
+  steps run past an error breaks that invariant, so main SPENDS the stale
+  step-error class before each later step (diag.zig `spendStepErrors`): the
+  diagnostics stay recorded and loud (log + rc unchanged), only the poison is
+  spent — otherwise the option would change nothing observable, because the next
+  DATA step would halt at compile and its output would be withheld. Verified by
+  probe: under NOSYNTAXCHECK the failing step's replace is still withheld
+  ("was not replaced because this step was stopped") while a later clean step
+  replaces the member, and D-009a's PRECONDITION now has a documented way to
+  make a later ABORT's step reachable (`abort return 3` after a step error exits
+  3 under NOSYNTAXCHECK, 1 under the default — the rc still requires its step to
+  RUN). Parity, same ruling: real SAS ends the FAILING step ITSELF with
+  `NOTE: The SAS System stopped processing this step because of errors.`
+  (trailing period included, per Examples 8.2/8.4/8.8, LR:Concepts Ch.8) —
+  opensas printed that NOTE only for SKIPPED steps; it now prints it for both,
+  so a log reader can tell "this step failed" from "this step was never
+  attempted". The old bare wording (no period) was unpinned by any golden or
+  test — corpus diffs stdout, the NOTE lives on stderr.

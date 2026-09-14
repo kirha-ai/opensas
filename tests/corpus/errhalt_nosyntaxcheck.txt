@@ -1,0 +1,8 @@
+independent-one ran, x=1
+independent-one ran, x=2
+Obs   x
+
+  1   1
+  2   2
+independent-two ran
+independent-two ran

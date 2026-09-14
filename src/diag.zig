@@ -75,6 +75,16 @@ pub const Diagnostics = struct {
     /// Set by main's OPTIONS branch — `report` drops `.note` diagnostics while set
     /// (warnings/errors always record). Production clinical runs rely on NONOTES.
     suppress_notes: bool = false,
+    /// GH#3 ISS-steperrhalt: `options nosyntaxcheck;` opts OUT of the post-step-
+    /// error stop-all for the rest of the run (main's syntax-check gate,
+    /// BUG-errhalt); `options syntaxcheck;` re-arms it. Default ON: opensas
+    /// models BATCH SAS, whose documented behavior after a step error skips every
+    /// later step (Language Reference: Concepts pp.170/177-178 make error-stop
+    /// mode-dependent — the reporter's SAS Studio observation is the NON-batch
+    /// half), and the stop-all is the project's clinical fail-loud safety
+    /// property (CLIN-failloud). Set by main's OPTIONS branch exactly like
+    /// suppress_notes; read by main's runExpanded gate (D-024).
+    syntax_check: bool = true,
 
     pub fn init(arena: std.mem.Allocator) Diagnostics {
         return .{ .arena = arena, .list = .empty };
@@ -172,6 +182,24 @@ pub const Diagnostics = struct {
             if (d.severity == .err and !d.recoverable) return true;
         }
         return false;
+    }
+
+    /// GH#3 ISS-steperrhalt: mark every live step error as spent — it keeps its
+    /// log line and its hasErrors()/exit-code weight, but it no longer reads as
+    /// `hasStepErrors()`. main calls this BEFORE each step it runs under
+    /// `options nosyntaxcheck;` (syntax_check == false): there the recorded step
+    /// errors belong to EARLIER steps, and every "this step stopped" consumer —
+    /// exec.zig's two DATA-step compile gates and commitOut's not-replaced rule —
+    /// keys on hasStepErrors() believing main already skipped anything older
+    /// ("hasStepErrors() is this step's alone", exec.zig). Leaving them armed
+    /// would halt the innocent later step at compile and withhold its output —
+    /// i.e. the option would change nothing observable. Spending restores the
+    /// per-step invariant instead of special-casing each consumer. A NO-OP under
+    /// the default: there the skip gate needs the errors armed to keep skipping.
+    pub fn spendStepErrors(self: *Diagnostics) void {
+        for (self.list.items) |*d| {
+            if (d.severity == .err and !d.recoverable) d.recoverable = true;
+        }
     }
 
     /// Render every diagnostic as a SAS-style log, one per line, into the arena.
@@ -316,4 +344,33 @@ test "suppress_notes drops NOTEs but keeps warnings/errors (F7 OPTIONS NONOTES)"
     diags.suppress_notes = false; // OPTIONS NOTES re-enables
     try diags.note(4, "now recorded", .{});
     try std.testing.expectEqual(@as(usize, 3), diags.count());
+}
+
+test "syntax_check defaults ON; spendStepErrors keeps the error loud, drops the poison (GH#3)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var diags = Diagnostics.init(arena.allocator());
+
+    // The batch stop-all is the DEFAULT — nothing may flip it implicitly.
+    try std.testing.expect(diags.syntax_check);
+
+    try diags.report(.err, 5, "step error", .{}); // the failing step's ERROR
+    try std.testing.expect(diags.hasErrors());
+    try std.testing.expect(diags.hasStepErrors());
+
+    // OPTIONS NOSYNTAXCHECK: main spends the stale error before the next step.
+    diags.syntax_check = false;
+    diags.spendStepErrors();
+    try std.testing.expect(diags.hasErrors()); // still loud, still rc 1
+    try std.testing.expectEqual(@as(usize, 1), diags.count()); // nothing dropped
+    try std.testing.expect(!diags.hasStepErrors()); // no longer poisons later steps
+
+    // A recoverable error (macro/rc species) is untouched by the spend.
+    try diags.macroErr(6, "Apparent symbolic reference {s} not resolved.", .{"NB"});
+    diags.spendStepErrors();
+    try std.testing.expect(diags.hasErrors());
+    try std.testing.expect(!diags.hasStepErrors());
+
+    diags.syntax_check = true; // OPTIONS SYNTAXCHECK re-arms the gate itself
+    try std.testing.expect(diags.syntax_check);
 }
