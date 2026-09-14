@@ -652,6 +652,23 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         return parseDatetime(iso_fld, .iso);
     }
     if (startsWithCI(nm, "b8601dt")) return parseDatetime(field, .iso);
+    // GH#5a ISS-e8601dndz: E8601DNw. reads ISO `yyyy-mm-dd` and returns a SAS
+    // DATETIME at midnight (Informats Reference p.642: Default 10; "Requirement:
+    // The width of the input field must be 10" — loud outside it, like SAS
+    // 29-185). An INCOMPLETE value (`2025-01`, `2025`) is not a width error:
+    // it is invalid data → missing.
+    if (startsWithCI(nm, "e8601dn")) {
+        checkWidthRange(spec_text, spec.w, 10, 10);
+        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day * 86400) };
+        return Value.missing;
+    }
+    // E8601DZw.d (p.645: Default 26, Range 20-35) reads the UTC-offset datetime
+    // and rebases it to the zero meridian — parseDatetimeZ below.
+    if (startsWithCI(nm, "e8601dz")) {
+        checkWidthRange(spec_text, spec.w, 20, 35);
+        if (parseDatetimeZ(field)) |utc| return .{ .num = utc };
+        return Value.missing;
+    }
     if (startsWithCI(nm, "e8601da") or startsWithCI(nm, "b8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
         if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
@@ -920,6 +937,47 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
     }) orelse return Value.missing;
     const secs = parseTimeSecs(s[sep + 1 ..]) orelse 0;
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
+}
+
+/// E8601DZw.d informat (Informats Reference p.645): the COMPLETE extended form —
+/// `yyyy-mm-ddThh:mm:ss[.f…]` followed by `+hh:mm` / `-hh:mm` or a trailing `Z` —
+/// rebased to the zero meridian. SAS adjusts for the offset (Language Reference:
+/// Concepts p.557: reading 2018-09-15T15:53:00+05:00 yields 1852645980 = 10:53
+/// UTC), so UTC = local − offset. Null when any part fails to parse or the
+/// offset is absent — a plain `yyyy-mm-ddThh:mm:ss` is not the complete
+/// representation this informat names, so it is invalid data → missing.
+/// ponytail: `+hh:mm` only (the doc's shape); the packed `+hhmm` is B8601DZ
+/// territory — add a packed branch there, not here, if a program needs it.
+fn parseDatetimeZ(field: []const u8) ?f64 {
+    const s = std.mem.trim(u8, field, " ");
+    const sep = std.mem.indexOfAny(u8, s, "Tt") orelse return null;
+    const day = parseIsoDate(s[0..sep]) orelse return null;
+    const base = @as(f64, @floatFromInt(day * 86400));
+    // The offset sign is the FIRST `+`/`-` in the TIME part — the date's own
+    // hyphens (`2018-09-15`) live before the `T`, so the search must not see
+    // them; the time digits up to the sign are only digits/colons/a fraction.
+    const tail = s[sep + 1 ..];
+    const sign_at = std.mem.indexOfAny(u8, tail, "+-") orelse {
+        // no offset sign: a trailing `Z` names the zero meridian (+00:00)
+        if (tail.len == 0 or (tail[tail.len - 1] != 'Z' and tail[tail.len - 1] != 'z')) return null;
+        const secs = parseTimeSecs(tail[0 .. tail.len - 1]) orelse return null;
+        return base + secs;
+    };
+    const secs = parseTimeSecs(tail[0..sign_at]) orelse return null;
+    const off = parseUtcOffset(tail[sign_at..]) orelse return null;
+    return base + secs - off; // local − offset = UTC (lrcon p.557)
+}
+
+/// `+hh:mm` / `-hh:mm` → SIGNED offset seconds (the value to SUBTRACT from the
+/// local time to get UTC: `+05:00` → +18000). Null unless the exact `shh:mm`
+/// shape with minutes ≤ 59 and hours ≤ 23.
+fn parseUtcOffset(text: []const u8) ?f64 {
+    if (text.len != 6 or (text[0] != '+' and text[0] != '-') or text[3] != ':') return null;
+    const hh = std.fmt.parseInt(i64, text[1..3], 10) catch return null;
+    const mm = std.fmt.parseInt(i64, text[4..6], 10) catch return null;
+    if (hh > 23 or mm > 59) return null;
+    const v: f64 = @floatFromInt(hh * 3600 + mm * 60);
+    return if (text[0] == '-') -v else v;
 }
 
 /// SAS day for y/m/d, or null if the day-of-month is invalid for that month —
@@ -1447,7 +1505,13 @@ fn isKnownNumFmt(name: []const u8) bool {
 /// (BUG-informatreadloud). Shared by readNumeric (INPUT stmt) and functions.zig
 /// readInformat (INPUT() function). Date-name informats are listed too so a caller
 /// that routes them here does not false-trip; `spec.name` is already lowercased-safe
-/// via eqi. `e`/`b` cover the digit-bearing E8601/B8601 names parseSpec cuts short.
+/// via eqi. `e` is the Ew.d w.d alias (NOTE-informatlow-tick245 #9), NOT a
+/// stand-in for the digit-bearing E8601 names — parseSpec preserves those whole
+/// (it peels only the TRAILING width digits, QA-e8601put), so they are listed
+/// verbatim. There is deliberately NO `b`: B8601 names survive parseSpec too,
+/// and a bare `b` here would only silence the not-yet-implemented B8601DZ/DN/TZ
+/// reads at the functions.zig whitelist (GH#5a rider — the old comment claimed
+/// `b` coverage this list never had).
 pub fn isKnownInformat(name: []const u8) bool {
     if (name.len == 0) return true; // plain w.d
     const known = [_][]const u8{
@@ -1457,7 +1521,8 @@ pub fn isKnownInformat(name: []const u8) bool {
         "date",   "mmddyy",   "ddmmyy",  "yymmdd",  "monyy", "yyq",  "yyqc",
         "time",   "hhmmss",   "datetime", "tod",    "julian",
         "anydtdte", "anydtdtm", "anydttme", // GAP-anydtinformat
-        "e8601da", "e8601dt", "e8601tm", "b8601da", "b8601dt", "b8601tm",
+        "e8601da", "e8601dn", "e8601dt", "e8601dz", "e8601tm", // GH#5a: dn/dz
+        "b8601da", "b8601dt", "b8601tm",
     };
     for (known) |k| if (eqi(name, k)) return true;
     return false;
@@ -1526,7 +1591,12 @@ fn checkWidthRange(spec_text: []const u8, w: usize, lo: usize, hi: usize) void {
     if (g_nofmterr) return;
     g_fmt_error = true;
     if (@import("builtin").is_test) {
-        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Width specified for format {s} is invalid (valid {d}-{d}).", .{ spec_text, lo, hi }) catch "invalid-format-width";
+        g_test_last_err = if (lo == hi)
+            std.fmt.bufPrint(&g_test_err_buf, "Width specified for format {s} is invalid (must be {d}).", .{ spec_text, lo }) catch "invalid-format-width"
+        else
+            std.fmt.bufPrint(&g_test_err_buf, "Width specified for format {s} is invalid (valid {d}-{d}).", .{ spec_text, lo, hi }) catch "invalid-format-width";
+    } else if (lo == hi) {
+        std.debug.print("ERROR: Width specified for format {s} is invalid (must be {d}).\n", .{ spec_text, lo });
     } else {
         std.debug.print("ERROR: Width specified for format {s} is invalid (valid {d}-{d}).\n", .{ spec_text, lo, hi });
     }
@@ -1743,6 +1813,13 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
         return renderE8601Dt(arena, valToNum(v), spec.w);
+    }
+    // GH#5a ISS-e8601dndz: E8601DZw. (Formats Reference p.204: Default 26,
+    // Range 20-35 — loud outside) writes the zero-meridian datetime; the doc's
+    // two notations form a width ladder rendered by renderE8601Dz below.
+    if (eqi(spec.name, "e8601dz")) {
+        checkWidthRange(spec_text, spec.w, 20, 35);
+        return renderE8601Dz(arena, valToNum(v), spec.w);
     }
     // E8601TMw. — ISO time hh:mm:ss (a time value); same body as TIME. E8601DNw. —
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
@@ -2830,6 +2907,41 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
         try body.append(arena, ':');
         try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
     }
+    return justLeft(arena, body.items, width);
+}
+
+/// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
+/// offset appended (Formats Reference p.204: Default 26, Range 20-35 — checked
+/// loud at the dispatch site; Alignment: Left). The entry's two notations are a
+/// width LADDER: `yyyy-mm-ddThh:mm:ss+00:00` (25 columns) "when w is large
+/// enough to support this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`
+/// (20 columns; "the shorter form +00 is not supported", p.204). The
+/// interpreter models one zero-meridian timeline, so the appended offset is
+/// always +00:00 (p.204: "The E8601DZ format always writes the datetime value
+/// by using the zero meridian offset value of +00:00"). ponytail: no `.d` —
+/// the entry defines no d parameter (unlike E8601DTw.d).
+fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+    const width = if (w == 0) 26 else w;
+    if (std.math.isNan(x)) return justRight(arena, ".", width);
+    if (!(x > -3.0e12 and x < 3.0e12))
+        return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
+    const total: i64 = @intFromFloat(@floor(x));
+    const day = @divFloor(total, 86400);
+    const secs = total - day * 86400; // 0..86399
+    const ymd = civilFromDays(day - unix_epoch_sas_day);
+    var body: std.ArrayList(u8) = .empty;
+    try appendPadded(arena, &body, @intCast(ymd.y), 4);
+    try body.append(arena, '-');
+    try appendPadded(arena, &body, ymd.m, 2);
+    try body.append(arena, '-');
+    try appendPadded(arena, &body, ymd.d, 2);
+    try body.append(arena, 'T');
+    try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
+    try body.append(arena, ':');
+    try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
+    try body.append(arena, ':');
+    try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+    if (width >= 25) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
     return justLeft(arena, body.items, width);
 }
 
@@ -4278,6 +4390,92 @@ test "E8601DT informat honors w: e8601dt16. reads seconds as 00 (GH#2 ISS-e8601d
     try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
     try t.expect(std.mem.indexOf(u8, g_test_last_err, "16-26") != null);
     g_fmt_error = false; // reset module state for other tests
+}
+
+test "E8601DN informat: ISO date reads as a midnight DATETIME; width must be 10 (GH#5a)" {
+    // Informats Reference p.642, the entry's own example: 2018-09-15 → 1852588800
+    // (SAS day 21442 × 86400). Both entry points land in the same read branch.
+    try t.expectEqual(@as(f64, 1852588800), readNumeric("e8601dn10.", "2018-09-15").num);
+    try t.expectEqual(@as(f64, 1852588800), readNumericStmt("e8601dn10.", "2018-09-15").num);
+    // an INCOMPLETE value is invalid DATA, not a width error → missing (the
+    // invalid-data NOTE layer is GH#4a's; this is the value contract)
+    try t.expect(readNumeric("e8601dn10.", "2025-01").isMissing());
+    try t.expect(readNumeric("e8601dn10.", "2025").isMissing());
+    try t.expect(!formatErrored());
+    // "Requirement: The width of the input field must be 10" (p.642) — loud
+    // outside it, via the captured reporter (TEST-quietnoise).
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = readNumeric("e8601dn9.", "2018-09-15");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "must be 10") != null);
+    g_test_last_err = "";
+    _ = readNumeric("e8601dn11.", "2018-09-15");
+    try t.expect(formatErrored());
+    g_fmt_error = false; // reset module state for other tests
+}
+
+test "E8601DZ informat rebases the UTC offset to the zero meridian (GH#5a)" {
+    // Informats Reference p.645 + lrcon p.557: UTC = local − offset. Issue
+    // anchor: 2025-01-16T13:53:00+05:00 → 08:53:00Z = 2052636780.
+    try t.expectEqual(@as(f64, 2052636780), readNumeric("e8601dz26.", "2025-01-16T13:53:00+05:00").num);
+    try t.expectEqual(@as(f64, 2052672780), readNumeric("e8601dz26.", "2025-01-16T13:53:00-05:00").num);
+    // a trailing `Z` IS the zero meridian (p.645's second form) — offset 0
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("e8601dz26.", "2018-09-15T15:53:00Z").num);
+    // fractional seconds survive the rebase
+    try t.expectEqual(@as(f64, 2052636825.5), readNumeric("e8601dz30.", "2025-01-16T13:53:45.5+05:00").num);
+    // the COMPLETE representation is required: no offset → invalid → missing
+    try t.expect(readNumeric("e8601dz26.", "2025-01-16T13:53:00").isMissing());
+    try t.expect(readNumeric("e8601dz26.", "2025-01-16").isMissing());
+    try t.expect(!formatErrored()); // invalid DATA is a NOTE class, not a format error
+    // Range 20-35 (p.645), loud outside — and distinct from the DT range
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = readNumeric("e8601dz19.", "2018-09-15T15:53:00Z");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "20-35") != null);
+    g_test_last_err = "";
+    g_fmt_error = false; // clear the dz19 report before the width-less read
+    _ = readNumeric("e8601dz.", "2018-09-15T15:53:00Z"); // width-less: default 26, fine
+    try t.expect(!formatErrored());
+    g_fmt_error = false; // reset module state for other tests
+}
+
+test "E8601DZw. format writes the zero-meridian offset; Z rung below w=25 (GH#5a)" {
+    // Formats Reference p.204: Default 26, Range 20-35, Alignment Left, and a
+    // two-rung notation ladder — `+00:00` "when w is large enough to support
+    // this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`. 15SEP2018:05:53:00
+    // = 1852609980.
+    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz."); // default 26, left
+    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz26."); // left-aligned
+    try expectFmt("2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz25."); // exact fit
+    try expectFmt("2018-09-15T05:53:00Z    ", .{ .num = 1852609980 }, "e8601dz24."); // Z rung
+    try expectFmt("2018-09-15T05:53:00Z", .{ .num = 1852609980 }, "e8601dz20."); // exact fit
+    try expectFmt("                         .", Value.missing, "e8601dz."); // missing dot, right-justified
+    // Range 20-35, loud outside (checkWidthRange twin of the informat)
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = try apply(a, .{ .num = 1852609980 }, "e8601dz19.");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "20-35") != null);
+    g_fmt_error = false; // reset module state for other tests
+}
+
+test "isKnownInformat: dn/dz whitelisted; `e` is the Ew.d alias, there is no `b` (GH#5a rider)" {
+    try t.expect(isKnownInformat("e8601dn"));
+    try t.expect(isKnownInformat("e8601dz"));
+    try t.expect(isKnownInformat("e")); // Ew.d w.d alias — not a digit-name stand-in
+    // deliberately absent: B8601 names survive parseSpec whole, so a bare `b`
+    // would only silence the not-yet-implemented B8601DZ/DN/TZ reads
+    try t.expect(!isKnownInformat("b"));
+    try t.expect(!isKnownInformat("b8601dz"));
 }
 
 test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write formats" {
