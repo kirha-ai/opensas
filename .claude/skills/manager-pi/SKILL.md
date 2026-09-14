@@ -9,21 +9,23 @@ description: >-
   the `manager` skill in every respect EXCEPT one: the dev-dispatch primitive
   (manager §7 Spawn) runs `pi -p` + Kimi-K3 in a git worktree per dev. QA, perf,
   doc-finder, and the manager itself stay Claude. The manager still owns the
-  gate, the cherry-pick, and the push.
+  gate, the cherry-pick, and pushes to the current human-created working branch.
+  It never pushes or merges a protected branch.
 ---
 
 # manager-pi — the manager loop, dev work on pi/Kimi-K3
 
 **Follow the `manager` skill in full** (sense → reconcile → remove completed
 tasks → assign → GitHub intake → audit lane → gate → push → loop; file-ownership,
-quiescent gate, don't-spin, never-stop — all inherited). This skill changes
+quiescent gate, don't-spin, never-self-stop-until-human-handoff — all inherited).
+This skill changes
 **one thing**: devs
 are dispatched as `pi`/Kimi-K3 runs in a worktree, not Agents. One-run-per-dev,
 completion = git+green (never the agent's say-so), REVIEW bounces, recovery still
 apply.
 
-**Stays Claude:** you (manager — gate/cherry-pick/push) and QA/perf/doc-finder.
-Only feature/bug-fix devs move to pi.
+**Stays Claude:** you (manager — gate/cherry-pick/working-branch push) and
+QA/perf/doc-finder. Only feature/bug-fix devs move to pi.
 
 ## Audit lane — all three live, concurrent
 
@@ -85,12 +87,14 @@ report — you re-gate.
 1. On run exit, `cd` the worktree, run the authoritative gate: `zig build test &&
    corpus && programs`. Red from its own work → REVIEW bounce.
 2. Scrutinize any golden/expected-output edit — SAS-correct, not a pass-hack.
-3. Green → `git cherry-pick <sha>` onto master, re-gate quiescent master.
+3. Green → `git cherry-pick <sha>` onto the same non-protected working branch
+   captured when the manager started, then re-gate that quiescent branch. Never
+   cherry-pick onto `main`/`master`.
 4. `git worktree remove` (--force only if nothing ungated). **CONFIRM THE RUN HAS
-   EXITED FIRST — "all its commits are on master" is NOT the same as "the run is
-   done"** (tick342: I removed a worktree whose pi process was still alive; the
-   commits were safe but the run kept working in a directory git no longer tracked,
-   so any further commit would have been orphaned). Check
+   EXITED FIRST — "all its commits are on the manager's working branch" is NOT
+   the same as "the run is done"** (tick342: I removed a worktree whose pi process
+   was still alive; the commits were safe but the run kept working in a directory
+   git no longer tracked, so any further commit would have been orphaned). Check
    `ps -eo args | grep mgrpi-<taskid>` before removing.
    **When you do need to stop a run, READ THE TaskStop RESULT** — it echoes the
    command it killed. Same tick, I passed the wrong task id and killed a *productive*
@@ -98,17 +102,15 @@ report — you re-gate.
    luck. Map task id → dev before stopping, and re-dispatch immediately if you kill
    the wrong one.
    **Never let your shell's cwd sit inside a worktree you are about to remove** — do
-   every inspection with `git -C <worktree> …` from the main tree, never `cd`. Two failures came from
+   every inspection with `git -C <worktree> …` from the manager worktree, never `cd`. Two failures came from
    this (tick326: a board commit landed on the removed worktree's BRANCH and had
    to be recovered from the dangling object; tick329: the persistent shell wedged
    entirely — even `true` returned 1 — because its cwd no longer existed, and only
-   absolute-path commands worked after that). **Do NOT push here** —
-   pushes are BATCHED per manager §1 step 8 (every 20-30 commits, user directive
-   2026-07-25) so each GitHub Actions run covers a batch instead of one landing.
-   Check `git rev-list --count origin/master..master` and push only when it
-   reaches 20; under that, land locally and say the count in your tick summary.
-   The per-landing gate above is unchanged — it, not the push, is the regression
-   net.
+   absolute-path commands worked after that). **Do NOT push from a pi worktree.**
+   After every green cherry-pick and manager-branch re-gate, push from the manager
+   worktree per manager §1 step 8, always to its current non-protected working
+   branch. Pull-request CI runs only after the human stops the manager and opens
+   the PR; the per-landing local gate remains the regression net during the loop.
 
 ## Recovery
 

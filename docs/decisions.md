@@ -77,6 +77,18 @@ these caused real regressions (see D-001).
   is now satisfied), then remove its line from `jira.md` the same tick. Do not
   retain DONE lines or maintain a separate archive file:
   `git log -p -- jira.md` is the audit trail; snapshot = one tick (AGT-ticklog).
+- D-023 **PROTECTED BRANCHES ARE HUMAN-MERGED THROUGH PRS** (team decision
+  2026-09-14). Before running the manager, a human creates and checks out a
+  non-protected working branch. The manager commits there and may push only that
+  current branch; it never switches to, commits on, pushes to, force-updates, or
+  merges `main`/`master`, and it never creates or merges a PR. After every
+  authoritative green landing, the manager pushes the current working branch. A
+  fixed GitHub issue closes only after its green fix commit is successfully
+  pushed there, with branch + SHA in the closing comment; a failed push leaves
+  the issue and jira task open. When the human stops the manager, it gates and
+  pushes any remaining working-branch commits, then reports the branch and tip
+  SHA. The human opens the PR, reviews it, waits for PR-triggered CI, and merges
+  manually. Releases/tags are also human-controlled.
 - D-011 **NO CONFIDENTIAL DATA IN THE TREE** (user decision 2026-08-17, at
   open-sourcing; supersedes the old "repo stays private" ruling). No client
   name, study identifier, subject data or client-derived program logic anywhere
@@ -335,13 +347,9 @@ these caused real regressions (see D-001).
   lesson: **an audit is a program, and its bugs look exactly like results.** Anything
   a sweep reports should be reproducible by the checked thing's own definition, not by
   a grep that resembles it.
-  **AND A STANDING FACT ABOUT BASELINES (tick444): `origin/main` IS ROUTINELY INSIDE
-  THE RANGE A SWEEP NEEDS TO AUDIT.** Three consecutive sweeps found the pushed tip
-  sitting within the wave under audit, because pushes here are BATCHED every 20-30
-  commits while landings are continuous. A sweep that takes `origin/main` as its
-  baseline therefore compares a couple of commits instead of twenty. **The baseline to
-  use is the head of the PREVIOUS sweep** — no gap, no double coverage — and it must be
-  verified an ancestor with `merge-base --is-ancestor` rather than assumed.
+  For audit sweeps, **the baseline is the head of the PREVIOUS sweep** — no gap,
+  no double coverage — and it must be verified an ancestor with
+  `merge-base --is-ancestor` rather than assumed.
 - D-015a **AN UNDATED RESTRICTION IS NOT EVIDENCE AGAINST A DATED FEATURE
   STATEMENT** (2026-07-29 tick409, offered by @coder-f4 as a D-015 corollary while
   REVERTING ITS OWN LANDED COMMIT from two ticks earlier). D-015 says do not

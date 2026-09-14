@@ -10,7 +10,8 @@ description: >-
   or when picking up mid-loop after a dev reports. The manager does NOT write
   feature code; it drives dev/QA/perf subagents (the Agent tool), runs the
   merge-gate (zig build test/corpus/programs), removes gated DONE tasks from
-  jira.md, and is the ONLY agent that pushes master. For GitHub-issue
+  jira.md, and is the ONLY agent that pushes the current human-created working
+  branch. It never pushes or merges a protected branch. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
   step 5b of this loop). One rotating audit slot alternates the perf agent (§8b —
   profiles real programs, files measured PERF-* tickets) with the doc-finder (§8c
@@ -59,7 +60,11 @@ You run the loop in a **single persistent session**, driven by **background-task
 completion notifications** (§7 Driving devs): dispatch work, wait for a subagent to report,
 gate it, dispatch the next. Each iteration:
 
-0. **Baseline (first loop only).** Commit any untracked *source* before fanning
+0. **Baseline (first loop only).** Confirm `git branch --show-current` names a
+   human-created working branch and is NOT `main` or `master`. If HEAD is detached
+   or the current branch is protected, do not commit, dispatch, switch branches,
+   or push: ask the human to create/check out a working branch, then resume.
+   Commit any untracked *source* before fanning
    out — untracked files are invisible to git and a dev's rework can silently
    delete them (this cost us the original `lexer.zig`). Use an explicit pathspec,
    never `git add -A` (a teammate may have half-done WIP in the shared tree).
@@ -75,13 +80,15 @@ gate it, dispatch the next. Each iteration:
    the dependent task to `TODO`. Do not retain `[DONE]` lines and do not maintain
    a separate archive file: `git log -p -- jira.md` is the audit trail. The
    snapshot paragraph carries ONE tick only. jira.md stays under ~200 lines, no
-   exceptions.
-2c. **CI check.** `gh run list --branch master --limit 3` — a red CI run on a
-   commit you pushed is a gate failure even if local suites were green (env
-   drift). Diagnose before assigning anything else. Since pushes are batched
-   (step 8), CI fires once per batch, so a red run indicts a RANGE of commits,
-   not one: bisect with the local per-landing gate rather than guessing. Skip
-   this check on ticks where you did not push — there is nothing new to see.
+   exceptions. For a `GH#` task, defer removal until its green fix has been pushed
+   to the remote working branch and the issue has closed successfully; follow the
+   `issue-manager` ordering so a push/API failure cannot orphan the issue.
+2c. **Branch-safety check.** Re-check the current branch before every dispatch,
+   board commit, cherry-pick, or push. It must still be the same non-protected
+   working branch captured at step 0. Never switch to, commit on, push to, merge
+   into, or force-update `main`/`master`. Pull-request CI runs later, after the
+   human stops the manager and opens the PR; local suite gates are authoritative
+   during the manager loop.
 3. **Unblock.** For each `BLOCKED` task, if its deps are now `DONE`, flip to
    `TODO`. If a dep is wrong/missing, file it as a new task.
 4. **Assign — never idle.** Ensure each active dev has exactly one `TODO`→`DOING`
@@ -134,44 +141,49 @@ gate it, dispatch the next. Each iteration:
    But another dev's uncommitted WIP can make the tree transiently red; that is not a
    gate failure). Green → `DONE`. Red (from THIS task) → bounce to the dev with
    the failing output, state `REVIEW`. For a `GH#`-tagged task that just landed
-   green, close its issue per the `issue-manager` skill.
+   green, close its issue only after the fix has been pushed to the remote working
+   branch, per the `issue-manager` skill.
 7. **Write.** Commit the updated `jira.md` with a one-line
    summary: `manager: tick N — merged X, assigned Y, corpus P/Q passing`. Pathspec
    only.
-8. **Push — BATCHED, every 20-30 commits (user directive 2026-07-25).** Do NOT
-   push every tick. Every push fires a GitHub Actions run, so let commits
-   accumulate locally and push once the batch is worth a CI run:
-   - Count what's waiting: `git rev-list --count origin/master..master`.
-   - **< 20 → do not push.** Say the count in your tick summary and move on.
-   - **20-30 → push** (`git push origin master`), provided `zig build test`
-     **and** corpus **and** programs are green on a quiescent tree. Red → hold
-     the whole batch; never push red.
-   - **A known HIGH regression does NOT hold the batch — push anyway and FLAG it**
-     (corrected tick335 by the user: I had invented a hold rule here and sat on 41
-     commits for ~8 ticks; the directive is 20-30, full stop). If an audit agent has
-     confirmed a HIGH defect in an unpushed commit, push on schedule and name the
-     defect plus its in-flight fix in the tick summary. The suites being green is
-     the push condition; known-but-unfixed defects are a *reporting* duty, not a
-     brake. Only genuinely red suites hold a push.
-   - **> 30 → push at the next green gate**, don't let it drift further.
-   - **Push immediately regardless of count** if: the user asks; you are cutting
-     a release (a tag needs its commits upstream); or the local branch holds
-     work you cannot afford to lose (before a risky history operation).
-   Local commits are the safety net between pushes — every landing is still
-   committed by pathspec the same tick, and the merge-gate still runs per
-   landing. Batching changes only when the remote learns about it. You are the
-   **only** agent that pushes `master`; devs commit locally, never push.
+8. **Push every green landing to the CURRENT WORKING BRANCH.** NEVER push
+   `main`/`master`.
+   - Capture the branch with `branch=$(git branch --show-current)` and refuse to
+     continue if it is empty, `main`, or `master`.
+   - If an upstream exists, require it to be exactly `origin/$branch`; a mismatched
+     upstream is a stop-and-report condition, never a reason to guess a push
+     target.
+   - After each authoritative green gate and scoped landing/board commit, push
+     with `git push -u origin HEAD` on the first push and `git push origin HEAD`
+     thereafter. A red or non-quiescent tree is never pushed.
+   - A known-but-unfixed defect whose existing suites remain green is a reporting
+     duty, not a push blocker; name it and its in-flight fix in the tick summary.
+   - For a completed `GH#` task, a successful working-branch push is required
+     before closing the issue. Push the green fix first; only after the issue
+     closes, remove its jira line, commit that board update, and push the board
+     commit. Follow the `issue-manager` ordering exactly; a failed fix push or
+     close leaves both the issue and its jira task open.
+   You are the **only** agent that pushes the current working branch; devs commit
+   locally, never push. The manager never creates a PR and never merges one.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
-   run the next iteration. This never ends: each dev report is the trigger for the
-   next tick (gate → refill that dev → sense → assign). The session stays alive
-   with agents running in the background indefinitely — you do not "finish".
+   run the next iteration. Until the human explicitly stops the manager, each dev
+   report is the trigger for the next tick (gate → refill that dev → sense →
+   assign). The session stays alive with agents running in the background; it
+   does not declare itself "finished".
    **Safety-net ticker:** at manager start, arm an explicit recurring re-entry with
    the `loop` skill — `/loop 10m /manager` — so the loop still ticks (sense →
    reconcile → refill idle devs → grow backlog) even if no completion notification
    arrives (a dev silently died, or the backlog emptied). Notifications drive the
    fast path; `/loop` guarantees it never stalls.
+   **Human stop/handoff.** Only the human decides when the batch is ready. When
+   explicitly asked to stop, stop dispatching, wait for or safely stop live work,
+   run all three suites on the quiescent working branch, push all remaining
+   commits to that same branch, and report the branch name and tip SHA. Do NOT
+   create a PR, merge, release, or touch `main`/`master`. The
+   human then opens the PR, reviews it, waits for PR CI, and merges manually.
 
-**Never stop the loop.** You do not exit while there is work the team could do.
+**Never self-stop the loop.** Until the human explicitly stops the manager, you
+do not exit while there is work the team could do.
 If the board looks empty, you have not looked hard enough: grow it (§5 corpus,
 step 5b issues, step 5c perf, Phase-F/G). The only idle state is *waiting on a completion
 notification while devs run in the background* — that is the loop working, not the
