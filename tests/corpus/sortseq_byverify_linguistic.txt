@@ -1,0 +1,76 @@
+grp=A
+
+Obs   grp   x
+
+  1   A     1
+
+grp=a
+
+Obs   grp   x
+
+  2   a     5
+
+grp=b
+
+Obs   grp   x
+
+  3   b     2
+
+grp=B
+
+Obs   grp   x
+
+  4   B     3
+
+grp=c
+
+Obs   grp   x
+
+  5   c     4
+                                       The MEANS Procedure
+
+                                      grp=A
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+       1.0000000
+     -----------
+
+                                      grp=a
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+       5.0000000
+     -----------
+
+                                      grp=b
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+       2.0000000
+     -----------
+
+                                      grp=B
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+       3.0000000
+     -----------
+
+                                      grp=c
+
+                              Analysis Variable : x
+
+            Mean
+     -----------
+       4.0000000
+     -----------
+later-step-ran
