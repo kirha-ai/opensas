@@ -238,7 +238,7 @@ been closed by step 6 after their green commits became available on the remote
 working branch.
 
 If the human later chooses to release, that is a separate human-controlled action
-performed from the protected branch only after the merged PR's CI is green.
+performed manually from GitHub after the merged PR's CI is green.
 
 ---
 
