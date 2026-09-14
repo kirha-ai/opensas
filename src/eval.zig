@@ -25,6 +25,7 @@ const ast = @import("ast.zig");
 const diag = @import("diag.zig");
 const pdv_mod = @import("pdv.zig");
 const Value = @import("value.zig").Value;
+const format = @import("format.zig"); // expandYear — the shared YEARCUTOFF window (BUG-date-literal-2digityear)
 
 // diag.Error (OutOfMemory + Lex/Parse/ExecError) so an out-of-range array
 // subscript can abort the DATA step LOUD (BUG-arrayoorerror), mirroring
@@ -735,7 +736,14 @@ const Fixture = struct {
 // ── typed constants ─────────────────────────────────────────────────────────
 // Value conversions for the lexer's `'…'d/t/dt/b/x` literals. Each returns null
 // on a malformed body (the lexer then keeps the plain string).
-// ponytail: 4-digit years only (no yearcutoff), as elsewhere.
+// BUG-date-literal-2digityear (D-002 silent-wrong): a 2-digit year in a
+// date/datetime literal now expands through the shared YEARCUTOFF span
+// (format.expandYear — lrcon printed pp.141-142, default 1926), the same
+// window the informat path already applies, so `'26oct02'd` and its informat
+// twin read identically. The old "4-digit years only (no yearcutoff)"
+// ponytail was not a decisions.md ruling and silently produced year-00NN
+// dates at rc 0 — the worst failure class for clinical output — so removing
+// it is deliberate.
 
 fn cdIsDigit(c: u8) bool {
     return c >= '0' and c <= '9';
@@ -768,7 +776,10 @@ pub fn dateConst(s: []const u8) ?f64 {
     const day = std.fmt.parseInt(i64, str[0..i], 10) catch return null;
     const mon = monthNum(str[i .. i + 3]) orelse return null;
     const year = std.fmt.parseInt(i64, str[i + 3 ..], 10) catch return null;
-    return @floatFromInt(sasDate(year, mon, day));
+    // BUG-date-literal-2digityear: a 2-digit year windows through the shared
+    // YEARCUTOFF span (expandYear passes ≥100 through verbatim), matching the
+    // informat readers — `'26oct02'd` is 26OCT2002, never year 2.
+    return @floatFromInt(sasDate(format.expandYear(year), mon, day));
 }
 
 /// `HH:MM[:SS][ ]?(AM|PM)?` → seconds since midnight (a SAS time value).
@@ -837,6 +848,26 @@ test "typed-constant conversions (G-const)" {
     defer arena.deinit();
     try t.expectEqualStrings("SAS", hexConst(arena.allocator(), "534153").?);
     try t.expect(hexConst(arena.allocator(), "5G") == null);
+}
+
+test "date/datetime literals window 2-digit years via YEARCUTOFF (BUG-date-literal-2digityear)" {
+    // lrcon printed pp.141-142: a 2-digit year lands in the 100-year span that
+    // begins with YEARCUTOFF (default 1926 → [1926, 2025]); 4-digit verbatim.
+    // Anchors: 26OCT2002 = 15639 (the doc's own example value), 26OCT1950 =
+    // -3354, 26OCT2025 = 24040, 26OCT1926 = -12120.
+    defer format.setYearCutoff(1926); // isolation from other tests / the CLI
+    try t.expectEqual(@as(f64, 15639), dateConst("26oct02").?); // 1902 < 1926 → 2002
+    try t.expectEqual(@as(f64, -3354), dateConst("26oct50").?); // 1950
+    try t.expectEqual(@as(f64, 24040), dateConst("26oct25").?); // 1925 < 1926 → 2025
+    try t.expectEqual(@as(f64, -12120), dateConst("26oct26").?); // span start
+    try t.expectEqual(@as(f64, 15639), dateConst("26oct2002").?); // 4-digit: verbatim
+    try t.expectEqual(@as(f64, 15639 * 86400), datetimeConst("26oct02:00:00:00").?); // inherits
+    try t.expectEqual(@as(f64, 60), datetimeConst("01JAN1960:00:01:00").?); // untouched
+    // the doc's p.142 example: options yearcutoff=1950 → '26oct02'd = 15639
+    format.setYearCutoff(1950);
+    try t.expectEqual(@as(f64, 15639), dateConst("26oct02").?); // 1902 < 1950 → 2002
+    try t.expectEqual(@as(f64, 32806), dateConst("26oct49").?); // 1949 < 1950 → 2049
+    try t.expectEqual(@as(f64, -3354), dateConst("26oct50").?); // span start 1950
 }
 
 fn fixture() Fixture {
