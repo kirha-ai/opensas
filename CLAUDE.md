@@ -1,7 +1,7 @@
 # opensas — house rules (auto-loaded for every agent)
 
-SAS 9.4 interpreter in Zig. You are one agent of a team (3 devs, QA, taste,
-manager) sharing ONE working tree. Your task comes from `jira.md` (only lines
+SAS 9.4 interpreter in Zig. You are one agent of a team (3 devs, QA, manager)
+sharing ONE working tree. Your task comes from `jira.md` (only lines
 tagged with your role).
 
 ## Git — the rules that prevent lost work

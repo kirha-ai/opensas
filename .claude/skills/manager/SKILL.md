@@ -28,7 +28,7 @@ and hunts bugs with lldb. The devs and QA are **subagents** you drive with the
 `Agent` tool (§7).
 
 **Notation.** Two numbering systems live in this file and do NOT share numbers.
-`§N` (§1–§9, incl. §8b/§8c) always means a top-level SECTION of this manual.
+`§N` (§1–§8, incl. §8b/§8c) always means a top-level SECTION of this manual.
 The per-tick checklist inside §1 is written `step N` (0–9, with sub-steps
 2b/2c/5b/5c) and cited from outside as `§1 step N`. So "(§4)" = the section
 *Assignment rules*; "(§1 step 6)" = the loop's merge-gate step. **A bare `§N`
@@ -112,7 +112,7 @@ gate it, dispatch the next. Each iteration:
    answer or crash) outranks corpus feature gaps and ties with QA bugs — queue it
    at the FRONT of the backlog, ahead of Phase-F/G leaf work, so the next freed dev
    picks it up first. Order the board: red-tree fix > QA/GH# wrong-answer bugs >
-   critical-path features > corpus gaps > perf/taste.
+   critical-path features > corpus gaps > perf.
 5c. **Audit lane — perf ⇄ doc-finder, ALWAYS exactly one live, alternating.**
    Keep a single background audit agent alive at all times, **alternating** each
    cycle: launch perf (§8b), and when it reports, launch the doc-finder (§8c);
@@ -124,7 +124,7 @@ gate it, dispatch the next. Each iteration:
    fix — same discipline as QA/§8b). perf skips filing constant-factor wins while
    the tree is red (correctness first); the doc-finder runs regardless (pure
    doc-vs-impl comparison). Their findings become dev tasks (step 5b ordering: bugs
-   ahead of features ahead of perf/taste).
+   ahead of features ahead of perf).
 6. **Verify & merge-gate.** Any dev-completed task: confirm its test exists and
    `zig build test` is green *including* it, on a **quiescent tree** (see §7 Driving devs —
    **NEVER write the gate as `zig build test 2>&1 | tail -N; echo "exit=$?"` — `$?`
@@ -531,28 +531,4 @@ task; documented-deviation false alarms → close with the `decisions.md` citati
 Point each new pass at a DIFFERENT doc surface so coverage advances (grammar
 productions → function library → statement options → PROC semantics → macro),
 and tell it the one or two surfaces most worth auditing next.
-
----
-
-## 9. Taste agent (advisory only)
-
-A read-only agent that raises code quality by borrowing idioms from famous Zig
-projects cloned under `style/` (e.g. `style/tigerbeetle`, `style/ghostty`). It
-**never edits code**. Its only output is `refacto-suggestion.md` at the repo root.
-
-**Job:** study the references in `style/` (style docs AND real source patterns),
-review `src/*.zig` against them, propose concrete refactors. Each suggestion:
-`file:line`, what to change, the reference idiom (cite the project/doc), a
-before→after sketch, a priority. Ranked, deduped, curated — not a firehose.
-
-**Hard constraints:** never touch `src/`, `jira.md`, or any test; never commit
-code; never push. May only write/commit `refacto-suggestion.md` (`taste: …`,
-locally). Respect the repo's **ponytail** ethos — lazy/minimal is a feature; do
-NOT suggest defensive bloat.
-
-**GATE (user policy): no Taste refactors until the code is fully functional.** A
-greenlit Taste suggestion is filed `BLOCKED` behind "all corpus + all
-tests/programs fixtures pass." Never assign a dev to a refactor while any
-feature/bug/fixture is failing — functionality first, cleanup after. When
-everything is green, run one "quality loop" to burn down the queued Taste tasks.
 
