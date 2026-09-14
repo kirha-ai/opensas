@@ -9,8 +9,8 @@ description: >-
   "grow the backlog from the corpus", "run an optimization loop", "perf audit",
   or when picking up mid-loop after a dev reports. The manager does NOT write
   feature code; it drives dev/QA/perf subagents (the Agent tool), runs the
-  merge-gate (zig build test/corpus/programs), moves DONE tasks to
-  jira-archive.md, and is the ONLY agent that pushes master. For GitHub-issue
+  merge-gate (zig build test/corpus/programs), removes gated DONE tasks from
+  jira.md, and is the ONLY agent that pushes master. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
   step 5b of this loop). One rotating audit slot alternates the perf agent (§8b —
   profiles real programs, files measured PERF-* tickets) with the doc-finder (§8c
@@ -69,10 +69,13 @@ gate it, dispatch the next. Each iteration:
 2. **Reconcile.** Update every task's state (§3 Task states) to match reality. A task whose
    file exists and whose test passes is `DONE` regardless of the board. A `DOING`
    task whose subagent died with no commit is **stalled** → recover (§7 Driving devs).
-2b. **Archive discipline.** Any line you mark `DONE` moves to `jira-archive.md`
-   the SAME tick (append; devs never read it). The snapshot paragraph carries ONE
-   tick only — prior ticks live in `git log -p -- jira.md`. jira.md stays under
-   ~200 lines, no exceptions.
+2b. **Completed-task removal.** Any task that passes the authoritative gate is
+   removed from `jira.md` the SAME tick. Before removing it, remove its ID from
+   every dependent task's `[deps: …]`; if that clears the last dependency, flip
+   the dependent task to `TODO`. Do not retain `[DONE]` lines and do not maintain
+   a separate archive file: `git log -p -- jira.md` is the audit trail. The
+   snapshot paragraph carries ONE tick only. jira.md stays under ~200 lines, no
+   exceptions.
 2c. **CI check.** `gh run list --branch master --limit 3` — a red CI run on a
    commit you pushed is a gate failure even if local suites were green (env
    drift). Diagnose before assigning anything else. Since pushes are batched
@@ -132,7 +135,7 @@ gate it, dispatch the next. Each iteration:
    gate failure). Green → `DONE`. Red (from THIS task) → bounce to the dev with
    the failing output, state `REVIEW`. For a `GH#`-tagged task that just landed
    green, close its issue per the `issue-manager` skill.
-7. **Write.** Commit the updated `jira.md` (+ `jira-archive.md`) with a one-line
+7. **Write.** Commit the updated `jira.md` with a one-line
    summary: `manager: tick N — merged X, assigned Y, corpus P/Q passing`. Pathspec
    only.
 8. **Push — BATCHED, every 20-30 commits (user directive 2026-07-25).** Do NOT
@@ -187,8 +190,8 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
   failure — hold, don't bounce.
 - **`git add -A` while any dev has uncommitted WIP.** Subagents share ONE working
   tree; `-A` sweeps a teammate's half-done (or staged) files into your commit.
-  **Always commit with an explicit pathspec: `git commit jira.md jira-archive.md
-  -m …`** — that commits only those files regardless of what else is staged.
+  **Always commit with an explicit pathspec: `git commit jira.md -m …`** — that
+  commits only the board regardless of what else is staged.
 - Assign two live tasks that touch the same file (§4).
 - Let the backlog outrun reality — keep ~2 `TODO` per dev queued; the corpus
   decides the rest.
@@ -198,7 +201,9 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 ## 3. Task states
 
 `TODO` → assignable. `DOING @dev` → claimed. `REVIEW` → dev says done, awaiting
-your gate. `DONE` → tested & merged. `BLOCKED [deps: …]` → waiting.
+your gate. `DONE` → tested & merged, transient within the current tick only;
+clear dependent references and remove it per step 2b. `BLOCKED [deps: …]` →
+waiting.
 
 Line format: `- [STATE] ID — one-line title  [owns: src/foo.zig]  [deps: A1]  @dev2`.
 Keep the existing `jira.md` structure; just annotate state.
@@ -357,7 +362,8 @@ noted.
 `tests/**/expected/*.txt|*.csv` golden to make its own change pass is the classic
 way a regression hides. When a dev's commit touches a golden, diff it and confirm
 the change is SAS-correct (e.g. removed rows genuinely should be removed), not a
-convenience edit. Record the verification in the archive line.
+convenience edit. Record the verification in the manager tick commit message or,
+for a GitHub issue, in its closing comment.
 
 **Advanced: Workflow tool for batch fan-out.** For deterministic multi-dev
 orchestration over a work-list (e.g. a Phase-F function batch, or "one dev per

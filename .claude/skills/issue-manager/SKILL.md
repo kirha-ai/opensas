@@ -26,8 +26,8 @@ pollutes the board. The validation gate is the point of this skill — everythin
 else is bookkeeping around it.
 
 Repo: `kirha-ai/opensas`. All GitHub ops go through `gh`. All board edits obey
-the `manager` skill's rules (pathspec commits, one-file ownership, archive
-discipline).
+the `manager` skill's rules (pathspec commits, one-file ownership, completed-task
+removal).
 
 ## The lifecycle at a glance
 
@@ -43,7 +43,7 @@ VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
    │
    └─ NEEDS-INFO ─► comment asking for a minimal repro, leave open, do NOT label
                                                  │
-   fix lands green ──────────────────────────► 5. CLOSE (mark DONE, archive, close issue w/ commit ref)
+   fix lands green ──────────────────────────► 5. CLOSE (close issue w/ commit ref, remove task)
 ```
 
 Run steps 1–4 during the manager loop's "grow the backlog" step (§1 step 5). Run
@@ -86,12 +86,12 @@ Pull open issues that are **not yet taken**. The `ongoing` label
 gh issue list --state open --search '-label:ongoing' --json number,title,labels,body
 ```
 
-Cross-check against the board as a belt-and-suspenders dedupe — every issue already
-on the board carries its `GH#` id, so an issue whose number already appears in
-`jira.md` (or `jira-archive.md`) has been taken even if the label is missing:
+Cross-check against the board as a belt-and-suspenders dedupe — every open issue
+already on the board carries its `GH#` id, so an issue whose number already
+appears in `jira.md` has been taken even if the label is missing:
 
 ```bash
-grep -oE 'GH#[0-9]+' jira.md jira-archive.md | sort -u
+grep -oE 'GH#[0-9]+' jira.md | sort -u
 ```
 
 If nothing new: say so in one line and stop. Don't re-triage taken issues.
@@ -163,7 +163,7 @@ State starts `TODO`. Respect the `manager` skill's §4: never create a task owni
 that a live task already owns — if the owning file is locked, note the dependency
 and leave it `TODO` unassigned (it queues) rather than dispatching a conflict.
 
-Keep `jira.md` under ~200 lines (archive discipline still applies).
+Keep `jira.md` under ~200 lines (completed-task removal still applies).
 
 ---
 
@@ -193,20 +193,23 @@ needed to start. No separate handoff message is required beyond the board.
 
 ## 6. Close on DONE
 
-During the loop's merge-gate (the `manager` skill's §1 step 6), for any GH#-tagged task whose
-fix has landed and whose `zig build test` / `corpus` / `programs` are green:
+During the loop's merge-gate (the `manager` skill's §1 step 6), for any GH#-tagged
+task whose fix has landed and whose `zig build test` / `corpus` / `programs` are
+green:
 
-1. Flip the task to `[DONE]` on the board with the commit ref and `@dev`, then move
-   the line to `jira-archive.md` the same tick (archive discipline).
-2. Close the issue with the commit reference so the audit trail is complete:
+1. Close the issue with the commit reference so the audit trail is complete:
 
 ```bash
 gh issue close <N> --comment "Fixed in <commit-sha> (<one-line>). Fixture: tests/corpus/<name>. Suites green: test 0, corpus X/X, programs Y/Y."
 ```
 
-The `ongoing` label can stay (the issue is closed, so it drops out of the open
-list anyway). Never close an issue whose fix hasn't gone green — that is the same
-merge-gate rule as the board.
+2. Remove the task line from `jira.md` in the same tick. Do not retain a `[DONE]`
+   line or copy it to a separate archive; the issue and `git log -p -- jira.md`
+   preserve the audit trail.
+
+The `ongoing` label can stay (the issue is closed, so it drops out of the open list
+anyway). Never close or remove an issue whose fix hasn't gone green — that is the
+same merge-gate rule as the board.
 
 ---
 
@@ -267,9 +270,10 @@ gaps, exploring, improving — in parallel with whatever is in flight.
   `CONFIRMED`.
 - **The docs outrank the reporter.** A confident bug report describing non-SAS
   behavior is `NOT-A-BUG`. Cite the doc every time.
-- **One `GH#` id per issue, forever.** It links board ↔ GitHub; keep it on the task
-  through DONE and archive so step 6 closes the right issue.
-- **Obey manager git rules:** pathspec commits only (`git commit jira.md jira-archive.md -m "..."`),
+- **One `GH#` id per open issue.** It links board ↔ GitHub; keep it on the task
+  until step 6 closes the issue and removes the task. GitHub and the board's Git
+  history preserve the link afterward.
+- **Obey manager git rules:** pathspec commits only (`git commit jira.md -m "..."`),
   never `git add -A`, never push a red tree. Commit message: `manager: <what> — one line`.
 - **Don't touch feature code.** This skill only reads `src/` to locate the owning
   file for the task; the dev writes the fix.

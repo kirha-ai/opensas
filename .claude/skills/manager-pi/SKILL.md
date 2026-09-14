@@ -14,9 +14,10 @@ description: >-
 
 # manager-pi — the manager loop, dev work on pi/Kimi-K3
 
-**Follow the `manager` skill in full** (sense → reconcile → archive → assign →
-GitHub intake → audit lane → gate → push → loop; file-ownership, quiescent gate,
-don't-spin, never-stop — all inherited). This skill changes **one thing**: devs
+**Follow the `manager` skill in full** (sense → reconcile → remove completed
+tasks → assign → GitHub intake → audit lane → gate → push → loop; file-ownership,
+quiescent gate, don't-spin, never-stop — all inherited). This skill changes
+**one thing**: devs
 are dispatched as `pi`/Kimi-K3 runs in a worktree, not Agents. One-run-per-dev,
 completion = git+green (never the agent's say-so), REVIEW bounces, recovery still
 apply.

@@ -72,8 +72,11 @@ these caused real regressions (see D-001).
   are inconsistent (1 vs 2)** — D-009 says a gap is 2, and some gaps exit 1.
   That is a conformance bug against our own contract, not a doc problem; it
   needs a dev pass to make every gap path agree.
-- D-010 The board carries OPEN work only; DONE lines move to jira-archive.md
-  the same tick; snapshot = one tick (AGT-archive/AGT-ticklog).
+- D-010 The board carries OPEN work only; after a task passes the authoritative
+  gate, clear its ID from dependent tasks (unblocking any whose last dependency
+  is now satisfied), then remove its line from `jira.md` the same tick. Do not
+  retain DONE lines or maintain a separate archive file:
+  `git log -p -- jira.md` is the audit trail; snapshot = one tick (AGT-ticklog).
 - D-011 **NO CONFIDENTIAL DATA IN THE TREE** (user decision 2026-08-17, at
   open-sourcing; supersedes the old "repo stays private" ruling). No client
   name, study identifier, subject data or client-derived program logic anywhere
@@ -240,11 +243,11 @@ these caused real regressions (see D-001).
 - D-019 **REPRODUCE BEFORE YOU DISPATCH — AN ID GREP IS NOT ENOUGH** (2026-07-29
   tick410, after SIX stale board lines in one session, one batch that was 100%
   stale, and two double-dispatches earlier in the week). The existing pre-dispatch
-  check is: grep `jira-archive.md` and `git log` for the ticket ID. **That check
-  passes cleanly on an already-fixed ticket**, because a fix often lands under a
-  DIFFERENT id — the dev finds the real root, names it after that, and the
-  originating line is never closed. All five tickets in the tick306 exec batch
-  greped clean and all five were already fixed by later landings. So the rule is:
+  check was: grep the completed-task history and `git log` for the ticket ID.
+  **That check passes cleanly on an already-fixed ticket**, because a fix often
+  lands under a DIFFERENT id — the dev finds the real root, names it after that,
+  and the originating line is never closed. All five tickets in the tick306 exec
+  batch greped clean and all five were already fixed by later landings. So the rule is:
   **for any ticket older than roughly ten landings, RUN ITS REPRO on a
   clean-rebuilt binary before writing the charter.** It costs one build; a wrong
   dispatch costs a 30-60 minute dev slot and, worse, produces a confident dev
