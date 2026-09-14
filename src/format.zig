@@ -638,7 +638,20 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // match the raw spec text (minus any leading `$`) for those.
     const nm = if (spec_text.len > 0 and spec_text[0] == '$') spec_text[1..] else spec_text;
     if (startsWithCI(nm, "datetime")) return parseDatetime(field, .native);
-    if (startsWithCI(nm, "e8601dt") or startsWithCI(nm, "b8601dt")) return parseDatetime(field, .iso);
+    // GH#2 ISS-e8601dt-width: E8601DTw.d honors its width on the read side too
+    // (Informats Reference pp.643-644 — same w Default 19 / Range 16-26 and the
+    // same w=16 note as the format): slice to w so `input(x, e8601dt16.)` stops
+    // at the minutes and the seconds read as 00. Only the INPUT()-function path
+    // slices (readNumeric, slice_w) — the STATEMENT path hands the whole token
+    // over for list/colon reads and column reads arrive pre-sliced to w, so a
+    // re-slice there would corrupt the token (same rule as the plain w.d slice
+    // below). B8601DT keeps its own (undocumented-here) range and stays unsliced.
+    if (startsWithCI(nm, "e8601dt")) {
+        checkWidthRange(spec_text, spec.w, 16, 26);
+        const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
+        return parseDatetime(iso_fld, .iso);
+    }
+    if (startsWithCI(nm, "b8601dt")) return parseDatetime(field, .iso);
     if (startsWithCI(nm, "e8601da") or startsWithCI(nm, "b8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
         if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
@@ -1501,6 +1514,24 @@ fn checkWidth(spec_text: []const u8, spec: Spec) usize {
     return cap;
 }
 
+/// GH#2 ISS-e8601dt-width: the PER-FORMAT width range — a documented `w Range`
+/// that the global checkWidth cap above can't express (it accepts 10/15/27
+/// silently). SAS rejects them (`ERROR 29-185: Width specified for format
+/// E8601DT is invalid.`), a user-program error → the rc 1 class via g_fmt_error,
+/// NOT the unsupported-feature rc 2. Same emission shape as checkWidth: loud
+/// then continue, captured in a test build, suppressed by `options nofmterr`.
+/// `w == 0` is "width unspecified" → the format's default, always valid.
+fn checkWidthRange(spec_text: []const u8, w: usize, lo: usize, hi: usize) void {
+    if (w == 0 or (lo <= w and w <= hi)) return;
+    if (g_nofmterr) return;
+    g_fmt_error = true;
+    if (@import("builtin").is_test) {
+        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Width specified for format {s} is invalid (valid {d}-{d}).", .{ spec_text, lo, hi }) catch "invalid-format-width";
+    } else {
+        std.debug.print("ERROR: Width specified for format {s} is invalid (valid {d}-{d}).\n", .{ spec_text, lo, hi });
+    }
+}
+
 pub fn informatNotFound(name: []const u8, is_char: bool) void {
     if (g_nofmterr) return;
     if (isDocumentedInformat(name, is_char)) diag.markGap(); // D-009 §5f — write-side twin above
@@ -1706,7 +1737,13 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "dtwkdatx")) return renderWeekDatx(arena, datePartOf(valToNum(v)), spec.w);
     // ISO 8601 write side (QA-e8601put) — the informat side already reads these.
     if (eqi(spec.name, "e8601da")) return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, '-');
-    if (eqi(spec.name, "e8601dt")) return renderE8601Dt(arena, valToNum(v), spec.w);
+    // GH#2 ISS-e8601dt-width: E8601DT's documented w Range 16-26 (Formats
+    // Reference pp.200-201) — loud outside it, before the width-less-default
+    // render below (w 0 → 19).
+    if (eqi(spec.name, "e8601dt")) {
+        checkWidthRange(spec_text, spec.w, 16, 26);
+        return renderE8601Dt(arena, valToNum(v), spec.w);
+    }
     // E8601TMw. — ISO time hh:mm:ss (a time value); same body as TIME. E8601DNw. —
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
     if (eqi(spec.name, "e8601tm")) return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, 0, true); // ISO: zero-pad hh
@@ -2759,8 +2796,17 @@ fn renderDatetime(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]
     return justRight(arena, body.items, w);
 }
 
-/// E8601DTw. — a SAS datetime (seconds since 1960-01-01) as ISO 8601 extended
-/// `yyyy-mm-ddThh:mm:ss` (w defaults to 19; fractional seconds not rendered).
+/// E8601DTw.d — a SAS datetime (seconds since 1960-01-01) as ISO 8601 extended
+/// `yyyy-mm-ddThh:mm:ss`. Width rules (GH#2 ISS-e8601dt-width; Formats and
+/// Informats Reference pp.200-201): w Default 19, Range 16-26 (checked loud at
+/// the dispatch site), Alignment: LEFT. The full form is 19 columns; at w=16
+/// "SAS assumes that the value for seconds is 0 and omits them from the output"
+/// (p.200 note), and w 20-26 blank-pad on the RIGHT of the value — the old
+/// justRight padded left. ponytail: the doc pins only the w=16 rung, but a
+/// `:ss` (3 columns) can't partially render (the renderDatetime ladder's rule),
+/// so 17-18 interpolate it — seconds-less, left-justified into the wider field.
+/// `.d` fractional seconds (Range 0-6) still not rendered; add with the p.201
+/// example (`e8601dt25.3` → `2018-09-15T14:52:22.000`).
 fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
@@ -2780,9 +2826,11 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
     try body.append(arena, ':');
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
-    try body.append(arena, ':');
-    try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
-    return justRight(arena, body.items, width);
+    if (width >= 19) { // seconds only when the whole `:ss` fits (16-18 omit them)
+        try body.append(arena, ':');
+        try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+    }
+    return justLeft(arena, body.items, width);
 }
 
 /// B8601DTw. — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss` (no
@@ -4155,6 +4203,81 @@ test "E8601DA/E8601DT write side renders ISO 8601 (QA-e8601put)" {
     // 25DEC2024 10:30:00 = 2050741800 (same anchor as the DATETIME cluster test)
     try expectFmt("2024-12-25T10:30:00", .{ .num = 2050741800 }, "e8601dt19.");
     try expectFmt("                  .", Value.missing, "e8601dt19."); // missing → dot, right-justified in w=19
+}
+
+test "E8601DTw. honors its width: w=16 omits the seconds, 20-26 left-justify (GH#2 ISS-e8601dt-width)" {
+    // Formats and Informats Reference pp.200-201: w Default 19, Range 16-26,
+    // Alignment: Left. 16JAN2025:13:53:45 = SAS day 23757 × 86400 + 50025.
+    const dt: f64 = 23757 * 86400 + 50025;
+    // w=16: "SAS assumes that the value for seconds is 0 and omits them from
+    // the output" (p.200 note) — the field is exactly the 16-char form.
+    try expectFmt("2025-01-16T13:53", .{ .num = dt }, "e8601dt16.");
+    // 17-18 can't hold the whole `:ss` (3 columns) and a component never
+    // renders partially, so they take the same seconds-less rung, left-aligned
+    // into the wider field (doc pins only w=16; this interpolates it).
+    try expectFmt("2025-01-16T13:53 ", .{ .num = dt }, "e8601dt17.");
+    try expectFmt("2025-01-16T13:53  ", .{ .num = dt }, "e8601dt18.");
+    // default 19 and explicit 19 are the full form, exactly filling the field
+    try expectFmt("2025-01-16T13:53:45", .{ .num = dt }, "e8601dt19.");
+    try expectFmt("2025-01-16T13:53:45", .{ .num = dt }, "e8601dt.");
+    // 20-26: Alignment Left — blank-pad the RIGHT (was right-justified)
+    try expectFmt("2025-01-16T13:53:45 ", .{ .num = dt }, "e8601dt20.");
+    try expectFmt("2025-01-16T13:53:45       ", .{ .num = dt }, "e8601dt26.");
+    // the seconds-less forms read seconds as 00, so a 16-written field
+    // round-trips through the informat back to :00
+    try expectFmt("2025-01-16T13:53:00", .{ .num = readNumeric("e8601dt16.", "2025-01-16T13:53:45").num }, "e8601dt19.");
+}
+
+test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
+    // Formats Reference pp.200-201 Range 16-26; SAS: `ERROR 29-185: Width
+    // specified for format E8601DT is invalid.` — a user-program error, so the
+    // rc 1 class (g_fmt_error), never the unsupported-feature rc 2. The global
+    // checkWidth cap (32) alone silently accepted 10/15/27. Asserted via the
+    // CAPTURED reporter (TEST-quietnoise) — no aborting process here.
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    for ([_][]const u8{ "e8601dt10.", "e8601dt15.", "e8601dt27." }) |spec| {
+        g_test_last_err = "";
+        _ = try apply(a, .{ .num = 2052654825 }, spec); // loud-then-render: output still lands
+        try t.expect(formatErrored());
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, spec) != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "16-26") != null);
+        g_fmt_error = false; // clear between candidates
+    }
+    // width-less and in-range never report
+    g_test_last_err = "";
+    _ = try apply(a, .{ .num = 2052654825 }, "e8601dt.");
+    try t.expect(!formatErrored());
+    _ = try apply(a, .{ .num = 2052654825 }, "e8601dt26.");
+    try t.expect(!formatErrored());
+    g_fmt_error = false; // reset module state for other tests
+}
+
+test "E8601DT informat honors w: e8601dt16. reads seconds as 00 (GH#2 ISS-e8601dt-width)" {
+    // Informats Reference pp.643-644: same Range 16-26 and w=16 note as the
+    // format. The INPUT()-function path slices the field to w.
+    const base: f64 = 23757 * 86400; // 16JAN2025 00:00:00
+    try t.expectEqual(base + 13 * 3600 + 53 * 60, readNumeric("e8601dt16.", "2025-01-16T13:53:45").num);
+    try t.expectEqual(base + 50025, readNumeric("e8601dt.", "2025-01-16T13:53:45").num); // width-less: seconds kept
+    try t.expectEqual(base + 50025, readNumeric("e8601dt19.", "2025-01-16T13:53:45").num); // 19 == field
+    // the STATEMENT path never re-slices: list/colon hands the whole token over
+    // (column reads are pre-sliced to w up in io.zig, i.e. exactly the 19 form)
+    try t.expectEqual(base + 50025, readNumericStmt("e8601dt16.", "2025-01-16T13:53:45").num);
+    // out-of-range width is loud on the read side too (same Range 16-26).
+    // Loud-then-continue: the read still yields whatever the sliced field
+    // parses to — the ERROR flag (rc 1) is the contract here, not the value.
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = readNumeric("e8601dt12.", "2025-01-16T13:53:45");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "16-26") != null);
+    g_fmt_error = false; // reset module state for other tests
 }
 
 test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write formats" {
