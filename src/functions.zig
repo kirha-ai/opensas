@@ -897,6 +897,32 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
         // `input("123", 8.)` used to log a num→char NOTE for the `8.` (QA tick356 F4).
         const spec = try specText(ev, args[1]); // the informat (a char spec)
         const v = readInformat(spec, s);
+        // GH#5 ISS-informatfallback: when the informat did not LOAD,
+        // readInformat has just emitted the loud "was not found or could not
+        // be loaded" ERROR and read MISSING. Language Reference: Concepts
+        // p.518 "How SAS Handles Invalid Data" adds two more mandatory
+        // actions — print the invalid-data NOTE and set _ERROR_ to 1 — and
+        // those live HERE, where the Evaluator is (readInformat is a pure
+        // spec→value helper also called from sql.zig, which gets the missing
+        // value only). The INPUT STATEMENT twin of this block is io.zig's
+        // noteInvalidNum; the two informat entry points now agree on all four
+        // p.518 actions. A blank / `.` / special-missing source stays SILENT:
+        // that is a legitimate missing, not invalid data (same guard
+        // noteInvalidNum draws). ponytail: ast.Call nodes carry no source
+        // span, so the NOTE omits SAS's "at line N column M" tail rather than
+        // freeze a 0/0 — GH#78 / NOTE-invalidnumdataloc precedent.
+        const fld = std.mem.trim(u8, s, " \t");
+        if (informatUnloaded(spec) and fld.len != 0 and
+            !std.mem.eql(u8, fld, ".") and Value.parseSpecialMissing(fld) == null)
+        {
+            // Real SAS names the function UPPERCASE whatever the call's case
+            // (and the in-file NOTE family — MORT/SAVING/COMPOUND — spells it
+            // that way too), so derive it instead of echoing `name`.
+            const fname = if (eqi(name, "inputn")) "INPUTN" else if (eqi(name, "inputc")) "INPUTC" else "INPUT";
+            note(ev, "Invalid argument to function {s}.", .{fname});
+            try ev.setError();
+            return Value.missing;
+        }
         // Named `$` informats post-process the verbatim read (readInformat has no
         // allocator): $UPCASE/$LOWCASE case-fold, $QUOTE strips quotes, $HEX decodes
         // hex pairs (BUG-upcaseinformat / BUG-quoteinformat). Done here where
@@ -3823,9 +3849,29 @@ pub fn weekNumber(d: i64, desc: u8) i64 {
 
 // ── informats: char → value (the `input(x, informat.)` conversion) ───────────
 
+/// True when `spec` names an informat the READ side has no loader for — the
+/// exact condition under which readInformat reports format.informatNotFound.
+/// Shared by readInformat (the loud ERROR) and the INPUT()/INPUTN()/INPUTC()
+/// dispatch (the p.518 invalid-data NOTE + _ERROR_), so the two halves of the
+/// unknown-informat handling cannot drift apart (D-021 rule 1: name the
+/// producers that reach each guard). `$`-specs are excluded: a char informat
+/// is validated by format.checkCharInformat instead (BUG-charinformatloud).
+/// The NAME comes from parseSpec's split — not this file's alphabetic
+/// informatName — because digit-bearing names must keep their digits:
+/// `b8601da8.` is name "b8601da" + w 8, not "b" (and "b" is not a known
+/// numeric informat, so the alphabetic cut false-flags every B8601 read).
+/// Same reason io.zig's checkInputInformats twins this with parseSpec.
+fn informatUnloaded(spec: []const u8) bool {
+    if (spec.len == 0 or spec[0] == '$') return false;
+    return !format.isKnownInformat(format.parseSpec(spec).name);
+}
+
 /// Convert `s` under informat `spec` (e.g. "date9.", "yymmdd10.", "comma8.").
 /// Dates yield a SAS day number; COMMA/DOLLAR strip separators; everything else
-/// parses as a plain number. Unparseable input → missing.
+/// parses as a plain number. Unparseable input → missing; an informat that is
+/// not in the read-side dictionary fails LOUD and reads missing (GH#5 — it
+/// used to fall through to the plain-number parse, so the ERROR was followed
+/// by a plausible-but-wrong value).
 pub fn readInformat(spec: []const u8, s: []const u8) Value {
     // A `$` (dollar) informat reads the source as a CHARACTER value: `input("abc",
     // $8.)` → "abc" (clipped to the width w). Without this it fell through to the
@@ -3898,7 +3944,20 @@ pub fn readInformat(spec: []const u8, s: []const u8) Value {
         return format.readNumeric(spec, s);
     // An unimplemented/unknown informat must FAIL LOUD, not silently read missing
     // (BUG-informatreadloud) — twin of the write-side unknown-format error.
-    if (!format.isKnownInformat(nm)) format.informatNotFound(nm, false);
+    // GH#5 ISS-informatfallback: the loud ERROR used to be followed by a plain
+    // numeric parse of the source, so `input('2025', zzznotreal.)` reported the
+    // informat and then STILL returned 2025 — plausible-but-wrong, the failure
+    // class D-002 exists to prevent. Language Reference: Concepts p.518 "How SAS
+    // Handles Invalid Data": a value requiring an informat that is not
+    // available is INVALID, and action 1 is set the value to MISSING. (The
+    // NOTE + _ERROR_ half fires at the dispatch, where the Evaluator lives.)
+    if (informatUnloaded(spec)) {
+        // Name the informat by parseSpec's split, like io.zig's twin ERROR:
+        // `nm` cuts at the first digit, so a digit-bearing typo would be
+        // reported as "The informat b was not found".
+        format.informatNotFound(format.parseSpec(spec).name, false);
+        return Value.missing;
+    }
     const wd = informatWD(spec);
     return numFromSpec(s, wd.w, wd.d);
 }
@@ -4999,6 +5058,59 @@ test "MISC-fnseterror: invalid function argument sets _ERROR_=1 via the PDV (NOT
     try h.pdv.set("_error_", .{ .num = 0 });
     _ = try dispatch(&e, "substr", &.{ strV("hello"), numV(2), numV(3) });
     try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+}
+
+test "GH#5 ISS-informatfallback: INPUT() on an unloaded informat reads MISSING + NOTE + _ERROR_=1" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // The repro: an unknown informat is LOUD (readInformat's captured
+    // format.informatNotFound) and the value is MISSING — never the plain
+    // numeric parse of the source. `input('2025', zzznotreal.)` used to
+    // report the informat and then STILL return 2025; Language Reference:
+    // Concepts p.518 "How SAS Handles Invalid Data" makes it invalid data:
+    // value missing (readInformat), NOTE + _ERROR_=1 (the dispatch guard).
+    format.g_fmt_error = false;
+    format.g_test_last_err = "";
+    const r = try dispatch(&e, "input", &.{ strV("2025"), strV("zzznotreal.") });
+    try t.expect(r.isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 1), h.diags.count());
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[0].message, "Invalid argument to function INPUT") != null);
+    try t.expect(std.mem.indexOf(u8, format.g_test_last_err, "The informat zzznotreal was not found") != null);
+
+    // The INPUTN twin NOTEs under its own name (real SAS names the function
+    // invoked), same missing + _ERROR_=1.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    const rn = try dispatch(&e, "inputn", &.{ strV("2025"), strV("zzznotreal.") });
+    try t.expect(rn.isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[1].message, "Invalid argument to function INPUTN") != null);
+
+    // A blank / `.` / special-missing source is a LEGITIMATE missing: NO NOTE
+    // and NO _ERROR_ (io.zig noteInvalidNum's guard, mirrored). The loud
+    // not-loaded ERROR still fires — the informat is absent from the
+    // dictionary whatever the source says — but that is readInformat's
+    // diagnostic, not this guard's.
+    for ([_][]const u8{ " ", ".", ".k" }) |src| {
+        try h.pdv.set("_error_", .{ .num = 0 });
+        const before = h.diags.count();
+        const m = try dispatch(&e, "input", &.{ strV(src), strV("zzznotreal.") });
+        try t.expect(m.isMissing());
+        try t.expectEqual(before, h.diags.count()); // silent
+        try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    }
+
+    // A KNOWN informat is untouched: reads through, no NOTE, _ERROR_ alone.
+    try h.pdv.set("_error_", .{ .num = 0 });
+    const ok = try dispatch(&e, "input", &.{ strV("2025"), strV("4.") });
+    try t.expectEqual(@as(f64, 2025), ok.num);
+    try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    try t.expectEqual(@as(usize, 2), h.diags.count()); // only the two NOTEs above
+
+    format.g_fmt_error = false; // reset module state for other tests
 }
 
 test "NOTE-subpadinvpos: a nonpositive SUBPAD position is INVALID — NOTE + _ERROR_=1, not a silent missing" {
