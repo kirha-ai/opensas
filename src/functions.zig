@@ -398,6 +398,17 @@ pub fn unbindLibrary() void {
     g_lib = null;
 }
 
+/// The session SYSPARM value (GAP-sysparm-opt): ONE value behind all three
+/// documented surfaces — `options sysparm="text";` writes it (main.zig
+/// handleGlobal), the SYSPARM() function (below) and the &SYSPARM automatic
+/// (macro.zig getVar, live) read it. Macro Reference printed pp.486-487: valid
+/// in the OPTIONS statement and on the command line — no CLI flag exists here,
+/// so the default is "". The slice is owned by the caller's run arena and the
+/// value resets per run with the other OPTIONS-derived state (the
+/// year_cutoff rule: run-scoped, not session-scoped — wasm runs many programs
+/// per load and must not leak one program's option into the next).
+pub var sysparm_text: []const u8 = "";
+
 /// Uniform per-run reset of module globals (taste #12): the PRX registry, SCL
 /// open-handle table and HASHING_* digest table all hold pointers into a prior
 /// run's freed arenas — a stale 1-based handle must die, not dangle. Mirrors
@@ -405,6 +416,7 @@ pub fn unbindLibrary() void {
 pub fn resetPerRun() void {
     prx.resetPerRun();
     dsfns.resetPerRun();
+    sysparm_text = "";
     const ga = std.heap.page_allocator;
     for (hashing_table.items) |*c| {
         ga.free(c.method);
@@ -973,9 +985,12 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
     }
 
     // ── system / environment: correct in a base session with no options set
-    if (eqi(name, "sysparm")) { // SYSPARM= option string; none set here → empty
+    if (eqi(name, "sysparm")) { // the shared session value (GAP-sysparm-opt)
+        // `options sysparm="text";` writes sysparm_text; macro.zig's &SYSPARM
+        // reads the same value live. Was hardcoded "" — the option errored
+        // "not recognized" and the function always returned empty.
         if (args.len != 0) return badArity(ev, name, "0", args.len);
-        return .{ .str = "" };
+        return .{ .str = sysparm_text };
     }
     if (eqi(name, "sysrc")) { // last system-error number; none → 0
         if (args.len != 0) return badArity(ev, name, "0", args.len);
@@ -5648,6 +5663,28 @@ test "Phase F net-new: spedis/compged/vtypex/vnamex + system fns" {
     try t.expectEqual(@as(f64, 0), (try dispatch(&e, "wto", &.{strV("hi")})).num);
     try t.expectEqual(@as(f64, 5), (try dispatch(&e, "sleep", &.{numV(5)})).num); // returns n, no actual delay
     try t.expectEqual(@as(f64, 0.25), (try dispatch(&e, "sleep", &.{ numV(0.25), numV(0.001) })).num);
+}
+
+test "GAP-sysparm-opt: SYSPARM() reads the shared session value the OPTIONS statement writes" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // default: no option set → "" (the arm above pins it too)
+    try t.expectEqualStrings("", (try dispatch(&e, "sysparm", &.{})).str);
+    // `options sysparm="PROBE123";` (main.zig handleGlobal) writes the pub var;
+    // the function reads the SAME value — it used to be hardcoded "".
+    sysparm_text = "PROBE123";
+    try t.expectEqualStrings("PROBE123", (try dispatch(&e, "sysparm", &.{})).str);
+    // `options sysparm="";` resets to empty
+    sysparm_text = "";
+    try t.expectEqualStrings("", (try dispatch(&e, "sysparm", &.{})).str);
+    // and resetPerRun (interpret's run start) clears it with the other
+    // OPTIONS-derived state — the year_cutoff run-scoped rule.
+    sysparm_text = "LEAK";
+    resetPerRun();
+    try t.expectEqualStrings("", (try dispatch(&e, "sysparm", &.{})).str);
 }
 
 test "Phase F net-new: FINANCE umbrella (closed-form modes vs SAS doc)" {

@@ -1424,6 +1424,22 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     try diags.report(.err, t.line, "Invalid value for the MISSING option.", .{});
                     return;
                 }
+            } else if (eqi(t.text, "sysparm")) {
+                // `options sysparm="text";` — the macro system option (Macro
+                // Reference printed pp.486-487, "Valid in: ... OPTIONS
+                // statement"): ONE session value that the SYSPARM() function
+                // and the &SYSPARM automatic both read (GAP-sysparm-opt). A
+                // quoted string or bare word/number; `sysparm="";` resets to
+                // empty. Fail LOUD on garbage, like OBS=/MISSING= above.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and
+                    (toks[i + 2].tag == .string or toks[i + 2].tag == .name or toks[i + 2].tag == .number))
+                {
+                    sas.functions.sysparm_text = toks[i + 2].text;
+                    i += 3;
+                } else {
+                    try diags.report(.err, t.line, "Invalid value for the SYSPARM option.", .{});
+                    return;
+                }
             } else if (eqi(t.text, "linesize") or eqi(t.text, "pagesize") or eqi(t.text, "ls") or eqi(t.text, "ps")) {
                 // `options linesize=N pagesize=N;` (GAP-listingwidth) — captured
                 // and validated; listing procs do NOT wrap/paginate to them yet
@@ -4828,6 +4844,16 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
     // honoured: the K suffix is a magnitude, not a token to drop — obs=2k = 2048
     try expectRun("options obs=2k; data d; x=1; run;\n", "");
     try std.testing.expectEqual(@as(usize, 2048), sas.io.global_obs);
+
+    // GAP-sysparm-opt: ONE session value — the OPTIONS statement writes it,
+    // the SYSPARM() function reads it, and a &SYSPARM reference in a LATER
+    // step (the chunk after the first `run;`) reads it live. Default "".
+    try expectRun(
+        "options sysparm=\"PROBE123\"; data _null_; sp=sysparm(); put \"FUNCTION=[\" sp \"]\"; run;\n" ++
+            "data _null_; mv = \"&sysparm\"; put \"MACRO=[\" mv \"]\"; run;\n",
+        "FUNCTION=[PROBE123 ]\nMACRO=[PROBE123 ]\n",
+    );
+    try expectRun("data _null_; sp=sysparm(); put \"DEFAULT=[\" sp \"]\"; run;\n", "DEFAULT=[ ]\n");
 
     const Case = struct { src: []const u8, msg: []const u8 };
     const cases = [_]Case{
