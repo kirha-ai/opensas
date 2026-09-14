@@ -674,6 +674,12 @@ pub const Executor = struct {
     ev: *eval.Evaluator,
     lib: *Library,
     log: std.ArrayList(u8) = .empty, // `put` output, for the CLI to print
+    // ISS-errordump: while set, putBuf/putSep route THERE instead of the FILE/log
+    // stdout buffer — the `_ERROR_=1` observation dump reuses putAllVars verbatim
+    // (same var order, same skip list, same value rendering) but must never land
+    // in the listing: a dump is log-class (stderr via the captured diagnostics),
+    // and it goes there even when a FILE statement is open (SAS dumps to the log).
+    put_redirect: ?*std.ArrayList(u8) = null,
     vnext_idx: usize = 0, // CALL VNEXT cursor over PDV variables
 
     // filled by `scan`
@@ -1274,6 +1280,16 @@ pub const Executor = struct {
                     if (self.modify_by) |md| try self.modifyReplace(md) else try self.outputAll();
                 },
             }
+
+            // ISS-errordump: end of THIS iteration — _ERROR_ still holds the
+            // row's value here (the reset is at the TOP of the next one, both
+            // split and unsplit), so a flagged row dumps its PDV now, once, even
+            // when DELETE dropped the observation (the obs is gone, the flag is
+            // not). A `stop` never reaches this line (the switch broke out): an
+            // abandoned iteration is not completed, and the
+            // `if _error_ then stop;` idiom ends the step before any further
+            // dump could repeat.
+            try self.dumpErrorObs();
 
             // Row boundary: the survivors of the top-of-loop reset are exactly
             // the retained vars — their char cells may point into the current
@@ -7191,6 +7207,30 @@ pub const Executor = struct {
         }
     }
 
+    /// ISS-errordump (Language Reference: Concepts printed p.518, "How SAS Handles Invalid
+    /// Data" action 4): an iteration that ENDS with `_ERROR_=1` dumps the
+    /// observation — every data variable as `name=value`, the automatics last
+    /// (`_ERROR_=1 _N_=k`) — so a bad-data row shows the user exactly what the
+    /// PDV held when it was flagged. Fired at the row boundary, BEFORE the next
+    /// iteration resets `_ERROR_`, and only when the program has not cleared the
+    /// flag itself (`if _error_ then _error_=0;` suppresses the dump — p.601's
+    /// documented idiom, which is why the check reads the live PDV). The dump is
+    /// LOG output: it rides the captured diagnostics (stderr in the CLI, main.zig
+    /// keeps the listing on stdout), so no stdout golden moves. Rendering reuses
+    /// putAllVars verbatim — one var order, one skip list, one renderer for both
+    /// `put _all_` and the dump.
+    fn dumpErrorObs(self: *Executor) Error!void {
+        const ev = self.pdv.get("_error_") orelse return;
+        if (ev != .num or ev.num == 0) return;
+        var buf: std.ArrayList(u8) = .empty;
+        var need_space = false;
+        var owe_blank = false;
+        self.put_redirect = &buf;
+        defer self.put_redirect = null;
+        try self.putAllVars(.all, &need_space, &owe_blank);
+        try self.diags.note(0, "{s}", .{buf.items});
+    }
+
     /// The label SAS prints for a `put name=;` item: the variable's DEFINED case
     /// (GAP-putnamedcase — Language Reference: Concepts pp.537/538/539 logs). first./last. flags render
     /// the prefix uppercase + the base var's defined case (`FIRST.State=`); the
@@ -7241,6 +7281,7 @@ pub const Executor = struct {
     /// (GAP-fileprint) target the log too — opensas has one stdout stream for
     /// both listing and log (main.zig), so both keywords route there.
     fn putBuf(self: *Executor) *std.ArrayList(u8) {
+        if (self.put_redirect) |b| return b;
         if (self.file) |f| return if (f.print_log) &self.log else &self.file_out;
         return &self.log;
     }
@@ -7272,6 +7313,7 @@ pub const Executor = struct {
     /// List-item separator for PUT: the FILE DLM char when a `file … dlm=x;`
     /// is in effect (DSD implies comma), else the SAS default blank (BUG-fileopts).
     fn putSep(self: *Executor) u8 {
+        if (self.put_redirect != null) return ' '; // the dump is blank-separated, never FILE DLM
         return if (self.file) |f| f.dlm orelse ' ' else ' ';
     }
 
@@ -11387,8 +11429,13 @@ test "MODIFY-BY no-match: ERROR + _IORC_=_DSENMR, unmatched row NOT fabricated (
     try t.expect(m2.indexOf("_iorc_") == null); // automatic, never written out
     // The unhandled no-match reported the Language Reference: Concepts p.600 ERROR (captured reporter).
     try t.expect(f.diags.hasStepErrors());
-    const msg = f.diags.list.items[f.diags.list.items.len - 1].message;
-    try t.expectEqualStrings("No matching observation was found in master data set.", msg);
+    try t.expect(diagsHave(&f.diags, "No matching observation was found in master data set."));
+    // ISS-errordump: the unhandled no-match left _ERROR_=1 at the iteration end,
+    // so the offending row dumps its PDV after the ERROR — the unmatched
+    // transaction row (id=3), automatics last.
+    const dump = f.diags.list.items[f.diags.list.items.len - 1];
+    try t.expectEqual(diag.Severity.note, dump.severity);
+    try t.expectEqualStrings("id=3 v=30 _ERROR_=1 _N_=2", dump.message);
 }
 
 test "MODIFY-BY revised program: test _IORC_, OUTPUT the unmatched row, clear _ERROR_ (BUG-modifybynomatch)" {
@@ -14190,10 +14237,143 @@ test "POINT= out-of-range obs is a NOTE + _ERROR_=1 and the step CONTINUES (NOTE
         try t.expectEqual(@as(usize, 5), out.rowCount()); // 3 real + 2 stale, all loud via NOTEs
         const kc = out.indexOf("k").?;
         for (0..5) |r| try t.expectEqual(@as(f64, @floatFromInt(@as(usize, 10) * @min(r + 1, 3))), out.row(r)[kc].num);
+        // Both failing passes still note (the pass-5 one for obs 5 is the last
+        // POINT= NOTE) — and ISS-errordump now appends the end-of-iteration PDV
+        // dump after them: the whole DO loop is ONE DATA-step iteration, so the
+        // dump fires once, holding the retained (stale) last-read k, the
+        // exhausted index (real SAS leaves i at 6), and the automatics last.
+        try t.expect(diagsNote(&f.diags, "SET POINT= invalid observation number 5: a has 3 observations"));
         const last = f.diags.list.items[f.diags.list.items.len - 1];
         try t.expectEqual(diag.Severity.note, last.severity);
-        try t.expectEqualStrings("SET POINT= invalid observation number 5: a has 3 observations", last.message);
+        try t.expectEqualStrings("k=30 i=6 _ERROR_=1 _N_=1", last.message);
     }
+}
+
+test "ISS-errordump: a row flagged _ERROR_=1 dumps its observation at iteration end; clean rows dump nothing" {
+    // Language Reference: Concepts printed p.518, "How SAS Handles Invalid Data" action 4: the
+    // offending observation is written to the log at the end of its iteration —
+    // `input s $ v;` on "XX2025 XX" reads s as text, fails v on 'XX', and the
+    // row dumps as `s=XX2025 v=. _ERROR_=1 _N_=1` (the put _all_ shape: data
+    // vars first, automatics last, BUG-putallcase uppercasing). The dump is
+    // LOG-class output — it rides the captured diagnostics (stderr in the CLI),
+    // never the listing, so stdout corpus goldens cannot move.
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    const items = [_]ast.InputItem{
+        .{ .name = "s", .type = .char },
+        .{ .name = "v", .type = .num },
+    };
+    const lines = [_][]const u8{ "XX2025 XX", "7 8" };
+    const prog = [_]ast.Stmt{
+        .{ .input = &items },
+        .{ .datalines = &lines },
+    };
+    var out = Dataset.init(f.a(), "work.out");
+    try x.run(&prog, &out);
+
+    try t.expectEqual(@as(usize, 2), out.rowCount());
+    // Exactly ONE dump (row 1), and it is the LAST diagnostic: the iteration-end
+    // position, after the invalid-data NOTE that raised the flag; row 2 read
+    // clean and must dump nothing.
+    var dumps: usize = 0;
+    for (f.diags.list.items) |d| {
+        if (std.mem.indexOf(u8, d.message, "_ERROR_=1 _N_=1") != null) dumps += 1;
+    }
+    try t.expectEqual(@as(usize, 1), dumps);
+    const dump = f.diags.list.items[f.diags.list.items.len - 1];
+    try t.expectEqual(diag.Severity.note, dump.severity);
+    try t.expectEqualStrings("s=XX2025 v=. _ERROR_=1 _N_=1", dump.message);
+    // The listing stays empty — a dump never reaches stdout (putBuf redirect).
+    try t.expectEqual(@as(usize, 0), x.log.items.len);
+}
+
+test "ISS-errordump: the p.601 in-step clear suppresses the dump — the flag is read live at iteration end" {
+    // Language Reference: Concepts p.601's documented handler clears the flag in-step
+    // (`if _error_ then _error_=0;`), which is exactly why the dump decision
+    // reads the live PDV at the row boundary, BEFORE the next iteration's reset:
+    // a cleared row dumps nothing, a left-set one does. Uses the expression
+    // char→num path (eval.toNum → setError, CHARNUM-errorvar) — the dump keys on
+    // _ERROR_=1 however it was raised, INPUT statement or not.
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+
+    // Control: left set → the row dumps `s=XX v=. _ERROR_=1 _N_=1`.
+    {
+        const raw = f.newDs("raw");
+        _ = try raw.addColumn("s", .char);
+        try raw.appendRow(&.{.{ .str = "XX" }});
+        try f.lib.put("raw", raw);
+        const names = [_][]const u8{"raw"};
+        const body = [_]ast.Stmt{
+            .{ .set = &names },
+            .{ .assign = .{ .target = "v", .value = f.bin(.add, f.vbl("s"), f.num(1)) } },
+        };
+        var x = f.exec();
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&body, &out);
+        try t.expect(!f.diags.hasErrors()); // NOTE-class only
+        const dump = f.diags.list.items[f.diags.list.items.len - 1];
+        try t.expectEqual(diag.Severity.note, dump.severity);
+        try t.expectEqualStrings("s=XX v=. _ERROR_=1 _N_=1", dump.message);
+    }
+
+    // Handled: the p.601 clear runs → iteration end sees 0 → NO dump anywhere.
+    {
+        f.diags = diag.Diagnostics.init(f.a()); // fresh log for the second run
+        const raw = f.newDs("raw");
+        _ = try raw.addColumn("s", .char);
+        try raw.appendRow(&.{.{ .str = "XX" }});
+        try f.lib.put("raw", raw);
+        const names = [_][]const u8{"raw"};
+        const clr = ast.Stmt{ .assign = .{ .target = "_error_", .value = f.num(0) } };
+        const guard = ast.Stmt{ .if_ = .{ .cond = f.vbl("_error_"), .then_branch = &clr, .else_branch = null } };
+        const body = [_]ast.Stmt{
+            .{ .set = &names },
+            .{ .assign = .{ .target = "v", .value = f.bin(.add, f.vbl("s"), f.num(1)) } },
+            guard,
+        };
+        var x = f.exec();
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&body, &out);
+        for (f.diags.list.items) |d| try t.expect(std.mem.indexOf(u8, d.message, "_ERROR_=") == null);
+        // the flag was really seen raised in-step: the invalid-data NOTE fired
+        try t.expect(diagsNote(&f.diags, "Invalid numeric data"));
+    }
+}
+
+test "ISS-errordump: a DELETEd offending row still dumps — the iteration completed, the flag is loud" {
+    // p.518 action 4 keys on the flag, not on the row's survival: the DELETE
+    // suppressed the OBSERVATION, not the ERROR. Staying silent for a deleted
+    // flagged row would be the failure class this codebase refuses (a bad-data
+    // row vanishing from both the dataset AND the log).
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    const raw = f.newDs("raw");
+    _ = try raw.addColumn("s", .char);
+    try raw.appendRow(&.{.{ .str = "AA" }});
+    try raw.appendRow(&.{.{ .str = "XX" }});
+    try f.lib.put("raw", raw);
+    const names = [_][]const u8{"raw"};
+    const del = ast.Stmt{ .delete = {} };
+    const body = [_]ast.Stmt{
+        .{ .set = &names },
+        .{ .assign = .{ .target = "v", .value = f.bin(.add, f.vbl("s"), f.num(1)) } },
+        .{ .if_ = .{ .cond = f.bin(.eq, f.vbl("s"), f.e(.{ .str = "XX" })), .then_branch = &del, .else_branch = null } },
+    };
+    var out = Dataset.init(f.a(), "work.out");
+    try x.run(&body, &out);
+
+    try t.expectEqual(@as(usize, 1), out.rowCount()); // only AA survived
+    const dump = f.diags.list.items[f.diags.list.items.len - 1];
+    try t.expectEqual(diag.Severity.note, dump.severity);
+    try t.expectEqualStrings("s=XX v=. _ERROR_=1 _N_=2", dump.message);
 }
 
 test "POINT= with a missing obs number is a NOTE + _ERROR_=1, step CONTINUES (NOTE-pointoorhard)" {

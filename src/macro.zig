@@ -447,7 +447,17 @@ const State = struct {
         var buf: [256]u8 = undefined;
         if (name.len == 0 or name.len > buf.len) return null;
         for (name, 0..) |c, i| buf[i] = std.ascii.toLower(c);
-        if (st.vars.getPtr(buf[0..name.len])) |v| return v.get();
+        const lname = buf[0..name.len];
+        // GAP-sysparm-opt: &SYSPARM reads the SHARED session value live —
+        // `options sysparm=…;` writes functions.sysparm_text, and a reference
+        // after that statement must see the new text without any re-seeding.
+        // (A chunk's macro expansion runs before its statements execute, so a
+        // same-chunk reference still shows the pre-OPTIONS value; across a
+        // `run;` chunk boundary it is live, which is the documented shape.)
+        // The seedAutomatics entry below stays for _AUTOMATIC_-style listings;
+        // this branch is authoritative for reads.
+        if (std.mem.eql(u8, lname, "sysparm")) return functions.sysparm_text;
+        if (st.vars.getPtr(lname)) |v| return v.get();
         return null;
     }
     /// The SavedVar for `name` if it was declared %local in any ACTIVE scope
@@ -513,7 +523,7 @@ fn seedAutomatics(st: *State) Error!void {
     try st.setVar("syserr", "0");
     try st.setVar("sysindex", "0");
     try st.setVar("sysmacroname", "");
-    try st.setVar("sysparm", "");
+    try st.setVar("sysparm", functions.sysparm_text); // GAP-sysparm-opt: the shared session value (reads are live — getVar)
     try st.setVar("sysver", "9.4");
     try st.setVar("sysscp", switch (@import("builtin").os.tag) {
         .windows => "WIN X64",
@@ -6162,6 +6172,17 @@ test "GAP-macroautovars: automatic macro variables are seeded" {
     var d2 = diag.Diagnostics.init(a);
     _ = try expand(a, "&ordinary", &d2);
     try std.testing.expectEqualStrings("", try d2.render());
+}
+
+test "GAP-sysparm-opt: &SYSPARM reads the shared session value live" {
+    // default: no option → empty (the seed takes functions.sysparm_text)
+    try expectExpand("[&sysparm]", "[]");
+    // `options sysparm="PROBE123";` (main.zig handleGlobal) wrote the shared
+    // value; getVar returns it LIVE, so a reference after the statement sees
+    // it — no re-seed, no table write.
+    functions.sysparm_text = "PROBE123";
+    defer functions.sysparm_text = "";
+    try expectExpand("[&sysparm]", "[PROBE123]");
 }
 
 test "CLIN-macrounresolvedsilent: an unresolved &name warns at the step that CONSUMES it, never before" {

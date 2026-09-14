@@ -1,0 +1,24 @@
+o k=1  v=1.5  tot=750750  pct=1.998002E-6  band=lo
+o k=2  v=3  tot=750750  pct=3.996004E-6  band=lo
+o k=999  v=1498.5  tot=750750  pct=0.001996004  band=hi
+o k=1000  v=1500  tot=750750  pct=0.001998002  band=hi
+p g=6  k=6  v=9  gtot=75150
+p g=7  k=7  v=10.5  gtot=75300
+p g=8  k=8  v=12  gtot=75450
+p g=9  k=9  v=13.5  gtot=75600
+p g=0  k=10  v=15  gtot=75750
+p g=6  k=16  v=24  gtot=75150
+p g=7  k=17  v=25.5  gtot=75300
+p g=8  k=18  v=27  gtot=75450
+p g=9  k=19  v=28.5  gtot=75600
+p g=0  k=20  v=30  gtot=75750
+p g=0  k=990  v=1485  gtot=75750
+p g=6  k=996  v=1494  gtot=75150
+p g=7  k=997  v=1495.5  gtot=75300
+p g=8  k=998  v=1497  gtot=75450
+p g=9  k=999  v=1498.5  gtot=75600
+p g=0  k=1000  v=1500  gtot=75750
+h k=501  g=1  v=751.5
+h k=502  g=2  v=753
+h k=1000  g=0  v=1500
+h rows=500

@@ -3292,23 +3292,12 @@ fn distinctFirst(arena: std.mem.Allocator, seen: *DistinctSet, v: Value) !bool {
     return true;
 }
 
-/// Evaluate a HAVING predicate for one group: replace each aggregate call with its
-/// value over the group, then evaluate the resulting expression against a PDV
-/// holding the group's (constant) key columns.
-fn evalHaving(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, ds: *Dataset, htoks: []const Token, grp: []const usize, rep: usize, cols: []const OutCol, cells: []const Value) diag.Error!bool {
-    var pdv = Pdv.init(arena);
-    // empty group (zero-row table, no GROUP BY): no rep row exists to load;
-    // HAVING still runs — its aggregates resolve over the empty set (BUG-sqlemptyaggexpr)
-    if (grp.len > 0) try loadForEval(&pdv, ds, ds.row(rep)); // group key columns are constant within the group
-    // bind each SELECT output under its name/alias, so HAVING can reference it.
-    // The VALUE's type governs, not the column's declared one: HAVING runs INSIDE
-    // the grouped/remerge row loop, i.e. before retypeComputed has corrected a
-    // computed column's declared type, so trusting `c.type` here bound a `.str`
-    // cell to a `.num` var and pdv.setAt converted it to MISSING — `having` on a
-    // char computed alias always failed (BUG-sqlremergecharcol). Matches how the
-    // two `calculated` binds in execGrouped/execRemerge already do it.
-    for (cols, cells) |c, v| try bindCol(&pdv, c.name, if (v == .num) .num else .char, c.len, v);
-    var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
+/// The GROUP-CONSTANT half of a HAVING predicate: `calculated` rewound, scalar
+/// subqueries collapsed, predicates desugared, and every aggregate replaced by
+/// its value over `grp`. Depends only on the group, never on one row — which is
+/// why the remerge paths can prepare it once per group and re-run only the
+/// per-row half (PERF-sqlremergeagg); evalHaving is prepare+evaluate in one call.
+fn havingPrepare(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, ds: *Dataset, htoks: []const Token, grp: []const usize) diag.Error![]const Token {
     const bare = try removeCalculated(arena, htoks); // `calculated alias` → the bound alias (BUG-calcwhere)
     // Collapse any `(select …)` scalar subquery to its value FIRST — same helper the
     // WHERE path uses — so `having sum(v) > (select avg(v) from t)` parses instead of
@@ -3320,11 +3309,37 @@ fn evalHaving(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics,
     // group. "IS NULL and IS MISSING are used in the WHERE, ON, and HAVING
     // expressions" (SQL Procedure Components, "IS Operator", printed p.372 / pdf 388).
     const desug = try desugarPredicates(arena, diags, nosubq);
-    const with_aggs = try substituteAggs(arena, diags, ds, desug, grp); // aggregates → group values
-    const resolved = try substituteCase(arena, diags, &ev, with_aggs); // then any CASE → its value (BUG-havingcase)
+    return try substituteAggs(arena, diags, ds, desug, grp); // aggregates → group values
+}
+
+/// The PER-ROW half of a HAVING predicate: bind one row (and its SELECT cells)
+/// into a PDV, then parse and evaluate the prepared predicate against it.
+/// `grp_len == 0` (zero-row table, no GROUP BY): no rep row exists to load;
+/// HAVING still runs — its aggregates resolved over the empty set (BUG-sqlemptyaggexpr).
+fn evalHavingPrepared(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Dataset, pre: []const Token, rep: usize, grp_len: usize, cols: []const OutCol, cells: []const Value) diag.Error!bool {
+    var pdv = Pdv.init(arena);
+    if (grp_len > 0) try loadForEval(&pdv, ds, ds.row(rep)); // group key columns are constant within the group
+    // bind each SELECT output under its name/alias, so HAVING can reference it.
+    // The VALUE's type governs, not the column's declared one: HAVING runs INSIDE
+    // the grouped/remerge row loop, i.e. before retypeComputed has corrected a
+    // computed column's declared type, so trusting `c.type` here bound a `.str`
+    // cell to a `.num` var and pdv.setAt converted it to MISSING — `having` on a
+    // char computed alias always failed (BUG-sqlremergecharcol). Matches how the
+    // two `calculated` binds in execGrouped/execRemerge already do it.
+    for (cols, cells) |c, v| try bindCol(&pdv, c.name, if (v == .num) .num else .char, c.len, v);
+    var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
+    const resolved = try substituteCase(arena, diags, &ev, pre); // any CASE → its value (BUG-havingcase)
     var wp = pe.Parser.init(arena, try withEof(arena, resolved), diags);
     const cond = try wp.parseExpr(); // fail loud on a genuinely unparseable HAVING (was `catch return true` — hid wrong output)
     return (try ev.eval(cond)).truthy();
+}
+
+/// Evaluate a HAVING predicate for one group: replace each aggregate call with its
+/// value over the group, then evaluate the resulting expression against a PDV
+/// holding the group's (constant) key columns.
+fn evalHaving(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, ds: *Dataset, htoks: []const Token, grp: []const usize, rep: usize, cols: []const OutCol, cells: []const Value) diag.Error!bool {
+    const pre = try havingPrepare(arena, lib, diags, ds, htoks, grp);
+    return evalHavingPrepared(arena, diags, ds, pre, rep, grp.len, cols, cells);
 }
 
 /// Replace `agg(col)` / `agg(*)` in a token stream with the aggregate's value over
@@ -4727,13 +4742,24 @@ fn execStarRemerge(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags:
 
     var cols: std.ArrayList(OutCol) = .empty;
     for (ds.columns.items) |c| try cols.append(arena, passCol(c.name, c)); // GH#49: pass-through keeps format; + its declared LENGTH (BUG-sqlcolwidthloss)
+    // PERF-sqlremergeagg: a HAVING predicate is a CONSTANT of its group (every
+    // aggregate in it is), but the row loop below used to re-run the whole
+    // substitute pipeline — substituteAggs folds the full group PER ROW, i.e.
+    // O(N·|grp|): quadratic for `select * … having <agg>` without GROUP BY, where
+    // the group is the whole table. Prepare it once per group; the loop only
+    // re-binds the row and re-evaluates (evalHavingPrepared).
+    var hpre: [][]const Token = &.{};
+    if (q.having) |htoks| {
+        hpre = try arena.alloc([]const Token, groups.items.len);
+        for (groups.items, 0..) |g, gi| hpre[gi] = try havingPrepare(arena, lib, diags, ds, htoks, g.items);
+    }
     var rows: std.ArrayList([]Value) = .empty;
     var srows: std.ArrayList(usize) = .empty; // res row → ds row, for ORDER BY on a non-selected source col
     for (kept) |ri| {
         // HAVING against THIS row's values, aggregates resolved over its group
-        // (rep = ri, no extra SELECT bindings): reuse the grouped HAVING evaluator.
-        if (q.having) |htoks|
-            if (!try evalHaving(arena, lib, diags, ds, htoks, groups.items[rowgrp[ri]].items, ri, &.{}, &.{})) continue;
+        // (rep = ri, no extra SELECT bindings — prepared above per group).
+        if (q.having != null)
+            if (!try evalHavingPrepared(arena, diags, ds, hpre[rowgrp[ri]], ri, groups.items[rowgrp[ri]].items.len, &.{}, &.{})) continue;
         const cells = try arena.alloc(Value, ds.columns.items.len);
         for (ds.row(ri), 0..) |v, j| cells[j] = v;
         try rows.append(arena, cells);
@@ -5633,43 +5659,105 @@ fn execRemerge(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
 
     var rows: std.ArrayList([]Value) = .empty;
     var srows: std.ArrayList(usize) = .empty; // res row → ds row, for ORDER BY on a non-selected source col
+    // PERF-sqlremergeagg: every aggregate in a remerge is a CONSTANT of its group,
+    // but the row loop below used to fold the whole group PER ROW — O(N·|grp|·aggs).
+    // For the no-GROUP-BY remerge the group IS the table (measured: 10k rows 0.2s
+    // → 100k rows 20s, i.e. quadratic; 1M extrapolates to ~half an hour), and a
+    // GROUP BY remerge scales by the same 1/G law. Compute each group-constant
+    // ONCE into the flat tables below — aggvals[g·nitem+k] for a SELECT-item
+    // aggregate, aggsub[g·nitem+k] for the aggregate-substituted CASE/expression
+    // tokens (a substituted aggregate is a group value too) — and let the row loop
+    // index them. Strictly less memory as well: one substituted token stream per
+    // GROUP, where the old loop built one per ROW.
+    const nitem = q.items.len;
+    const aggvals = try arena.alloc(Value, groups.items.len * nitem);
+    @memset(aggvals, Value.missing);
+    // aggsub holds entries only for CASE items and for expression items WITHOUT a
+    // scalar subquery: a `(select …)` binds THIS row, and the aggregate
+    // substitution must keep running per row on its post-collapse tokens (the
+    // subquery's aggregates are its own) so none is taken over the outer group.
+    var has_aggsub = false;
+    for (q.items) |it| {
+        if (it.case_toks != null) has_aggsub = true;
+        if (it.expr_toks != null and !hasSubquery(it.expr_toks.?)) has_aggsub = true;
+    }
+    const aggsub = try arena.alloc(?[]const Token, if (has_aggsub) groups.items.len * nitem else 0);
+    @memset(aggsub, null);
+    for (groups.items, 0..) |g, gi| {
+        const grp = g.items;
+        // an empty group (zero-row table) has no row to broadcast to, and the old
+        // loop never folded anything for it — skip it, so an aggregate that would
+        // fail loud on an empty fold (e.g. a char argument) only fails where the
+        // old path would have reached it
+        if (grp.len == 0) continue;
+        for (q.items, 0..) |it, k| {
+            const slot = gi * nitem + k;
+            if (it.case_toks) |ct| {
+                aggsub[slot] = try substituteAggs(arena, diags, ds, ct, grp);
+            } else if (it.expr_toks) |et| {
+                if (!hasSubquery(et)) aggsub[slot] = try substituteAggs(arena, diags, ds, try removeCalculated(arena, et), grp);
+            } else if (it.agg) |f| {
+                aggvals[slot] = if (it.agg_arg) |arg|
+                    try computeAggExpr(arena, diags, ds, f, arg, grp, it.agg_distinct)
+                else
+                    try computeAgg(arena, diags, ds, f, it.agg_star, if (it.col) |c| resolveCol(ds, unqualify(c)) else null, grp, it.agg_distinct);
+            }
+        }
+    }
+    // HAVING's aggregates are group-constants too: prepare once per group, then
+    // only re-bind and re-evaluate per row (see havingPrepare/evalHavingPrepared).
+    var hpre: [][]const Token = &.{};
+    if (q.having) |htoks| {
+        hpre = try arena.alloc([]const Token, groups.items.len);
+        for (groups.items, 0..) |g, gi| {
+            if (g.items.len == 0) continue; // no row broadcasts from an empty group
+            hpre[gi] = try havingPrepare(arena, lib, diags, ds, htoks, g.items);
+        }
+    }
     // one PDV across all rows, not one per row/item (BUG-sqlrowwiseoom)
     var pdv = Pdv.init(arena);
     var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
     for (kept) |ri| {
-        const grp = groups.items[rowgrp[ri]].items; // aggregates resolve over THIS row's group
+        const gi = rowgrp[ri];
+        const grp = groups.items[gi].items; // aggregates resolve over THIS row's group
         const cells = try arena.alloc(Value, q.items.len);
         for (q.items, 0..) |it, k| {
-            if (it.case_toks) |ct| {
-                // aggregates resolved over the row's group, then the CASE per row
+            if (it.case_toks != null) {
+                // aggregates already substituted (a group constant — PERF-sqlremergeagg),
+                // then the CASE evaluated per row
                 try loadForEval(&pdv, ds, ds.row(ri));
-                cells[k] = try evalCase(arena, diags, &ev, try substituteAggs(arena, diags, ds, ct, grp));
+                cells[k] = try evalCase(arena, diags, &ev, aggsub[gi * nitem + k].?);
             } else if (it.expr_toks) |et| {
-                const et2 = if (hasSubquery(et))
-                    try substituteSubqueries(arena, lib, diags, et, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias })
-                else
-                    et;
-                try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias);
                 // bind earlier SELECT items so `calculated <alias>` (incl. an aggregate
                 // alias) resolves in the remerge path too (BUG-sqlcalcgroupagg).
-                for (0..k) |j|
-                    try bindCol(&pdv, cols.items[j].name, if (cells[j] == .num) .num else .char, cols.items[j].len, cells[j]);
-                // aggregate substituted (whole table), then the expr evaluated per row
-                const bare = try removeCalculated(arena, et2); // `calculated s` → the bound `s`
-                cells[k] = try evalExprItem(arena, diags, &ev, try substituteMonotonic(arena, try substituteAggs(arena, diags, ds, bare, grp), rows.items.len + 1));
-            } else if (it.agg) |f| {
-                // ponytail: recomputed per row (broadcast value is constant); O(N·agg)
-                // is fine for SQL group sizes — hoist if a hot query ever needs it.
-                cells[k] = if (it.agg_arg) |arg|
-                    try computeAggExpr(arena, diags, ds, f, arg, grp, it.agg_distinct)
-                else
-                    try computeAgg(arena, diags, ds, f, it.agg_star, if (it.col) |c| resolveCol(ds, unqualify(c)) else null, grp, it.agg_distinct);
+                if (hasSubquery(et)) {
+                    // the scalar subquery binds THIS row — collapse it first, then the
+                    // aggregate substitution on the post-collapse tokens, per row
+                    const et2 = try substituteSubqueries(arena, lib, diags, et, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias });
+                    try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias);
+                    for (0..k) |j|
+                        try bindCol(&pdv, cols.items[j].name, if (cells[j] == .num) .num else .char, cols.items[j].len, cells[j]);
+                    // aggregate substituted (whole table), then the expr evaluated per row
+                    const bare = try removeCalculated(arena, et2); // `calculated s` → the bound `s`
+                    cells[k] = try evalExprItem(arena, diags, &ev, try substituteMonotonic(arena, try substituteAggs(arena, diags, ds, bare, grp), rows.items.len + 1));
+                } else {
+                    try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias);
+                    for (0..k) |j|
+                        try bindCol(&pdv, cols.items[j].name, if (cells[j] == .num) .num else .char, cols.items[j].len, cells[j]);
+                    // aggregates already substituted (a group constant); the row's own
+                    // expression — and MONOTONIC(), which counts OUTPUT rows — stays per row
+                    cells[k] = try evalExprItem(arena, diags, &ev, try substituteMonotonic(arena, aggsub[gi * nitem + k].?, rows.items.len + 1));
+                }
+            } else if (it.agg != null) {
+                // folded once per group above; the row loop only broadcasts it
+                // (was: a full group fold per row — the quadratic PERF-sqlremergeagg removes)
+                cells[k] = aggvals[gi * nitem + k];
             } else if (it.col) |c| {
                 cells[k] = ds.row(ri)[resolveCol(ds, c) orelse return colNotFound(diags, c)];
             } else cells[k] = Value.missing;
         }
-        if (q.having) |htoks|
-            if (!try evalHaving(arena, lib, diags, ds, htoks, grp, ri, cols.items, cells)) continue;
+        if (q.having != null)
+            if (!try evalHavingPrepared(arena, diags, ds, hpre[gi], ri, grp.len, cols.items, cells)) continue;
         try rows.append(arena, cells);
         try srows.append(arena, ri);
     }

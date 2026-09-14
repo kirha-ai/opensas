@@ -2172,8 +2172,24 @@ fn byLess(l: []const Value, r: []const Value, bcols: []const usize) bool {
 /// With no descending keys this is exactly `byLess(nxt, cur)` made
 /// index-returning (Statements ref p.40: DESCENDING means the data set is
 /// sorted descending BY THAT VARIABLE, so the check flips per key).
+///
+/// BUG-sortseq-byverify: the comparison runs under the SAME collation the
+/// sort used — `options sortseq=linguistic;` (io.global_sortseq_linguistic,
+/// the same seed runSort reads) folds case via cmpColl — because the data the
+/// user presents IS linguistically ordered (apple < Banana < Zebra; A a b B c
+/// with the mixed-case pairs fold-equal). Byte-comparing here rejected that
+/// valid order as "not sorted in ascending sequence" at rc 1 — a valid
+/// program killed, and BUG-errhalt then skipped every later step (Language
+/// Reference: Concepts printed p.533 Note: "The BY statement honors the
+/// linguistic collation of sorted data when you use the SORT procedure with
+/// the SORTSEQ=LINGUISTIC option."). The fold can make two DISTINCT groups
+/// (A vs a) compare .eq — that is a PASS on this key, not an equality claim:
+/// grouping stays byte-exact (byEqual is untouched), so the groups stay
+/// separate; only the ORDER check folds. The DESCENDING inversion is
+/// orthogonal and applies unchanged to the folded comparison.
 fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize, descs: []const bool) ?usize {
-    for (bcols, 0..) |ci, k| switch (cmpValue(nxt[ci], cur[ci])) {
+    const ling = io.global_sortseq_linguistic; // BUG-sortseq-byverify: verify under the sort's collation
+    for (bcols, 0..) |ci, k| switch (cmpColl(nxt[ci], cur[ci], ling)) {
         .lt => return if (k < descs.len and descs[k]) null else k,
         .gt => return if (k < descs.len and descs[k]) k else null,
         .eq => {},
@@ -13118,6 +13134,94 @@ test "BUG-meansoptnoop: DESCENDING/ORDER=/ALPHA= honored; COMPLETETYPES, ORDER=F
         try t.expectError(error.ParseError, runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks));
         try t.expect(diags.hasErrors());
         try t.expectEqual(@as(usize, 0), out.items.len); // no partial table on a rejected option
+    }
+}
+
+test "BUG-sortseq-byverify: the BY verify honors the linguistic collation the sort used — ascending, fold-equal, DESCENDING" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    defer io.global_sortseq_linguistic = false; // run global — restore like the sql sortseq tests
+
+    // What `proc sort; by g;` yields under `options sortseq=linguistic;`:
+    // apple < Banana < Zebra (case-folded dictionary order). A byte verifier
+    // reads the very same rows as Banana Zebra apple — i.e. "not sorted".
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "ling");
+    _ = try ds.addColumn("g", .char);
+    _ = try ds.addColumn("x", .num);
+    try ds.appendRow(&.{ strV("apple"), numV(1) });
+    try ds.appendRow(&.{ strV("Banana"), numV(2) });
+    try ds.appendRow(&.{ strV("Zebra"), numV(3) });
+    try lib.put("ling", ds);
+
+    { // control: flag OFF keeps the byte verify armed — linguistic-ordered data
+        // still fails loud (captured), so the fix cannot be a silent verify drop
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc means data=ling mean; by g; var x; run;", &diags);
+        try t.expectError(error.ParseError, runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks));
+        try t.expect(std.mem.indexOf(u8, try diags.render(), "not sorted in ascending sequence") != null);
+        try t.expectEqual(@as(usize, 0), out.items.len);
+    }
+
+    { // the fix: same data, system option on — the verify uses the sort's
+        // collation (lrcon printed p.533 Note) and the step runs, in order
+        io.global_sortseq_linguistic = true;
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc means data=ling mean; by g; var x; run;", &diags);
+        try runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expect(!diags.hasErrors());
+        const apple = std.mem.indexOf(u8, out.items, "g=apple").?;
+        const banana = std.mem.indexOf(u8, out.items, "g=Banana").?;
+        const zebra = std.mem.indexOf(u8, out.items, "g=Zebra").?;
+        try t.expect(apple < banana and banana < zebra);
+    }
+
+    // Mixed-case fold-equal adjacency: A a b is linguistic ascending, but the
+    // byte check rejects it at A→a ('a' > 'A'). The fold-equal pair PASSES
+    // while grouping stays byte-exact (A and a remain separate sections).
+    var mlib = Library.init(a);
+    const mds = try a.create(Dataset);
+    mds.* = Dataset.init(a, "mixed");
+    _ = try mds.addColumn("g", .char);
+    _ = try mds.addColumn("x", .num);
+    try mds.appendRow(&.{ strV("A"), numV(1) });
+    try mds.appendRow(&.{ strV("a"), numV(2) });
+    try mds.appendRow(&.{ strV("b"), numV(3) });
+    try mlib.put("mixed", mds);
+    {
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc means data=mixed mean; by g; var x; run;", &diags);
+        try runMeans(.{ .arena = a, .lib = &mlib, .diags = &diags }, &out, toks);
+        try t.expect(!diags.hasErrors());
+        try t.expect(std.mem.indexOf(u8, out.items, "g=A") != null);
+        try t.expect(std.mem.indexOf(u8, out.items, "g=a") != null); // still its own group
+    }
+
+    // DESCENDING: Zebra Banana apple is `by descending g` order (the same
+    // collation, inverted). The byte check dies at Banana→apple ('a' > 'B').
+    // A second emit site (TABULATE) — every site shares byOrderViolation.
+    var dlib = Library.init(a);
+    const dds = try a.create(Dataset);
+    dds.* = Dataset.init(a, "desc");
+    _ = try dds.addColumn("g", .char);
+    _ = try dds.addColumn("trt", .char);
+    _ = try dds.addColumn("v", .num);
+    try dds.appendRow(&.{ strV("Zebra"), strV("A"), numV(1) });
+    try dds.appendRow(&.{ strV("Banana"), strV("A"), numV(2) });
+    try dds.appendRow(&.{ strV("apple"), strV("A"), numV(3) });
+    try dlib.put("desc", dds);
+    {
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc tabulate data=desc; by descending g; class trt; var v; table trt, v*sum; run;", &diags);
+        try runTabulate(.{ .arena = a, .lib = &dlib, .diags = &diags }, &out, toks);
+        try t.expect(!diags.hasErrors());
+        try t.expect(std.mem.indexOf(u8, out.items, "g=Zebra").? < std.mem.indexOf(u8, out.items, "g=apple").?);
     }
 }
 

@@ -53,7 +53,20 @@ pub const UnOp = enum {
 
 pub const Unary = struct { op: UnOp, operand: *const Expr };
 pub const Binary = struct { op: BinOp, lhs: *const Expr, rhs: *const Expr };
-pub const Call = struct { name: []const u8, args: []const Expr };
+pub const Call = struct {
+    name: []const u8,
+    args: []const Expr,
+    /// `?`/`??` error-suppression modifier count before the informat argument —
+    /// INPUT(source, <?|??> informat.), Functions and CALL Routines Reference
+    /// printed pp.1038-39. 0 = none; 1 = `?` (suppress the invalid-data NOTE,
+    /// keep _ERROR_=1); 2 = `??` (suppress both). Set only for the INPUT
+    /// family. eval's call_fn boundary (eval.zig evalCall) forwards name+args
+    /// only, so parser_expr ALSO desugars the call name (`__inputq`/`__inputqq`
+    /// …, the `__assignc` pattern) — that desugared name is what functions.zig
+    /// reads; this field is the AST-level record of the source syntax
+    /// (ArrayRef.line precedent).
+    qq: u2 = 0,
+};
 
 /// An ARRAY declared over a special variable list — `array v{*} _numeric_;`
 /// (or `_character_`/`_all_`). Its members can't be known at parse time (the PDV
