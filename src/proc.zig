@@ -332,11 +332,21 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        // Absent input: warn+skip like the DATA-step SET does, not a fail-loud
-        // "UNSUPPORTED" — PROC SORT IS supported; the table just isn't there
-        // (usually a cross-step/cross-program dataset a standalone run hasn't
-        // produced). SORT-emptytol.
-        diags.warn(if (toks.len > 1) toks[1].line else 0, "dataset {s} not found; PROC SORT skipped", .{in_name orelse "?"}) catch {};
+        // GH#8 ISS-sortmissingerr: SAS 9.4 ERRORS on a missing SORT input —
+        // "ERROR: File WORK.NOPE.DATA does not exist." + the step-halt NOTE —
+        // rc 1 (D-009): a USER error. PROC SORT IS supported; the table just
+        // isn't there. The old warn+skip justified itself as "like the
+        // DATA-step SET", but that went STALE when BUG-setmissingquiet made
+        // SET hard-error the identical shape ("File {s} does not exist",
+        // exec.zig) — SORT now matches it byte-for-byte (D-009b corollary:
+        // same condition, same text, same rc). NOT unsupported(): that would
+        // file a rc 2 opensas gap for the user's own missing table.
+        // Mechanism mirrors the DUPOUT-collision arm below: a plain .err
+        // report (not a fail() propagation), so runExpanded's NOTE parity
+        // fires for THIS step ("stopped processing this step because of
+        // errors") and BUG-errhalt syntax-check mode skips every later step —
+        // a pipeline can no longer flow on an absent input at rc 0.
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
 
@@ -12931,6 +12941,55 @@ test "PROC SORT validates BY even on a 0-obs input; schemaless empty stays toler
     const sl = try lex.tokenize(a, "proc sort data=e1 out=o3; by g; run;", &diags);
     try runSort(.{ .arena = a, .lib = &lib, .diags = &diags }, sl);
     try t.expect(g_test_last_unsup.len == 0);
+}
+
+test "GH#8 ISS-sortmissingerr: SORT on a missing member is a hard STEP error, rc 1 (SET parity)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    var lib = Library.init(a);
+
+    // The repro: data= names a member that was never created. SAS 9.4 errors
+    // ("ERROR: File WORK.NOPE.DATA does not exist.") — same condition, same
+    // text as the DATA-step SET (BUG-setmissingquiet, exec.zig), so the
+    // message must match it byte-for-byte. A plain .err report (captured
+    // here — never a real aborting process) that is NOT `recoverable`, so
+    // hasStepErrors() arms the BUG-errhalt syntax-check skip of later steps
+    // and the GH#3 step-halt NOTE parity, and hasErrors() makes the run rc 1.
+    var diags = diag.Diagnostics.init(a);
+    const c1 = try lex.tokenize(a, "proc sort data=ghost out=g1; by g; run;", &diags);
+    try runSort(.{ .arena = a, .lib = &lib, .diags = &diags }, c1);
+    try t.expectEqual(@as(usize, 1), diags.list.items.len);
+    try t.expectEqual(diag.Severity.err, diags.list.items[0].severity);
+    try t.expect(!diags.list.items[0].recoverable);
+    try t.expectEqualStrings("File ghost does not exist", diags.list.items[0].message);
+    try t.expectEqual(@as(usize, 1), diags.list.items[0].line); // the `sort` keyword's line
+    try t.expect(diags.hasErrors()); // → rc 1 (D-009 user error, not a gap)
+    try t.expect(diags.hasStepErrors()); // → later steps skipped (BUG-errhalt)
+    // The gap flag is a per-RUN global (main's interpret resets it); earlier
+    // tests in this binary hit unsupported() paths, so reset before asserting.
+    diag.resetGap();
+    try t.expect(!diag.gapHit()); // NOT unsupported()/rc 2 — nothing is missing in opensas
+    // No plausible-looking artifact survives the failed step: no OUT= member.
+    try t.expect(lib.find("g1") == null);
+
+    // A bare `proc sort;` with NO prior dataset resolves DATA= to _LAST_ —
+    // same user error, named by the dataset SAS would have looked for.
+    var diags2 = diag.Diagnostics.init(a);
+    const c2 = try lex.tokenize(a, "proc sort; by g; run;", &diags2);
+    try runSort(.{ .arena = a, .lib = &lib, .diags = &diags2 }, c2);
+    try t.expectEqualStrings("File _last_ does not exist", diags2.list.items[0].message);
+
+    // Control: a 0-obs PRESENT input keeps sorting as a no-op (SORT-emptytol,
+    // must not regress — the error is for an ABSENT member only).
+    const empt = try a.create(Dataset);
+    empt.* = Dataset.init(a, "empt");
+    try lib.put("empt", empt);
+    var diags3 = diag.Diagnostics.init(a);
+    const c3 = try lex.tokenize(a, "proc sort data=empt; by g v; run;", &diags3);
+    try runSort(.{ .arena = a, .lib = &lib, .diags = &diags3 }, c3);
+    try t.expect(!diags3.hasErrors());
 }
 
 test "cmpStrLing: case-folded dictionary order, blank-padded (BUG-sortseq)" {

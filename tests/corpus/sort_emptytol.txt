@@ -1,4 +1,3 @@
-pipeline survived
 Obs   g   v
 
   1   a   1
