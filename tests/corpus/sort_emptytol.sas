@@ -1,16 +1,17 @@
-/* SORT-emptytol: PROC SORT tolerates absent/empty input — an absent dataset
-   warns+skips and a 0-obs input is a no-op (nothing to reorder). A pipeline
-   flows instead of dying, and a real sort still works. (The empty dataset is
-   built with STOP, not a ghost SET — SET on a missing member is a hard error
-   per BUG-setmissingquiet.) */
+/* SORT-emptytol: PROC SORT tolerates an EMPTY PRESENT input — a 0-obs dataset
+   is a no-op sort (nothing to reorder) and a truly schemaless empty dataset
+   (built with STOP, not a ghost SET: 0 rows AND 0 columns) has no columns to
+   check a BY var against, so it stays tolerant without even validating `by`.
+   The missing-MEMBER half of the old pin is GONE: SORT on an absent dataset
+   is a hard ERROR since GH#8 ISS-sortmissingerr (the DATA-step SET has
+   errored that identical shape all along — BUG-setmissingquiet), pinned now
+   by sort_missingerr.sas. */
 data have; input g $ v; datalines;
 b 2
 a 1
 ;
 run;
-proc sort data=ghost out=g1; by g; run;
 data empt; stop; run;
 proc sort data=empt; by g v; run;
 proc sort data=have; by g v; run;
-data _null_; put "pipeline survived"; run;
 proc print data=have; run;
