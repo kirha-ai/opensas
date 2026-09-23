@@ -673,8 +673,23 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
-    if (eqi(spec.name, "time") or startsWithCI(nm, "e8601tm") or startsWithCI(nm, "b8601tm")) {
+    // TIMEw. reads ONLY its documented separator forms (Informats Reference
+    // p.722: "Separate hh, mm, and ss with a special character"), so a
+    // separator-less digit run is ALL HOURS by that grammar — a SAS time value
+    // may be a duration over 24h, and `155300` under TIME8. reads 155300×3600.
+    // The packed hhmmss form is NOT TIMEw. grammar; it belongs to the ISO
+    // BASIC informats just below (BUG-8601packtime).
+    if (eqi(spec.name, "time")) {
         if (parseTimeSecs(field)) |sc| return .{ .num = sc };
+        return Value.missing;
+    }
+    // E8601TM/B8601TM: the ISO 8601 time — the extended `hh:mm:ss[.f]` colon
+    // form (E8601TM p.650) AND the basic packed `hhmmss<ffffff>` (B8601TM
+    // p.623's own example `155300` → 57180). BUG-8601packtime: the packed run
+    // used to fall into parseTimeSecs' no-separator branch and read as HOURS
+    // (155300×3600 = 559080000) — a silent wrong numeric on a doc example.
+    if (startsWithCI(nm, "e8601tm") or startsWithCI(nm, "b8601tm")) {
+        if (parseIsoTimeSecs(field)) |sc| return .{ .num = sc };
         return Value.missing;
     }
     if (eqi(spec.name, "hhmmss")) { // colon AND digit-packed forms (BUG-hhmmssinformat)
@@ -922,8 +937,10 @@ const DtStyle = enum { native, iso };
 
 /// Parse a datetime informat field → SAS datetime (seconds since 1960-01-01
 /// 00:00:00) = SAS-day × 86400 + seconds-of-day. `native` (DATETIMEw.):
-/// `ddMMMyyyy:hh:mm:ss` (date, then a `:`, then the time). `iso` (E8601DT.):
-/// `yyyy-mm-ddThh:mm:ss`. A missing time defaults to 00:00:00; unparseable →
+/// `ddMMMyyyy:hh:mm:ss` (date, then a `:`, then the time). `iso` (E8601DT./
+/// B8601DT.): `yyyy-mm-ddThh:mm:ss` / `yyyymmddThhmmss` — the time half takes
+/// the packed basic digits too (parseIsoTimeSecs). A missing time defaults to
+/// 00:00:00; unparseable →
 /// missing. Reuses the same civil-day math as the DATE informats.
 fn parseDatetime(field: []const u8, style: DtStyle) Value {
     const s = std.mem.trim(u8, field, " ");
@@ -935,7 +952,14 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
         .native => parseDDMMMYYYY(s[0..sep]),
         .iso => parseIsoDate(s[0..sep]),
     }) orelse return Value.missing;
-    const secs = parseTimeSecs(s[sep + 1 ..]) orelse 0;
+    // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
+    // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
+    // example `20180915T155300` → 1852645980) — BUG-8601packtime. A missing
+    // time still defaults to 00:00:00.
+    const secs = (switch (style) {
+        .native => parseTimeSecs(s[sep + 1 ..]),
+        .iso => parseIsoTimeSecs(s[sep + 1 ..]),
+    }) orelse 0;
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
 }
 
@@ -1265,6 +1289,28 @@ pub fn parseHhmmss(field: []const u8) ?f64 {
     const m = std.fmt.parseInt(i64, buf[2..4], 10) catch unreachable;
     const sec = std.fmt.parseInt(i64, buf[4..6], 10) catch unreachable;
     return @floatFromInt(h * 3600 + m * 60 + sec);
+}
+
+/// The time half of an ISO 8601 field (E8601TM/B8601TM, and the part after the
+/// `T` of E8601DT/B8601DT): the extended `hh:mm:ss[.f]` colon form reads via
+/// parseTimeSecs, and a digit-packed run reads via parseHhmmss — the ISO BASIC
+/// notation `hhmmss<ffffff>` (B8601TM p.623: `155300` → 57180; B8601DT p.619:
+/// `20180915T155300` → 1852645980). BUG-8601packtime: the packed run used to
+/// land in parseTimeSecs' no-separator branch and read as HOURS (155300×3600 =
+/// 559080000) — silent wrong numerics on the informats' own doc examples.
+/// Digits past `hhmmss` are the fraction (p.555's table: `155300322348` =
+/// 15:53:00.322348); a short run is parseHhmmss' left-padded reduced form
+/// (`1553` → 15:53:00). TIMEw. deliberately does NOT come through here —
+/// packed digits are not TIMEw. grammar (p.722 documents only separator
+/// forms), so its digit runs keep the whole-run-as-hours duration read.
+fn parseIsoTimeSecs(s0: []const u8) ?f64 {
+    const s = std.mem.trim(u8, s0, " ");
+    if (s.len == 0) return null;
+    if (!allDigits(s)) return parseTimeSecs(s);
+    const secs = parseHhmmss(s[0..@min(s.len, 6)]) orelse return null;
+    if (s.len <= 6) return secs;
+    const frac = std.fmt.parseFloat(f64, s[6..]) catch return null;
+    return secs + frac / std.math.pow(f64, 10, @floatFromInt(s.len - 6));
 }
 
 fn monthAbbr(abbr: []const u8) ?i64 {
@@ -3840,6 +3886,33 @@ test "BUG-hhmmssinformat: HHMMSSw. colon and digit-packed forms" {
     try t.expectEqual(@as(f64, 48645), readNumeric("hhmmss8.", "13:30:45").num); // colon form
     try t.expect(readNumeric("hhmmss8.", "13:30:45.9").num == 48645); // fraction ignored
     try t.expect(readNumeric("hhmmss8.", "1234567").isMissing()); // >6 packed digits
+}
+
+test "BUG-8601packtime: ISO 8601 packed hhmmss reads as hh:mm:ss, not hours" {
+    // The informats' own doc examples, verbatim values:
+    //   B8601TM p.623:  `155300`          → 57180  (15:53:00)
+    //   B8601DT p.619:  `20180915T155300` → 1852645980
+    try t.expectEqual(@as(f64, 57180), readNumeric("b8601tm.", "155300").num);
+    try t.expectEqual(@as(f64, 57180), readNumeric("e8601tm8.", "155300").num); // lenient superset
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("b8601dt.", "20180915T155300").num);
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("e8601dt19.", "2018-09-15T155300").num);
+    // reduced-accuracy basic run `1430` → 14:30:00 (parseHhmmss left-padding)
+    try t.expectEqual(@as(f64, 52200), readNumeric("b8601tm6.", "1430").num);
+    // digits past hhmmss are the fraction (p.555's `155300322348`)
+    try t.expectEqual(@as(f64, 57180.5), readNumeric("b8601tm12.", "155300500000").num);
+    const frac = readNumeric("b8601tm12.", "155300322348").num; // 15:53:00.322348
+    try t.expect(@abs(frac - 57180.322348) < 1e-6);
+    // colon and fractional forms are UNCHANGED (the E8601TM clean pass)
+    try t.expectEqual(@as(f64, 57180), readNumeric("e8601tm8.", "15:53:00").num);
+    try t.expectEqual(@as(f64, 57180.5), readNumeric("e8601tm10.", "15:53:00.5").num);
+    try t.expectEqual(@as(f64, 52215.5), readNumeric("e8601tm12.", "14:30:15.5").num);
+    // TIMEw. keeps its documented separator-only grammar: the packed run is
+    // all HOURS (a duration — may exceed 24h), NOT hh:mm:ss
+    try t.expectEqual(@as(f64, 559080000), readNumeric("time8.", "155300").num);
+    try t.expectEqual(@as(f64, 57180), readNumeric("time8.", "15:53:00").num);
+    // unparseable stays missing, and no diagnostic fired (known informats)
+    try t.expect(readNumeric("b8601tm.", "not a time").isMissing());
+    try t.expect(!formatErrored());
 }
 
 test "readNumeric informat: w.d implied decimal and PERCENT (BUG-informatdec/percentinformat)" {
