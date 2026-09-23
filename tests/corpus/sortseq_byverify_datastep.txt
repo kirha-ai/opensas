@@ -1,0 +1,6 @@
+grp=A x=1 fst=1 lst=1
+grp=a x=5 fst=1 lst=1
+grp=b x=2 fst=1 lst=1
+grp=B x=3 fst=1 lst=1
+grp=c x=4 fst=1 lst=1
+later-step-ran

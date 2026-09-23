@@ -3612,13 +3612,20 @@ pub const Executor = struct {
             // (BUG-setbyunsorted, the mergeNext check's SET twin).
             const tup = try self.byTupleOfSet(sd.dss[pick], sd.cursors[pick], bc[pick]);
             self.truncBySet(tup); // compare/store the truncated key (BUG-setbyvarlen)
-            if (sd.prev_by) |pb| if (self.cmpBy(tup, pb) == .lt) {
+            // BUG-sortseq-byverify-datastep: the ORDER arm verifies under the
+            // collation the sort used (Language Reference: Concepts printed
+            // p.533 Note) — `options sortseq=linguistic;` sorts GRP into A a b
+            // B c, which the byte compare read as "BY variables are not
+            // properly sorted", errhalt-killing every later step of a valid
+            // program. The GROUP arm below stays BYTE-EXACT: fold-equal
+            // neighbours (A vs a) pass the verify yet form separate BY groups.
+            if (sd.prev_by) |pb| if (self.cmpBy(tup, pb, io.global_sortseq_linguistic) == .lt) {
                 self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
                 return false;
             };
             // Language Reference: Concepts p.566 Step 1: PDV vars go missing each time a NEW data set
             // is read AND when the BY group changes (BUG-setsourcereset).
-            const by_changed = if (sd.prev_by) |pb| self.cmpBy(tup, pb) != .eq else false;
+            const by_changed = if (sd.prev_by) |pb| self.cmpBy(tup, pb, false) != .eq else false;
             if (sd.last_contrib != pick or by_changed) self.resetSetVars(sd);
             sd.last_contrib = pick;
             sd.prev_by = tup;
@@ -3843,7 +3850,7 @@ pub const Executor = struct {
         if (m_left and t_left) {
             const mt = try self.byTupleOfSet(u.master, u.mi, u.m_by);
             const tt = try self.byTupleOfSet(u.trans, u.ti, u.t_by);
-            use_master = self.cmpBy(mt, tt) != .gt; // master <= trans → master group
+            use_master = self.cmpBy(mt, tt, false) != .gt; // master <= trans → master group (pick: byte, not a verify)
         }
 
         const gkey = if (use_master)
@@ -3853,8 +3860,9 @@ pub const Executor = struct {
 
         // Sorted-input invariant, as in mergeNext/SET-BY: a backwards group key
         // means an unsorted source — fail loud, don't silently mis-apply
-        // transactions (BUG-setbyunsorted).
-        if (u.prev_g) |pg| if (self.cmpBy(gkey, pg) == .lt) {
+        // transactions (BUG-setbyunsorted). The verify folds under the sort's
+        // collation, like the SET arm (BUG-sortseq-byverify-datastep).
+        if (u.prev_g) |pg| if (self.cmpBy(gkey, pg, io.global_sortseq_linguistic) == .lt) {
             self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
             return false;
         };
@@ -3890,7 +3898,7 @@ pub const Executor = struct {
             const mt = if (u.mi < u.master.rowCount()) try self.byTupleOfSet(u.master, u.mi, u.m_by) else null;
             const tt = if (u.ti < u.trans.rowCount()) try self.byTupleOfSet(u.trans, u.ti, u.t_by) else null;
             const nxt = if (mt != null and tt != null)
-                (if (self.cmpBy(tt.?, mt.?) == .lt) tt.? else mt.?)
+                (if (self.cmpBy(tt.?, mt.?, false) == .lt) tt.? else mt.?) // pick: byte, not a verify
             else
                 mt orelse tt;
             if (nxt) |nx| last_level = changeLevel(gkey, nx);
@@ -4001,7 +4009,10 @@ pub const Executor = struct {
         // its physical master row for the commit. scan == master when unfiltered.
         const mscan = md.scan orelse md.master;
         const tt = try self.byTupleOfSet(md.trans, md.ti, md.t_by);
-        const same_key = if (md.prev_key) |pk| self.cmpBy(tt, pk) == .eq else false;
+        // GROUPING check — BYTE-EXACT on purpose (never folds): fold-equal
+        // transaction keys (A vs a) are distinct MODIFY keys even though the
+        // sortedness verify folds (BUG-sortseq-byverify-datastep).
+        const same_key = if (md.prev_key) |pk| self.cmpBy(tt, pk, false) == .eq else false;
         // Locate the master obs. Duplicate BY values match in order (p.588 Table
         // 23.3 allows them in BOTH sources): a repeated key continues the scan
         // past the last match; a new key scans from the top — MODIFY requires no
@@ -4437,7 +4448,7 @@ pub const Executor = struct {
             for (md.dss, 0..) |ds, d| {
                 if (md.cur[d] >= ds.rowCount()) continue;
                 byTupleInto(md, d, md.cur[d], tmp);
-                if (!have_g or self.cmpBy(tmp, g) == .lt) {
+                if (!have_g or self.cmpBy(tmp, g, false) == .lt) { // pick: byte, not a verify
                     @memcpy(g, tmp);
                     have_g = true;
                 }
@@ -4447,8 +4458,9 @@ pub const Executor = struct {
             // If it went backwards, a source is out of order — SAS errors "BY variables
             // are not properly sorted" rather than silently dropping the out-of-order
             // rows (which `if a and b` then filters away). Fail loud, don't truncate
-            // (BUG-mergeunsorted / CLIN-failloud).
-            if (md.prev_g) |pg| if (self.cmpBy(g, pg) == .lt) {
+            // (BUG-mergeunsorted / CLIN-failloud). The verify folds under the
+            // sort's collation, like the SET arm (BUG-sortseq-byverify-datastep).
+            if (md.prev_g) |pg| if (self.cmpBy(g, pg, io.global_sortseq_linguistic) == .lt) {
                 self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
                 return false;
             };
@@ -4483,7 +4495,7 @@ pub const Executor = struct {
                 const r = md.group_start[d] + md.group_count[d];
                 if (r >= ds.rowCount()) continue;
                 byTupleInto(md, d, r, tmp);
-                if (!have_n or self.cmpBy(tmp, nxt) == .lt) {
+                if (!have_n or self.cmpBy(tmp, nxt, false) == .lt) { // pick: byte, not a verify
                     @memcpy(nxt, tmp);
                     have_n = true;
                 }
@@ -7823,9 +7835,20 @@ pub const Executor = struct {
     /// BY tuple compare honouring BY DESCENDING: a descending key compares
     /// inverted, so "smallest first" is exactly the SAS group order for mixed
     /// ascending/descending keys (GAP-batch-qa107). Equality is unaffected.
-    fn cmpBy(self: *const Executor, a: []const Value, b: []const Value) std.math.Order {
+    /// `ling` folds the character arm to SORTSEQ=LINGUISTIC dictionary order.
+    /// ONLY the three sortedness verifies pass the system flag
+    /// (io.global_sortseq_linguistic, BUG-sortseq-byverify-datastep): every
+    /// other caller — the interleave/group picks and the group-change checks —
+    /// passes `false` and stays BYTE-EXACT, so fold-equal neighbours (A vs a)
+    /// pass the order check yet remain separate BY groups. The same
+    /// order/grouping split as proc.zig's byOrderViolation-vs-byte-equality
+    /// (with main.zig's print twin the third copy of the rule).
+    fn cmpBy(self: *const Executor, a: []const Value, b: []const Value, ling: bool) std.math.Order {
         for (a, b, 0..) |x, y, k| {
-            const o = cmpValueOrd(x, y);
+            const o = if (ling and x == .str and y == .str)
+                cmpStrOrdLing(x.str, y.str)
+            else
+                cmpValueOrd(x, y);
             if (o != .eq) return if (k < self.by_desc.len and self.by_desc[k]) o.invert() else o;
         }
         return .eq;
@@ -7887,7 +7910,7 @@ pub const Executor = struct {
             if (cursors[d] >= ds.rowCount()) continue;
             const tup = try self.byTupleOfSet(ds, cursors[d], by_cols[d]);
             self.truncBySet(tup); // interleave on the truncated key (BUG-setbyvarlen)
-            if (best == null or self.cmpBy(tup, best_tuple) == .lt) {
+            if (best == null or self.cmpBy(tup, best_tuple, false) == .lt) { // pick: byte, not a verify
                 best = d;
                 best_tuple = tup;
             }
@@ -8253,6 +8276,21 @@ fn cmpValueOrd(a: Value, b: Value) std.math.Order {
     if (xm) return .lt;
     if (ym) return .gt;
     return std.math.order(x, y);
+}
+
+/// SORTSEQ=LINGUISTIC dictionary order for the sortedness verify's character
+/// arm — byte-for-byte proc.zig's cmpStrLing (and main.zig's cmpStrLingTrim
+/// twin): letters compare case-folded, blank-padded like cmpValueOrd so a
+/// prefix orders below its extension (BUG-sortseq-byverify-datastep).
+fn cmpStrOrdLing(a: []const u8, b: []const u8) std.math.Order {
+    const n = @max(a.len, b.len);
+    var i: usize = 0;
+    while (i < n) : (i += 1) {
+        const ca = std.ascii.toLower(if (i < a.len) a[i] else ' '); // blank-pad like cmpValueOrd
+        const cb = std.ascii.toLower(if (i < b.len) b[i] else ' ');
+        if (ca != cb) return std.math.order(ca, cb);
+    }
+    return .eq;
 }
 
 /// Map an `ordered:` argument value to a HashOrder. 'a'/'ascending'/'yes'/'y' and
@@ -10997,6 +11035,77 @@ test "SET-BY interleave on unsorted input fails loud (BUG-setbyunsorted)" {
         try x.run(&prog, &out);
         try t.expect(!f.diags.hasErrors());
         try t.expectEqual(@as(usize, 4), out.rowCount());
+    }
+}
+
+test "SET-BY verify honors SORTSEQ=LINGUISTIC (BUG-sortseq-byverify-datastep)" {
+    // The SET guard verifies under the collation the sort used (LR: Concepts
+    // printed p.533 Note), like proc.byOrderViolation and the PRINT twin —
+    // while GROUPING stays byte-exact. Invented data.
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    // s: GRP in LINGUISTIC order (what `proc sort; by grp;` emits — the byte
+    // order of these same rows would be A B a b c)
+    const s_ds = f.newDs("s");
+    _ = try s_ds.addColumn("grp", .char);
+    for ([_][]const u8{ "A", "a", "b", "B", "c" }) |g| try s_ds.appendRow(&.{.{ .str = g }});
+    try f.lib.put("s", s_ds);
+
+    const names = [_][]const u8{"s"};
+    const by_names = [_][]const u8{"grp"};
+    io.global_sortseq_linguistic = true;
+    defer io.global_sortseq_linguistic = false;
+    { // ascending linguistic passes; fold-equal groups stay SEPARATE sections
+        var x = f.exec();
+        const prog = [_]ast.Stmt{
+            .{ .set = &names },
+            .{ .by = &by_names },
+            .{ .assign = .{ .target = "fst", .value = f.vbl("first.grp") } },
+            .{ .assign = .{ .target = "lst", .value = f.vbl("last.grp") } },
+        };
+        var out = Dataset.init(f.a(), "out");
+        try x.run(&prog, &out);
+        try t.expect(!f.diags.hasErrors()); // was: "not properly sorted", rc 1
+        try t.expectEqual(@as(usize, 5), out.rowCount());
+        // the linguistic order itself survives the pass
+        for ([_][]const u8{ "A", "a", "b", "B", "c" }, 0..) |g, r|
+            try t.expectEqualStrings(g, out.row(r)[out.indexOf("grp").?].str);
+        // GROUPING is byte-exact: A|a|b|B|c are FIVE groups (folded grouping
+        // would merge A+a and B+b, putting fst=0 on rows 1 and 3)
+        for (0..5) |r| {
+            try t.expectEqual(@as(f64, 1), out.row(r)[out.indexOf("fst").?].num);
+            try t.expectEqual(@as(f64, 1), out.row(r)[out.indexOf("lst").?].num);
+        }
+    }
+    // DESCENDING + linguistic: the per-key inversion is orthogonal to the
+    // collation — c B b a A is fold-descending and verifies clean (fold-equal
+    // neighbours B/b and a/A are .eq steps, which never violate)
+    f.diags = diag.Diagnostics.init(f.a());
+    const d_ds = f.newDs("d");
+    _ = try d_ds.addColumn("grp", .char);
+    for ([_][]const u8{ "c", "B", "b", "a", "A" }) |g| try d_ds.appendRow(&.{.{ .str = g }});
+    try f.lib.put("d", d_ds);
+    {
+        var x = f.exec();
+        const dnames = [_][]const u8{"d"};
+        const dby = [_][]const u8{"\x00Dgrp"}; // BY DESCENDING grp (parser wire form)
+        const prog = [_]ast.Stmt{ .{ .set = &dnames }, .{ .by = &dby } };
+        var out = Dataset.init(f.a(), "outd");
+        try x.run(&prog, &out);
+        try t.expect(!f.diags.hasErrors());
+        try t.expectEqual(@as(usize, 5), out.rowCount());
+    }
+    // control, flag OFF: the same A a b B c data goes BACKWARDS in byte order
+    // at b→B — the byte verify stays a fail-loud control (D-002)
+    f.diags = diag.Diagnostics.init(f.a());
+    io.global_sortseq_linguistic = false;
+    {
+        var x = f.exec();
+        const prog = [_]ast.Stmt{ .{ .set = &names }, .{ .by = &by_names } };
+        var out = Dataset.init(f.a(), "outb");
+        try x.run(&prog, &out);
+        try t.expect(f.diags.hasErrors()); // captured diagnostic (D-003)
     }
 }
 
