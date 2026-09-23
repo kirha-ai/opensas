@@ -1575,6 +1575,38 @@ fn coerceToColumn(arena: std.mem.Allocator, diags: *diag.Diagnostics, line: usiz
     var val = v;
     if (c.informat) |inf| if (v == .str) {
         const read = functions.readInformat(inf, v.str);
+        // GAP-sqlinputfnnote: the invalid-data half of Language Reference:
+        // Concepts p.518 that the INPUT()-function dispatch pairs with
+        // readInformat's loud ERROR (functions.zig, GH#5 + GH#4a). This call
+        // bypassed that dispatch, so an unknown informat — or a known one that
+        // cannot read the field — stored MISSING with no NOTE. The coercion
+        // models "the INPUT() function's exact semantics" (GAP-sqlcolumnattr),
+        // so mirror the dispatch guard's exact shape: judge the field the
+        // informat actually READ (the w-slice, trimmed), and note only a
+        // NON-blank field that is not `.` and not a special missing — a
+        // legitimate missing stays silent, like io.zig's noteInvalidNum guard.
+        // Same text as the function family ("Invalid argument to function
+        // INPUT."), so a log reader sees one contract. _ERROR_ (p.518 action 3)
+        // is a DATA-step PDV automatic (eval.zig setError) with NO SQL row
+        // sink — a SELECT result is a table, not an observation — so NOTE +
+        // missing is the whole contract here; there is no Evaluator on this
+        // path to invent one with. (The SELECT-side input() call reaches the
+        // dispatch through sqlDispatch and its ev.setError lands in SQL's
+        // scratch PDV — likewise unobservable.) The INFORMAT= column attribute
+        // carries no `?`/`??` modifier, so the NOTE never scales down.
+        // ponytail: fired only where the missing read IS the stored result
+        // (num column); a type-mismatched informat falls through to the raw
+        // value below and keeps its silence, like before.
+        if (c.type == .num and read.isMissing()) {
+            const ps = format.parseSpec(inf);
+            const eff = if (ps.w > 0 and ps.w < v.str.len) v.str[0..ps.w] else v.str;
+            const fld = std.mem.trim(u8, eff, " \t");
+            if (fld.len != 0 and !std.mem.eql(u8, fld, ".") and
+                Value.parseSpecialMissing(fld) == null)
+            {
+                diags.note(line, "Invalid argument to function INPUT.", .{}) catch {};
+            }
+        }
         if (c.type == .num and read == .num) return read;
         if (c.type == .char and read == .str)
             val = .{ .str = try format.charInformat(arena, format.parseSpec(inf).name, read.str) };
@@ -7131,6 +7163,88 @@ test "BUG-sqlddlmed: INSERT arity fail-loud, CREATE col format/label, ALTER ADD 
     try runSql(a, &lib, &d9, "proc sql; insert into e values(3, ., 4); quit;"); // b (CREATE-era? no — ADD'd) still NOT NULL
     try t.expect(d9.hasErrors());
     try t.expectEqual(@as(usize, 1), lib.find("e").?.rowCount());
+}
+
+/// True when the captured diagnostics carry a NOTE containing `needle`.
+fn hasNote(d: *const diag.Diagnostics, needle: []const u8) bool {
+    for (d.list.items) |x|
+        if (x.severity == .note and std.mem.indexOf(u8, x.message, needle) != null) return true;
+    return false;
+}
+
+test "SQL INFORMAT= coercion notes invalid data like the INPUT function (GAP-sqlinputfnnote)" {
+    // The INFORMAT= column-attribute coercion (INSERT VALUES / UPDATE SET →
+    // coerceToColumn) shares functions.readInformat with the INPUT() function
+    // but bypassed its dispatch guard, so after GH#5 an unknown informat fired
+    // the loud ERROR and stored MISSING with NO invalid-data NOTE. Language
+    // Reference: Concepts p.518 "How SAS Handles Invalid Data": the value is
+    // MISSING (pinned below), the invalid-data NOTE prints (same text as the
+    // function dispatch), _ERROR_=1 — but _ERROR_ is a DATA-step PDV automatic
+    // (eval.zig setError) with NO SQL row sink: a SELECT result is a table, not
+    // an observation, so NOTE + missing is the whole contract here. Captured
+    // diagnostics, never an aborting process (D-003).
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    { // unknown informat: loud ERROR (GH#5) + the NOTE, value missing
+        var lib = Library.init(a);
+        var d = diag.Diagnostics.init(a);
+        // the not-found ERROR rides format.zig's captured reporter in test
+        // builds (format.g_test_last_err), not the Diagnostics — same as
+        // functions.zig's GH#5 test
+        format.g_fmt_error = false;
+        format.g_test_last_err = "";
+        try runSql(a, &lib, &d, "proc sql; create table t (n num informat=zzznotreal.); insert into t values ('2025'); quit;");
+        try t.expect(format.formatErrored()); // the not-found ERROR stays loud
+        try t.expect(std.mem.indexOf(u8, format.g_test_last_err, "The informat zzznotreal was not found") != null);
+        try t.expect(hasNote(&d, "Invalid argument to function INPUT."));
+        try t.expect(lib.find("t").?.row(0)[0].isMissing()); // p.518 action 1
+        format.g_fmt_error = false; // reset module state for other tests
+    }
+    { // a KNOWN informat that cannot read the field notes too (GH#4a class —
+        // `input('abc', 8.)` has noted since the dispatch guard; this twin was silent)
+        var lib = Library.init(a);
+        var d = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d, "proc sql; create table k (n num informat=8.); insert into k values ('abc'); quit;");
+        try t.expect(!d.hasErrors()); // the informat itself loaded — no ERROR at all
+        try t.expect(!format.formatErrored());
+        try t.expect(hasNote(&d, "Invalid argument to function INPUT."));
+        try t.expect(lib.find("k").?.row(0)[0].isMissing());
+    }
+    { // guard rails: blank / `.` / special-missing sources and real reads stay SILENT
+        var lib = Library.init(a);
+        var d = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d,
+            \\proc sql; create table g (n num informat=8.);
+            \\insert into g values (5); insert into g values ('');
+            \\insert into g values ('.'); insert into g values ('.k');
+            \\insert into g values ('2025'); quit;
+        );
+        try t.expect(!d.hasErrors());
+        try t.expect(!hasNote(&d, "Invalid argument"));
+        const g = lib.find("g").?;
+        try t.expectEqual(@as(f64, 5), g.row(0)[0].num);
+        try t.expect(g.row(1)[0].isMissing()); // blank → missing, silent
+        try t.expect(g.row(2)[0].isMissing()); // `.` → missing, silent
+        try t.expectEqual(@as(u8, 12), Value.missingRank(g.row(3)[0].num)); // .k → .K (._ < . < .A=2 … .K=12 … .Z=27)
+        try t.expectEqual(@as(f64, 2025), g.row(4)[0].num);
+    }
+    { // `$` char informats are unaffected: $upcase. stores 'ABC', no NOTE
+        var lib = Library.init(a);
+        var d = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d, "proc sql; create table h (s char(8) informat=$upcase.); insert into h values ('abc'); quit;");
+        try t.expect(!d.hasErrors());
+        try t.expect(!hasNote(&d, "Invalid argument"));
+        try t.expectEqualStrings("ABC", lib.find("h").?.row(0)[0].str);
+    }
+    { // the UPDATE SET call site notes the same way (the coerce's second caller)
+        var lib = Library.init(a);
+        var d = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d, "proc sql; create table u (n num informat=8.); insert into u values (1); update u set n='zzz'; quit;");
+        try t.expect(hasNote(&d, "Invalid argument to function INPUT."));
+        try t.expect(lib.find("u").?.row(0)[0].isMissing());
+    }
 }
 
 test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
