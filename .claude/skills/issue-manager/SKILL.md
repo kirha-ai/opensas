@@ -44,7 +44,7 @@ VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
    │
    └─ NEEDS-INFO ─► comment asking for a minimal repro, leave open, do NOT label
                                                  │
-   fix lands green ──► push working branch ──► 5. CLOSE (close issue w/ branch+commit, remove task)
+   fix lands green ──► push working branch ──► 5. CLOSE (close issue w/ branch+commit, swap `ongoing`→`done`, remove task)
 ```
 
 Run lifecycle-diagram steps 1–4 during the manager skill's GitHub-issue intake
@@ -180,8 +180,9 @@ gh issue edit <N> --add-label ongoing
 gh issue comment <N> --body "Tracked in jira.md as GH#<N> ISS-<shortslug> — validated repro attached, dispatched. Will close on fix."
 ```
 
-(If the `ongoing` label ever goes missing from the repo, recreate it:
-`gh label create ongoing --color fbca04 --description "Dispatched to jira.md and being worked on"`.)
+(If a workflow label ever goes missing from the repo, recreate it:
+`gh label create ongoing --color fbca04 --description "Dispatched to jira.md and being worked on"`
+and `gh label create done --color 7a2cd3 --description "Fixed and closed; the fix is on the working branch"`.)
 
 ---
 
@@ -209,14 +210,23 @@ green:
 gh issue close <N> --comment "Fixed on branch <working-branch> in <commit-sha> (<one-line>). Fixture: tests/corpus/<name>. Local suites green: test 0, corpus X/X, programs Y/Y. This branch will be merged through a human-reviewed PR."
 ```
 
-3. Remove the task line from `jira.md` in the same tick. Do not retain a `[DONE]`
+3. Swap the `ongoing` label for `done` in the same breath. `ongoing` means
+   "Dispatched to jira.md and being worked on", which is FALSE once the issue
+   is closed, and any label-based view that does not filter by state would
+   show closed work as still running; `done` keeps such views truthful in the
+   other direction too — a fixed issue reads as fixed, not as unlabeled:
+
+```bash
+gh issue edit <N> --remove-label ongoing --add-label done
+```
+
+4. Remove the task line from `jira.md` in the same tick. Do not retain a `[DONE]`
    line or copy it to a separate archive; the issue and `git log -p -- jira.md`
    preserve the audit trail.
-4. Commit the `jira.md` removal by explicit pathspec and push that board commit to
+5. Commit the `jira.md` removal by explicit pathspec and push that board commit to
    the same working branch.
 
-The `ongoing` label can stay because a closed issue drops out of the open intake
-query. If the fix push fails, do not close the issue or remove the task. If issue
+If the fix push fails, do not close the issue or remove the task. If issue
 closure fails, likewise leave the task in place and retry/report the GitHub
 failure rather than losing the board↔issue link.
 
