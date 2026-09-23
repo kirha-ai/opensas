@@ -417,3 +417,32 @@ these caused real regressions (see D-001).
   so a log reader can tell "this step failed" from "this step was never
   attempted". The old bare wording (no period) was unpinned by any golden or
   test — corpus diffs stdout, the NOTE lives on stderr.
+- D-025 **A CATALOG METADATA FIELD (`Alignment:` et al.) IS A CLAIM TO VERIFY,
+  NOT ORACLE — THE ENTRY'S DETAILS PROSE AND A RUNTIME DIFF ARE THE ONLY
+  ORACLES** (2026-09-14, GH#11 ISS-e8601rightalign, a shipped regression from
+  the GH#2 width fix). The Formats and Informats entry for E8601DTw.d
+  (docs/sas94-formats-informats-ref.txt ~L8038, printed p.200) carries
+  `Alignment: Left` in its header block, and the GH#2 fix implemented exactly
+  that: w>19 padded on the RIGHT. Real SAS 9.4 (user-provided SAS Studio run,
+  reproduced before dispatch per D-019) RIGHT-justifies: `put(x, e8601dt26.)`
+  stores `"       2025-01-16T13:53:00"` — 7 LEADING blanks — provable two ways
+  inside one log line: `length()` returns the position of the last non-blank,
+  so leading padding pins len=26 where trailing padding collapses to 19, and
+  `$quote30.` prints the blanks INSIDE the opening quote. The entry's Details
+  section says NOTHING about w>19 padding, so the header field was not
+  implementing any textual rule — it is wrong for this purpose or does not mean
+  PUT-function padding direction at all. **Rule: when a catalog header field
+  (Alignment, Category, Restriction, …) points one way and the Details prose or
+  a runtime diff points the other, the header field LOSES — implement the
+  runtime and record the field as verified-wrong here, so no future reader
+  (human or agent) "fixes" it back from the doc.** Concretely, pinned for the
+  E8601DT family: w=16 omits the seconds (Details note, p.200 — kept), w≥19
+  renders the full 19-column `yyyy-mm-ddThh:mm:ss` body, EVERY padded width
+  blank-pads on the LEFT (right-justifies), and the w=17/18 seconds-less rung
+  right-justifies too (needs-oracle: 17/18 never probed on real SAS — see the
+  renderE8601Dt ponytail comment). The informat side (w=16 slicing) is
+  unaffected. Fixture: tests/corpus/gfmt_e8601dt.sas pins len 16/19/20/26 plus
+  the `$quote30.` discriminator line. Unprobed sibling carrying the same
+  metadata: E8601DZw.d's header also says `Alignment: Left` (p.204) and
+  renderE8601Dz still left-justifies — do not trust that field there either;
+  probe before touching.

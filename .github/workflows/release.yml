@@ -43,6 +43,12 @@ jobs:
         with:
           version: 0.16.0
       - name: cross-compile ${{ matrix.target }}
+        env:
+          # GH#10 ISS-versionflag: the tag is the authoritative version — passed
+          # straight through to `-Dversion=` (the Makefile forwards it), no git
+          # needed on the runner (a shallow checkout carries no tag objects, so
+          # `git describe` would be unreliable here).
+          VERSION: ${{ github.event.release.tag_name }}
         run: make ${{ matrix.target }}
       - name: package ${{ matrix.target }}
         # Two names per binary: versioned (audit trail / pinning) and STABLE
@@ -74,6 +80,8 @@ jobs:
         with:
           version: 0.16.0
       - name: build wasm
+        env:
+          VERSION: ${{ github.event.release.tag_name }} # GH#10: same passthrough, harmless for the reactor build
         run: make wasm
       - name: package wasm
         run: |

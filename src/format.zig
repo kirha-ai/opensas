@@ -673,8 +673,23 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
-    if (eqi(spec.name, "time") or startsWithCI(nm, "e8601tm") or startsWithCI(nm, "b8601tm")) {
+    // TIMEw. reads ONLY its documented separator forms (Informats Reference
+    // p.722: "Separate hh, mm, and ss with a special character"), so a
+    // separator-less digit run is ALL HOURS by that grammar — a SAS time value
+    // may be a duration over 24h, and `155300` under TIME8. reads 155300×3600.
+    // The packed hhmmss form is NOT TIMEw. grammar; it belongs to the ISO
+    // BASIC informats just below (BUG-8601packtime).
+    if (eqi(spec.name, "time")) {
         if (parseTimeSecs(field)) |sc| return .{ .num = sc };
+        return Value.missing;
+    }
+    // E8601TM/B8601TM: the ISO 8601 time — the extended `hh:mm:ss[.f]` colon
+    // form (E8601TM p.650) AND the basic packed `hhmmss<ffffff>` (B8601TM
+    // p.623's own example `155300` → 57180). BUG-8601packtime: the packed run
+    // used to fall into parseTimeSecs' no-separator branch and read as HOURS
+    // (155300×3600 = 559080000) — a silent wrong numeric on a doc example.
+    if (startsWithCI(nm, "e8601tm") or startsWithCI(nm, "b8601tm")) {
+        if (parseIsoTimeSecs(field)) |sc| return .{ .num = sc };
         return Value.missing;
     }
     if (eqi(spec.name, "hhmmss")) { // colon AND digit-packed forms (BUG-hhmmssinformat)
@@ -922,8 +937,10 @@ const DtStyle = enum { native, iso };
 
 /// Parse a datetime informat field → SAS datetime (seconds since 1960-01-01
 /// 00:00:00) = SAS-day × 86400 + seconds-of-day. `native` (DATETIMEw.):
-/// `ddMMMyyyy:hh:mm:ss` (date, then a `:`, then the time). `iso` (E8601DT.):
-/// `yyyy-mm-ddThh:mm:ss`. A missing time defaults to 00:00:00; unparseable →
+/// `ddMMMyyyy:hh:mm:ss` (date, then a `:`, then the time). `iso` (E8601DT./
+/// B8601DT.): `yyyy-mm-ddThh:mm:ss` / `yyyymmddThhmmss` — the time half takes
+/// the packed basic digits too (parseIsoTimeSecs). A missing time defaults to
+/// 00:00:00; unparseable →
 /// missing. Reuses the same civil-day math as the DATE informats.
 fn parseDatetime(field: []const u8, style: DtStyle) Value {
     const s = std.mem.trim(u8, field, " ");
@@ -935,7 +952,14 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
         .native => parseDDMMMYYYY(s[0..sep]),
         .iso => parseIsoDate(s[0..sep]),
     }) orelse return Value.missing;
-    const secs = parseTimeSecs(s[sep + 1 ..]) orelse 0;
+    // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
+    // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
+    // example `20180915T155300` → 1852645980) — BUG-8601packtime. A missing
+    // time still defaults to 00:00:00.
+    const secs = (switch (style) {
+        .native => parseTimeSecs(s[sep + 1 ..]),
+        .iso => parseIsoTimeSecs(s[sep + 1 ..]),
+    }) orelse 0;
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
 }
 
@@ -1265,6 +1289,28 @@ pub fn parseHhmmss(field: []const u8) ?f64 {
     const m = std.fmt.parseInt(i64, buf[2..4], 10) catch unreachable;
     const sec = std.fmt.parseInt(i64, buf[4..6], 10) catch unreachable;
     return @floatFromInt(h * 3600 + m * 60 + sec);
+}
+
+/// The time half of an ISO 8601 field (E8601TM/B8601TM, and the part after the
+/// `T` of E8601DT/B8601DT): the extended `hh:mm:ss[.f]` colon form reads via
+/// parseTimeSecs, and a digit-packed run reads via parseHhmmss — the ISO BASIC
+/// notation `hhmmss<ffffff>` (B8601TM p.623: `155300` → 57180; B8601DT p.619:
+/// `20180915T155300` → 1852645980). BUG-8601packtime: the packed run used to
+/// land in parseTimeSecs' no-separator branch and read as HOURS (155300×3600 =
+/// 559080000) — silent wrong numerics on the informats' own doc examples.
+/// Digits past `hhmmss` are the fraction (p.555's table: `155300322348` =
+/// 15:53:00.322348); a short run is parseHhmmss' left-padded reduced form
+/// (`1553` → 15:53:00). TIMEw. deliberately does NOT come through here —
+/// packed digits are not TIMEw. grammar (p.722 documents only separator
+/// forms), so its digit runs keep the whole-run-as-hours duration read.
+fn parseIsoTimeSecs(s0: []const u8) ?f64 {
+    const s = std.mem.trim(u8, s0, " ");
+    if (s.len == 0) return null;
+    if (!allDigits(s)) return parseTimeSecs(s);
+    const secs = parseHhmmss(s[0..@min(s.len, 6)]) orelse return null;
+    if (s.len <= 6) return secs;
+    const frac = std.fmt.parseFloat(f64, s[6..]) catch return null;
+    return secs + frac / std.math.pow(f64, 10, @floatFromInt(s.len - 6));
 }
 
 fn monthAbbr(abbr: []const u8) ?i64 {
@@ -2876,12 +2922,20 @@ fn renderDatetime(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]
 /// E8601DTw.d — a SAS datetime (seconds since 1960-01-01) as ISO 8601 extended
 /// `yyyy-mm-ddThh:mm:ss`. Width rules (GH#2 ISS-e8601dt-width; Formats and
 /// Informats Reference pp.200-201): w Default 19, Range 16-26 (checked loud at
-/// the dispatch site), Alignment: LEFT. The full form is 19 columns; at w=16
-/// "SAS assumes that the value for seconds is 0 and omits them from the output"
-/// (p.200 note), and w 20-26 blank-pad on the RIGHT of the value — the old
-/// justRight padded left. ponytail: the doc pins only the w=16 rung, but a
+/// the dispatch site). The full form is 19 columns; at w=16 "SAS assumes that
+/// the value for seconds is 0 and omits them from the output" (p.200 note).
+/// Padding: EVERY padded width right-justifies (LEADING blanks) — GH#11
+/// ISS-e8601rightalign, runtime-verified on real SAS 9.4: `put(x, e8601dt26.)`
+/// stores 7 blanks BEFORE the text, provable two ways in one log line —
+/// `length()` pins 26 only with leading padding (trailing collapses to 19) and
+/// `$quote30.` shows the blanks INSIDE the opening quote. The entry's
+/// `Alignment: Left` header field says otherwise and is NOT oracle: catalog
+/// metadata fields are claims to verify, the Details prose and a runtime diff
+/// are the oracles (decisions.md D-025 — the GH#2 fix trusted the field and
+/// regressed). ponytail/needs-oracle: the doc pins only the w=16 rung, but a
 /// `:ss` (3 columns) can't partially render (the renderDatetime ladder's rule),
-/// so 17-18 interpolate it — seconds-less, left-justified into the wider field.
+/// so 17-18 interpolate the same seconds-less body, right-justified into the
+/// wider field (1-2 leading blanks) — real SAS unprobed for 17/18.
 /// `.d` fractional seconds (Range 0-6) still not rendered; add with the p.201
 /// example (`e8601dt25.3` → `2018-09-15T14:52:22.000`).
 fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
@@ -2907,7 +2961,9 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
         try body.append(arena, ':');
         try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
     }
-    return justLeft(arena, body.items, width);
+    // right-justify in every padded width — GH#11 ISS-e8601rightalign (real-SAS
+    // verified; the catalog `Alignment: Left` header field is not oracle, D-025)
+    return justRight(arena, body.items, width);
 }
 
 /// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
@@ -3832,6 +3888,33 @@ test "BUG-hhmmssinformat: HHMMSSw. colon and digit-packed forms" {
     try t.expect(readNumeric("hhmmss8.", "1234567").isMissing()); // >6 packed digits
 }
 
+test "BUG-8601packtime: ISO 8601 packed hhmmss reads as hh:mm:ss, not hours" {
+    // The informats' own doc examples, verbatim values:
+    //   B8601TM p.623:  `155300`          → 57180  (15:53:00)
+    //   B8601DT p.619:  `20180915T155300` → 1852645980
+    try t.expectEqual(@as(f64, 57180), readNumeric("b8601tm.", "155300").num);
+    try t.expectEqual(@as(f64, 57180), readNumeric("e8601tm8.", "155300").num); // lenient superset
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("b8601dt.", "20180915T155300").num);
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("e8601dt19.", "2018-09-15T155300").num);
+    // reduced-accuracy basic run `1430` → 14:30:00 (parseHhmmss left-padding)
+    try t.expectEqual(@as(f64, 52200), readNumeric("b8601tm6.", "1430").num);
+    // digits past hhmmss are the fraction (p.555's `155300322348`)
+    try t.expectEqual(@as(f64, 57180.5), readNumeric("b8601tm12.", "155300500000").num);
+    const frac = readNumeric("b8601tm12.", "155300322348").num; // 15:53:00.322348
+    try t.expect(@abs(frac - 57180.322348) < 1e-6);
+    // colon and fractional forms are UNCHANGED (the E8601TM clean pass)
+    try t.expectEqual(@as(f64, 57180), readNumeric("e8601tm8.", "15:53:00").num);
+    try t.expectEqual(@as(f64, 57180.5), readNumeric("e8601tm10.", "15:53:00.5").num);
+    try t.expectEqual(@as(f64, 52215.5), readNumeric("e8601tm12.", "14:30:15.5").num);
+    // TIMEw. keeps its documented separator-only grammar: the packed run is
+    // all HOURS (a duration — may exceed 24h), NOT hh:mm:ss
+    try t.expectEqual(@as(f64, 559080000), readNumeric("time8.", "155300").num);
+    try t.expectEqual(@as(f64, 57180), readNumeric("time8.", "15:53:00").num);
+    // unparseable stays missing, and no diagnostic fired (known informats)
+    try t.expect(readNumeric("b8601tm.", "not a time").isMissing());
+    try t.expect(!formatErrored());
+}
+
 test "readNumeric informat: w.d implied decimal and PERCENT (BUG-informatdec/percentinformat)" {
     // implied decimal — a field with no explicit `.` is scaled by 10^-d
     try t.expectEqual(@as(f64, 123.45), readNumeric("5.2", "12345").num);
@@ -4317,27 +4400,56 @@ test "E8601DA/E8601DT write side renders ISO 8601 (QA-e8601put)" {
     try expectFmt("                  .", Value.missing, "e8601dt19."); // missing → dot, right-justified in w=19
 }
 
-test "E8601DTw. honors its width: w=16 omits the seconds, 20-26 left-justify (GH#2 ISS-e8601dt-width)" {
-    // Formats and Informats Reference pp.200-201: w Default 19, Range 16-26,
-    // Alignment: Left. 16JAN2025:13:53:45 = SAS day 23757 × 86400 + 50025.
+test "E8601DTw. honors its width: w=16 omits the seconds, w>19 right-justifies (GH#2 + GH#11)" {
+    // Formats and Informats Reference pp.200-201: w Default 19, Range 16-26.
+    // Padding side is RUNTIME-verified, not doc metadata (GH#11
+    // ISS-e8601rightalign): every padded width right-justifies — LEADING
+    // blanks; the entry's `Alignment: Left` header field is not oracle (D-025).
+    // 16JAN2025:13:53:45 = SAS day 23757 × 86400 + 50025.
     const dt: f64 = 23757 * 86400 + 50025;
     // w=16: "SAS assumes that the value for seconds is 0 and omits them from
     // the output" (p.200 note) — the field is exactly the 16-char form.
     try expectFmt("2025-01-16T13:53", .{ .num = dt }, "e8601dt16.");
     // 17-18 can't hold the whole `:ss` (3 columns) and a component never
-    // renders partially, so they take the same seconds-less rung, left-aligned
-    // into the wider field (doc pins only w=16; this interpolates it).
-    try expectFmt("2025-01-16T13:53 ", .{ .num = dt }, "e8601dt17.");
-    try expectFmt("2025-01-16T13:53  ", .{ .num = dt }, "e8601dt18.");
+    // renders partially, so they take the same seconds-less rung, right-
+    // justified into the wider field (needs-oracle: real SAS unprobed for
+    // 17/18 — the body ladder interpolates the doc's w=16 note).
+    try expectFmt(" 2025-01-16T13:53", .{ .num = dt }, "e8601dt17.");
+    try expectFmt("  2025-01-16T13:53", .{ .num = dt }, "e8601dt18.");
     // default 19 and explicit 19 are the full form, exactly filling the field
     try expectFmt("2025-01-16T13:53:45", .{ .num = dt }, "e8601dt19.");
     try expectFmt("2025-01-16T13:53:45", .{ .num = dt }, "e8601dt.");
-    // 20-26: Alignment Left — blank-pad the RIGHT (was right-justified)
-    try expectFmt("2025-01-16T13:53:45 ", .{ .num = dt }, "e8601dt20.");
-    try expectFmt("2025-01-16T13:53:45       ", .{ .num = dt }, "e8601dt26.");
+    // 20-26: real SAS right-justifies — blank-pad the LEFT (GH#11; the GH#2
+    // fix had these trailing under the doc's Alignment: Left metadata)
+    try expectFmt(" 2025-01-16T13:53:45", .{ .num = dt }, "e8601dt20.");
+    try expectFmt("       2025-01-16T13:53:45", .{ .num = dt }, "e8601dt26.");
     // the seconds-less forms read seconds as 00, so a 16-written field
     // round-trips through the informat back to :00
     try expectFmt("2025-01-16T13:53:00", .{ .num = readNumeric("e8601dt16.", "2025-01-16T13:53:45").num }, "e8601dt19.");
+}
+
+test "E8601DTw. stored value: w>19 leading blanks keep length() at w (GH#11 ISS-e8601rightalign)" {
+    // The issue's probe value: '16JAN2025:13:53:00'dt = day 23757 × 86400
+    // + 13:53:00. Real SAS 9.4 stores f26 = "       2025-01-16T13:53:00" —
+    // 7 LEADING blanks — because length() returns the position of the last
+    // non-blank: only leading padding pins length()=w; the GH#2 left-justify
+    // collapsed every w>19 length() to 19 (the regression's fingerprint).
+    const dt: f64 = 23757 * 86400 + 13 * 3600 + 53 * 60;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]usize{ 20, 26 }) |w| {
+        var buf: [16]u8 = undefined;
+        const spec = try std.fmt.bufPrint(&buf, "e8601dt{d}.", .{w});
+        const stored = try apply(a, .{ .num = dt }, spec);
+        try t.expectEqual(w, stored.len); // full width stored
+        for (stored[0 .. w - 19]) |c| try t.expect(c == ' '); // padding is LEADING
+        try t.expectEqualStrings("2025-01-16T13:53:00", std.mem.trim(u8, stored, " ")); // length() = w, not 19
+        try t.expect(stored[0] == ' '); // blank INSIDE the $quote discriminator
+    }
+    // w=16 behavior UNCHANGED from GH#2 — verified correct against real SAS
+    // (seconds omitted, field exactly 16, alignment unobservable)
+    try expectFmt("2025-01-16T13:53", .{ .num = dt }, "e8601dt16.");
 }
 
 test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {

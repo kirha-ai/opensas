@@ -22,6 +22,7 @@
 const std = @import("std");
 const Io = std.Io;
 const sas = @import("sas");
+const build_options = @import("build_options"); // build.zig: `-Dversion=` / git describe / "dev" (GH#10)
 
 const Token = sas.lexer.Token;
 const max_file: Io.Limit = .limited(1 << 31);
@@ -40,6 +41,18 @@ pub fn main(init: std.process.Init) !void {
         if (std.mem.eql(u8, args[ai], "--sasautos") and ai + 1 < args.len) {
             sasautos = args[ai + 1];
             ai += 1;
+        } else if (std.mem.eql(u8, args[ai], "--version") or std.mem.eql(u8, args[ai], "-V")) {
+            // GH#10 ISS-versionflag: SHORT-CIRCUIT before the input file is even
+            // opened — `sas --version anything.sas` still prints, and the old
+            // behavior ("sas: cannot read --version (FileNotFound)") left a
+            // release binary with no way to name itself (the issue template
+            // demands a Version from every reporter). stdout, not the log:
+            // scripts capture it; `return` exits 0, a clean run.
+            var vbuf: [256]u8 = undefined;
+            var vfw = stdoutWriter(io, &vbuf);
+            vfw.interface.print("opensas {s}\n", .{build_options.version}) catch {};
+            vfw.interface.flush() catch {};
+            return;
         } else if (file == null) {
             file = args[ai];
         }
@@ -280,6 +293,31 @@ const StepCtx = struct {
 /// Examples 8.2/8.4/8.8 — the log's old bare wording dropped it.
 const step_halt_note = "The SAS System stopped processing this step because of errors.";
 
+/// The LAST literal `yearcutoff=<n>` value in this slice's OPTIONS statements,
+/// or null when none is present (the common slice: no second pass, no extra
+/// work). Statement-boundary walk, not `segments()`: it must run BEFORE the
+/// segment loop exists to consume, and it reads only — no segs, no reports.
+/// A mid-step (hoisted) OPTIONS is seen too: it takes effect for its step's
+/// compile, the same claim the hoisting itself is justified by.
+fn pendingYearcutoff(toks: []const Token) ?i64 {
+    var found: ?i64 = null;
+    var i: usize = 0;
+    while (i < toks.len) : (i += 1) {
+        const boundary = i == 0 or toks[i - 1].tag == .semicolon;
+        if (!boundary or toks[i].tag != .name or !eqi(toks[i].text, "options")) continue;
+        var j = i + 1;
+        while (j < toks.len and toks[j].tag != .semicolon) : (j += 1) {
+            if (toks[j].tag == .name and eqi(toks[j].text, "yearcutoff") and
+                j + 2 < toks.len and toks[j + 1].tag == .eq and toks[j + 2].tag == .number)
+            {
+                found = std.fmt.parseInt(i64, toks[j + 2].text, 10) catch null;
+            }
+        }
+        i = j; // the +1 lands past the ';'
+    }
+    return found;
+}
+
 /// Run one slice of already-expanded source: tokenize, split into steps, execute
 /// each (or apply a global statement), then feed any CALL SYMPUT vars it created
 /// back into the macro session. `allow_anon` runs an unframed token stream as a
@@ -294,6 +332,36 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
     // marked `(expanded Lnn)` by GH#17 — shifting that would mislabel twice.
     if (!ctx.diags.expansion_space and ctx.line_off > 0) {
         for (toks) |*t| t.line += ctx.line_off;
+    }
+    // BUG-yearcutoffflushorder: a global OPTIONS statement flushes TOGETHER
+    // WITH the step it precedes (one run;/quit; blob out of rawSegments), but a
+    // '…'d date LITERAL in the step resolves during THIS tokenize — before the
+    // segment loop below dispatches the OPTIONS statement — so it windowed
+    // under the PRIOR cutoff while the step's exec-time informat reads (running
+    // later) already saw the new one: one step, two windows. Real SAS windows
+    // both under the new cutoff (probe: `options yearcutoff=1950; a='26oct49'd;
+    // b=input('01jan49',date9.);` — a=2049 AND b=2049, never 1949/2049). So
+    // when this slice carries a literal YEARCUTOFF=, wire it and RE-TOKENIZE
+    // before anything compiles: the option state is in effect before the
+    // step's tokens exist. handleGlobal below stays the authority — it
+    // re-applies the identical value with no diagnostics, still fails LOUD on
+    // garbage (this pre-pass deliberately skips non-numeric values for it),
+    // and still covers `yearcutoff=&v` (macro.zig resolves the & during
+    // expansion, so a bound value arrives here already literal). Re-lex into a
+    // SCRATCH reporter: identical text, so pass 1 already recorded every
+    // diagnostic this pass could add — never double-report. ponytail: a
+    // yearcutoff AFTER the step in the same (remainder) slice pre-applies to
+    // that whole slice; real-SAS ordering there is untestable, and the old
+    // tokenize-first behavior for it was equally arbitrary.
+    if (pendingYearcutoff(toks)) |n| {
+        if (n != sas.format.yearCutoff()) {
+            sas.format.setYearCutoff(n);
+            var junk = sas.diag.Diagnostics.init(a);
+            toks = try sas.lexer.tokenize(a, text, &junk);
+            if (!ctx.diags.expansion_space and ctx.line_off > 0) {
+                for (toks) |*t| t.line += ctx.line_off;
+            }
+        }
     }
     toks = try coalesceLibrefs(a, toks, ctx.librefs.items);
     // BUG-existdisk: a libref member named only inside macro text first appears
@@ -4651,6 +4719,76 @@ test "BUG-macrointerleave: intra-body CALL SYMPUT feeds the SAME body's later %d
             " data _null_; set want; put \"row \" x1= x2=; run;",
         "row x1=1 x2=2\n",
     );
+}
+
+test "BUG-yearcutoffflushorder: a same-chunk OPTIONS YEARCUTOFF= windows the SAME step's date literals (flush before tokenize)" {
+    defer sas.format.setYearCutoff(1926); // run-scoped global: restore the SAS default for later tests
+    // The probe: within ONE step the '…'d LITERAL and the exec-time INFORMAT
+    // read must agree. Before the fix the literal was lexed during this blob's
+    // tokenize — before the segment loop dispatched the OPTIONS statement — so
+    // it windowed under the PRIOR 1926 span (49 → 1949) while the informat
+    // (running later) saw 1950 (49 → 2049): one step, two windows. Real SAS
+    // windows both under 1950 (lrcon pp.141-142: YEARCUTOFF governs how the
+    // data step reads two-digit years, whichever surface reads them).
+    try expectRun(
+        "options yearcutoff=1950;\n" ++
+            "data _null_;\n" ++
+            "  a='26oct49'd;\n" ++
+            "  b=input('01jan49', date9.);\n" ++
+            "  y=year(a); z=year(b);\n" ++
+            "  put y= z=;\n" ++
+            "run;\n",
+        "y=2049 z=2049\n",
+    );
+
+    // Control: with NO option in play the default span is untouched — the same
+    // literal still reads 1949 (1926-2025), so the fix moved only what the
+    // option itself moves.
+    try expectRun(
+        "data _null_;\n  y=year('26oct49'd);\n  put y=;\nrun;\n",
+        "y=1949\n",
+    );
+
+    // Hoisted mid-step OPTIONS: the statement takes effect for its step's
+    // compile, so the step's literal windows under its own option too.
+    try expectRun(
+        "data _null_;\n  options yearcutoff=1950;\n  y=year('26oct49'd);\n  put y=;\nrun;\n",
+        "y=2049\n",
+    );
+
+    // Control for the pre-pass's read-only contract: a NON-numeric value must
+    // NOT pre-apply and must NOT be swallowed by the pre-pass's skip —
+    // handleGlobal stays the authority that fails LOUD on it (captured
+    // reporter, D-003 — never a real aborting run), exactly ONCE (a stray
+    // second report would mean the pre-pass started diagnosing), rc 1. The
+    // step after the bad option is skipped (the global ERROR arms BUG-errhalt
+    // syntax-check — D-024 semantics unchanged by this fix).
+    {
+        var arena2 = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena2.deinit();
+        const a2 = arena2.allocator();
+        var diags2 = sas.diag.Diagnostics.init(a2);
+        var out2: std.ArrayList(u8) = .empty;
+        try interpret(a2, &out2, &diags2,
+            "options yearcutoff=banana;\n" ++
+                "data _null_;\n  y=1;\n  put y=;\nrun;\n", null);
+        try std.testing.expect(diags2.hasErrors());
+        const log2 = try diags2.render();
+        try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, log2, "Invalid value for the YEARCUTOFF option."));
+        try std.testing.expect(std.mem.indexOf(u8, out2.items, "y=1") == null); // errhalt skipped it
+        try std.testing.expectEqual(@as(u8, 1), testRc(&diags2));
+    }
+}
+
+test "GH#10 ISS-versionflag: the build-time version is injected and printable" {
+    // build.zig wires the options module into THIS module: `-Dversion=` (CI
+    // release builds), else `git describe --tags --always`, else "dev". The
+    // CLI prints it verbatim as `opensas <version>` on stdout, exit 0 — so it
+    // must be non-empty and single-line printable (a stray newline would
+    // corrupt the line a bug reporter pastes).
+    try std.testing.expect(build_options.version.len > 0);
+    for (build_options.version) |c|
+        try std.testing.expect(c >= 0x20 and c < 0x7f); // printable ASCII, no control chars
 }
 
 test "CALL SYMPUT var resolves in a later step's string literal (BUG-symput)" {
