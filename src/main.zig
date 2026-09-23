@@ -22,6 +22,7 @@
 const std = @import("std");
 const Io = std.Io;
 const sas = @import("sas");
+const build_options = @import("build_options"); // build.zig: `-Dversion=` / git describe / "dev" (GH#10)
 
 const Token = sas.lexer.Token;
 const max_file: Io.Limit = .limited(1 << 31);
@@ -40,6 +41,18 @@ pub fn main(init: std.process.Init) !void {
         if (std.mem.eql(u8, args[ai], "--sasautos") and ai + 1 < args.len) {
             sasautos = args[ai + 1];
             ai += 1;
+        } else if (std.mem.eql(u8, args[ai], "--version") or std.mem.eql(u8, args[ai], "-V")) {
+            // GH#10 ISS-versionflag: SHORT-CIRCUIT before the input file is even
+            // opened — `sas --version anything.sas` still prints, and the old
+            // behavior ("sas: cannot read --version (FileNotFound)") left a
+            // release binary with no way to name itself (the issue template
+            // demands a Version from every reporter). stdout, not the log:
+            // scripts capture it; `return` exits 0, a clean run.
+            var vbuf: [256]u8 = undefined;
+            var vfw = stdoutWriter(io, &vbuf);
+            vfw.interface.print("opensas {s}\n", .{build_options.version}) catch {};
+            vfw.interface.flush() catch {};
+            return;
         } else if (file == null) {
             file = args[ai];
         }
@@ -4765,6 +4778,17 @@ test "BUG-yearcutoffflushorder: a same-chunk OPTIONS YEARCUTOFF= windows the SAM
         try std.testing.expect(std.mem.indexOf(u8, out2.items, "y=1") == null); // errhalt skipped it
         try std.testing.expectEqual(@as(u8, 1), testRc(&diags2));
     }
+}
+
+test "GH#10 ISS-versionflag: the build-time version is injected and printable" {
+    // build.zig wires the options module into THIS module: `-Dversion=` (CI
+    // release builds), else `git describe --tags --always`, else "dev". The
+    // CLI prints it verbatim as `opensas <version>` on stdout, exit 0 — so it
+    // must be non-empty and single-line printable (a stray newline would
+    // corrupt the line a bug reporter pastes).
+    try std.testing.expect(build_options.version.len > 0);
+    for (build_options.version) |c|
+        try std.testing.expect(c >= 0x20 and c < 0x7f); // printable ASCII, no control chars
 }
 
 test "CALL SYMPUT var resolves in a later step's string literal (BUG-symput)" {

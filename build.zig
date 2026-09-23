@@ -21,6 +21,18 @@ pub fn build(b: *std.Build) void {
     // target and optimize options) will be listed when running `zig build --help`
     // in this directory.
 
+    // GH#10 ISS-versionflag: the binary must self-report (`sas --version`).
+    // Two sources, CI wins: the release workflow passes the git tag straight
+    // through (`VERSION=v0.6.5 make …` → `-Dversion=v0.6.5`) — authoritative
+    // even from a shallow checkout, where actions/checkout's default fetch
+    // carries no tag objects and `git describe` would be wrong or empty. A
+    // local build falls back to `git describe --tags --always` (precise:
+    // `0.6.5-3-gbe92f29`), then to "dev" outside a git tree. build.zig.zon's
+    // .version deliberately stays the 0.0.0 placeholder — never printed.
+    const version = b.option([]const u8, "version", "Release version string reported by `sas --version`") orelse describeGit(b) orelse "dev";
+    const version_opts = b.addOptions();
+    version_opts.addOption([]const u8, "version", version);
+
     // This creates a module, which represents a collection of source files alongside
     // some compilation options, such as optimization mode and linked system libraries.
     // Zig modules are the preferred way of making Zig code available to consumers.
@@ -84,6 +96,10 @@ pub fn build(b: *std.Build) void {
                 // can be extremely useful in case of collisions (which can happen
                 // importing modules from different packages).
                 .{ .name = "sas", .module = mod },
+                // GH#10: `@import("build_options").version` — the string
+                // `sas --version` prints. CLI module only; the interpreter
+                // (root.zig) has no use for the build's git state.
+                .{ .name = "build_options", .module = version_opts.createModule() },
             },
         }),
     });
@@ -248,4 +264,31 @@ pub fn build(b: *std.Build) void {
     //
     // Lastly, the Zig build system is relatively simple and self-contained,
     // and reading its source code will allow you to master it.
+}
+
+/// GH#10 ISS-versionflag: the LOCAL-build fallback — `git describe --tags
+/// --always` run by the build runner at execution time (`b.graph.io`), trimmed
+/// of its trailing newline. null (→ "dev") when git is missing, the dir isn't a
+/// git tree, or the describe fails — versioning must never break a build. The
+/// spawn+collect shape mirrors std.Build.Step.Run's `evalGeneric` (Zig 0.16
+/// has no `Child.run` convenience).
+fn describeGit(b: *std.Build) ?[]const u8 {
+    if (!std.process.can_spawn) return null;
+    const io = b.graph.io;
+    var child = std.process.spawn(io, .{
+        .argv = &.{ "git", "describe", "--tags", "--always" },
+        .stdout = .pipe,
+        .stderr = .ignore, // git's own "not a git repository" — the fallback IS the answer
+    }) catch return null;
+    var read_buffer: [4096]u8 = undefined;
+    var stdout_reader = child.stdout.?.readerStreaming(io, &read_buffer);
+    const out = stdout_reader.interface.allocRemaining(b.allocator, .limited(4096)) catch {
+        child.kill(io);
+        return null;
+    };
+    const term = child.wait(io) catch return null;
+    if (term != .exited or term.exited != 0) return null;
+    const trimmed = std.mem.trim(u8, out, " \n\r\t");
+    if (trimmed.len == 0) return null;
+    return trimmed;
 }
