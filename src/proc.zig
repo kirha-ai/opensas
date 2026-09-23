@@ -1444,7 +1444,17 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC MEANS: no input dataset");
+        // BUG-procmissingrc2: a MISSING input table is a USER error (D-009 rc
+        // 1), never an opensas gap — the PROC is supported, the table just
+        // isn't there. Same absent-input arm runSort got at GH#8, byte-identical
+        // to the DATA-step SET (BUG-setmissingquiet): real SAS 9.4 errors
+        // "ERROR: File WORK.NOPE.DATA does not exist." and ends the step with
+        // the halt NOTE. The plain .err report (NOT unsupported()/rc 2, NOT a
+        // fail() propagation) is what lets runExpanded emit THIS step's halt
+        // NOTE (GH#3 parity) and arm BUG-errhalt's later-step skip, so a
+        // pipeline can no longer flow on an absent input. `_last_` names the
+        // dataset SAS would have looked for when DATA= is omitted.
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     var ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -3159,7 +3169,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC FREQ: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     var ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -4185,7 +4198,10 @@ pub fn runTranspose(cx: ProcCtx, toks: []const Token) diag.Error!void {
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC TRANSPOSE: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     const ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-transposeinputopts)
@@ -4664,7 +4680,10 @@ pub fn runReport(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag
         return;
     }
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC REPORT: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     const ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -5723,7 +5742,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC UNIVARIATE: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     var ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -6451,7 +6473,10 @@ pub fn runRank(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC RANK: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     const ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -6662,7 +6687,10 @@ pub fn runStandard(cx: ProcCtx, toks: []const Token) diag.Error!void {
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC STANDARD: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     const ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -6879,7 +6907,12 @@ pub fn runContents(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
     };
 
     const ds = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC CONTENTS: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        // (The no-DATA= library-listing arm above is a different condition —
+        // an empty library has no member to name — it stays as it is.)
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
 
@@ -8092,6 +8125,24 @@ pub fn runCompare(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) dia
         if (atTag(toks, i, .semicolon)) i += 1;
     }
 
+    // BUG-procmissingrc2: a NAMED but absent BASE=/COMPARE= member is the
+    // user's error (D-009 rc 1) — real SAS errors "ERROR: File WORK.X.DATA
+    // does not exist." — so it takes the runSort (GH#8) .err arm (step-halt
+    // NOTE, BUG-errhalt later-step skip, rc 1), never unsupported()/rc 2.
+    // Only the option-itself-absent case keeps the `required` arms below: no
+    // member was named, so there is no missing table to point at.
+    if (base_name) |n| {
+        if (lib.find(n) == null) {
+            diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{n}) catch {};
+            return;
+        }
+    }
+    if (comp_name) |n| {
+        if (lib.find(n) == null) {
+            diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{n}) catch {};
+            return;
+        }
+    }
     const b = (if (base_name) |n| lib.find(n) else null) orelse {
         unsupported("PROC COMPARE: BASE= dataset required");
         return;
@@ -8479,7 +8530,10 @@ pub fn runTabulate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
     }
 
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC TABULATE: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{in_name orelse "_last_"}) catch {};
         return;
     };
     var ds = try procInput(arena, raw, toks, diags); // WHERE stmt / data= options (BUG-procwhere)
@@ -9948,7 +10002,10 @@ pub fn runExport(cx: ProcCtx, toks: []const Token) diag.Error!void {
         i += 1; // `;` between sub-statements
     }
     const ds = (if (data_name) |n| lib.find(n) else lastDataset(lib)) orelse {
-        unsupported("PROC EXPORT: no input dataset");
+        // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
+        // gap — the runSort (GH#8) absent-input arm: "File {s} does not
+        // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
+        diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{data_name orelse "_last_"}) catch {};
         return;
     };
     if (!eqi(dbms, "csv")) {
@@ -10693,7 +10750,7 @@ pub fn runFormat(cx: ProcCtx, toks: []const Token) diag.Error!void {
     while (i < toks.len and toks[i].tag != .semicolon and toks[i].tag != .eof) {
         if (toks[i].tag == .name and i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
             if (tkKw(toks[i], "cntlin")) {
-                try appendCntlin(arena, lib, toks[i + 2].text, &cats);
+                try appendCntlin(arena, lib, diags, toks[i].line, toks[i + 2].text, &cats);
             } else if (tkKw(toks[i], "cntlout")) {
                 cntlout = toks[i + 2].text;
             } else if (tkKw(toks[i], "library") or tkKw(toks[i], "lib")) {
@@ -10936,9 +10993,14 @@ fn dumpCntlout(arena: std.mem.Allocator, lib: *Library, name: []const u8, cats: 
 /// template, not a literal: BUG-cntlinpicture) and HLO ('L'/'H'→low/high open ends,
 /// 'O'→OTHER). SEXCL/EEXCL='Y' mark an exclusive start/end endpoint (`0-<5`).
 /// Rows sharing a FMTNAME group into one format (GAP-permformat).
-fn appendCntlin(arena: std.mem.Allocator, lib: *Library, name: []const u8, cats: *std.ArrayList(format.UserFmt)) diag.Error!void {
+fn appendCntlin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, line_no: usize, name: []const u8, cats: *std.ArrayList(format.UserFmt)) diag.Error!void {
     const ds = lib.find(name) orelse {
-        unsupported("PROC FORMAT: CNTLIN dataset not found");
+        // BUG-procmissingrc2: CNTLIN= naming an absent member is the user's
+        // error (D-009 rc 1) — real SAS errors "ERROR: File WORK.X.DATA does
+        // not exist." — so it takes the runSort (GH#8) .err arm (step-halt
+        // NOTE, BUG-errhalt later-step skip, rc 1), never unsupported()/rc 2:
+        // the CNTLIN feature itself is supported, the table just isn't there.
+        diags.report(.err, line_no, "File {s} does not exist", .{name}) catch {};
         return;
     };
     const i_fmt = ds.indexOf("fmtname") orelse {
@@ -12990,6 +13052,117 @@ test "GH#8 ISS-sortmissingerr: SORT on a missing member is a hard STEP error, rc
     const c3 = try lex.tokenize(a, "proc sort data=empt; by g v; run;", &diags3);
     try runSort(.{ .arena = a, .lib = &lib, .diags = &diags3 }, c3);
     try t.expect(!diags3.hasErrors());
+}
+
+test "BUG-procmissingrc2: a missing PROC input is a rc-1 STEP error everywhere (MEANS/REPORT/TABULATE + siblings), not a gap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    diag.resetGap(); // process-global: an earlier test's gap would leak into the rc asserts
+
+    // The task-named trio at full GH#8 depth: the ERROR text is byte-for-byte
+    // the SET path's (BUG-setmissingquiet) and SORT's (GH#8) — real SAS 9.4
+    // prints "ERROR: File WORK.NOPE.DATA does not exist." and ends the step —
+    // severity .err, NOT recoverable (hasStepErrors arms BUG-errhalt's
+    // later-step skip and the GH#3 step-halt NOTE), rc 1 via hasErrors, and
+    // NEVER diag.markGap(): the PROC is supported, the user's table just is
+    // not there (D-009: 1 = fix your SAS, not 2 = file an opensas issue).
+    const Case = struct { prog: []const u8, run: *const fn (ProcCtx, *std.ArrayList(u8), []const Token) diag.Error!void };
+    const trio = [_]Case{
+        .{ .prog = "proc means data=nope; run;", .run = &runMeans },
+        .{ .prog = "proc report data=nope; run;", .run = &runReport },
+        .{ .prog = "proc tabulate data=nope; run;", .run = &runTabulate },
+    };
+    for (trio) |c| {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, c.prog, &diags);
+        try c.run(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expectEqual(@as(usize, 1), diags.list.items.len);
+        try t.expectEqual(diag.Severity.err, diags.list.items[0].severity);
+        try t.expect(!diags.list.items[0].recoverable);
+        try t.expectEqualStrings("File nope does not exist", diags.list.items[0].message);
+        try t.expectEqual(@as(usize, 1), diags.list.items[0].line); // the proc-keyword line
+        try t.expect(diags.hasErrors()); // → rc 1 (D-009 user error)
+        try t.expect(diags.hasStepErrors()); // → later steps skipped (BUG-errhalt)
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors()));
+        try t.expectEqual(@as(usize, 0), out.items.len); // no plausible half-table printed
+    }
+
+    // The same arm across the sibling PROCs (one assert per PROC, fresh
+    // library): every DATA=-named absent member is the same user error. These
+    // fire BEFORE each PROC's own "required option" guards — the table is
+    // looked up first, exactly as SAS resolves the name before validating the
+    // rest of the step.
+    const fam3 = [_]Case{
+        .{ .prog = "proc freq data=nope; run;", .run = &runFreq },
+        .{ .prog = "proc univariate data=nope; run;", .run = &runUnivariate },
+        .{ .prog = "proc rank data=nope; run;", .run = &runRank },
+        .{ .prog = "proc contents data=nope; run;", .run = &runContents },
+        .{ .prog = "proc compare base=nope; run;", .run = &runCompare }, // named-but-absent BASE= arm
+    };
+    for (fam3) |c| {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, c.prog, &diags);
+        try c.run(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expectEqualStrings("File nope does not exist", diags.list.items[0].message);
+        try t.expect(diags.hasErrors() and diags.hasStepErrors());
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors()));
+    }
+    const fam2 = [_]struct { prog: []const u8, run: *const fn (ProcCtx, []const Token) diag.Error!void }{
+        .{ .prog = "proc transpose data=nope; run;", .run = &runTranspose },
+        .{ .prog = "proc standard data=nope; run;", .run = &runStandard },
+        .{ .prog = "proc export data=nope; run;", .run = &runExport },
+    };
+    for (fam2) |c| {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        const toks = try lex.tokenize(a, c.prog, &diags);
+        try c.run(.{ .arena = a, .lib = &lib, .diags = &diags }, toks);
+        try t.expectEqualStrings("File nope does not exist", diags.list.items[0].message);
+        try t.expect(diags.hasErrors() and diags.hasStepErrors());
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors()));
+    }
+    // FORMAT's CNTLIN= resolves its input inside a helper, so the arm moved in
+    // there with it — same message, same rc class.
+    {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        const toks = try lex.tokenize(a, "proc format cntlin=nope; run;", &diags);
+        try runFormat(.{ .arena = a, .lib = &lib, .diags = &diags }, toks);
+        try t.expectEqualStrings("File nope does not exist", diags.list.items[0].message);
+        try t.expect(diags.hasErrors() and diags.hasStepErrors());
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors()));
+    }
+
+    // A bare `proc summary;` (no DATA=) resolves to _LAST_; with nothing
+    // created the same user error fires, named by the dataset SAS would have
+    // looked for. SUMMARY dispatches to runMeans (main.zig) — one name, one arm.
+    {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc summary; run;", &diags);
+        try runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expectEqualStrings("File _last_ does not exist", diags.list.items[0].message);
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors()));
+    }
+
+    // Control: the error is for an ABSENT member only — a PRESENT input still
+    // lists clean (must not regress).
+    {
+        var lib = Library.init(a);
+        try lib.put("have", try buildHave(a));
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc means data=have; run;", &diags);
+        try runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expect(!diags.hasErrors());
+        try t.expect(out.items.len > 0);
+    }
 }
 
 test "cmpStrLing: case-folded dictionary order, blank-padded (BUG-sortseq)" {
