@@ -22,3 +22,6 @@ web/sas.wasm
 /tests/corpus/includes/fmid_old.txt
 /tests/corpus/includes/fmid_new.txt
 /tests/corpus/includes/fmid2.txt
+
+# OpenCode agent team / skills / commands (global ~/.gitignore is a * whitelist)
+!.opencode/**
