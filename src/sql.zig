@@ -3634,6 +3634,41 @@ fn buildJoin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
     return acc;
 }
 
+/// Parse a span that is supposed to be ONE WHOLE predicate and REFUSE a
+/// leftover tail. `pe.Parser.parseExpr` consumes exactly one expression and, by
+/// its documented contract, leaves the cursor on the first token it could not
+/// use — it never reports that it stopped early. So a predicate whose tail uses
+/// an operator we do not understand was silently TRUNCATED to its parsable
+/// head, and a bare column head is ALWAYS TRUTHY: `on a.x between b.lo and
+/// b.hi` became `on a.x`, i.e. the full cartesian product at rc 0
+/// (BUG-sqlonpredicates GH#18). That silent-wrong-answer class is the real
+/// defect, so the tail is now loud. rc 2, not 1: `ON sql-expression`
+/// (joined-table Component, printed p.373 / pdf 389) admits every operator in
+/// Table 8.2 "Operators and Order of Evaluation" (printed p.403 / pdf 419), so
+/// a tail we cannot consume is legal SAS that opensas has not implemented —
+/// D-009/D-009b(i). Null = already reported; the caller abandons the statement.
+/// ponytail: only the JOIN ON site calls this today. The WHERE/HAVING spans run
+/// the same `parseExpr`-over-a-span shape and deserve the same guard, but they
+/// desugar first and each has its own catch arm, so retrofitting them is a
+/// separate change with its own fixture.
+fn parseWholeSpan(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token, what: []const u8) diag.Error!?*const ast.Expr {
+    var p = pe.Parser.init(arena, try withEof(arena, toks), diags);
+    const e = p.parseExpr() catch {
+        unsupported(try std.fmt.allocPrint(arena, "PROC SQL: unsupported {s} condition", .{what}));
+        return null;
+    };
+    const tail = p.peek();
+    if (tail.tag != .eof) {
+        // A punctuation token carries no `text` (`?` lexes as `.question` with
+        // an empty string), and `unconsumed token ``` names nothing — fall back
+        // to the tag so the message always identifies the offender.
+        const shown = if (tail.text.len > 0) tail.text else @tagName(tail.tag);
+        unsupported(try std.fmt.allocPrint(arena, "PROC SQL: {s}: unconsumed token `{s}` (line {d}) — refusing a TRUNCATED predicate, which would silently match the wrong rows (a full sql-expression is required: SQL Procedure Components printed p.403 / pdf 419)", .{ what, shown, tail.line }));
+        return null;
+    }
+    return e;
+}
+
 /// Join the accumulated (already-qualified) result with one more table.
 fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, step: JoinStep, t2: *Dataset) !?*Dataset {
     const joined = try arena.create(Dataset);
@@ -3644,13 +3679,20 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
 
     var pdv = Pdv.init(arena);
     var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
-    const oncond = if (step.on) |ot| blk: {
-        var wp = pe.Parser.init(arena, try withEof(arena, ot), diags);
-        break :blk wp.parseExpr() catch {
-            unsupported("PROC SQL: unsupported JOIN condition");
-            return null;
-        };
-    } else null;
+    // BUG-sqlonpredicates (GH#18): the ON span never went through
+    // desugarPredicates, so every SQL-only predicate in it (BETWEEN, LIKE,
+    // CONTAINS, IS [NOT] NULL/MISSING) reached the expression parser raw and was
+    // truncated away at rc 0 — over-matching (BETWEEN → cartesian product) and
+    // under-matching (LIKE/CONTAINS/IS NOT NULL → zero rows) in the same bug.
+    // `ON sql-expression` is the SAME grammar as WHERE and HAVING — "IS NULL and
+    // IS MISSING are used in the WHERE, ON, and HAVING expressions" (IS
+    // Operator, SQL Procedure Components printed p.372 / pdf 388) — so it
+    // desugars through the ONE shared helper the other eight sites already use
+    // rather than growing a second, drifting copy.
+    const oncond = if (step.on) |ot|
+        (try parseWholeSpan(arena, diags, try desugarPredicates(arena, diags, ot), "JOIN ON")) orelse return null
+    else
+        null;
 
     const n1 = acc.columns.items.len;
     const n2 = t2.columns.items.len;
@@ -9611,4 +9653,153 @@ test "GAP-sqlsortseqlinguistic: ORDER BY honours SORTSEQ=LINGUISTIC; statement o
     var dt = diag.Diagnostics.init(a);
     runSql(a, &lib, &dt, "proc sql sortseqq=x; select name from t; quit;") catch {};
     try t.expect(std.mem.indexOf(u8, try dt.render(), "unrecognized option sortseqq") != null);
+}
+
+test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    var lib = Library.init(a);
+    const ta = try a.create(Dataset);
+    ta.* = Dataset.init(a, "a");
+    _ = try ta.addColumn("x", .num);
+    for ([_]f64{ 1, 5, 9 }) |v| try ta.appendRow(&.{numV(v)});
+    try lib.put("a", ta);
+
+    const tb = try a.create(Dataset);
+    tb.* = Dataset.init(a, "b");
+    _ = try tb.addColumn("lo", .num);
+    _ = try tb.addColumn("hi", .num);
+    _ = try tb.addColumn("nm", .char);
+    try tb.appendRow(&.{ numV(0), numV(3), strV("abc") });
+    try tb.appendRow(&.{ numV(4), numV(6), strV("xyz") });
+    try lib.put("b", tb);
+
+    // The ON span never reached desugarPredicates, so parseExpr stopped at the
+    // predicate keyword and the condition collapsed to its parsable head at
+    // rc 0: BETWEEN kept all 6 pairs (a bare `a.x` is truthy) while LIKE /
+    // CONTAINS / IS NOT NULL kept none (a bare `b.nm` is falsy). "IS NULL and
+    // IS MISSING are used in the WHERE, ON, and HAVING expressions" (IS
+    // Operator, SQL Procedure Components printed p.372 / pdf 388); Table 8.2
+    // (printed p.403 / pdf 419) puts <NOT> BETWEEN/CONTAINS/IN, IS <NOT> and
+    // <NOT> LIKE in sql-expression group 6, and `ON sql-expression` is the same
+    // grammar (joined-table Component, printed p.373 / pdf 389).
+    const Case = struct { on: []const u8, rows: usize };
+    for ([_]Case{
+        .{ .on = "a.x between b.lo and b.hi", .rows = 2 }, // (1,0-3) (5,4-6)
+        .{ .on = "a.x not between b.lo and b.hi", .rows = 4 }, // the other 4 PAIRS
+        .{ .on = "b.nm like 'a%'", .rows = 3 },
+        .{ .on = "b.nm not like 'a%'", .rows = 3 },
+        .{ .on = "not (b.nm like 'a%')", .rows = 3 },
+        .{ .on = "b.nm contains 'ab'", .rows = 3 },
+        .{ .on = "b.nm not contains 'ab'", .rows = 3 },
+        .{ .on = "b.nm is null", .rows = 0 },
+        .{ .on = "b.nm is not null", .rows = 6 },
+        .{ .on = "b.nm is missing", .rows = 0 },
+        .{ .on = "b.nm is not missing", .rows = 6 },
+        // Already correct before the fix — the desugar must not disturb them.
+        .{ .on = "a.x = b.lo", .rows = 0 }, // no x equals any lo
+        .{ .on = "a.x ^= b.lo", .rows = 6 },
+        .{ .on = "a.x <> b.lo", .rows = 6 }, // `<>` is NE in SQL, not MAX
+        .{ .on = "a.x > b.lo", .rows = 5 },
+        .{ .on = "a.x < b.lo", .rows = 1 }, // only (1, lo=4)
+        .{ .on = "b.nm in ('abc')", .rows = 3 },
+        .{ .on = "b.nm not in ('abc')", .rows = 3 },
+        // One desugared half beside an equality: both halves must survive.
+        .{ .on = "a.x = b.lo and b.nm like 'a%'", .rows = 0 },
+        .{ .on = "a.x between b.lo and b.hi and b.nm contains 'a'", .rows = 1 }, // (1,abc)
+    }, 0..) |c, i| {
+        var d = diag.Diagnostics.init(a);
+        const name = try std.fmt.allocPrint(a, "r{d}", .{i});
+        const src = try std.fmt.allocPrint(a, "proc sql; create table {s} as select a.x, b.nm from a join b on {s}; quit;", .{ name, c.on });
+        try runSql(a, &lib, &d, src);
+        try t.expect(!d.hasErrors());
+        try t.expectEqual(c.rows, lib.find(name).?.rowCount());
+    }
+}
+
+test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates (BUG-sqlonpredicates GH#18)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    var lib = Library.init(a);
+    const ta = try a.create(Dataset);
+    ta.* = Dataset.init(a, "a");
+    _ = try ta.addColumn("x", .num);
+    for ([_]f64{ 1, 5, 9 }) |v| try ta.appendRow(&.{numV(v)});
+    try lib.put("a", ta);
+    const tb = try a.create(Dataset);
+    tb.* = Dataset.init(a, "b");
+    _ = try tb.addColumn("nm", .char);
+    try tb.appendRow(&.{strV("abc")});
+    try tb.appendRow(&.{strV("xyz")});
+    try lib.put("b", tb);
+
+    // `?` is the documented CONTAINS alias — "CONTAINS Operator … Alias: ?"
+    // (SQL Procedure Components printed p.370 / pdf 386) — and opensas does not
+    // implement it. parseExpr stops ON it and, by contract, says nothing, so the
+    // condition used to degrade to a bare `b.nm`: a wrong row set at rc 0. The
+    // tail is now refused BY NAME. D-003: the assertion reads the CAPTURED
+    // message, never a spawned aborting process.
+    g_test_last_unsup = "";
+    var dq = diag.Diagnostics.init(a);
+    runSql(a, &lib, &dq, "proc sql; create table rq as select a.x from a join b on b.nm ? 'ab'; quit;") catch {};
+    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "unconsumed token") != null);
+    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "question") != null); // punctuation has no text → named by tag
+    try t.expect(lib.find("rq") == null); // and no wrong table is left behind
+
+    // Positive control: the spelled-out operator still runs clean.
+    var dc = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &dc, "proc sql; create table rc as select a.x from a join b on b.nm contains 'ab'; quit;");
+    try t.expect(!dc.hasErrors());
+    try t.expectEqual(@as(usize, 3), lib.find("rc").?.rowCount());
+}
+
+test "PROC SQL: the equi-join hash fast path survives the ON desugar (BUG-sqlonpredicates GH#18)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    // joinTwo's accumulated left side holds QUALIFIED column names; the joined-in
+    // table holds unqualified ones under the qualifier `b`.
+    const acc = try a.create(Dataset);
+    acc.* = Dataset.init(a, "_join");
+    _ = try acc.addColumn("a.x", .num);
+    const tb = try a.create(Dataset);
+    tb.* = Dataset.init(a, "b");
+    _ = try tb.addColumn("lo", .num);
+    _ = try tb.addColumn("hi", .num);
+    _ = try tb.addColumn("nm", .char);
+
+    // Routing ON through desugarPredicates must NOT cost the O(n+m) hash join
+    // (BUG-sqljoinoom's fix): a plain `col = col` is still recognized, while a
+    // rewritten BETWEEN/LIKE correctly falls OUT of the eq block into the nested
+    // loop — keeping it there would be a correctness bug, losing it on the plain
+    // equality a perf one.
+    const Case = struct { on: []const u8, fast: bool };
+    for ([_]Case{
+        .{ .on = "a.x = b.lo", .fast = true },
+        .{ .on = "a.x = b.lo and a.x = b.hi", .fast = true },
+        .{ .on = "a.x between b.lo and b.hi", .fast = false },
+        .{ .on = "b.nm like 'a%'", .fast = false },
+        .{ .on = "b.nm is not null", .fast = false },
+        // An equality beside a desugared predicate must NOT hash-join on the
+        // equality alone (that would drop the LIKE half and over-match). The
+        // partial key extractEqKeys appends before it rejects the second
+        // conjunct dies with joinTwo's block-local `keys` list.
+        .{ .on = "a.x = b.lo and b.nm like 'a%'", .fast = false },
+    }) |c| {
+        var d = diag.Diagnostics.init(a);
+        // `coalesceDots` first, exactly as PROC SQL's statement path does: the
+        // raw lexer emits `a` `.` `x` and only the folded `a.x` name token is a
+        // column reference extractEqKeys can resolve.
+        const toks = try coalesceDots(a, try lex.tokenize(a, c.on, &d));
+        const desug = try desugarPredicates(a, &d, toks);
+        const cond = (try parseWholeSpan(a, &d, desug, "JOIN ON")).?;
+        var keys: std.ArrayList(EqKey) = .empty;
+        try t.expectEqual(c.fast, try extractEqKeys(a, acc, tb, "b", cond, &keys));
+        if (c.fast) try t.expect(keys.items.len > 0);
+    }
 }
