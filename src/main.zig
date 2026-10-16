@@ -233,6 +233,14 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // output) is run afterwards. CALL SYMPUT vars feed back into the session so
     // later macro code (%put/%if/%do &n) sees them.
     var session = sas.macro.Session.init(a, diags);
+    // GH#13 GAP-callexecutemacro: publish the run's Session to the macro layer
+    // so exec.zig's CALL EXECUTE can macro-process its argument at CALL TIME
+    // (Macro Language: Reference printed p.123 — macro elements execute
+    // immediately, the SAS statements they generate are deferred to the step
+    // boundary). Cleared on the way out: the hook is process-global and a
+    // stale pointer to this stack slot would outlive the arena.
+    sas.macro.setLiveSession(&session);
+    defer sas.macro.setLiveSession(null);
     const chunks = try rawSegments(a, src);
     var ctx = StepCtx{
         .a = a,

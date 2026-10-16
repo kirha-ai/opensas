@@ -642,6 +642,108 @@ pub const Session = struct {
 /// concurrent Session would need this threaded through Library instead.
 var g_live: ?*State = null;
 
+/// GH#13 GAP-callexecutemacro — the Session driving the current run, live for
+/// the WHOLE run rather than only the `expandExec` window `g_live` covers.
+///
+/// Why a SECOND hook and not a wider `g_live`: `g_live` means "a step is
+/// running INSIDE a macro body", and `symputLocal` keys its scope rule on
+/// exactly that window (printed p.77 rule 1) — widening it would start routing
+/// open-code CALL SYMPUTs through the scoped table instead of the exec→macro
+/// queue. CALL EXECUTE needs the opposite: the macro processor, from ANY step,
+/// including the trailing remainder main.zig runs after `expandExec` returns.
+/// ponytail: one live Session per process (main.zig makes exactly one), the
+/// same assumption `g_live`/`g_unresolved` already make.
+var g_session: ?*Session = null;
+pub fn setLiveSession(s: ?*Session) void {
+    g_session = s;
+}
+
+/// GH#13 GAP-callexecutemacro — macro-process CALL EXECUTE's argument text AT
+/// CALL TIME and return the SAS language statements it generated (empty text
+/// when the argument was pure macro language). Null when no Session is live
+/// (the CLI setup pass, unit tests) so the caller can fail LOUD instead of
+/// queueing a `%` that the lexer will choke on.
+///
+/// THIS SPLIT IS THE FEATURE. Macro Language: Reference printed p.123, "CALL
+/// EXECUTE Routine Timing Details": "if CALL EXECUTE produces macro language
+/// elements, those elements execute immediately. If CALL EXECUTE produces SAS
+/// language statements, or if the macro language elements generate SAS language
+/// statements, those statements execute after the end of the DATA step's
+/// execution." Running `process` HERE is the "immediately" half — a %LET/%PUT
+/// inside the argument takes effect while the calling step is still executing,
+/// observable mid-step through SYMGET/RESOLVE. Handing the RETURNED text to
+/// exec.zig's execute queue is the "after the end of the DATA step" half.
+pub fn expandForExecute(text: []const u8) Error!?[]const u8 {
+    const sess = g_session orelse return null;
+    const st = &sess.st;
+    // Suppress the interleaved step flush (D-004) for the duration: with
+    // `exec_fn` set, `process` would run a generated `data …; run;`
+    // RE-ENTRANTLY, mid-step — precisely the timing p.123 forbids. Null it and
+    // `process` accumulates the whole generated program for us to queue.
+    const saved_ctx = st.exec_ctx;
+    const saved_fn = st.exec_fn;
+    // A stray top-level `%return`/`%goto` in the argument must not unwind the
+    // macro body we were CALLED FROM — that would silently drop the rest of an
+    // enclosing body (the GH#4 open-code-%return shape). Save the control flags
+    // too. `aborting` is deliberately NOT saved: it is sticky program-halt
+    // state and must escape (see State.aborting).
+    const saved_returning = st.returning;
+    const saved_goto = st.goto_target;
+    st.exec_ctx = null;
+    st.exec_fn = null;
+    st.returning = false;
+    st.goto_target = null;
+    defer {
+        st.exec_ctx = saved_ctx;
+        st.exec_fn = saved_fn;
+        st.returning = saved_returning;
+        st.goto_target = saved_goto;
+    }
+    var out: std.ArrayList(u8) = .empty;
+    try process(st, text, &out);
+    return try unmaskTriggers(st.a, out.items);
+}
+
+/// GH#13 GAP-callexecutemacro — the first macro TRIGGER still present in text
+/// that `expandForExecute` has already processed, or null when it is clean SAS.
+///
+/// Reached only when `process` deliberately left a `%` behind: `%nrstr` masks
+/// its argument's triggers and `unmaskTriggers` restores them, so a macro that
+/// GENERATES `%nrstr(%tally(1))` hands us text our queue drain cannot run (it
+/// lexes, it does not macro-process). Without this check that text reaches the
+/// lexer as `unexpected character '%'` — a USER-error rc 1 for what is in fact
+/// an opensas gap, which D-009/D-009b(i) says must be rc 2.
+///
+/// Quote handling mirrors `process`: `/* … */` and `'…'` spans are skipped
+/// because the macro processor never scanned them either (`sq_masks_triggers`),
+/// so a legitimate `put '%done';` is not a false positive. Inside `"…"` SAS
+/// DOES resolve triggers, so a surviving one there is genuinely unresolved.
+pub fn residualTrigger(text: []const u8) ?[]const u8 {
+    var i: usize = 0;
+    while (i < text.len) {
+        if (text[i] == '/' and i + 1 < text.len and text[i + 1] == '*') {
+            const rel = std.mem.indexOf(u8, text[i + 2 ..], "*/");
+            i = if (rel) |r| i + 2 + r + 2 else text.len;
+        } else if (text[i] == '\'') {
+            var j = i + 1;
+            while (j < text.len) : (j += 1) {
+                if (text[j] != '\'') continue;
+                if (j + 1 < text.len and text[j + 1] == '\'') {
+                    j += 1;
+                    continue;
+                }
+                break;
+            }
+            i = if (j < text.len) j + 1 else j;
+        } else if (text[i] == '%' and i + 1 < text.len and isNameStart(text[i + 1])) {
+            var e = i + 1;
+            while (e < text.len and isNameChar(text[e])) e += 1;
+            return text[i..e];
+        } else i += 1;
+    }
+    return null;
+}
+
 /// CLIN-macrounresolvedsilent — macro-trigger names the scanner could NOT
 /// resolve (lowercased keys, arena-owned), pending a deferred warning.
 ///
@@ -4687,11 +4789,13 @@ test "BUG-undefmacro: unresolved %FOO(args) warns + drops instead of LexError" {
     const a = arena.allocator();
     var diags = diag.Diagnostics.init(a);
     // The undefined call is swallowed (parens balanced) so no stray `%` reaches
-    // the lexer; a defined macro next to it still runs.
-    const out = try expand(a, "%macro ok;Z%mend;a %MAKE_SHELL(dm, keep=x) %ok b", &diags);
+    // the lexer; a defined macro next to it still runs. The name is arbitrary —
+    // what matters is a POSITIONAL + KEYWORD arg list on an UNDEFINED macro,
+    // which is where the parens-balancing swallow used to give up.
+    const out = try expand(a, "%macro ok;Z%mend;a %MAKE_TABLE(dm, keep=x) %ok b", &diags);
     try std.testing.expectEqualStrings("a  Zb", out);
     try std.testing.expectEqualStrings(
-        "WARNING: Apparent invocation of macro MAKE_SHELL not resolved.\n",
+        "WARNING: Apparent invocation of macro MAKE_TABLE not resolved.\n",
         try diags.render(),
     );
 }

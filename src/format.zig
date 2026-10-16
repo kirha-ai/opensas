@@ -489,9 +489,11 @@ fn lookupUserFmt(v: Value, spec: Spec) ?UserFmtEntry {
     for (user_catalog, 0..) |uf, i| {
         if (uf.is_picture) continue; // pictures render via renderPicture, not as literal labels
         // A character VALUE resolves a char-typed format referenced WITHOUT the
-        // `$` — SAS matches by name + value type there (the study's CNTLIN
-        // TYPE='C' codelists are applied `put(VISIT, VISNUM_ALL_PERIOD.)`,
-        // $-less; QA-charfmtnodollar). A `$fmt` on a numeric value still falls
+        // `$` — SAS matches by name + value type there. THE SHAPE that motivates
+        // it (D-011): a CNTLIN-built codelist catalog whose char entries carry
+        // TYPE='C', applied as `put(somecharvar, codelistfmt.)` with no `$` on
+        // the format name — legal SAS, and refusing it silently blanked every
+        // decode (QA-charfmtnodollar). A `$fmt` on a numeric value still falls
         // through to the default renderers.
         const type_ok = uf.is_char == spec.is_char or (uf.is_char and !spec.is_char and v == .str);
         if (!type_ok or !eqi(uf.name, spec.name)) continue;

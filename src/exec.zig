@@ -37,6 +37,7 @@ const lex = @import("lexer.zig");
 const dsfns = @import("dsfns.zig"); // SCL dataset access, for CALL LABEL
 const prx = @import("prx.zig"); // regex engine, for the CALL PRX routines
 const fns = @import("functions.zig"); // shared toInt guard (BUG-combcallcrash)
+const macro = @import("macro.zig"); // CALL EXECUTE macro-processes at call time (GH#13)
 
 // diag.Error (OutOfMemory + Lex/Parse/ExecError) so a step can abort LOUD — e.g.
 // output access to an ACCESS=READONLY libref (GH#15). A superset of the old
@@ -2778,7 +2779,7 @@ pub const Executor = struct {
             // ubiquitous SDTM `length …; set src;` schema-pin) leniently coerces the
             // source value the way opensas always has. opensas infers a source
             // column's type from CSV data, so an all-integer ID column (AESPID
-            // "1","2") reads as numeric though the study's real var is char $8;
+            // "1","2") reads as numeric though SDTM types that variable char $8;
             // halting there breaks correct programs (real SDTM AE/CM/MH). Only a
             // GENUINE conflict halts: two SET sources disagreeing (#69), or a char
             // LENGTH applied to a var ALREADY brought in numeric by a PRECEDING SET
@@ -5095,12 +5096,29 @@ pub const Executor = struct {
             }
             return;
         }
-        // CALL EXECUTE('program text') — queue full steps (often a PROC) to run
-        // AFTER this step finishes. The step driver is main.zig's runExpanded,
-        // unreachable from here (circular import), so we append to the library
-        // queue and main drains it FIFO (FEAT-callexecute). Non-char argument
-        // and %nrstr-style macro quoting fail LOUD (D-002): quoting functions
-        // would need the macro facility at unqueue time, which is long gone.
+        // CALL EXECUTE('program text') — macro-process the text NOW, then queue
+        // the SAS statements it generated to run AFTER this step finishes. The
+        // step driver is main.zig's runExpanded, unreachable from here
+        // (circular import), so we append to the library queue and main drains
+        // it FIFO (FEAT-callexecute). Non-char argument and %nrstr-style macro
+        // quoting fail LOUD (D-002).
+        //
+        // GH#13 GAP-callexecutemacro — THE TWO TIMINGS. Macro Language:
+        // Reference printed p.123, "CALL EXECUTE Routine Timing Details": "if
+        // CALL EXECUTE produces macro language elements, those elements execute
+        // immediately. If CALL EXECUTE produces SAS language statements, or if
+        // the macro language elements generate SAS language statements, those
+        // statements execute after the end of the DATA step's execution."
+        // So `macro.expandForExecute` runs here, inside the step (the
+        // "immediately" half: a %LET in the text is visible to a later SYMGET
+        // in this same step), and only its OUTPUT is queued (the "after the end
+        // of the step" half). It used to queue the raw argument verbatim, so
+        // `call execute('%rep(1)')` reached the lexer as a bare `%` —
+        // `unexpected character '%'`, rc 1, the whole run dead.
+        // ponytail: the queue drain lexes, it does NOT macro-process, which is
+        // why the expansion has to happen here rather than there — and also why
+        // %nrstr (whose whole point is deferring resolution PAST the queue)
+        // stays an rc-2 gap below rather than riding this path.
         if (eqi(c.name, "execute")) {
             const text = if (c.args.len == 1) switch (try self.ev.eval(&c.args[0])) {
                 .str => |s| s,
@@ -5155,9 +5173,37 @@ pub const Executor = struct {
                 // writes an output member over a live one.
                 // The reference TIPs this exact call as the documented workaround
                 // (comment above) — valid SAS we can't honour, so rc 2 (D-009).
+                //
+                // GH#13 UPDATE: the macro facility is no longer "long gone" at
+                // CALL EXECUTE time — the arm below now routes through it. This
+                // arm still stands, for the narrower and more precise reason:
+                // %NRSTR's whole POINT is to defer resolution past the queue,
+                // and it is the DRAIN that has no macro processor (main.zig
+                // hands queued text straight to runExpanded, which lexes). So
+                // honouring p.296 needs the masked text to survive the queue
+                // and be re-scanned on the way out, not a call-time expansion.
+                // Deliberately left out of GH#13's scope; see also the
+                // residual-trigger guard below, which catches the same shape
+                // when a MACRO generates the %NRSTR instead of the caller.
                 return failGap(self.diags, "CALL EXECUTE with macro-quoting functions (%nrstr/%str/…) is not supported", .{});
             }
-            try self.lib.execute_queue.append(self.arena, try self.arena.dupe(u8, text.?));
+            // GH#13 GAP-callexecutemacro: macro-process at CALL time (p.123).
+            const gen = (try macro.expandForExecute(text.?)) orelse
+                // No live Session: the CLI setup pass / a unit test. Queueing
+                // verbatim here is the OLD bug, so refuse loudly instead —
+                // rc 2, because a program that reaches this is valid SAS we
+                // simply cannot run from this context (D-009b(i)).
+                return failGap(self.diags, "CALL EXECUTE needs the macro processor, which is not available in this context", .{});
+            // A macro TRIGGER that survived expansion means `process` left it
+            // masked on purpose (%nrstr) — the drain cannot run it. Fail at the
+            // GAP class rather than letting the lexer call it a user error.
+            if (macro.residualTrigger(gen)) |trig|
+                return failGap(self.diags, "CALL EXECUTE generated an unresolved macro reference '{s}'; deferred macro resolution is not supported", .{trig});
+            // Pure macro language (`%let`, `%put`) generates no statements —
+            // it already ran above, so there is nothing to defer. Queueing the
+            // blank would make the drain lex an empty program.
+            if (std.mem.trim(u8, gen, " \t\r\n").len == 0) return;
+            try self.lib.execute_queue.append(self.arena, try self.arena.dupe(u8, gen));
             return;
         }
         // ── SCL / utility CALL routines that update their argument variables ──
@@ -9722,6 +9768,13 @@ test "CALL EXECUTE queues program text FIFO; non-char and %nrstr forms fail LOUD
     f.prime();
     var x = f.exec();
 
+    // GH#13 GAP-callexecutemacro: CALL EXECUTE macro-processes its argument at
+    // CALL time, so it needs the run's Session (main.zig publishes it; this test
+    // stands in for that). The no-Session arm is asserted in its own test below.
+    var session = macro.Session.init(f.a(), &f.diags);
+    macro.setLiveSession(&session);
+    defer macro.setLiveSession(null);
+
     // char argument → appended to the library queue, FIFO across invocations
     const a1 = [_]ast.Expr{.{ .str = "data _null_; put \"one\"; run;" }};
     _ = try x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &a1 } });
@@ -9755,6 +9808,90 @@ test "CALL EXECUTE queues program text FIFO; non-char and %nrstr forms fail LOUD
     // with 0 (or 2+) arguments when the syntax is CALL EXECUTE(argument).
     try t.expectError(error.ExecError, x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &.{} } }));
     try t.expectEqual(@as(usize, 2), f.lib.execute_queue.items.len);
+}
+
+test "GH#13 GAP-callexecutemacro: CALL EXECUTE macro-processes at CALL time, queues only the generated statements" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    var session = macro.Session.init(f.a(), &f.diags);
+    macro.setLiveSession(&session);
+    defer macro.setLiveSession(null);
+    // Define the macro the way a real run would: open-code expansion first.
+    _ = try session.expand("%macro rep(id); data _null_; put \"report for id &id\"; run; %mend;");
+
+    // THE REPORTED BUG. `call execute('%rep(1)')` used to queue the text
+    // VERBATIM, so the drain's lexer saw a bare `%` → "unexpected character
+    // '%'", rc 1. Now the macro is expanded HERE (Macro Language: Reference
+    // printed p.123: macro language elements "execute immediately") and only the
+    // SAS statements it generated are queued ("after the end of the DATA step's
+    // execution").
+    const a1 = [_]ast.Expr{.{ .str = "%rep(1)" }};
+    _ = try x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &a1 } });
+    try t.expectEqual(@as(usize, 1), f.lib.execute_queue.items.len);
+    try t.expect(std.mem.indexOf(u8, f.lib.execute_queue.items[0], "report for id 1") != null);
+    try t.expect(std.mem.indexOfScalar(u8, f.lib.execute_queue.items[0], '%') == null);
+    try t.expect(!f.diags.hasErrors());
+
+    // PURE macro language generates no SAS statements, so there is nothing to
+    // defer — the %LET's effect is all that survives, and it happened NOW, while
+    // this step is still executing (the other half of the p.123 split).
+    const a2 = [_]ast.Expr{.{ .str = "%let tag=queued;" }};
+    _ = try x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &a2 } });
+    try t.expectEqual(@as(usize, 1), f.lib.execute_queue.items.len); // nothing added
+    try t.expectEqualStrings("queued", try session.expand("&tag"));
+    try t.expect(!f.diags.hasErrors());
+}
+
+test "GH#13 GAP-callexecutemacro: no live macro session → loud rc-2 gap, never a verbatim queue (D-002/D-009)" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    // No Session published. Queueing verbatim here is exactly the bug, so the
+    // call refuses LOUDLY at the GAP class rather than letting the drain's lexer
+    // report a user error for an opensas limitation (D-009b(i)).
+    macro.setLiveSession(null);
+    diag.resetGap();
+    const a1 = [_]ast.Expr{.{ .str = "data _null_; put \"one\"; run;" }};
+    try t.expectError(error.ExecError, x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &a1 } }));
+    try t.expect(diagsHave(&f.diags, "needs the macro processor"));
+    try t.expect(diag.gapHit()); // rc 2, not 1
+    try t.expectEqual(@as(usize, 0), f.lib.execute_queue.items.len);
+    diag.resetGap();
+}
+
+test "GH#13 GAP-callexecutemacro: a trigger that SURVIVES expansion is a loud rc-2 gap, not a lexer error" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    var session = macro.Session.init(f.a(), &f.diags);
+    macro.setLiveSession(&session);
+    defer macro.setLiveSession(null);
+    // %NRSTR masks its argument's triggers and unmaskTriggers restores them, so
+    // a macro that GENERATES one hands us text the queue drain cannot run (it
+    // lexes, it does not macro-process). The direct `call execute('%nrstr(…)')`
+    // form is caught earlier by hasMacroQuoting; this is the generated-by-a-macro
+    // route past that gate.
+    _ = try session.expand("%macro gen; %nrstr(%tally(1)) %mend;");
+    diag.resetGap();
+    const a1 = [_]ast.Expr{.{ .str = "%gen" }};
+    try t.expectError(error.ExecError, x.runStmt(&.{ .call_ = .{ .name = "execute", .args = &a1 } }));
+    try t.expect(diagsHave(&f.diags, "unresolved macro reference"));
+    try t.expect(diag.gapHit()); // rc 2, not the lexer's rc-1 "unexpected character '%'"
+    try t.expectEqual(@as(usize, 0), f.lib.execute_queue.items.len);
+    diag.resetGap();
+
+    // And a single-quoted literal percent is NOT a false positive: the macro
+    // processor never scans '…' (sq_masks_triggers), so neither do we.
+    try t.expect(macro.residualTrigger("put 'progress: 50%done';") == null);
+    try t.expect(macro.residualTrigger("/* %leftover */ put 'x';") == null);
+    try t.expect(macro.residualTrigger("put \"%still_here\";") != null);
 }
 
 test "CALL SYMPUT/SYMPUTX write macro variables to the library store (G-callroutines)" {

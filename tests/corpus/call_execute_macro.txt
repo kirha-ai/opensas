@@ -1,0 +1,13 @@
+report for id 1
+report for id 2
+program finished
+step: before any call
+mid1=A
+mid2=AB
+step: after both calls
+deferred: acc was A
+deferred: acc was AB
+open code: acc = AB
+saleitem=&special
+saleitem=&special
+saleitem=&special

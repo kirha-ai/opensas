@@ -78,7 +78,7 @@ they don't block 100% of the *feasible* set.
 - [x] CALL CATT
 - [x] CALL CATX
 - [~] CALL COMPCOST   (N/A: COMPGED cost matrix (niche tuning))
-- [~] CALL EXECUTE   (N/A: queues SAS code — engine)
+- [~] CALL EXECUTE   (engine, not a value-returning routine: queues generated SAS code. GH#13 — the argument is macro-processed AT CALL TIME and only the SAS statements it generates are deferred to the step boundary, the two timings Macro Language Ref printed p.123 "CALL EXECUTE Routine Timing Details" prescribes; fixture call_execute_macro. Residual, loud at rc 2: %NRSTR/%STR-quoted text, whose whole point is deferring resolution PAST the queue drain — the drain lexes, it does not macro-process)
 - [x] CALL GRAYCODE   (Phase-F-callbatch; fixture call_combinatorics)
 - [~] CALL IS8601_CONVERT   (GH#50: only 'dt/dt'→'du' — two datetimes → duration seconds = later−earlier; every other from/to combo fails loud. Full model still absent: P-string durations with calendar Y/M components, the other interval forms (dt/du, du/dt), 6-component decomposition, calendar-aware duration arithmetic — disproportionate multi-mode build, full [x] deferred)
 - [x] CALL LABEL   (already implemented + tested; Phase-F-callbatch)

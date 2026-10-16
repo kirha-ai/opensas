@@ -1,0 +1,134 @@
+between
+x  lo  hi
+1   0   3
+5   4   6
+notbetween
+x  lo  hi
+1   4   6
+5   0   3
+9   0   3
+9   4   6
+like
+x  nm
+1  abc
+5  abc
+9  abc
+notlike
+x  nm
+1  xyz
+5  xyz
+9  xyz
+notparenlike
+x  nm
+1  xyz
+5  xyz
+9  xyz
+contains
+x  nm
+1  abc
+5  abc
+9  abc
+notcontains
+x  nm
+1  xyz
+5  xyz
+9  xyz
+isnull
+x  nm
+isnotnull
+x  nm
+1  abc
+1  xyz
+5  abc
+5  xyz
+9  abc
+9  xyz
+ismissing
+x  nm
+isnotmissing
+x  nm
+1  abc
+1  xyz
+5  abc
+5  xyz
+9  abc
+9  xyz
+in
+x  nm
+1  abc
+5  abc
+9  abc
+notin
+x  nm
+1  xyz
+5  xyz
+9  xyz
+eq
+x  lo
+1   1
+5   5
+9   9
+necaret
+x  lo
+1   5
+1   9
+5   1
+5   9
+9   1
+9   5
+neangle
+x  lo
+1   5
+1   9
+5   1
+5   9
+9   1
+9   5
+lt
+x  lo
+1   5
+1   9
+5   9
+gt
+x  lo
+5   1
+9   1
+9   5
+le
+x  lo
+1   1
+1   5
+1   9
+5   5
+5   9
+9   9
+ge
+x  lo
+1   1
+5   1
+5   5
+9   1
+9   5
+9   9
+eqandlike
+x  nm
+1  abc
+9  a
+betweenandcontains
+x  nm
+1  abc
+9  a
+likeoreq
+x  nm
+1  abc
+1  a
+5  abc
+5  xyz
+5  a
+9  abc
+9  a
+leftbetween
+x  lo  hi
+1   0   3
+5   4   6
+9   .   .
