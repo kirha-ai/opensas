@@ -9969,7 +9969,11 @@ pub fn runExport(cx: ProcCtx, toks: []const Token) diag.Error!void {
             // it) instead of silently skipping the token (GAP-procopts).
             i += 1;
         } else if (toks[i].tag == .lparen) {
-            i = skipParen(toks, i); // data=x(keep=…) — not routed through procInput; skip without false-firing on `keep`
+            // data=x(keep=…): the option list is EXTRACTED and APPLIED below via
+            // procInput (BUG-exportimportdsopts) — this arm only steps the header
+            // scanner past the balanced parens so `keep`/`where` inside them never
+            // false-fire the unknown-option arm.
+            i = skipParen(toks, i);
         } else if (toks[i].tag == .name) {
             // GAP-procopts: an unknown header option (`replaced`, `dbm=csv`, …)
             // used to be silently skipped by the bare `else i += 1`.
@@ -10001,13 +10005,30 @@ pub fn runExport(cx: ProcCtx, toks: []const Token) diag.Error!void {
         }
         i += 1; // `;` between sub-statements
     }
-    const ds = (if (data_name) |n| lib.find(n) else lastDataset(lib)) orelse {
+    const raw = (if (data_name) |n| lib.find(n) else lastDataset(lib)) orelse {
         // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
         // gap — the runSort (GH#8) absent-input arm: "File {s} does not
         // exist" + the runExpanded step-halt NOTE, rc 1. NOT unsupported().
         diags.report(.err, if (toks.len > 1) toks[1].line else 0, "File {s} does not exist", .{data_name orelse "_last_"}) catch {};
         return;
     };
+    // GH#20 BUG-exportimportdsopts: `data=x(keep=/drop=/where=/rename=/firstobs=/
+    // obs=)` options were PARSED PAST and dropped on the floor — the full table
+    // was serialized with the wrong columns, wrong rows and wrong names at rc 0.
+    // A CSV that silently disagrees with the program that wrote it is the worst
+    // failure class for clinical use (D-002, CLAUDE.md fail-loud). The options are
+    // documented on this very statement (Base SAS 9.4 Procedures Guide, 7th ed.,
+    // printed p. 851 `PROC EXPORT DATA=<libref.>SAS data set <(SAS data set
+    // options)>`, p. 852 "(SAS data set options) specifies SAS data set options",
+    // and the chapter's own worked example `data=sashelp.class (where=(sex='F'))`,
+    // printed p. 862). EXPORT's options sit on its INPUT, so route them through
+    // the SAME procInput every other reading PROC uses (the runSort pattern): it
+    // filters a COPY, so the library table is untouched for later steps, and it
+    // promotes a malformed/unknown option to a real `.err` + abort instead of
+    // writing a file. firstobs=/obs= are honoured here because this IS an input
+    // read (procInput passes input=true), which also picks up the global `options
+    // obs=/firstobs=` default range for free (BUG-globalobsproc).
+    const ds = try procInput(arena, raw, toks, diags);
     if (!eqi(dbms, "csv")) {
         unsupported("PROC EXPORT: only DBMS=CSV is supported");
         return;
@@ -10066,7 +10087,10 @@ pub fn runImport(cx: ProcCtx, toks: []const Token) diag.Error!void {
             replace = true;
             i += 1;
         } else if (toks[i].tag == .lparen) {
-            i = skipParen(toks, i); // out=x(keep=…) — skip without false-firing on `keep`
+            // out=x(keep=…): the option list is EXTRACTED and APPLIED to the
+            // imported dataset below (BUG-exportimportdsopts) — this arm only
+            // steps the header scanner past the balanced parens.
+            i = skipParen(toks, i);
         } else if (toks[i].tag == .name) {
             // GAP-procopts: an unknown header option used to be silently
             // skipped by the bare `else i += 1` — a typo'd `dbm=xlsx` then
@@ -10207,25 +10231,35 @@ pub fn runImport(cx: ProcCtx, toks: []const Token) diag.Error!void {
     if ((is_csv or is_dlm) and std.mem.trim(u8, bytes, " \t\r\n").len == 0) {
         return diags.fail(error.ExecError, toks[0].line, "PROC IMPORT: DATAFILE \"{s}\" is empty — no variables or observations to import", .{path});
     }
-    if (is_csv) {
-        const ds = try io.readDelimited(arena, bytes, out, delim orelse ',', getnames, datarow, true);
-        try lib.put(out, ds);
-    } else if (is_dlm) {
+    const ds: *Dataset = if (is_csv)
+        try io.readDelimited(arena, bytes, out, delim orelse ',', getnames, datarow, true)
+    else if (is_dlm) blk: {
         // DLM: the DELIMITER= char (SAS default a blank; TAB = a tab).
         const d: u8 = delim orelse (if (eqi(dbms, "tab")) '\t' else ' ');
-        const ds = try io.readDelimited(arena, bytes, out, d, getnames, datarow, true);
-        try lib.put(out, ds);
-    } else {
+        break :blk try io.readDelimited(arena, bytes, out, d, getnames, datarow, true);
+    } else blk: {
         if (!std.mem.startsWith(u8, bytes, "PK")) {
             unsupported("PROC IMPORT: not an XLSX workbook (legacy binary .xls is not supported)");
             return;
         }
-        const ds = readXlsx(arena, bytes, out, sheet) catch {
+        break :blk readXlsx(arena, bytes, out, sheet) catch {
             unsupported("PROC IMPORT: could not read the XLSX file");
             return;
         } orelse return; // readXlsx already printed a specific UNSUPPORTED
-        try lib.put(out, ds);
-    }
+    };
+    // GH#20 BUG-exportimportdsopts, the OTHER direction: `out=x(keep=/drop=/
+    // where=/rename=)` was parsed past and dropped, so the imported table landed
+    // with the wrong columns/rows/names at rc 0. The options are documented on
+    // this statement (printed p. 1328 `OUT=<libref.>SAS data set <(SAS data set
+    // options)>` + "SAS data set options specifies SAS data set options"). Unlike
+    // EXPORT's data=, these sit on an OUTPUT dataset, so they are applied to the
+    // freshly-read table through the SHARED out= helper (input=false → DKROCOND
+    // WARN severity for an unreferenced keep/drop/rename name, and firstobs=/obs=
+    // ignored exactly as SAS ignores them on an output data set — settled,
+    // BUG-outdsobsslice). Applied BEFORE lib.put so the library never holds the
+    // unfiltered table, not even transiently.
+    try applyOutOptions(arena, ds, toks, diags, "out");
+    try lib.put(out, ds);
 }
 
 // ── minimal XLSX reader (PROC IMPORT DBMS=XLSX, MACRO-xlsximport) ─────────────
