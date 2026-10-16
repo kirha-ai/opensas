@@ -75,7 +75,10 @@ pub fn build(b: *std.Build) void {
     // If neither case applies to you, feel free to delete the declaration you
     // don't need and to put everything under a single module.
     const exe = b.addExecutable(.{
-        .name = "sas",
+        // The installed CLI is `opensas` (zig-out/bin/opensas, dist/<t>/opensas).
+        // NOT the same string as the `sas` MODULE name above/below — that one is
+        // what source says in `@import("sas")` and must not be renamed with it.
+        .name = "opensas",
         .root_module = b.createModule(.{
             // b.createModule defines a new module just like b.addModule but,
             // unlike b.addModule, it does not expose the module to consumers of
