@@ -4789,11 +4789,13 @@ test "BUG-undefmacro: unresolved %FOO(args) warns + drops instead of LexError" {
     const a = arena.allocator();
     var diags = diag.Diagnostics.init(a);
     // The undefined call is swallowed (parens balanced) so no stray `%` reaches
-    // the lexer; a defined macro next to it still runs.
-    const out = try expand(a, "%macro ok;Z%mend;a %MAKE_SHELL(dm, keep=x) %ok b", &diags);
+    // the lexer; a defined macro next to it still runs. The name is arbitrary —
+    // what matters is a POSITIONAL + KEYWORD arg list on an UNDEFINED macro,
+    // which is where the parens-balancing swallow used to give up.
+    const out = try expand(a, "%macro ok;Z%mend;a %MAKE_TABLE(dm, keep=x) %ok b", &diags);
     try std.testing.expectEqualStrings("a  Zb", out);
     try std.testing.expectEqualStrings(
-        "WARNING: Apparent invocation of macro MAKE_SHELL not resolved.\n",
+        "WARNING: Apparent invocation of macro MAKE_TABLE not resolved.\n",
         try diags.render(),
     );
 }

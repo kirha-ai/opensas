@@ -7216,8 +7216,9 @@ fn isDeleteParenGapOption(kw: []const u8) bool {
 }
 
 /// `proc delete data=ds1 ds2 …;` — drop each named dataset from the library
-/// (SAS's between-step cleanup). Absent members warn (not fail-loud): the study
-/// deletes scratch tables that may never have been created (PROC-delete).
+/// (SAS's between-step cleanup). Absent members warn (not fail-loud): the
+/// real-world shape is a program that unconditionally deletes its scratch
+/// tables, some of which a conditional branch never created (PROC-delete).
 pub fn runDelete(cx: ProcCtx, toks: []const Token) diag.Error!void {
     const arena = cx.arena;
     const lib = cx.lib;
@@ -12301,8 +12302,11 @@ test "BUG-procimport: DBMS=EXCEL RANGE reads the named sheet; every gap fails lo
     var diags = diag.Diagnostics.init(a);
     const wb = "tests/corpus/includes/import_sample.xlsx";
 
-    // DV.sas's shape: DBMS=EXCEL + RANGE="Data$" → the NAMED sheet (the 2nd),
-    // not the first ("Info", a lone "city" cell) that ignoring RANGE would read.
+    // The legacy Excel-engine shape: DBMS=EXCEL + RANGE="Data$" → the NAMED
+    // sheet (the 2nd in this workbook), not the first ("Info", a lone "city"
+    // cell) that ignoring RANGE would read. Ignoring RANGE is silent WRONG
+    // DATA rather than an error, which is why this arm asserts the column
+    // names and the row shape and not merely that something imported.
     {
         g_test_last_unsup = "";
         const src = try std.fmt.allocPrint(a, "proc import out=d datafile=\"{s}\" dbms=excel replace; range=\"Data$\"; getnames=yes; run;", .{wb});

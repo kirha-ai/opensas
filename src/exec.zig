@@ -2779,7 +2779,7 @@ pub const Executor = struct {
             // ubiquitous SDTM `length …; set src;` schema-pin) leniently coerces the
             // source value the way opensas always has. opensas infers a source
             // column's type from CSV data, so an all-integer ID column (AESPID
-            // "1","2") reads as numeric though the study's real var is char $8;
+            // "1","2") reads as numeric though SDTM types that variable char $8;
             // halting there breaks correct programs (real SDTM AE/CM/MH). Only a
             // GENUINE conflict halts: two SET sources disagreeing (#69), or a char
             // LENGTH applied to a var ALREADY brought in numeric by a PRECEDING SET
