@@ -6,7 +6,8 @@ description: >-
   intake, triage, validate, dispatch, or close GitHub issues — e.g. "check the
   open issues", "pull new bugs from GitHub", "any new issues to work on", "triage
   GitHub issue #<N>", "close the fixed issues", or during the manager loop's backlog step.
-  Handles the full lifecycle: fetch open issues, gate each through a reproduce +
+  Handles the full lifecycle: fetch open issues the human has marked `ready`
+  (unlabeled issues are deliberately out of scope), gate each through a reproduce +
   SAS-doc validation step, create confirmed bugs as GH#-tagged tasks in jira.md,
   mark taken issues with the `ongoing` label so they are never pulled twice,
   dispatch to a dev with reproduction instructions, and close issues after their
@@ -21,39 +22,38 @@ procedure for moving bugs from **GitHub Issues** into the `jira.md` board and ba
 out again when fixed. The engineering value it protects: a reported bug should
 never be dispatched to a dev until someone has **proven it reproduces** and
 **confirmed against the SAS 9.4 docs that the expected behavior is actually
-correct SAS**. Devs are expensive and one-file-locked; sending them a phantom bug
+correct SAS**. A dev slot is expensive; sending it a phantom bug
 (reporter misunderstood SAS) or an un-reproducible one wastes a whole loop and
 pollutes the board. The validation gate is the point of this skill — everything
 else is bookkeeping around it.
 
 Repo: `kirha-ai/opensas`. All GitHub ops go through `gh`. All board edits obey
-the `manager` skill's rules (pathspec commits, one-file ownership, completed-task
-removal).
+the `manager` skill's rules (pathspec commits, completed-task removal).
 
 ## The lifecycle at a glance
 
 ```
-OPEN issue (no `ongoing` label)
+OPEN issue with `ready` label, without `ongoing` label
    │  1. FETCH
    ▼
-VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
+2. VALIDATION GATE  ── reproduce + check SAS doc ──►  verdict
    │                                                 │
-   ├─ CONFIRMED ──► 2. CREATE task in jira.md ──► 3. MARK taken (`ongoing` + comment) ──► 4. DISPATCH to a dev
+   ├─ CONFIRMED ──► 3. CREATE task in jira.md ──► 4. MARK taken (`ongoing` + comment) ──► 5. DISPATCH to a dev
    │
    ├─ NOT-A-BUG ──► comment with the doc citation, close issue, nothing on the board
    │
    └─ NEEDS-INFO ─► comment asking for a minimal repro, leave open, do NOT label
                                                  │
-   fix lands green ──► push working branch ──► 5. CLOSE (close issue w/ branch+commit, swap `ongoing`→`done`, remove task)
+   fix lands green ──► push working branch ──► 6. CLOSE (close issue w/ branch+commit, swap `ongoing`→`done`, remove task)
 ```
 
-Run lifecycle-diagram steps 1–4 during the manager skill's GitHub-issue intake
-(manager §1 step 5b). Run lifecycle-diagram step 5 — CLOSE (close the issue with
+The numbers are this skill's sections. Run steps 1–5 during the manager skill's
+GitHub-issue intake (manager §1 step 5b). Run step 6 — CLOSE (close the issue with
 the working branch + commit, then remove the task) — during the manager skill's
 verify & merge-gate (manager §1 step 6), after the green fix has been pushed to
 the remote working branch.
 
-### Pipeline, don't batch (steps 2→5)
+### Pipeline, don't batch (steps 2→6)
 
 These steps are a **per-issue pipeline**, not global phases. Do NOT validate every
 issue, then create every task, then dispatch every dev. The moment a validation
@@ -69,25 +69,36 @@ Concretely, per intake loop:
    Dispatch the dev the same turn the task hits the board — a validated task that
    sits at `TODO` for a loop is wasted latency.
 
-The only thing that gates dev dispatch is **file ownership** (the `manager`
-skill's §4):
-if a confirmed bug's owning file is already locked by a live task, leave it `TODO`
-with a `[deps: …]` note so it queues — everything else pipelines through. Confirmed
-bugs on distinct files dispatch to distinct devs in parallel (worktree isolation so
-their concurrent builds/commits don't race the shared tree), then one unified
-merge-gate at the end.
+The only thing that gates dev dispatch is an open **dependency** (the `manager`
+skill's §4): if a confirmed bug genuinely needs another task to land first, leave
+it `TODO` with a `[deps: …]` note so it queues — everything else pipelines
+through. **Files are NOT a gate.** Two confirmed bugs in the same `src/*.zig`
+dispatch to two devs in parallel; the landing protocol (`manager` §7: rebase in
+the dev's own worktree, `--ff-only` on the manager side) absorbs the overlap.
 
 ---
 
 ## 1. Fetch pending issues
 
-Pull open issues that are **not yet taken**. The `ongoing` label
-("Dispatched to jira.md and being worked on") is the taken-marker, so exclude it:
+Pull open issues that are **cleared for intake** and **not yet taken**. Two labels
+govern this:
+
+- **`ready`** — the human's opt-in marker: "this report is worth a dev slot, pull
+  it." An issue WITHOUT `ready` is invisible to the manager, no matter how well
+  written. This keeps raw inbound reports (questions, duplicates, half-formed
+  bugs) out of the pipeline until a human waves them through.
+- **`ongoing`** — "Dispatched to jira.md and being worked on", the taken-marker.
+
+So intake is `ready` AND NOT `ongoing`:
 
 ```bash
-# Everything still open and not yet pulled into jira.md
-gh issue list --state open --search '-label:ongoing' --json number,title,labels,body
+# Human-approved, still open, and not yet pulled into jira.md
+gh issue list --state open --label ready --search '-label:ongoing' --json number,title,labels,body
 ```
+
+Do **not** widen this filter on your own initiative. An unlabeled issue is not
+an oversight to be corrected by the manager — it is a human decision not to
+work on it yet.
 
 Cross-check against the board as a belt-and-suspenders dedupe — every open issue
 already on the board carries its `GH#` id, so an issue whose number already
@@ -97,7 +108,9 @@ appears in `jira.md` has been taken even if the label is missing:
 grep -oE 'GH#[0-9]+' jira.md | sort -u
 ```
 
-If nothing new: say so in one line and stop. Don't re-triage taken issues.
+If nothing new: say so in one line and fall through to backlog work (§8). An
+empty `ready` queue is the normal steady state, not an anomaly. Don't re-triage
+taken issues and don't go looking for unlabeled ones.
 
 ---
 
@@ -151,20 +164,21 @@ Act on the verdict:
 
 ## 3. Create the task in jira.md
 
-Add confirmed bugs under the **`### ★ GITHUB ISSUES`** section of `jira.md`
-(matching the existing format). The task line **keeps the `GH#` id** (that is how
-step 6 closes the right issue) and **embeds the validated reproduction** so the
-dev can start immediately without re-triaging:
+`jira.md` is ONE flat list — there is no per-source section. Add the confirmed bug
+as a line in the board's own format (the spec lives in jira.md's header; match it,
+don't invent a variant). The **`GH#<N>` id goes in the source paren** — that is how
+step 6 closes the right issue — and the line **embeds the validated reproduction**
+so the dev can start immediately without re-triaging:
 
 ```
-- [TODO] GH#<N> ISS-<shortslug> — <one-line bug summary>. Repro: <minimal SAS
-  one-liner or ref>; EXPECTED <x> vs ACTUAL <y> (SAS doc: <citation>). Fix: <the
-  suspected file/function from validation>.  [owns: src/<file>.zig]
+- [TODO] <ID> (GH#<N>, <severity>) — <one-line bug summary>. Repro: <minimal SAS
+  one-liner or ref>; EXPECTED <x> vs ACTUAL <y> (SAS doc: <citation>).
+  (likely: src/<file>.zig)
 ```
 
-State starts `TODO`. Respect the `manager` skill's §4: never create a task owning a file
-that a live task already owns — if the owning file is locked, note the dependency
-and leave it `TODO` unassigned (it queues) rather than dispatching a conflict.
+State starts `TODO`. The `(likely: …)` tail is a **hint**, never a reservation:
+the dev decides what it actually changes, and such a hint has pointed at the
+wrong file before (D-019).
 
 Keep `jira.md` under ~200 lines (completed-task removal still applies).
 
@@ -180,16 +194,21 @@ gh issue edit <N> --add-label ongoing
 gh issue comment <N> --body "Tracked in jira.md as GH#<N> ISS-<shortslug> — validated repro attached, dispatched. Will close on fix."
 ```
 
+Leave `ready` in place — it records that a human approved this issue for intake,
+and `ongoing`/`done` already carry the state.
+
 (If a workflow label ever goes missing from the repo, recreate it:
+`gh label create ready --color 0e8a16 --description "ready to be handled by our manager"`,
 `gh label create ongoing --color fbca04 --description "Dispatched to jira.md and being worked on"`
-and `gh label create done --color 7a2cd3 --description "Fixed and closed; the fix is on the working branch"`.)
+and `gh label create done --color 7a2cd3 --description "Fixed and closed; the fix is on the working branch"`.
+The manager never applies `ready` itself — only the human does.)
 
 ---
 
 ## 5. Dispatch to a dev
 
-Assign the new `TODO` → `DOING @devN` per the `manager` skill's §4 (one-file ownership,
-balance load, critical-path first). Because the task line already carries the
+Assign the new `TODO` → `DOING @devN` per the `manager` skill's §4 (deps, load,
+critical-path first). Because the task line already carries the
 reproduction, expected-vs-actual, and the suspected file, the dev has everything
 needed to start. No separate handoff message is required beyond the board.
 
@@ -258,9 +277,9 @@ performed manually from GitHub after the merged PR's CI is green.
 queue is NOT "done" — it means switch to backlog work, not stop. Every loop, in
 order:
 
-1. **Intake** (steps 1–6 above): pull, validate, dispatch, and close confirmed
-   GitHub issues after their fixes are green and pushed.
-2. **If the issue queue is empty:** immediately fall through to the classic
+1. **Intake** (steps 1–6 above): pull `ready` issues, validate, dispatch, and
+   close confirmed GitHub issues after their fixes are green and pushed.
+2. **If the `ready` queue is empty:** immediately fall through to the classic
    `manager` loop — keep every dev on exactly one live task drawn from the
    backlog (Phase-G grammar gaps, Phase-F functions, corpus-driven failure classes
    §5), and **always nudge/relaunch the QA agent** (lldb + arch-UB sweep, §8 of
@@ -284,8 +303,11 @@ gaps, exploring, improving — in parallel with whatever is in flight.
 
 ## Guardrails
 
+- **Never pull an issue the human hasn't marked `ready`** (§1). The label is the
+  human's opt-in; its absence is a decision, not an oversight. The manager never
+  applies `ready` to an issue itself.
 - **Never dispatch an unvalidated issue.** The gate exists because a phantom bug
-  burns a full dev loop and a file lock. When unsure, verdict is `NEEDS-INFO`, not
+  burns a whole dev loop. When unsure, verdict is `NEEDS-INFO`, not
   `CONFIRMED`.
 - **The docs outrank the reporter.** A confident bug report describing non-SAS
   behavior is `NOT-A-BUG`. Cite the doc every time.
@@ -295,8 +317,8 @@ gaps, exploring, improving — in parallel with whatever is in flight.
 - **Obey manager git rules:** pathspec commits only (`git commit jira.md -m "..."`),
   never `git add -A`, never push a red tree or a protected branch. Commit message:
   `manager: <what> — one line`.
-- **Don't touch feature code.** This skill only reads `src/` to locate the owning
-  file for the task; the dev writes the fix.
+- **Don't touch feature code.** This skill only reads `src/` to write the
+  `(likely: …)` hint; the dev writes the fix and picks the files.
 - **Human owns PR/merge/release (the protected-branch handoff in §7).** The
   manager may close a fixed issue only after its green fix is pushed to the
   current non-protected working branch.
