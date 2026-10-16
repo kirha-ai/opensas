@@ -10022,7 +10022,22 @@ pub fn runExport(cx: ProcCtx, toks: []const Token) diag.Error!void {
     if (!putnames) if (std.mem.indexOfScalar(u8, csv, '\n')) |nl| {
         csv = csv[nl + 1 ..];
     };
-    if (!io.writeFileRaw(path, csv)) unsupported("PROC EXPORT: could not write the output file");
+    if (!io.writeFileRaw(path, csv)) {
+        // BUG-procmissingfilerc (GH#21): an unwritable EXTERNAL file is a USER
+        // error (D-009 rc 1), not an opensas gap — EXPORT itself worked, the
+        // caller's OUTFILE= path is wrong (missing directory, read-only target,
+        // full disk). rc 2 told a downstream agent "file an opensas issue" for a
+        // path typo. Same shape as the five BUG-procmissingrc2 absent-input arms
+        // (MEANS/FREQ/TRANSPOSE/REPORT/UNIVARIATE) and as exec.zig's INFILE open
+        // failure, which has always been rc 1 ("Physical file does not exist,
+        // {s}") — D-009b corollary: one condition must not carry two rcs. The
+        // plain .err report (NOT unsupported(), NOT a fail() propagation) is what
+        // lets runExpanded emit THIS step's halt NOTE and arm BUG-errhalt's
+        // later-step skip. writeFileRaw collapses every open/write error into
+        // false, so the message names the path and does not guess WHICH one.
+        diags.report(.err, toks[0].line, "PROC EXPORT: cannot write the output file \"{s}\" — check the directory exists and is writable", .{path}) catch {};
+        return;
+    }
 }
 
 /// `PROC IMPORT datafile="path" out=DS [dbms=csv|xlsx] [replace]; [sheet="S";]` —
@@ -10164,9 +10179,23 @@ pub fn runImport(cx: ProcCtx, toks: []const Token) diag.Error!void {
         return;
     }
     const bytes = io.readFileRaw(arena, path) orelse {
-        // name the path: a bogus/undelivered external file (DV.sas's E:\ paths)
-        // must read as source skew in the histogram, not an interpreter bug
-        unsupported(try std.fmt.allocPrint(arena, "PROC IMPORT: could not read DATAFILE \"{s}\"", .{path}));
+        // BUG-procmissingfilerc (GH#21): an unreadable EXTERNAL file is a USER
+        // error (D-009 rc 1), not an opensas gap — IMPORT is implemented, the
+        // caller's DATAFILE= path is wrong or undelivered. Naming the path was
+        // always the point (a bogus/undelivered input must read as source skew,
+        // not an interpreter bug); rc 2 undid that by telling a downstream agent
+        // to file an opensas issue. Same shape as the five BUG-procmissingrc2
+        // absent-input arms and as exec.zig's INFILE open failure, rc 1 since
+        // ISS-infilemissing ("Physical file does not exist, {s}") — D-009b
+        // corollary: one condition must not carry two rcs. ONE read site covers
+        // every DBMS we support (CSV, DLM/TAB, XLSX/EXCEL/XLS), and the DBMS gap
+        // guard above already ran, so an UNSUPPORTED dbms still exits 2 — as does
+        // a successfully-read but unparseable XLSX below (a real opensas gap).
+        // The plain .err report (NOT unsupported(), NOT a fail() propagation) is
+        // what lets runExpanded emit THIS step's halt NOTE and arm BUG-errhalt's
+        // later-step skip. readFileRaw collapses open AND read errors into null,
+        // so the message does not claim "does not exist".
+        diags.report(.err, toks[0].line, "PROC IMPORT: cannot read DATAFILE \"{s}\" — check the path exists and is readable", .{path}) catch {};
         return;
     };
     // GAP-importtypes: an empty (or all-whitespace) delimited input has NO
@@ -12276,12 +12305,18 @@ test "BUG-procimport: DBMS=EXCEL RANGE reads the named sheet; every gap fails lo
         try runImport(.{ .arena = a, .lib = &lib, .diags = &diags }, try lex.tokenize(a, "proc import out=e datafile=\"no/such.accdb\" dbms=accdb; run;", &diags));
         try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "DBMS=accdb") != null);
     }
-    // a missing DATAFILE names the path — an undelivered external file (DV.sas's
-    // E:\ paths) must read as source skew in the histogram, not a mystery
+    // a missing DATAFILE names the path — an undelivered external file (a
+    // Windows-drive path in a program run elsewhere) must read as source skew,
+    // not a mystery. BUG-procmissingfilerc (GH#21) moved it off unsupported()
+    // onto the rc-1 user-error arm, so the path now shows up in a captured
+    // ERROR, not in an UNSUPPORTED line — same loudness, correct D-009 class.
     {
         g_test_last_unsup = "";
         try runImport(.{ .arena = a, .lib = &lib, .diags = &diags }, try lex.tokenize(a, "proc import out=e datafile=\"E:\\nope\\gone.xlsx\" dbms=excel; run;", &diags));
-        try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "gone.xlsx") != null);
+        try t.expectEqualStrings("", g_test_last_unsup); // NOT a gap any more
+        try t.expect(std.mem.indexOf(u8, try diags.render(), "gone.xlsx") != null);
+        try t.expect(diags.hasStepErrors());
+        try t.expect(lib.find("e") == null);
     }
     // a non-zip payload behind an Excel DBMS → loud legacy-.xls message
     {
@@ -12347,6 +12382,82 @@ test "GAP-importtypes: an EMPTY import file is an ERROR, no 0-variable dataset (
     const h = lib.find("h").?;
     try t.expectEqual(@as(usize, 2), h.columns.items.len);
     try t.expectEqual(@as(usize, 0), h.rowCount());
+}
+
+test "BUG-procmissingfilerc (GH#21): an unreadable/unwritable EXTERNAL file is a rc-1 STEP error, not a gap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    diag.resetGap(); // process-global: an earlier test's gap would leak into the rc asserts
+
+    // THE DEFECT: both external-file failures went through unsupported() → rc 2,
+    // which tells a downstream agent "opensas cannot do this / file an issue"
+    // when the truth is "your path is wrong" (D-009: 1 = fix your SAS). The fix
+    // is the five BUG-procmissingrc2 arms' shape — a plain .err report at rc 1,
+    // NEVER diag.markGap() — and it matches exec.zig's INFILE open failure,
+    // which has been rc 1 since ISS-infilemissing (D-009b corollary: the same
+    // condition must not carry two rcs). D-003: captured reporter, no child.
+    //
+    // A directory that nothing in the suite creates, so the read really fails
+    // and the write really has nowhere to land (no permission games needed).
+    const nodir = ".zig-cache/opensas_procmissingfilerc_no_such_dir";
+    try t.expect(!io.fileExistsRaw(nodir));
+
+    // IMPORT: every DBMS opensas supports funnels through the ONE
+    // io.readFileRaw site, so all four spellings must now land on rc 1. The
+    // DBMS gap guard runs BEFORE the read, so an unsupported DBMS still exits 2
+    // (that arm is unchanged) — this loop proves the supported ones do not.
+    for ([_][]const u8{ "csv", "dlm", "tab", "xlsx", "excel" }) |dbms| {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        const src = try std.fmt.allocPrint(a, "proc import datafile=\"{s}/in.csv\" out=z dbms={s} replace; getnames=yes; run;", .{ nodir, dbms });
+        try runImport(.{ .arena = a, .lib = &lib, .diags = &diags }, try lex.tokenize(a, src, &diags));
+        try t.expectEqual(@as(usize, 1), diags.list.items.len);
+        try t.expectEqual(diag.Severity.err, diags.list.items[0].severity);
+        try t.expect(!diags.list.items[0].recoverable); // arms BUG-errhalt's later-step skip
+        try t.expectEqual(@as(usize, 1), diags.list.items[0].line); // the proc-keyword line
+        try t.expect(std.mem.indexOf(u8, diags.list.items[0].message, "cannot read DATAFILE") != null);
+        try t.expect(std.mem.indexOf(u8, diags.list.items[0].message, nodir) != null); // names the PATH
+        try t.expect(diags.hasStepErrors());
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors())); // rc 1, was 2
+        try t.expect(lib.find("z") == null); // and no plausible empty table
+    }
+
+    // EXPORT: a bad directory / read-only target / full disk is all caller-side.
+    {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        try lib.put("have", try buildHave(a));
+        const src = try std.fmt.allocPrint(a, "proc export data=have outfile=\"{s}/out.csv\" dbms=csv replace; run;", .{nodir});
+        try runExport(.{ .arena = a, .lib = &lib, .diags = &diags }, try lex.tokenize(a, src, &diags));
+        try t.expectEqual(@as(usize, 1), diags.list.items.len);
+        try t.expectEqual(diag.Severity.err, diags.list.items[0].severity);
+        try t.expect(!diags.list.items[0].recoverable);
+        try t.expectEqual(@as(usize, 1), diags.list.items[0].line);
+        try t.expect(std.mem.indexOf(u8, diags.list.items[0].message, "cannot write the output file") != null);
+        try t.expect(std.mem.indexOf(u8, diags.list.items[0].message, nodir) != null); // names the PATH
+        try t.expect(diags.hasStepErrors());
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), diags.hasErrors())); // rc 1, was 2
+        try t.expect(!io.fileExistsRaw(nodir)); // nothing was conjured on the way out
+    }
+
+    // THE BOUNDARY this ticket deliberately does NOT move: a file that WAS read
+    // and then fails to PARSE as a workbook is a genuine opensas gap — rc 2
+    // stays. "PK" is the ZIP magic, so the not-an-XLSX guard passes it through
+    // to readXlsx, which finds no central directory.
+    {
+        var lib = Library.init(a);
+        var diags = diag.Diagnostics.init(a);
+        const path = ".zig-cache/opensas_procmissingfilerc_corrupt.xlsx";
+        try t.expect(io.writeFileRaw(path, "PK\x03\x04 not really a workbook"));
+        const src = try std.fmt.allocPrint(a, "proc import datafile=\"{s}\" out=z dbms=xlsx replace; run;", .{path});
+        g_test_last_unsup = "";
+        try runImport(.{ .arena = a, .lib = &lib, .diags = &diags }, try lex.tokenize(a, src, &diags));
+        try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "XLSX") != null);
+        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), diags.hasErrors())); // still a gap
+        g_test_last_unsup = "";
+    }
+    diag.resetGap();
 }
 
 test "PROC DATASETS DELETE/KILL unlink on-disk members — no undead datasets (BUG-datasetsdeletedisk)" {
