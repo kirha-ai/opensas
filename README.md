@@ -38,7 +38,7 @@ Grab a binary from the [releases page](https://github.com/kirha-ai/opensas/relea
 
 ```sh
 git clone https://github.com/kirha-ai/opensas && cd OpenSAS
-zig build -Doptimize=ReleaseFast        # binary at zig-out/bin/sas
+zig build -Doptimize=ReleaseFast        # binary at zig-out/bin/opensas
 ```
 
 Write a program:
@@ -65,14 +65,14 @@ run;
 Run it:
 
 ```
-$ sas vitals.sas
+$ opensas vitals.sas
 usubjid   visit      sysbp   diabp     map
 
 S002      WEEK4        135      88   103.7
 S002      BASELINE     142      91     108
 ```
 
-`sas --sasautos ./macros program.sas` adds an autocall macro library. A
+`opensas --sasautos ./macros program.sas` adds an autocall macro library. A
 `libname` points to a directory; members resolve as `.sas7bdat`, `.xpt` or
 `.csv`, and datasets the program writes land there in the same formats.
 [`tests/programs/dm`](tests/programs/dm) is a complete example: a raw

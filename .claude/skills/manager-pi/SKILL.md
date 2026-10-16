@@ -49,7 +49,7 @@ a dev fixes it.
 - **Fuzz/probe via the exe → clean-rebuild first** (`rm -rf .zig-cache zig-cache &&
   zig build`); a stale `zig-out` under concurrent worktree builds fakes bugs
   (tick-128). State it in every fuzz-agent charter. (The manager's `zig build` gate
-  rebuilds — safe; a bare `./zig-out/bin/sas` is not.)
+  rebuilds — safe; a bare `./zig-out/bin/opensas` is not.)
 - **Event-driven once exhausted** — an agent clean ≈3+ runs whose only work left is
   "verify a fix when it lands" stops relaunching every tick; re-arm on its trigger.
   perf (relaunch on a PERF-* landing); doc-finder (tick139); and **QA too as of

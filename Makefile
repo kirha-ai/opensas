@@ -1,5 +1,5 @@
-# Cross-compile the `sas` binary. Zig cross-compiles natively — no external
-# toolchain. Output: dist/<triple>/sas[.exe]. Override OPT=Debug for debug builds.
+# Cross-compile the `opensas` binary. Zig cross-compiles natively — no external
+# toolchain. Output: dist/<triple>/opensas[.exe]. Override OPT=Debug for debug builds.
 OPT ?= ReleaseFast
 
 # GH#10 ISS-versionflag: the release workflow passes the git tag through

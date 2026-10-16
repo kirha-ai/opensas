@@ -493,7 +493,7 @@ Spawn it like a dev (background `Agent`), with a QA charter.
   job**. This is where lldb beats reading a diff.
 
 **Debug with lldb.** Lazy first cut from its Bash tool: `lldb -batch -o run -o bt
--o "frame variable" -- ./zig-out/bin/sas prog.sas`. For stepping/watchpoints, QA
+-o "frame variable" -- ./zig-out/bin/opensas prog.sas`. For stepping/watchpoints, QA
 drives lldb across successive Bash calls.
 
 **QA does NOT build features.** If QA finds an unimplemented feature it **files a
@@ -525,7 +525,7 @@ allocations OOMed a full pipeline at 17GB on 2MB of input.)
 
 **Measure first, always.** The toolkit, in order of reach:
 - for any program,
-  `/usr/bin/time -l ./zig-out/bin/sas prog.sas` → wall + `maximum resident set
+  `/usr/bin/time -l ./zig-out/bin/opensas prog.sas` → wall + `maximum resident set
   size`. Always on a `-Doptimize=ReleaseFast` build — Debug-only slowness is
   usually not a ticket (see PERF-timeoutresiduals).
 - **Scale probe:** rerun with the input scaled ×10 (synthetic `do i=1 to N` data
@@ -599,7 +599,7 @@ for a heading.
 **Method (one surface per pass, adversarial):** pick a doc surface — a grammar
 production, a function, a statement's option list, a semantic rule — and try to
 **break opensas against it**: write the smallest `.sas` probe that exercises the
-doc's stated behavior, run it on `./zig-out/bin/sas`, and compare ACTUAL vs the
+doc's stated behavior, run it on `./zig-out/bin/opensas`, and compare ACTUAL vs the
 doc. A production that parses but does the wrong thing, an option silently
 ignored, a function that's missing or off by a rule, a default that differs — all
 are findings. Cite the exact doc location (EBNF production name, function page,

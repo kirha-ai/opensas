@@ -58,7 +58,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     if (file == null) {
-        std.debug.print("usage: sas [--sasautos <dir>] <file.sas>\n", .{});
+        std.debug.print("usage: opensas [--sasautos <dir>] <file.sas>\n", .{});
         return;
     }
     sas.macro.setAutocallDir(sasautos);
