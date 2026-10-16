@@ -54,14 +54,6 @@ jobs:
         # Two names per binary: versioned (audit trail / pinning) and STABLE
         # (opensas-<target>) so releases/latest/download/opensas-<target> always
         # resolves to the newest published build.
-        #
-        # DEPRECATED ALIAS: the pre-rename names (sas-<tag>-<t>, sas-<t>) are
-        # STILL published, because consumers mount release assets BY NAME and
-        # track `latest` without pinning a tag — dropping them would break
-        # kirha-agents' three SAS agents (clinical-data-studio,
-        # exystat-sas-code-generator, opensas-coder) the moment this ships.
-        # Removal is a deliberate follow-up AFTER those consumers are on the new
-        # names; publishing both makes the rollout order-independent.
         run: |
           set -eu
           mkdir -p out
@@ -70,20 +62,13 @@ jobs:
           ext=""; case "$bin" in *.exe) ext=".exe";; esac
           cp "$bin" "out/opensas-${{ github.event.release.tag_name }}-$t$ext"
           cp "$bin" "out/opensas-$t$ext"
-          # deprecated aliases — see the comment above before removing
-          cp "$bin" "out/sas-${{ github.event.release.tag_name }}-$t$ext"
-          cp "$bin" "out/sas-$t$ext"
       - uses: actions/upload-artifact@v4
         with:
           name: bin-${{ matrix.target }}
           path: out/
           if-no-files-found: error
 
-  # The web demo's wasm reactor. Deliberately NOT renamed with the CLI: its asset
-  # (sas.wasm) is consumed by kirha-landing, which copies it into public/sas.wasm
-  # by hand and fetches "/sas.wasm" (v2/src/hooks/use-sas-engine.ts). Renaming it
-  # is a separate change coordinated with that repo.
-  # Not in the matrix above: it has no dist/<t>/opensas
+  # The web demo's wasm reactor. Not in the matrix above: it has no dist/<t>/opensas
   # layout and no OPT knob (target/optimize are fixed in build.zig).
   wasm:
     needs: gate
