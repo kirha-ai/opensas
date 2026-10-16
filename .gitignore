@@ -5,7 +5,7 @@ style
 dist/
 output/
 
-web/sas.wasm
+web/opensas.wasm
 
 # macOS Finder metadata
 .DS_Store

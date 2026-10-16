@@ -87,8 +87,8 @@ jobs:
         run: |
           set -eu
           mkdir -p out
-          cp web/sas.wasm "out/sas-${{ github.event.release.tag_name }}.wasm"
-          cp web/sas.wasm out/sas.wasm
+          cp web/opensas.wasm "out/opensas-${{ github.event.release.tag_name }}.wasm"
+          cp web/opensas.wasm out/opensas.wasm
       - uses: actions/upload-artifact@v4
         with:
           name: bin-wasm

@@ -221,12 +221,12 @@ pub fn build(b: *std.Build) void {
 
     // Web demo: `zig build wasm` compiles the interpreter to wasm32-wasi (a
     // reactor — no main; wasm.zig exports alloc/run/outPtr/…) and drops
-    // web/sas.wasm next to web/index.html. Serve `web/` statically to demo.
+    // web/opensas.wasm next to web/index.html. Serve `web/` statically to demo.
     // wasi (not freestanding) so the fail-loud std.debug.print paths keep
     // working — index.html shims fd_write in ~20 lines of JS.
     const wasm_target = b.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .wasi });
     const wasm = b.addExecutable(.{
-        .name = "sas",
+        .name = "opensas",
         .root_module = b.createModule(.{
             .root_source_file = b.path("src/wasm.zig"),
             .target = wasm_target,
@@ -246,8 +246,8 @@ pub fn build(b: *std.Build) void {
     });
     wasm.entry = .disabled;
     wasm.rdynamic = true; // keep the `export fn`s visible
-    const wasm_step = b.step("wasm", "Build web/sas.wasm for the web demo");
-    wasm_step.dependOn(&b.addInstallFile(wasm.getEmittedBin(), "../web/sas.wasm").step);
+    const wasm_step = b.step("wasm", "Build web/opensas.wasm for the web demo");
+    wasm_step.dependOn(&b.addInstallFile(wasm.getEmittedBin(), "../web/opensas.wasm").step);
     // Merge gate: `zig build test` also COMPILES the wasm target (no install),
     // so a native-only-valid change (u6-shift on usize, threaded allocator)
     // can't land green and break the web demo.

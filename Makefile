@@ -25,7 +25,7 @@ all: arm amd windows
 arm amd windows macos:
 	zig build $(VERSION_FLAG) -Dtarget=$($@) -Doptimize=$(OPT) --prefix dist/$@
 
-# Web demo: builds web/sas.wasm (target/optimize are fixed in build.zig).
+# Web demo: builds web/opensas.wasm (target/optimize are fixed in build.zig).
 wasm:
 	zig build $(VERSION_FLAG) wasm
 
