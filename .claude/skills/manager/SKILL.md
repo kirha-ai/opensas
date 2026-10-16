@@ -13,10 +13,9 @@ description: >-
   jira.md, and is the ONLY agent that pushes the current human-created working
   branch. It never pushes or merges a protected branch. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
-  step 5b of this loop). One rotating audit slot alternates the perf agent (§8b —
-  profiles real programs, files measured PERF-* tickets) with the doc-finder (§8c
-  — adversarial SAS-9.4-doc audit, files GAP-*/BUG-* conformance tickets); exactly
-  one is live at a time (loop step 5c).
+  step 5b of this loop). One pressure-gated audit slot rotates QA (§8), perf
+  (§8b), and doc-finder (§8c) — one live at a time; a source is skipped while
+  it has more than 5 dispatchable tickets on the board (loop step 5c).
 ---
 
 # Manager — operating manual
@@ -38,19 +37,9 @@ is never a loop step.**
 the PROCs and macro language). Progress is measured by the conformance corpus
 (§5), not by vibes.
 
-**Current phases — G & F run in parallel:**
-- **Phase G:** implement **100% of `docs/sas9.4.ebnf`**. Every un-`(* opensas *)`
-  production is a gap (jira "Phase G" list). A feature is done only with a
-  fixture AND its grammar production annotated `(* opensas *)`.
-- **Phase F:** implement **all 615 functions** in `docs/sas-functions.md` (the
-  tracker; `[x]`=done). Devs read ONE function's PDF page at a time — never bulk
-  the 1742-page PDF. Tick `[x]` + add a fixture per fn.
-
-**Throughput rule:** `functions.zig` is one file → **exactly one dev/loop batches
-Phase-F functions** (20-40/loop); other devs work Phase-G gaps in other files.
-QA verifies each + audits annotations (it has caught false `(* opensas *)`
-markers). Phases complete when the grammar note is empty AND the checklist is
-100% (minus `[~]` truly-infeasible fns). Then resume open-ended §5.
+Durable trackers: `docs/sas-functions.md` (`[x]`/`[~]` per function) and
+`docs/sas9.4.ebnf` (`(* opensas *)` per production) — a feature is done only
+with a fixture AND its tracker entry, per CLAUDE.md's Definition of Done.
 
 ---
 
@@ -64,20 +53,31 @@ gate it, dispatch the next. Each iteration:
    human-created working branch and is NOT `main` or `master`. If HEAD is detached
    or the current branch is protected, do not commit, dispatch, switch branches,
    or push: ask the human to create/check out a working branch, then resume.
-   Commit any untracked *source* before fanning
-   out — untracked files are invisible to git and a dev's rework can silently
-   delete them (this cost us the original `lexer.zig`). Use an explicit pathspec,
-   never `git add -A` (a teammate may have half-done WIP in the shared tree).
+   **Main tree must be clean at startup:** no uncommitted edits, no untracked
+   files; if it is not, stop and ask the human before anything else (§2).
+   **Unclean-shutdown recovery (dev worktrees exist at startup):** the
+   previous loop died without its stop procedure — standing assumption: one
+   operator, one machine, one checkout. Crude on purpose (rare event, zero
+   judgment calls; unlanded work is discarded — the same semantics as the
+   stop deadline):
+   1. Every `[DOING @devN]` → `[TODO]`. A task landed-but-not-yet-removed
+      converges harmlessly on redo (§7 Anti-duplication).
+   2. Delete every dev worktree and branch: `git worktree remove --force
+      ../opensas-devN` + `git branch -D devN`. (`wip/*` refs are ticket
+      forensics — leave them.)
+   3. If the working branch is ahead of its upstream: run the consolidated
+      gate on the tip; green → push (step 7). Landed work survives a crash;
+      only its push can be missing.
+   Then start the loop normally.
 1. **Sense.** Read `jira.md`. Run `git log --oneline -20` and `zig build test`.
    Note what merged since last loop, what's green/red, what each dev is on. For
    liveness, use the subagent task list / completion notifications (§7 Driving devs).
-2. **Reconcile.** Update every task's state (§3 Task states) to match reality. A task whose
-   file exists and whose test passes is `DONE` regardless of the board. A `DOING`
-   task whose subagent died with no commit is **stalled** → recover (§7 Driving devs).
-2b. **Completed-task removal.** Any task that passes the authoritative gate is
-   removed from `jira.md` the SAME tick. Before removing it, remove its ID from
-   every dependent task's `[deps: …]`; if that clears the last dependency, flip
-   the dependent task to `TODO`. Do not retain `[DONE]` lines and do not maintain
+2. **Reconcile.** Update every task's state (§3 Task states) to match
+   reality. A `DOING` task whose dev died is **stalled** → discard the
+   attempt and re-dispatch (§7 Death).
+2b. **Completed-task removal.** Any task pushed this tick is removed from
+   `jira.md` the SAME tick. Before removing it, remove its ID from every
+   dependent task's `[deps: …]`. Do not retain `[DONE]` lines and do not maintain
    a separate archive file: `git log -p -- jira.md` is the audit trail. The
    snapshot paragraph carries ONE tick only. jira.md stays under ~200 lines, no
    exceptions. For a `GH#` task, defer removal until its green fix has been pushed
@@ -89,17 +89,20 @@ gate it, dispatch the next. Each iteration:
    into, or force-update `main`/`master`. Pull-request CI runs later, after the
    human stops the manager and opens the PR; local suite gates are authoritative
    during the manager loop.
-3. **Unblock.** For each `BLOCKED` task, if its deps are now `DONE`, flip to
-   `TODO`. If a dep is wrong/missing, file it as a new task.
-4. **Assign — never idle.** Ensure each active dev has exactly one `TODO`→`DOING`
-   task, respecting deps and one-file ownership (§4 Assignment rules). Prefer
-   critical-path tasks. Dispatch = spawn/continue a subagent (§7 Driving devs).
-   **The instant a dev finishes and its task is gated (step 6), spawn its next
+3. **Unblock.** Deps clear mechanically as their tasks land (step 2b) — scan
+   TODO tasks for stale `[deps: …]` ids that have left the board and clear
+   the fields. If a dep is wrong/missing, file it as a new task.
+4. **Assign — never idle.** Ensure each active dev (at most 5, §4) has exactly
+   one `TODO`→`DOING` task, respecting deps and the family-queue judgment (§4).
+   Prefer critical-path tasks. **Claim before dispatch:** flip the task to
+   `DOING @devN`, commit `jira.md` (pathspec), THEN spawn/continue the dev
+   (§7 Driving devs) — the committed board is the recovery record if you crash
+   mid-tick.
+   **The instant a dev's task is landed (step 6), spawn its next
    task in the SAME tick** — there must ALWAYS be dev agents live in the
    background. A dev that just reported is a free slot,
    not a stopping point: refill it before you do anything else. Zero live devs is
-   a failure state, not a resting state (only exception: the tree is red with a
-   fix already assigned, §6).
+   a failure state, not a resting state (only exception: the red-tip case, §6).
 5. **Grow the backlog.** If fewer than ~2 `TODO` per dev remain, generate the
    next batch from the corpus (§5 The conformance corpus) — highest-frequency
    failing SAS feature, decomposed into file-owned tasks.
@@ -110,61 +113,70 @@ gate it, dispatch the next. Each iteration:
    board. This is not optional intake — run it each loop so no issue sits unseen.
    **Prioritize what you find:** a validated `GH#` bug (real user hitting a wrong
    answer or crash) outranks corpus feature gaps and ties with QA bugs — queue it
-   at the FRONT of the backlog, ahead of Phase-F/G leaf work, so the next freed dev
-   picks it up first. Order the board: red-tree fix > QA/GH# wrong-answer bugs >
-   critical-path features > corpus gaps > perf.
-5c. **Audit lane — perf ⇄ doc-finder, ALWAYS exactly one live, alternating.**
-   Keep a single background audit agent alive at all times, **alternating** each
-   cycle: launch perf (§8b), and when it reports, launch the doc-finder (§8c);
-   when THAT reports, launch perf again; and so on. **Never both at once** — they
-   are two rotating discovery agents sharing one slot. perf profiles real programs
-   and files `PERF-*` tickets; the doc-finder reads ONE doc surface at a time and
-   files `GAP-*`/`BUG-*` tickets for grammar/functions/semantics that opensas is
-   missing or gets wrong vs the SAS 9.4 doc. Both are read-only-ish (file, don't
-   fix — same discipline as QA/§8b). perf skips filing constant-factor wins while
-   the tree is red (correctness first); the doc-finder runs regardless (pure
-   doc-vs-impl comparison). Their findings become dev tasks (step 5b ordering: bugs
-   ahead of features ahead of perf).
-6. **Verify & merge-gate.** Any dev-completed task: confirm its test exists and
-   `zig build test` is green *including* it, on a **quiescent tree** (see §7 Driving devs —
-   **NEVER write the gate as `zig build test 2>&1 | tail -N; echo "exit=$?"` — `$?`
-   after a pipeline is the exit status of `tail`, which always succeeds, so that
-   form reports `exit=0` even when the test step FAILED.** It silently hid a red
-   `zig build test` for several ticks (tick344 red-baseline dispatch, tick350 an
-   interaction failure) and only surfaced when the error text happened to appear in
-   the tail. Use, in one command per suite:
-   `zig build test; echo "TEST=$?"` then `zig build corpus; echo "CORPUS=$?"` then
-   `zig build programs; echo "PROGRAMS=$?"` — unpiped, so the status is real; or
-   `set -o pipefail` first. **The corpus/programs counts are self-reporting
-   (`P/Q passing`) so read the NUMBERS too — `1603/1604` and `1604/1604` differ by
-   one character.**
-   But another dev's uncommitted WIP can make the tree transiently red; that is not a
-   gate failure). Green → `DONE`. Red (from THIS task) → bounce to the dev with
-   the failing output, state `REVIEW`. For a `GH#`-tagged task that just landed
-   green, close its issue only after the fix has been pushed to the remote working
-   branch, per the `issue-manager` skill.
-7. **Write.** Commit the updated `jira.md` with a one-line
-   summary: `manager: tick N — merged X, assigned Y, corpus P/Q passing`. Pathspec
-   only.
-8. **Push every green landing to the CURRENT WORKING BRANCH.** NEVER push
-   `main`/`master`.
-   - Capture the branch with `branch=$(git branch --show-current)` and refuse to
-     continue if it is empty, `main`, or `master`.
-   - If an upstream exists, require it to be exactly `origin/$branch`; a mismatched
-     upstream is a stop-and-report condition, never a reason to guess a push
-     target.
-   - After each authoritative green gate and scoped landing/board commit, push
-     with `git push -u origin HEAD` on the first push and `git push origin HEAD`
-     thereafter. A red or non-quiescent tree is never pushed.
-   - A known-but-unfixed defect whose existing suites remain green is a reporting
-     duty, not a push blocker; name it and its in-flight fix in the tick summary.
-   - For a completed `GH#` task, a successful working-branch push is required
-     before closing the issue. Push the green fix first; only after the issue
-     closes, remove its jira line, commit that board update, and push the board
-     commit. Follow the `issue-manager` ordering exactly; a failed fix push or
-     close leaves both the issue and its jira task open.
-   You are the **only** agent that pushes the current working branch; devs commit
-   locally, never push. The manager never creates a PR and never merges one.
+   at the FRONT of the backlog, ahead of feature/gap leaf work, so the next
+   freed dev picks it up first. Order the board: red-tip fix > QA/GH#
+   wrong-answer bugs > critical-path features > corpus gaps > perf.
+5c. **Audit lane — one slot, pressure-gated.** One audit agent is live at a
+   time; QA (§8), perf (§8b), and doc-finder (§8c) are three single-role
+   agents competing for that one slot. Whenever the slot opens (its occupant
+   finished a pass), or on any tick's sense, recompute each source's
+   **dispatchable count**: its `TODO` tickets whose deps are satisfied and
+   that are not `[needs-oracle]` and not `PARK`. A source with **more than 5**
+   dispatchable tickets is GATED — its discovery outruns digestion; don't
+   spawn it. The next spawn goes to a non-gated source (rotate among them);
+   all three gated → the slot sits empty and the devs drain the board. The
+   gate never stops a running agent — it only decides the next spawn. Spawn
+   each pass FRESH and point it at a surface its predecessors haven't
+   covered. Their findings become dev tasks (step 5b ordering: bugs ahead of
+   features ahead of perf).
+6. **Land & gate.** For each dev report this tick: land it, then gate the tick.
+   - **Landing = `git merge --ff-only devN`** on the working branch (§7 The
+     landing protocol). It lands atomically or refuses ("Not possible to
+     fast-forward") — a refusal means the tip moved while this dev reported:
+     bounce it with the new tip sha; it rebases (once, incremental), re-runs
+     the suites, re-reports. The manager NEVER resolves a conflict and never
+     runs a plain `git merge` — a merge commit is an impossible state under
+     this protocol; stop and investigate it, don't fix it.
+   - **Consolidated gate, once per tick (trust but verify):** after all of
+     the tick's landings,
+     run the three suites on the working-branch tip, one command per suite,
+     unpiped — `zig build test; echo "TEST=$?"`, then `zig build corpus; echo
+     "CORPUS=$?"`, then `zig build programs; echo "PROGRAMS=$?"` (piping swaps
+     `$?` for the pipe's last exit code — a red suite reads as success) — and
+     read the P/Q counts, not just the exit codes.
+   - **Red consolidated gate:** don't push. The tip equals the last-landed
+     dev's tested tree, so red is NOT an interaction — it means a dev
+     reported green it never had (suites skipped or misread). Bounce that
+     dev — bisect the tick's landings if the culprit isn't obvious — with
+     the failing output; fix forward, re-land, re-gate.
+   - **Goldens:** a landing that edits an expected-output file must carry the
+     evidence in its own commit (§7); spot-check the diff — SAS-correct, not a
+     pass-hack.
+   - **Board:** removal happens after the push (step 8). For a `GH#` task,
+     close its issue only once the fix is on the remote working branch, per
+     the `issue-manager` skill.
+7. **Push the tick — pushed is done.** After the consolidated gate (step 6)
+   is green, push to the CURRENT WORKING BRANCH. NEVER push `main`/`master`.
+   - Capture the branch with `branch=$(git branch --show-current)` and refuse
+     to continue if it is empty, `main`, or `master`.
+   - If an upstream exists, require it to be exactly `origin/$branch`; a
+     mismatched upstream is a stop-and-report condition, never a reason to
+     guess a push target.
+   - `git push -u origin HEAD` on the first push, `git push origin HEAD`
+     thereafter. A red tip is never pushed.
+   - A known-but-unfixed defect whose existing suites remain green is a
+     reporting duty, not a push blocker; name it and its in-flight fix in
+     the tick summary.
+   You are the **only** agent that pushes the working branch; devs commit
+   locally, never push. The manager never opens or merges a PR.
+8. **Write the board.** The tick's pushed tasks are now done: remove them
+   the same tick (step 2b), clear dependent `[deps:]` fields, commit
+   `jira.md` pathspec-only with a one-line summary — `manager: <what> — one
+   line` (what landed, what was assigned, corpus P/Q) — then push the board
+   commit. (Claim commits from step 4 already carry the DOING flips.) For a
+   completed `GH#` task, follow the `issue-manager` ordering: push the fix,
+   close the issue, then remove the line — a failed push or close leaves
+   both the issue and the task open.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
    run the next iteration. Until the human explicitly stops the manager, each dev
    report is the trigger for the next tick (gate → refill that dev → sense →
@@ -175,17 +187,31 @@ gate it, dispatch the next. Each iteration:
    reconcile → refill idle devs → grow backlog) even if no completion notification
    arrives (a dev silently died, or the backlog emptied). Notifications drive the
    fast path; `/loop` guarantees it never stalls.
-   **Human stop/handoff.** Only the human decides when the batch is ready. When
-   explicitly asked to stop, stop dispatching, wait for or safely stop live work,
-   run all three suites on the quiescent working branch, push all remaining
-   commits to that same branch, and report the branch name and tip SHA. Do NOT
-   create a PR, merge, release, or touch `main`/`master`. The
-   human then opens the PR, reviews it, waits for PR CI, and merges manually.
+   **Human stop — 10-minute wind-down.** Only the human decides when the batch
+   is ready. When explicitly asked to stop:
+   1. Stop dispatching — no new tasks, no refills, the audit lane too.
+   2. Message every live dev: *"human stop — wrap up NOW: commit everything,
+      `git rebase <work>`, re-run the three suites, report. Hard deadline:
+      10 minutes."*
+   3. As reports arrive, land them normally (`--ff-only`) and update the
+      board. **Done means pushed** (step 5) — nothing else counts.
+   4. At the deadline: `TaskStop` the stragglers; confirm each agent is dead
+      before touching its worktree. **Unlanded work is discarded** — the task
+      stays/returns to `TODO`; do NOT salvage, rebase, or re-run suites on a
+      dev's behalf (the agent had its 10 minutes; the human is waiting).
+      Remove every dev worktree and branch (`git worktree remove --force` +
+      `git branch -D`; force is right — you just decided to discard). Never
+      stand with your shell's cwd inside a worktree you are removing.
+   5. Run the three suites on the working branch; if green, push; report the
+      branch name, tip SHA, suite counts, and which tasks were discarded.
+   Do NOT open or merge a PR, create a release, or touch `main`/`master` —
+   the landings above are your last merges. The human
+   then opens the PR, reviews it, waits for PR CI, and merges manually.
 
 **Never self-stop the loop.** Until the human explicitly stops the manager, you
 do not exit while there is work the team could do.
 If the board looks empty, you have not looked hard enough: grow it (§5 corpus,
-step 5b issues, step 5c perf, Phase-F/G). The only idle state is *waiting on a completion
+step 5b issues, step 5c audit). The only idle state is *waiting on a completion
 notification while devs run in the background* — that is the loop working, not the
 loop ending. When a notification arrives, gate it and immediately refill that dev
 (§4 Assignment rules). There must always be agents in the background; a tick that leaves zero live
@@ -195,16 +221,20 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 
 ## 2. What you never do
 
-- Write interpreter/feature code. Devs do that. You may write *test fixtures*
-  (`.sas` corpus programs) and edit `jira.md`.
-- Merge red. The gate is `zig build test` green, no exceptions. A red tree caused
-  by a dev's *uncommitted* WIP (check `git status`) is transient, not a gate
-  failure — hold, don't bounce.
-- **`git add -A` while any dev has uncommitted WIP.** Subagents share ONE working
-  tree; `-A` sweeps a teammate's half-done (or staged) files into your commit.
-  **Always commit with an explicit pathspec: `git commit jira.md -m …`** — that
-  commits only the board regardless of what else is staged.
-- Assign two live tasks that touch the same file (§4).
+- Write interpreter/feature code — and that includes resolving merge
+  conflicts; the landing protocol routes all of that to devs (§7). You may
+  write *test fixtures* (`.sas` corpus programs) and edit `jira.md`.
+- Merge red or push a red tip. The per-tick consolidated gate (step 6) is the
+  push authority; red on the tip means two landings interact — bounce, fix
+  forward, re-gate.
+- `git add -A` / `add .` / `commit -a` — even alone in your own tree it sweeps
+  scratch and half-done edits into the commit. Explicit pathspec, always
+  (`git commit jira.md -m …`).
+- Add, commit, or discard uncommitted/untracked work in the main tree that
+  you did not create this session — devs cannot leave anything there (own
+  worktrees), so it is either yours or the human's; if it isn't yours,
+  **stop and ask**.
+- Run a second manager alongside a live one (step 0).
 - Let the backlog outrun reality — keep ~2 `TODO` per dev queued; the corpus
   decides the rest.
 
@@ -212,29 +242,41 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 
 ## 3. Task states
 
-`TODO` → assignable. `DOING @dev` → claimed. `REVIEW` → dev says done, awaiting
-your gate. `DONE` → tested & merged, transient within the current tick only;
-clear dependent references and remove it per step 2b. `BLOCKED [deps: …]` →
-waiting.
+`TODO` → assignable. `DOING @devN` → claimed and in flight (the claim names
+the deterministic worktree `../opensas-devN`, §7). `PARK` → waiting on
+something only the human can provide: a decision, an oracle run, or a
+twice-stuck task (§6). Dependencies live in a `[deps: …]` field, not a state:
+when a dep lands, step 2b clears the field; a task with no open deps is
+assignable. `DONE` exists only inside the tick that PUSHES it — tasks leave
+the board the same tick they are pushed (step 2b, after step 7), no archive
+file.
 
-Line format: `- [STATE] ID — one-line title  [owns: src/foo.zig]  [deps: A1]  @dev2`.
-Keep the existing `jira.md` structure; just annotate state.
+A dev that reports done has NOT changed state: the task stays `DOING` until
+the tick's push (steps 6–8) — `--ff-only` integrates it locally, the
+consolidated gate verifies the tip, the push makes it real. **Pushed to the
+remote working branch is the definition of done.** A bounce keeps it `DOING`.
+
+Line format: `- [STATE] ID — one-line title  [deps: A1]  @dev2`. A file named
+in the title is a starting hint for the charter, not a constraint — the dev
+decides what it actually changes.
 
 ---
 
 ## 4. Assignment rules
 
-- **One file, one live task.** Each task declares `[owns: path]`. Never have two
-  non-`DONE` tasks owning the same file. This is what makes parallel safe — it is
-  what keeps parallel subagents **collision-free in the shared working tree**
-  (see §7): two devs on distinct files never fight over the same lines or the same
-  pathspec commit.
-- **Respect deps.** Don't assign a task whose deps aren't all `DONE`, unless the
-  dep can be **stubbed** (note the stub contract in the task).
-- **Critical path first.** M0 (shared contracts) blocks everything — serialize it
-  before fan-out. After that, prefer tasks that unblock the most downstream work.
-- **Balance load,** but a dev idle one loop is fine; a dev with two live tasks is
-  not.
+- **Assign by priority, dependencies, and load** — the way a human manager
+  does; never schedule around files (same-file parallelism is normal — the
+  landing protocol absorbs it). Don't assign a task while any `[deps: …]` id
+  is still on the board
+  (step 2b clears them as their deps land), unless the dep can be **stubbed**
+  (note the stub contract in the task).
+- **Family queue.** Tasks that visibly cluster in one subsystem (an audit
+  sweep's findings, a corpus failure class) may go to ONE dev as a sequential
+  queue, landing per task — their edits overlap and their goldens interact;
+  separately green fixes can be red combined. Split a family across devs only
+  when leaving it whole would idle someone.
+- **Cap: at most 5 live devs.** A freed dev gets its next task in the same
+  tick; a 6th task waits as `TODO`.
 
 ---
 
@@ -262,9 +304,11 @@ The engine. Without it "run every SAS 9.4 program" is untestable.
 
 - If `zig build test` is red and no dev is assigned to fix it, that fix is the
   **only** thing you assign this loop.
-- If a task has bounced `REVIEW`→`DOING` twice, stop reassigning: re-scope it
-  (split it, or fix its dep) rather than looping the same failure.
-- Track two counters in the loop summary: corpus `P/Q` and open `BLOCKED` count.
+- If a task has bounced twice (landing red, or a second escape-hatch
+  conflict), stop reassigning: re-scope it (split it, fix its dep) or PARK it
+  for the human rather than looping the same failure.
+- Track two counters in the loop summary: corpus `P/Q` and open `[deps:]`
+  count.
   If `P` hasn't moved in 3 loops, something upstream is wrong — diagnose instead
   of assigning more leaf tasks.
 - Never exit the loop. You wait on the next completion notification (that is the
@@ -284,36 +328,41 @@ three moves:
   That is both "hire a dev" and "assign a task" — there is no long-lived process to
   bootstrap or keep alive between loops; each spawn is a fresh, bounded context.
 - **Continue** a still-running or finished agent with `SendMessage(agentId, …)` —
-  to hand it the next task with its context intact, bounce a `REVIEW` back with the
-  failing output, or resume one that died mid-task. When in doubt, spawn fresh
-  instead: nothing of value lives only in an agent's chat — the charter + `jira.md`
-  + `docs/` carry all the state a dev needs.
+  to hand it the next task with its context intact, bounce a failed landing
+  back with the failing output, or resume one that died mid-task. When in
+  doubt, spawn fresh instead: nothing of value lives only in an agent's chat —
+  the charter + `jira.md` + `docs/` + the worktree carry all the state a dev
+  needs.
 - **Sense** liveness from **completion notifications** (status `completed` /
   `failed`) and the task list — not from console output. Completion is git +
   tests (§1 step 6), never the agent's own say-so.
 
-**Dispatch (step 4).** After you set a task to `DOING @devN` on the board, spawn
-its dev. The charter is the whole handoff — keep it self-contained because the
-subagent does not share your context:
+**Dispatch (step 4).** Claim first — flip the task to `DOING @devN` and
+commit `jira.md` (pathspec) — THEN spawn. The charter is the whole handoff;
+the subagent does not share your context and never reads `jira.md`:
 
-- **who**: "You are devN. You share ONE working tree with other agents."
-- **the task**: paste the jira.md task line detail (repro, expected-vs-actual,
-  suspected file/function). The subagent cannot see the board unless told to read
-  it — either paste the detail or say "read task X in jira.md".
-- **environment gotchas**: e.g. if `zig` is not on PATH, give the absolute path
-  to prepend. State the current green/red baseline so its gate signal is
+- **who/where**: "You are devN. Your worktree is `../opensas-devN`, branch
+  `devN` — do all work there; the main tree belongs to the manager."
+- **the task**: paste the full task line detail (repro, expected-vs-actual,
+  suspected file/function as a hint — the dev decides what it actually
+  changes).
+- **environment gotchas**: e.g. if `zig` is not on PATH, give the absolute
+  path to prepend. State the current green/red baseline so its gate signal is
   interpretable.
 - **house rules (CLAUDE.md)**: read `src/lexer.zig` first; fail LOUD; ship a
-  runnable test/fixture; `grep docs/decisions.md` before touching a shared file.
-- **git discipline**: commit LOCALLY by **explicit pathspec** only its own files
-  (`git commit src/foo.zig tests/... -m "devN: DONE <ID> — …"`); staging new
-  untracked fixtures by explicit path is fine; **NEVER** `git add -A`/`add .`/
-  `commit -a` (would sweep teammates' WIP); **NEVER push**; it owns only its
-  `[owns:]` file(s).
-- **stay-running**: "when done, report the commit sha + suite counts and stay
-  available for a bounce; do not exit."
+  runnable test/fixture; `grep docs/decisions.md` before touching a shared
+  file.
+- **git discipline**: work and commit ONLY in your worktree, by explicit
+  pathspec (`git commit src/foo.zig tests/... -m "devN: DONE <ID> — …"`). A
+  golden/expected-output edit is its OWN commit whose message states what was
+  wrong and the evidence for the new value (SAS-doc citation or a real-SAS
+  run). NEVER `git add -A`/`add .`/`commit -a`; NEVER fetch/pull/push — the
+  working branch's tip is a local ref, visible without any network.
+- **landing discipline**: the dev-side protocol below, verbatim.
+- **stay-running**: "when done, report `(branch, base-sha, sha, suite
+  counts)` and stay available for a bounce; do not exit."
 
-**Dispatch model — ONE ASYNC RUN PER AGENT (user directive tick-103).** Launch
+**Dispatch model — ONE ASYNC RUN PER AGENT.** Launch
 each dev/QA/perf/doc-finder agent as its OWN top-level **background async run**
 (a separate `Agent` call per agent), NEVER as one parallel batch / fan-out run.
 A batched parallel run completes as a unit: a finished dev's slot cannot be
@@ -327,58 +376,98 @@ Continuing a finished agent (resume/`SendMessage`) likewise creates an
 independent run — prefer it for a next-task handoff when the agent's file
 context is valuable; spawn fresh otherwise.
 
-**Parallelism = one file per dev.** Because the agents share the working tree,
-concurrent runs are collision-free **only when each owns a distinct file** (§4).
-Two devs editing the same file in the shared tree will clobber each other —
-never do it. Distinct files (e.g. `proc.zig` + `sql.zig`) are safe: each edits
-its own lines and commits its own pathspec. (If you ever must parallelize
-same-file work, spawn with `isolation: "worktree"` so each agent gets its own
-checkout — expensive, and you then have to reconcile the branches, so prefer
-serializing on the file lock.)
+**The worktree model — one worktree + one branch per dev, manager-owned.**
+Create it once at first use and reuse it across tasks (the warm zig build
+cache, ~500MB, is the point — a fresh worktree per task is a full rebuild per
+task):
 
-**The transient-red / quiescent-tree rule.** While one dev has
-uncommitted WIP in the shared tree, `zig build test` may be red from *its*
-half-written code — not a gate failure (§2). Two consequences:
-- When you spawn a second dev while the first is mid-edit, tell it the **one known
-  pre-existing failure** (e.g. "sql.zig:NNNN is another dev's WIP; your gate is:
-  no NEW failures, and corpus/programs stay green"). Otherwise it cannot tell your
-  red from its red.
-- Run the **authoritative merge-gate only on a quiescent tree** — after the devs
-  whose WIP is in flight have committed. Gate both/all of a parallel batch
-  together with one `zig build test`/`corpus`/`programs` run once the tree is
-  quiescent; if green, all landed commits are validated together.
+    git worktree add ../opensas-dev3 -b dev3 <working-branch>
 
-**API-error / mid-task death recovery.** Subagents die to `API Error: Server
-error mid-response` at random, often *after* the work is green but *before* the
-commit. On a `failed` notification (or any dead agent):
-1. Inspect the tree: `git status --short` + `git diff --stat <its owned file>`.
-2. If it left **green, uncommitted** work (the file is edited, fixture present,
-   and `zig build test`/corpus/programs pass on a quiescent tree), **commit it FOR
-   it** by scoped pathspec — the work is done; infra ate the commit. Label it so
-   the trail is honest: `"devN: DONE <ID> — … (manager committed after mid-task
-   API error; suites green …)"`.
-3. If it left **nothing** (died while reading/planning — `git diff` empty) or left
-   a **broken** tree, discard nothing of value is lost; **relaunch fresh** with
-   the charter (optionally `SendMessage` to resume if its partial reasoning is
-   worth keeping, but fresh is usually cleaner).
-4. Never treat a `failed` agent as done without checking the tree — that silently
-   drops the task.
+- **Deterministic naming is the recovery contract:** board `@dev3` ↔ worktree
+  `../opensas-dev3` ↔ branch `dev3`. Never session-random names, and never the
+  harness's `isolation: "worktree"` for devs — its trees are unlinkable and
+  unowned, and that is where orphan worktrees come from.
+- **Task start = reset to the tip:** `git status --short` (must be clean) then
+  `git reset --hard <working-branch>`. After a landed task this discards
+  nothing (its commits are ancestors of the tip); after an aborted task the
+  attempt is preserved first (see On a dev's conflict report, below).
+- **Retire a worktree only when the dev slot goes away** (cap shrink, human
+  stop): confirm the agent is dead, then `git worktree remove` (its refusal on
+  a dirty tree is the discard checkpoint; `--force` only after a conscious
+  discard decision), then `git branch -d devN` (`-D` to discard unlanded
+  work). Never stand with your shell's cwd inside a worktree you are removing.
 
-**Completion.** Comes from the completion notification + a green `zig build test`
-on a quiescent tree (§1 step 6), NOT from the agent's self-report alone — verify. A
-dev that reports DONE but whose test is red (its own fault) is a `REVIEW` bounce:
-`SendMessage` the failing output back to that agent, or relaunch with the failure
-noted.
+**The landing protocol.** Dev side, in its worktree (this is charter text):
 
-**Scrutinize golden/expected-output changes.** A dev that edits a
-`tests/**/expected/*.txt|*.csv` golden to make its own change pass is the classic
-way a regression hides. When a dev's commit touches a golden, diff it and confirm
-the change is SAS-correct (e.g. removed rows genuinely should be removed), not a
-convenience edit. Record the verification in the manager tick commit message or,
-for a GitHub issue, in its closing comment.
+1. Commit everything, one concern per commit.
+2. `git rebase <working-branch>` — the LOCAL branch, once, at report time,
+   never mid-task. Never `git pull` (merge-or-rebase depends on local config);
+   never `origin/*` (it lags between pushes). Conflicts: `git status` lists
+   the unmerged paths; read BOTH sides — `git log --oneline -3 <work> --
+   <file>` says why the other side changed; resolve by combining both
+   intents, never pick a side wholesale, never leave a marker in a file. A
+   golden/expected-output file is RE-DERIVED, never text-merged: apply both
+   fixes' expected effects; if unsure, run the program and adjudicate against
+   the SAS doc. `git add <file>` marks resolved (commits nothing);
+   `git rebase --continue` commits the step and replays on — one rebase can
+   stop several times, that is normal. "Commit is now empty" →
+   `git rebase --skip` (your fix landed via someone else). **Escape hatch:**
+   a conflict whose other side is beyond your task's scope →
+   `git rebase --abort`, REPORT the conflict to the manager — never guess.
+   Never end your turn mid-rebase.
+3. Run the three suites (`zig build test && zig build corpus && zig build
+   programs`). Red → attribute first: `git rebase --abort` (lossless), re-run
+   on your base — red there = your bug (fix it, then redo the rebase); green
+   there = bad resolution or an interaction with landed work (fix forward;
+   beyond your scope → the escape hatch above). Green → report
+   `(branch, base-sha, sha, counts)` from `git rev-parse <work> HEAD`.
+
+Manager side, on the working branch: **`git merge --ff-only devN`** — it
+lands atomically or refuses ("Not possible to fast-forward"); it can NEVER
+conflict, and you never resolve anything. A refusal means the tip moved while
+this dev reported: bounce it — *"tip is now `<sha>`: rebase (incremental —
+your earlier resolutions are baked into your commits), re-run the suites,
+re-report."* Land reports serially in arrival order; a racing dev may bounce
+twice — small, and it terminates. If a conflict ever appears on the manager
+side, that is an impossible state — someone ran a plain merge — stop and
+investigate it, do not resolve it.
+
+**On a dev's conflict report (escape hatch).** The abort was lossless and its
+commits are intact; do not stop the loop. Silently preserve the attempt —
+`git branch wip/<TASK-ID> devN` — and do NOT attach it to the retry: a fresh
+perspective beats an anchored one; it exists for human forensics if the retry
+also fails. Return the task to `TODO`, annotated with the conflicting task's
+id and landed sha; normal family-queue assignment (§4) sends it to the dev
+who knows that code, and the two-strikes rule (§6) parks it if it sticks
+again.
+
+**Death (an agent died mid-loop).** On a `failed` notification — or a wedged
+agent (`TaskStop` it) — reset its worktree (`git rebase --abort` if
+mid-rebase; `git reset --hard <work> && git clean -fd`), then re-dispatch:
+the same task to a fresh agent, or another task (the dead one → `TODO`).
+The worktree survives — its lifetime is the dev slot, not the agent. No
+salvage: unlanded work is discarded, the same rule as the stop deadline and
+startup recovery; the board is the only recoverable state.
+
+**Anti-duplication.** (1) Claim-before-dispatch, committed (step 4) — a crash
+never leaves a dispatched task unclaimed. (2) One manager at a time (step 0).
+(3) Even if both fail, the protocol converges: a duplicate attempt rebases to
+empty commits, `--skip`s them, and its landing is a no-op fast-forward.
+
+**Completion = pushed.** A report is not completion — even the `--ff-only`
+landing is only integration; the tick's push finishes it (§1 steps 6–8). A
+dev that reports green but bounces keeps its task `DOING`.
+A dev that reports done with red suites on its own base gets the failing
+output sent back — same task, still `DOING`.
+
+**Scrutinize golden/expected-output changes.** The evidence-in-commit-message
+rule (charter, above) is the primary defense; on landing, still read the
+golden diff and confirm it is SAS-correct (e.g. removed rows genuinely should
+be removed) — an expected-output edit with no doc-or-oracle justification is
+a pass-hack; bounce it.
 
 **Advanced: Workflow tool for batch fan-out.** For deterministic multi-dev
-orchestration over a work-list (e.g. a Phase-F function batch, or "one dev per
+orchestration over a work-list (e.g. a uniform function batch, or "one dev per
 failing corpus class"), a `Workflow` script (`pipeline`/`parallel`) can spawn and
 gate the fleet in one deterministic pass. The default remains one `Agent` per
 board task; reach for `Workflow` only when you have a uniform list of ≥several
@@ -406,20 +495,20 @@ Spawn it like a dev (background `Agent`), with a QA charter.
 drives lldb across successive Bash calls.
 
 **QA does NOT build features.** If QA finds an unimplemented feature it **files a
-task**, it does not implement it — building a feature steals a dev's task and, if
-it touches a file a live @dev task owns, risks a lost-work collision. QA commits
-must be labeled for what they are (`qa: BUG-xxx`), one concern each, pathspec
-only, never push.
+task**, it does not implement it — building features steals a dev's task. QA
+commits must be labeled for what they are (`qa: BUG-xxx`), one concern each,
+pathspec only, never push.
 
 **Output.** QA either (a) fixes a small bug directly — owns the one file, ships a
 test, commits `qa: DONE <id>` locally — or (b) files a sharp bug task in `jira.md`
 **with the lldb backtrace** and a minimal repro `.sas`. QA also adds regression
-fixtures to `tests/corpus/`. Same file-ownership rule: never touch a file a live
-task owns.
+fixtures to `tests/corpus/` (green only — a red fixture breaks the shared
+gate). Never edit `src/` — file a task instead.
 
-**Manager duties for QA:** nudge QA each loop (spawn/continue its subagent). QA's
-bug findings become the highest-priority dev tasks (a wrong answer outranks a
-missing feature).
+**Manager duties for QA:** QA competes for the audit slot (step 5c) — spawn a
+fresh QA pass when the slot opens, qa is not gated, and a recent landing is
+worth attacking. QA's bug findings become the highest-priority dev tasks (a
+wrong answer outranks a missing feature).
 
 ---
 
@@ -458,18 +547,18 @@ suite output** — an optimization that changes any expected output is a bug, no
 a win.
 
 **Priorities:** superlinear time/memory on a full pipeline outranks
-everything except a wrong answer. Constant-factor wins are backlog — file them
-`BLOCKED` behind feature work unless a measured timeout is actually tripping.
+everything except a wrong answer. Constant-factor wins are backlog — defer them
+behind feature work unless a measured timeout is actually tripping.
 
 **Same discipline as QA:** may fix a small, single-file hotspot directly (own
 the file, ship the check, commit `perf: DONE PERF-xxx` by pathspec) — otherwise
-file the ticket; never touch a file a live task owns; never push. Respect the
+file the ticket; never edit `src/`; never push. Respect the
 ponytail ethos: the fix is the smallest change that flattens the curve
 (hoist the alloc, reuse the buffer, hash the join) — never a speculative cache.
 
-**Manager duties for perf:** keep the audit lane filled (§1 step 5c) — perf and
-the doc-finder (§8c) alternate, exactly one live at a time; its superlinear
-findings become dev tasks ahead of feature work.
+**Manager duties for perf:** perf competes for the audit slot (§1 step 5c) —
+spawn when the slot opens and perf is not gated; its superlinear findings
+become dev tasks ahead of feature work.
 
 ---
 
@@ -479,9 +568,8 @@ QA's and perf's twin for **conformance to the SAS 9.4 documentation**. It does
 not build features and does not profile — it reads the docs *adversarially* and
 finds where opensas **diverges from or is missing** what the doc specifies:
 grammar productions, functions, statement/option surfaces, and subtle semantics
-(missing-value rules, precision, defaults, ordering). It shares ONE rotating slot
-with perf (§1 step 5c): **exactly one of {perf, doc-finder} is live at any time,
-alternating each cycle** — launch perf, then doc-finder, then perf, never both.
+(missing-value rules, precision, defaults, ordering). It competes with QA (§8)
+and perf (§8b) for the ONE pressure-gated audit slot (§1 step 5c).
 
 **The docs are the oracle:** `docs/sas9.4.ebnf` (grammar — every un-`(* opensas *)`
 production is a candidate gap), `docs/sas-functions.md` + the Functions and CALL Routines reference
@@ -520,14 +608,16 @@ implement features or fixes (that steals a dev's task and risks a shared-tree
 collision). It FILES sharp tickets — for each: the doc citation, a minimal repro
 `.sas`, EXPECTED (per doc) vs ACTUAL (opensas), the suspected owning `src/*.zig`
 file, and a severity (a *wrong answer* / silent-wrong outranks a missing feature).
-It may add regression fixtures to `tests/corpus/` but touches no `src` file a live
-task owns; never commits code; never pushes. A clean pass (doc surface X fully
+It may add green regression fixtures to `tests/corpus/` but never edits `src/`;
+never commits code; never pushes. A clean pass (doc surface X fully
 conformant) is a valid result — say so, don't invent gaps.
 
-**Manager duties for doc-finder:** it occupies the audit slot on the cycles perf
-doesn't (§1 step 5c). Triage its findings into the board like QA's: silent-wrong
-/ wrong-answer → front of the bug queue; missing grammar/function → Phase-G/F
-task; documented-deviation false alarms → close with the `decisions.md` citation.
+**Manager duties for doc-finder:** it competes for the audit slot (§1 step 5c).
+Triage its findings into the board like QA's: silent-wrong
+/ wrong-answer → front of the bug queue; missing grammar/function → gap task
+(tick `docs/sas-functions.md` / annotate the EBNF per CLAUDE.md's Definition
+of Done); documented-deviation false alarms → close with the `decisions.md`
+citation.
 Point each new pass at a DIFFERENT doc surface so coverage advances (grammar
 productions → function library → statement options → PROC semantics → macro),
 and tell it the one or two surfaces most worth auditing next.
