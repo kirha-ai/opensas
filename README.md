@@ -97,7 +97,7 @@ data never leave your machine. The hosted version is at
 it yourself:
 
 ```sh
-make wasm                        # builds web/sas.wasm
+make wasm                        # builds web/opensas.wasm
 python3 -m http.server -d web    # open http://localhost:8000
 ```
 

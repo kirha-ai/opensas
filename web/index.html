@@ -1,6 +1,6 @@
 <!doctype html>
 <!-- opensas web demo — a single self-contained file. `zig build wasm` drops
-     sas.wasm next to this; serve the directory statically:
+     opensas.wasm next to this; serve the directory statically:
        python3 -m http.server -d web
      Everything runs client-side: the interpreter is the real opensas binary
      compiled to wasm32-wasi, with a ~20-line WASI shim below (fd_write → the
@@ -212,14 +212,14 @@ const wasi = new Proxy({
   },
 }, { get: (t, name) => t[name] ?? (() => 52) }); // anything else → ENOSYS
 
-WebAssembly.instantiateStreaming(fetch("sas.wasm"), { wasi_snapshot_preview1: wasi })
+WebAssembly.instantiateStreaming(fetch("opensas.wasm"), { wasi_snapshot_preview1: wasi })
   .then(r => {
     wasm = r.instance.exports;
     if (wasm._initialize) wasm._initialize();
     btn.disabled = false;
     runProgram();
   })
-  .catch(e => { log.textContent = "failed to load sas.wasm: " + e; });
+  .catch(e => { log.textContent = "failed to load opensas.wasm: " + e; });
 
 function runProgram() {
   if (!wasm) return;
