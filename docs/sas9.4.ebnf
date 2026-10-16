@@ -984,7 +984,21 @@ sql_term       = number | string | "*"                            (* opensas *)
                | "(" ( sql_expr | select_query ) ")" ;
 agg_func       = "COUNT" | "SUM" | "AVG" | "MIN" | "MAX" | "MEAN" (* opensas *)
                | "N" | "NMISS" | "STD" | "VAR" ;
-case_expr      = "CASE" [ sql_expr ]                              (* opensas *)
+case_expr      = "CASE" [ sql_expr ]                              (* opensas — the
+                   arms are full sql_expr, so via sql_term a `( select_query )`
+                   subquery is a legal CASE operand in the WHEN and in the
+                   THEN/ELSE result. SQL Procedure ref agrees twice: a CASE goes
+                   "anywhere that you can use a column name" (printed p.33) and
+                   sql-expression Component (printed p.401) lists "a query
+                   expression" among the operands. The grammar already said this;
+                   the SELECT-list implementation did NOT — a subquery there
+                   evaluated as MISSING and printed WRONG rows to stdout before
+                   erroring (BUG-sqlcasesubquery, GH#19; fixture
+                   sql_case_subquery). Now resolved wherever a Library is in
+                   scope: SELECT list, WHERE, HAVING. Still a loud rc-2 GAP at
+                   the four sites that have none — ORDER BY, GROUP BY, a
+                   summary-function argument, a CHECK constraint (fixture
+                   sql_case_subquery_gap) *)
                  { "WHEN" sql_expr "THEN" sql_expr }
                  [ "ELSE" sql_expr ] "END" ;
 col_def        = column datatype [ column_attr ] ;               (* opensas *)
