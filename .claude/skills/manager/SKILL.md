@@ -13,10 +13,9 @@ description: >-
   jira.md, and is the ONLY agent that pushes the current human-created working
   branch. It never pushes or merges a protected branch. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
-  step 5b of this loop). One rotating audit slot alternates the perf agent (§8b —
-  profiles real programs, files measured PERF-* tickets) with the doc-finder (§8c
-  — adversarial SAS-9.4-doc audit, files GAP-*/BUG-* conformance tickets); exactly
-  one is live at a time (loop step 5c).
+  step 5b of this loop). One pressure-gated audit slot rotates QA (§8), perf
+  (§8b), and doc-finder (§8c) — one live at a time; a source is skipped while
+  it has more than 5 dispatchable tickets on the board (loop step 5c).
 ---
 
 # Manager — operating manual
@@ -117,18 +116,19 @@ gate it, dispatch the next. Each iteration:
    at the FRONT of the backlog, ahead of feature/gap leaf work, so the next
    freed dev picks it up first. Order the board: red-tip fix > QA/GH#
    wrong-answer bugs > critical-path features > corpus gaps > perf.
-5c. **Audit lane — perf ⇄ doc-finder, ALWAYS exactly one live, alternating.**
-   Keep a single background audit agent alive at all times, **alternating** each
-   cycle: launch perf (§8b), and when it reports, launch the doc-finder (§8c);
-   when THAT reports, launch perf again; and so on. **Never both at once** — they
-   are two rotating discovery agents sharing one slot. perf profiles real programs
-   and files `PERF-*` tickets; the doc-finder reads ONE doc surface at a time and
-   files `GAP-*`/`BUG-*` tickets for grammar/functions/semantics that opensas is
-   missing or gets wrong vs the SAS 9.4 doc. Both are read-only-ish (file, don't
-   fix — same discipline as QA/§8b). perf skips filing constant-factor wins while
-   the tree is red (correctness first); the doc-finder runs regardless (pure
-   doc-vs-impl comparison). Their findings become dev tasks (step 5b ordering: bugs
-   ahead of features ahead of perf).
+5c. **Audit lane — one slot, pressure-gated.** One audit agent is live at a
+   time; QA (§8), perf (§8b), and doc-finder (§8c) are three single-role
+   agents competing for that one slot. Whenever the slot opens (its occupant
+   finished a pass), or on any tick's sense, recompute each source's
+   **dispatchable count**: its `TODO` tickets whose deps are satisfied and
+   that are not `[needs-oracle]` and not `PARK`. A source with **more than 5**
+   dispatchable tickets is GATED — its discovery outruns digestion; don't
+   spawn it. The next spawn goes to a non-gated source (rotate among them);
+   all three gated → the slot sits empty and the devs drain the board. The
+   gate never stops a running agent — it only decides the next spawn. Spawn
+   each pass FRESH and point it at a surface its predecessors haven't
+   covered. Their findings become dev tasks (step 5b ordering: bugs ahead of
+   features ahead of perf).
 6. **Land & gate.** For each dev report this tick: land it, then gate the tick.
    - **Landing = `git merge --ff-only devN`** on the working branch (§7 The
      landing protocol). It lands atomically or refuses ("Not possible to
@@ -505,9 +505,10 @@ test, commits `qa: DONE <id>` locally — or (b) files a sharp bug task in `jira
 fixtures to `tests/corpus/` (green only — a red fixture breaks the shared
 gate). Never edit `src/` — file a task instead.
 
-**Manager duties for QA:** nudge QA each loop (spawn/continue its subagent). QA's
-bug findings become the highest-priority dev tasks (a wrong answer outranks a
-missing feature).
+**Manager duties for QA:** QA competes for the audit slot (step 5c) — spawn a
+fresh QA pass when the slot opens, qa is not gated, and a recent landing is
+worth attacking. QA's bug findings become the highest-priority dev tasks (a
+wrong answer outranks a missing feature).
 
 ---
 
@@ -555,9 +556,9 @@ file the ticket; never edit `src/`; never push. Respect the
 ponytail ethos: the fix is the smallest change that flattens the curve
 (hoist the alloc, reuse the buffer, hash the join) — never a speculative cache.
 
-**Manager duties for perf:** keep the audit lane filled (§1 step 5c) — perf and
-the doc-finder (§8c) alternate, exactly one live at a time; its superlinear
-findings become dev tasks ahead of feature work.
+**Manager duties for perf:** perf competes for the audit slot (§1 step 5c) —
+spawn when the slot opens and perf is not gated; its superlinear findings
+become dev tasks ahead of feature work.
 
 ---
 
@@ -567,9 +568,8 @@ QA's and perf's twin for **conformance to the SAS 9.4 documentation**. It does
 not build features and does not profile — it reads the docs *adversarially* and
 finds where opensas **diverges from or is missing** what the doc specifies:
 grammar productions, functions, statement/option surfaces, and subtle semantics
-(missing-value rules, precision, defaults, ordering). It shares ONE rotating slot
-with perf (§1 step 5c): **exactly one of {perf, doc-finder} is live at any time,
-alternating each cycle** — launch perf, then doc-finder, then perf, never both.
+(missing-value rules, precision, defaults, ordering). It competes with QA (§8)
+and perf (§8b) for the ONE pressure-gated audit slot (§1 step 5c).
 
 **The docs are the oracle:** `docs/sas9.4.ebnf` (grammar — every un-`(* opensas *)`
 production is a candidate gap), `docs/sas-functions.md` + the Functions and CALL Routines reference
@@ -612,8 +612,8 @@ It may add green regression fixtures to `tests/corpus/` but never edits `src/`;
 never commits code; never pushes. A clean pass (doc surface X fully
 conformant) is a valid result — say so, don't invent gaps.
 
-**Manager duties for doc-finder:** it occupies the audit slot on the cycles perf
-doesn't (§1 step 5c). Triage its findings into the board like QA's: silent-wrong
+**Manager duties for doc-finder:** it competes for the audit slot (§1 step 5c).
+Triage its findings into the board like QA's: silent-wrong
 / wrong-answer → front of the bug queue; missing grammar/function → gap task
 (tick `docs/sas-functions.md` / annotate the EBNF per CLAUDE.md's Definition
 of Done); documented-deviation false alarms → close with the `decisions.md`
