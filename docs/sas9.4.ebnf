@@ -624,7 +624,14 @@ call_stmt      = "CALL" name "(" [ arg_list ] ")" ";" ;            (* opensas *)
                    (fixtures call_routines + the call_* family); an UNKNOWN
                    routine FAILS LOUD "CALL X() is not supported" and aborts the
                    step (NOTE-callnohalt) — like function_call, the generic
-                   dispatch + loud unknowns earns the marker *)
+                   dispatch + loud unknowns earns the marker.
+                   CALL EXECUTE carries the printed-p.123 TWO-TIMING split
+                   (GH#13): its argument is macro-processed AT CALL TIME (macro
+                   elements run immediately, mid-step) and only the SAS
+                   statements that generates are queued to the step boundary —
+                   fixture call_execute_macro. %NRSTR/%STR-quoted text, whose
+                   point is deferring resolution PAST the queue drain, fails
+                   loud at rc 2 *)
 link_stmt      = "LINK" name ";" ;                                (* opensas *)
 goto_stmt      = ( "GO" "TO" | "GOTO" ) name ";" ;                (* opensas *)
 null_stmt      = ";" ;                                            (* opensas *)
