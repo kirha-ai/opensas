@@ -3199,7 +3199,7 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         };
         for (ds.rows.items, 0..) |_, ri| {
             try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias); // qualified + unqualified + alias
-            if (uses_calc) try bindComputed(arena, diags, &ev, q, names);
+            if (uses_calc) try bindComputed(arena, lib, diags, &ev, q, names, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias });
             const cond = cond0 orelse blk: {
                 const row_toks = try substituteCase(arena, diags, &ev, subst);
                 var wp = pe.Parser.init(arena, try withEof(arena, row_toks), diags);
@@ -3434,12 +3434,20 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
     // then fold (BUG-sqlsumcase; the old path returned missing / could null-unwrap).
     if (arg.len >= 2 and tkKw(arg[0], "case") and isPureCase(arg)) {
         const inner = arg[1 .. arg.len - 1]; // tokens between `case` and `end`
+        // BUG-sqlcasesubquery: checked BEFORE the fold, not inside it — the per-row
+        // `catch Value.missing` below would otherwise fold missings into a plausible
+        // aggregate and print it ahead of the diagnostic (TODO-sqlcasesubqagg: the
+        // aggregate path has no Library to resolve the subquery with).
+        if (hasSubquery(inner)) return caseSubqGap(diags, inner);
         // one PDV for the group, not one per row (BUG-sqlrowwiseoom)
         var pdv = Pdv.init(arena);
         var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
         for (grp, 0..) |ri, k| {
             try loadForEval(&pdv, ds, ds.row(ri));
-            vals[k] = evalCase(arena, diags, &ev, inner) catch Value.missing;
+            // no Library here (computeAggExpr takes only the dataset + group): a
+            // subquery inside the aggregated CASE is evalCase's loud rc-2 gap
+            // (TODO-sqlcasesubqagg), not a silently-missing fold term.
+            vals[k] = evalCase(arena, null, diags, &ev, inner, null) catch Value.missing;
         }
     } else {
         var pdv = Pdv.init(arena);
@@ -4907,6 +4915,22 @@ fn execRowWise(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
     }
     var pkb: std.ArrayList(u8) = .empty; // reused scalar-probe key buffer
 
+    // BUG-sqlcasesubquery, hoist half: an UNCORRELATED subquery inside a SELECT-list
+    // CASE has the same value for every row, so collapse it ONCE here — the same
+    // one-shot the WHERE path gets from its `corr = null` call site (substituteSubqueries
+    // at the `} else if (q.where) |wtoks|` branch). Without this, CASE being a per-row
+    // evaluation would re-execute the inner query once per outer row. A CORRELATED span
+    // is left alone (null): it genuinely must resolve per outer row below, and after the
+    // hoist `hasSubquery` is false so evalCase does no further work.
+    const chois = try arena.alloc(?[]const Token, q.items.len);
+    for (q.items, 0..) |it, k| {
+        chois[k] = null;
+        if (it.case_toks) |ct| {
+            if (hasSubquery(ct) and !hasCorrelatedSubq(ct, ds, q.table, q.alias))
+                chois[k] = try substituteSubqueries(arena, lib, diags, ct, null);
+        }
+    }
+
     var pdv = Pdv.init(arena);
     var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
     for (kept) |ri| {
@@ -4919,7 +4943,9 @@ fn execRowWise(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
                 if (sm.ineq) |*iqsel| break :blk probeIneqSel(iqsel, pkb.items, toNum(ds.row(ri)[iqsel.ocol]));
                 break :blk sm.map.get(pkb.items) orelse sm.miss;
             } else if (it.case_toks) |ct|
-                try evalCase(arena, diags, &ev, ct)
+                // a `(select …)` inside the CASE resolves here too (BUG-sqlcasesubquery):
+                // pre-hoisted above when uncorrelated, else per outer row via `corr`.
+                try evalCase(arena, lib, diags, &ev, chois[k] orelse ct, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias })
             else if (it.expr_toks) |et|
                 // a `(select …)` scalar subquery in the select list runs per outer
                 // row, correlated to it (BUG-sqlcorrscalar); plain expressions untouched.
@@ -4998,6 +5024,20 @@ fn isLagDif(name: []const u8) bool {
     return false;
 }
 
+/// BUG-sqlcasesubquery: the loud gap for a `(select …)` inside a CASE that the caller
+/// cannot resolve because it has no `Library` in scope — ORDER BY, GROUP BY, a
+/// summary-function argument, a CHECK constraint. It is valid SAS (a CASE operand may
+/// be "a query expression" — SQL Procedure Reference, sql-expression Component p.401)
+/// that opensas does not implement at those sites, so it is an opensas GAP
+/// (rc 2, D-009/D-009b(i)) and it ABORTS the statement. It must abort rather than fold
+/// a MISSING, because the per-row `catch Value.missing` callers would otherwise print a
+/// plausible wrong row BEFORE the error — exactly the failure class this bug was filed
+/// for. Callers that CAN reach a Library resolve the subquery instead (evalCase).
+fn caseSubqGap(diags: *diag.Diagnostics, toks: []const Token) diag.Error {
+    diag.markGap();
+    return diags.fail(error.ParseError, if (toks.len > 0) toks[0].line else 0, "PROC SQL: a subquery inside a CASE expression is supported in the SELECT list, WHERE and HAVING clauses only — not in ORDER BY, GROUP BY, a summary-function argument, or a CHECK constraint", .{});
+}
+
 /// Evaluate `case when C then V … [else E] end` for one row: the first WHEN whose
 /// condition is true yields its THEN value; otherwise the ELSE value (or missing).
 /// Evaluate a CASE against a pre-loaded evaluator (its PDV holds the current row).
@@ -5005,7 +5045,33 @@ fn isLagDif(name: []const u8) bool {
 /// searched form `case when <cond> …` treats each WHEN as a boolean. Arm spans are
 /// split at the *top-level* when/then/else (nested CASE skipped) and evaluated
 /// case-aware, so a CASE nested in any part works (BUG-casenest).
-fn evalCase(arena: std.mem.Allocator, diags: *diag.Diagnostics, ev: *eval.Evaluator, toks: []const Token) diag.Error!Value {
+///
+/// BUG-sqlcasesubquery: a `(select …)` anywhere in the CASE is collapsed to its value
+/// HERE, before any arm is parsed — CASE's `when-condition` and `result-expression` are
+/// both sql-expressions (SQL Procedure Reference, CASE expression: "See sql-expression
+/// Component on page 401") and an sql-expression operand may be "a query expression"
+/// (p.401), so a subquery is a legal CASE operand. parser_expr has no subquery grammar:
+/// left raw, the `(` stopped the parse at the inner `select` ("expected ')'") and
+/// `evalSpan`'s `catch return Value.missing` turned the whole arm into a MISSING — which
+/// is how plausible-but-WRONG rows reached stdout *ahead of* the error. Doing it in this
+/// one function covers every nested CASE too (the arms are already collapsed when the
+/// recursive `evalCase` sees them), so the sub-evaluators need no Library.
+/// `lib == null` means the caller has no Library in scope; with a subquery present that
+/// is a loud rc-2 gap below, never a row.
+fn evalCase(arena: std.mem.Allocator, lib: ?*Library, diags: *diag.Diagnostics, ev: *eval.Evaluator, toks_in: []const Token, corr: ?RowCtx) diag.Error!Value {
+    const toks = blk: {
+        if (!hasSubquery(toks_in)) break :blk toks_in;
+        if (lib) |l| break :blk try substituteSubqueries(arena, l, diags, toks_in, corr);
+        // The CASE sites with no Library in scope, each one PROBED rather than
+        // assumed (D-025): ORDER BY (`orderRows`), a summary-function argument
+        // (`computeAggExpr`), GROUP BY (`groupKey`) and a CHECK constraint. NOT
+        // COALESCE — a `coalesce(case …)` SELECT item is an `.expr` item, so the
+        // row loop collapses its subqueries before substituteCoalesce ever runs,
+        // and it answers correctly today. A subquery at the four sites above is
+        // valid SAS we do not implement yet → an opensas gap, rc 2 (D-009), and it
+        // ABORTS the statement rather than letting a missing-valued arm print.
+        return caseSubqGap(diags, toks_in);
+    };
     // BUG-sqltypeconsistency: a proven char/num mix in the result arms is a
     // SAS ERROR, not a silently mistyped column. (Per-row callers that
     // `catch Value.missing` still record the ERROR each row — loud, just
@@ -5335,12 +5401,19 @@ fn itemNames(arena: std.mem.Allocator, q: Query) ![]const []const u8 {
 
 /// Compute each computed SELECT item for source row `ri` and bind it into `ev`'s
 /// PDV under its output name, so a WHERE/HAVING CALCULATED reference resolves.
-fn bindComputed(arena: std.mem.Allocator, diags: *diag.Diagnostics, ev: *eval.Evaluator, q: Query, names: []const []const u8) diag.Error!void {
+/// `corr` is that outer row, so a SELECT item holding a `(select …)` — inside a CASE or
+/// standing alone — resolves here exactly as it does in the main row loop; both arms
+/// used to hand the raw `(` to parser_expr and bind a MISSING, so `where calculated f`
+/// filtered against a fabricated value (BUG-sqlcasesubquery).
+fn bindComputed(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, ev: *eval.Evaluator, q: Query, names: []const []const u8, corr: RowCtx) diag.Error!void {
     for (q.items, 0..) |it, k| {
         const v = if (it.case_toks) |ct|
-            try evalCase(arena, diags, ev, ct)
+            try evalCase(arena, lib, diags, ev, ct, corr)
         else if (it.expr_toks) |et|
-            try evalExprItem(arena, diags, ev, et)
+            try evalExprItem(arena, diags, ev, if (hasSubquery(et))
+                try substituteSubqueries(arena, lib, diags, et, corr)
+            else
+                et)
         else
             continue; // a plain column is already in the PDV
         // a computed item only: a plain column already carries its width from the
@@ -5472,7 +5545,12 @@ fn substituteCase(arena: std.mem.Allocator, diags: *diag.Diagnostics, ev: *eval.
                     if (depth == 0) break;
                 }
             }
-            try out.append(arena, try valueToken(arena, try evalCase(arena, diags, ev, toks[i + 1 .. j])));
+            // null Library: every substituteCase caller runs substituteSubqueries over
+            // the stream FIRST (the WHERE/ON/HAVING/UPDATE-SET sites) or arrives from
+            // evalCase, which collapsed the subqueries before splitting the arms — so
+            // nothing is left to resolve here. A caller that forgets gets evalCase's
+            // loud rc-2 gap instead of a missing-valued arm (BUG-sqlcasesubquery).
+            try out.append(arena, try valueToken(arena, try evalCase(arena, null, diags, ev, toks[i + 1 .. j], null)));
             i = j + 1; // past `end`
         } else {
             try out.append(arena, toks[i]);
@@ -5581,7 +5659,15 @@ fn execGrouped(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
                 // first, then evaluate against the rep row (its group-key columns are
                 // constant across the group) — BUG-casegroupcrash
                 if (has_rows) try loadForEval(&pdv, ds, ds.row(reps.items[gi]));
-                cells[k] = try evalCase(arena, diags, &ev, try substituteAggs(arena, diags, ds, ct, grp));
+                // BUG-sqlcasesubquery: a `(select …)` the CASE holds resolves FIRST,
+                // correlated to the rep row — BEFORE substituteAggs, for the same
+                // reason the `.expr` arm below does it in that order: substituteAggs
+                // walks the whole stream, so run second it would fold the SUBQUERY's
+                // own `avg(x)` over the OUTER group and leave `select 2 from t` behind
+                // (a >1-row scalar error). One evaluation per GROUP here, not per row.
+                const grp_corr: ?RowCtx = if (has_rows) .{ .ds = ds, .ri = reps.items[gi], .table = q.table, .alias = q.alias } else null;
+                const ct2 = if (hasSubquery(ct)) try substituteSubqueries(arena, lib, diags, ct, grp_corr) else ct;
+                cells[k] = try evalCase(arena, lib, diags, &ev, try substituteAggs(arena, diags, ds, ct2, grp), grp_corr);
             } else if (it.expr_toks) |et| {
                 // an expression under GROUP BY: a `(select …)` scalar subquery is
                 // resolved first (correlated to the group's rep row, whose key
@@ -5623,7 +5709,10 @@ fn execGrouped(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
             for (q.order, 0..) |o, oi| {
                 if (o.case_toks != null and has_rows) try loadForEval(&pdv, ds, ds.row(reps.items[gi]));
                 key[oi] = if (o.case_toks) |ct|
-                    (evalCase(arena, diags, &ev, try substituteAggs(arena, diags, ds, ct, grp)) catch Value.missing)
+                    (evalCase(arena, lib, diags, &ev, try substituteAggs(arena, diags, ds, if (hasSubquery(ct))
+                        try substituteSubqueries(arena, lib, diags, ct, if (has_rows) RowCtx{ .ds = ds, .ri = reps.items[gi], .table = q.table, .alias = q.alias } else null)
+                    else
+                        ct, grp), if (has_rows) RowCtx{ .ds = ds, .ri = reps.items[gi], .table = q.table, .alias = q.alias } else null) catch Value.missing)
                 else if (o.idx) |ci|
                     (if (ci < cells.len) cells[ci] else Value.missing)
                 else nm: {
@@ -5750,9 +5839,11 @@ fn execRemerge(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
     // scalar subquery: a `(select …)` binds THIS row, and the aggregate
     // substitution must keep running per row on its post-collapse tokens (the
     // subquery's aggregates are its own) so none is taken over the outer group.
+    // BUG-sqlcasesubquery: that applies to a CASE holding a subquery exactly as it
+    // does to an expression holding one, so the CASE line carries the same guard.
     var has_aggsub = false;
     for (q.items) |it| {
-        if (it.case_toks != null) has_aggsub = true;
+        if (it.case_toks != null and !hasSubquery(it.case_toks.?)) has_aggsub = true;
         if (it.expr_toks != null and !hasSubquery(it.expr_toks.?)) has_aggsub = true;
     }
     const aggsub = try arena.alloc(?[]const Token, if (has_aggsub) groups.items.len * nitem else 0);
@@ -5767,7 +5858,7 @@ fn execRemerge(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
         for (q.items, 0..) |it, k| {
             const slot = gi * nitem + k;
             if (it.case_toks) |ct| {
-                aggsub[slot] = try substituteAggs(arena, diags, ds, ct, grp);
+                if (!hasSubquery(ct)) aggsub[slot] = try substituteAggs(arena, diags, ds, ct, grp);
             } else if (it.expr_toks) |et| {
                 if (!hasSubquery(et)) aggsub[slot] = try substituteAggs(arena, diags, ds, try removeCalculated(arena, et), grp);
             } else if (it.agg) |f| {
@@ -5796,11 +5887,23 @@ fn execRemerge(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
         const grp = groups.items[gi].items; // aggregates resolve over THIS row's group
         const cells = try arena.alloc(Value, q.items.len);
         for (q.items, 0..) |it, k| {
-            if (it.case_toks != null) {
+            if (it.case_toks) |ct| {
                 // aggregates already substituted (a group constant — PERF-sqlremergeagg),
                 // then the CASE evaluated per row
                 try loadForEval(&pdv, ds, ds.row(ri));
-                cells[k] = try evalCase(arena, diags, &ev, aggsub[gi * nitem + k].?);
+                const corr = RowCtx{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias };
+                // BUG-sqlcasesubquery: a `(select …)` the CASE holds binds THIS row, so
+                // it has no per-group pre-substitution (aggsub skipped it above) —
+                // collapse the subquery first, THEN substitute this query's aggregates
+                // over the post-collapse tokens, so the subquery's own aggregates stay
+                // inside it. Same order, same reason as the `.expr` arm below.
+                // ponytail: an UNCORRELATED subquery here re-runs once per row — the
+                // remerge path has no equivalent of the SELECT fast path's one-shot hoist.
+                const cts = if (hasSubquery(ct))
+                    try substituteAggs(arena, diags, ds, try substituteSubqueries(arena, lib, diags, ct, corr), grp)
+                else
+                    aggsub[gi * nitem + k].?;
+                cells[k] = try evalCase(arena, lib, diags, &ev, cts, corr);
             } else if (it.expr_toks) |et| {
                 // bind earlier SELECT items so `calculated <alias>` (incl. an aggregate
                 // alias) resolves in the remerge path too (BUG-sqlcalcgroupagg).
@@ -5990,6 +6093,11 @@ fn orderRows(arena: std.mem.Allocator, diags: *diag.Diagnostics, res: *Result, o
     // against the output row; idx is positional/aggregate; else the named output column).
     const kv = precomp orelse try arena.alloc([]Value, res.rows.len);
     if (precomp == null) {
+        // BUG-sqlcasesubquery: checked BEFORE the key loop, because the per-row
+        // `catch Value.missing` below would otherwise sort every row on a fabricated
+        // missing key and emit that order ahead of the diagnostic. orderRows has no
+        // Library, so this stays evalCase's loud rc-2 gap (TODO-sqlcasesubqorder).
+        for (order) |o| if (o.case_toks) |ct| if (hasSubquery(ct)) return caseSubqGap(diags, ct);
         // one PDV for all rows, not one per row (BUG-sqlrowwiseoom)
         var pdv = Pdv.init(arena);
         var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
@@ -5998,7 +6106,7 @@ fn orderRows(arena: std.mem.Allocator, diags: *diag.Diagnostics, res: *Result, o
             if (has_expr) for (res.cols, row) |c, v| try bindCol(&pdv, c.name, c.type, c.len, v);
             for (order, 0..) |o, oi| {
                 kv[ri][oi] = if (o.case_toks) |ct|
-                    (evalCase(arena, diags, &ev, ct) catch Value.missing)
+                    (evalCase(arena, null, diags, &ev, ct, null) catch Value.missing) // subquery-free: guarded above
                 else if (o.expr_toks) |et|
                     (evalExprItem(arena, diags, &ev, et) catch Value.missing)
                 else if (o.idx) |ci|
@@ -9252,6 +9360,86 @@ test "BUG-sqltypeconsistency: mixed-type COALESCE arguments fail loud" {
     const ok = lib.find("ok").?;
     try t.expectEqual(@as(f64, 0), ok.row(0)[0].num);
     try t.expectEqualStrings("hi", ok.row(0)[1].str);
+}
+
+test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-less sites are a LOUD rc-2 gap that emits NO rows" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    diag.resetGap();
+    defer diag.resetGap();
+
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "part");
+    _ = try ds.addColumn("qty", .num);
+    try ds.appendRow(&.{numV(10)});
+    try ds.appendRow(&.{numV(20)});
+    try ds.appendRow(&.{numV(30)});
+    try lib.put("part", ds);
+    const cap = try a.create(Dataset); // the correlated partner: 10, 99, 30
+    cap.* = Dataset.init(a, "lot");
+    _ = try cap.addColumn("qty", .num);
+    _ = try cap.addColumn("cap", .num);
+    try cap.appendRow(&.{ numV(10), numV(10) });
+    try cap.appendRow(&.{ numV(20), numV(99) });
+    try cap.appendRow(&.{ numV(30), numV(30) });
+    try lib.put("lot", cap);
+
+    // avg(qty) = 20 — the value the broken path never computed, so every arm fell to
+    // MISSING and 'over' was unreachable. UNCORRELATED (hoisted once) …
+    var d1 = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &d1, "proc sql; create table b1 as select qty, case when qty > (select avg(qty) from part) then 'over' else 'under' end as band from part; quit;");
+    try t.expect(!d1.hasErrors());
+    const b1 = lib.find("b1").?;
+    try t.expectEqualStrings("under", b1.row(0)[1].str);
+    try t.expectEqualStrings("under", b1.row(1)[1].str);
+    try t.expectEqualStrings("over", b1.row(2)[1].str);
+
+    // … CORRELATED (per outer row) …
+    var d2 = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &d2, "proc sql; create table b2 as select qty, case when qty = (select cap from lot where lot.qty = part.qty) then 'match' else 'differ' end as cmp from part part; quit;");
+    try t.expect(!d2.hasErrors());
+    const b2 = lib.find("b2").?;
+    try t.expectEqualStrings("match", b2.row(0)[1].str);
+    try t.expectEqualStrings("differ", b2.row(1)[1].str);
+    try t.expectEqualStrings("match", b2.row(2)[1].str);
+
+    // … and the subquery AS the THEN/ELSE value (min 10 / max 30).
+    var d3 = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &d3, "proc sql; create table b3 as select case when qty > (select avg(qty) from part) then (select max(qty) from part) else (select min(qty) from part) end as pick from part; quit;");
+    try t.expect(!d3.hasErrors());
+    const b3 = lib.find("b3").?;
+    try t.expectEqual(@as(f64, 10), b3.row(0)[0].num);
+    try t.expectEqual(@as(f64, 10), b3.row(1)[0].num);
+    try t.expectEqual(@as(f64, 30), b3.row(2)[0].num);
+    try t.expect(!diag.gapHit()); // nothing above is a gap
+
+    // The two sites with no Library in scope stay LOUD and emit NOTHING. `out` is
+    // asserted empty because the whole point of this bug was that the wrong rows
+    // reached output BEFORE the diagnostic — a loud error after a printed answer is
+    // still a silent-wrong-output failure for whoever read stdout (D-002).
+    inline for (.{
+        "proc sql; select sum(case when qty > (select avg(qty) from part) then 1 else 0 end) as n from part; quit;",
+        "proc sql; select qty from part order by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
+    }) |src| {
+        diag.resetGap();
+        var dg = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        var titles: Titles = .{};
+        const toks = try lex.tokenize(a, src, &dg);
+        run(a, &out, &lib, &dg, &titles, toks) catch {};
+        try t.expect(dg.hasErrors());
+        try t.expect(diag.gapHit()); // legal SAS, unimplemented here → rc 2, never rc 1
+        try t.expectEqual(@as(usize, 0), out.items.len); // not one row of wrong output
+        var loud = false;
+        for (dg.list.items) |m|
+            if (m.severity == .err and std.mem.indexOf(u8, m.message, "a subquery inside a CASE expression is supported") != null) {
+                loud = true;
+            };
+        try t.expect(loud);
+    }
 }
 
 test "BUG-sqltypeconsistency: char literal into a NUMERIC column converts (NOTE), never raw text" {

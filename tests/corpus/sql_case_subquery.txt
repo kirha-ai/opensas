@@ -1,0 +1,33 @@
+pid  qty  band
+P01   10  under
+P02   20  under
+P03   30  over
+pid  qty  cmp
+P01   10  match
+P02   20  differ
+P03   30  match
+pid  qty  pick
+P01   10    10
+P02   20    10
+P03   30    30
+into_band
+over
+grp  f
+  0  lo
+  1  hi
+pid  qty   f
+P01   10   0
+P02   20   0
+P03   30  30
+pid  band
+P03  over
+pid  qty
+P03   30
+pid  qty
+P01   10
+P03   30
+pid  qty
+P02   20
+P03   30
+grp  mx
+  1  30
