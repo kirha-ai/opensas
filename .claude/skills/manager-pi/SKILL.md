@@ -16,8 +16,9 @@ description: >-
 # manager-pi — the manager loop, dev work on pi/Kimi-K3
 
 **Follow the `manager` skill in full** (sense → reconcile → remove completed
-tasks → assign → GitHub intake → audit lane → gate → push → loop; file-ownership,
-quiescent gate, don't-spin, never-self-stop-until-human-handoff — all inherited).
+tasks → assign → GitHub intake → audit lane → gate → push → loop; deps-only
+scheduling, quiescent gate, don't-spin, never-self-stop-until-human-handoff — all
+inherited).
 This skill changes
 **one thing**: devs
 are dispatched as `pi`/Kimi-K3 runs in a worktree, not Agents. One-run-per-dev,

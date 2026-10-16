@@ -107,7 +107,9 @@ gate it, dispatch the next. Each iteration:
    next batch from the corpus (§5 The conformance corpus) — highest-frequency
    failing SAS feature, decomposed into file-owned tasks.
 5b. **GitHub issues — check & prioritize EVERY loop.** Invoke the `issue-manager`
-   skill to pull new open issues, run each through the reproduce + SAS-doc
+   skill to pull new open issues the human has labeled `ready` (an issue without
+   that label is deliberately out of scope — never widen the filter yourself,
+   and never apply the label), run each through the reproduce + SAS-doc
    validation gate, and create confirmed bugs as `GH#`-tagged tasks (marking taken
    issues `ongoing` so they are never pulled twice). Only validated bugs reach the
    board. This is not optional intake — run it each loop so no issue sits unseen.
