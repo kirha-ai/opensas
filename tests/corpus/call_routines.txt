@@ -1,6 +1,6 @@
 sortn=1 2 3
 sortn_miss=. 4 8
-sortc=apple banana cherry
+sortc=apple banan cherry
 scan=7 5
 scan_neg=5 1
 cats=abc

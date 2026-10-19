@@ -1,5 +1,5 @@
 dollar10=[j-akl ]
 controls=[ihgfedcba ]
-dollar0=[[ab] ]
+dollar0=[[a ]
 bad10=.
 bad2=.

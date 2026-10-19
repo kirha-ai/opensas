@@ -1,4 +1,4 @@
-Obs   grp      x
+Obs   grp     x
 
-  1   LOW     10
-  2   HIGH   100
+  1   LOW    10
+  2   HIG   100

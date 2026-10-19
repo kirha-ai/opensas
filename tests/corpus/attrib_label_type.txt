@@ -1,4 +1,4 @@
-RFICDTC=abc
+RFICDTC=a
                           The CONTENTS Procedure
 
 Data Set Name  L
