@@ -1668,9 +1668,11 @@ pub fn readDelimited(a: std.mem.Allocator, text: []const u8, name: []const u8, d
 
     // Infer type: a column becomes numeric when it has at least one non-missing
     // value and every non-missing value parses as a number — so a numeric column
-    // sorts/compares numerically, not lexically (BUG-csvnumtype). ponytail: a
-    // value with a significant leading zero (`007`, `01`) keeps the column
-    // character, so zero-padded ids/codes aren't silently renumbered.
+    // sorts/compares numerically, not lexically (BUG-csvnumtype). A significant
+    // leading zero does NOT keep the column character: live SAS 9.4 EFI types an
+    // all-digit zero-padded column (`0001`) NUMERIC (informat BEST32.) and reads
+    // `1` (GH#29, BUG-importleadingzero — the old keep-char choice was an
+    // unrecorded deviation, overturned and recorded as D-026).
     for (0..ncol) |ci| {
         var any = false;
         var all_num = true;
@@ -1678,7 +1680,7 @@ pub fn readDelimited(a: std.mem.Allocator, text: []const u8, name: []const u8, d
             const f = rowf[ci];
             if (isCsvMissing(f)) continue;
             any = true;
-            if (parseF64(f) == null or hasLeadingZero(f)) {
+            if (parseF64(f) == null) {
                 all_num = false;
                 break;
             }
@@ -1755,15 +1757,6 @@ fn isCsvMissing(f: []const u8) bool {
 
 fn parseF64(f: []const u8) ?f64 {
     return std.fmt.parseFloat(f64, std.mem.trim(u8, f, " ")) catch null;
-}
-
-/// True for a zero-padded token like `007`/`01` (a leading `0` before another
-/// digit) — kept character so ids/codes aren't renumbered. `0`, `0.5`, `0e3`
-/// are ordinary numbers and return false.
-fn hasLeadingZero(f: []const u8) bool {
-    const t = std.mem.trim(u8, f, " ");
-    const s = if (t.len > 0 and (t[0] == '+' or t[0] == '-')) t[1..] else t;
-    return s.len >= 2 and s[0] == '0' and std.ascii.isDigit(s[1]);
 }
 
 /// A SAS-valid variable name from a header cell per VALIDVARNAME=V7 (the SAS 9.4
@@ -2514,23 +2507,26 @@ test "writeSas7bdat → read preserves char type/length: '007' stays Char, not N
     try std.testing.expect(back.row(1)[1].isMissing());
 }
 
-test "readCsv infers numeric columns; text and zero-padded codes stay char (BUG-csvnumtype)" {
+test "readCsv infers numeric columns; text stays char, zero-padded digits go NUMERIC (BUG-csvnumtype, GH#29)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
 
     // id: all numeric → numeric (loads as f64, so it sorts/compares numerically);
-    // code: zero-padded → char; name: text → char; a `.`/empty is missing.
+    // code: zero-padded all-digit → numeric too (live SAS 9.4 EFI, informat
+    // BEST32.: `007` reads 7 — GH#29/D-026, the old keep-char choice is
+    // overturned); name: text → char; a `.`/empty is missing.
     const ds = try readCsv(a, "id,code,name\n10,007,ann\n2,001,bob\n1,.,\n", "d");
     try std.testing.expectEqual(@as(usize, 3), ds.rowCount());
     try std.testing.expect(ds.columns.items[0].type == .num); // id
-    try std.testing.expect(ds.columns.items[1].type == .char); // code (leading zeros)
+    try std.testing.expect(ds.columns.items[1].type == .num); // code (zero-padded → num, GH#29)
     try std.testing.expect(ds.columns.items[2].type == .char); // name (text)
 
     try std.testing.expectEqual(@as(f64, 10), ds.row(0)[0].num);
     try std.testing.expectEqual(@as(f64, 1), ds.row(2)[0].num);
-    try std.testing.expectEqualStrings("007", ds.row(0)[1].str); // zero-pad preserved
-    try std.testing.expectEqualStrings(".", ds.row(2)[1].str); // `.` literal in a char column
+    try std.testing.expectEqual(@as(f64, 7), ds.row(0)[1].num); // `007` → 7
+    try std.testing.expectEqual(@as(f64, 1), ds.row(1)[1].num); // `001` → 1
+    try std.testing.expect(ds.row(2)[1].isMissing()); // `.` in a numeric column
     try std.testing.expectEqualStrings("", ds.row(2)[2].str); // empty char field
 
     // a numeric column with a `.` reads that cell as numeric missing
@@ -2545,13 +2541,16 @@ test "readDelimited: DBMS=DLM semicolon, GETNAMES, DATAROW, GETNAMES=NO (BUG-imp
     defer arena.deinit();
     const a = arena.allocator();
 
-    // `;`-delimited with names on row 1: numeric age, zero-padded code stays char.
+    // `;`-delimited with names on row 1: numeric age; zero-padded all-digit code
+    // is NUMERIC too (live SAS EFI best32. — GH#29/D-026).
     const ds = try readDelimited(a, "name;age;code\nAnn;30;007\nBob;25;010\n", "d", ';', true, 2, true);
     try std.testing.expectEqual(@as(usize, 3), ds.columns.items.len);
     try std.testing.expectEqualStrings("name", ds.columns.items[0].name);
     try std.testing.expect(ds.columns.items[1].type == .num); // age
     try std.testing.expectEqual(@as(f64, 30), ds.row(0)[1].num);
-    try std.testing.expectEqualStrings("007", ds.row(0)[2].str);
+    try std.testing.expect(ds.columns.items[2].type == .num); // code: `007` → num (GH#29)
+    try std.testing.expectEqual(@as(f64, 7), ds.row(0)[2].num);
+    try std.testing.expectEqual(@as(f64, 10), ds.row(1)[2].num);
 
     // GETNAMES=NO → VAR1.. names, data from row 1 (datarow=0 → default).
     const ds2 = try readDelimited(a, "Ann;30\nBob;25\n", "d2", ';', false, 0, true);
@@ -2575,6 +2574,9 @@ test "readDelimited: quoted embedded newline stays ONE record; headers V7-normal
     // second line into a bogus row and mistype/misalign everything right).
     const ds = try readDelimited(a, "subjid,aetext,age\n001,\"Rash on arm\nspreading to back\",34\n002,\"Nausea\",28\n", "d", ',', true, 2, true);
     try std.testing.expectEqual(@as(usize, 2), ds.rowCount()); // TWO records, not three
+    try std.testing.expect(ds.columns.items[0].type == .num); // subjid `001`/`002` → num (GH#29)
+    try std.testing.expectEqual(@as(f64, 1), ds.row(0)[0].num);
+    try std.testing.expectEqual(@as(f64, 2), ds.row(1)[0].num);
     try std.testing.expectEqualStrings("Rash on arm\nspreading to back", ds.row(0)[1].str);
     try std.testing.expect(ds.columns.items[2].type == .num); // age still numeric
     try std.testing.expectEqual(@as(f64, 34), ds.row(0)[2].num); // …and on the right row
