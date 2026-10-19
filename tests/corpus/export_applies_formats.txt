@@ -1,0 +1,5 @@
+      day          iso              stamp      clock         cost
+
+15MAR2021   2021-03-15   15MAR21:14:45:00   14:45:00    $8,765.40
+CSV: who,day,iso,stamp,clock,cost,wide,ratio,hole
+CSV: Ondrej,15MAR2021,2021-03-15,15MAR21:14:45:00,14:45:00,"$8,765.40",9.8765432E15,0.6666666667,
