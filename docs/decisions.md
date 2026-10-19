@@ -446,3 +446,29 @@ these caused real regressions (see D-001).
   metadata: E8601DZw.d's header also says `Alignment: Left` (p.204) and
   renderE8601Dz still left-justifies — do not trust that field there either;
   probe before touching.
+- D-026 **A LEADING-ZERO ALL-DIGIT DELIMITED COLUMN TYPES NUMERIC — LIVE SAS 9.4
+  EFI WINS OVER AN UNRECORDED LOCAL CHOICE** (2026-10-19, GH#29
+  BUG-importleadingzero, manager-validated repro against live SAS). `readDelimited`
+  (io.zig) — the ONE inference loop shared by PROC IMPORT DBMS=CSV, DBMS=DLM, and
+  the libname `.csv` engine — used to keep a column character when any value had a
+  significant leading zero (`hasLeadingZero`: `007` stays `007`), a deliberate
+  "don't renumber zero-padded ids" choice. But live SAS 9.4 EFI types an all-digit
+  column with leading zeros NUMERIC (`informat code best32.` in the contents
+  output) and reads `0001` as `1`: zero-padded ids ARE renumbered by real IMPORT,
+  and the local choice was never recorded here — an unrecorded deviation, so it
+  lost. The `hasLeadingZero` disjunct is deleted; the numeric test is now
+  `parseF64(f) == null` alone. **Scope boundaries, both live-SAS-true:** a MIXED
+  column (`0001`,`12`,`abc`) stays character — `abc` forces it — and an all-digit
+  column WITHOUT leading zeros was already numeric and stays. Do not "restore" the
+  zeros: a future reader who finds `007` printing as `7` in a golden is looking at
+  this decision, not a bug. **Downstream note:** the lenient char-LENGTH-before-SET
+  coercion (exec.zig `seedColumnsOf`, the SDTM `length …; set src;` schema-pin
+  exception) exists precisely because CSV inference hands numeric-typed columns to
+  steps that declare them `$n`; MORE columns now arrive numeric, which is the case
+  that leniency was built for — its upgrade-to-strict path (readers carrying real
+  types) is unchanged. Pins: io.zig test blocks BUG-csvnumtype / BUG-importdlm /
+  BUG-importdelimread; corpus import_leadzero.sas (contents Type=Num + print 1/2)
+  with the mixed control import_leadzero_mixed.sas; goldens re-derived under this
+  rule: import_dsd, import_dlm, import_newline_hdr (subjid), global_stmt_opts and
+  libname_engine (libname-engine `site`). The doc-finder tick223 claim that
+  `007` stays character is overturned by this entry.
