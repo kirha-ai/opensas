@@ -1380,7 +1380,7 @@ fn writeCsvImpl(a: std.mem.Allocator, ds: *const Dataset, variant: CsvVariant) d
             // data, not stripping formats) — a real EFI log for SASHELP.CARS keeps
             // `format MSRP dollar8.;`, and comma separators show up in exported
             // CSVs exactly for COMMA/DOLLAR-formatted columns. Overturned, not
-            // worked around: see docs/decisions.md D-026. Char columns stay
+            // worked around: see docs/decisions.md D-027. Char columns stay
             // verbatim as before — ponytail: whether EFI applies an attached CHAR
             // format (`$upcase.`) is unruled; no fixture pins it.
             const fmt: ?[]const u8 = if (variant == .exporting) ds.columns.items[i].format else null;

@@ -17,7 +17,7 @@
      - the standard answer to "how do I keep my date format when exporting" is
        "attach the format to the variable" — and it works.
    Deciding repro: `format d yymmdd10.;` + EXPORT writes 2024-02-15, not the
-   day count 23421 (docs/decisions.md D-026).
+   day count 23421 (docs/decisions.md D-027).
 
    So the EXPORT path renders every formatted numeric exactly as `put var fmt.`
    would (leading width padding trimmed — EFI writes the value, not the field),
