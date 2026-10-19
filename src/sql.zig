@@ -5331,6 +5331,28 @@ fn isSelectAlias(q: Query, name: []const u8) bool {
     return false;
 }
 
+/// BUG-sqlorderbyambig (GH#26): true when `name` matches EXACTLY ONE SELECT
+/// output column name — ORDER BY resolves result columns before contributing
+/// tables (the same order orderRows documents and implements), so `select a.id
+/// … order by id` is valid SAS 9.4 even though `id` lives in both join inputs:
+/// the bare name designates the projected output column, not either table's.
+/// UNIQUENESS is the exemption, not existence: `select a.id, b.id` leaves two
+/// output columns named `id` — still an ambiguous reference. Names mirror
+/// itemNames (an `as` alias; else the unqualified projected column). ponytail:
+/// a computed item's generated `_colN` is skipped to stay allocation-free —
+/// the generated names are unique, so they can't affect the >1 count.
+fn uniqueOutputCol(q: Query, name: []const u8) bool {
+    var n: usize = 0;
+    for (q.items) |it| {
+        const out = it.alias orelse (if (it.col) |c| unqualify(c) else continue);
+        if (eqi(out, name)) {
+            n += 1;
+            if (n > 1) return false;
+        }
+    }
+    return n == 1;
+}
+
 /// First UNQUALIFIED ambiguous name in a token stream, or null. A nested
 /// `(select …)` owns its own names (skipped whole); a `name(` is a function call;
 /// a SELECT alias resolves to the output column, not a contributing table.
@@ -5384,7 +5406,10 @@ fn validateNoAmbiguity(diags: *diag.Diagnostics, ds: *Dataset, q: Query) diag.Er
             if (firstAmbiguous(ds, q, et)) |c| return ambigErr(diags, c);
         } else if (o.case_toks) |ct| {
             if (firstAmbiguous(ds, q, ct)) |c| return ambigErr(diags, c);
-        } else if (o.idx == null and o.col.len > 0 and !isSelectAlias(q, o.col)) {
+        } else if (o.idx == null and o.col.len > 0 and !isSelectAlias(q, o.col) and !uniqueOutputCol(q, o.col)) {
+            // BUG-sqlorderbyambig (GH#26): a bare name that names exactly one
+            // output column resolves there (see uniqueOutputCol) — only a name
+            // with no unique output match falls through to table ambiguity.
             if (ambiguousCol(ds, o.col)) return ambigErr(diags, o.col);
         }
     }
@@ -9543,6 +9568,72 @@ test "ambiguous unqualified column in a join fails loud (BUG-sqlambigcol)" {
     try runSql(a, &lib, &d4, "proc sql; create table ok3 as select k from a; quit;");
     try t.expect(!d4.hasErrors());
     try t.expectEqual(@as(usize, 2), lib.find("ok3").?.rowCount());
+}
+
+test "order by unqualified shared column over a unique projection runs (BUG-sqlorderbyambig)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+
+    const da = try a.create(Dataset);
+    da.* = Dataset.init(a, "a");
+    _ = try da.addColumn("id", .num);
+    _ = try da.addColumn("x", .num);
+    try da.appendRow(&.{ numV(2), numV(20) });
+    try da.appendRow(&.{ numV(1), numV(10) });
+    try lib.put("a", da);
+    const db = try a.create(Dataset);
+    db.* = Dataset.init(a, "b");
+    _ = try db.addColumn("id", .num);
+    _ = try db.addColumn("y", .num);
+    try db.appendRow(&.{ numV(2), numV(200) });
+    try db.appendRow(&.{ numV(1), numV(100) });
+    try lib.put("b", db);
+
+    // GH#26 repro shape: `id` is in BOTH tables, but the SELECT list projects
+    // exactly one of them (`a.id` → output column `id`), so `order by id`
+    // names that output column — valid SAS 9.4, not an ambiguous reference.
+    // Rows are inserted id=2,1 so the sort is observable, both directions.
+    var d1 = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &d1, "proc sql; create table asc1 as select a.id, a.x, b.y from a inner join b on a.id=b.id order by id; quit;");
+    try t.expect(!d1.hasErrors());
+    const t1 = lib.find("asc1").?;
+    try t.expectEqual(@as(usize, 2), t1.rowCount());
+    try t.expectEqual(@as(f64, 1), t1.row(0)[0].num);
+    try t.expectEqual(@as(f64, 10), t1.row(0)[1].num);
+    try t.expectEqual(@as(f64, 100), t1.row(0)[2].num);
+    try t.expectEqual(@as(f64, 2), t1.row(1)[0].num);
+
+    // `desc` variant — same resolution, descending direction
+    var d2 = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &d2, "proc sql; create table desc1 as select a.id, a.x, b.y from a inner join b on a.id=b.id order by id desc; quit;");
+    try t.expect(!d2.hasErrors());
+    const t2 = lib.find("desc1").?;
+    try t.expectEqual(@as(f64, 2), t2.row(0)[0].num);
+    try t.expectEqual(@as(f64, 1), t2.row(1)[0].num);
+
+    // PRECISION — the exemption is a UNIQUE output-name check, not existence:
+    // BOTH `a.id, b.id` projected → two output columns named `id` → still the
+    // ambiguous-reference ERROR (real SAS errors here too), no output table.
+    var d3 = diag.Diagnostics.init(a);
+    runSql(a, &lib, &d3, "proc sql; create table bad as select a.id, b.id from a inner join b on a.id=b.id order by id; quit;") catch {};
+    try t.expect(d3.hasErrors());
+    try t.expect(lib.find("bad") == null);
+    var named = false;
+    for (d3.list.items) |m|
+        if (m.severity == .err and std.mem.indexOf(u8, m.message, "Ambiguous reference") != null and std.mem.indexOf(u8, m.message, "id") != null) {
+            named = true;
+        };
+    try t.expect(named);
+
+    // a bare name with NO output match and >1 table hit keeps erroring — the
+    // fix widened only the ORDER BY arm, nothing else (SELECT-list `select id`
+    // is caught above by the items loop, as before).
+    var d4 = diag.Diagnostics.init(a);
+    runSql(a, &lib, &d4, "proc sql; create table bad2 as select a.x, b.y from a inner join b on a.id=b.id order by id; quit;") catch {};
+    try t.expect(d4.hasErrors());
+    try t.expect(lib.find("bad2") == null);
 }
 
 test "nested summary functions fail loud (BUG-sqlnestedagg)" {

@@ -1,0 +1,2 @@
+control id=1 x=10 y=100
+control id=2 x=20 y=200
