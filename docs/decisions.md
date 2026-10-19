@@ -472,3 +472,35 @@ these caused real regressions (see D-001).
   rule: import_dsd, import_dlm, import_newline_hdr (subjid), global_stmt_opts and
   libname_engine (libname-engine `site`). The doc-finder tick223 claim that
   `007` stays character is overturned by this entry.
+- D-027 **PROC EXPORT (DBMS=CSV) PRESERVES ATTACHED FORMATS — AND AN OVERTURNED
+  ADJUDICATION IS REVERSED EXPLICITLY, NEVER QUIETLY ROUTED AROUND**
+  (2026-10-19, GH#25 BUG-exportcsvfmt, reversing the in-tree NOTE-exportformatraw
+  verdict the old export_ignores_formats.sas pinned). The old ruling read the
+  Procedures Guide EXPORT chapter's generated EFI code (`format <var> best12.;`
+  for every numeric) as "EXPORT strips formats". That evidence was
+  NON-DISCRIMINATING: both worked examples feed SASHELP.CLASS, whose numerics
+  carry NO formats, so the generated lines re-state the source data — they
+  never showed a format being removed. Live SAS 9.4 says the opposite, three
+  independent ways: a real EFI log for SASHELP.CARS preserves
+  `format MSRP dollar8.;` / `format Invoice dollar8.;` (best12. appears only
+  beside columns with no format to preserve); runtime corroboration — comma
+  separators show up in exported CSVs exactly for COMMA/DOLLAR-formatted
+  columns, which BEST12. never emits; and the standard community answer to
+  "keep my date format when exporting" is "attach the format", and it works.
+  **Rule: the EXPORT CSV path renders every formatted numeric exactly as
+  `put var fmt.` would, trims the LEADING width padding (EFI writes the value,
+  not the field: dollar10.2 exports `$8,765.40`, not `  $8,765.40`), and routes
+  the rendered text through the same DSD quoting a char field gets (a rendered
+  `$8,765.40` contains the delimiter). BEST12. is only the DEFAULT for
+  numerics with NO format; a missing stays EFI's missing (empty / lettered)
+  even under a format — BUG-exportmissing and NOTE-exportspecialmiss keep
+  their verdicts. Scoped per D-001 to `writeCsvExport` ONLY: the libname
+  TARGET engine's CSV stays format-free; making IT format-aware is a separate
+  ruling if ever wanted. Corollary: a golden fixture derived from a doc
+  example must state what the example DISCRIMINATES — the old fixture pinned
+  "formats ignored" off an example whose input had no formats to ignore, and
+  its very NAME then argued for the wrong verdict.** Fixture:
+  tests/corpus/export_applies_formats.sas (yymmdd10.→2021-03-15, date9.→
+  15MAR2021, dollar10.2→DSD-quoted `$8,765.40`, formatted missing → empty,
+  BEST12. controls `wide`/`ratio`; io.zig unit test pins the internal writer
+  unchanged).
