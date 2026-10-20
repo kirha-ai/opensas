@@ -423,7 +423,7 @@ pub const DeclVar = struct {
 /// DO loop (runDo consumes them); the others propagate to the step loop.
 const Flow = enum { normal, deleted, stop, continue_, leave, returned, goto_, link_ };
 
-const RetainInit = struct { name: []const u8, expr: *const ast.Expr };
+const RetainInit = struct { name: []const u8, expr: *const ast.Expr, from_array: bool = false };
 /// A `retain _NUMERIC_ 0;`-style item: the kind of special name list plus its
 /// optional seed, expanded against the PDV once declareVars completes it.
 const SpecialRetain = struct { kind: ast.SpecialArr, init: ?*const ast.Expr };
@@ -1022,8 +1022,26 @@ pub const Executor = struct {
         // pdv.set's define-if-missing steal the var's first-mention slot — a
         // sum statement after a second-SET POINT= lookup ordered the
         // accumulator AHEAD of the lookup's columns (QA tick377 F2).
+        // GH#27: attrs BEFORE the inits — stampLiteralLen's FORMAT/INFORMAT
+        // width guard reads the attached spec, and `format y $8.; retain y "ab";`
+        // must see it (these same attaches ran before the first statement anyway;
+        // applyAttrs is set-only and idempotent).
+        self.maybeApplyAttrs();
         for (self.retain_inits.items) |ri| {
             try self.pdv.set(ri.name, try self.ev.eval(ri.expr));
+            // GH#27 (EPIC-charfixedwidth-slice1): the retain-store twin of the
+            // assignment arm — a char-literal init fixes an undeclared var's width
+            // (`retain y "abcdef";` → $6, and a later loop assignment cannot grow
+            // it). Runs before the loop, so the init's width also beats a loop
+            // literal — SAS's first-length rule. NOT for ARRAY member inits
+            // (from_array): an array member's width comes from the ARRAY
+            // statement's $w (default 8 in SAS), never from an init literal —
+            // stamping `(5*'')` at $1 truncated a later `tags{5}='q7'` to `q`
+            // (GAP-inoperators fixture). ponytail: an assignment textually
+            // BEFORE the retain statement still stamps after the init (runtime
+            // order, not source order); the compile-time width model is the
+            // epic's.
+            if (ri.expr.* == .str and !ri.from_array) self.pdv.stampLiteralLen(ri.name, ri.expr.str);
         }
 
         // GH#75 ISS-uninitvar: with the PDV now fully seeded, any RHS variable
@@ -1651,7 +1669,7 @@ pub const Executor = struct {
                         for (decl.inits, 0..) |init_expr, k| {
                             if (k >= decl.elements.len) break;
                             try self.retained.append(self.arena, decl.elements[k]);
-                            try self.retain_inits.append(self.arena, .{ .name = decl.elements[k], .expr = init_expr });
+                            try self.retain_inits.append(self.arena, .{ .name = decl.elements[k], .expr = init_expr, .from_array = true });
                         }
                         if (decl.temporary) {
                             // SAS 9.4: _TEMPORARY_ elements are ALWAYS retained
@@ -4773,6 +4791,15 @@ pub const Executor = struct {
                 // plain value assignment (Phase-F-final).
                 if (!(a.value.* == .call and try self.runCombFunc(a.target, a.value.call))) {
                     try self.pdv.set(a.target, try self.ev.eval(a.value));
+                    // GH#27 (EPIC-charfixedwidth-slice1): a BARE char-literal RHS fixes
+                    // an undeclared target's width — AFTER the store, so pdv.set's
+                    // define has settled the type (a numeric target stays un-stamped).
+                    // The literal itself always fits its own width; every LATER store
+                    // then truncates at it (setAt), the SAS compile-time rule. The
+                    // automatic record buffer is excluded: _INFILE_'s width is the
+                    // LRECL, and a short literal assignment must not shrink it.
+                    if (a.value.* == .str and !eqi(a.target, "_infile_"))
+                        self.pdv.stampLiteralLen(a.target, a.value.str);
                     // `_infile_ = …` also writes through to the held record
                     // (BUG-infilevarnoop). Read the stored cell back so a numeric
                     // RHS applies the PDV's own num→char rendering (compact BEST).

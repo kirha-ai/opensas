@@ -1,0 +1,31 @@
+CASE1 y=abc len=3 vlen=3
+CASE2 s6=n/a len=3 vlen=6
+CASE3 f=ABC len=3 vlen=3
+                          The CONTENTS Procedure
+
+Data Set Name  w1
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  f         Char    3
+                          The CONTENTS Procedure
+
+Data Set Name  w2
+Observations   1
+Variables      1
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  f         Char    3
+f
+
+abc
+CASE5 r6=n/a len=3 vlen=6
+CASE6 id=1 c=XY
+CASE6 id=2 c=XY
+CTRL g=SMALL
+CTRL h=CARDIACDISORDERS

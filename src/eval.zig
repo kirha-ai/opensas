@@ -380,7 +380,29 @@ pub const Evaluator = struct {
         // list name; expand it here to the current PDV's matching variables (the
         // runtime list can't be known at parse time). Skip automatic/helper vars.
         var argv: std.ArrayList(Value) = .empty;
-        for (c.args) |*arg| {
+        // BUG-prxmatchpad (GH#28): the SUBJECT of a PRX function — prxmatch(rx,
+        // subject), prxchange(rx, times, subject), prxposn(rx, n, source) — is a
+        // bare char VARIABLE read PADDED to its declared length: fixed-width
+        // storage again, the exact rule `concatStr` applies to `||` operands
+        // (BUG-concatnopad; Language Reference: Concepts p.49). functions.zig sees
+        // only evaluated Values (a `.str` carries no variable name), so — like
+        // VLENGTH/LENGTHC above — the bare-var case must be caught here where the
+        // raw AST is still in hand. Live SAS 9.4: `length s $8; s="abc";`
+        // prxmatch('/abc$/', s) is 0 (subject "abc"+5 blanks, `$` fails) while a
+        // literal subject still matches — the PRX engine was never at fault, the
+        // subject just arrived unpadded. Only a declared char VARIABLE diverts;
+        // literals, computed expressions (trim(s) et al.) and len==0 vars fall
+        // through unpadded — the documented LENGTHC fallthrough. Storage stays
+        // unpadded (EPIC-charfixedwidth); CALL PRXCHANGE/PRXPOSN are exec.zig's
+        // separate lineage and keep their current reads.
+        const prx_subject: ?usize = blk: {
+            const eqi = std.ascii.eqlIgnoreCase;
+            if (eqi(c.name, "prxmatch") and c.args.len == 2) break :blk 1;
+            if (eqi(c.name, "prxchange") and c.args.len == 3) break :blk 2;
+            if (eqi(c.name, "prxposn") and c.args.len == 3) break :blk 2;
+            break :blk null;
+        };
+        for (c.args, 0..) |*arg, ai| {
             // `of x:` (Language Reference: Concepts printed p.70 Table 4.5) — arrives as a synthetic
             // `__ofprefix("x")` argument (parser.expandOf, the `__dimchk`
             // pattern); expand the prefix against the live PDV here, the same
@@ -415,6 +437,20 @@ pub const Evaluator = struct {
                         try argv.append(self.arena, v.value);
                 }
                 continue;
+            };
+            // BUG-prxmatchpad: this arg is the SUBJECT slot of a PRX call and a
+            // bare char variable with a declared LENGTH — contribute its value
+            // padded to that width (concatStr's rule). Anything else — literal,
+            // expression, numeric var, undeclared-width var — takes the ordinary
+            // path below unchanged.
+            if (prx_subject) |si| if (ai == si and arg.* == .variable) {
+                if (self.pdv.indexOf(arg.variable)) |vi| {
+                    const vr = self.pdv.vars.items[vi];
+                    if (vr.type == .char and vr.len > 0) {
+                        try argv.append(self.arena, .{ .str = try self.concatStr(arg, try self.eval(arg)) });
+                        continue;
+                    }
+                }
             };
             try argv.append(self.arena, try self.eval(arg));
         }
@@ -1041,6 +1077,75 @@ test "concat pads a char VARIABLE to its declared length (BUG-concatnopad)" {
     // an all-blank char var contributes its full declared width of blanks
     try f.pdv.set("t", .{ .str = "" });
     try t.expectEqualStrings("     !", (try e.eval(b.bin(.concat, b.vbl("t"), b.str("!")))).str);
+}
+
+// BUG-prxmatchpad test hook: captures the LAST argument the PRX function
+// received — the SUBJECT slot in all three forms (prxmatch: args[1];
+// prxchange/prxposn: args[2]) — so the padding is pinned at the exact boundary
+// the fix changed: what the evaluator hands the function layer. null = the arg
+// arrived as something other than a string (e.g. 2-arg prxposn's numeric n).
+var prxpad_subject: ?[]const u8 = null;
+fn prxpadEcho(ev: *Evaluator, name: []const u8, args: []const Value) Error!Value {
+    _ = ev;
+    _ = name;
+    prxpad_subject = if (args.len > 0 and args[args.len - 1] == .str) args[args.len - 1].str else null;
+    return Value.missing;
+}
+
+test "PRX subject: a bare char VARIABLE pads to its declared width (BUG-prxmatchpad)" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var e = f.ev();
+    e.call_fn = &prxpadEcho;
+    const b = f.b();
+
+    // length s $8; s="abc" — stored unpadded (EPIC-charfixedwidth), declared 8
+    const si = try f.pdv.declare("s", .char);
+    f.pdv.vars.items[si].len = 8;
+    try f.pdv.set("s", .{ .str = "abc" });
+
+    const mk = struct { // name(args…) from expr pointers
+        fn f2(al: std.mem.Allocator, name: []const u8, args: []const *const ast.Expr) *const ast.Expr {
+            const cargs = al.alloc(ast.Expr, args.len) catch unreachable;
+            for (args, 0..) |a, i| cargs[i] = a.*;
+            const c = al.create(ast.Expr) catch unreachable;
+            c.* = .{ .call = .{ .name = name, .args = cargs } };
+            return c;
+        }
+    }.f2;
+
+    // prxmatch('/abc$/', s): the subject ARRIVES as "abc"+5 blanks (the engine
+    // then fails `$` → m=0; that end-to-end pin is bug_prxmatchpad.sas)
+    _ = try e.eval(mk(f.arena.allocator(), "prxmatch", &.{ b.str("/abc$/"), b.vbl("s") }));
+    try t.expectEqualStrings("abc" ++ "     ", prxpad_subject.?);
+    // prxchange(rx, -1, s): the args[2] subject pads the same way
+    _ = try e.eval(mk(f.arena.allocator(), "prxchange", &.{ b.vbl("rx"), b.num(-1), b.vbl("s") }));
+    try t.expectEqualStrings("abc" ++ "     ", prxpad_subject.?);
+    // prxposn(rx, 1, s): the args[2] source pads; the 2-arg form's last arg is
+    // the numeric n — never an early string conversion
+    _ = try e.eval(mk(f.arena.allocator(), "prxposn", &.{ b.vbl("rx"), b.num(1), b.vbl("s") }));
+    try t.expectEqualStrings("abc" ++ "     ", prxpad_subject.?);
+    _ = try e.eval(mk(f.arena.allocator(), "prxposn", &.{ b.vbl("rx"), b.num(1) }));
+    try t.expect(prxpad_subject == null);
+    // a LITERAL subject keeps its own width — no declared length to pad to
+    _ = try e.eval(mk(f.arena.allocator(), "prxmatch", &.{ b.str("/abc$/"), b.str("abc") }));
+    try t.expectEqualStrings("abc", prxpad_subject.?);
+    // a computed expression — "abc"||"" — arrives unpadded (the documented
+    // fallthrough: only the BARE variable pads; the trim(s) idiom is pinned
+    // end-to-end in bug_prxmatchpad.sas, where the real function table is live
+    // and a nested call is not intercepted by this echo)
+    const cat = b.bin(.concat, b.str("abc"), b.str(""));
+    _ = try e.eval(mk(f.arena.allocator(), "prxmatch", &.{ b.str("/abc$/"), cat }));
+    try t.expectEqualStrings("abc", prxpad_subject.?);
+    // a no-declared-length char var and a NUMERIC var take the ordinary path
+    // (the numeric stays .num — char conversion is the callee's job, as before)
+    try f.pdv.set("plain", .{ .str = "abc" });
+    _ = try e.eval(mk(f.arena.allocator(), "prxmatch", &.{ b.str("/abc$/"), b.vbl("plain") }));
+    try t.expectEqualStrings("abc", prxpad_subject.?);
+    try f.pdv.set("n", .{ .num = 12 });
+    _ = try e.eval(mk(f.arena.allocator(), "prxmatch", &.{ b.str("/12/"), b.vbl("n") }));
+    try t.expect(prxpad_subject == null);
 }
 
 test "array subscript: out-of-range is a SAS ERROR that aborts the step (BUG-arrayoorerror)" {

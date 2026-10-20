@@ -1278,15 +1278,26 @@ pub fn deleteMemberFiles(a: std.mem.Allocator, dir_path: []const u8, stem: []con
 /// through readCsv and matches every real-SAS golden (BUG-csvregress). The data CSV
 /// stays CLEAN (header + rows); labels persist in a `.labels` sidecar.
 pub fn writeCsv(a: std.mem.Allocator, ds: *const Dataset) diag.Error![]const u8 {
-    return writeCsvImpl(a, ds, false);
+    return writeCsvImpl(a, ds, .internal);
 }
 
-/// PROC EXPORT (dbms=csv): a missing numeric writes an EMPTY field (`,,`), matching
-/// SAS's exported CSV — a "." there would be read back as data by a strict reader
-/// (BUG-exportmissing). This variant is ONLY for the EXPORT code path.
+/// PROC EXPORT (dbms=csv) differs from the internal writer in two policies, never
+/// in mechanism (D-001): a missing numeric writes an EMPTY field (`,,`) — a "."
+/// there would be read back as data by a strict reader (BUG-exportmissing) — and
+/// an ATTACHED format is PRESERVED (GH#25): live SAS 9.4 EFI exports
+/// `format d yymmdd10.;` as `2024-02-15`, never the day count; BEST12. is only
+/// the DEFAULT for numerics with NO format. This variant is ONLY for the EXPORT
+/// code path — the libname TARGET engine keeps the internal rendering (D-001:
+/// scope to the caller, never the shared writer).
 pub fn writeCsvExport(a: std.mem.Allocator, ds: *const Dataset) diag.Error![]const u8 {
-    return writeCsvImpl(a, ds, true);
+    return writeCsvImpl(a, ds, .exporting);
 }
+
+/// Which caller is serializing. The impl below forks on this for exactly the two
+/// documented policy differences (missing rendering, BUG-exportmissing; attached
+/// formats, GH#25) — everything else is byte-identical for both callers, per
+/// D-001's "scope any behavior change to the caller".
+const CsvVariant = enum { internal, exporting };
 
 // ── BUG-csvzerocolphantom: a 0-VARIABLE data set has NO CSV encoding ─────────
 // Neither writeCsv nor readCsv has a `*diag.Diagnostics` handle (both are called
@@ -1306,7 +1317,8 @@ fn loudUnsup(comptime fmt: []const u8, args: anytype) void {
     }
 }
 
-fn writeCsvImpl(a: std.mem.Allocator, ds: *const Dataset, missing_empty: bool) diag.Error![]const u8 {
+fn writeCsvImpl(a: std.mem.Allocator, ds: *const Dataset, variant: CsvVariant) diag.Error![]const u8 {
+    const missing_empty = variant == .exporting;
     // BUG-csvzerocolphantom. CSV CANNOT EXPRESS A 0-VARIABLE DATA SET, on two
     // independent grounds, so writing one produces a file that is a lie:
     //
@@ -1361,15 +1373,38 @@ fn writeCsvImpl(a: std.mem.Allocator, ds: *const Dataset, missing_empty: bool) d
     for (ds.rows.items) |row| {
         for (row, 0..) |v, i| {
             if (i > 0) try buf.append(a, ',');
+            // GH#25 (EXPORT ONLY — D-001): live SAS 9.4 EFI PRESERVES an attached
+            // format; the in-tree NOTE-exportformatraw ruling over-generalized the
+            // doc's SASHELP.CLASS example (whose numerics carry NO formats, so its
+            // generated `format <var> best12.;` lines were re-stating the source
+            // data, not stripping formats) — a real EFI log for SASHELP.CARS keeps
+            // `format MSRP dollar8.;`, and comma separators show up in exported
+            // CSVs exactly for COMMA/DOLLAR-formatted columns. Overturned, not
+            // worked around: see docs/decisions.md D-027. Char columns stay
+            // verbatim as before — ponytail: whether EFI applies an attached CHAR
+            // format (`$upcase.`) is unruled; no fixture pins it.
+            const fmt: ?[]const u8 = if (variant == .exporting) ds.columns.items[i].format else null;
             switch (v) {
                 // An all-blank char value is character-missing → empty field (SDTM
                 // convention). GH#60 makes a quoted `''` a single blank, so `x=""`
                 // must still export empty, not " ". Values with content are written
                 // verbatim (padding like " A " is preserved for round-trip fidelity).
                 .str => |s| if (std.mem.trim(u8, s, " ").len != 0) try appendCsvField(a, &buf, s),
-                .num => |x| if (!std.math.isNan(x))
-                    try buf.appendSlice(a, try fmtCsvNum(a, x))
-                else if (!missing_empty)
+                .num => |x| if (!std.math.isNan(x)) {
+                    if (fmt) |f| {
+                        // Render exactly as `put v f;` does (the same format.apply
+                        // the PUT statement dispatches), then strip the LEADING
+                        // width padding — EFI writes the value, not the field:
+                        // dollar10.2 exports `$8,765.40`, not `  $8,765.40`.
+                        // Trailing blanks are NOT stripped: numeric formats
+                        // right-justify so they never emit any, and a user VALUE
+                        // label's trailing blank is content, not padding.
+                        // appendCsvField quotes per DSD because a rendered value
+                        // can contain the delimiter or a quote just like a char
+                        // field can (`"$8,765.40"`).
+                        try appendCsvField(a, &buf, std.mem.trimStart(u8, try format.apply(a, v, f), " "));
+                    } else try buf.appendSlice(a, try fmtCsvNum(a, x));
+                } else if (!missing_empty)
                     try buf.append(a, '.') // internal libname: missing → "."
                 else if (Value.missingChar(x) != '.') {
                     // NOTE-exportspecialmiss: EXPORT keeps the special-missing
@@ -1377,6 +1412,10 @@ fn writeCsvImpl(a: std.mem.Allocator, ds: *const Dataset, missing_empty: bool) d
                     // because A" vs "just missing" distinction. Plain missing
                     // stays empty (BUG-exportmissing). The internal path above
                     // keeps ".": readDelimited can't round-trip a letter back.
+                    // A format does NOT redirect this: a missing under yymmdd10.
+                    // renders "         ." via put, but EFI's missing handling
+                    // wins — the field stays empty / lettered (BUG-exportmissing
+                    // + NOTE-exportspecialmiss keep their verdicts under GH#25).
                     try buf.appendSlice(a, &[2]u8{ '.', Value.missingChar(x) });
                 },
             }
@@ -1668,9 +1707,11 @@ pub fn readDelimited(a: std.mem.Allocator, text: []const u8, name: []const u8, d
 
     // Infer type: a column becomes numeric when it has at least one non-missing
     // value and every non-missing value parses as a number — so a numeric column
-    // sorts/compares numerically, not lexically (BUG-csvnumtype). ponytail: a
-    // value with a significant leading zero (`007`, `01`) keeps the column
-    // character, so zero-padded ids/codes aren't silently renumbered.
+    // sorts/compares numerically, not lexically (BUG-csvnumtype). A significant
+    // leading zero does NOT keep the column character: live SAS 9.4 EFI types an
+    // all-digit zero-padded column (`0001`) NUMERIC (informat BEST32.) and reads
+    // `1` (GH#29, BUG-importleadingzero — the old keep-char choice was an
+    // unrecorded deviation, overturned and recorded as D-026).
     for (0..ncol) |ci| {
         var any = false;
         var all_num = true;
@@ -1678,7 +1719,7 @@ pub fn readDelimited(a: std.mem.Allocator, text: []const u8, name: []const u8, d
             const f = rowf[ci];
             if (isCsvMissing(f)) continue;
             any = true;
-            if (parseF64(f) == null or hasLeadingZero(f)) {
+            if (parseF64(f) == null) {
                 all_num = false;
                 break;
             }
@@ -1755,15 +1796,6 @@ fn isCsvMissing(f: []const u8) bool {
 
 fn parseF64(f: []const u8) ?f64 {
     return std.fmt.parseFloat(f64, std.mem.trim(u8, f, " ")) catch null;
-}
-
-/// True for a zero-padded token like `007`/`01` (a leading `0` before another
-/// digit) — kept character so ids/codes aren't renumbered. `0`, `0.5`, `0e3`
-/// are ordinary numbers and return false.
-fn hasLeadingZero(f: []const u8) bool {
-    const t = std.mem.trim(u8, f, " ");
-    const s = if (t.len > 0 and (t[0] == '+' or t[0] == '-')) t[1..] else t;
-    return s.len >= 2 and s[0] == '0' and std.ascii.isDigit(s[1]);
 }
 
 /// A SAS-valid variable name from a header cell per VALIDVARNAME=V7 (the SAS 9.4
@@ -2514,23 +2546,26 @@ test "writeSas7bdat → read preserves char type/length: '007' stays Char, not N
     try std.testing.expect(back.row(1)[1].isMissing());
 }
 
-test "readCsv infers numeric columns; text and zero-padded codes stay char (BUG-csvnumtype)" {
+test "readCsv infers numeric columns; text stays char, zero-padded digits go NUMERIC (BUG-csvnumtype, GH#29)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
 
     // id: all numeric → numeric (loads as f64, so it sorts/compares numerically);
-    // code: zero-padded → char; name: text → char; a `.`/empty is missing.
+    // code: zero-padded all-digit → numeric too (live SAS 9.4 EFI, informat
+    // BEST32.: `007` reads 7 — GH#29/D-026, the old keep-char choice is
+    // overturned); name: text → char; a `.`/empty is missing.
     const ds = try readCsv(a, "id,code,name\n10,007,ann\n2,001,bob\n1,.,\n", "d");
     try std.testing.expectEqual(@as(usize, 3), ds.rowCount());
     try std.testing.expect(ds.columns.items[0].type == .num); // id
-    try std.testing.expect(ds.columns.items[1].type == .char); // code (leading zeros)
+    try std.testing.expect(ds.columns.items[1].type == .num); // code (zero-padded → num, GH#29)
     try std.testing.expect(ds.columns.items[2].type == .char); // name (text)
 
     try std.testing.expectEqual(@as(f64, 10), ds.row(0)[0].num);
     try std.testing.expectEqual(@as(f64, 1), ds.row(2)[0].num);
-    try std.testing.expectEqualStrings("007", ds.row(0)[1].str); // zero-pad preserved
-    try std.testing.expectEqualStrings(".", ds.row(2)[1].str); // `.` literal in a char column
+    try std.testing.expectEqual(@as(f64, 7), ds.row(0)[1].num); // `007` → 7
+    try std.testing.expectEqual(@as(f64, 1), ds.row(1)[1].num); // `001` → 1
+    try std.testing.expect(ds.row(2)[1].isMissing()); // `.` in a numeric column
     try std.testing.expectEqualStrings("", ds.row(2)[2].str); // empty char field
 
     // a numeric column with a `.` reads that cell as numeric missing
@@ -2545,13 +2580,16 @@ test "readDelimited: DBMS=DLM semicolon, GETNAMES, DATAROW, GETNAMES=NO (BUG-imp
     defer arena.deinit();
     const a = arena.allocator();
 
-    // `;`-delimited with names on row 1: numeric age, zero-padded code stays char.
+    // `;`-delimited with names on row 1: numeric age; zero-padded all-digit code
+    // is NUMERIC too (live SAS EFI best32. — GH#29/D-026).
     const ds = try readDelimited(a, "name;age;code\nAnn;30;007\nBob;25;010\n", "d", ';', true, 2, true);
     try std.testing.expectEqual(@as(usize, 3), ds.columns.items.len);
     try std.testing.expectEqualStrings("name", ds.columns.items[0].name);
     try std.testing.expect(ds.columns.items[1].type == .num); // age
     try std.testing.expectEqual(@as(f64, 30), ds.row(0)[1].num);
-    try std.testing.expectEqualStrings("007", ds.row(0)[2].str);
+    try std.testing.expect(ds.columns.items[2].type == .num); // code: `007` → num (GH#29)
+    try std.testing.expectEqual(@as(f64, 7), ds.row(0)[2].num);
+    try std.testing.expectEqual(@as(f64, 10), ds.row(1)[2].num);
 
     // GETNAMES=NO → VAR1.. names, data from row 1 (datarow=0 → default).
     const ds2 = try readDelimited(a, "Ann;30\nBob;25\n", "d2", ';', false, 0, true);
@@ -2575,6 +2613,9 @@ test "readDelimited: quoted embedded newline stays ONE record; headers V7-normal
     // second line into a bogus row and mistype/misalign everything right).
     const ds = try readDelimited(a, "subjid,aetext,age\n001,\"Rash on arm\nspreading to back\",34\n002,\"Nausea\",28\n", "d", ',', true, 2, true);
     try std.testing.expectEqual(@as(usize, 2), ds.rowCount()); // TWO records, not three
+    try std.testing.expect(ds.columns.items[0].type == .num); // subjid `001`/`002` → num (GH#29)
+    try std.testing.expectEqual(@as(f64, 1), ds.row(0)[0].num);
+    try std.testing.expectEqual(@as(f64, 2), ds.row(1)[0].num);
     try std.testing.expectEqualStrings("Rash on arm\nspreading to back", ds.row(0)[1].str);
     try std.testing.expect(ds.columns.items[2].type == .num); // age still numeric
     try std.testing.expectEqual(@as(f64, 34), ds.row(0)[2].num); // …and on the right row
@@ -3576,4 +3617,35 @@ test "NOTE-exportspecialmiss: EXPORT writes the special-missing letter; plain mi
     // internal libname CSV unchanged: every missing is "." (round-trip path).
     const internal = try writeCsv(a, &ds);
     try std.testing.expectEqualStrings("n\n.\n.\n.\n.\n5\n", internal);
+}
+
+test "GH#25: EXPORT preserves attached formats; BEST12. stays the unformatted default; internal writer unchanged" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("who", .char);
+    _ = try ds.addColumn("d", .num);
+    _ = try ds.addColumn("cost", .num);
+    _ = try ds.addColumn("raw", .num);
+    _ = try ds.addColumn("hole", .num);
+    ds.setFormat("d", "yymmdd10.");
+    ds.setFormat("cost", "dollar10.2");
+    // 23421 = '15feb2024'd: the day count a format-IGNORING writer would export.
+    try ds.appendRow(&.{ .{ .str = "Ann" }, .{ .num = 23421 }, .{ .num = 8765.4 }, .{ .num = 2.0 / 3.0 }, Value.missing });
+
+    // EXPORT (live-SAS EFI): an attached format WINS — yymmdd10. exports the DATE,
+    // not 23421; dollar10.2 exports `$8,765.40` DSD-QUOTED (the rendered value
+    // contains the delimiter, exactly like a char field with a comma); `raw`
+    // (NO format) keeps BEST12.; a FORMATTED missing stays EMPTY — BUG-exportmissing
+    // keeps its verdict under a format.
+    const exp = try writeCsvExport(a, &ds);
+    try std.testing.expectEqualStrings("who,d,cost,raw,hole\nAnn,2024-02-15,\"$8,765.40\",0.6666666667,\n", exp);
+
+    // D-001: the INTERNAL libname writer is NOT format-aware — same cells, raw
+    // numbers, missing still "." — so the real-SAS internal-path goldens keep
+    // their bytes.
+    const internal = try writeCsv(a, &ds);
+    try std.testing.expectEqualStrings("who,d,cost,raw,hole\nAnn,23421,8765.4,0.6666666667,.\n", internal);
 }

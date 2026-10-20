@@ -1,7 +1,7 @@
 site   sbj   age
 
-01     S1     34
-02     S2     28
+   1   S1     34
+   2   S2     28
 site   sbj   age
 
 01     S1     34

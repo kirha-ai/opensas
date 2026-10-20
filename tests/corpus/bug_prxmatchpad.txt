@@ -1,0 +1,2 @@
+anchor=0  both=0  literal=1  noanchor=1
+trim=1  blanks=0  lengthc=8  length=3

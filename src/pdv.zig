@@ -47,6 +47,16 @@ fn typeOf(v: Value) VarType {
     };
 }
 
+/// The width of a `$…w…` character format/informat spec, or null when the spec
+/// is absent, numeric, or carries no width (`$yn.`) — stampLiteralLen's
+/// FORMAT/INFORMAT-created-width guard (GH#27 slice).
+fn charSpecWidth(spec: ?[]const u8) ?usize {
+    const s = spec orelse return null;
+    const ps = format.parseSpec(s);
+    if (!ps.is_char or ps.w == 0) return null;
+    return ps.w;
+}
+
 /// SAS AUTOMATIC num→char conversion (Language Reference: Concepts p.124, BUG-numcharwidth): BESTw.
 /// RIGHT-JUSTIFIED in a w-wide field — `n||"x"` converts n with w=12
 /// (`"           5x"`); assignment `c = n` into a length-n char var uses BESTn.
@@ -300,6 +310,43 @@ pub const Pdv = struct {
             return;
         }
         vr.value = v;
+    }
+
+    /// EPIC-charfixedwidth-slice1 (GH#27): fix an UNDECLARED char variable's
+    /// storage width from the char LITERAL just stored into it. SAS fixes a
+    /// variable's width at COMPILE time — `y="n/a"; x="abcdef"; y=x;` leaves y
+    /// $3 and the third statement truncates to `abc` — where opensas re-derived
+    /// width from every stored value, growing AND shrinking per assignment (the
+    /// silent-wrong this kills). First length wins, so a later `y="n/a"` after
+    /// `y="abcdef"` keeps $6 (Language Reference: Concepts p.49). Called only
+    /// with the literal's own bytes, from the two executor store sites whose
+    /// AST proves the RHS is a BARE `.str` — a computed char value (SQL CASE,
+    /// function result, concat) never reaches here, which is what keeps this
+    /// clear of the REVERTED width-on-first-assign attempt's casualty class
+    /// ('small'→'sma', 'CARDIAC DISORDERS'→'DISOR' — jira EPIC-charfixedwidth).
+    /// The width is then in place for every LATER store: setAt's truncate
+    /// branch (above) and vlengthx/contentsLen's declared-len branches read it
+    /// unchanged. No-op when the var is numeric, absent, or already carries a
+    /// width (LENGTH/ATTRIB seed, SET-schema carry, an earlier literal).
+    /// ponytail: stamps the first EXECUTED literal — SAS also resolves dead
+    /// code, at compile time; and a literal over max_char_len keeps the float
+    /// (SAS refuses it before the step runs — out of this slice).
+    pub fn stampLiteralLen(self: *Pdv, name: []const u8, lit: []const u8) void {
+        const i = self.indexOf(name) orelse return; // caller stored first: the var exists
+        const vr = &self.vars.items[i];
+        if (vr.type != .char or vr.len != 0) return;
+        // A var CREATED by a FORMAT/INFORMAT statement takes the spec's WIDTH as
+        // its length (Language Reference: Concepts p.72 — BUG-informatwidth); that width
+        // source outranks the literal and must not be stamped over. It rides the
+        // attached spec, not vr.len (descriptor-only), so consult both. Timing
+        // matches SAS's creation rule: the spec is attached before the store
+        // exactly when its statement preceded the assignment — a format/informat
+        // attached AFTER the var exists never re-lengths it (p.51), and there the
+        // stamp below still fires.
+        if (charSpecWidth(vr.format) != null) return;
+        if (charSpecWidth(vr.informat) != null) return;
+        if (lit.len == 0 or lit.len > max_char_len) return;
+        vr.len = lit.len;
     }
 
     /// Keep the high `n` bytes (n=3..7) of the 8-byte IEEE double, zeroing the
@@ -715,4 +762,52 @@ test "BUG-numcharwidth: numToChar is BESTw. RIGHT-JUSTIFIED; set() converts num�
     _ = try pdv.define("d", .char);
     try pdv.set("d", .{ .num = 5 });
     try std.testing.expectEqualStrings("5", pdv.get("d").?.str);
+}
+
+test "GH#27 slice: stampLiteralLen fixes an undeclared char width at the first literal" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var pdv = Pdv.init(a);
+
+    // the repro: literal stamps $3, a later wider store truncates (setAt)
+    try pdv.set("y", .{ .str = "n/a" });
+    pdv.stampLiteralLen("y", "n/a");
+    try pdv.set("y", .{ .str = "abcdef" });
+    try std.testing.expectEqualStrings("abc", pdv.get("y").?.str);
+    try std.testing.expectEqual(@as(usize, 3), pdv.vars.items[pdv.indexOf("y").?].len);
+
+    // first wins: a second (longer) literal cannot re-stamp
+    pdv.stampLiteralLen("y", "abcdef");
+    try std.testing.expectEqual(@as(usize, 3), pdv.vars.items[pdv.indexOf("y").?].len);
+    // shrink direction too: the pinned `y="abcdef"; y="n/a"` keeps $6
+    try pdv.set("s", .{ .str = "abcdef" });
+    pdv.stampLiteralLen("s", "abcdef");
+    pdv.stampLiteralLen("s", "n/a");
+    try std.testing.expectEqual(@as(usize, 6), pdv.vars.items[pdv.indexOf("s").?].len);
+
+    // a numeric target is untouched
+    try pdv.set("n", .{ .num = 1 });
+    pdv.stampLiteralLen("n", "abc");
+    try std.testing.expectEqual(@as(usize, 0), pdv.vars.items[pdv.indexOf("n").?].len);
+
+    // a declared length outranks the literal (LENGTH/ATTRIB/SET-schema shape)
+    try pdv.set("d", .{ .str = "hi" });
+    pdv.vars.items[pdv.indexOf("d").?].len = 8;
+    pdv.stampLiteralLen("d", "hi");
+    try std.testing.expectEqual(@as(usize, 8), pdv.vars.items[pdv.indexOf("d").?].len);
+
+    // a FORMAT/INFORMAT-created width rides the spec, not len — outranks too
+    // (BUG-informatwidth: `format f $char8.; f="hi";` is $8, not $2)
+    try pdv.set("f", .{ .str = "hi" });
+    pdv.vars.items[pdv.indexOf("f").?].format = "$char8.";
+    pdv.stampLiteralLen("f", "hi");
+    try std.testing.expectEqual(@as(usize, 0), pdv.vars.items[pdv.indexOf("f").?].len);
+    pdv.vars.items[pdv.indexOf("f").?].format = "$yn."; // width-less char spec does NOT pin
+    pdv.stampLiteralLen("f", "hi");
+    try std.testing.expectEqual(@as(usize, 2), pdv.vars.items[pdv.indexOf("f").?].len);
+
+    // absent var: a no-op, never a crash
+    pdv.stampLiteralLen("ghost", "abc");
+    try std.testing.expect(pdv.indexOf("ghost") == null);
 }
