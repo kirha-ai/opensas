@@ -312,25 +312,28 @@ pub const Pdv = struct {
         vr.value = v;
     }
 
-    /// EPIC-charfixedwidth-slice1 (GH#27): fix an UNDECLARED char variable's
-    /// storage width from the char LITERAL just stored into it. SAS fixes a
+    /// EPIC-charfixedwidth (GH#27 slice 1, GH#31 remainder): fix an UNDECLARED
+    /// char variable's storage width from a char LITERAL. SAS fixes a
     /// variable's width at COMPILE time — `y="n/a"; x="abcdef"; y=x;` leaves y
     /// $3 and the third statement truncates to `abc` — where opensas re-derived
     /// width from every stored value, growing AND shrinking per assignment (the
     /// silent-wrong this kills). First length wins, so a later `y="n/a"` after
     /// `y="abcdef"` keeps $6 (Language Reference: Concepts p.49). Called only
-    /// with the literal's own bytes, from the two executor store sites whose
-    /// AST proves the RHS is a BARE `.str` — a computed char value (SQL CASE,
-    /// function result, concat) never reaches here, which is what keeps this
-    /// clear of the REVERTED width-on-first-assign attempt's casualty class
-    /// ('small'→'sma', 'CARDIAC DISORDERS'→'DISOR' — jira EPIC-charfixedwidth).
-    /// The width is then in place for every LATER store: setAt's truncate
-    /// branch (above) and vlengthx/contentsLen's declared-len branches read it
-    /// unchanged. No-op when the var is numeric, absent, or already carries a
-    /// width (LENGTH/ATTRIB seed, SET-schema carry, an earlier literal).
-    /// ponytail: stamps the first EXECUTED literal — SAS also resolves dead
-    /// code, at compile time; and a literal over max_char_len keeps the float
-    /// (SAS refuses it before the step runs — out of this slice).
+    /// with the literal's own bytes, from callers whose AST proves the operand
+    /// is a BARE `.str`: the pre-execution whole-step walk (exec.zig
+    /// stampTextualWidths, GH#31 — SOURCE order, retain inits at their own
+    /// position, dead branches included) and the two runtime store sites it
+    /// kept as the fallback for runtime-typed shapes. A computed char value
+    /// (SQL CASE, function result, concat) never reaches here, which is what
+    /// keeps this clear of the REVERTED width-on-first-assign attempt's
+    /// casualty class ('small'→'sma', 'CARDIAC DISORDERS'→'DISOR' — jira
+    /// EPIC-charfixedwidth). The width is then in place for every LATER
+    /// store: setAt's truncate branch (above) and vlengthx/contentsLen's
+    /// declared-len branches read it unchanged. No-op when the var is
+    /// numeric, absent, or already carries a width (LENGTH/ATTRIB seed,
+    /// SET-schema carry, an earlier literal).
+    /// ponytail: a literal over max_char_len keeps the float (SAS refuses it
+    /// before the step runs — out of this slice).
     pub fn stampLiteralLen(self: *Pdv, name: []const u8, lit: []const u8) void {
         const i = self.indexOf(name) orelse return; // caller stored first: the var exists
         const vr = &self.vars.items[i];

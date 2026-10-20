@@ -1027,6 +1027,12 @@ pub const Executor = struct {
         // must see it (these same attaches ran before the first statement anyway;
         // applyAttrs is set-only and idempotent).
         self.maybeApplyAttrs();
+        // GH#31 (EPIC-charfixedwidth's textual-vs-executed remainder): with
+        // attrs attached, stamp undeclared char widths from the FIRST TEXTUAL
+        // literal — source order, dead branches included — before any store
+        // runs (see stampTextualWidths). Must precede the retain-init loop so
+        // a textually-first assignment's width truncates the init's own store.
+        self.stampTextualWidths(program);
         for (self.retain_inits.items) |ri| {
             try self.pdv.set(ri.name, try self.ev.eval(ri.expr));
             // GH#27 (EPIC-charfixedwidth-slice1): the retain-store twin of the
@@ -1037,10 +1043,12 @@ pub const Executor = struct {
             // (from_array): an array member's width comes from the ARRAY
             // statement's $w (default 8 in SAS), never from an init literal —
             // stamping `(5*'')` at $1 truncated a later `tags{5}='q7'` to `q`
-            // (GAP-inoperators fixture). ponytail: an assignment textually
-            // BEFORE the retain statement still stamps after the init (runtime
-            // order, not source order); the compile-time width model is the
-            // epic's.
+            // (GAP-inoperators fixture). With stampTextualWidths (GH#31) the
+            // textually-first literal has already stamped — at the retain
+            // statement's own SOURCE position, so `y="abcdef"; retain y "ab";`
+            // is $6 — and this no-ops via the `len != 0` guard; it stays only
+            // as the runtime fallback for a var whose compile-time type guess
+            // the walk could not stamp.
             if (ri.expr.* == .str and !ri.from_array) self.pdv.stampLiteralLen(ri.name, ri.expr.str);
         }
 
@@ -1930,6 +1938,62 @@ pub const Executor = struct {
         for (program) |*s| try self.collectCallOutArgs(s);
         var noted: std.ArrayList([]const u8) = .empty;
         for (program) |*s| try self.uninitScanStmt(s, &noted);
+    }
+
+    /// GH#31 (EPIC-charfixedwidth's textual-vs-executed remainder): stamp an
+    /// undeclared char variable's width from the FIRST TEXTUAL literal, not
+    /// the first EXECUTED one. SAS fixes lengths at COMPILE time — Language
+    /// Reference: Concepts p.49 ("Creating Variables"): the first reference
+    /// that gives the variable a length is its first occurrence in the DATA
+    /// step, in SOURCE order, including branches that never run. So
+    /// `if i=2 then y='abcdef'; else y='ab';` is $6 from the THEN branch even
+    /// when the ELSE executes first, dead code still stamps
+    /// (`if 0 then y='abcdefgh';` → $8), and an assignment textually BEFORE a
+    /// RETAIN statement outranks its init. The GH#27 slice stamped at the two
+    /// runtime store sites, so the executed-first branch won and the width
+    /// was data-order dependent — silent truncation at rc 0. One
+    /// pre-execution walk in SOURCE order — the noteUninitVars precedent,
+    /// "whole-step and order-independent, like SAS's compile" — replaying
+    /// each first-occurrence literal through stampLiteralLen, whose guards
+    /// are the single home for the exclusions (first wins, declared
+    /// LENGTH/FORMAT/INFORMAT widths outrank, `_infile_`, empty/oversized
+    /// literals). Called before the retain-init loop so a textually-first
+    /// assignment's width also truncates the init's own store. The two GH#27
+    /// runtime sites stay as the FALLBACK for shapes the walk cannot see: a
+    /// var whose compile-time type GUESS says numeric, corrected to char only
+    /// by an earlier runtime store.
+    fn stampTextualWidths(self: *Executor, program: ast.Program) void {
+        for (program) |*s| self.stampTextualStmt(s);
+    }
+
+    fn stampTextualStmt(self: *Executor, s: *const ast.Stmt) void {
+        switch (s.*) {
+            // The runtime assignment site's exact predicate, moved to compile
+            // time: a BARE `.str` RHS to a named target. `a{i}='x'` rides
+            // .array_assign (an ARRAY member's width comes from the ARRAY
+            // statement's $w, never an init literal) and `_infile_`'s width
+            // is the LRECL — both excluded there, both excluded here.
+            .assign => |a| if (a.value.* == .str and !eqi(a.target, "_infile_"))
+                self.pdv.stampLiteralLen(a.target, a.value.str),
+            // A char-literal RETAIN init stamps at its SOURCE position: ahead
+            // of any assignment written before the statement (GH#31's p7),
+            // behind any written after it (p5) — first textual occurrence
+            // wins either way. Special name lists (_character_ &c.) are not
+            // variables (their inits ride pdv.set in expandSpecialVarLists)
+            // and ARRAY member inits ride the .array statement (from_array):
+            // neither stamps.
+            .retain => |items| for (items) |it| {
+                if (it.init) |e| if (e.* == .str and specialVarList(it.name) == null)
+                    self.pdv.stampLiteralLen(it.name, e.str);
+            },
+            // then before else — the order the source spells them
+            .if_ => |f| {
+                if (f.then_branch) |b| self.stampTextualStmt(b);
+                if (f.else_branch) |b| self.stampTextualStmt(b);
+            },
+            .do_ => |d| for (d.body) |*b| self.stampTextualStmt(b),
+            else => {},
+        }
     }
 
     /// BUG-declaredobjnamevalue: collect the step's COMPONENT-OBJECT names, so
@@ -8824,6 +8888,88 @@ test "GH#22 ISS-dkrocondwarn: KEEP statement of a never-referenced var WARNs and
         try x.run(&prog, &out);
         try t.expect(!diagsHave(&f.diags, "never been referenced"));
         try t.expect(out.indexOf("later") != null);
+    }
+}
+
+test "GH#31: undeclared char width stamps at the first TEXTUAL literal — branch order, dead code, retain position" {
+    // SAS compiles the whole step before a row runs: the width comes from the
+    // first occurrence in SOURCE order, branches and dead code included
+    // (Language Reference: Concepts p.49, "Creating Variables"). Three shapes
+    // the GH#27 runtime stamps got wrong (executed-first), plus the two
+    // controls that were already right and must stay so.
+    // p1 — the repro: the THEN branch's wider literal is textually first ($6)
+    // even though the ELSE executes first on row 1.
+    {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var x = f.exec();
+        const then_wide: ast.Stmt = .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "abcdef" }) } };
+        const else_short: ast.Stmt = .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "ab" }) } };
+        const body = [_]ast.Stmt{
+            .{ .if_ = .{ .cond = f.bin(.eq, f.vbl("i"), f.num(2)), .then_branch = &then_wide, .else_branch = &else_short } },
+            .{ .output = &.{} },
+        };
+        const prog = [_]ast.Stmt{
+            .{ .do_ = .{ .header = .{ .iter = .{ .name = "i", .start = f.num(1), .stop = f.num(2), .by = null } }, .body = &body } },
+        };
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&prog, &out);
+        const yi = out.indexOf("y").?;
+        try t.expectEqualStrings("ab", out.row(0)[yi].str); // fits $6
+        try t.expectEqualStrings("abcdef", out.row(1)[yi].str); // was "ab": $2 from the executed ELSE
+        try t.expectEqual(@as(usize, 6), f.pdv.vars.items[f.pdv.indexOf("y").?].len);
+    }
+    // p3 — dead code still stamps: `if 0 then y='abcdefgh'` never runs, its
+    // literal is still the first TEXTUAL occurrence ($8).
+    {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var x = f.exec();
+        const dead: ast.Stmt = .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "abcdefgh" }) } };
+        const prog = [_]ast.Stmt{
+            .{ .if_ = .{ .cond = f.num(0), .then_branch = &dead, .else_branch = null } },
+            .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "ab" }) } },
+            .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "abcdef" }) } },
+        };
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&prog, &out);
+        try t.expectEqualStrings("abcdef", out.row(0)[out.indexOf("y").?].str); // was "ab"
+        try t.expectEqual(@as(usize, 8), f.pdv.vars.items[f.pdv.indexOf("y").?].len);
+    }
+    // p7 + p5 — retain position: an assignment textually BEFORE the retain
+    // statement outranks its init ($6); textually AFTER, the init wins ($2)
+    // and the assignment truncates — that control was already correct.
+    {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var x = f.exec();
+        const rets = [_]ast.RetainItem{.{ .name = "y", .init = f.e(.{ .str = "ab" }) }};
+        const prog = [_]ast.Stmt{
+            .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "abcdef" }) } },
+            .{ .retain = &rets },
+        };
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&prog, &out);
+        try t.expectEqualStrings("abcdef", out.row(0)[out.indexOf("y").?].str); // was "ab": runtime-order init stamp
+        try t.expectEqual(@as(usize, 6), f.pdv.vars.items[f.pdv.indexOf("y").?].len);
+    }
+    {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var x = f.exec();
+        const rets = [_]ast.RetainItem{.{ .name = "y", .init = f.e(.{ .str = "ab" }) }};
+        const prog = [_]ast.Stmt{
+            .{ .retain = &rets },
+            .{ .assign = .{ .target = "y", .value = f.e(.{ .str = "abcdef" }) } },
+        };
+        var out = Dataset.init(f.a(), "work.out");
+        try x.run(&prog, &out);
+        try t.expectEqualStrings("ab", out.row(0)[out.indexOf("y").?].str); // $2, truncates
+        try t.expectEqual(@as(usize, 2), f.pdv.vars.items[f.pdv.indexOf("y").?].len);
     }
 }
 
