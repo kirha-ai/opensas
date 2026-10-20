@@ -1,0 +1,11 @@
+P1 i=1 y=ab vl=6
+P1 i=2 y=abcdef vl=6
+P2 sev=1 grade=MILD vl=6
+P2 sev=2 grade=MODERA vl=6
+P2 sev=3 grade=SEVERE vl=6
+P3 y=abcdef vl=8
+P4 y=ab vl=2
+P5 y=ab vl=2
+P6 i=1 z=abcdef vl=6
+P6 i=2 z=ab vl=6
+P7 y=abcdef vl=6
