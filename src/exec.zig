@@ -2776,12 +2776,7 @@ pub const Executor = struct {
         // executable peer reader in collectExtraSets; the second seed is a no-op
         // for order/typing, it only preserves that runtime registration path.
         if (self.merge_names != null or self.update_names != null or self.modify_names != null) {
-            if (firstInputStmt(program)) |i| switch (program[i]) {
-                .set => for (self.set_names orelse &.{}) |name| {
-                    if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
-                },
-                else => {},
-            };
+            if (firstInputStmt(program)) |i| try self.seedSetColumnsInStmt(&program[i]);
             const drv = self.merge_names orelse self.update_names orelse self.modify_names.?;
             for (drv) |name| {
                 if (try self.resolveDataset(name, false, null)) |ds| {
@@ -2794,6 +2789,26 @@ pub const Executor = struct {
             self.update_names orelse self.modify_names orelse return;
         for (names) |name| {
             if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
+        }
+    }
+
+    fn seedSetColumnsInStmt(self: *Executor, s: *const ast.Stmt) Error!void {
+        switch (s.*) {
+            .set => |node_names| {
+                const names = if (s == self.drv_set)
+                    (self.set_names orelse node_names)
+                else
+                    (self.extra_src_names.get(s) orelse node_names);
+                for (names) |name| {
+                    if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
+                }
+            },
+            .if_ => |f| {
+                if (f.then_branch) |b| try self.seedSetColumnsInStmt(b);
+                if (f.else_branch) |b| try self.seedSetColumnsInStmt(b);
+            },
+            .do_ => |d| for (d.body) |*b| try self.seedSetColumnsInStmt(b),
+            else => {},
         }
     }
 

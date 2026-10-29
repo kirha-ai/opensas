@@ -48,6 +48,13 @@ data out;
 run;
 proc print data=out noobs; run;
 
+data out6;
+  if 1 then set meta2;
+  merge a b;
+  by k;
+run;
+proc print data=out6 noobs; run;
+
 data pointout;
   if _n_ > 2 then stop;
   set meta2 point=_n_;

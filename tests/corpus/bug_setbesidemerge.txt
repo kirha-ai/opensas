@@ -8,6 +8,10 @@ factor   k    v     w
 
      7   1   11   100
      8   2   21   200
+factor   k    v     w
+
+     7   1   11   100
+     8   2   21   200
 factor   k    v
 
      7   1   11
