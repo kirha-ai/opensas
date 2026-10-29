@@ -5776,11 +5776,22 @@ fn execGrouped(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
 /// columns, so this makes the three paths agree rather than adding a fourth rule;
 /// with no rows there is nothing to learn from and the declared guess stands
 /// (caseResultType, or `.num`). Pass-through columns follow their source column and
-/// aggregates follow `aggType` — neither is touched.
+/// aggregates over a bare column follow `aggType` — neither is touched.
+///
+/// GH#34: a MIN/MAX over an EXPRESSION is corrected here too. The fold in
+/// computeAggExpr compares through cmpVal — collating for strings — so a
+/// character argument produces a character CELL, and the declared `.num`
+/// (aggType's expression fallback) lied exactly the way a computed column's
+/// did above: CONTENTS said Num, a `set` read the text as numeric MISSING.
+/// Non-CASE char expressions (`max('a' || b)`) have no static type — there is
+/// no expression typer (same ponytail as computeAggExpr's own) — so the folded
+/// value is the only evidence, the same evidence this function already uses.
 fn retypeComputed(cols: []OutCol, items: []const Item, rows: []const []Value) void {
     if (rows.len == 0) return;
     for (items, 0..) |it, k| {
-        if (it.expr_toks == null and it.case_toks == null) continue;
+        // a min/max whose argument is an expression (col == null and agg_arg set)
+        const expr_agg = (it.agg == .min or it.agg == .max) and it.col == null and it.agg_arg != null;
+        if (it.expr_toks == null and it.case_toks == null and !expr_agg) continue;
         if (k < rows[0].len) cols[k].type = if (rows[0][k] == .num) .num else .char;
     }
 }
@@ -6351,13 +6362,25 @@ fn sortByGroupKeys(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Data
     return out;
 }
 
-/// MIN/MAX over a character column yield a string, so the output column stays
+/// MIN/MAX over a character argument yield a string, so the output column stays
 /// char (left-justified, not coerced to numeric); every other aggregate is num.
+/// A bare column takes its source column's type. An EXPRESSION argument
+/// (GH#34: `max(case when x > 3 then '9' else '10' end) as lvl` used to stamp
+/// `lvl Num` while the folded cell stayed .str — only the descriptor lied) has
+/// no source column: a pure CASE is typed statically from its first THEN, the
+/// same evidence a bare CASE item uses, and it survives a zero-row result where
+/// retypeComputed has no row 0 to learn from; any other expression falls to
+/// `.num` here and is corrected from the folded value by retypeComputed.
 fn aggType(ds: *Dataset, it: Item) VarType {
     if (it.agg != .min and it.agg != .max) return .num;
-    const c = it.col orelse return .num;
-    const j = ds.indexOf(c) orelse return .num;
-    return ds.columns.items[j].type;
+    if (it.col) |c| {
+        const j = ds.indexOf(c) orelse return .num;
+        return ds.columns.items[j].type;
+    }
+    const arg = it.agg_arg orelse return .num; // `(*)` — count-only, never min/max
+    if (arg.len >= 2 and tkKw(arg[0], "case") and isPureCase(arg))
+        return caseResultType(arg[1 .. arg.len - 1]);
+    return .num;
 }
 
 fn cmpVal(x: Value, y: Value) std.math.Order {
