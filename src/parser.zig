@@ -1909,9 +1909,9 @@ pub const Parser = struct {
             if (t.tag == .name and self.hashAttrAhead())
                 return self.p.diags.fail(error.ParseError, t.line, "put: object attribute {s}.{s} is not valid here — read it into a variable first (n = {s}.{s};)", .{ t.text, self.tokAt(2).text, t.text, self.tokAt(2).text });
             // `+n` (relative column pointer) — move the pointer n columns right.
-            // The buffer is append-only and forward, so "move right n" is exactly
-            // "emit n spaces" and suppress the default inter-item space. Desugared
-            // to a literal so exec needs no new item kind (GAP-putcolptr). ponytail:
+            // Kept as a pointer item (not a literal space run) so after a
+            // backward @n rewind it skips over existing bytes instead of
+            // overwriting them with blanks (NOTE-putcolrewind). ponytail:
             // integer literal only; `+(expr)` / negative moves fail loud.
             if (t.tag == .plus) {
                 _ = self.p.advance(); // '+'
@@ -1927,9 +1927,7 @@ pub const Parser = struct {
                 const n = std.fmt.parseInt(usize, self.p.advance().text, 10) catch 0;
                 if (n > max_put_ptr)
                     return self.p.diags.fail(error.ParseError, t.line, "put: +{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
-                const pad = try self.p.arena.alloc(u8, n);
-                @memset(pad, ' ');
-                try items.append(self.p.arena, .{ .literal = pad });
+                try items.append(self.p.arena, .{ .rel = n });
                 continue;
             }
             // `#n` (line pointer) — move to line n. Forward-only in an append buffer:
@@ -2012,6 +2010,7 @@ pub const Parser = struct {
                     return self.p.diags.fail(error.ParseError, t.line, "put: '(variable-list)' must be followed by a '(format-list)' group", .{});
                 const GElem = union(enum) {
                     literal: []const u8,
+                    rel: usize,
                     col: usize,
                     fmt: struct { named: bool, spec: ?[]const u8 },
                 };
@@ -2032,9 +2031,7 @@ pub const Parser = struct {
                         const n = std.fmt.parseInt(usize, self.p.advance().text, 10) catch 0;
                         if (n > max_put_ptr)
                             return self.p.diags.fail(error.ParseError, g.line, "put: +{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
-                        const pad = try self.p.arena.alloc(u8, n);
-                        @memset(pad, ' ');
-                        try elems.append(self.p.arena, .{ .literal = pad });
+                        try elems.append(self.p.arena, .{ .rel = n });
                     } else if (g.tag == .at) {
                         _ = self.p.advance(); // '@'
                         // group format-list `@var`/`@(expr)`: same split as `+`.
@@ -2065,6 +2062,7 @@ pub const Parser = struct {
                     cur = (cur + 1) % elems.items.len;
                     switch (e) {
                         .literal => |s| try items.append(self.p.arena, .{ .literal = s }),
+                        .rel => |n| try items.append(self.p.arena, .{ .rel = n }),
                         .col => |n| try items.append(self.p.arena, .{ .col = n }),
                         .fmt => |f| {
                             try items.append(self.p.arena, if (f.named)
@@ -4403,17 +4401,17 @@ test "put with formats and a format statement" {
     try testing.expectEqualStrings("date9.", items[2].fmt);
 }
 
-test "put +n/#n/-R desugar to spaces/newlines/fmt-marker (GAP-putcolptr+putalign)" {
+test "put +n/#n/-R parse to pointer/newlines/fmt-marker (GAP-putcolptr+putalign)" {
     var arena = std.heap.ArenaAllocator.init(testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
     var diags = diag.Diagnostics.init(a);
 
-    // +3 → a literal of 3 spaces; #3 (from line 1) → two newlines to reach line 3.
+    // +3 → a relative column pointer; #3 (from line 1) → two newlines to reach line 3.
     const p = try prog(a, &diags, "put a +3 b; put a #3 b;");
     const p1 = p[0].put;
     try testing.expect(p1[0] == .variable);
-    try testing.expectEqualStrings("   ", p1[1].literal); // +3
+    try testing.expectEqual(@as(usize, 3), p1[1].rel); // +3
     try testing.expect(p1[2] == .variable);
     const p2 = p[1].put;
     try testing.expect(p2[0] == .variable);
