@@ -4530,15 +4530,21 @@ pub const Executor = struct {
         return null;
     }
 
-    /// The `in=` variable of a source's options (`src(… in=x)`), or null.
+    /// The top-level `in=` variable of a source's options (`src(… in=x)`), or null.
     fn inVarOf(self: *Executor, name: []const u8) Error!?[]const u8 {
         const ref = splitSourceRef(name);
         if (ref.opts.len == 0) return null;
         const toks = self.lexOpts(ref.opts) catch |e| return if (e == error.OutOfMemory) error.OutOfMemory else null;
-        var i: usize = 0;
-        while (i + 2 < toks.len) : (i += 1) {
-            if (toks[i].tag == .name and eqi(toks[i].text, "in") and toks[i + 1].tag == .eq and toks[i + 2].tag == .name)
-                return toks[i + 2].text;
+        var depth: usize = 0;
+        for (toks, 0..) |tk, i| {
+            switch (tk.tag) {
+                .lparen => depth += 1,
+                .rparen => depth -|= 1,
+                // RENAME=(in=flag) and WHERE=(in=flag) refer to data columns.
+                .name => if (depth == 0 and i + 2 < toks.len and eqi(tk.text, "in") and toks[i + 1].tag == .eq and toks[i + 2].tag == .name)
+                    return toks[i + 2].text,
+                else => {},
+            }
         }
         return null;
     }
