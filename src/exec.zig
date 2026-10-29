@@ -941,7 +941,7 @@ pub const Executor = struct {
         // Then the SET/MERGE input columns, in schema order — SAS orders output
         // variables by first appearance, and the input dataset (which SET names
         // before every statement that follows it) appears next (BUG-varorder).
-        try self.seedInputColumns();
+        try self.seedInputColumns(program);
 
         // MULTISET-impl: register any SET beyond the driver (a 2nd `set b;` or an
         // if-guarded `set summary;`) as an executable node with its own cursor, and
@@ -2767,13 +2767,21 @@ pub const Executor = struct {
         return .normal;
     }
 
-    fn seedInputColumns(self: *Executor) Error!void {
+    fn seedInputColumns(self: *Executor, program: ast.Program) Error!void {
         // A SET beside a MERGE/UPDATE/MODIFY is an executable peer reader, not
-        // the step driver. The driver owns the early PDV slots; the SET's
-        // columns seed later when collectExtraSets claims its node. This
-        // generalizes QA tick377 F2's POINT= lookup case to ordinary sequential
-        // SET lookups (BUG-setbesidemerge).
+        // necessarily the step driver. Whichever input statement is textually
+        // first owns the early PDV slots: `merge a b; set meta;` is driver-first,
+        // but `set meta; merge a b;` is SET-first (LR Concepts p.47 variable
+        // position = definition order). The SET still registers later as an
+        // executable peer reader in collectExtraSets; the second seed is a no-op
+        // for order/typing, it only preserves that runtime registration path.
         if (self.merge_names != null or self.update_names != null or self.modify_names != null) {
+            if (firstInputStmt(program)) |i| switch (program[i]) {
+                .set => for (self.set_names orelse &.{}) |name| {
+                    if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
+                },
+                else => {},
+            };
             const drv = self.merge_names orelse self.update_names orelse self.modify_names.?;
             for (drv) |name| {
                 if (try self.resolveDataset(name, false, null)) |ds| {
