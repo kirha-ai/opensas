@@ -3429,6 +3429,7 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
     if (exprHasAgg(arg))
         return diags.fail(error.ParseError, if (arg.len > 0) arg[0].line else 0, "PROC SQL: Summary functions nested in this fashion are not supported.", .{});
     const vals = try arena.alloc(Value, grp.len);
+    var missing = Value.missing;
     // `sum(case when … end)` (or any aggregate over a CASE): the DATA-step expression
     // parser can't parse SQL CASE — evaluate it per row through the SQL CASE evaluator,
     // then fold (BUG-sqlsumcase; the old path returned missing / could null-unwrap).
@@ -3439,6 +3440,9 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
         // aggregate and print it ahead of the diagnostic (TODO-sqlcasesubqagg: the
         // aggregate path has no Library to resolve the subquery with).
         if (hasSubquery(inner)) return caseSubqGap(diags, inner);
+        // BUG-sqlemptycharaggtype: the empty MIN/MAX fold must carry CASE's
+        // type in its cell too, or retypeComputed replaces Char with Num.
+        if (caseResultType(inner) == .char) missing = .{ .str = "" };
         // one PDV for the group, not one per row (BUG-sqlrowwiseoom)
         var pdv = Pdv.init(arena);
         var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
@@ -3482,7 +3486,7 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
                 if ((f == .min and ord == .lt) or (f == .max and ord == .gt)) best = v;
             } else best = v;
         }
-        return best orelse Value.missing;
+        return best orelse missing;
     }
     // BUG-sqlsumwgtcharzero: character-argument guard for the EXPRESSION path
     // (e.g. sumwgt(upcase(b))) — an expression has no declared type, so test the
@@ -5776,11 +5780,22 @@ fn execGrouped(arena: std.mem.Allocator, lib: *Library, ds: *Dataset, diags: *di
 /// columns, so this makes the three paths agree rather than adding a fourth rule;
 /// with no rows there is nothing to learn from and the declared guess stands
 /// (caseResultType, or `.num`). Pass-through columns follow their source column and
-/// aggregates follow `aggType` — neither is touched.
+/// aggregates over a bare column follow `aggType` — neither is touched.
+///
+/// GH#34: a MIN/MAX over an EXPRESSION is corrected here too. The fold in
+/// computeAggExpr compares through cmpVal — collating for strings — so a
+/// character argument produces a character CELL, and the declared `.num`
+/// (aggType's expression fallback) lied exactly the way a computed column's
+/// did above: CONTENTS said Num, a `set` read the text as numeric MISSING.
+/// Non-CASE char expressions (`max('a' || b)`) have no static type — there is
+/// no expression typer (same ponytail as computeAggExpr's own) — so the folded
+/// value is the only evidence, the same evidence this function already uses.
 fn retypeComputed(cols: []OutCol, items: []const Item, rows: []const []Value) void {
     if (rows.len == 0) return;
     for (items, 0..) |it, k| {
-        if (it.expr_toks == null and it.case_toks == null) continue;
+        // a min/max whose argument is an expression (col == null and agg_arg set)
+        const expr_agg = (it.agg == .min or it.agg == .max) and it.col == null and it.agg_arg != null;
+        if (it.expr_toks == null and it.case_toks == null and !expr_agg) continue;
         if (k < rows[0].len) cols[k].type = if (rows[0][k] == .num) .num else .char;
     }
 }
@@ -6351,13 +6366,25 @@ fn sortByGroupKeys(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Data
     return out;
 }
 
-/// MIN/MAX over a character column yield a string, so the output column stays
+/// MIN/MAX over a character argument yield a string, so the output column stays
 /// char (left-justified, not coerced to numeric); every other aggregate is num.
+/// A bare column takes its source column's type. An EXPRESSION argument
+/// (GH#34: `max(case when x > 3 then '9' else '10' end) as lvl` used to stamp
+/// `lvl Num` while the folded cell stayed .str — only the descriptor lied) has
+/// no source column: a pure CASE is typed statically from its first THEN, the
+/// same evidence a bare CASE item uses, and it survives a zero-row result where
+/// retypeComputed has no row 0 to learn from; any other expression falls to
+/// `.num` here and is corrected from the folded value by retypeComputed.
 fn aggType(ds: *Dataset, it: Item) VarType {
     if (it.agg != .min and it.agg != .max) return .num;
-    const c = it.col orelse return .num;
-    const j = ds.indexOf(c) orelse return .num;
-    return ds.columns.items[j].type;
+    if (it.col) |c| {
+        const j = ds.indexOf(c) orelse return .num;
+        return ds.columns.items[j].type;
+    }
+    const arg = it.agg_arg orelse return .num; // `(*)` — count-only, never min/max
+    if (arg.len >= 2 and tkKw(arg[0], "case") and isPureCase(arg))
+        return caseResultType(arg[1 .. arg.len - 1]);
+    return .num;
 }
 
 fn cmpVal(x: Value, y: Value) std.math.Order {
@@ -6687,6 +6714,52 @@ test "create table with aggregates, no group (matches sql_basic.sas)" {
     try t.expectEqual(@as(f64, 90), s.row(0)[1].num); // sum
     try t.expectEqual(@as(f64, 30), s.row(0)[2].num); // avg
     try t.expectEqualStrings("n", s.columns.items[0].name);
+}
+
+test "BUG-sqlemptycharaggtype: empty CASE MIN/MAX keep character schema and cells" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "have");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 5 }) |v| try ds.appendRow(&.{numV(v)});
+    try lib.put("have", ds);
+
+    const projection =
+        "min(case when x>3 then '9' else '10' end) as lo, " ++
+        "max(case when x>3 then '9' else '10' end) as hi, " ++
+        "min(case when x>3 then 9 else 10 end) as nlo, " ++
+        "max(case when x>3 then 9 else 10 end) as nhi ";
+    for ([_][]const u8{ "", "group by x" }) |group| {
+        const src = try std.fmt.allocPrint(a, "proc sql; create table result as select {s} from have where x>100 {s}; quit;", .{ projection, group });
+        try runSql(a, &lib, &diags, src);
+        const result = lib.find("result").?;
+        try t.expectEqual(@as(usize, if (group.len == 0) 1 else 0), result.rowCount());
+        for (result.columns.items, 0..) |col, k|
+            try t.expectEqual(if (k < 2) VarType.char else VarType.num, col.type);
+        if (result.rowCount() == 1) {
+            for (result.row(0)[0..2]) |v| {
+                try t.expect(v == .str);
+                try t.expect(aggMissing(v));
+            }
+            for (result.row(0)[2..4]) |v| {
+                try t.expect(v == .num);
+                try t.expect(v.isMissing());
+            }
+        }
+    }
+
+    try runSql(a, &lib, &diags, "proc sql; create table populated as select " ++ projection ++ "from have; quit;");
+    const populated = lib.find("populated").?;
+    try t.expectEqual(@as(usize, 1), populated.rowCount());
+    try t.expectEqualStrings("10", populated.row(0)[0].str);
+    try t.expectEqualStrings("9", populated.row(0)[1].str);
+    try t.expectEqual(@as(f64, 9), populated.row(0)[2].num);
+    try t.expectEqual(@as(f64, 10), populated.row(0)[3].num);
+    try t.expect(!diags.hasErrors());
 }
 
 test "PROC SQL operator rules: <> is NE, >< and the legacy =< / => are loud (GAP-sqllegacycmp)" {

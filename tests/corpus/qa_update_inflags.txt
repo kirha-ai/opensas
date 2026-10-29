@@ -1,0 +1,9 @@
+k    x   fm   ft
+
+1   12    1    1
+2   20    1    0
+3   30    0    1
+  id   name   team   orig   weight   change
+
+1114   ann    red     125      119        6
+1441   bill   blue    145        .        .

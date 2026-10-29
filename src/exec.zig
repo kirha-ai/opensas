@@ -564,6 +564,13 @@ const UpdateState = struct {
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-setbyunsorted)
     m_slots: []const usize = &.{}, // master's column→PDV-slot map for loadRow (PERF-loadrowdual)
     t_slots: []const usize = &.{}, // transaction's, for the per-read reset (BUG-prefixmergewipe)
+    // `in=` flags on the two sources (BUG-updateinflag). The Statements ref's
+    // UPDATE Example 2 — `update health(rename=(weight=ORIG) in=a)
+    // fitness(drop=name team in=b); by id;` gated by `if a and b then` —
+    // settles that UPDATE tracks IN= exactly like MERGE: 1 when that source
+    // contributed to the obs being written.
+    in_m: ?[]const u8 = null, // master's `in=` flag (1 = this group came from the master)
+    in_t: ?[]const u8 = null, // transaction's `in=` flag (1 = ≥1 trans obs applied here)
 };
 
 /// An ADDITIONAL SET statement beyond the driving one (MULTISET-impl). SAS makes
@@ -1134,6 +1141,10 @@ pub const Executor = struct {
             },
             .merge => |*md| for (md.in_vars) |iv| {
                 if (iv) |v| try self.keepReadFlag(v);
+            },
+            .update => |*ud| {
+                if (ud.in_m) |v| try self.keepReadFlag(v);
+                if (ud.in_t) |v| try self.keepReadFlag(v);
             },
             else => {},
         }
@@ -1933,6 +1944,10 @@ pub const Executor = struct {
         for (self.set_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
             try self.uninit_exempt.append(self.arena, v);
         for (self.merge_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
+            try self.uninit_exempt.append(self.arena, v);
+        // BUG-updateinflag: UPDATE's `in=` flags are read-populated too (the
+        // driver sets them per output obs) — exempt them like MERGE's.
+        for (self.update_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
             try self.uninit_exempt.append(self.arena, v);
         for (program) |*s| try self.collectHashTargets(s);
         for (program) |*s| try self.collectCallOutArgs(s);
@@ -3909,7 +3924,23 @@ pub const Executor = struct {
         }
         const m_by = (try self.byColsOf(master.?, bys)) orelse return .{ .once = true }; // spent driver: no iterations, no output
         const t_by = (try self.byColsOf(trans.?, bys)) orelse return .{ .once = true }; // spent driver: no iterations, no output
-        return .{ .update = .{ .master = master.?, .trans = trans.?, .m_by = m_by, .t_by = t_by, .m_slots = try io.columnSlots(self.pdv, master.?), .t_slots = try io.columnSlots(self.pdv, trans.?) } };
+        // BUG-updateinflag: `in=` rides a data set option on either UPDATE
+        // source (Statements ref Example 2). Track the flag like MERGE's — and
+        // drop it from the output schema, as every read-control temporary is.
+        const in_m = if (names.len > 0) try self.inVarOf(names[0]) else null;
+        const in_t = if (names.len > 1) try self.inVarOf(names[1]) else null;
+        if (in_m) |v| try self.drops.append(self.arena, v);
+        if (in_t) |v| try self.drops.append(self.arena, v);
+        return .{ .update = .{
+            .master = master.?,
+            .trans = trans.?,
+            .m_by = m_by,
+            .t_by = t_by,
+            .m_slots = try io.columnSlots(self.pdv, master.?),
+            .t_slots = try io.columnSlots(self.pdv, trans.?),
+            .in_m = in_m,
+            .in_t = in_t,
+        } };
     }
 
     /// Load one UPDATE output observation. Source columns were reset to missing
@@ -3962,12 +3993,20 @@ pub const Executor = struct {
         // (MODIFY no longer routes here — it is transaction-driven, see
         // modifyNext; the no-match _DSENMR/_DSEMTR flagging lives there.)
         // Apply every transaction obs sharing this key, in order (cumulative).
+        var t_applied = false;
         while (u.ti < u.trans.rowCount() and
             cmpTuple(try self.byTupleOfSet(u.trans, u.ti, u.t_by), gkey) == .eq)
         {
             try self.applyTrans(u.trans, u.ti);
             u.ti += 1;
+            t_applied = true;
         }
+        // BUG-updateinflag: the `in=` flags, set AFTER applyTrans (a like-named
+        // source column must not clobber them) — 1 when that source contributed
+        // to the obs being written: master 1 on every master group (0 on a
+        // new transaction-only key), transaction 1 once any trans obs applied.
+        if (u.in_m) |v| try self.pdv.set(v, .{ .num = if (use_master) 1 else 0 });
+        if (u.in_t) |v| try self.pdv.set(v, .{ .num = if (t_applied) 1 else 0 });
 
         // first./last. BY flags (BUG-updatefirstlast): UPDATE emits ONE obs per
         // BY group, so each obs is its group's first AND last — gated per level
@@ -4491,15 +4530,21 @@ pub const Executor = struct {
         return null;
     }
 
-    /// The `in=` variable of a source's options (`src(… in=x)`), or null.
+    /// The top-level `in=` variable of a source's options (`src(… in=x)`), or null.
     fn inVarOf(self: *Executor, name: []const u8) Error!?[]const u8 {
         const ref = splitSourceRef(name);
         if (ref.opts.len == 0) return null;
         const toks = self.lexOpts(ref.opts) catch |e| return if (e == error.OutOfMemory) error.OutOfMemory else null;
-        var i: usize = 0;
-        while (i + 2 < toks.len) : (i += 1) {
-            if (toks[i].tag == .name and eqi(toks[i].text, "in") and toks[i + 1].tag == .eq and toks[i + 2].tag == .name)
-                return toks[i + 2].text;
+        var depth: usize = 0;
+        for (toks, 0..) |tk, i| {
+            switch (tk.tag) {
+                .lparen => depth += 1,
+                .rparen => depth -|= 1,
+                // RENAME=(in=flag) and WHERE=(in=flag) refer to data columns.
+                .name => if (depth == 0 and i + 2 < toks.len and eqi(tk.text, "in") and toks[i + 1].tag == .eq and toks[i + 2].tag == .name)
+                    return toks[i + 2].text,
+                else => {},
+            }
         }
         return null;
     }
@@ -11758,6 +11803,70 @@ test "SET-BY / UPDATE with a BY variable absent from a source fail loud (BUG-mer
         try x.run(&prog, &out);
         try t.expect(f.diags.hasErrors());
         try t.expectEqual(@as(usize, 0), out.rowCount());
+    }
+}
+
+test "BUG-updateinnestedopts: nested IN expressions preserve columns across UPDATE, SET and MERGE" {
+    // Statements Reference pp.315,351,355-356: input RENAME= precedes
+    // processing; either UPDATE input can combine RENAME= with genuine IN=.
+    for ([_]enum { update, set, merge }{ .update, .set, .merge }) |driver| {
+        for (0..2) |source_index| {
+            for ([_]bool{ false, true }) |where| {
+                for (0..3) |flag_position| {
+                    var f = fixture();
+                    defer f.deinit();
+                    f.prime();
+                    var x = f.exec();
+                    const d = f.newDs("d");
+                    _ = try d.addColumn("k", .num);
+                    _ = try d.addColumn("in", .num);
+                    if (where) _ = try d.addColumn("flag", .num);
+                    const values = [_]Value{ .{ .num = 1 }, .{ .num = 7 }, .{ .num = 7 } };
+                    try d.appendRow(values[0..if (where) @as(usize, 3) else 2]);
+                    try f.lib.put("d", d);
+                    const other = f.newDs("other");
+                    _ = try other.addColumn("k", .num);
+                    _ = try other.addColumn("x", .num);
+                    try other.appendRow(&.{ .{ .num = 1 }, .{ .num = 20 } });
+                    try f.lib.put("other", other);
+
+                    const nested = if (where) "where=((in=flag))" else "rename=(in=flag)";
+                    const source = try std.fmt.allocPrint(f.a(), "d({s}{s}{s})", .{
+                        if (flag_position == 1) "IN=present " else "",
+                        nested,
+                        if (flag_position == 2) " IN=present" else "",
+                    });
+                    var names = [_][]const u8{ "other", "other" };
+                    names[source_index] = source;
+                    const bys = [_][]const u8{"k"};
+                    var prog: std.ArrayList(ast.Stmt) = .empty;
+                    try prog.append(f.a(), switch (driver) {
+                        .update => .{ .update = &names },
+                        .set => .{ .set = &names },
+                        .merge => .{ .merge = &names },
+                    });
+                    if (driver != .set) try prog.append(f.a(), .{ .by = &bys });
+                    if (flag_position != 0) try prog.append(f.a(), .{
+                        .assign = .{ .target = "seen", .value = f.vbl("present") },
+                    });
+                    var out = Dataset.init(f.a(), "out");
+                    try x.run(prog.items, &out);
+                    try t.expect(!f.diags.hasErrors());
+                    try t.expectEqual(@as(usize, if (driver == .set) 2 else 1), out.rowCount());
+                    try t.expectEqual(@as(usize, 3) + @intFromBool(where) + @intFromBool(flag_position != 0), out.columns.items.len);
+                    const row = out.row(if (driver == .set) source_index else 0);
+                    try t.expect(out.indexOf("flag") != null);
+                    try t.expectEqual(@as(f64, 7), row[out.indexOf("flag").?].num);
+                    try t.expectEqual(where, out.indexOf("in") != null);
+                    if (where) try t.expectEqual(@as(f64, 7), row[out.indexOf("in").?].num);
+                    try t.expect(out.indexOf("present") == null);
+                    if (flag_position != 0) {
+                        try t.expectEqual(@as(f64, 1), row[out.indexOf("seen").?].num);
+                        if (driver == .set) try t.expectEqual(@as(f64, 0), out.row(1 - source_index)[out.indexOf("seen").?].num);
+                    }
+                }
+            }
+        }
     }
 }
 

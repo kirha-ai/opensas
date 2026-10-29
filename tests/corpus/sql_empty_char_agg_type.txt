@@ -1,0 +1,31 @@
+                          The CONTENTS Procedure
+
+Data Set Name  emptyagg
+Observations   1
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  hi        Char    2
+1  lo        Char    2
+4  nhi       Num     8
+3  nlo       Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  grouped
+Observations   0
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  hi        Char    2
+1  lo        Char    2
+4  nhi       Num     8
+3  nlo       Num     8
+lotype=C hitype=C nlotype=N nhitype=N
+loblank=1 hiblank=1 lowidth=2 hiwidth=2 nlo=. nhi=.
+loblank  hiblank  lowidth  hiwidth
+      1        1        2        2
+lo=10 hi=9 nlo=9 nhi=10 lotype=C hitype=C
