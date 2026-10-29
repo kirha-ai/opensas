@@ -2334,7 +2334,9 @@ pub const Executor = struct {
         // set e (an INFINITE LOOP on a 2-row input) and the raw \x00 sentinel
         // leaked into the user-visible "File  end=e does not exist". Walk the
         // whole step and give every non-driver SET node the same strip.
-        var seen_driver = false;
+        const set_is_point_lookup = self.set_point_var != null and self.set_point_node == null;
+        var seen_driver = !set_is_point_lookup and
+            (self.merge_names != null or self.update_names != null or self.modify_names != null);
         for (program) |*s| {
             const dow = s.* == .do_ and (s.do_.header == .until_ or s.do_.header == .while_);
             try self.extractNestedSetOpts(s, &seen_driver, false, dow);
@@ -2762,21 +2764,16 @@ pub const Executor = struct {
     }
 
     fn seedInputColumns(self: *Executor) Error!void {
-        // QA tick377 F2: a POINT= lookup riding beside a MERGE/UPDATE/MODIFY
-        // driver (its SET is the first top-level one, so set_names holds the
-        // LOOKUP's list) is first-mentioned AFTER the driver statement — the
-        // driver owns the early PDV slots and the lookup's columns seed at
-        // their own node in declareStmt's program-order walk. Seed the driver
-        // here with the SAME plain define buildMerge/slotsOf use today (order
-        // moves; types/widths/diags don't). Without this the orelse chain
-        // seeded the LOOKUP first (b k p q for `merge mA mB; set lk point=_n_;`).
-        if (self.set_point_var != null and self.set_point_node == null and
-            (self.merge_names != null or self.update_names != null or self.modify_names != null))
-        {
+        // A SET beside a MERGE/UPDATE/MODIFY is an executable peer reader, not
+        // the step driver. The driver owns the early PDV slots; the SET's
+        // columns seed later when collectExtraSets claims its node. This
+        // generalizes QA tick377 F2's POINT= lookup case to ordinary sequential
+        // SET lookups (BUG-setbesidemerge).
+        if (self.merge_names != null or self.update_names != null or self.modify_names != null) {
             const drv = self.merge_names orelse self.update_names orelse self.modify_names.?;
             for (drv) |name| {
                 if (try self.resolveDataset(name, false, null)) |ds| {
-                    for (ds.columns.items) |c| _ = try self.pdv.define(c.name, c.type);
+                    try self.seedColumnsOf(ds);
                 }
             }
             return;
@@ -2942,10 +2939,9 @@ pub const Executor = struct {
     /// executable node with its own concatenate cursor (runExtraSet). SAS: each
     /// SET has an INDEPENDENT read position, and a SET'd variable is RETAINED
     /// until its next read, so the _n_=1 lookup value persists across iterations.
-    /// The driver SET (self.set_names — the first TOP-LEVEL SET) is skipped. Only
-    /// for a plain SET-driven step (a POINT= source of the driver list's own,
-    /// MERGE / UPDATE / MODIFY keep the old single path; a second-SET POINT=
-    /// lookup — GAP-secondsetstmt — registers extras like the plain case).
+    /// The driver SET (self.set_names — the first TOP-LEVEL SET when SET is the
+    /// actual driver) is skipped. With a MERGE/UPDATE/MODIFY driver, every SET
+    /// node is executable peer input and must register here.
     fn collectExtraSets(self: *Executor, program: ast.Program) Error!void {
         // No set_names gate: when the ONLY source is a nested (conditional) SET
         // there is no driver at all, but its columns must still seed the PDV —
@@ -2955,8 +2951,7 @@ pub const Executor = struct {
         // register below; the lookup's own node is skipped inside (it reads
         // via the direct-access path, not its own cursor).
         if (self.set_point_var != null and self.set_point_node == null) return;
-        if (self.merge_names != null or self.update_names != null or self.modify_names != null) return;
-        var seen_driver = false;
+        var seen_driver = self.merge_names != null or self.update_names != null or self.modify_names != null;
         for (program) |*s| try self.collectExtraSetsStmt(s, &seen_driver, false);
     }
 
