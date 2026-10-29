@@ -2970,14 +2970,18 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
 
 /// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
 /// offset appended (Formats Reference p.204: Default 26, Range 20-35 — checked
-/// loud at the dispatch site; Alignment: Left). The entry's two notations are a
+/// loud at the dispatch site; catalog Alignment: Left is verified-wrong for
+/// PUT padding direction, D-025). The entry's two notations are a
 /// width LADDER: `yyyy-mm-ddThh:mm:ss+00:00` (25 columns) "when w is large
 /// enough to support this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`
 /// (20 columns; "the shorter form +00 is not supported", p.204). The
 /// interpreter models one zero-meridian timeline, so the appended offset is
 /// always +00:00 (p.204: "The E8601DZ format always writes the datetime value
-/// by using the zero meridian offset value of +00:00"). ponytail: no `.d` —
-/// the entry defines no d parameter (unlike E8601DTw.d).
+/// by using the zero meridian offset value of +00:00"). Runtime oracle pins
+/// right-justification for both rungs: e8601dz26. has one leading blank before
+/// the 25-column `+00:00` body, and e8601dz22. has two before the 20-column `Z`
+/// body. ponytail: no `.d` — the entry defines no d parameter (unlike
+/// E8601DTw.d).
 fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     const width = if (w == 0) 26 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
@@ -3000,14 +3004,16 @@ fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try body.append(arena, ':');
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
     if (width >= 25) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
-    return justLeft(arena, body.items, width);
+    return justRight(arena, body.items, width);
 }
 
 /// B8601DTw. — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss` (no
-/// separators, GAP-fmtwritebatch). Default w 15. ponytail: no fractional seconds
-/// (SAS's default w 26 includes `.ffffff`); add when a program needs sub-second.
+/// separators, GAP-fmtwritebatch). Default w 19 (Formats Reference p.152;
+/// runtime oracle: `put(x,b8601dt.)` stores four leading blanks before the
+/// 15-column body). ponytail: no fractional seconds; add when a program needs
+/// sub-second.
 fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
-    const width = if (w == 0) 15 else w;
+    const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
@@ -4559,14 +4565,15 @@ test "E8601DZ informat rebases the UTC offset to the zero meridian (GH#5a)" {
 }
 
 test "E8601DZw. format writes the zero-meridian offset; Z rung below w=25 (GH#5a)" {
-    // Formats Reference p.204: Default 26, Range 20-35, Alignment Left, and a
-    // two-rung notation ladder — `+00:00` "when w is large enough to support
-    // this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`. 15SEP2018:05:53:00
-    // = 1852609980.
-    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz."); // default 26, left
-    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz26."); // left-aligned
+    // Formats Reference p.204: Default 26, Range 20-35, and a two-rung notation
+    // ladder — `+00:00` "when w is large enough to support this time zone
+    // notation", else `yyyy-mm-ddThh:mm:ssZ`. Runtime oracle overrides the
+    // catalog Alignment: Left field: ISO 8601 family write formats right-justify
+    // when padded (D-025). 15SEP2018:05:53:00 = 1852609980.
+    try expectFmt(" 2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz."); // default 26
+    try expectFmt(" 2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz26.");
     try expectFmt("2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz25."); // exact fit
-    try expectFmt("2018-09-15T05:53:00Z    ", .{ .num = 1852609980 }, "e8601dz24."); // Z rung
+    try expectFmt("    2018-09-15T05:53:00Z", .{ .num = 1852609980 }, "e8601dz24."); // Z rung
     try expectFmt("2018-09-15T05:53:00Z", .{ .num = 1852609980 }, "e8601dz20."); // exact fit
     try expectFmt("                         .", Value.missing, "e8601dz."); // missing dot, right-justified
     // Range 20-35, loud outside (checkWidthRange twin of the informat)
@@ -4617,7 +4624,7 @@ test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write 
     try expectFmt("  845:06", .{ .num = 50706 }, "mmss8.");
     try expectFmt("  20200704", .{ .num = 22100 }, "b8601da10.");
     try expectFmt("20200704", .{ .num = 22100 }, "b8601da8.");
-    try expectFmt("20200704T140506", .{ .num = 1909490706 }, "b8601dt.");
+    try expectFmt("    20200704T140506", .{ .num = 1909490706 }, "b8601dt.");
     try expectFmt("  140506", .{ .num = 50706 }, "b8601tm.");
     try expectFmt("140506", .{ .num = 50706 }, "b8601tm6.");
     try expectFmt("04Jul2020:14:05:06", .{ .num = 1909490706 }, "nldatm.");

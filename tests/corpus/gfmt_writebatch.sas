@@ -1,6 +1,7 @@
 /* gfmt_writebatch: YYMON / JULDAY / PDJULIAN / ROMAN / WORDS / DATEAMPM / MMSS /
    B8601DA / B8601DT / B8601TM / NLDATM / NLTIME / NLMNY write formats.
-   GAP-fmtwritebatch (doc-finder tick126). Oracle: Language Reference: Concepts pp.146-150,
+   GAP-fmtwritebatch (doc-finder tick126). Oracle: Language Reference:
+   Concepts pp.146-150, Formats Reference p.152 (B8601DT default width 19),
    sas-functions-ref p.680. d=04JUL2020 (day-of-year 186), t=14:05:06. */
 data _null_;
   d = mdy(7,4,2020); t = hms(14,5,6); dt = dhms(d,14,5,6); n = 1234;

@@ -4,9 +4,12 @@
    are invalid data and read missing. DZ (p.645: w 20-35) reads the UTC-offset
    complete form and rebases to the zero meridian (local - offset); a trailing
    Z is offset 0 and a field with no offset is invalid. The DZ FORMAT (p.204:
-   Default 26, Alignment Left) appends +00:00 and drops to the Z short form
-   below w=25. Doc anchors: 2018-09-15 -> 1852588800;
-   2018-09-15T15:53:00Z -> 1852645980. Invented data. */
+   Default 26, Range 20-35) appends +00:00 and drops to the Z short form below
+   w=25. Runtime oracle (user run 0923-v2) proves right-justified padding
+   despite catalog Alignment: Left: e8601dz26. -> " 2018-09-15T14:52:22+00:00"
+   and e8601dz22. -> "  2018-09-15T14:52:22Z". Doc anchors:
+   2018-09-15 -> 1852588800; 2018-09-15T15:53:00Z -> 1852645980. Invented
+   data. */
 data _null_;
   a1 = input("2018-09-15", e8601dn10.);
   put "a1=" a1;

@@ -442,10 +442,20 @@ these caused real regressions (see D-001).
   right-justifies too (needs-oracle: 17/18 never probed on real SAS — see the
   renderE8601Dt ponytail comment). The informat side (w=16 slicing) is
   unaffected. Fixture: tests/corpus/gfmt_e8601dt.sas pins len 16/19/20/26 plus
-  the `$quote30.` discriminator line. Unprobed sibling carrying the same
-  metadata: E8601DZw.d's header also says `Alignment: Left` (p.204) and
-  renderE8601Dz still left-justifies — do not trust that field there either;
-  probe before touching.
+  the `$quote30.` discriminator line. Addendum (2026-10-30, BUG-8601dzalign /
+  BUG-b8601dtdefwidth): the E8601DZ probe is now in, and it confirms the rule
+  is FAMILY-wide for the ISO 8601 datetime write formats: despite
+  E8601DZw.d's `Alignment: Left` header (p.204), real SAS right-justifies both
+  offset rungs (`e8601dz26.` stores one leading blank before the 25-column
+  `+00:00` body; `e8601dz22.` stores two before the 20-column `Z` body). B8601DT
+  is the same theme from the BASIC side: Formats Reference p.152 gives Default
+  width 19, and real SAS `put(x,b8601dt.)` stores four leading blanks before
+  the 15-column `yyyymmddThhmmss` body. So do not use catalog Alignment metadata
+  to left-pad/right-pad any ISO 8601 family member; trust Details prose plus a
+  runtime diff, and default widths from the entry's width table unless runtime
+  disproves them. Fixtures: tests/corpus/gfmt_e8601dnz.sas pins E8601DZ
+  right-justification, and tests/corpus/gfmt_writebatch.sas pins B8601DT's
+  width-19 default.
 - D-026 **A LEADING-ZERO ALL-DIGIT DELIMITED COLUMN TYPES NUMERIC — LIVE SAS 9.4
   EFI WINS OVER AN UNRECORDED LOCAL CHOICE** (2026-10-19, GH#29
   BUG-importleadingzero, manager-validated repro against live SAS). `readDelimited`
