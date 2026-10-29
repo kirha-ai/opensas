@@ -564,6 +564,13 @@ const UpdateState = struct {
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-setbyunsorted)
     m_slots: []const usize = &.{}, // master's column→PDV-slot map for loadRow (PERF-loadrowdual)
     t_slots: []const usize = &.{}, // transaction's, for the per-read reset (BUG-prefixmergewipe)
+    // `in=` flags on the two sources (BUG-updateinflag). The Statements ref's
+    // UPDATE Example 2 — `update health(rename=(weight=ORIG) in=a)
+    // fitness(drop=name team in=b); by id;` gated by `if a and b then` —
+    // settles that UPDATE tracks IN= exactly like MERGE: 1 when that source
+    // contributed to the obs being written.
+    in_m: ?[]const u8 = null, // master's `in=` flag (1 = this group came from the master)
+    in_t: ?[]const u8 = null, // transaction's `in=` flag (1 = ≥1 trans obs applied here)
 };
 
 /// An ADDITIONAL SET statement beyond the driving one (MULTISET-impl). SAS makes
@@ -1134,6 +1141,10 @@ pub const Executor = struct {
             },
             .merge => |*md| for (md.in_vars) |iv| {
                 if (iv) |v| try self.keepReadFlag(v);
+            },
+            .update => |*ud| {
+                if (ud.in_m) |v| try self.keepReadFlag(v);
+                if (ud.in_t) |v| try self.keepReadFlag(v);
             },
             else => {},
         }
@@ -1933,6 +1944,10 @@ pub const Executor = struct {
         for (self.set_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
             try self.uninit_exempt.append(self.arena, v);
         for (self.merge_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
+            try self.uninit_exempt.append(self.arena, v);
+        // BUG-updateinflag: UPDATE's `in=` flags are read-populated too (the
+        // driver sets them per output obs) — exempt them like MERGE's.
+        for (self.update_names orelse &.{}) |nm| if (try self.inVarOf(nm)) |v|
             try self.uninit_exempt.append(self.arena, v);
         for (program) |*s| try self.collectHashTargets(s);
         for (program) |*s| try self.collectCallOutArgs(s);
@@ -3909,7 +3924,23 @@ pub const Executor = struct {
         }
         const m_by = (try self.byColsOf(master.?, bys)) orelse return .{ .once = true }; // spent driver: no iterations, no output
         const t_by = (try self.byColsOf(trans.?, bys)) orelse return .{ .once = true }; // spent driver: no iterations, no output
-        return .{ .update = .{ .master = master.?, .trans = trans.?, .m_by = m_by, .t_by = t_by, .m_slots = try io.columnSlots(self.pdv, master.?), .t_slots = try io.columnSlots(self.pdv, trans.?) } };
+        // BUG-updateinflag: `in=` rides a data set option on either UPDATE
+        // source (Statements ref Example 2). Track the flag like MERGE's — and
+        // drop it from the output schema, as every read-control temporary is.
+        const in_m = if (names.len > 0) try self.inVarOf(names[0]) else null;
+        const in_t = if (names.len > 1) try self.inVarOf(names[1]) else null;
+        if (in_m) |v| try self.drops.append(self.arena, v);
+        if (in_t) |v| try self.drops.append(self.arena, v);
+        return .{ .update = .{
+            .master = master.?,
+            .trans = trans.?,
+            .m_by = m_by,
+            .t_by = t_by,
+            .m_slots = try io.columnSlots(self.pdv, master.?),
+            .t_slots = try io.columnSlots(self.pdv, trans.?),
+            .in_m = in_m,
+            .in_t = in_t,
+        } };
     }
 
     /// Load one UPDATE output observation. Source columns were reset to missing
@@ -3962,12 +3993,20 @@ pub const Executor = struct {
         // (MODIFY no longer routes here — it is transaction-driven, see
         // modifyNext; the no-match _DSENMR/_DSEMTR flagging lives there.)
         // Apply every transaction obs sharing this key, in order (cumulative).
+        var t_applied = false;
         while (u.ti < u.trans.rowCount() and
             cmpTuple(try self.byTupleOfSet(u.trans, u.ti, u.t_by), gkey) == .eq)
         {
             try self.applyTrans(u.trans, u.ti);
             u.ti += 1;
+            t_applied = true;
         }
+        // BUG-updateinflag: the `in=` flags, set AFTER applyTrans (a like-named
+        // source column must not clobber them) — 1 when that source contributed
+        // to the obs being written: master 1 on every master group (0 on a
+        // new transaction-only key), transaction 1 once any trans obs applied.
+        if (u.in_m) |v| try self.pdv.set(v, .{ .num = if (use_master) 1 else 0 });
+        if (u.in_t) |v| try self.pdv.set(v, .{ .num = if (t_applied) 1 else 0 });
 
         // first./last. BY flags (BUG-updatefirstlast): UPDATE emits ONE obs per
         // BY group, so each obs is its group's first AND last — gated per level
