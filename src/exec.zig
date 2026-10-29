@@ -7159,11 +7159,11 @@ pub const Executor = struct {
         return .normal;
     }
 
-    /// Move the PUT output column pointer to 1-based column `n`: pad the current
-    /// line with spaces when moving beyond the current end, or rewind so later
-    /// bytes overwrite existing text (NOTE-putcolrewind). The ONE landing site
-    /// for both `@n` and `@(expression)` (GAP-atexpression-put) — a second copy
-    /// would be a second ceiling to drift.
+    /// Move the PUT output column pointer to 1-based column `n`. Positioning
+    /// itself writes no bytes: a later write pads if it lands beyond the current
+    /// end, while a backward move can overwrite existing text (NOTE-putcolrewind).
+    /// The ONE landing site for both `@n` and `@(expression)` (GAP-atexpression-put)
+    /// — a second copy would be a second ceiling to drift.
     fn putColPtr(self: *Executor, n: usize) Error!void {
         // BUG-putptroom: an unbounded @n pads gigabytes (hang/OOM). The parser
         // rejects oversized literals; guard the alloc site too (same ceiling,
@@ -7172,8 +7172,6 @@ pub const Executor = struct {
         if (n > max_put_ptr)
             return self.diags.fail(error.ExecError, 0, "put: @{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
         const target = self.curLineStart() + n - 1;
-        const buf = self.putBuf();
-        if (target > buf.items.len) try buf.appendNTimes(self.arena, ' ', target - buf.items.len);
         self.put_cursor = target;
     }
 
@@ -7188,8 +7186,6 @@ pub const Executor = struct {
             base - @min(base - line_start, @as(usize, @intCast(-n)))
         else
             base + @as(usize, @intCast(n));
-        const buf = self.putBuf();
-        if (target > buf.items.len) try buf.appendNTimes(self.arena, ' ', target - buf.items.len);
         self.put_cursor = target;
     }
 
