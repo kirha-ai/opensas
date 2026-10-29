@@ -1123,6 +1123,19 @@ pub const Executor = struct {
         var driver = try self.buildDriver();
         self.driver_ptr = &driver; // DOWLOOP-impl: a DOW SET advances this from runStmt
         if (driver == .modify) self.modify_by = &driver.modify; // REPLACE/OUTPUT routing (BUG-modifybymasterdriven)
+        // BUG-wherestmtnosource: a DATA-step WHERE filters SAS input data sets;
+        // it is not a subsetting IF over raw records. Real SAS errors when a
+        // datalines/INPUT-only (or otherwise no-source) step has no input data
+        // set for WHERE to bind to. The old .lines/.once paths consumed the
+        // compile-time node in runStmt and silently emitted unfiltered rows.
+        if (self.where_expr != null) switch (driver) {
+            .sets, .merge, .update, .modify => {},
+            .lines, .once => {
+                self.diags.report(.err, 0, "No input data sets available for WHERE statement.", .{}) catch {};
+                if (out.columns.items.len == 0) try self.seedSchema(out);
+                return;
+            },
+        };
         // BUG-setpointtemp: the SET point=/nobs= vars are temporary control vars —
         // SAS drops them from the output schema, like SET end= (stripSourceOpts).
         try self.dropSetControlTemp(self.set_point_var);
