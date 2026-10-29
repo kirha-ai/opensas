@@ -1,0 +1,24 @@
+k   flag    x
+
+1      7   20
+k   in   flag    x
+
+1    7      7   20
+k    x   flag
+
+1   20      7
+k    x   in   flag
+
+1   20    7      7
+k   flag    x   fm   ft
+
+1      7   20    1    1
+k    x   flag   fm   ft
+
+1   20      7    1    1
+k   in   flag    x   fm   ft
+
+1    7      7   20    1    1
+k    x   in   flag   fm   ft
+
+1   20    7      7    1    1

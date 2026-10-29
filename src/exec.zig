@@ -11800,6 +11800,70 @@ test "SET-BY / UPDATE with a BY variable absent from a source fail loud (BUG-mer
     }
 }
 
+test "BUG-updateinnestedopts: nested IN expressions preserve columns across UPDATE, SET and MERGE" {
+    // Statements Reference pp.315,351,355-356: input RENAME= precedes
+    // processing; either UPDATE input can combine RENAME= with genuine IN=.
+    for ([_]enum { update, set, merge }{ .update, .set, .merge }) |driver| {
+        for (0..2) |source_index| {
+            for ([_]bool{ false, true }) |where| {
+                for (0..3) |flag_position| {
+                    var f = fixture();
+                    defer f.deinit();
+                    f.prime();
+                    var x = f.exec();
+                    const d = f.newDs("d");
+                    _ = try d.addColumn("k", .num);
+                    _ = try d.addColumn("in", .num);
+                    if (where) _ = try d.addColumn("flag", .num);
+                    const values = [_]Value{ .{ .num = 1 }, .{ .num = 7 }, .{ .num = 7 } };
+                    try d.appendRow(values[0..if (where) @as(usize, 3) else 2]);
+                    try f.lib.put("d", d);
+                    const other = f.newDs("other");
+                    _ = try other.addColumn("k", .num);
+                    _ = try other.addColumn("x", .num);
+                    try other.appendRow(&.{ .{ .num = 1 }, .{ .num = 20 } });
+                    try f.lib.put("other", other);
+
+                    const nested = if (where) "where=((in=flag))" else "rename=(in=flag)";
+                    const source = try std.fmt.allocPrint(f.a(), "d({s}{s}{s})", .{
+                        if (flag_position == 1) "IN=present " else "",
+                        nested,
+                        if (flag_position == 2) " IN=present" else "",
+                    });
+                    var names = [_][]const u8{ "other", "other" };
+                    names[source_index] = source;
+                    const bys = [_][]const u8{"k"};
+                    var prog: std.ArrayList(ast.Stmt) = .empty;
+                    try prog.append(f.a(), switch (driver) {
+                        .update => .{ .update = &names },
+                        .set => .{ .set = &names },
+                        .merge => .{ .merge = &names },
+                    });
+                    if (driver != .set) try prog.append(f.a(), .{ .by = &bys });
+                    if (flag_position != 0) try prog.append(f.a(), .{
+                        .assign = .{ .target = "seen", .value = f.vbl("present") },
+                    });
+                    var out = Dataset.init(f.a(), "out");
+                    try x.run(prog.items, &out);
+                    try t.expect(!f.diags.hasErrors());
+                    try t.expectEqual(@as(usize, if (driver == .set) 2 else 1), out.rowCount());
+                    try t.expectEqual(@as(usize, 3) + @intFromBool(where) + @intFromBool(flag_position != 0), out.columns.items.len);
+                    const row = out.row(if (driver == .set) source_index else 0);
+                    try t.expect(out.indexOf("flag") != null);
+                    try t.expectEqual(@as(f64, 7), row[out.indexOf("flag").?].num);
+                    try t.expectEqual(where, out.indexOf("in") != null);
+                    if (where) try t.expectEqual(@as(f64, 7), row[out.indexOf("in").?].num);
+                    try t.expect(out.indexOf("present") == null);
+                    if (flag_position != 0) {
+                        try t.expectEqual(@as(f64, 1), row[out.indexOf("seen").?].num);
+                        if (driver == .set) try t.expectEqual(@as(f64, 0), out.row(1 - source_index)[out.indexOf("seen").?].num);
+                    }
+                }
+            }
+        }
+    }
+}
+
 test "UPDATE applies transaction rows to master by BY key (BUG-updatebroken)" {
     var f = fixture();
     defer f.deinit();
