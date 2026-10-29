@@ -1,0 +1,86 @@
+                          The CONTENTS Procedure
+
+Data Set Name  u
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+2  lvl       Char    1
+SET g=A lvl=[9 ]
+SET vtype(lvl)=C
+SET g=B lvl=[9 ]
+SET vtype(lvl)=C
+                          The CONTENTS Procedure
+
+Data Set Name  lohi
+Observations   2
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+3  hi        Char    1
+2  lo        Char    2
+                          The CONTENTS Procedure
+
+Data Set Name  ncase
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+2  nlvl      Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  plaincol
+Observations   1
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  mg        Char    1
+2  mng       Char    1
+                          The CONTENTS Procedure
+
+Data Set Name  cexpr
+Observations   2
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+2  zc        Char    9
+                          The CONTENTS Procedure
+
+Data Set Name  remr
+Observations   4
+Variables      3
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+3  lvl       Char    1
+2  x         Num     8
+                          The CONTENTS Procedure
+
+Data Set Name  empty
+Observations   0
+Variables      2
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+1  g         Char    8
+2  lvl       Char    1
+g  lvl  w
+A  9    1
+B  9    1
