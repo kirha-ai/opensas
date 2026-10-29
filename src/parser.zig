@@ -1908,25 +1908,19 @@ pub const Parser = struct {
             // while `n = h.num_items;` in assignment position works.
             if (t.tag == .name and self.hashAttrAhead())
                 return self.p.diags.fail(error.ParseError, t.line, "put: object attribute {s}.{s} is not valid here — read it into a variable first (n = {s}.{s};)", .{ t.text, self.tokAt(2).text, t.text, self.tokAt(2).text });
-            // `+n` (relative column pointer) — move the pointer n columns right.
+            // `+n` / `+(-n)` (relative column pointer) — move the pointer right
+            // or left.
             // Kept as a pointer item (not a literal space run) so after a
             // backward @n rewind it skips over existing bytes instead of
             // overwriting them with blanks (NOTE-putcolrewind). ponytail:
-            // integer literal only; `+(expr)` / negative moves fail loud.
+            // integer literal only; non-literal `+(expr)` moves fail loud.
             if (t.tag == .plus) {
                 _ = self.p.advance(); // '+'
                 // `+numeric-variable` / `+(expression)` are valid SAS 9.4 PUT
                 // pointer controls (Statements Table 2.5) opensas doesn't
                 // implement → gap (rc 2); anything else after `+` is not PUT
                 // syntax → user error (rc 1). Same message either way (D-009).
-                if (!self.p.check(.number)) {
-                    if (self.p.check(.name) or self.p.check(.lparen))
-                        return failGap(self.p.diags, t.line, "put: only an integer +n column pointer is supported", .{});
-                    return self.p.diags.fail(error.ParseError, t.line, "put: only an integer +n column pointer is supported", .{});
-                }
-                const n = std.fmt.parseInt(usize, self.p.advance().text, 10) catch 0;
-                if (n > max_put_ptr)
-                    return self.p.diags.fail(error.ParseError, t.line, "put: +{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
+                const n = try self.parsePutRelLiteral(t.line);
                 try items.append(self.p.arena, .{ .rel = n });
                 continue;
             }
@@ -2010,7 +2004,7 @@ pub const Parser = struct {
                     return self.p.diags.fail(error.ParseError, t.line, "put: '(variable-list)' must be followed by a '(format-list)' group", .{});
                 const GElem = union(enum) {
                     literal: []const u8,
-                    rel: usize,
+                    rel: isize,
                     col: usize,
                     fmt: struct { named: bool, spec: ?[]const u8 },
                 };
@@ -2023,14 +2017,7 @@ pub const Parser = struct {
                         // group format-list `+var`/`+(expr)`: same split as the
                         // top-level `+` guard — valid SAS 9.4 (Table 2.5, and
                         // p.293 allows pointer controls in a format-list) → gap.
-                        if (!self.p.check(.number)) {
-                            if (self.p.check(.name) or self.p.check(.lparen))
-                                return failGap(self.p.diags, g.line, "put: only an integer +n column pointer is supported", .{});
-                            return self.p.diags.fail(error.ParseError, g.line, "put: only an integer +n column pointer is supported", .{});
-                        }
-                        const n = std.fmt.parseInt(usize, self.p.advance().text, 10) catch 0;
-                        if (n > max_put_ptr)
-                            return self.p.diags.fail(error.ParseError, g.line, "put: +{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
+                        const n = try self.parsePutRelLiteral(g.line);
                         try elems.append(self.p.arena, .{ .rel = n });
                     } else if (g.tag == .at) {
                         _ = self.p.advance(); // '@'
@@ -2171,6 +2158,26 @@ pub const Parser = struct {
         }
         _ = try self.p.expect(.semicolon, "';' after put");
         return .{ .put = try items.toOwnedSlice(self.p.arena) };
+    }
+
+    fn parsePutRelLiteral(self: *Parser, line: usize) Error!isize {
+        var sign: isize = 1;
+        var parenthesized = false;
+        if (self.p.eat(.lparen)) {
+            parenthesized = true;
+            if (self.p.eat(.minus)) sign = -1;
+        }
+        if (!self.p.check(.number)) {
+            if (self.p.check(.name) or parenthesized)
+                return failGap(self.p.diags, line, "put: only an integer +n column pointer is supported", .{});
+            return self.p.diags.fail(error.ParseError, line, "put: only an integer +n column pointer is supported", .{});
+        }
+        const mag = std.fmt.parseInt(isize, self.p.advance().text, 10) catch 0;
+        if (parenthesized)
+            _ = try self.p.expect(.rparen, "')' after +(integer) column pointer");
+        if (mag > @as(isize, @intCast(max_put_ptr)))
+            return self.p.diags.fail(error.ParseError, line, "put: +{d} column pointer exceeds the {d} line-size ceiling", .{ mag, max_put_ptr });
+        return sign * mag;
     }
 
     /// `format v1 v2 fmt1 v3 fmt2 …;` — a format applies to every variable named
@@ -4411,7 +4418,7 @@ test "put +n/#n/-R parse to pointer/newlines/fmt-marker (GAP-putcolptr+putalign)
     const p = try prog(a, &diags, "put a +3 b; put a #3 b;");
     const p1 = p[0].put;
     try testing.expect(p1[0] == .variable);
-    try testing.expectEqual(@as(usize, 3), p1[1].rel); // +3
+    try testing.expectEqual(@as(isize, 3), p1[1].rel); // +3
     try testing.expect(p1[2] == .variable);
     const p2 = p[1].put;
     try testing.expect(p2[0] == .variable);

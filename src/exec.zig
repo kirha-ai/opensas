@@ -7169,9 +7169,13 @@ pub const Executor = struct {
         self.put_cursor = target;
     }
 
-    fn putRelPtr(self: *Executor, n: usize) Error!void {
+    fn putRelPtr(self: *Executor, n: isize) Error!void {
         const base = self.put_cursor orelse self.putBuf().items.len;
-        const target = base + n;
+        const line_start = self.curLineStart();
+        const target = if (n < 0)
+            base - @min(base - line_start, @as(usize, @intCast(-n)))
+        else
+            base + @as(usize, @intCast(n));
         const buf = self.putBuf();
         if (target > buf.items.len) try buf.appendNTimes(self.arena, ' ', target - buf.items.len);
         self.put_cursor = target;

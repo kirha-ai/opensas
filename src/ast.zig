@@ -186,7 +186,7 @@ pub const InputItem = struct {
 pub const PutItem = union(enum) {
     variable: struct { name: []const u8, fmt: ?[]const u8 = null }, // a value, optional format (`put x 8.2`)
     literal: []const u8, // put a quoted string
-    rel: usize, // `+n` — move the output column pointer n columns right
+    rel: isize, // `+n` / `+(-n)` — move the output column pointer relatively
     col: usize, // `@n` — move the output column pointer to column n (1-based)
     // GAP-atexpression-put: `@(expression)` — the same column pointer as `col`,
     // but the operand AST rides the item and exec evaluates it PER PUT against
