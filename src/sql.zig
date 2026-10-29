@@ -3429,6 +3429,7 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
     if (exprHasAgg(arg))
         return diags.fail(error.ParseError, if (arg.len > 0) arg[0].line else 0, "PROC SQL: Summary functions nested in this fashion are not supported.", .{});
     const vals = try arena.alloc(Value, grp.len);
+    var missing = Value.missing;
     // `sum(case when … end)` (or any aggregate over a CASE): the DATA-step expression
     // parser can't parse SQL CASE — evaluate it per row through the SQL CASE evaluator,
     // then fold (BUG-sqlsumcase; the old path returned missing / could null-unwrap).
@@ -3439,6 +3440,9 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
         // aggregate and print it ahead of the diagnostic (TODO-sqlcasesubqagg: the
         // aggregate path has no Library to resolve the subquery with).
         if (hasSubquery(inner)) return caseSubqGap(diags, inner);
+        // BUG-sqlemptycharaggtype: the empty MIN/MAX fold must carry CASE's
+        // type in its cell too, or retypeComputed replaces Char with Num.
+        if (caseResultType(inner) == .char) missing = .{ .str = "" };
         // one PDV for the group, not one per row (BUG-sqlrowwiseoom)
         var pdv = Pdv.init(arena);
         var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
@@ -3482,7 +3486,7 @@ fn computeAggExpr(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Datas
                 if ((f == .min and ord == .lt) or (f == .max and ord == .gt)) best = v;
             } else best = v;
         }
-        return best orelse Value.missing;
+        return best orelse missing;
     }
     // BUG-sqlsumwgtcharzero: character-argument guard for the EXPRESSION path
     // (e.g. sumwgt(upcase(b))) — an expression has no declared type, so test the
@@ -6710,6 +6714,52 @@ test "create table with aggregates, no group (matches sql_basic.sas)" {
     try t.expectEqual(@as(f64, 90), s.row(0)[1].num); // sum
     try t.expectEqual(@as(f64, 30), s.row(0)[2].num); // avg
     try t.expectEqualStrings("n", s.columns.items[0].name);
+}
+
+test "BUG-sqlemptycharaggtype: empty CASE MIN/MAX keep character schema and cells" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "have");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 5 }) |v| try ds.appendRow(&.{numV(v)});
+    try lib.put("have", ds);
+
+    const projection =
+        "min(case when x>3 then '9' else '10' end) as lo, " ++
+        "max(case when x>3 then '9' else '10' end) as hi, " ++
+        "min(case when x>3 then 9 else 10 end) as nlo, " ++
+        "max(case when x>3 then 9 else 10 end) as nhi ";
+    for ([_][]const u8{ "", "group by x" }) |group| {
+        const src = try std.fmt.allocPrint(a, "proc sql; create table result as select {s} from have where x>100 {s}; quit;", .{ projection, group });
+        try runSql(a, &lib, &diags, src);
+        const result = lib.find("result").?;
+        try t.expectEqual(@as(usize, if (group.len == 0) 1 else 0), result.rowCount());
+        for (result.columns.items, 0..) |col, k|
+            try t.expectEqual(if (k < 2) VarType.char else VarType.num, col.type);
+        if (result.rowCount() == 1) {
+            for (result.row(0)[0..2]) |v| {
+                try t.expect(v == .str);
+                try t.expect(aggMissing(v));
+            }
+            for (result.row(0)[2..4]) |v| {
+                try t.expect(v == .num);
+                try t.expect(v.isMissing());
+            }
+        }
+    }
+
+    try runSql(a, &lib, &diags, "proc sql; create table populated as select " ++ projection ++ "from have; quit;");
+    const populated = lib.find("populated").?;
+    try t.expectEqual(@as(usize, 1), populated.rowCount());
+    try t.expectEqualStrings("10", populated.row(0)[0].str);
+    try t.expectEqualStrings("9", populated.row(0)[1].str);
+    try t.expectEqual(@as(f64, 9), populated.row(0)[2].num);
+    try t.expectEqual(@as(f64, 10), populated.row(0)[3].num);
+    try t.expect(!diags.hasErrors());
 }
 
 test "PROC SQL operator rules: <> is NE, >< and the legacy =< / => are loud (GAP-sqllegacycmp)" {
