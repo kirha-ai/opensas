@@ -15,6 +15,14 @@ these caused real regressions (see D-001).
 - D-004 Macro expansion INTERLEAVES with execution: flush-and-execute at
   `run;`/`quit;` boundaries so CALL SYMPUT feeds later `%do` in the same body
   (BUG-macrointerleave — this took studybench 0/27 → 26/27).
+  **ADDENDUM (GH#13 CALL EXECUTE): suppress that interleave flush while expanding
+  a CALL EXECUTE argument.** `macro.expandForExecute` deliberately saves and
+  nulls `exec_ctx`/`exec_fn` before scanning the argument: macro language
+  elements execute immediately, but generated SAS statements must be queued
+  until after the DATA step finishes (Macro Language Reference p.123). If the
+  D-004 flush stayed live here, a generated `data ...; run;` would execute
+  re-entrantly in the middle of the calling step, which is the exact timing GH#13
+  forbids.
 - D-005 `writeLibOutputs` never writes `member.csv` where a binary source
   (`member.xpt`/`.sas7bdat`) exists in the same dir — a CSV shadow silently
   bypasses the binary readers on the next run (BUG-csvshadow).
