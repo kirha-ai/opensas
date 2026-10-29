@@ -7179,6 +7179,10 @@ pub const Executor = struct {
 
     fn putRelPtr(self: *Executor, n: isize) Error!void {
         const base = self.put_cursor orelse self.putBuf().items.len;
+        try self.putRelPtrFrom(n, base);
+    }
+
+    fn putRelPtrFrom(self: *Executor, n: isize, base: usize) Error!void {
         const line_start = self.curLineStart();
         const target = if (n < 0)
             base - @min(base - line_start, @as(usize, @intCast(-n)))
@@ -7228,11 +7232,12 @@ pub const Executor = struct {
                 },
                 .rel => |n| {
                     // A list-style value still owes its one separator blank
-                    // before an explicit +n control. Then +n moves from that
-                    // position; +0 is the common "keep the owed blank, suppress
-                    // default spacing before the next literal" idiom.
-                    if (owe_blank and !dlm_on) try self.putWriteByte(sep);
-                    try self.putRelPtr(n);
+                    // before an explicit +n control. SAS moves from that
+                    // virtual position, but the separator byte is only written
+                    // if a later write lands to its right. A backward move can
+                    // cross it without stranding a trailing blank byte.
+                    const base = self.put_cursor orelse self.putBuf().items.len;
+                    try self.putRelPtrFrom(n, base + @as(usize, if (owe_blank and !dlm_on) 1 else 0));
                     need_space = false;
                     owe_blank = false;
                 },
