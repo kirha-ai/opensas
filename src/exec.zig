@@ -688,6 +688,10 @@ pub const Executor = struct {
     // in the listing: a dump is log-class (stderr via the captured diagnostics),
     // and it goes there even when a FILE statement is open (SAS dumps to the log).
     put_redirect: ?*std.ArrayList(u8) = null,
+    // NOTE-putcolrewind: PUT @n can move the output pointer backward and
+    // overwrite bytes already present on the current line. Null means ordinary
+    // append-at-end output; otherwise this is an absolute index into putBuf().
+    put_cursor: ?usize = null,
     vnext_idx: usize = 0, // CALL VNEXT cursor over PDV variables
 
     // filled by `scan`
@@ -937,7 +941,7 @@ pub const Executor = struct {
         // Then the SET/MERGE input columns, in schema order — SAS orders output
         // variables by first appearance, and the input dataset (which SET names
         // before every statement that follows it) appears next (BUG-varorder).
-        try self.seedInputColumns();
+        try self.seedInputColumns(program);
 
         // MULTISET-impl: register any SET beyond the driver (a 2nd `set b;` or an
         // if-guarded `set summary;`) as an executable node with its own cursor, and
@@ -2334,7 +2338,9 @@ pub const Executor = struct {
         // set e (an INFINITE LOOP on a 2-row input) and the raw \x00 sentinel
         // leaked into the user-visible "File  end=e does not exist". Walk the
         // whole step and give every non-driver SET node the same strip.
-        var seen_driver = false;
+        const set_is_point_lookup = self.set_point_var != null and self.set_point_node == null;
+        var seen_driver = !set_is_point_lookup and
+            (self.merge_names != null or self.update_names != null or self.modify_names != null);
         for (program) |*s| {
             const dow = s.* == .do_ and (s.do_.header == .until_ or s.do_.header == .while_);
             try self.extractNestedSetOpts(s, &seen_driver, false, dow);
@@ -2761,22 +2767,20 @@ pub const Executor = struct {
         return .normal;
     }
 
-    fn seedInputColumns(self: *Executor) Error!void {
-        // QA tick377 F2: a POINT= lookup riding beside a MERGE/UPDATE/MODIFY
-        // driver (its SET is the first top-level one, so set_names holds the
-        // LOOKUP's list) is first-mentioned AFTER the driver statement — the
-        // driver owns the early PDV slots and the lookup's columns seed at
-        // their own node in declareStmt's program-order walk. Seed the driver
-        // here with the SAME plain define buildMerge/slotsOf use today (order
-        // moves; types/widths/diags don't). Without this the orelse chain
-        // seeded the LOOKUP first (b k p q for `merge mA mB; set lk point=_n_;`).
-        if (self.set_point_var != null and self.set_point_node == null and
-            (self.merge_names != null or self.update_names != null or self.modify_names != null))
-        {
+    fn seedInputColumns(self: *Executor, program: ast.Program) Error!void {
+        // A SET beside a MERGE/UPDATE/MODIFY is an executable peer reader, not
+        // necessarily the step driver. Whichever input statement is textually
+        // first owns the early PDV slots: `merge a b; set meta;` is driver-first,
+        // but `set meta; merge a b;` is SET-first (LR Concepts p.47 variable
+        // position = definition order). The SET still registers later as an
+        // executable peer reader in collectExtraSets; the second seed is a no-op
+        // for order/typing, it only preserves that runtime registration path.
+        if (self.merge_names != null or self.update_names != null or self.modify_names != null) {
+            if (firstInputStmt(program)) |i| try self.seedSetColumnsInStmt(&program[i]);
             const drv = self.merge_names orelse self.update_names orelse self.modify_names.?;
             for (drv) |name| {
                 if (try self.resolveDataset(name, false, null)) |ds| {
-                    for (ds.columns.items) |c| _ = try self.pdv.define(c.name, c.type);
+                    try self.seedColumnsOf(ds);
                 }
             }
             return;
@@ -2785,6 +2789,26 @@ pub const Executor = struct {
             self.update_names orelse self.modify_names orelse return;
         for (names) |name| {
             if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
+        }
+    }
+
+    fn seedSetColumnsInStmt(self: *Executor, s: *const ast.Stmt) Error!void {
+        switch (s.*) {
+            .set => |node_names| {
+                const names = if (s == self.drv_set)
+                    (self.set_names orelse node_names)
+                else
+                    (self.extra_src_names.get(s) orelse node_names);
+                for (names) |name| {
+                    if (try self.resolveDataset(name, false, null)) |ds| try self.seedColumnsOf(ds);
+                }
+            },
+            .if_ => |f| {
+                if (f.then_branch) |b| try self.seedSetColumnsInStmt(b);
+                if (f.else_branch) |b| try self.seedSetColumnsInStmt(b);
+            },
+            .do_ => |d| for (d.body) |*b| try self.seedSetColumnsInStmt(b),
+            else => {},
         }
     }
 
@@ -2942,10 +2966,9 @@ pub const Executor = struct {
     /// executable node with its own concatenate cursor (runExtraSet). SAS: each
     /// SET has an INDEPENDENT read position, and a SET'd variable is RETAINED
     /// until its next read, so the _n_=1 lookup value persists across iterations.
-    /// The driver SET (self.set_names — the first TOP-LEVEL SET) is skipped. Only
-    /// for a plain SET-driven step (a POINT= source of the driver list's own,
-    /// MERGE / UPDATE / MODIFY keep the old single path; a second-SET POINT=
-    /// lookup — GAP-secondsetstmt — registers extras like the plain case).
+    /// The driver SET (self.set_names — the first TOP-LEVEL SET when SET is the
+    /// actual driver) is skipped. With a MERGE/UPDATE/MODIFY driver, every SET
+    /// node is executable peer input and must register here.
     fn collectExtraSets(self: *Executor, program: ast.Program) Error!void {
         // No set_names gate: when the ONLY source is a nested (conditional) SET
         // there is no driver at all, but its columns must still seed the PDV —
@@ -2955,8 +2978,7 @@ pub const Executor = struct {
         // register below; the lookup's own node is skipped inside (it reads
         // via the direct-access path, not its own cursor).
         if (self.set_point_var != null and self.set_point_node == null) return;
-        if (self.merge_names != null or self.update_names != null or self.modify_names != null) return;
-        var seen_driver = false;
+        var seen_driver = self.merge_names != null or self.update_names != null or self.modify_names != null;
         for (program) |*s| try self.collectExtraSetsStmt(s, &seen_driver, false);
     }
 
@@ -7152,12 +7174,11 @@ pub const Executor = struct {
         return .normal;
     }
 
-    /// Move the PUT output column pointer to 1-based column `n`: pad the current
-    /// line with spaces so the next item starts there. The ONE landing site for
-    /// both `@n` and `@(expression)` (GAP-atexpression-put) — a second copy would
-    /// be a second ceiling to drift. ponytail: forward-only; a target before the
-    /// current column can't rewind an append-only buffer, so it no-ops there
-    /// (SAS would overwrite) — note if a program needs it.
+    /// Move the PUT output column pointer to 1-based column `n`. Positioning
+    /// itself writes no bytes: a later write pads if it lands beyond the current
+    /// end, while a backward move can overwrite existing text (NOTE-putcolrewind).
+    /// The ONE landing site for both `@n` and `@(expression)` (GAP-atexpression-put)
+    /// — a second copy would be a second ceiling to drift.
     fn putColPtr(self: *Executor, n: usize) Error!void {
         // BUG-putptroom: an unbounded @n pads gigabytes (hang/OOM). The parser
         // rejects oversized literals; guard the alloc site too (same ceiling,
@@ -7165,8 +7186,22 @@ pub const Executor = struct {
         // so for that form THIS is the only guard.
         if (n > max_put_ptr)
             return self.diags.fail(error.ExecError, 0, "put: @{d} column pointer exceeds the {d} line-size ceiling", .{ n, max_put_ptr });
-        const len = self.curLineLen();
-        if (n > len + 1) try self.putBuf().appendNTimes(self.arena, ' ', n - 1 - len);
+        const target = self.curLineStart() + n - 1;
+        self.put_cursor = target;
+    }
+
+    fn putRelPtr(self: *Executor, n: isize) Error!void {
+        const base = self.put_cursor orelse self.putBuf().items.len;
+        try self.putRelPtrFrom(n, base);
+    }
+
+    fn putRelPtrFrom(self: *Executor, n: isize, base: usize) Error!void {
+        const line_start = self.curLineStart();
+        const target = if (n < 0)
+            base - @min(base - line_start, @as(usize, @intCast(-n)))
+        else
+            base + @as(usize, @intCast(n));
+        self.put_cursor = target;
     }
 
     /// `put` writes a line to the log. ponytail: list style only, single space
@@ -7193,7 +7228,7 @@ pub const Executor = struct {
         for (items) |item| {
             switch (item) {
                 .newline => {
-                    try self.putBuf().append(self.arena, '\n');
+                    try self.putNewline();
                     need_space = false;
                     owe_blank = false;
                 },
@@ -7201,15 +7236,25 @@ pub const Executor = struct {
                     // BUG-putlistsep: collect the blank a list-style value owes
                     // (Language Reference: Concepts p.621). DLM mode unchanged — literals stay
                     // undelimited there (the fileopts fixtures pin that).
-                    if (owe_blank and !dlm_on) try self.putBuf().append(self.arena, sep);
-                    try self.putBuf().appendSlice(self.arena, lit);
+                    if (owe_blank and !dlm_on) try self.putWriteByte(sep);
+                    try self.putWriteSlice(lit);
                     need_space = false;
                     owe_blank = false;
                 },
-                // `@n` — move the output column pointer to column n (1-based): pad the
-                // current line with spaces so the next item starts at column n. ponytail:
-                // forward-only; `@n` before the current column can't rewind an append-only
-                // buffer, so it no-ops there (SAS would overwrite) — note if a program needs it.
+                .rel => |n| {
+                    // A list-style value still owes its one separator blank
+                    // before an explicit +n control. SAS moves from that
+                    // virtual position, but the separator byte is only written
+                    // if a later write lands to its right. A backward move can
+                    // cross it without stranding a trailing blank byte.
+                    const base = self.put_cursor orelse self.putBuf().items.len;
+                    try self.putRelPtrFrom(n, base + @as(usize, if (owe_blank and !dlm_on) 1 else 0));
+                    need_space = false;
+                    owe_blank = false;
+                },
+                // `@n` — move the output column pointer to column n (1-based).
+                // Later text overwrites bytes already on this line when the
+                // pointer moves backward (NOTE-putcolrewind).
                 .col => |n| {
                     try self.putColPtr(n);
                     need_space = false; // @col sets spacing explicitly
@@ -7252,7 +7297,7 @@ pub const Executor = struct {
                         const xf = @floor(toF64(try self.ev.eval(ix)));
                         if (xf >= 1 and xf <= @as(f64, @floatFromInt(elements.len))) {
                             const nm = elements[@as(usize, @intFromFloat(xf)) - 1];
-                            if (need_space) try self.putBuf().append(self.arena, sep);
+                            if (need_space) try self.putWriteByte(sep);
                             // `put a[i]=;` — named output: the label is the RESOLVED
                             // element's own name (a[2] → a2=; array a[3] x y z → y=).
                             if (ae.named) {
@@ -7262,21 +7307,21 @@ pub const Executor = struct {
                                 // (x[6]=). ponytail: flat subscript even for multidim
                                 // (x[2,3] → x[6]=); the folded bounds aren't on the item.
                                 if (std.ascii.startsWithIgnoreCase(nm, "_temp_")) {
-                                    try self.putBuf().appendSlice(self.arena, ae.name);
-                                    try self.putBuf().append(self.arena, '[');
-                                    try self.putBuf().appendSlice(self.arena, try std.fmt.allocPrint(self.arena, "{d}", .{@as(u64, @intFromFloat(xf))}));
-                                    try self.putBuf().append(self.arena, ']');
+                                    try self.putWriteSlice(ae.name);
+                                    try self.putWriteByte('[');
+                                    try self.putWriteSlice(try std.fmt.allocPrint(self.arena, "{d}", .{@as(u64, @intFromFloat(xf))}));
+                                    try self.putWriteByte(']');
                                 } else {
-                                    try self.putBuf().appendSlice(self.arena, nm);
+                                    try self.putWriteSlice(nm);
                                 }
-                                try self.putBuf().append(self.arena, '=');
+                                try self.putWriteByte('=');
                             }
                             try self.emitPutValue(self.pdv.get(nm) orelse Value.missing, null, .none);
                             need_space = true;
                             owe_blank = true;
                         } // out of range → SAS notes + missing; emit nothing
                     } else for (elements) |nm| {
-                        if (need_space) try self.putBuf().append(self.arena, sep);
+                        if (need_space) try self.putWriteByte(sep);
                         try self.emitPutValue(self.pdv.get(nm) orelse Value.missing, null, .none);
                         need_space = true;
                         owe_blank = true;
@@ -7286,7 +7331,7 @@ pub const Executor = struct {
                     // `put _page_;` — page eject (form-feed), not a PDV lookup
                     // (BUG-putpage: fell through to missing → printed ".").
                     if (eqi(v.name, "_page_")) {
-                        try self.putBuf().append(self.arena, '\x0c');
+                        try self.putWriteByte('\x0c');
                         need_space = false;
                         owe_blank = false;
                         // `put _all_;` / `_numeric_` / `_character_` list every matching PDV
@@ -7306,7 +7351,7 @@ pub const Executor = struct {
                         // (BUG-putfmtblank); an unformatted list item keeps its one
                         // leading blank. (Named output below keeps its separator
                         // unconditionally — SAS spaces `x=` items even formatted.)
-                        if (need_space and (ml.fmt == null or ml.colon or dlm_on)) try self.putBuf().append(self.arena, sep);
+                        if (need_space and (ml.fmt == null or ml.colon or dlm_on)) try self.putWriteByte(sep);
                         // BUG-declaredobjnamevalue: a PUT item is not an
                         // expression, so this read is the one place a bare name
                         // becomes a value WITHOUT passing eval's guard — `put h;`
@@ -7342,14 +7387,14 @@ pub const Executor = struct {
                     if (specialPutList(n.name)) |kind| {
                         try self.putAllVars(kind, &need_space, &owe_blank);
                     } else {
-                        if (need_space) try self.putBuf().append(self.arena, sep);
+                        if (need_space) try self.putWriteByte(sep);
                         // GAP-putnamedcase: the label is the variable's DEFINED
                         // case, not the reference-site spelling (Language Reference: Concepts p.537's
                         // log renders `put _n_= … first.state=` as
                         // `_N_=1 FIRST.State=1`; p.539: `first.x=` → `FIRST.x=1`).
                         try self.ev.rejectObjectName(n.name); // `put h=;` — see the .variable arm above
-                        try self.putBuf().appendSlice(self.arena, try self.putNamedLabel(n.name));
-                        try self.putBuf().append(self.arena, '=');
+                        try self.putWriteSlice(try self.putNamedLabel(n.name));
+                        try self.putWriteByte('=');
                         const val = self.pdv.get(n.name) orelse Value.missing;
                         // explicit `put x= fmt.` wins; else the variable's attached
                         // FORMAT/ATTRIB format; else default (BUG-putnamedfmt).
@@ -7361,7 +7406,7 @@ pub const Executor = struct {
                 },
             }
         }
-        try self.putBuf().append(self.arena, '\n');
+        try self.putNewline();
     }
 
     const PutAllKind = enum { all, numeric, character };
@@ -7451,9 +7496,9 @@ pub const Executor = struct {
             .character => is_char,
         };
         if (!match) return;
-        if (need_space.*) try self.putBuf().append(self.arena, self.putSep());
-        try self.putBuf().appendSlice(self.arena, v.name);
-        try self.putBuf().append(self.arena, '=');
+        if (need_space.*) try self.putWriteByte(self.putSep());
+        try self.putWriteSlice(v.name);
+        try self.putWriteByte('=');
         try self.appendValue(v.value);
         need_space.* = true;
         owe_blank.* = true;
@@ -7480,28 +7525,64 @@ pub const Executor = struct {
         return &self.log;
     }
 
+    fn putWriteByte(self: *Executor, c: u8) Error!void {
+        try self.putWriteSlice((&c)[0..1]);
+    }
+
+    fn putWriteSlice(self: *Executor, s: []const u8) Error!void {
+        const pos0 = self.put_cursor orelse {
+            try self.putBuf().appendSlice(self.arena, s);
+            return;
+        };
+        var pos = pos0;
+        const buf = self.putBuf();
+        if (pos > buf.items.len) try buf.appendNTimes(self.arena, ' ', pos - buf.items.len);
+        for (s) |c| {
+            if (pos < buf.items.len) {
+                buf.items[pos] = c;
+            } else {
+                try buf.append(self.arena, c);
+            }
+            pos += 1;
+        }
+        self.put_cursor = pos;
+    }
+
+    fn putNewline(self: *Executor) Error!void {
+        self.put_cursor = null;
+        try self.putBuf().append(self.arena, '\n');
+    }
+
     /// Length of the line currently being built in the put buffer (bytes since the
     /// last '\n'), i.e. the 0-based column the next write lands on — for `@n`/PUT.
     fn curLineLen(self: *Executor) usize {
+        return self.putBuf().items.len - self.curLineStart();
+    }
+
+    fn curLineStart(self: *Executor) usize {
         const buf = self.putBuf().items;
-        if (std.mem.lastIndexOfScalar(u8, buf, '\n')) |nl| return buf.len - nl - 1;
-        return buf.len;
+        if (std.mem.lastIndexOfScalar(u8, buf, '\n')) |nl| return nl + 1;
+        return 0;
     }
 
     fn appendValue(self: *Executor, v: Value) Error!void {
-        switch (v) {
+        try self.putWriteSlice(try self.putValueText(v));
+    }
+
+    fn putValueText(self: *Executor, v: Value) Error![]const u8 {
+        return switch (v) {
             // List-PUT writes a char value's bytes verbatim — SAS preserves trailing
             // blanks here (e.g. `put x $char5.` → "ABC  "). So a GH#60 `''` blank
             // prints as a space; only CSV export drops an all-blank value (io.zig).
-            .str => |s| try self.putBuf().appendSlice(self.arena, s),
+            .str => |s| s,
             // SAS default numeric format (BEST12.) — trims f64 noise. A PLAIN
             // missing prints the OPTIONS MISSING= char (BUG-optmissing); special
             // missings (.A–.Z/._) keep their letter via bestNum.
-            .num => |x| try self.putBuf().appendSlice(self.arena, if (std.math.isNan(x) and Value.missingChar(x) == '.')
+            .num => |x| if (std.math.isNan(x) and Value.missingChar(x) == '.')
                 try std.fmt.allocPrint(self.arena, "{c}", .{io.global_missing})
             else
-                try format.bestNum(self.arena, x)),
-        }
+                try format.bestNum(self.arena, x),
+        };
     }
 
     /// List-item separator for PUT: the FILE DLM char when a `file … dlm=x;`
@@ -7516,26 +7597,23 @@ pub const Executor = struct {
     /// rewrap that slice in double quotes (doubling embedded quotes — CSV rules,
     /// SAS DSD semantics). Buffer-splice keeps emitField the single formatter.
     fn emitPutValue(self: *Executor, val: Value, fmt: ?[]const u8, al: PutAlign) Error!void {
-        const f = self.file orelse return self.emitField(val, fmt, al);
-        if (!f.dsd) return self.emitField(val, fmt, al);
-        const buf = self.putBuf();
-        const start = buf.items.len;
-        try self.emitField(val, fmt, al);
-        const s = buf.items[start..];
+        const raw = try self.emitFieldText(val, fmt, al);
+        const f = self.file orelse return self.putWriteSlice(raw);
+        if (!f.dsd) return self.putWriteSlice(raw);
         const dlm = f.dlm orelse ',';
         // Quote-trigger mirrors appendCsvField (PROC EXPORT): delimiter, '"', \n, \r.
         // ponytail: no leading/trailing-blank trigger (export has one) — DSD char values
         // are length-padded, so blank-triggered quoting would quote every char field.
-        if (std.mem.indexOfScalar(u8, s, dlm) == null and std.mem.indexOfAny(u8, s, "\"\n\r") == null) return;
+        if (std.mem.indexOfScalar(u8, raw, dlm) == null and std.mem.indexOfAny(u8, raw, "\"\n\r") == null)
+            return self.putWriteSlice(raw);
         var q: std.ArrayList(u8) = .empty;
         try q.append(self.arena, '"');
-        for (s) |c| {
+        for (raw) |c| {
             if (c == '"') try q.append(self.arena, '"');
             try q.append(self.arena, c);
         }
         try q.append(self.arena, '"');
-        buf.shrinkRetainingCapacity(start);
-        try buf.appendSlice(self.arena, q.items);
+        try self.putWriteSlice(q.items);
     }
 
     const PutAlign = enum { none, left, right };
@@ -7571,15 +7649,18 @@ pub const Executor = struct {
     /// justify within the field width if `-R`/`-L` was given (GAP-putalign). With no
     /// format the field is the value's natural width, so alignment is a no-op there.
     fn emitField(self: *Executor, val: Value, fmt: ?[]const u8, al: PutAlign) Error!void {
+        try self.putWriteSlice(try self.emitFieldText(val, fmt, al));
+    }
+
+    fn emitFieldText(self: *Executor, val: Value, fmt: ?[]const u8, al: PutAlign) Error![]const u8 {
         if (al == .none) {
-            if (fmt) |f| try self.putBuf().appendSlice(self.arena, try format.apply(self.arena, val, f)) else try self.appendValue(val);
-            return;
+            return if (fmt) |f| try format.apply(self.arena, val, f) else try self.putValueText(val);
         }
         const s = if (fmt) |f| try format.apply(self.arena, val, f) else switch (val) {
             .str => |x| x,
             .num => |x| try format.bestNum(self.arena, x),
         };
-        try self.putBuf().appendSlice(self.arena, justifyField(self.arena, s, al) catch s);
+        return justifyField(self.arena, s, al) catch s;
     }
 
     /// Re-justify a width-padded field: trim the blanks, repad on the requested side
