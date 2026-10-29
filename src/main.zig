@@ -1935,15 +1935,26 @@ fn skipOptionValue(toks: []const Token, i: usize) usize {
         }
         return j - i;
     }
-    if (j + 1 < toks.len and (toks[j].tag == .minus or toks[j].tag == .plus) and toks[j + 1].tag == .number) return 3;
+    if (j + 1 < toks.len and (toks[j].tag == .minus or toks[j].tag == .plus) and toks[j + 1].tag == .number) {
+        if (j + 2 < toks.len and toks[j + 2].tag == .name and isOptionNumericSuffix(toks[j + 2].text)) return 4;
+        return 3;
+    }
     if (j < toks.len and toks[j].tag == .number) {
-        // a size suffix lexes as a separate one-char name: `bufsize=64k`
-        if (j + 1 < toks.len and toks[j + 1].tag == .name and toks[j + 1].text.len == 1 and
-            std.mem.indexOfScalar(u8, "kmgKMg", toks[j + 1].text[0]) != null) return 3;
+        // A suffix lexes as a separate name: size (`bufsize=64k`) or page
+        // dimension (`leftmargin=0.5in`, BUG-marginunit-suffix).
+        if (j + 1 < toks.len and toks[j + 1].tag == .name and isOptionNumericSuffix(toks[j + 1].text)) return 3;
         return 2;
     }
     if (j < toks.len and (toks[j].tag == .string or toks[j].tag == .name)) return 2;
     return 0;
+}
+
+fn isOptionNumericSuffix(text: []const u8) bool {
+    if (text.len == 1 and std.mem.indexOfScalar(u8, "kmgKMg", text[0]) != null) return true;
+    inline for (.{ "in", "cm", "mm", "pt" }) |unit| {
+        if (eqi(text, unit)) return true;
+    }
+    return false;
 }
 
 /// Rewrite `infile REF;` / `file REF;` naming a registered fileref into the
