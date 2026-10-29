@@ -1486,13 +1486,16 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     return;
                 }
             } else if (eqi(t.text, "missing")) {
-                // `options missing='X';` — display char for a PLAIN missing
+                // `options missing='X';` / `missing=X` — display char for a PLAIN missing
                 // numeric (Language Reference: Concepts p.209/234; BUG-optmissing: parsed then DROPPED
-                // → `.` printed regardless = silent wrong listing). `missing='';`
-                // /`missing='.'` resets to the default `.`. Special missings
-                // (.A–.Z/._) keep their letter. Fail LOUD on garbage, like
-                // YEARCUTOFF above.
-                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .string) {
+                // → `.` printed regardless = silent wrong listing). Real SAS
+                // accepts the unquoted scalar form too (`missing=N`), verified
+                // before GAP-opt-unknown-sweep. `missing=''` / `missing='.'`
+                // resets to the default `.`. Special missings (.A–.Z/._) keep
+                // their letter. Fail LOUD on garbage, like YEARCUTOFF above.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and
+                    (toks[i + 2].tag == .string or toks[i + 2].tag == .name or toks[i + 2].tag == .number))
+                {
                     const s = toks[i + 2].text;
                     sas.io.global_missing = if (s.len == 0 or (s.len == 1 and s[0] == '.')) '.' else s[0];
                     i += 3;
@@ -1532,6 +1535,22 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     try diags.report(.err, t.line, "Invalid value for the {s} option.", .{if (is_ls) "LINESIZE" else "PAGESIZE"});
                     return;
                 }
+            } else if (eqi(t.text, "errors")) {
+                // `options errors=N;` (Language Reference: Concepts p.207):
+                // limits repeated data-error diagnostics, not data values or
+                // listing content. opensas does not cap repeated diagnostics yet,
+                // so accept the documented numeric option as inert rather than
+                // misclassifying it as a typo.
+                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .number)
+                    std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null
+                else
+                    null;
+                if (v != null) {
+                    i += 3;
+                } else {
+                    try diags.report(.err, t.line, "Invalid value for the ERRORS option.", .{});
+                    return;
+                }
             } else if (eqi(t.text, "dkricond") or eqi(t.text, "dkrocond")) {
                 // Language Reference: Concepts pp.184-185: severity when DROP=/KEEP=/RENAME= names a
                 // variable missing from an input (DKRICOND=, default ERROR) vs
@@ -1554,6 +1573,17 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     }
                 }
                 try diags.report(.err, t.line, "Invalid value for the {s} option.", .{if (eqi(t.text, "dkricond")) "DKRICOND" else "DKROCOND"});
+                return;
+            } else if (eqi(t.text, "vnferr")) {
+                // VNFERR is the documented default: an unresolved variable name
+                // is an error, which is already opensas's behavior.
+                i += 1;
+            } else if (eqi(t.text, "novnferr")) {
+                // NOVNFERR downgrades variable-not-found conditions; silently
+                // accepting it would keep ERROR behavior under a safety-relevant
+                // option, so D-018 classifies it as a documented gap.
+                sas.diag.markGap();
+                try diags.report(.err, t.line, "system option NOVNFERR is not supported", .{});
                 return;
             } else if (eqi(t.text, "sortseq")) {
                 // SORTSEQ= system option: the DEFAULT collation for PROC SORT
@@ -1702,7 +1732,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // headers are always mangled per V7 (io.zig). The VALUE is still
                 // validated so `validvarname=v8` (a typo) dies.
                 if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name and
-                    (eqi(toks[i + 2].text, "v7") or eqi(toks[i + 2].text, "upcase") or eqi(toks[i + 2].text, "any")))
+                    (eqi(toks[i + 2].text, "v6") or eqi(toks[i + 2].text, "v7") or eqi(toks[i + 2].text, "upcase") or eqi(toks[i + 2].text, "any")))
                 {
                     i += 3;
                     continue;
@@ -1890,6 +1920,9 @@ fn isInertOption(name: []const u8) bool {
         "source",       "nosource",    "source2",    "nosource2",   "echo",
         "noecho",       "msglevel",    "stimer",     "nostimer",    "fullstimer",
         "nofullstimer",
+        // host X-command execution policy; X itself is inert/not executed
+        // (D-022), so wait/sync host toggles cannot change observable data here.
+        "xwait",        "noxwait",     "xsync",      "noxsync",
         // macro toggles/debugging (the macro processor runs regardless; the
         // `in` gate itself was already applied by macro.zig — see above)
         "mprint",       "nomprint",    "mlogic",     "nomlogic",    "symbolgen",
@@ -3814,6 +3847,8 @@ test "GAP-gapsexitingone §5d: main.zig's gaps exit 2 — and every split's typo
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options mergenoby=error;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options varinitchk=error;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options varinitchk=abend;\n", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options novnferr;\n", &log));
+    try std.testing.expect(std.mem.indexOf(u8, log, "system option NOVNFERR is not supported") != null);
     // FILENAME concatenation, ODS OUTPUT/SELECT/EXCLUDE/TRACE, DATA-step LIST
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "filename both ('fa.txt' 'fb.txt');\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods output Summary=s;\n", &log));
@@ -5047,19 +5082,21 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         sas.io.global_dkrocond = .warn;
         sas.io.global_nobyline = false;
         sas.io.global_sortseq_linguistic = false;
+        sas.io.global_missing = '.';
     }
     // ── positive control (the D-014 anti-regression assertion): a realistic
     //    inert bundle + every HONOURED arm parses clean and the program runs.
     try expectRun(
         "options nodate nonumber center pageno=1 msglevel=i compress=yes reuse=no\n" ++
-            "  validvarname=v7 fmtsearch=(work sashelp) mprint symbolgen minoperator\n" ++
+            "  validvarname=v6 fmtsearch=(work sashelp) mprint symbolgen minoperator\n" ++
             "  mindelimiter=',' bufsize=64k sortsize=16m threads stimer source notes\n" ++
             "  nolabel byline replace mergenoby=nowarn varinitchk=note dkricond=warn\n" ++
-            "  sortseq=ascii obs=max firstobs=1;\n" ++
+            "  sortseq=ascii obs=max firstobs=1 errors=1 vnferr noxwait noxsync;\n" ++
             "data d; x=1; run;\nproc print data=d noobs; run;\n",
         "x\n\n1\n",
     );
     try std.testing.expectEqual(sas.io.CondLevel.warn, sas.io.global_dkricond);
+    try expectRun("options missing=N; data _null_; x=.; put x; run;\n", "N\n");
     // honoured: the K suffix is a magnitude, not a token to drop — obs=2k = 2048
     try expectRun("options obs=2k; data d; x=1; run;\n", "");
     try std.testing.expectEqual(@as(usize, 2048), sas.io.global_obs);
@@ -5083,8 +5120,10 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         .{ .src = "options varinitchk=error;\n", .msg = "system option VARINITCHK=error is not supported" },
         .{ .src = "options mergenoby=warn;\n", .msg = "system option MERGENOBY=warn is not supported" },
         .{ .src = "options noreplace;\n", .msg = "system option NOREPLACE is not supported" },
+        .{ .src = "options novnferr;\n", .msg = "system option NOVNFERR is not supported" },
         .{ .src = "options sortseq=danish;\n", .msg = "system option SORTSEQ=danish is not supported" },
         // invalid VALUES on known options
+        .{ .src = "options errors=abc;\n", .msg = "Invalid value for the ERRORS option." },
         .{ .src = "options firstobs=0;\n", .msg = "Invalid value for the FIRSTOBS option." },
         .{ .src = "options mergenoby=zzz;\n", .msg = "Invalid value for the MERGENOBY option." },
         .{ .src = "options varinitchk=zzz;\n", .msg = "Invalid value for the VARINITCHK option." },
