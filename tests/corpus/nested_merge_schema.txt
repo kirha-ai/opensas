@@ -42,6 +42,15 @@ Variables      2
 #  Variable  Type  Len  Format  Informat  Label
 1  k         Num     8
 2  v         Num     8
-Obs   k   v2   w   x
+                          The CONTENTS Procedure
 
-  1   .    .   .   .
+Data Set Name  o
+Observations   0
+Variables      3
+
+              Variables in Creation Order
+
+#  Variable  Type  Len  Format  Informat  Label
+1  k         Num     8
+2  v2        Num     8
+3  w         Num     8
