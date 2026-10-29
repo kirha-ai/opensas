@@ -22,11 +22,12 @@ run;
 /* lrcon p.142's own example program. NOTE on literal timing
    (BUG-yearcutoffflushorder): the OPTIONS statement flushes together with the
    step it precedes (one run; blob), and its value is wired BEFORE that step's
-   tokens exist — so the step's '…'d literal AND its exec-time informat read
+   tokens exist — so a same-step '…'d literal AND its exec-time informat read
    share the new [1950,2049] window. ('02' maps to 2002 under both spans, so
-   the doc's value holds regardless.) c pins the flip: 49 reads 2049, where
-   the old tokenize-first order lexed it under the PRIOR 1926 window as 1949
-   while the same step's informat read 2049 — one step, two windows. */
+   the doc's value holds regardless.) lit/inf pin the flip: 49 reads 2049,
+   where the old tokenize-first order lexed the literal under the PRIOR 1926
+   window as 1949 while the same step's informat read 2049 — one step, two
+   windows. */
 options yearcutoff=1950;
 data _null_;
   a='26oct02'd;
@@ -35,4 +36,8 @@ data _null_;
   put b year4.;
   c='26oct49'd;   /* same flush: lexed under THIS statement's 1950 → 2049 */
   put c year4.;
+  lit='26oct49'd;
+  inf=input('01jan49', date9.);
+  y=year(lit); z=year(inf);
+  put y= z=;
 run;
