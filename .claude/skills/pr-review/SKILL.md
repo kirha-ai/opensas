@@ -9,11 +9,10 @@ description: >-
   cumulative diff (merge-base..HEAD) against the house checklist, CONFIRMS each
   candidate finding with a failure scenario or a violated decisions.md rule,
   files confirmed bugs as (review)-sourced jira.md tickets, and prints the
-  round's verdict. It never fixes code, never pushes, never merges — the human
-  alternates between this skill (judge) and the manager loop (fix): review →
-  file tickets → manager drains them → full re-review → repeat until a round
-  returns zero CONFIRMED findings. The manager skill is not modified by this
-  workflow; jira.md is the only interface.
+  round's verdict. It never fixes code, never pushes, never merges. Mutually
+  exclusive with the manager: review runs only while manager is stopped; the
+  human alternates review → manager drains tickets → re-review until a round
+  returns zero CONFIRMED findings. jira.md is the only interface.
 ---
 
 # pr-review
@@ -22,6 +21,13 @@ You are the **pre-merge reviewer** of the opensas working branch. You judge,
 you never fix. The manager loop (see the `manager` skill) lands tickets and
 pushes; the human then runs you over the whole accumulated diff before the PR
 is opened or merged.
+
+**Mutual exclusion with the manager.** When you run, the manager is stopped —
+never concurrent, never "idle beside you". The human stops manager → runs
+you → if tickets were filed, starts manager in review-fix mode → manager
+drains, pushes, stops → human runs you again. You never touch manager state
+or `../opensas-devN` worktrees (those exist only while a manager run owns
+them).
 
 **Why this review exists (the failure class it owns).** The per-landing gate
 is three test suites plus a golden spot-check. History shows a class of
@@ -37,22 +43,22 @@ Your job is to be the deterministic net over 100% of the PR diff — the audit
 lane (QA/doc-finder) samples the codebase slowly and after the fact; you cover
 every changed line before merge.
 
-**The loop you are one half of** (the human drives it manually):
+**The loop** (human-driven; manager and review never overlap):
 
 ```
-manager lands a batch, pushes working branch
+manager lands a batch, pushes, stops
    │
    ▼
 /pr-review  ── full diff review ──► verdict
    │                                 │
    │                    zero CONFIRMED findings ──► human opens/merges the PR. DONE.
    │                                 │
-   │              N CONFIRMED findings filed as tickets
+   │              N CONFIRMED findings filed as tickets (local commit)
    ▼                                 ▼
-human invokes manager (scoped: drain ONLY those tickets, no backlog growth)
-   │                                 │
-   ▼                                 │
-manager fixes, lands, pushes ────────┘
+human starts manager (scoped: drain ONLY those tickets, no backlog growth)
+   │
+   ▼
+manager fixes, lands, pushes, stops ─┘
    │
    ▼
 /pr-review again — FULL re-review of the same range, fresh eyes, no cursor
@@ -81,9 +87,8 @@ bar and the fix commits themselves (see §5), not from bookkeeping.
    If a PR is already open, this range IS the PR diff — reviewing locally
    needs no network. Do not widen the range to the whole codebase: pre-existing
    issues are out of scope (§3, class B).
-3. **A clean tree is not required for you** (you only read), but never touch
-   dev worktrees (`../opensas-devN`) — the manager owns them, and a live
-   manager session may be running beside you.
+3. **Clean tree not required** (you only read code). Never touch
+   `../opensas-devN` — leave them for the manager's next run.
 
 ## 1. Build the review map
 
@@ -134,8 +139,8 @@ the precedent that made it a check:
    must carry the overturning evidence; absence of evidence is a finding.
 8. **The normal read.** Beyond the checklist: off-by-ones, inverted
    conditions, wrong variable in a symmetric block, leaks of per-row arena
-   allocations into a loop (the perf agents' usual suspect class — worth a
-   note even when not blocking).
+   allocations into a loop. Pure style / taste is out of scope for the board
+   (§4) — hunt for wrongness, not polish.
 
 Severity vocabulary matches the board's: `CRITICAL silent-wrong`, `MED
 fail-loud`, `LOW` … — a *wrong answer* or *silent accept* always outranks a
@@ -188,9 +193,11 @@ records `review`:
 
 - Slug style matches existing ids (lowercase, concatenated:
   `BUG-sqlorderbyambig`), so the line sorts with its family.
-- Notes-class observations worth keeping (style, perf smells from §2.8) are
-  ordinary `NOTE-<slug> (review)` lines — they never block the merge. If it
-  is not worth a dev slot ever, do not file it.
+- **Board is an execution queue, not a comment thread.** Do not file style /
+  naming / taste. File a `NOTE-<slug> (review)` only when it could become a
+  real bug or is worth a future dev slot (e.g. arena-in-row-loop perf smell,
+  a house-rule / D-xxx deviation without a failure probe yet). Otherwise drop
+  it — do not print it in the verdict either.
 - Commit the board by explicit pathspec, house message format:
 
   ```bash
@@ -198,7 +205,8 @@ records `review`:
   ```
 
   Never `git add -A`. Never commit anything except `jira.md`. Never push —
-  the manager pushes the working branch on its next tick.
+  same tree as the next manager run; that run pushes the working branch after
+  it lands fixes (and will carry this board commit with it).
 
 ## 5. Verdict and the loop protocol
 
@@ -212,19 +220,18 @@ Print, in this order:
    failure scenario (EXPECTED vs ACTUAL), the evidence citation, the
    introducing commit (short-sha + task-id).
 4. **The next command**, spelled out for the human to paste — the scoped
-   manager invocation:
+   manager invocation (manager is currently stopped; start it now):
 
-   > Run the manager loop in **review-fix mode** for these tickets ONLY:
+   > Start the manager loop in **review-fix mode** for these tickets ONLY:
    > `<ids>`. Do not grow the backlog — skip corpus backlog growth, GitHub
    > issue intake, and audit-lane spawns; take no other TODO. Land, gate,
-   > push as usual. Report when the list is drained and pushed, then wait —
-   > do not resume normal loop operation until told.
+   > push, then stop. Report when the list is drained and pushed.
 
 Loop rules the human relies on (state them in your verdict footer):
 
 - **Full re-review every round.** The next `/pr-review` re-reads the whole
   same range with fresh eyes. There is no cursor and no "already reviewed"
-  list.
+  list. Run it only after manager has stopped again.
 - **Rulings are sticky via the artifacts, not memory.** A finding fixed by a
   landed commit (task id in its message) must not be refiled — if the FIX is
   itself wrong, that is a new finding against the fix commit. A deviation
@@ -234,10 +241,8 @@ Loop rules the human relies on (state them in your verdict footer):
   fix rounds is flipped to `[PARK]` on the board with its history for a human
   ruling — the loop stops churning on it.
 - **Freeze between rounds:** while the review loop is open, the working
-  branch only receives review-fix landings (that is what the scoped
-  invocation enforces). Don't run the manager's full human-stop procedure
-  between rounds — it deletes dev worktrees; keep the manager session alive
-  and idle instead.
+  branch only receives review-fix landings (scoped manager invocation). No
+  backlog growth, no unrelated tickets.
 
 ## Guardrails
 
@@ -245,9 +250,8 @@ Loop rules the human relies on (state them in your verdict footer):
   "small-fix" anything — findings go through tickets exactly like QA's. Your
   probes live in `/tmp`.
 - **Only `jira.md` is writable**, committed by pathspec only, never pushed.
-- **Never touch `main`/`master`**, dev worktrees, or a running manager's
-  state. You never open, comment on, or merge a PR — that boundary is D-023
-  and belongs to the human.
+- **Never touch `main`/`master` or `../opensas-devN`.** You never open,
+  comment on, or merge a PR — that boundary is D-023 and belongs to the human.
 - **The docs outrank the diff.** A green suite, a confident commit message,
   and a golden that matches are exactly what a wrong fix looks like here.
   Cite the doc every time; if the docs can't settle it, that's needs-oracle,
