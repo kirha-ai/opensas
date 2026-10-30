@@ -6467,18 +6467,25 @@ pub const Executor = struct {
                 try self.hashLoadDataset(h);
             }
         } else if (eqi(op.method, "add")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashAdd(h, op.args);
         } else if (eqi(op.method, "replace")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashReplace(h, op.args);
         } else if (eqi(op.method, "find")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashFind(h, op.args);
         } else if (eqi(op.method, "find_next")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashFindNext(h);
         } else if (eqi(op.method, "check")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashCheck(h, op.args);
         } else if (eqi(op.method, "remove")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashRemove(h, op.args);
         } else if (eqi(op.method, "output")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashOutput(h, op.args);
         } else if (eqi(op.method, "first")) {
             rc = try self.hashIterMove(h, .first);
@@ -6492,6 +6499,7 @@ pub const Executor = struct {
             // SAS CLEAR (GAP-hashitermethods): remove every item; the object
             // stays usable. A bound hiter's cursor is now out of range, so its
             // next move reports exhaustion — coherent, never a stale read.
+            try self.hashRequireDefineDone(h, op.method);
             h.entries.clearRetainingCapacity();
             h.index.clearRetainingCapacity();
             h.md_key = null; // find_next after clear must not walk stale records
@@ -6515,6 +6523,7 @@ pub const Executor = struct {
             // Language Reference: Concepts p.623 hash ATTRIBUTES — reachable parenless (`n = h.num_items;`)
             // or as `h.num_items()`; both land here with an empty arg list
             // (GAP-hashnumitems).
+            try self.hashRequireDefineDone(h, op.method);
             if (op.args.len != 0) {
                 return self.diags.fail(error.ExecError, 0, "hash attribute {s} takes no arguments", .{op.method});
             } else if (eqi(op.method, "num_items")) {
@@ -6533,6 +6542,11 @@ pub const Executor = struct {
             return self.diags.fail(error.ExecError, 0, "hash method {s}() is not supported yet", .{op.method});
         }
         if (op.target) |tgt| try self.pdv.set(tgt, .{ .num = rc });
+    }
+
+    fn hashRequireDefineDone(self: *Executor, h: *const HashObject, method: []const u8) Error!void {
+        if (!h.done)
+            return self.diags.fail(error.ExecError, 0, "hash object {s}: defineDone() must be called before {s}()", .{ h.name, method });
     }
 
     /// Approximate per-item byte size for `h.item_size` (Language Reference: Concepts p.623): the sum
@@ -12789,6 +12803,31 @@ test "hash attributes: num_items live count, item_size width sum, unknown/args f
     try t.expect(f.pdv.get("y") == null);
 }
 
+test "NOTE-hashpredefinedone: add/find before defineDone fail loud before execution" {
+    inline for (.{ "add", "find" }) |method| {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var ex = f.exec();
+
+        _ = try f.pdv.declare("k", .num);
+        _ = try f.pdv.declare("v", .num);
+        try ex.hashDeclare(.{ .name = "h", .args = &.{} });
+        const key_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
+        const data_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "v" }) }};
+        try ex.hashOp(.{ .target = null, .obj = "h", .method = "defineKey", .args = &key_def });
+        try ex.hashOp(.{ .target = null, .obj = "h", .method = "defineData", .args = &data_def });
+
+        const args = [_]ast.HashArg{ .{ .name = "key", .value = f.num(1) }, .{ .name = "data", .value = f.num(10) } };
+        const call_args = if (eqi(method, "add")) args[0..] else args[0..1];
+        try t.expectError(error.ExecError, ex.hashOp(.{ .target = "rc", .obj = "h", .method = method, .args = call_args }));
+        try t.expect(diagsHave(&f.diags, "defineDone() must be called before"));
+        try t.expect(std.mem.indexOf(u8, f.diags.list.items[f.diags.count() - 1].message, method) != null);
+        try t.expect(f.pdv.get("rc") == null); // no fabricated rc to branch on
+        try t.expectEqual(@as(usize, 0), ex.findHash("h").?.entries.items.len); // add did not mutate
+    }
+}
+
 test "unsupported hash methods fail loud AND HALT the step, fabricating no rc; suminc: tag loud (GAP-hashmethods + BUG-hashexprdeferredhalt)" {
     var f = fixture();
     defer f.deinit();
@@ -13683,15 +13722,16 @@ test "NOTE-hashofhash: a hash-valued data item (nested hash) fails loud instead 
 // a `.sas` file may hold exactly one error (BUG-errhalt), and each of these
 // two conditions is caught by a DIFFERENT one of the two guard sites, so each
 // stays green when the other site is reverted.
-test "BUG-hashofhashexplicit: the EXPLICIT key:/data: spelling reaches the nested-hash guard (collectArgs backstop)" {
+test "NOTE-hashpredefinedone: keyed methods fail before the collectArgs backstop when defineDone was omitted" {
     var f = fixture();
     defer f.deinit();
     f.prime();
     var x = f.exec();
 
-    // No defineDone — so the define-time guard never runs and collectArgs is
-    // the only thing standing between an explicit `data:` tag and a silently
-    // stored missing. Pre-fix this returned rc 0 and appended an entry.
+    // No defineDone — the keyed operation is malformed before its key:/data:
+    // payload is meaningful. Pre-fix this returned rc 0 and appended an entry
+    // (then later fixes made collectArgs a backstop for one narrow payload
+    // class). Now the object lifecycle error wins before execution.
     const key_arg = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
     const data_arg = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "inner" }) }};
     const explicit = [_]ast.HashArg{
@@ -13708,12 +13748,7 @@ test "BUG-hashofhashexplicit: the EXPLICIT key:/data: spelling reaches the neste
 
     var out = Dataset.init(f.a(), "out");
     x.run(&prog, &out) catch {};
-    var found = false;
-    for (f.diags.list.items) |d|
-        if (d.severity == .err and std.mem.indexOf(u8, d.message, "hash-valued data items (nested hash) are not supported") != null) {
-            found = true;
-        };
-    try t.expect(found);
+    try t.expect(diagsHave(&f.diags, "defineDone() must be called before add()"));
     // The DIAGNOSTIC IS HALF THE ASSERTION. What made this the worst class is
     // the fabricated value, so pin that nothing was stored.
     try t.expectEqual(@as(usize, 0), x.findHash("h").?.entries.items.len);
