@@ -1920,9 +1920,6 @@ fn isInertOption(name: []const u8) bool {
         "source",       "nosource",    "source2",    "nosource2",   "echo",
         "noecho",       "msglevel",    "stimer",     "nostimer",    "fullstimer",
         "nofullstimer",
-        // host X-command execution policy; X itself is inert/not executed
-        // (D-022), so wait/sync host toggles cannot change observable data here.
-        "xwait",        "noxwait",     "xsync",      "noxsync",
         // macro toggles/debugging (the macro processor runs regardless; the
         // `in` gate itself was already applied by macro.zig — see above)
         "mprint",       "nomprint",    "mlogic",     "nomlogic",    "symbolgen",
@@ -5091,7 +5088,7 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
             "  validvarname=v6 fmtsearch=(work sashelp) mprint symbolgen minoperator\n" ++
             "  mindelimiter=',' bufsize=64k sortsize=16m threads stimer source notes\n" ++
             "  nolabel byline replace mergenoby=nowarn varinitchk=note dkricond=warn\n" ++
-            "  sortseq=ascii obs=max firstobs=1 errors=1 vnferr noxwait noxsync;\n" ++
+            "  sortseq=ascii obs=max firstobs=1 errors=1 vnferr;\n" ++
             "data d; x=1; run;\nproc print data=d noobs; run;\n",
         "x\n\n1\n",
     );
@@ -5116,6 +5113,11 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         // a typo on a READ LIMIT — read EVERYTHING before this fix
         .{ .src = "options obbs=2;\n", .msg = "system option obbs is not recognized" },
         .{ .src = "options zzzznotanoption=5;\n", .msg = "system option zzzznotanoption is not recognized" },
+        // host-specific Windows X-command policy toggles are not valid here
+        .{ .src = "options xwait;\n", .msg = "system option xwait is not recognized" },
+        .{ .src = "options noxwait;\n", .msg = "system option noxwait is not recognized" },
+        .{ .src = "options xsync;\n", .msg = "system option xsync is not recognized" },
+        .{ .src = "options noxsync;\n", .msg = "system option noxsync is not recognized" },
         // result-changing but honoured only in the exec layer → LOUD gap
         .{ .src = "options varinitchk=error;\n", .msg = "system option VARINITCHK=error is not supported" },
         .{ .src = "options mergenoby=warn;\n", .msg = "system option MERGENOBY=warn is not supported" },
