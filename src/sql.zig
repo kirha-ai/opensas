@@ -3076,15 +3076,13 @@ fn rowsMatching(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostic
             const e = try substituteExists(arena, lib, diags, wtoks, ds, ri, table, alias);
             const s0 = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, e, .{ .ds = ds, .ri = ri, .table = table, .alias = alias }));
             const s = try substituteCase(arena, diags, &ev, s0);
-            var wp = pe.Parser.init(arena, try withEof(arena, s), diags);
-            const cond = wp.parseExpr() catch continue;
+            const cond = (try parseWholeSpan(arena, diags, s, "WHERE")) orelse return error.ParseError;
             if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
         }
         return kept.items;
     }
     const subst = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, wtoks, null));
-    var wp = pe.Parser.init(arena, try withEof(arena, subst), diags);
-    const cond = wp.parseExpr() catch return error.ParseError;
+    const cond = (try parseWholeSpan(arena, diags, subst, "WHERE")) orelse return error.ParseError;
     for (ds.rows.items, 0..) |_, ri| {
         try loadForEval(&pdv, ds, ds.row(ri));
         if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
@@ -3188,8 +3186,7 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
                 const e = try substituteExists(arena, lib, diags, q.where.?, ds, ri, q.table, q.alias);
                 const s0 = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, e, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias }));
                 const s = try substituteCase(arena, diags, &ev, s0);
-                var wp = pe.Parser.init(arena, try withEof(arena, s), diags);
-                const cond = wp.parseExpr() catch continue;
+                const cond = (try parseWholeSpan(arena, diags, s, "WHERE")) orelse return null;
                 if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
             }
         }
@@ -3209,16 +3206,14 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         // per-row value, then parse/eval the resulting ordinary expression per row
         // (BUG-casewhere). Otherwise parse the condition once (the common path).
         const cond0: ?*const ast.Expr = if (hasCase(subst)) null else blk: {
-            var wp = pe.Parser.init(arena, try withEof(arena, subst), diags);
-            break :blk try wp.parseExpr();
+            break :blk (try parseWholeSpan(arena, diags, subst, "WHERE")) orelse return null;
         };
         for (ds.rows.items, 0..) |_, ri| {
             try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias); // qualified + unqualified + alias
             if (uses_calc) try bindComputed(arena, lib, diags, &ev, q, names, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias });
             const cond = cond0 orelse blk: {
                 const row_toks = try substituteCase(arena, diags, &ev, subst);
-                var wp = pe.Parser.init(arena, try withEof(arena, row_toks), diags);
-                break :blk wp.parseExpr() catch continue; // unparseable predicate → row dropped
+                break :blk (try parseWholeSpan(arena, diags, row_toks, "WHERE")) orelse return null;
             };
             if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
         }
@@ -3376,8 +3371,7 @@ fn evalHavingPrepared(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *D
     for (cols, cells) |c, v| try bindCol(&pdv, c.name, if (v == .num) .num else .char, c.len, v);
     var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
     const resolved = try substituteCase(arena, diags, &ev, pre); // any CASE → its value (BUG-havingcase)
-    var wp = pe.Parser.init(arena, try withEof(arena, resolved), diags);
-    const cond = try wp.parseExpr(); // fail loud on a genuinely unparseable HAVING (was `catch return true` — hid wrong output)
+    const cond = (try parseWholeSpan(arena, diags, resolved, "HAVING")) orelse return error.ParseError; // fail loud on a genuinely unparseable HAVING
     return (try ev.eval(cond)).truthy();
 }
 
@@ -3674,10 +3668,8 @@ fn buildJoin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
 /// Table 8.2 "Operators and Order of Evaluation" (printed p.403 / pdf 419), so
 /// a tail we cannot consume is legal SAS that opensas has not implemented —
 /// D-009/D-009b(i). Null = already reported; the caller abandons the statement.
-/// ponytail: only the JOIN ON site calls this today. The WHERE/HAVING spans run
-/// the same `parseExpr`-over-a-span shape and deserve the same guard, but they
-/// desugar first and each has its own catch arm, so retrofitting them is a
-/// separate change with its own fixture.
+/// WHERE/HAVING desugar first, then route here too; every SQL predicate span must
+/// be consumed as a whole or refused loudly.
 fn parseWholeSpan(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token, what: []const u8) diag.Error!?*const ast.Expr {
     var p = pe.Parser.init(arena, try withEof(arena, toks), diags);
     const e = p.parseExpr() catch {
