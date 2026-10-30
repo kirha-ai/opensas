@@ -2996,12 +2996,12 @@ fn renderMonyy(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     return justRight(arena, body.items, w);
 }
 
-/// MONNAMEw. — the full month name in a w-wide field (value left, blank-padded
-/// right; truncated when longer). renderChar is exactly that pad/truncate.
+/// MONNAMEw. — truncate a long month name to w, then right-justify it.
 fn renderMonName(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     if (std.math.isNan(x)) return justRight(arena, ".", w);
     const ymd = ymdFromSasDay(x) orelse return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
-    return renderChar(arena, full_months[ymd.m - 1], w);
+    const name = full_months[ymd.m - 1];
+    return justRight(arena, name[0..@min(name.len, w)], w);
 }
 
 /// DOWNAMEw. — the weekday name (SAS day 0 = 1960-01-01 = Friday), same field rule.
@@ -3011,7 +3011,8 @@ fn renderDowName(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     if (!(xr >= sas_day_min and xr <= sas_day_max))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
     const dow: usize = @intCast(@mod(@as(i64, @intFromFloat(xr)) + 5, 7)); // +5: SAS day 0 is Friday
-    return renderChar(arena, day_names[dow], w);
+    const name = day_names[dow];
+    return justRight(arena, name[0..@min(name.len, w)], w);
 }
 
 /// YEARw. — the year, w digits (4-digit at w≥4, else 2-digit), right-justified.
@@ -3991,16 +3992,17 @@ test "WRITE-side date/time cluster: MONYY/MONNAME/DOWNAME/YEAR/DATETIME/TIMEAMPM
     try expectFmt("DEC2024", .{ .num = 23735 }, "monyy7.");
     try expectFmt("DEC24", .{ .num = 23735 }, "monyy5.");
     try expectFmt("DEC24", .{ .num = 23735 }, "monyy."); // width-less → default 5, 2-digit year (BUG-fmtdefwidth-date)
-    try expectFmt("December ", .{ .num = 23735 }, "monname."); // default 9: value left, blank-padded (BUG-fmtdefwidth-date)
+    try expectFmt(" December", .{ .num = 23735 }, "monname."); // default 9: right-justified (real SAS)
     try expectFmt("Dec", .{ .num = 23735 }, "monname3."); // truncated to w
-    try expectFmt("July     ", .{ .num = 22100 }, "monname9."); // explicit w: padded into the 9-col field
+    try expectFmt("     July", .{ .num = 22100 }, "monname9.");
     try expectFmt("Wednesday", .{ .num = 23735 }, "downame.");
+    try expectFmt("Wed", .{ .num = 23735 }, "downame3.");
     try expectFmt("2024", .{ .num = 23735 }, "year4.");
     try expectFmt("  25DEC2024:10:30:00", .{ .num = 2050741800 }, "datetime20."); // right-justified
     try expectFmt("10:30:00 AM", .{ .num = 37800 }, "timeampm11."); // a TIME value (seconds of day)
     try expectFmt(" 1:00:00 PM", .{ .num = 46800 }, "timeampm11.");
     try expectFmt("10:30:00", .{ .num = 2050741800 }, "tod8."); // time-of-day of a datetime
-    try expectFmt("Friday   ", .{ .num = 0 }, "downame."); // SAS day 0 = 1960-01-01 = Friday
+    try expectFmt("   Friday", .{ .num = 0 }, "downame."); // SAS day 0 = 1960-01-01 = Friday
 }
 
 test "width-less DATETIME renders at its documented DEFAULT 16 (NOTE-datetimewidth)" {
