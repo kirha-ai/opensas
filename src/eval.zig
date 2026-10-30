@@ -473,7 +473,7 @@ pub const Evaluator = struct {
         }
         if (self.call_fn) |f| {
             const result = try f(self, c.name, argv.items);
-            if (literal_prxparse and result == .num)
+            if (literal_prxparse and result == .num and !result.isMissing())
                 try self.prx_literal_ids.put(self.stateArena(), site, @intFromFloat(result.num));
             return result;
         }
