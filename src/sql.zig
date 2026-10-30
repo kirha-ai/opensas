@@ -2051,10 +2051,20 @@ fn parseQuery(arena: std.mem.Allocator, toks: []const Token) !Query {
             if (!(atKw(toks, i, "on"))) return error.ParseError;
             i += 1;
             const s = i;
-            while (i < toks.len and !tkKw(toks[i], "where") and !tkKw(toks[i], "group") and
-                !tkKw(toks[i], "order") and !tkKw(toks[i], "inner") and !tkKw(toks[i], "left") and
-                !tkKw(toks[i], "right") and !tkKw(toks[i], "full") and
-                !tkKw(toks[i], "cross") and !tkKw(toks[i], "join") and toks[i].tag != .comma) i += 1;
+            var depth: usize = 0;
+            while (i < toks.len) : (i += 1) {
+                const tk = toks[i];
+                if (tk.tag == .lparen or tkKw(tk, "case")) {
+                    depth += 1;
+                } else if (tk.tag == .rparen or tkKw(tk, "end")) {
+                    if (depth > 0) depth -= 1;
+                } else if (depth == 0 and (tk.tag == .comma or tkKw(tk, "where") or tkKw(tk, "group") or
+                    tkKw(tk, "having") or tkKw(tk, "order") or tkKw(tk, "inner") or tkKw(tk, "left") or
+                    tkKw(tk, "right") or tkKw(tk, "full") or tkKw(tk, "cross") or tkKw(tk, "join")))
+                {
+                    break;
+                }
+            }
             on = toks[s..i];
         }
         try joins.append(arena, .{ .kind = kind, .table = tn, .alias = talias, .on = on, .from_sub = sub, .opts = topts });
@@ -3708,8 +3718,9 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
     // Operator, SQL Procedure Components printed p.372 / pdf 388) — so it
     // desugars through the ONE shared helper the other eight sites already use
     // rather than growing a second, drifting copy.
-    const oncond = if (step.on) |ot|
-        (try parseWholeSpan(arena, diags, try desugarPredicates(arena, diags, ot), "JOIN ON")) orelse return null
+    const on_toks = if (step.on) |ot| try desugarPredicates(arena, diags, ot) else null;
+    const oncond = if (on_toks) |ot|
+        if (hasCase(ot)) null else (try parseWholeSpan(arena, diags, ot, "JOIN ON")) orelse return null
     else
         null;
 
@@ -3774,7 +3785,7 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
     for (acc.rows.items) |r1| {
         var matched = false;
         for (t2.rows.items, 0..) |r2, ri2| {
-            if (oncond) |cond| {
+            if (on_toks) |ot| {
                 try loadForEval(&pdv, acc, r1);
                 for (t2.columns.items, 0..) |c, j| {
                     // joined's schema already holds the qualified name — reuse it;
@@ -3786,6 +3797,10 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
                     // resolve, not read missing (BUG-sqljoinunqual).
                     try aliasUnqualified(&pdv, nm, c.type, c.len, r2[j]);
                 }
+                const cond = oncond orelse blk: {
+                    const row_toks = try substituteCase(arena, diags, &ev, ot);
+                    break :blk (try parseWholeSpan(arena, diags, row_toks, "JOIN ON")) orelse return null;
+                };
                 if (!(try ev.eval(cond)).truthy()) continue;
             }
             matched = true;
@@ -10065,6 +10080,10 @@ test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18
         .{ .on = "a.x < b.lo", .rows = 1 }, // only (1, lo=4)
         .{ .on = "b.nm in ('abc')", .rows = 3 },
         .{ .on = "b.nm not in ('abc')", .rows = 3 },
+        .{ .on = "b.nm in ('abc','zzz')", .rows = 3 }, // BUG-sqlinlistinon: comma stays inside the ON span
+        .{ .on = "substr(b.nm,1,1) = 'a'", .rows = 3 }, // same span bug for multi-arg function calls
+        .{ .on = "a.x in (1,5) and b.nm in ('abc','zzz')", .rows = 2 },
+        .{ .on = "case when b.nm in ('abc','zzz') then 1 else 0 end = 1", .rows = 3 },
         // One desugared half beside an equality: both halves must survive.
         .{ .on = "a.x = b.lo and b.nm like 'a%'", .rows = 0 },
         .{ .on = "a.x between b.lo and b.hi and b.nm contains 'a'", .rows = 1 }, // (1,abc)
@@ -10076,6 +10095,13 @@ test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18
         try t.expect(!d.hasErrors());
         try t.expectEqual(c.rows, lib.find(name).?.rowCount());
     }
+
+    var dh = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &dh,
+        "proc sql; create table h as select b.nm, count(*) as n from a join b on a.x between b.lo and b.hi group by b.nm having b.nm in ('abc','zzz'); quit;");
+    try t.expect(!dh.hasErrors());
+    try t.expectEqual(@as(usize, 1), lib.find("h").?.rowCount());
+    try t.expectEqualStrings("abc", lib.find("h").?.row(0)[0].str);
 }
 
 test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates (BUG-sqlonpredicates GH#18)" {
