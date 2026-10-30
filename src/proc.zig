@@ -7209,9 +7209,9 @@ fn isDeleteGapOption(kw: []const u8) bool {
 /// statement set — LIBRARY=/LIB= are statement-level only): "You use the
 /// option in parentheses after the name of each SAS file" (GENNUM= entry,
 /// printed p. 787, === pdf 837 ===). A name in this set is a documented,
-/// unimplemented option → failGap (rc 2); anything else in the parens keeps
-/// the old silent skip — the doc names nothing else there, and D-018's
-/// stay-put direction keeps a possibly-legal spelling from a false rc.
+/// unimplemented PROC DELETE file option → failGap (rc 2). Anything else in
+/// the parens is not honoured by PROC DELETE here, so it must fail loud rather
+/// than being silently skipped before a destructive delete.
 fn isDeleteParenGapOption(kw: []const u8) bool {
     inline for (.{ "gennum", "memtype", "encryptkey", "alter" }) |opt|
         if (eqi(kw, opt)) return true;
@@ -7254,13 +7254,19 @@ pub fn runDelete(cx: ProcCtx, toks: []const Token) diag.Error!void {
                 // case; opensas has no generation model, so honouring
                 // GENNUM=ALL is out of scope and failing loud is the answer).
                 // Scan BEFORE the delete: a documented name failGaps (rc 2,
-                // byte-identical message) with the file left untouched.
+                // byte-identical message) with the file left untouched. Other
+                // data set options (KEEP=/WHERE=/...) cannot affect DELETE's
+                // final outcome, but silently accepting an unhonoured request
+                // is still a D-002 violation (NOTE-deletedsopts).
                 if (atTag(toks, i, .lparen)) {
                     var j = i + 1;
                     var depth: usize = 1;
                     while (j < toks.len and depth > 0) : (j += 1) {
-                        if (toks[j].tag == .lparen) depth += 1 else if (toks[j].tag == .rparen) depth -= 1 else if (toks[j].tag == .name and atTag(toks, j + 1, .eq) and isDeleteParenGapOption(toks[j].text))
-                            return failGap(diags, toks[j].line, "PROC DELETE: option {s} is not supported (only DATA=)", .{toks[j].text});
+                        if (toks[j].tag == .lparen) depth += 1 else if (toks[j].tag == .rparen) depth -= 1 else if (toks[j].tag == .name and atTag(toks, j + 1, .eq)) {
+                            if (isDeleteParenGapOption(toks[j].text))
+                                return failGap(diags, toks[j].line, "PROC DELETE: option {s} is not supported (only DATA=)", .{toks[j].text});
+                            return diags.fail(error.ParseError, toks[j].line, "PROC DELETE: option {s} is not supported (only DATA=)", .{toks[j].text});
+                        }
                     }
                     i = j;
                 }
@@ -7272,7 +7278,7 @@ pub fn runDelete(cx: ProcCtx, toks: []const Token) diag.Error!void {
                     diags.warn(toks[i - 1].line, "PROC DELETE: dataset {s} not found", .{name}) catch {};
             }
         } else if (toks[i].tag == .lparen) {
-            i = skipParen(toks, i); // data=x(…) — never read back, but don't false-fire on `keep`
+            return diags.fail(error.ParseError, toks[i].line, "PROC DELETE: parenthesized options are not supported (only DATA=)", .{});
         } else if (toks[i].tag == .name) {
             // GAP-procopts: LIB=/MEMTYPE= or a typo'd option used to vanish
             // here — name it (D-002), mirroring PROC APPEND.
@@ -18027,16 +18033,19 @@ test "PROC DELETE data=x(gennum=all) fails loud BEFORE the delete (BUG-deletegen
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
         try t.expect(lib.find("have") != null);
     }
-    { // A name the doc does NOT put in those parens (KEEP=) stays put per
-      // D-018: the old silent skip stands, the delete still runs, rc 0.
+    for ([_]struct { src: []const u8, opt: []const u8 }{
+        .{ .src = "proc delete data=have(keep=age); run;", .opt = "keep" },
+        .{ .src = "proc delete data=have(where=(age>28)); run;", .opt = "where" },
+    }) |cs| { // ordinary data set options fail before DELETE, leaving HAVE intact.
         diag.resetGap();
         var lib = Library.init(a);
         try lib.put("have", try buildHave(a));
         var d = diag.Diagnostics.init(a);
-        const toks = try lex.tokenize(a, "proc delete data=have(keep=a); run;", &d);
-        try runDelete(.{ .arena = a, .lib = &lib, .diags = &d }, toks);
-        try t.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors()));
-        try t.expect(lib.find("have") == null);
+        const toks = try lex.tokenize(a, cs.src, &d);
+        try t.expectError(error.ParseError, runDelete(.{ .arena = a, .lib = &lib, .diags = &d }, toks));
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try t.expect(std.mem.indexOf(u8, try d.render(), cs.opt) != null);
+        try t.expect(lib.find("have") != null);
     }
     diag.resetGap();
 }
