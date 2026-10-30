@@ -53,9 +53,8 @@ const weekNumber = fns.weekNumber;
 /// passed toU32 and silently masked (& 31), so blshift(1,32) computed 1<<0=1,
 /// a plausible wrong number. The p.6 rule reaches it too: domErr, below.
 /// The RESULT is missing either way — this adds the diagnostic, never a value.
-/// ponytail: still nothing here about a non-integer IN range (`band(1.9,3)`);
-/// that is NOTE-bitfracround and the entries genuinely do not say, so it keeps
-/// rounding via toU32 until an oracle settles it.
+/// NOTE-bitfracround: the real-SAS oracle returns band(1.9,3)=1; toU32
+/// truncates fractional operands before these operations.
 fn bitArgInvalid(ev: *eval.Evaluator, name: []const u8, arg: Value) Value {
     if (isMiss(toNum(arg))) {
         note(ev, "{s}: missing argument (result set to missing)", .{name});

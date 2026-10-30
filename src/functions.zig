@@ -111,11 +111,12 @@ pub const bit_binops = [_]struct { name: []const u8, op: BitOp }{
     .{ .name = "brshift", .op = .brshift },
 };
 
-/// A bitwise arg → u32, or null if missing / out of the 0..2^32-1 range.
+/// A bitwise arg -> u32, or null if missing / out of the 0..2^32-1 range.
+/// SAS truncates fractional operands toward zero (NOTE-bitfracround oracle).
 pub fn toU32(v: Value) ?u32 {
     const x = toNum(v);
     if (isMiss(x) or x < 0 or x > 4294967295) return null;
-    return @intFromFloat(@round(x));
+    return @intFromFloat(@trunc(x));
 }
 
 /// THE guard for every `@intFromFloat` on a user-supplied value (BUG-intfromfloat):
@@ -5370,13 +5371,33 @@ test "NOTE-bitrangenote: an out-of-range bitwise arg NOTEs and sets _ERROR_ (val
     try t.expect((try dispatch(&e, "band", &.{ Value.missing, numV(3) })).isMissing());
     try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
 
-    // in-range values and the flag are untouched — and NOTE-bitfracround stays
-    // parked: an in-range FRACTION still rounds (band(1.9,3)=2), because the
-    // entries never say round-or-truncate. Pinned so the park is visible.
+    // In-range integer values keep their value and a clean flag.
     try h.pdv.set("_error_", .{ .num = 0 });
     try t.expectEqual(@as(f64, 8), (try dispatch(&e, "band", &.{ numV(12), numV(10) })).num);
-    try t.expectEqual(@as(f64, 2), (try dispatch(&e, "band", &.{ numV(1.9), numV(3) })).num);
     try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+}
+
+test "NOTE-bitfracround: bitwise operands truncate fractional parts" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // Real SAS 9.4 oracle: these exact DATA-step calls produced the values below.
+    const cases = [_]struct { name: []const u8, args: []const Value, want: f64 }{
+        .{ .name = "band", .args = &.{ numV(1.9), numV(3) }, .want = 1 },
+        .{ .name = "band", .args = &.{ numV(1.5), numV(3) }, .want = 1 },
+        .{ .name = "bor", .args = &.{ numV(1.9), numV(0) }, .want = 1 },
+        .{ .name = "bxor", .args = &.{ numV(1.9), numV(3) }, .want = 2 },
+        .{ .name = "bnot", .args = &.{numV(1.9)}, .want = 4294967294 },
+        .{ .name = "blshift", .args = &.{ numV(1.9), numV(1) }, .want = 2 },
+        .{ .name = "brshift", .args = &.{ numV(7), numV(1.9) }, .want = 3 },
+    };
+    for (cases) |c| {
+        try h.pdv.set("_error_", .{ .num = 0 });
+        try t.expectEqual(c.want, (try dispatch(&e, c.name, c.args)).num);
+        try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    }
 }
 
 test "GAP-bondrangenote (value half): an unchecked out-of-range arg no longer computes a plausible number" {
