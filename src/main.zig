@@ -176,6 +176,7 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     sas.format.resetPerRun();
     sas.functions.resetPerRun(); // drop prior-run prx/dsfns/hashing handles (taste #12)
     sas.diag.resetGap(); // clear the per-run opensas-gap flag (D-009 exit code)
+    sas.pdv.setValidVarName(.v7); // VALIDVARNAME is session state; default is V7 for each interpret() run.
     // …and resetGap's TWIN gap flag (BUG-fmterrorneverreset): `gap` is `g_failed
     // or gapHit()`, so clearing only one half left the other sticky. wasm.zig was
     // clearing this itself — i.e. the reset list had been COPIED, which is how the
@@ -1727,13 +1728,21 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 try diags.report(.err, t.line, "system option NOREPLACE is not supported", .{});
                 return;
             } else if (eqi(t.text, "validvarname")) {
-                // Inert-equivalent: opensas's name handling is a fixed SUPERSET
-                // of every mode — name literals are always accepted, IMPORT
-                // headers are always mangled per V7 (io.zig). The VALUE is still
-                // validated so `validvarname=v8` (a typo) dies.
-                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name and
-                    (eqi(toks[i + 2].text, "v6") or eqi(toks[i + 2].text, "v7") or eqi(toks[i + 2].text, "upcase") or eqi(toks[i + 2].text, "any")))
-                {
+                // VALIDVARNAME=V6 has one safety-relevant tooth opensas can
+                // honour locally: a created variable name may not exceed 8
+                // bytes. Other modes keep the V7-era 32-byte/superset handling
+                // this interpreter already had; the VALUE is still validated so
+                // `validvarname=v8` (a typo) dies.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "v6")) {
+                        sas.pdv.setValidVarName(.v6);
+                    } else if (eqi(v, "v7") or eqi(v, "upcase") or eqi(v, "any")) {
+                        sas.pdv.setValidVarName(.v7);
+                    } else {
+                        try diags.report(.err, t.line, "Invalid value for the VALIDVARNAME option.", .{});
+                        return;
+                    }
                     i += 3;
                     continue;
                 }
@@ -3635,6 +3644,7 @@ fn resetRcSignals() void {
     g_test_last_err = "";
     sas.format.g_fmt_error = false;
     sas.exec.g_abort_rc = null; // D-009a override; interpret clears it too
+    sas.pdv.setValidVarName(.v7);
     sas.diag.resetGap(); // (interpret resets this too; explicit so testRc is honest before a run)
 }
 

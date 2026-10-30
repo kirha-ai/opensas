@@ -42,6 +42,7 @@ const Column = @import("dataset.zig").Column;
 const Library = @import("exec.zig").Library;
 const Pdv = @import("pdv.zig").Pdv;
 const missingOf = @import("pdv.zig").missingOf;
+const pdv_mod = @import("pdv.zig");
 const sasParseFloat = @import("pdv.zig").sasParseFloat;
 const VarType = @import("pdv.zig").VarType;
 const pe = @import("parser_expr.zig");
@@ -212,8 +213,12 @@ fn applyItemMods(cols: *std.ArrayList(OutCol), it: Item) void {
     if (it.length) |n| c.len = n;
 }
 
-fn addResultCols(ds: *Dataset, cols: []const OutCol) !void {
+fn addResultCols(diags: *diag.Diagnostics, ds: *Dataset, cols: []const OutCol) !void {
     for (cols) |c| {
+        if (pdv_mod.createNameTooLong(c.name)) {
+            try pdv_mod.reportCreateNameError(ds.arena, diags, 0, c.name);
+            return error.ExecError;
+        }
         const idx = try ds.addColumn(c.name, c.type);
         ds.columns.items[idx].format = c.format;
         ds.columns.items[idx].informat = c.informat;
@@ -1094,7 +1099,7 @@ fn runCreate(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         const res = applyOutobs((try execSelect(arena, lib, diags, stmt[i..])) orelse return); // OUTOBS= caps written rows (F2)
         const ds = try arena.create(Dataset);
         ds.* = Dataset.init(arena, name);
-        try addResultCols(ds, res.cols); // GH#49: carry attached formats
+        try addResultCols(diags, ds, res.cols); // GH#49: carry attached formats
         for (res.rows) |row| try ds.appendRow(row);
         try lib.put(name, ds);
         return;
@@ -1108,7 +1113,13 @@ fn runCreate(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         }
         const ds = try arena.create(Dataset);
         ds.* = Dataset.init(arena, name);
-        for (src.?.columns.items) |c| _ = try ds.addColumnLike(c.name, c);
+        for (src.?.columns.items) |c| {
+            if (pdv_mod.createNameTooLong(c.name)) {
+                try pdv_mod.reportCreateNameError(arena, diags, 0, c.name);
+                return error.ExecError;
+            }
+            _ = try ds.addColumnLike(c.name, c);
+        }
         try lib.put(name, ds);
         return;
     }
@@ -1228,6 +1239,10 @@ fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, d
     if (type_kws > 1) {
         try diags.report(.err, item[0].line, "PROC SQL: malformed column definition for {s} in CREATE TABLE {s} (unexpected extra type token)", .{ cname, ds.name });
         return;
+    }
+    if (pdv_mod.createNameTooLong(cname)) {
+        try pdv_mod.reportCreateNameError(arena, diags, item[0].line, cname);
+        return error.ExecError;
     }
     const col_idx = try ds.addColumn(cname, ty);
     if (width) |w| ds.columns.items[col_idx].len = w;
@@ -3106,7 +3121,7 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         const name = try std.fmt.allocPrint(arena, "_sqlderived_{d}", .{lib.names.items.len});
         const sub = try arena.create(Dataset);
         sub.* = Dataset.init(arena, name);
-        try addResultCols(sub, res.cols); // GH#49: carry attached formats through the derived table
+        try addResultCols(diags, sub, res.cols); // GH#49: carry attached formats through the derived table
         for (res.rows) |row| try sub.appendRow(row);
         try lib.put(name, sub);
         q.table = name;
@@ -3627,7 +3642,7 @@ fn buildJoin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
             const res = (try execSelect(arena, lib, diags, subtoks)) orelse return null;
             const sub = try arena.create(Dataset);
             sub.* = Dataset.init(arena, step.alias orelse "_joinsub");
-            try addResultCols(sub, res.cols); // GH#49: carry attached formats through the inline view
+            try addResultCols(diags, sub, res.cols); // GH#49: carry attached formats through the inline view
             for (res.rows) |row| try sub.appendRow(row);
             break :blk sub;
         } else try withOptions(arena, diags, lib.find(step.table) orelse {
