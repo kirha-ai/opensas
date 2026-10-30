@@ -12781,6 +12781,36 @@ test "BUG-hashkeytypesilent: a type-mismatched KEY:/DATA: argument fails LOUD on
     try t.expectEqual(@as(usize, 1), h.entries.items.len); // no failed call stored anything
 }
 
+test "NOTE-hashkeytypemismatch: numeric hash key rejects a character find argument during step execution" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var ex = f.exec();
+
+    _ = try f.pdv.declare("k", .num);
+    _ = try f.pdv.declare("v", .char);
+    const key_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
+    const data_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "v" }) }};
+    const bad_key = [_]ast.HashArg{.{ .name = "key", .value = f.e(.{ .str = "1" }) }};
+    const prog = [_]ast.Stmt{
+        .{ .hash_decl = .{ .name = "h", .args = &.{} } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineKey", .args = &key_def } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineData", .args = &data_def } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineDone", .args = &.{} } },
+        .{ .assign = .{ .target = "k", .value = f.num(1) } },
+        .{ .assign = .{ .target = "v", .value = f.e(.{ .str = "one" }) } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "add", .args = &.{} } },
+        .{ .hash_op = .{ .target = "rc", .obj = "h", .method = "find", .args = &bad_key } },
+        .{ .assign = .{ .target = "after_find", .value = f.num(1) } },
+    };
+    var out = Dataset.init(f.a(), "out");
+    try t.expectError(error.ExecError, ex.run(&prog, &out));
+    try t.expect(diagsHave(&f.diags, "key k is numeric but the key: argument is character"));
+    try t.expectEqual(@as(usize, 0), out.rowCount());
+    if (f.pdv.get("rc")) |rc| try t.expect(rc == .num and std.math.isNan(rc.num));
+    if (f.pdv.get("after_find")) |after| try t.expect(after == .num and std.math.isNan(after.num));
+}
+
 test "hash attributes: num_items live count, item_size width sum, unknown/args fail loud (GAP-hashnumitems)" {
     var f = fixture();
     defer f.deinit();
