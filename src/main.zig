@@ -3729,6 +3729,28 @@ test "GAP-mprint-loglines: macro trace options emit plain lines through NONOTES 
     try std.testing.expect(std.mem.indexOf(u8, log, "MLOGIC(CHOOSE):  %IF condition &x > 0 is FALSE\n") != null);
 }
 
+test "BUG-mprintfragmenddrop: MPRINT flushes a pending fragment at macro end" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro a; data t; set %mend;\n" ++
+        "%macro b; src; run; %mend;\n" ++
+        "%a %b\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(A):   data t;\n" ++
+            "MPRINT(A):   set\n" ++
+            "MPRINT(B):   src;\n" ++
+            "MPRINT(B):   run;\n",
+        log,
+    );
+}
+
 fn expectRun(src: []const u8, want: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
