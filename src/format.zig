@@ -1684,6 +1684,20 @@ fn checkWidthRange(spec_text: []const u8, w: usize, lo: usize, hi: usize) void {
     }
 }
 
+/// Per-format decimal-precision guard for formats whose entries document a
+/// narrower `.d` range than ordinary numeric formats. SAS reports this as
+/// ERROR 30-185; keep it in the user-program error class, twin to width errors.
+fn checkDecimalRange(spec_text: []const u8, d: usize, hi: usize) void {
+    if (d <= hi) return;
+    if (g_nofmterr) return;
+    g_fmt_error = true;
+    if (@import("builtin").is_test) {
+        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Decimal specified for format {s} is invalid (valid 0-{d}).", .{ spec_text, hi }) catch "invalid-format-decimal";
+    } else {
+        std.debug.print("ERROR: Decimal specified for format {s} is invalid (valid 0-{d}).\n", .{ spec_text, hi });
+    }
+}
+
 pub fn informatNotFound(name: []const u8, is_char: bool) void {
     if (g_nofmterr) return;
     if (isDocumentedInformat(name, is_char)) diag.markGap(); // D-009 §5f — write-side twin above
@@ -1897,7 +1911,8 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     // render below (w 0 → 19).
     if (eqi(spec.name, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
-        return renderE8601Dt(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderE8601Dt(arena, valToNum(v), spec.w, spec.d);
     }
     // GH#5a ISS-e8601dndz: E8601DZw. (Formats Reference p.204: Default 26,
     // Range 20-35 — loud outside) writes the zero-meridian datetime; the doc's
@@ -1910,7 +1925,8 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
     if (eqi(spec.name, "e8601tm")) {
         checkWidthRange(spec_text, spec.w, 8, 15);
-        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, 0, true); // ISO: zero-pad hh
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, spec.d, true); // ISO: zero-pad hh
     }
     if (eqi(spec.name, "e8601dn")) {
         checkWidthRange(spec_text, spec.w, 10, 10);
@@ -1929,11 +1945,13 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     }
     if (eqi(spec.name, "b8601dt")) {
         checkWidthRange(spec_text, spec.w, 15, 26);
-        return renderB8601Dt(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderB8601Dt(arena, valToNum(v), spec.w, spec.d);
     }
     if (eqi(spec.name, "b8601tm")) {
         checkWidthRange(spec_text, spec.w, 6, 15);
-        return renderB8601Tm(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderB8601Tm(arena, valToNum(v), spec.w, spec.d);
     }
     if (eqi(spec.name, "yymon")) return renderYymon(arena, valToNum(v), spec.w);
     // NENGOw. — Japanese era date (p.257; GAP-fmtwrite-unimpl).
@@ -2990,14 +3008,22 @@ fn renderDatetime(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]
 /// `:ss` (3 columns) can't partially render (the renderDatetime ladder's rule),
 /// so 17-18 interpolate the same seconds-less body, right-justified into the
 /// wider field (1-2 leading blanks) — real SAS unprobed for 17/18.
-/// `.d` fractional seconds (Range 0-6) still not rendered; add with the p.201
-/// example (`e8601dt25.3` → `2018-09-15T14:52:22.000`).
-fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// `.d` fractional seconds (Range 0-6, checked at dispatch) render when they
+/// fit, matching p.201's `e8601dt25.3` example.
+fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    var total: i64 = @intFromFloat(fx);
+    const dd: usize = @min(d, 6);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3014,6 +3040,10 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     if (width >= 19) { // seconds only when the whole `:ss` fits (16-18 omit them)
         try body.append(arena, ':');
         try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+        if (dd > 0 and body.items.len + 1 + dd <= width) {
+            try body.append(arena, '.');
+            try appendPadded(arena, &body, @intCast(frac), dd);
+        }
     }
     // right-justify in every padded width — GH#11 ISS-e8601rightalign (real-SAS
     // verified; the catalog `Alignment: Left` header field is not oracle, D-025)
@@ -3059,17 +3089,24 @@ fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     return justRight(arena, body.items, width);
 }
 
-/// B8601DTw. — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss` (no
+/// B8601DTw.d — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss<ffffff>` (no
 /// separators, GAP-fmtwritebatch). Default w 19 (Formats Reference p.152;
 /// runtime oracle: `put(x,b8601dt.)` stores four leading blanks before the
-/// 15-column body). ponytail: no fractional seconds; add when a program needs
-/// sub-second.
-fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// 15-column body). Fractional seconds are packed digits, not `.fff`.
+fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    var total: i64 = @intFromFloat(fx);
+    const dd: usize = @min(d, 6);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3081,23 +3118,34 @@ fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+    if (dd > 0 and body.items.len + dd <= width) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
-/// B8601TMw. — a SAS time as ISO 8601 BASIC `hhmmss` (GAP-fmtwritebatch).
-/// Default w 8. Hours are not capped at 24 (same as TIMEw.). ponytail: no
-/// fractional seconds.
-fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// B8601TMw.d — a SAS time as ISO 8601 BASIC `hhmmss<ffffff>`
+/// (GAP-fmtwritebatch). Default w 8. Hours are not capped at 24 (same as
+/// TIMEw.). Fractional seconds are packed digits, not `.fff`.
+fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 8 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -1.0e11 and x < 1.0e11))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(@abs(x)));
+    const ax = @abs(x);
+    const fx = @floor(ax);
+    var total: i64 = @intFromFloat(fx);
+    const dd: usize = @min(d, 6);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((ax - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     var body: std.ArrayList(u8) = .empty;
     if (x < 0) try body.append(arena, '-');
     try appendPadded(arena, &body, @intCast(@divFloor(total, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(total, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(total, 60)), 2);
+    if (dd > 0 and body.items.len + dd <= width) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
@@ -4510,6 +4558,46 @@ test "E8601DTw. stored value: w>19 leading blanks keep length() at w (GH#11 ISS-
     // w=16 behavior UNCHANGED from GH#2 — verified correct against real SAS
     // (seconds omitted, field exactly 16, alignment unobservable)
     try expectFmt("2025-01-16T13:53", .{ .num = dt }, "e8601dt16.");
+}
+
+test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
+    // 15SEP2018:14:52:22.125 = 1852642342.125; 14:52:22.125 = 53542.125.
+    // SAS 9.4: extended E8601 formats use `.fff`, BASIC B8601 formats append
+    // packed fraction digits. E8601DZ is deliberately untouched by this ticket.
+    const dt: f64 = 1852642342.125;
+    const tm: f64 = 53542.125;
+
+    try expectFmt("  2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt25.3");
+    try expectFmt("2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt23.3");
+    try expectFmt("   2018-09-15T14:52:22", .{ .num = dt }, "e8601dt22.3"); // .d does not force overflow
+    try expectFmt("2018-09-15T14:52:22.125000", .{ .num = dt }, "e8601dt26.6");
+    try expectFmt("14:52:22.125", .{ .num = tm }, "e8601tm12.3");
+    try expectFmt("   14:52:22", .{ .num = tm }, "e8601tm11.3");
+
+    try expectFmt("    20180915T145222125", .{ .num = dt }, "b8601dt22.3");
+    try expectFmt("20180915T145222125", .{ .num = dt }, "b8601dt18.3");
+    try expectFmt("  20180915T145222", .{ .num = dt }, "b8601dt17.3");
+    try expectFmt(" 145222125", .{ .num = tm }, "b8601tm10.3");
+    try expectFmt("145222125", .{ .num = tm }, "b8601tm9.3");
+    try expectFmt("  145222", .{ .num = tm }, "b8601tm8.3");
+
+    // E8601DZ has a separate entry and no documented d parameter per this task;
+    // leave its renderer and width ladder unchanged.
+    try expectFmt("     2018-09-15T14:52:22+00:00", .{ .num = dt }, "e8601dz30.3");
+
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    for ([_][]const u8{ "e8601dt25.7", "e8601tm15.7", "b8601dt22.7", "b8601tm12.7" }) |spec| {
+        g_test_last_err = "";
+        _ = try apply(a, .{ .num = dt }, spec);
+        try t.expect(formatErrored());
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "Decimal specified for format") != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "0-6") != null);
+        g_fmt_error = false;
+    }
 }
 
 test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
