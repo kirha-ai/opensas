@@ -2834,7 +2834,7 @@ fn appendAll(arena: std.mem.Allocator, out: *std.ArrayList(Token), items: []cons
 ///   L BETWEEN lo AND hi        → ( L ge lo and L le hi )
 ///   L IS [NOT] NULL|MISSING    → [not] missing(L)
 ///   L [NOT] LIKE pat           → [not] like(L, pat)
-///   L [NOT] CONTAINS sub       → ( index(L, sub) gt|eq 0 )
+///   L [NOT] CONTAINS|? sub     → ( index(L, sub) gt|eq 0 )
 /// ponytail: the left operand is captured as a FULL term by `popLeftOperand` —
 /// a balanced function-call/parenthesized group (`lowcase(c)`, `substr(c,1,7)`)
 /// or a single column/literal/coalesced `t.c`. Right operands: LIKE pat and
@@ -2968,8 +2968,12 @@ fn isOperandBoundary(text: []const u8) bool {
     return false;
 }
 
+fn isContainsOp(tok: Token) bool {
+    return tok.tag == .question or tkKw(tok, "contains");
+}
+
 /// Rewrite SQL-style infix predicates (IS [NOT] NULL/MISSING, BETWEEN, LIKE,
-/// CONTAINS) into ordinary expression tokens. Shared with io.zig's DATA-step
+/// CONTAINS/?) into ordinary expression tokens. Shared with io.zig's DATA-step
 /// `where=` path so it agrees with PROC SQL (GH#35 ISS-wherenull).
 pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token) diag.Error![]const Token {
     var out: std.ArrayList(Token) = .empty;
@@ -2996,7 +3000,7 @@ pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, tok
             try appendAll(arena, &out, &.{ synName("missing"), synTok(.lparen, "(") });
             try appendAll(arena, &out, L);
             try out.append(arena, synTok(.rparen, ")"));
-        } else if ((tkKw(tok, "between") or tkKw(tok, "like") or tkKw(tok, "contains")) and out.items.len > 0) {
+        } else if ((tkKw(tok, "between") or tkKw(tok, "like") or isContainsOp(tok)) and out.items.len > 0) {
             var neg = false;
             if (tkKw(out.items[out.items.len - 1], "not")) {
                 neg = true;
@@ -3048,7 +3052,7 @@ pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, tok
                 try out.append(arena, synTok(.comma, ","));
                 try appendAll(arena, &out, pat);
                 try out.append(arena, synTok(.rparen, ")"));
-            } else { // contains → index(L, sub) > 0
+            } else { // contains / ? → index(L, sub) > 0
                 var j = i + 1;
                 const sub = try scanOperand(arena, diags, toks, &j, tok.line, "CONTAINS", true);
                 i = j - 1;
@@ -7517,7 +7521,7 @@ test "SQL INFORMAT= coercion notes invalid data like the INPUT function (GAP-sql
     }
 }
 
-test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
+test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS/? (G-sqldml)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -7539,6 +7543,8 @@ test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
         " create table l as select s from have where s like 'b%';" ++
         " create table n as select s from have where v is null;" ++
         " create table c as select s from have where s contains 'err';" ++
+        " create table q as select s from have where s ? 'err';" ++
+        " create table nq as select s from have where s not ? 'err';" ++
         " create table x as select v from have where v not between 10 and 20;" ++
         " quit;");
 
@@ -7546,7 +7552,51 @@ test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
     try t.expectEqualStrings("banana", lib.find("l").?.row(0)[0].str); // LIKE b%
     try t.expectEqualStrings("date", lib.find("n").?.row(0)[0].str); // IS NULL
     try t.expectEqualStrings("cherry", lib.find("c").?.row(0)[0].str); // CONTAINS err
+    try t.expectEqualStrings("cherry", lib.find("q").?.row(0)[0].str); // ? alias
+    try t.expectEqual(@as(usize, 3), lib.find("nq").?.rowCount()); // NOT ? → apple, banana, date
     try t.expectEqual(@as(usize, 3), lib.find("x").?.rowCount()); // NOT BETWEEN → 5,25,.
+}
+
+test "PROC SQL: ? is the documented CONTAINS alias across predicate surfaces (GAP-sqlcontainsquestion)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "have");
+    _ = try ds.addColumn("s", .char);
+    try ds.appendRow(&.{strV("apple")});
+    try ds.appendRow(&.{strV("berry")});
+    try ds.appendRow(&.{strV("cherry")});
+    try lib.put("have", ds);
+
+    try runSql(a, &lib, &diags, "proc sql;" ++
+        " create table w as select s from have where s ? 'err';" ++
+        " create table h as select s, count(*) as n from have group by s having s ? 'err';" ++
+        " create table c as select s, case when s ? 'err' then 'Y' else 'N' end as hit from have where s in ('apple','cherry') order by s;" ++
+        " create table u as select * from have; update u set s = 'found' where s ? 'err';" ++
+        " delete from u where s ? 'app';" ++
+        " quit;");
+
+    try t.expect(!diags.hasErrors());
+    try t.expectEqual(@as(usize, 2), lib.find("w").?.rowCount());
+    try t.expectEqualStrings("berry", lib.find("w").?.row(0)[0].str);
+    try t.expectEqualStrings("cherry", lib.find("w").?.row(1)[0].str);
+    try t.expectEqual(@as(usize, 2), lib.find("h").?.rowCount());
+    try t.expectEqualStrings("berry", lib.find("h").?.row(0)[0].str);
+    try t.expectEqualStrings("cherry", lib.find("h").?.row(1)[0].str);
+    const c = lib.find("c").?;
+    try t.expectEqual(@as(usize, 2), c.rowCount());
+    try t.expectEqualStrings("apple", c.row(0)[0].str);
+    try t.expectEqualStrings("N", c.row(0)[1].str);
+    try t.expectEqualStrings("cherry", c.row(1)[0].str);
+    try t.expectEqualStrings("Y", c.row(1)[1].str);
+    const u = lib.find("u").?;
+    try t.expectEqual(@as(usize, 2), u.rowCount());
+    try t.expectEqualStrings("found", u.row(0)[0].str);
+    try t.expectEqualStrings("found", u.row(1)[0].str);
 }
 
 test "GAP-wherelow-tick266: malformed IS fails loud; valid IS spellings still filter" {
@@ -10122,18 +10172,14 @@ test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates
     try tb.appendRow(&.{strV("xyz")});
     try lib.put("b", tb);
 
-    // `?` is the documented CONTAINS alias — "CONTAINS Operator … Alias: ?"
-    // (SQL Procedure Components printed p.370 / pdf 386) — and opensas does not
-    // implement it. parseExpr stops ON it and, by contract, says nothing, so the
-    // condition used to degrade to a bare `b.nm`: a wrong row set at rc 0. The
-    // tail is now refused BY NAME. D-003: the assertion reads the CAPTURED
-    // message, never a spawned aborting process.
-    g_test_last_unsup = "";
+    // Positive pin for `?`, the documented CONTAINS alias — "CONTAINS Operator
+    // … Alias: ?" (SQL Procedure Components printed p.370 / pdf 386). It used
+    // to reach parseExpr raw, stop at `.question`, and fail loud as an
+    // unconsumed token; desugarPredicates now rewrites it like CONTAINS.
     var dq = diag.Diagnostics.init(a);
-    runSql(a, &lib, &dq, "proc sql; create table rq as select a.x from a join b on b.nm ? 'ab'; quit;") catch {};
-    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "unconsumed token") != null);
-    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "question") != null); // punctuation has no text → named by tag
-    try t.expect(lib.find("rq") == null); // and no wrong table is left behind
+    try runSql(a, &lib, &dq, "proc sql; create table rq as select a.x from a join b on b.nm ? 'ab'; quit;");
+    try t.expect(!dq.hasErrors());
+    try t.expectEqual(@as(usize, 3), lib.find("rq").?.rowCount());
 
     // Positive control: the spelled-out operator still runs clean.
     var dc = diag.Diagnostics.init(a);

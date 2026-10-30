@@ -4775,6 +4775,11 @@ test "where parses to its own pre-read node; select to an if/else chain" {
     try testing.expect(w[0] == .where_);
     try testing.expect(w[0].where_.binary.op == .gt);
 
+    const q = try prog(a, &diags, "where s ? \"err\";");
+    try testing.expect(q[0] == .where_);
+    try testing.expect(q[0].where_.binary.op == .gt);
+    try testing.expectEqualStrings("index", q[0].where_.binary.lhs.call.name);
+
     // select (g) with two whens + otherwise → nested if/else, selector = value
     const p = try prog(a, &diags, "select (g); when (1) a = 1; when (2) a = 2; otherwise a = 9; end;");
     try testing.expectEqual(@as(usize, 1), p.len);

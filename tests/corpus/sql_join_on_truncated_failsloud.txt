@@ -3,3 +3,8 @@ x  nm
 1  abc
 5  abc
 9  abc
+contains_alias
+x  nm
+1  abc
+5  abc
+9  abc
