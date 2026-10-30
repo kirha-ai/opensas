@@ -647,13 +647,17 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // slices (readNumeric, slice_w) — the STATEMENT path hands the whole token
     // over for list/colon reads and column reads arrive pre-sliced to w, so a
     // re-slice there would corrupt the token (same rule as the plain w.d slice
-    // below). B8601DT keeps its own (undocumented-here) range and stays unsliced.
+    // below). B8601DT keeps its own read-side range (14-26) and slice behavior.
     if (startsWithCI(nm, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
         return parseDatetime(iso_fld, .iso);
     }
-    if (startsWithCI(nm, "b8601dt")) return parseDatetime(field, .iso);
+    if (startsWithCI(nm, "b8601dt")) {
+        checkWidthRange(spec_text, spec.w, 14, 26);
+        const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
+        return parseDatetime(iso_fld, .iso);
+    }
     // GH#5a ISS-e8601dndz: E8601DNw. reads ISO `yyyy-mm-dd` and returns a SAS
     // DATETIME at midnight (Informats Reference p.642: Default 10; "Requirement:
     // The width of the input field must be 10" — loud outside it, like SAS
@@ -671,7 +675,12 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         if (parseDatetimeZ(field)) |utc| return .{ .num = utc };
         return Value.missing;
     }
-    if (startsWithCI(nm, "e8601da") or startsWithCI(nm, "b8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
+    if (startsWithCI(nm, "e8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
+        checkWidthRange(spec_text, spec.w, 10, 10);
+        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
+        return Value.missing;
+    }
+    if (startsWithCI(nm, "b8601da")) { // BASIC date yyyymmdd → SAS day (GH#52)
         if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
@@ -690,7 +699,13 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // p.623's own example `155300` → 57180). BUG-8601packtime: the packed run
     // used to fall into parseTimeSecs' no-separator branch and read as HOURS
     // (155300×3600 = 559080000) — a silent wrong numeric on a doc example.
-    if (startsWithCI(nm, "e8601tm") or startsWithCI(nm, "b8601tm")) {
+    if (startsWithCI(nm, "e8601tm")) {
+        checkWidthRange(spec_text, spec.w, 8, 15);
+        if (parseIsoTimeSecs(field)) |sc| return .{ .num = sc };
+        return Value.missing;
+    }
+    if (startsWithCI(nm, "b8601tm")) {
+        checkWidthRange(spec_text, spec.w, 6, 15);
         if (parseIsoTimeSecs(field)) |sc| return .{ .num = sc };
         return Value.missing;
     }
@@ -956,12 +971,13 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
     }) orelse return Value.missing;
     // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
     // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
-    // example `20180915T155300` → 1852645980) — BUG-8601packtime. A missing
-    // time still defaults to 00:00:00.
-    const secs = (switch (style) {
-        .native => parseTimeSecs(s[sep + 1 ..]),
-        .iso => parseIsoTimeSecs(s[sep + 1 ..]),
-    }) orelse 0;
+    // example `20180915T155300` → 1852645980) — BUG-8601packtime. An omitted
+    // time defaults to 00:00:00; a present-but-invalid time is invalid data.
+    const tail = s[sep + 1 ..];
+    const secs = if (tail.len == 0) 0 else (switch (style) {
+        .native => parseTimeSecs(tail),
+        .iso => parseIsoTimeSecs(tail),
+    }) orelse return Value.missing;
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
 }
 
@@ -1302,17 +1318,35 @@ pub fn parseHhmmss(field: []const u8) ?f64 {
 /// 559080000) — silent wrong numerics on the informats' own doc examples.
 /// Digits past `hhmmss` are the fraction (p.555's table: `155300322348` =
 /// 15:53:00.322348); a short run is parseHhmmss' left-padded reduced form
-/// (`1553` → 15:53:00). TIMEw. deliberately does NOT come through here —
-/// packed digits are not TIMEw. grammar (p.722 documents only separator
-/// forms), so its digit runs keep the whole-run-as-hours duration read.
+/// (`1553` → 15:53:00). A trailing partial group is invalid (`14050` is not
+/// `14:05:00`) — BUG-b8601dtpartialgroup. TIMEw. deliberately does NOT come
+/// through here — packed digits are not TIMEw. grammar (p.722 documents only
+/// separator forms), so its digit runs keep the whole-run-as-hours duration read.
 fn parseIsoTimeSecs(s0: []const u8) ?f64 {
     const s = std.mem.trim(u8, s0, " ");
     if (s.len == 0) return null;
-    if (!allDigits(s)) return parseTimeSecs(s);
+    if (!allDigits(s)) return parseIsoExtendedTimeSecs(s);
+    if (s.len < 6 and (s.len & 1) == 1) return null;
     const secs = parseHhmmss(s[0..@min(s.len, 6)]) orelse return null;
     if (s.len <= 6) return secs;
     const frac = std.fmt.parseFloat(f64, s[6..]) catch return null;
     return secs + frac / std.math.pow(f64, 10, @floatFromInt(s.len - 6));
+}
+
+fn parseIsoExtendedTimeSecs(s: []const u8) ?f64 {
+    var it = std.mem.splitScalar(u8, s, ':');
+    const h = it.next() orelse return null;
+    if (h.len != 2 or !allDigits(h)) return null;
+    if (it.next()) |m| {
+        if (m.len != 2 or !allDigits(m)) return null;
+        if (it.next()) |sec| {
+            if (std.mem.indexOfScalar(u8, sec, '.')) |dot| {
+                if (dot != 2 or dot + 1 == sec.len or !allDigits(sec[0..dot]) or !allDigits(sec[dot + 1 ..])) return null;
+            } else if (sec.len != 2 or !allDigits(sec)) return null;
+        }
+    }
+    if (it.next() != null) return null;
+    return parseTimeSecs(s);
 }
 
 fn monthAbbr(abbr: []const u8) ?i64 {
@@ -1854,7 +1888,10 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "dtyear")) return renderYear(arena, datePartOf(valToNum(v)), spec.w);
     if (eqi(spec.name, "dtwkdatx")) return renderWeekDatx(arena, datePartOf(valToNum(v)), spec.w);
     // ISO 8601 write side (QA-e8601put) — the informat side already reads these.
-    if (eqi(spec.name, "e8601da")) return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, '-');
+    if (eqi(spec.name, "e8601da")) {
+        checkWidthRange(spec_text, spec.w, 10, 10);
+        return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, '-');
+    }
     // GH#2 ISS-e8601dt-width: E8601DT's documented w Range 16-26 (Formats
     // Reference pp.200-201) — loud outside it, before the width-less-default
     // render below (w 0 → 19).
@@ -1871,8 +1908,14 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     }
     // E8601TMw. — ISO time hh:mm:ss (a time value); same body as TIME. E8601DNw. —
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
-    if (eqi(spec.name, "e8601tm")) return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, 0, true); // ISO: zero-pad hh
-    if (eqi(spec.name, "e8601dn")) return renderYymmddX(arena, datePartOf(valToNum(v)), if (spec.w == 0) 10 else spec.w, '-');
+    if (eqi(spec.name, "e8601tm")) {
+        checkWidthRange(spec_text, spec.w, 8, 15);
+        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, 0, true); // ISO: zero-pad hh
+    }
+    if (eqi(spec.name, "e8601dn")) {
+        checkWidthRange(spec_text, spec.w, 10, 10);
+        return renderYymmddX(arena, datePartOf(valToNum(v)), if (spec.w == 0) 10 else spec.w, '-');
+    }
     // GAP-fmtwritebatch (doc-finder tick126): ISO 8601 BASIC forms (no
     // separators) + the date/time/special write formats that used to fail loud.
     // Still loud: the LOCALE=-driven NL* writes — NLPCT/NLPCTP/NLMNYI and the
@@ -1880,9 +1923,18 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     // "The output value depends on the locale"), which opensas does not model,
     // so any output would be a guess (GAP-fmtwrite-unimpl) — and PDJULG/PDJULI
     // (packed-byte forms).
-    if (eqi(spec.name, "b8601da")) return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, null);
-    if (eqi(spec.name, "b8601dt")) return renderB8601Dt(arena, valToNum(v), spec.w);
-    if (eqi(spec.name, "b8601tm")) return renderB8601Tm(arena, valToNum(v), spec.w);
+    if (eqi(spec.name, "b8601da")) {
+        checkWidthRange(spec_text, spec.w, 8, 10);
+        return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, null);
+    }
+    if (eqi(spec.name, "b8601dt")) {
+        checkWidthRange(spec_text, spec.w, 15, 26);
+        return renderB8601Dt(arena, valToNum(v), spec.w);
+    }
+    if (eqi(spec.name, "b8601tm")) {
+        checkWidthRange(spec_text, spec.w, 6, 15);
+        return renderB8601Tm(arena, valToNum(v), spec.w);
+    }
     if (eqi(spec.name, "yymon")) return renderYymon(arena, valToNum(v), spec.w);
     // NENGOw. — Japanese era date (p.257; GAP-fmtwrite-unimpl).
     if (eqi(spec.name, "nengo")) return renderNengo(arena, valToNum(v), spec.w);
@@ -2970,14 +3022,18 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
 
 /// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
 /// offset appended (Formats Reference p.204: Default 26, Range 20-35 — checked
-/// loud at the dispatch site; Alignment: Left). The entry's two notations are a
+/// loud at the dispatch site; catalog Alignment: Left is verified-wrong for
+/// PUT padding direction, D-025). The entry's two notations are a
 /// width LADDER: `yyyy-mm-ddThh:mm:ss+00:00` (25 columns) "when w is large
 /// enough to support this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`
 /// (20 columns; "the shorter form +00 is not supported", p.204). The
 /// interpreter models one zero-meridian timeline, so the appended offset is
 /// always +00:00 (p.204: "The E8601DZ format always writes the datetime value
-/// by using the zero meridian offset value of +00:00"). ponytail: no `.d` —
-/// the entry defines no d parameter (unlike E8601DTw.d).
+/// by using the zero meridian offset value of +00:00"). Runtime oracle pins
+/// right-justification for both rungs: e8601dz26. has one leading blank before
+/// the 25-column `+00:00` body, and e8601dz22. has two before the 20-column `Z`
+/// body. ponytail: no `.d` — the entry defines no d parameter (unlike
+/// E8601DTw.d).
 fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     const width = if (w == 0) 26 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
@@ -3000,14 +3056,16 @@ fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try body.append(arena, ':');
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
     if (width >= 25) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
-    return justLeft(arena, body.items, width);
+    return justRight(arena, body.items, width);
 }
 
 /// B8601DTw. — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss` (no
-/// separators, GAP-fmtwritebatch). Default w 15. ponytail: no fractional seconds
-/// (SAS's default w 26 includes `.ffffff`); add when a program needs sub-second.
+/// separators, GAP-fmtwritebatch). Default w 19 (Formats Reference p.152;
+/// runtime oracle: `put(x,b8601dt.)` stores four leading blanks before the
+/// 15-column body). ponytail: no fractional seconds; add when a program needs
+/// sub-second.
 fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
-    const width = if (w == 0) 15 else w;
+    const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
@@ -4483,6 +4541,67 @@ test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
     g_fmt_error = false; // reset module state for other tests
 }
 
+test "BUG-8601widths: ISO date/time width ranges fail loud on format and informat sides" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    g_fmt_error = false;
+    g_nofmterr = false;
+    for ([_]struct { spec: []const u8, range: []const u8 }{
+        .{ .spec = "e8601da5.", .range = "must be 10" },
+        .{ .spec = "e8601da12.", .range = "must be 10" },
+        .{ .spec = "e8601dn12.", .range = "must be 10" },
+        .{ .spec = "e8601tm7.", .range = "8-15" },
+        .{ .spec = "e8601tm16.", .range = "8-15" },
+        .{ .spec = "b8601da7.", .range = "8-10" },
+        .{ .spec = "b8601da11.", .range = "8-10" },
+        .{ .spec = "b8601dt14.", .range = "15-26" },
+        .{ .spec = "b8601dt27.", .range = "15-26" },
+        .{ .spec = "b8601tm5.", .range = "6-15" },
+        .{ .spec = "b8601tm16.", .range = "6-15" },
+    }) |bad| {
+        g_test_last_err = "";
+        _ = try apply(a, .{ .num = 1909490706 }, bad.spec);
+        try t.expect(formatErrored());
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, bad.spec) != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, bad.range) != null);
+        g_fmt_error = false;
+    }
+
+    for ([_]struct { spec: []const u8, field: []const u8, range: []const u8 }{
+        .{ .spec = "e8601da12.", .field = "2020-07-04", .range = "must be 10" },
+        .{ .spec = "e8601tm7.", .field = "14:05:06", .range = "8-15" },
+        .{ .spec = "e8601tm16.", .field = "14:05:06", .range = "8-15" },
+        .{ .spec = "b8601dt13.", .field = "20200704T140506", .range = "14-26" },
+        .{ .spec = "b8601dt27.", .field = "20200704T140506", .range = "14-26" },
+        .{ .spec = "b8601tm5.", .field = "140506", .range = "6-15" },
+        .{ .spec = "b8601tm16.", .field = "140506", .range = "6-15" },
+    }) |bad| {
+        g_test_last_err = "";
+        _ = readNumeric(bad.spec, bad.field);
+        try t.expect(formatErrored());
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "Width specified for format") != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, bad.spec) != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, bad.range) != null);
+        g_fmt_error = false;
+    }
+
+    // B8601DT's INPUT()-function path must slice to w like E8601DT; otherwise
+    // the packed fractional tail changes the parsed value instead of being
+    // outside the field. The slice still has to end on a complete ISO time
+    // group: `...T14050` is invalid data, not `14:05:00`.
+    try t.expect(readNumeric("b8601dt14.", "20200704T140506").isMissing());
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("b8601dt14.", "20180915T1553").num);
+    try t.expectEqual(@as(f64, 1909490706), readNumeric("b8601dt15.", "20200704T140506999999").num);
+    try t.expectEqual(@as(f64, 1909490706.999999), readNumeric("b8601dt21.", "20200704T140506999999").num);
+    try t.expect(readNumeric("e8601dt20.", "2020-07-04T14:05:0").isMissing());
+
+    g_test_last_err = "";
+    g_fmt_error = false; // reset module state for other tests
+}
+
 test "E8601DT informat honors w: e8601dt16. reads seconds as 00 (GH#2 ISS-e8601dt-width)" {
     // Informats Reference pp.643-644: same Range 16-26 and w=16 note as the
     // format. The INPUT()-function path slices the field to w.
@@ -4559,14 +4678,15 @@ test "E8601DZ informat rebases the UTC offset to the zero meridian (GH#5a)" {
 }
 
 test "E8601DZw. format writes the zero-meridian offset; Z rung below w=25 (GH#5a)" {
-    // Formats Reference p.204: Default 26, Range 20-35, Alignment Left, and a
-    // two-rung notation ladder — `+00:00` "when w is large enough to support
-    // this time zone notation", else `yyyy-mm-ddThh:mm:ssZ`. 15SEP2018:05:53:00
-    // = 1852609980.
-    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz."); // default 26, left
-    try expectFmt("2018-09-15T05:53:00+00:00 ", .{ .num = 1852609980 }, "e8601dz26."); // left-aligned
+    // Formats Reference p.204: Default 26, Range 20-35, and a two-rung notation
+    // ladder — `+00:00` "when w is large enough to support this time zone
+    // notation", else `yyyy-mm-ddThh:mm:ssZ`. Runtime oracle overrides the
+    // catalog Alignment: Left field: ISO 8601 family write formats right-justify
+    // when padded (D-025). 15SEP2018:05:53:00 = 1852609980.
+    try expectFmt(" 2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz."); // default 26
+    try expectFmt(" 2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz26.");
     try expectFmt("2018-09-15T05:53:00+00:00", .{ .num = 1852609980 }, "e8601dz25."); // exact fit
-    try expectFmt("2018-09-15T05:53:00Z    ", .{ .num = 1852609980 }, "e8601dz24."); // Z rung
+    try expectFmt("    2018-09-15T05:53:00Z", .{ .num = 1852609980 }, "e8601dz24."); // Z rung
     try expectFmt("2018-09-15T05:53:00Z", .{ .num = 1852609980 }, "e8601dz20."); // exact fit
     try expectFmt("                         .", Value.missing, "e8601dz."); // missing dot, right-justified
     // Range 20-35, loud outside (checkWidthRange twin of the informat)
@@ -4617,7 +4737,7 @@ test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write 
     try expectFmt("  845:06", .{ .num = 50706 }, "mmss8.");
     try expectFmt("  20200704", .{ .num = 22100 }, "b8601da10.");
     try expectFmt("20200704", .{ .num = 22100 }, "b8601da8.");
-    try expectFmt("20200704T140506", .{ .num = 1909490706 }, "b8601dt.");
+    try expectFmt("    20200704T140506", .{ .num = 1909490706 }, "b8601dt.");
     try expectFmt("  140506", .{ .num = 50706 }, "b8601tm.");
     try expectFmt("140506", .{ .num = 50706 }, "b8601tm6.");
     try expectFmt("04Jul2020:14:05:06", .{ .num = 1909490706 }, "nldatm.");

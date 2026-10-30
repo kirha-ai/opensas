@@ -718,6 +718,7 @@ pub const Executor = struct {
     // already pulled (extractSetOptions walk) — collectExtraSetsStmt resolves
     // THESE names, never the raw node list (which still holds the sentinel).
     extra_src_names: std.AutoHashMapUnmanaged(*const ast.Stmt, []const []const u8) = .empty,
+    nested_source_nodes: std.AutoHashMapUnmanaged(*const ast.Stmt, void) = .empty, // BUG-mergebesideset: nested MERGE/UPDATE/MODIFY seeds schema but fails loud if executed
     dow_set: ?*const ast.Stmt = null, // DOWLOOP-impl: the SET whose reads are driven by an enclosing DO loop
     driver_ptr: ?*Driver = null, // the live driver, so a DOW SET can advance it from runStmt
     // BUG-setstmtorder: the DIRECT top-level source statement each scan arm
@@ -1123,6 +1124,19 @@ pub const Executor = struct {
         var driver = try self.buildDriver();
         self.driver_ptr = &driver; // DOWLOOP-impl: a DOW SET advances this from runStmt
         if (driver == .modify) self.modify_by = &driver.modify; // REPLACE/OUTPUT routing (BUG-modifybymasterdriven)
+        // BUG-wherestmtnosource: a DATA-step WHERE filters SAS input data sets;
+        // it is not a subsetting IF over raw records. Real SAS errors when a
+        // datalines/INPUT-only (or otherwise no-source) step has no input data
+        // set for WHERE to bind to. The old .lines/.once paths consumed the
+        // compile-time node in runStmt and silently emitted unfiltered rows.
+        if (self.where_expr != null) switch (driver) {
+            .sets, .merge, .update, .modify => {},
+            .lines, .once => {
+                self.diags.report(.err, 0, "No input data sets available for WHERE statement.", .{}) catch {};
+                if (out.columns.items.len == 0) try self.seedSchema(out);
+                return;
+            },
+        };
         // BUG-setpointtemp: the SET point=/nobs= vars are temporary control vars —
         // SAS drops them from the output schema, like SET end= (stripSourceOpts).
         try self.dropSetControlTemp(self.set_point_var);
@@ -3041,9 +3055,17 @@ pub const Executor = struct {
             // registers its name list (BUG-nestedsetdriver), and only SET got
             // the compensating schema seed — a nested one contributed NO PDV
             // columns, emitting "1 obs with 0 variables" at exit 0 (fabricated
-            // output). Seed the compile-time schema like the nested SET; the
-            // runtime semantics of a conditional MERGE/UPDATE stay needs-oracle.
-            .merge, .update, .modify => if (nested) try self.seedNestedSource(s),
+            // output). Seed the compile-time schema like the nested SET.
+            //
+            // BUG-mergebesideset: oracle later answered the runtime question for
+            // conditional MERGE/UPDATE beside a driver: SAS executes the nested
+            // reader at its node. opensas does not yet have a node-local
+            // MERGE/UPDATE cursor, so remember the node and fail loud if control
+            // reaches it instead of silently leaving its variables missing.
+            .merge, .update, .modify => if (nested) {
+                try self.seedNestedSource(s);
+                try self.nested_source_nodes.put(self.arena, s, {});
+            },
             else => {},
         }
     }
@@ -5077,11 +5099,21 @@ pub const Executor = struct {
             // INFILE is not inert (BUG-multiinfilelastwins): executing it makes
             // its line source the current one for the following INPUTs.
             .infile => try self.selectInfileStmt(s),
-            // declaratives: consumed by `scan`, inert at run time
-            .drop, .keep, .rename, .retain, .merge, .by, .array, .datalines, .format, .informat, .file => {},
-            // UPDATE/MODIFY parse today; their exec semantics are dev2's — this
-            // inert stub only keeps the exhaustive switch compiling (G-update).
-            .update, .modify => {},
+            .merge => {
+                if (self.nested_source_nodes.contains(s))
+                    return failGap(self.diags, "nested MERGE execution is not supported yet", .{});
+            },
+            .update => {
+                if (self.nested_source_nodes.contains(s))
+                    return failGap(self.diags, "nested UPDATE execution is not supported yet", .{});
+            },
+            .modify => {
+                if (self.nested_source_nodes.contains(s))
+                    return failGap(self.diags, "nested MODIFY execution is not supported yet", .{});
+            },
+            // declaratives and top-level driver readers: consumed by `scan` /
+            // loadNext, inert when reached in statement order.
+            .drop, .keep, .rename, .retain, .by, .array, .datalines, .format, .informat, .file => {},
         }
         return .normal;
     }
@@ -15281,6 +15313,57 @@ test "nested MERGE/UPDATE seed the PDV schema; nested UPDATE without BY fails lo
     const msg = f.diags.list.items[f.diags.list.items.len - 1].message;
     try t.expectEqualStrings("The BY statement is required for the UPDATE statement", msg);
     try t.expect(std.mem.indexOfScalar(u8, msg, 0) == null); // no raw \x00 in a user-visible message
+}
+
+test "executed nested MERGE/UPDATE fail loud instead of silently missing values (BUG-mergebesideset)" {
+    inline for (.{ "merge", "update" }) |kind| {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var x = f.exec();
+
+        const a_ds = f.newDs("a");
+        _ = try a_ds.addColumn("k", .num);
+        _ = try a_ds.addColumn("v", .num);
+        try a_ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 11 } });
+        try f.lib.put("a", a_ds);
+        const b_ds = f.newDs("b");
+        _ = try b_ds.addColumn("k", .num);
+        _ = try b_ds.addColumn("w", .num);
+        try b_ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 100 } });
+        try f.lib.put("b", b_ds);
+        const meta = f.newDs("meta");
+        _ = try meta.addColumn("factor", .num);
+        try meta.appendRow(&.{.{ .num = 7 }});
+        try f.lib.put("meta", meta);
+
+        const nested = if (comptime std.mem.eql(u8, kind, "merge"))
+            ast.Stmt{ .merge = &[_][]const u8{ "a", "b" } }
+        else
+            ast.Stmt{ .update = &[_][]const u8{ "a", "b" } };
+        const driver = if (comptime std.mem.eql(u8, kind, "merge"))
+            ast.Stmt{ .set = &[_][]const u8{"meta"} }
+        else
+            ast.Stmt{ .set = &[_][]const u8{"a"} };
+        const prog = if (comptime std.mem.eql(u8, kind, "merge"))
+            [_]ast.Stmt{
+                .{ .if_ = .{ .cond = f.num(1), .then_branch = &nested, .else_branch = null } },
+                driver,
+            }
+        else
+            [_]ast.Stmt{
+                .{ .if_ = .{ .cond = f.num(1), .then_branch = &nested, .else_branch = null } },
+                driver,
+                .{ .by = &[_][]const u8{"k"} },
+            };
+        var out = Dataset.init(f.a(), kind);
+        try t.expectError(error.ExecError, x.run(&prog, &out));
+        const msg = f.diags.list.items[f.diags.list.items.len - 1].message;
+        try t.expectEqualStrings(if (comptime std.mem.eql(u8, kind, "merge"))
+            "nested MERGE execution is not supported yet"
+        else
+            "nested UPDATE execution is not supported yet", msg);
+    }
 }
 
 test "NOBS= is the PHYSICAL obs count, not the firstobs=/obs= window (BUG-pointnobs)" {

@@ -24,6 +24,30 @@ const format = @import("format.zig");
 
 pub const VarType = enum { num, char };
 
+pub const ValidVarName = enum { v7, v6 };
+
+var g_validvarname: ValidVarName = .v7;
+
+pub fn setValidVarName(mode: ValidVarName) void {
+    g_validvarname = mode;
+}
+
+pub fn createNameTooLong(name: []const u8) bool {
+    return g_validvarname == .v6 and name.len > 8;
+}
+
+pub fn reportCreateNameError(arena: std.mem.Allocator, diags: *diag.Diagnostics, line: usize, name: []const u8) std.mem.Allocator.Error!void {
+    if (!createNameTooLong(name)) return;
+    const up = try upperName(arena, name);
+    diags.report(.err, line, "The variable named {s} contains more than 8 bytes.", .{up}) catch {};
+}
+
+fn upperName(arena: std.mem.Allocator, name: []const u8) ![]const u8 {
+    const out = try arena.dupe(u8, name);
+    for (out) |*c| c.* = std.ascii.toUpper(c.*);
+    return out;
+}
+
 /// SAS caps a character variable's length at 32767 bytes: LENGTH Statement,
 /// SAS 9.4 DATA Step Statements: Reference, printed p.217 (pdf 228 at the
 /// volume's +11 offset) — "For character variables, 1 to 32767 bytes under
@@ -181,6 +205,7 @@ pub const Pdv = struct {
             }
             return i;
         }
+        if (self.diags) |d| try reportCreateNameError(self.arena, d, 0, name);
         const owned = try self.arena.dupe(u8, name);
         try self.vars.append(self.arena, .{ .name = owned, .type = t, .value = missingOf(t) });
         const key = try std.ascii.allocLowerString(self.arena, name);

@@ -1,12 +1,9 @@
-/* BUG-doblocksourceinert (QA tick307 F1b): a nested MERGE inside a
-   `do … end` block contributed NO PDV columns at all — "1 obs with
-   0 variables" at exit 0, the exact fabricated-output signature
-   BUG-nestedsourceschema was filed to kill, restored only for the bare-IF
-   form. The .do_ arm gives the block form the same compile-time schema seed.
-   The RUN-TIME semantics of a conditional MERGE/UPDATE stay needs-oracle —
-   pinned for the else-branch form in nested_merge_schema as one all-missing
-   obs — so this pins the identical compromise for the block form: columns
-   present, never a 0-variable dataset. */
+/* BUG-doblocksourceinert + BUG-mergebesideset: a nested MERGE inside a
+   `do ... end` block still contributes compile-time PDV columns, but if the
+   block executes opensas must fail loud rather than silently leave MERGE vars
+   missing. Conditional MERGE/UPDATE needs a node-local reader; until that lands
+   this is an opensas gap, not rc-0 fabricated data.
+   expect-rc: 2 */
 data a; input k av; datalines;
 1 10
 ;
@@ -16,7 +13,7 @@ data b; input k bv; datalines;
 ;
 run;
 
-/* nested MERGE in a block: schema k av bv seeded (was: 0 variables) */
+/* nested MERGE in a block: execution is unsupported, so fail before PROC PRINT */
 data o1; if 1 then do; merge a b; by k; end; run;
 proc print data=o1 noobs; run;
 

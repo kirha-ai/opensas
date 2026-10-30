@@ -1220,10 +1220,12 @@ fn stmtKw(src: []const u8, i: usize, word: []const u8) bool {
     return after >= src.len or !isNameChar(src[after]);
 }
 
-/// Scan an `OPTIONS …` statement body (sans `;`) for the macro-expression
-/// system options (BUG-minoperatoropt): MINOPERATOR/NOMINOPERATOR toggle the
-/// `in`/`#` gate; MINDELIMITER='c' sets its list delimiter. Every other option
-/// is the executor's business — the statement text passes through untouched.
+/// Scan an `OPTIONS …` statement body (sans `;`) for read-time effects the
+/// macro layer itself can observe. MINOPERATOR/NOMINOPERATOR toggle the `in`/`#`
+/// gate; MINDELIMITER='c' sets its list delimiter (BUG-minoperatoropt).
+/// A literal YEARCUTOFF=<n> at statement end also takes effect when READ, before
+/// a same-flush DATA step is tokenized. Garbage/unresolved values deliberately
+/// stay the executor's business, so its fail-loud validator remains authoritative.
 fn applyOptionsStmt(st: *State, stmt: []const u8) void {
     var i: usize = 0;
     while (i < stmt.len) {
@@ -1238,9 +1240,44 @@ fn applyOptionsStmt(st: *State, stmt: []const u8) void {
             } else if (eqi(w, "mindelimiter")) {
                 var ignored: usize = undefined;
                 if (parseMindelim(st, stmt, i, &ignored)) |d| st.mindelimiter = d;
+            } else if (st.plain_put and eqi(w, "yearcutoff")) {
+                if (parseTrailingYearcutoff(stmt, i)) |n| format.setYearCutoff(n);
             }
         } else i += 1;
     }
+}
+
+/// Raw OPTIONS read-time YEARCUTOFF scanner (BUG-yearcutoffscanwindow).
+/// Accept only `yearcutoff=<digits>` whose value reaches the statement boundary
+/// after whitespace/comments. Thus `1950x`, `abc`, and `&v` are NOT partially
+/// applied here; handleGlobal later reports or applies them after macro
+/// resolution.
+fn parseTrailingYearcutoff(stmt: []const u8, from: usize) ?i64 {
+    var p = skipOptsSpace(stmt, from);
+    if (p >= stmt.len or stmt[p] != '=') return null;
+    p = skipOptsSpace(stmt, p + 1);
+    const s = p;
+    while (p < stmt.len and stmt[p] >= '0' and stmt[p] <= '9') p += 1;
+    if (p == s) return null;
+    const e = p;
+    p = skipOptsSpace(stmt, p);
+    if (p < stmt.len and stmt[p] != ';') return null;
+    return std.fmt.parseInt(i64, stmt[s..e], 10) catch null;
+}
+
+fn skipOptsSpace(stmt: []const u8, from: usize) usize {
+    var p = from;
+    while (p < stmt.len) {
+        while (p < stmt.len and (stmt[p] == ' ' or stmt[p] == '\t' or stmt[p] == '\r' or stmt[p] == '\n')) p += 1;
+        if (p + 1 < stmt.len and stmt[p] == '/' and stmt[p + 1] == '*') {
+            p += 2;
+            while (p + 1 < stmt.len and !(stmt[p] == '*' and stmt[p + 1] == '/')) p += 1;
+            if (p + 1 < stmt.len) p += 2;
+            continue;
+        }
+        break;
+    }
+    return p;
 }
 
 /// MINDELIMITER= value parser (F10): SAS takes a SINGLE character. The value
@@ -6096,6 +6133,41 @@ test "NOTE-puttevalpartial: a %put whose own resolution ERRORs does not print th
             "NOTE: B=1\n",
         try d3.render(),
     );
+}
+
+test "BUG-yearcutoffscanwindow: OPTIONS YEARCUTOFF literal applies at macro read time only when bounded" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    defer format.setYearCutoff(1926);
+
+    // The raw scanner runs before the same flushed DATA step is tokenized.
+    format.setYearCutoff(1926);
+    var d1 = diag.Diagnostics.init(a);
+    var s1 = Session.init(a, &d1);
+    _ = try s1.expand("options yearcutoff=1950;");
+    try std.testing.expectEqual(@as(i64, 1950), format.yearCutoff());
+
+    // The throwaway setup expansion in main.zig is intentionally read-only for
+    // YEARCUTOFF; otherwise a later OPTIONS statement rewrites earlier literals.
+    format.setYearCutoff(1926);
+    var d0 = diag.Diagnostics.init(a);
+    _ = try expand(a, "options yearcutoff=1950;", &d0);
+    try std.testing.expectEqual(@as(i64, 1926), format.yearCutoff());
+
+    // No prefix acceptance: malformed values remain for handleGlobal's
+    // fail-loud validator, rather than silently changing the global span here.
+    format.setYearCutoff(1926);
+    var d2 = diag.Diagnostics.init(a);
+    var s2 = Session.init(a, &d2);
+    _ = try s2.expand("options yearcutoff=1950x;");
+    try std.testing.expectEqual(@as(i64, 1926), format.yearCutoff());
+
+    format.setYearCutoff(1926);
+    var d3 = diag.Diagnostics.init(a);
+    var s3 = Session.init(a, &d3);
+    _ = try s3.expand("%let v=1950;options yearcutoff=&v;");
+    try std.testing.expectEqual(@as(i64, 1926), format.yearCutoff());
 }
 
 test "BUG-minoperatoropt: OPTIONS MINOPERATOR gates `in`; un-gated `in` and bare text leaves error like %eval" {

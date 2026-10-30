@@ -176,6 +176,7 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     sas.format.resetPerRun();
     sas.functions.resetPerRun(); // drop prior-run prx/dsfns/hashing handles (taste #12)
     sas.diag.resetGap(); // clear the per-run opensas-gap flag (D-009 exit code)
+    sas.pdv.setValidVarName(.v7); // VALIDVARNAME is session state; default is V7 for each interpret() run.
     // …and resetGap's TWIN gap flag (BUG-fmterrorneverreset): `gap` is `g_failed
     // or gapHit()`, so clearing only one half left the other sticky. wasm.zig was
     // clearing this itself — i.e. the reset list had been COPIED, which is how the
@@ -1486,13 +1487,16 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     return;
                 }
             } else if (eqi(t.text, "missing")) {
-                // `options missing='X';` — display char for a PLAIN missing
+                // `options missing='X';` / `missing=X` — display char for a PLAIN missing
                 // numeric (Language Reference: Concepts p.209/234; BUG-optmissing: parsed then DROPPED
-                // → `.` printed regardless = silent wrong listing). `missing='';`
-                // /`missing='.'` resets to the default `.`. Special missings
-                // (.A–.Z/._) keep their letter. Fail LOUD on garbage, like
-                // YEARCUTOFF above.
-                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .string) {
+                // → `.` printed regardless = silent wrong listing). Real SAS
+                // accepts the unquoted scalar form too (`missing=N`), verified
+                // before GAP-opt-unknown-sweep. `missing=''` / `missing='.'`
+                // resets to the default `.`. Special missings (.A–.Z/._) keep
+                // their letter. Fail LOUD on garbage, like YEARCUTOFF above.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and
+                    (toks[i + 2].tag == .string or toks[i + 2].tag == .name or toks[i + 2].tag == .number))
+                {
                     const s = toks[i + 2].text;
                     sas.io.global_missing = if (s.len == 0 or (s.len == 1 and s[0] == '.')) '.' else s[0];
                     i += 3;
@@ -1532,6 +1536,22 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     try diags.report(.err, t.line, "Invalid value for the {s} option.", .{if (is_ls) "LINESIZE" else "PAGESIZE"});
                     return;
                 }
+            } else if (eqi(t.text, "errors")) {
+                // `options errors=N;` (Language Reference: Concepts p.207):
+                // limits repeated data-error diagnostics, not data values or
+                // listing content. opensas does not cap repeated diagnostics yet,
+                // so accept the documented numeric option as inert rather than
+                // misclassifying it as a typo.
+                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .number)
+                    std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null
+                else
+                    null;
+                if (v != null) {
+                    i += 3;
+                } else {
+                    try diags.report(.err, t.line, "Invalid value for the ERRORS option.", .{});
+                    return;
+                }
             } else if (eqi(t.text, "dkricond") or eqi(t.text, "dkrocond")) {
                 // Language Reference: Concepts pp.184-185: severity when DROP=/KEEP=/RENAME= names a
                 // variable missing from an input (DKRICOND=, default ERROR) vs
@@ -1554,6 +1574,17 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     }
                 }
                 try diags.report(.err, t.line, "Invalid value for the {s} option.", .{if (eqi(t.text, "dkricond")) "DKRICOND" else "DKROCOND"});
+                return;
+            } else if (eqi(t.text, "vnferr")) {
+                // VNFERR is the documented default: an unresolved variable name
+                // is an error, which is already opensas's behavior.
+                i += 1;
+            } else if (eqi(t.text, "novnferr")) {
+                // NOVNFERR downgrades variable-not-found conditions; silently
+                // accepting it would keep ERROR behavior under a safety-relevant
+                // option, so D-018 classifies it as a documented gap.
+                sas.diag.markGap();
+                try diags.report(.err, t.line, "system option NOVNFERR is not supported", .{});
                 return;
             } else if (eqi(t.text, "sortseq")) {
                 // SORTSEQ= system option: the DEFAULT collation for PROC SORT
@@ -1697,13 +1728,21 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 try diags.report(.err, t.line, "system option NOREPLACE is not supported", .{});
                 return;
             } else if (eqi(t.text, "validvarname")) {
-                // Inert-equivalent: opensas's name handling is a fixed SUPERSET
-                // of every mode — name literals are always accepted, IMPORT
-                // headers are always mangled per V7 (io.zig). The VALUE is still
-                // validated so `validvarname=v8` (a typo) dies.
-                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name and
-                    (eqi(toks[i + 2].text, "v7") or eqi(toks[i + 2].text, "upcase") or eqi(toks[i + 2].text, "any")))
-                {
+                // VALIDVARNAME=V6 has one safety-relevant tooth opensas can
+                // honour locally: a created variable name may not exceed 8
+                // bytes. Other modes keep the V7-era 32-byte/superset handling
+                // this interpreter already had; the VALUE is still validated so
+                // `validvarname=v8` (a typo) dies.
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "v6")) {
+                        sas.pdv.setValidVarName(.v6);
+                    } else if (eqi(v, "v7") or eqi(v, "upcase") or eqi(v, "any")) {
+                        sas.pdv.setValidVarName(.v7);
+                    } else {
+                        try diags.report(.err, t.line, "Invalid value for the VALIDVARNAME option.", .{});
+                        return;
+                    }
                     i += 3;
                     continue;
                 }
@@ -1711,7 +1750,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 return;
             } else if (isInertOption(t.text)) {
                 i += 1;
-                i += skipOptionValue(toks, i);
+                i += skipOptionValue(toks, i, t.text);
             } else {
                 // Neither honoured nor a known-inert option: a typo (`obbs=2`)
                 // or a real option nobody filed → LOUD, naming it (D-002).
@@ -1917,7 +1956,7 @@ fn isInertOption(name: []const u8) bool {
 /// value — a scalar (number/string/name, optionally signed) or a balanced (…)
 /// group (`fmtsearch=(lib work)`). A dangling `=` consumes nothing; the main
 /// loop's non-name guard then errors on it.
-fn skipOptionValue(toks: []const Token, i: usize) usize {
+fn skipOptionValue(toks: []const Token, i: usize, option_name: []const u8) usize {
     if (i >= toks.len or toks[i].tag != .eq) return 0;
     var j = i + 1;
     if (j < toks.len and toks[j].tag == .lparen) {
@@ -1935,15 +1974,34 @@ fn skipOptionValue(toks: []const Token, i: usize) usize {
         }
         return j - i;
     }
-    if (j + 1 < toks.len and (toks[j].tag == .minus or toks[j].tag == .plus) and toks[j + 1].tag == .number) return 3;
+    if (j + 1 < toks.len and (toks[j].tag == .minus or toks[j].tag == .plus) and toks[j + 1].tag == .number) {
+        if (j + 2 < toks.len and toks[j + 2].tag == .name and isOptionNumericSuffix(option_name, toks[j + 2].text)) return 4;
+        return 3;
+    }
     if (j < toks.len and toks[j].tag == .number) {
-        // a size suffix lexes as a separate one-char name: `bufsize=64k`
-        if (j + 1 < toks.len and toks[j + 1].tag == .name and toks[j + 1].text.len == 1 and
-            std.mem.indexOfScalar(u8, "kmgKMg", toks[j + 1].text[0]) != null) return 3;
+        // A suffix lexes as a separate name: size (`bufsize=64k`) or page
+        // dimension (`leftmargin=0.5in`, BUG-marginunit-suffix).
+        if (j + 1 < toks.len and toks[j + 1].tag == .name and isOptionNumericSuffix(option_name, toks[j + 1].text)) return 3;
         return 2;
     }
     if (j < toks.len and (toks[j].tag == .string or toks[j].tag == .name)) return 2;
     return 0;
+}
+
+fn isOptionNumericSuffix(option_name: []const u8, text: []const u8) bool {
+    if (text.len == 1 and std.mem.indexOfScalar(u8, "kmgKMg", text[0]) != null) return true;
+    if (!isMarginOption(option_name)) return false;
+    inline for (.{ "in", "cm" }) |unit| {
+        if (eqi(text, unit)) return true;
+    }
+    return false;
+}
+
+fn isMarginOption(name: []const u8) bool {
+    inline for (.{ "topmargin", "bottommargin", "leftmargin", "rightmargin" }) |margin| {
+        if (eqi(name, margin)) return true;
+    }
+    return false;
 }
 
 /// Rewrite `infile REF;` / `file REF;` naming a registered fileref into the
@@ -3586,6 +3644,7 @@ fn resetRcSignals() void {
     g_test_last_err = "";
     sas.format.g_fmt_error = false;
     sas.exec.g_abort_rc = null; // D-009a override; interpret clears it too
+    sas.pdv.setValidVarName(.v7);
     sas.diag.resetGap(); // (interpret resets this too; explicit so testRc is honest before a run)
 }
 
@@ -3803,6 +3862,8 @@ test "GAP-gapsexitingone §5d: main.zig's gaps exit 2 — and every split's typo
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options mergenoby=error;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options varinitchk=error;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options varinitchk=abend;\n", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "options novnferr;\n", &log));
+    try std.testing.expect(std.mem.indexOf(u8, log, "system option NOVNFERR is not supported") != null);
     // FILENAME concatenation, ODS OUTPUT/SELECT/EXCLUDE/TRACE, DATA-step LIST
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "filename both ('fa.txt' 'fb.txt');\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods output Summary=s;\n", &log));
@@ -5028,6 +5089,34 @@ test "GAP-listingwidth: LINESIZE=/PAGESIZE= captured (inert), garbage fails loud
     try std.testing.expect(std.mem.indexOf(u8, try diags.render(), "Invalid value for the PAGESIZE option.") != null);
 }
 
+test "BUG-marginunitmmpt: OPTIONS margin units accept IN/CM but reject MM/PT" {
+    try expectRun(
+        "options leftmargin=0.5in rightmargin=1cm topmargin=2IN bottommargin=3CM;\n" ++
+            "data _null_; put \"ok\"; run;\n",
+        "ok\n",
+    );
+
+    const Case = struct { src: []const u8, msg: []const u8 };
+    const cases = [_]Case{
+        .{ .src = "options topmargin=5mm;\n", .msg = "system option mm is not recognized" },
+        .{ .src = "options bottommargin=12pt;\n", .msg = "system option pt is not recognized" },
+    };
+    for (cases) |c| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        var diags = sas.diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        try interpret(a, &out, &diags, c.src, null);
+        try std.testing.expect(diags.hasErrors());
+        const rendered = try diags.render();
+        if (std.mem.indexOf(u8, rendered, c.msg) == null) {
+            std.debug.print("for {s}: wanted '{s}' in:\n{s}", .{ c.src, c.msg, rendered });
+            return error.TestUnexpectedResult;
+        }
+    }
+}
+
 test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert allowlist + honoured set stay accepted" {
     defer { // restore the module state the honoured arms set
         sas.io.global_obs = std.math.maxInt(usize);
@@ -5036,19 +5125,21 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         sas.io.global_dkrocond = .warn;
         sas.io.global_nobyline = false;
         sas.io.global_sortseq_linguistic = false;
+        sas.io.global_missing = '.';
     }
     // ── positive control (the D-014 anti-regression assertion): a realistic
     //    inert bundle + every HONOURED arm parses clean and the program runs.
     try expectRun(
         "options nodate nonumber center pageno=1 msglevel=i compress=yes reuse=no\n" ++
-            "  validvarname=v7 fmtsearch=(work sashelp) mprint symbolgen minoperator\n" ++
+            "  validvarname=v6 fmtsearch=(work sashelp) mprint symbolgen minoperator\n" ++
             "  mindelimiter=',' bufsize=64k sortsize=16m threads stimer source notes\n" ++
             "  nolabel byline replace mergenoby=nowarn varinitchk=note dkricond=warn\n" ++
-            "  sortseq=ascii obs=max firstobs=1;\n" ++
+            "  sortseq=ascii obs=max firstobs=1 errors=1 vnferr;\n" ++
             "data d; x=1; run;\nproc print data=d noobs; run;\n",
         "x\n\n1\n",
     );
     try std.testing.expectEqual(sas.io.CondLevel.warn, sas.io.global_dkricond);
+    try expectRun("options missing=N; data _null_; x=.; put x; run;\n", "N\n");
     // honoured: the K suffix is a magnitude, not a token to drop — obs=2k = 2048
     try expectRun("options obs=2k; data d; x=1; run;\n", "");
     try std.testing.expectEqual(@as(usize, 2048), sas.io.global_obs);
@@ -5068,12 +5159,19 @@ test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert
         // a typo on a READ LIMIT — read EVERYTHING before this fix
         .{ .src = "options obbs=2;\n", .msg = "system option obbs is not recognized" },
         .{ .src = "options zzzznotanoption=5;\n", .msg = "system option zzzznotanoption is not recognized" },
+        // host-specific Windows X-command policy toggles are not valid here
+        .{ .src = "options xwait;\n", .msg = "system option xwait is not recognized" },
+        .{ .src = "options noxwait;\n", .msg = "system option noxwait is not recognized" },
+        .{ .src = "options xsync;\n", .msg = "system option xsync is not recognized" },
+        .{ .src = "options noxsync;\n", .msg = "system option noxsync is not recognized" },
         // result-changing but honoured only in the exec layer → LOUD gap
         .{ .src = "options varinitchk=error;\n", .msg = "system option VARINITCHK=error is not supported" },
         .{ .src = "options mergenoby=warn;\n", .msg = "system option MERGENOBY=warn is not supported" },
         .{ .src = "options noreplace;\n", .msg = "system option NOREPLACE is not supported" },
+        .{ .src = "options novnferr;\n", .msg = "system option NOVNFERR is not supported" },
         .{ .src = "options sortseq=danish;\n", .msg = "system option SORTSEQ=danish is not supported" },
         // invalid VALUES on known options
+        .{ .src = "options errors=abc;\n", .msg = "Invalid value for the ERRORS option." },
         .{ .src = "options firstobs=0;\n", .msg = "Invalid value for the FIRSTOBS option." },
         .{ .src = "options mergenoby=zzz;\n", .msg = "Invalid value for the MERGENOBY option." },
         .{ .src = "options varinitchk=zzz;\n", .msg = "Invalid value for the VARINITCHK option." },
