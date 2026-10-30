@@ -971,12 +971,13 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
     }) orelse return Value.missing;
     // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
     // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
-    // example `20180915T155300` → 1852645980) — BUG-8601packtime. A missing
-    // time still defaults to 00:00:00.
-    const secs = (switch (style) {
-        .native => parseTimeSecs(s[sep + 1 ..]),
-        .iso => parseIsoTimeSecs(s[sep + 1 ..]),
-    }) orelse 0;
+    // example `20180915T155300` → 1852645980) — BUG-8601packtime. An omitted
+    // time defaults to 00:00:00; a present-but-invalid time is invalid data.
+    const tail = s[sep + 1 ..];
+    const secs = if (tail.len == 0) 0 else (switch (style) {
+        .native => parseTimeSecs(tail),
+        .iso => parseIsoTimeSecs(tail),
+    }) orelse return Value.missing;
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
 }
 
@@ -1317,17 +1318,35 @@ pub fn parseHhmmss(field: []const u8) ?f64 {
 /// 559080000) — silent wrong numerics on the informats' own doc examples.
 /// Digits past `hhmmss` are the fraction (p.555's table: `155300322348` =
 /// 15:53:00.322348); a short run is parseHhmmss' left-padded reduced form
-/// (`1553` → 15:53:00). TIMEw. deliberately does NOT come through here —
-/// packed digits are not TIMEw. grammar (p.722 documents only separator
-/// forms), so its digit runs keep the whole-run-as-hours duration read.
+/// (`1553` → 15:53:00). A trailing partial group is invalid (`14050` is not
+/// `14:05:00`) — BUG-b8601dtpartialgroup. TIMEw. deliberately does NOT come
+/// through here — packed digits are not TIMEw. grammar (p.722 documents only
+/// separator forms), so its digit runs keep the whole-run-as-hours duration read.
 fn parseIsoTimeSecs(s0: []const u8) ?f64 {
     const s = std.mem.trim(u8, s0, " ");
     if (s.len == 0) return null;
-    if (!allDigits(s)) return parseTimeSecs(s);
+    if (!allDigits(s)) return parseIsoExtendedTimeSecs(s);
+    if (s.len < 6 and (s.len & 1) == 1) return null;
     const secs = parseHhmmss(s[0..@min(s.len, 6)]) orelse return null;
     if (s.len <= 6) return secs;
     const frac = std.fmt.parseFloat(f64, s[6..]) catch return null;
     return secs + frac / std.math.pow(f64, 10, @floatFromInt(s.len - 6));
+}
+
+fn parseIsoExtendedTimeSecs(s: []const u8) ?f64 {
+    var it = std.mem.splitScalar(u8, s, ':');
+    const h = it.next() orelse return null;
+    if (h.len != 2 or !allDigits(h)) return null;
+    if (it.next()) |m| {
+        if (m.len != 2 or !allDigits(m)) return null;
+        if (it.next()) |sec| {
+            if (std.mem.indexOfScalar(u8, sec, '.')) |dot| {
+                if (dot != 2 or dot + 1 == sec.len or !allDigits(sec[0..dot]) or !allDigits(sec[dot + 1 ..])) return null;
+            } else if (sec.len != 2 or !allDigits(sec)) return null;
+        }
+    }
+    if (it.next() != null) return null;
+    return parseTimeSecs(s);
 }
 
 fn monthAbbr(abbr: []const u8) ?i64 {
@@ -4571,10 +4590,13 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
 
     // B8601DT's INPUT()-function path must slice to w like E8601DT; otherwise
     // the packed fractional tail changes the parsed value instead of being
-    // outside the field.
-    try t.expectEqual(@as(f64, 1909446050), readNumeric("b8601dt14.", "20200704T140506").num);
+    // outside the field. The slice still has to end on a complete ISO time
+    // group: `...T14050` is invalid data, not `14:05:00`.
+    try t.expect(readNumeric("b8601dt14.", "20200704T140506").isMissing());
+    try t.expectEqual(@as(f64, 1852645980), readNumeric("b8601dt14.", "20180915T1553").num);
     try t.expectEqual(@as(f64, 1909490706), readNumeric("b8601dt15.", "20200704T140506999999").num);
     try t.expectEqual(@as(f64, 1909490706.999999), readNumeric("b8601dt21.", "20200704T140506999999").num);
+    try t.expect(readNumeric("e8601dt20.", "2020-07-04T14:05:0").isMissing());
 
     g_test_last_err = "";
     g_fmt_error = false; // reset module state for other tests
