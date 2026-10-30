@@ -7268,7 +7268,9 @@ pub fn runDelete(cx: ProcCtx, toks: []const Token) diag.Error!void {
                             return diags.fail(error.ParseError, toks[j].line, "PROC DELETE: option {s} is not supported (only DATA=)", .{toks[j].text});
                         }
                     }
-                    i = j;
+                    // No name= pair is still invalid syntax, not an empty
+                    // option group to discard before deleting the member.
+                    return diags.fail(error.ParseError, toks[i].line, "PROC DELETE: parenthesized options are not supported (only DATA=)", .{});
                 }
                 // `data=_all_` (or `lib._all_`) — sweep every member of that
                 // library like KILL (BUG-datasetsdeleteall); bare _all_ = WORK.
@@ -18045,6 +18047,21 @@ test "PROC DELETE data=x(gennum=all) fails loud BEFORE the delete (BUG-deletegen
         try t.expectError(error.ParseError, runDelete(.{ .arena = a, .lib = &lib, .diags = &d }, toks));
         try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
         try t.expect(std.mem.indexOf(u8, try d.render(), cs.opt) != null);
+        try t.expect(lib.find("have") != null);
+    }
+    for ([_][]const u8{
+        "proc delete data=have(keep); run;",
+        "proc delete data=have(keep age); run;",
+        "proc delete data=have(); run;",
+    }) |src| {
+        diag.resetGap();
+        var lib = Library.init(a);
+        try lib.put("have", try buildHave(a));
+        var d = diag.Diagnostics.init(a);
+        const toks = try lex.tokenize(a, src, &d);
+        try t.expectError(error.ParseError, runDelete(.{ .arena = a, .lib = &lib, .diags = &d }, toks));
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try t.expect(std.mem.indexOf(u8, try d.render(), "PROC DELETE: parenthesized options are not supported") != null);
         try t.expect(lib.find("have") != null);
     }
     diag.resetGap();
