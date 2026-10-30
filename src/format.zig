@@ -639,7 +639,7 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // carry digits (E8601DT), which `parseSpec` would cut at the first digit, so
     // match the raw spec text (minus any leading `$`) for those.
     const nm = if (spec_text.len > 0 and spec_text[0] == '$') spec_text[1..] else spec_text;
-    if (startsWithCI(nm, "datetime")) return parseDatetime(field, .native);
+    if (startsWithCI(nm, "datetime")) return parseDatetime(field, .native, false);
     // GH#2 ISS-e8601dt-width: E8601DTw.d honors its width on the read side too
     // (Informats Reference pp.643-644 — same w Default 19 / Range 16-26 and the
     // same w=16 note as the format): slice to w so `input(x, e8601dt16.)` stops
@@ -651,12 +651,12 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     if (startsWithCI(nm, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
-        return parseDatetime(iso_fld, .iso);
+        return parseDatetime(iso_fld, .iso, false);
     }
     if (startsWithCI(nm, "b8601dt")) {
         checkWidthRange(spec_text, spec.w, 14, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
-        return parseDatetime(iso_fld, .iso);
+        return parseDatetime(iso_fld, .iso, true);
     }
     // GH#5a ISS-e8601dndz: E8601DNw. reads ISO `yyyy-mm-dd` and returns a SAS
     // DATETIME at midnight (Informats Reference p.642: Default 10; "Requirement:
@@ -665,7 +665,7 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // it is invalid data → missing.
     if (startsWithCI(nm, "e8601dn")) {
         checkWidthRange(spec_text, spec.w, 10, 10);
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day * 86400) };
+        if (parseIsoDate(field, false)) |day| return .{ .num = @floatFromInt(day * 86400) };
         return Value.missing;
     }
     // E8601DZw.d (p.645: Default 26, Range 20-35) reads the UTC-offset datetime
@@ -677,11 +677,11 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     }
     if (startsWithCI(nm, "e8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
         checkWidthRange(spec_text, spec.w, 10, 10);
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
+        if (parseIsoDate(field, false)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
     if (startsWithCI(nm, "b8601da")) { // BASIC date yyyymmdd → SAS day (GH#52)
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
+        if (parseIsoDate(field, true)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
     // TIMEw. reads ONLY its documented separator forms (Informats Reference
@@ -723,7 +723,7 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // renderTod's mod-86400 (that datetime→time-of-day extraction is the whole
     // reason TOD exists next to TIME).
     if (eqi(spec.name, "tod")) {
-        const dt = parseDatetime(field, .native);
+        const dt = parseDatetime(field, .native, false);
         if (!dt.isMissing()) return .{ .num = @mod(dt.num, 86400) };
         if (parseTimeSecs(field)) |sc| return .{ .num = sc };
         return Value.missing;
@@ -755,9 +755,9 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         return Value.missing;
     }
     if (eqi(spec.name, "anydtdtm")) {
-        const nat = parseDatetime(field, .native);
+        const nat = parseDatetime(field, .native, false);
         if (!nat.isMissing()) return nat;
-        const iso = parseDatetime(field, .iso);
+        const iso = parseDatetime(field, .iso, false);
         if (!iso.isMissing()) return iso;
         if (parseAnyDate(field)) |day| return .{ .num = @floatFromInt(day * 86400) };
         return Value.missing;
@@ -959,15 +959,21 @@ const DtStyle = enum { native, iso };
 /// the packed basic digits too (parseIsoTimeSecs). A missing time defaults to
 /// 00:00:00; unparseable →
 /// missing. Reuses the same civil-day math as the DATE informats.
-fn parseDatetime(field: []const u8, style: DtStyle) Value {
+fn parseDatetime(field: []const u8, style: DtStyle, default_omitted_iso: bool) Value {
     const s = std.mem.trim(u8, field, " ");
     const sep = switch (style) {
         .native => std.mem.indexOfScalar(u8, s, ':') orelse return Value.missing,
-        .iso => std.mem.indexOfAny(u8, s, "Tt") orelse return Value.missing,
+        .iso => std.mem.indexOfAny(u8, s, "Tt") orelse {
+            if (default_omitted_iso) {
+                const day = parseIsoDate(s, true) orelse return Value.missing;
+                return .{ .num = @floatFromInt(day * 86400) };
+            }
+            return Value.missing;
+        },
     };
     const day = (switch (style) {
         .native => parseDDMMMYYYY(s[0..sep]),
-        .iso => parseIsoDate(s[0..sep]),
+        .iso => parseIsoDate(s[0..sep], default_omitted_iso),
     }) orelse return Value.missing;
     // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
     // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
@@ -993,7 +999,7 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
 fn parseDatetimeZ(field: []const u8) ?f64 {
     const s = std.mem.trim(u8, field, " ");
     const sep = std.mem.indexOfAny(u8, s, "Tt") orelse return null;
-    const day = parseIsoDate(s[0..sep]) orelse return null;
+    const day = parseIsoDate(s[0..sep], false) orelse return null;
     const base = @as(f64, @floatFromInt(day * 86400));
     // The offset sign is the FIRST `+`/`-` in the TIME part — the date's own
     // hyphens (`2018-09-15`) live before the `T`, so the search must not see
@@ -1055,7 +1061,7 @@ fn parseAnyDate(field: []const u8) ?i64 {
     if (parseDDMMMYYYY(field)) |d| return d;
     if (parseDateParts(field, true)) |d| return d; // DDMMYY
     if (parseDateParts(field, false)) |d| return d; // MMDDYY
-    if (parseIsoDate(field)) |d| return d; // YMD
+    if (parseIsoDate(field, false)) |d| return d; // YMD
     return null;
 }
 
@@ -1129,16 +1135,40 @@ fn parseJulian(field: []const u8) ?i64 {
 }
 
 /// `yyyy-mm-dd` (or `yyyy/mm/dd`) or the packed basic form `yyyymmdd` (8 digits,
-/// no separators, e.g. B8601DA) → SAS day number, or null. Both the INPUT
-/// statement (readNumeric) and the INPUT() function route here, so both read the
-/// packed form (E8601DA-packed-input).
+/// no separators, e.g. B8601DA) → SAS day number, or null. `default_omitted`
+/// applies only to B8601 read paths: omitted month/day default to 1 before the
+/// date math (`2018` → 01JAN2018, `201809` → 01SEP2018). E8601 callers pass
+/// false, keeping incomplete extended values invalid unless an oracle says
+/// otherwise. Both the INPUT statement (readNumeric) and the INPUT() function
+/// route here, so both read the packed form (E8601DA-packed-input).
 /// ponytail: packed DATE only. A packed datetime keeps its `T` (`yyyymmddThhmmss`),
 /// so parseDatetime still splits it and the date part lands here; a fully-packed
 /// `yyyymmddhhmmss` (no T) is out of scope — add a length split in parseDatetime
 /// if a fixture ever needs it.
-fn parseIsoDate(s0: []const u8) ?i64 {
+fn parseIsoDate(s0: []const u8, default_omitted: bool) ?i64 {
     const s = std.mem.trim(u8, s0, " ");
-    if (s.len == 8 and std.mem.indexOfNone(u8, s, "0123456789") == null) {
+    if (std.mem.indexOfNone(u8, s, "0123456789") == null) {
+        if (default_omitted) {
+            return switch (s.len) {
+                4 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    1,
+                    1,
+                ),
+                6 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    std.fmt.parseInt(i64, s[4..6], 10) catch return null,
+                    1,
+                ),
+                8 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    std.fmt.parseInt(i64, s[4..6], 10) catch return null,
+                    std.fmt.parseInt(i64, s[6..8], 10) catch return null,
+                ),
+                else => null,
+            };
+        }
+        if (s.len != 8) return null;
         return sasDayChecked(
             expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
             std.fmt.parseInt(i64, s[4..6], 10) catch return null,
@@ -1147,8 +1177,9 @@ fn parseIsoDate(s0: []const u8) ?i64 {
     }
     var it = std.mem.tokenizeAny(u8, s, "-/");
     const y = expandYear(std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null);
-    const m = std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null;
-    const d = std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null;
+    const m = if (it.next()) |part| std.fmt.parseInt(i64, part, 10) catch return null else if (default_omitted) 1 else return null;
+    const d = if (it.next()) |part| std.fmt.parseInt(i64, part, 10) catch return null else if (default_omitted) 1 else return null;
+    if (it.next() != null) return null;
     if (m < 1 or m > 12 or d < 1 or d > 31) return null;
     return sasDayChecked(y, m, d);
 }
@@ -1185,7 +1216,7 @@ pub fn importDateGuess(field: []const u8) ?ImportDate {
     // YMD order); parseIsoDate's packed 8-digit form is excluded (EFI reads
     // that as a plain number, never a date).
     if (f.len >= 8 and f.len <= 10 and std.mem.indexOfAny(u8, f, "-/") != null and allDigits(f[0..4])) {
-        if (parseIsoDate(f)) |day| return .{ .kind = .yymmdd, .value = @floatFromInt(day) };
+        if (parseIsoDate(f, false)) |day| return .{ .kind = .yymmdd, .value = @floatFromInt(day) };
     }
     if (std.mem.indexOfScalar(u8, f, ':')) |colon| {
         // datetime `ddMONyy[yy]:hh:mm[:ss]` — BOTH sides strict: parseDatetime
@@ -4021,6 +4052,22 @@ test "BUG-8601packtime: ISO 8601 packed hhmmss reads as hh:mm:ss, not hours" {
     // unparseable stays missing, and no diagnostic fired (known informats)
     try t.expect(readNumeric("b8601tm.", "not a time").isMissing());
     try t.expect(!formatErrored());
+}
+
+test "BUG-8601yearonly: B8601 date/datetime default omitted pieces, E8601 stays strict" {
+    // B8601 informats explicitly default omitted month/day to 1 and omitted
+    // hour/min/sec to 0. The doc's year-only example is 2018 -> SAS day 21185.
+    try t.expectEqual(@as(f64, 21185), readNumeric("b8601da.", "2018").num);
+    try t.expectEqual(@as(f64, 21428), readNumeric("b8601da.", "201809").num); // 01SEP2018
+    try t.expectEqual(@as(f64, 21185), readNumericStmt("b8601da.", "2018").num);
+    try t.expectEqual(@as(f64, 1830384000), readNumeric("b8601dt.", "2018").num);
+    try t.expectEqual(@as(f64, 1830384000), readNumeric("b8601dt.", "201801").num);
+    try t.expectEqual(@as(f64, 1830438000), readNumeric("b8601dt.", "2018T15").num); // 15:00:00
+    try t.expectEqual(@as(f64, 1830384000), readNumericStmt("b8601dt.", "2018").num);
+
+    try t.expect(readNumeric("e8601da.", "2018").isMissing());
+    try t.expect(readNumeric("e8601dt.", "2018").isMissing());
+    try t.expect(readNumeric("e8601dt.", "2018-09").isMissing());
 }
 
 test "readNumeric informat: w.d implied decimal and PERCENT (BUG-informatdec/percentinformat)" {
