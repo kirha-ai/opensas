@@ -2745,6 +2745,31 @@ test "applyDatasetOptions: where= filters rows on read (BUG-setwhere)" {
     try std.testing.expectEqual(@as(f64, 9), ds.row(1)[0].num);
 }
 
+test "applyDatasetOptions: where= accepts ? as CONTAINS alias (GAP-sqlcontainsquestion)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    var ds = Dataset.init(a, "src");
+    _ = try ds.addColumn("s", .char);
+    try ds.appendRow(&.{.{ .str = "apple" }});
+    try ds.appendRow(&.{.{ .str = "berry" }});
+    try ds.appendRow(&.{.{ .str = "cherry" }});
+
+    const toks = [_]lex.Token{
+        .{ .tag = .name, .text = "where" }, .{ .tag = .eq },     .{ .tag = .lparen },
+        .{ .tag = .name, .text = "s" },     .{ .tag = .question }, .{ .tag = .string, .text = "err" },
+        .{ .tag = .rparen },
+    };
+    var diags = diag.Diagnostics.init(a);
+    try applyDatasetOptions(a, &ds, &toks, &diags, true);
+
+    try std.testing.expect(!diags.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), ds.rowCount());
+    try std.testing.expectEqualStrings("berry", ds.row(0)[0].str);
+    try std.testing.expectEqualStrings("cherry", ds.row(1)[0].str);
+}
+
 test "applyDatasetOptions: firstobs=/obs= slice the read range (G-dsopt)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

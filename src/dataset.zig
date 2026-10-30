@@ -30,6 +30,7 @@ pub const Dataset = struct {
     columns: std.ArrayList(Column),
     rows: std.ArrayList([]const Value),
     label: ?[]const u8 = null, // dataset label (PROC DATASETS MODIFY (LABEL=)) — BUG-datasetsstrip
+    sortseq_linguistic: ?bool = null, // PROC SORT collation for later BY verification; null = unknown/use current system default
 
     pub fn init(arena: std.mem.Allocator, name: []const u8) Dataset {
         return .{ .arena = arena, .name = name, .columns = .empty, .rows = .empty };

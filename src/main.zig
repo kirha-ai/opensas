@@ -3362,7 +3362,8 @@ fn cmpStrLingTrim(a: []const u8, b: []const u8) std.math.Order {
 /// proc.zig PROCs apply the same rule) — else null. Equal keys continue.
 /// (Storage order: missing lowest, char trimmed, binary.)
 ///
-/// BUG-sortseq-byverify: under the system SORTSEQ=LINGUISTIC the character
+/// BUG-sortseq-byverify: when PROC SORT records SORTSEQ=LINGUISTIC (or, for
+/// unknown/manual order, the system option is currently LINGUISTIC) the character
 /// arm compares with the collation the sort used (Language Reference:
 /// Concepts printed p.533 Note: "The BY statement honors the linguistic
 /// collation of sorted data when you use the SORT procedure with the
@@ -3372,6 +3373,7 @@ fn cmpStrLingTrim(a: []const u8, b: []const u8) std.math.Order {
 /// valid program. Grouping (byRowsEqual) stays byte-exact: two distinct-case
 /// groups (A vs a) stay separate sections; the fold is the ORDER check only.
 fn byRowOrderViolation(ds: *sas.dataset.Dataset, i: usize, j: usize, bcols: []const usize, descs: []const bool) ?usize {
+    const ling = ds.sortseq_linguistic orelse sas.io.global_sortseq_linguistic;
     for (bcols, 0..) |bj, k| {
         const desc = k < descs.len and descs[k];
         const va = ds.row(i)[bj];
@@ -3387,7 +3389,7 @@ fn byRowOrderViolation(ds: *sas.dataset.Dataset, i: usize, j: usize, bcols: []co
             .str => |s| {
                 const sa = std.mem.trimEnd(u8, s, " ");
                 const sb = std.mem.trimEnd(u8, vb.str, " ");
-                const ord = if (sas.io.global_sortseq_linguistic) // BUG-sortseq-byverify
+                const ord = if (ling) // BUG-sortseq-byverify
                     cmpStrLingTrim(sa, sb)
                 else
                     std.mem.order(u8, sa, sb);

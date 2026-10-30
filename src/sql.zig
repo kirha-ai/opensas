@@ -1326,6 +1326,12 @@ fn parseTableConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: 
 /// CREATE and skip the constraint.
 fn appendCheckCons(arena: std.mem.Allocator, diags: *diag.Diagnostics, cons: *std.ArrayList(Constraint), pred: ?[]const Token, line: usize) !void {
     const p = pred orelse return;
+    // GAP-sqlcasenolibrary: parser_expr cannot validate SQL CASE, and a CHECK
+    // constraint has no Library in scope at CREATE time to collapse a subquery in
+    // that CASE. Skipping the constraint would let later rows through with a
+    // plausible answer, so surface the same rc-2 gap as the other lib-less CASE
+    // subquery sites.
+    if (hasCase(p) and hasSubquery(p)) return caseSubqGap(diags, p);
     const desug = try desugarPredicates(arena, diags, p);
     var pp = pe.Parser.init(arena, try withEof(arena, desug), diags);
     _ = pp.parseExpr() catch {
@@ -2051,10 +2057,20 @@ fn parseQuery(arena: std.mem.Allocator, toks: []const Token) !Query {
             if (!(atKw(toks, i, "on"))) return error.ParseError;
             i += 1;
             const s = i;
-            while (i < toks.len and !tkKw(toks[i], "where") and !tkKw(toks[i], "group") and
-                !tkKw(toks[i], "order") and !tkKw(toks[i], "inner") and !tkKw(toks[i], "left") and
-                !tkKw(toks[i], "right") and !tkKw(toks[i], "full") and
-                !tkKw(toks[i], "cross") and !tkKw(toks[i], "join") and toks[i].tag != .comma) i += 1;
+            var depth: usize = 0;
+            while (i < toks.len) : (i += 1) {
+                const tk = toks[i];
+                if (tk.tag == .lparen or tkKw(tk, "case")) {
+                    depth += 1;
+                } else if (tk.tag == .rparen or tkKw(tk, "end")) {
+                    if (depth > 0) depth -= 1;
+                } else if (depth == 0 and (tk.tag == .comma or tkKw(tk, "where") or tkKw(tk, "group") or
+                    tkKw(tk, "having") or tkKw(tk, "order") or tkKw(tk, "inner") or tkKw(tk, "left") or
+                    tkKw(tk, "right") or tkKw(tk, "full") or tkKw(tk, "cross") or tkKw(tk, "join")))
+                {
+                    break;
+                }
+            }
             on = toks[s..i];
         }
         try joins.append(arena, .{ .kind = kind, .table = tn, .alias = talias, .on = on, .from_sub = sub, .opts = topts });
@@ -2824,7 +2840,7 @@ fn appendAll(arena: std.mem.Allocator, out: *std.ArrayList(Token), items: []cons
 ///   L BETWEEN lo AND hi        → ( L ge lo and L le hi )
 ///   L IS [NOT] NULL|MISSING    → [not] missing(L)
 ///   L [NOT] LIKE pat           → [not] like(L, pat)
-///   L [NOT] CONTAINS sub       → ( index(L, sub) gt|eq 0 )
+///   L [NOT] CONTAINS|? sub     → ( index(L, sub) gt|eq 0 )
 /// ponytail: the left operand is captured as a FULL term by `popLeftOperand` —
 /// a balanced function-call/parenthesized group (`lowcase(c)`, `substr(c,1,7)`)
 /// or a single column/literal/coalesced `t.c`. Right operands: LIKE pat and
@@ -2958,8 +2974,12 @@ fn isOperandBoundary(text: []const u8) bool {
     return false;
 }
 
+fn isContainsOp(tok: Token) bool {
+    return tok.tag == .question or tkKw(tok, "contains");
+}
+
 /// Rewrite SQL-style infix predicates (IS [NOT] NULL/MISSING, BETWEEN, LIKE,
-/// CONTAINS) into ordinary expression tokens. Shared with io.zig's DATA-step
+/// CONTAINS/?) into ordinary expression tokens. Shared with io.zig's DATA-step
 /// `where=` path so it agrees with PROC SQL (GH#35 ISS-wherenull).
 pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token) diag.Error![]const Token {
     var out: std.ArrayList(Token) = .empty;
@@ -2986,7 +3006,7 @@ pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, tok
             try appendAll(arena, &out, &.{ synName("missing"), synTok(.lparen, "(") });
             try appendAll(arena, &out, L);
             try out.append(arena, synTok(.rparen, ")"));
-        } else if ((tkKw(tok, "between") or tkKw(tok, "like") or tkKw(tok, "contains")) and out.items.len > 0) {
+        } else if ((tkKw(tok, "between") or tkKw(tok, "like") or isContainsOp(tok)) and out.items.len > 0) {
             var neg = false;
             if (tkKw(out.items[out.items.len - 1], "not")) {
                 neg = true;
@@ -3038,7 +3058,7 @@ pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, tok
                 try out.append(arena, synTok(.comma, ","));
                 try appendAll(arena, &out, pat);
                 try out.append(arena, synTok(.rparen, ")"));
-            } else { // contains → index(L, sub) > 0
+            } else { // contains / ? → index(L, sub) > 0
                 var j = i + 1;
                 const sub = try scanOperand(arena, diags, toks, &j, tok.line, "CONTAINS", true);
                 i = j - 1;
@@ -3076,15 +3096,13 @@ fn rowsMatching(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostic
             const e = try substituteExists(arena, lib, diags, wtoks, ds, ri, table, alias);
             const s0 = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, e, .{ .ds = ds, .ri = ri, .table = table, .alias = alias }));
             const s = try substituteCase(arena, diags, &ev, s0);
-            var wp = pe.Parser.init(arena, try withEof(arena, s), diags);
-            const cond = wp.parseExpr() catch continue;
+            const cond = (try parseWholeSpan(arena, diags, s, "WHERE")) orelse return error.ParseError;
             if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
         }
         return kept.items;
     }
     const subst = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, wtoks, null));
-    var wp = pe.Parser.init(arena, try withEof(arena, subst), diags);
-    const cond = wp.parseExpr() catch return error.ParseError;
+    const cond = (try parseWholeSpan(arena, diags, subst, "WHERE")) orelse return error.ParseError;
     for (ds.rows.items, 0..) |_, ri| {
         try loadForEval(&pdv, ds, ds.row(ri));
         if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
@@ -3188,8 +3206,7 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
                 const e = try substituteExists(arena, lib, diags, q.where.?, ds, ri, q.table, q.alias);
                 const s0 = try desugarPredicates(arena, diags, try substituteSubqueries(arena, lib, diags, e, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias }));
                 const s = try substituteCase(arena, diags, &ev, s0);
-                var wp = pe.Parser.init(arena, try withEof(arena, s), diags);
-                const cond = wp.parseExpr() catch continue;
+                const cond = (try parseWholeSpan(arena, diags, s, "WHERE")) orelse return null;
                 if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
             }
         }
@@ -3209,16 +3226,14 @@ fn execQuery(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
         // per-row value, then parse/eval the resulting ordinary expression per row
         // (BUG-casewhere). Otherwise parse the condition once (the common path).
         const cond0: ?*const ast.Expr = if (hasCase(subst)) null else blk: {
-            var wp = pe.Parser.init(arena, try withEof(arena, subst), diags);
-            break :blk try wp.parseExpr();
+            break :blk (try parseWholeSpan(arena, diags, subst, "WHERE")) orelse return null;
         };
         for (ds.rows.items, 0..) |_, ri| {
             try loadForEvalAlias(&pdv, ds, ds.row(ri), q.alias); // qualified + unqualified + alias
             if (uses_calc) try bindComputed(arena, lib, diags, &ev, q, names, .{ .ds = ds, .ri = ri, .table = q.table, .alias = q.alias });
             const cond = cond0 orelse blk: {
                 const row_toks = try substituteCase(arena, diags, &ev, subst);
-                var wp = pe.Parser.init(arena, try withEof(arena, row_toks), diags);
-                break :blk wp.parseExpr() catch continue; // unparseable predicate → row dropped
+                break :blk (try parseWholeSpan(arena, diags, row_toks, "WHERE")) orelse return null;
             };
             if ((try ev.eval(cond)).whereTruthy()) try kept.append(arena, ri);
         }
@@ -3376,8 +3391,7 @@ fn evalHavingPrepared(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *D
     for (cols, cells) |c, v| try bindCol(&pdv, c.name, if (v == .num) .num else .char, c.len, v);
     var ev: eval.Evaluator = .{ .arena = arena, .pdv = &pdv, .diags = diags, .call_fn = &sqlDispatch };
     const resolved = try substituteCase(arena, diags, &ev, pre); // any CASE → its value (BUG-havingcase)
-    var wp = pe.Parser.init(arena, try withEof(arena, resolved), diags);
-    const cond = try wp.parseExpr(); // fail loud on a genuinely unparseable HAVING (was `catch return true` — hid wrong output)
+    const cond = (try parseWholeSpan(arena, diags, resolved, "HAVING")) orelse return error.ParseError; // fail loud on a genuinely unparseable HAVING
     return (try ev.eval(cond)).truthy();
 }
 
@@ -3674,10 +3688,8 @@ fn buildJoin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
 /// Table 8.2 "Operators and Order of Evaluation" (printed p.403 / pdf 419), so
 /// a tail we cannot consume is legal SAS that opensas has not implemented —
 /// D-009/D-009b(i). Null = already reported; the caller abandons the statement.
-/// ponytail: only the JOIN ON site calls this today. The WHERE/HAVING spans run
-/// the same `parseExpr`-over-a-span shape and deserve the same guard, but they
-/// desugar first and each has its own catch arm, so retrofitting them is a
-/// separate change with its own fixture.
+/// WHERE/HAVING desugar first, then route here too; every SQL predicate span must
+/// be consumed as a whole or refused loudly.
 fn parseWholeSpan(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token, what: []const u8) diag.Error!?*const ast.Expr {
     var p = pe.Parser.init(arena, try withEof(arena, toks), diags);
     const e = p.parseExpr() catch {
@@ -3716,8 +3728,9 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
     // Operator, SQL Procedure Components printed p.372 / pdf 388) — so it
     // desugars through the ONE shared helper the other eight sites already use
     // rather than growing a second, drifting copy.
-    const oncond = if (step.on) |ot|
-        (try parseWholeSpan(arena, diags, try desugarPredicates(arena, diags, ot), "JOIN ON")) orelse return null
+    const on_toks = if (step.on) |ot| try desugarPredicates(arena, diags, ot) else null;
+    const oncond = if (on_toks) |ot|
+        if (hasCase(ot)) null else (try parseWholeSpan(arena, diags, ot, "JOIN ON")) orelse return null
     else
         null;
 
@@ -3782,7 +3795,7 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
     for (acc.rows.items) |r1| {
         var matched = false;
         for (t2.rows.items, 0..) |r2, ri2| {
-            if (oncond) |cond| {
+            if (on_toks) |ot| {
                 try loadForEval(&pdv, acc, r1);
                 for (t2.columns.items, 0..) |c, j| {
                     // joined's schema already holds the qualified name — reuse it;
@@ -3794,6 +3807,10 @@ fn joinTwo(arena: std.mem.Allocator, diags: *diag.Diagnostics, acc: *Dataset, st
                     // resolve, not read missing (BUG-sqljoinunqual).
                     try aliasUnqualified(&pdv, nm, c.type, c.len, r2[j]);
                 }
+                const cond = oncond orelse blk: {
+                    const row_toks = try substituteCase(arena, diags, &ev, ot);
+                    break :blk (try parseWholeSpan(arena, diags, row_toks, "JOIN ON")) orelse return null;
+                };
                 if (!(try ev.eval(cond)).truthy()) continue;
             }
             matched = true;
@@ -7510,7 +7527,7 @@ test "SQL INFORMAT= coercion notes invalid data like the INPUT function (GAP-sql
     }
 }
 
-test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
+test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS/? (G-sqldml)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -7532,6 +7549,8 @@ test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
         " create table l as select s from have where s like 'b%';" ++
         " create table n as select s from have where v is null;" ++
         " create table c as select s from have where s contains 'err';" ++
+        " create table q as select s from have where s ? 'err';" ++
+        " create table nq as select s from have where s not ? 'err';" ++
         " create table x as select v from have where v not between 10 and 20;" ++
         " quit;");
 
@@ -7539,7 +7558,51 @@ test "DML predicates: BETWEEN, LIKE, IS NULL, CONTAINS (G-sqldml)" {
     try t.expectEqualStrings("banana", lib.find("l").?.row(0)[0].str); // LIKE b%
     try t.expectEqualStrings("date", lib.find("n").?.row(0)[0].str); // IS NULL
     try t.expectEqualStrings("cherry", lib.find("c").?.row(0)[0].str); // CONTAINS err
+    try t.expectEqualStrings("cherry", lib.find("q").?.row(0)[0].str); // ? alias
+    try t.expectEqual(@as(usize, 3), lib.find("nq").?.rowCount()); // NOT ? → apple, banana, date
     try t.expectEqual(@as(usize, 3), lib.find("x").?.rowCount()); // NOT BETWEEN → 5,25,.
+}
+
+test "PROC SQL: ? is the documented CONTAINS alias across predicate surfaces (GAP-sqlcontainsquestion)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "have");
+    _ = try ds.addColumn("s", .char);
+    try ds.appendRow(&.{strV("apple")});
+    try ds.appendRow(&.{strV("berry")});
+    try ds.appendRow(&.{strV("cherry")});
+    try lib.put("have", ds);
+
+    try runSql(a, &lib, &diags, "proc sql;" ++
+        " create table w as select s from have where s ? 'err';" ++
+        " create table h as select s, count(*) as n from have group by s having s ? 'err';" ++
+        " create table c as select s, case when s ? 'err' then 'Y' else 'N' end as hit from have where s in ('apple','cherry') order by s;" ++
+        " create table u as select * from have; update u set s = 'found' where s ? 'err';" ++
+        " delete from u where s ? 'app';" ++
+        " quit;");
+
+    try t.expect(!diags.hasErrors());
+    try t.expectEqual(@as(usize, 2), lib.find("w").?.rowCount());
+    try t.expectEqualStrings("berry", lib.find("w").?.row(0)[0].str);
+    try t.expectEqualStrings("cherry", lib.find("w").?.row(1)[0].str);
+    try t.expectEqual(@as(usize, 2), lib.find("h").?.rowCount());
+    try t.expectEqualStrings("berry", lib.find("h").?.row(0)[0].str);
+    try t.expectEqualStrings("cherry", lib.find("h").?.row(1)[0].str);
+    const c = lib.find("c").?;
+    try t.expectEqual(@as(usize, 2), c.rowCount());
+    try t.expectEqualStrings("apple", c.row(0)[0].str);
+    try t.expectEqualStrings("N", c.row(0)[1].str);
+    try t.expectEqualStrings("cherry", c.row(1)[0].str);
+    try t.expectEqualStrings("Y", c.row(1)[1].str);
+    const u = lib.find("u").?;
+    try t.expectEqual(@as(usize, 2), u.rowCount());
+    try t.expectEqualStrings("found", u.row(0)[0].str);
+    try t.expectEqualStrings("found", u.row(1)[0].str);
 }
 
 test "GAP-wherelow-tick266: malformed IS fails loud; valid IS spellings still filter" {
@@ -9475,7 +9538,7 @@ test "BUG-sqltypeconsistency: mixed-type COALESCE arguments fail loud" {
     try t.expectEqualStrings("hi", ok.row(0)[1].str);
 }
 
-test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-less sites are a LOUD rc-2 gap that emits NO rows" {
+test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; lib-less sites are LOUD rc-2 gaps with NO rows" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -9529,13 +9592,15 @@ test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-le
     try t.expectEqual(@as(f64, 30), b3.row(2)[0].num);
     try t.expect(!diag.gapHit()); // nothing above is a gap
 
-    // The two sites with no Library in scope stay LOUD and emit NOTHING. `out` is
+    // The four sites with no Library in scope stay LOUD and emit NOTHING. `out` is
     // asserted empty because the whole point of this bug was that the wrong rows
     // reached output BEFORE the diagnostic — a loud error after a printed answer is
     // still a silent-wrong-output failure for whoever read stdout (D-002).
     inline for (.{
         "proc sql; select sum(case when qty > (select avg(qty) from part) then 1 else 0 end) as n from part; quit;",
         "proc sql; select qty from part order by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
+        "proc sql; select count(*) as n from part group by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
+        "proc sql; create table ck (qty num, check (case when qty > (select avg(qty) from part) then 1 else 0 end = 1)); insert into ck values(10); quit;",
     }) |src| {
         diag.resetGap();
         var dg = diag.Diagnostics.init(a);
@@ -9553,6 +9618,7 @@ test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-le
             };
         try t.expect(loud);
     }
+    try t.expect(lib.find("ck") == null); // the CHECK gap aborts CREATE; no unenforced table remains
 }
 
 test "BUG-sqltypeconsistency: char literal into a NUMERIC column converts (NOTE), never raw text" {
@@ -10073,6 +10139,10 @@ test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18
         .{ .on = "a.x < b.lo", .rows = 1 }, // only (1, lo=4)
         .{ .on = "b.nm in ('abc')", .rows = 3 },
         .{ .on = "b.nm not in ('abc')", .rows = 3 },
+        .{ .on = "b.nm in ('abc','zzz')", .rows = 3 }, // BUG-sqlinlistinon: comma stays inside the ON span
+        .{ .on = "substr(b.nm,1,1) = 'a'", .rows = 3 }, // same span bug for multi-arg function calls
+        .{ .on = "a.x in (1,5) and b.nm in ('abc','zzz')", .rows = 2 },
+        .{ .on = "case when b.nm in ('abc','zzz') then 1 else 0 end = 1", .rows = 3 },
         // One desugared half beside an equality: both halves must survive.
         .{ .on = "a.x = b.lo and b.nm like 'a%'", .rows = 0 },
         .{ .on = "a.x between b.lo and b.hi and b.nm contains 'a'", .rows = 1 }, // (1,abc)
@@ -10084,9 +10154,16 @@ test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18
         try t.expect(!d.hasErrors());
         try t.expectEqual(c.rows, lib.find(name).?.rowCount());
     }
+
+    var dh = diag.Diagnostics.init(a);
+    try runSql(a, &lib, &dh,
+        "proc sql; create table h as select b.nm, count(*) as n from a join b on a.x between b.lo and b.hi group by b.nm having b.nm in ('abc','zzz'); quit;");
+    try t.expect(!dh.hasErrors());
+    try t.expectEqual(@as(usize, 1), lib.find("h").?.rowCount());
+    try t.expectEqualStrings("abc", lib.find("h").?.row(0)[0].str);
 }
 
-test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates (BUG-sqlonpredicates GH#18)" {
+test "PROC SQL: WHERE, HAVING, and ON tails fail loud, never truncate (NOTE-tailguardpins)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -10104,24 +10181,47 @@ test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates
     try tb.appendRow(&.{strV("xyz")});
     try lib.put("b", tb);
 
-    // `?` is the documented CONTAINS alias — "CONTAINS Operator … Alias: ?"
-    // (SQL Procedure Components printed p.370 / pdf 386) — and opensas does not
-    // implement it. parseExpr stops ON it and, by contract, says nothing, so the
-    // condition used to degrade to a bare `b.nm`: a wrong row set at rc 0. The
-    // tail is now refused BY NAME. D-003: the assertion reads the CAPTURED
-    // message, never a spawned aborting process.
-    g_test_last_unsup = "";
+    // Positive pin for `?`, the documented CONTAINS alias — "CONTAINS Operator
+    // … Alias: ?" (SQL Procedure Components printed p.370 / pdf 386). It used
+    // to reach parseExpr raw, stop at `.question`, and fail loud as an
+    // unconsumed token; desugarPredicates now rewrites it like CONTAINS.
     var dq = diag.Diagnostics.init(a);
-    runSql(a, &lib, &dq, "proc sql; create table rq as select a.x from a join b on b.nm ? 'ab'; quit;") catch {};
-    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "unconsumed token") != null);
-    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "question") != null); // punctuation has no text → named by tag
-    try t.expect(lib.find("rq") == null); // and no wrong table is left behind
+    try runSql(a, &lib, &dq, "proc sql; create table rq as select a.x from a join b on b.nm ? 'ab'; quit;");
+    try t.expect(!dq.hasErrors());
+    try t.expectEqual(@as(usize, 3), lib.find("rq").?.rowCount());
 
     // Positive control: the spelled-out operator still runs clean.
     var dc = diag.Diagnostics.init(a);
     try runSql(a, &lib, &dc, "proc sql; create table rc as select a.x from a join b on b.nm contains 'ab'; quit;");
     try t.expect(!dc.hasErrors());
     try t.expectEqual(@as(usize, 3), lib.find("rc").?.rowCount());
+
+    // `@` is lexed but cannot continue an SQL expression. The whole-span
+    // guard must refuse it, and no table with a truncated predicate may be created.
+    g_test_last_unsup = "";
+    var dt = diag.Diagnostics.init(a);
+    runSql(a, &lib, &dt, "proc sql; create table rt as select a.x from a join b on b.nm @ 'ab'; quit;") catch |e| switch (e) {
+        error.OutOfMemory => return e,
+        else => {},
+    };
+    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "JOIN ON: unconsumed token `at`") != null);
+    try t.expect(lib.find("rt") == null);
+
+    for ([_]struct { clause: []const u8, label: []const u8, table: []const u8 }{
+        .{ .clause = "where b.nm @ 'ab'", .label = "WHERE", .table = "rw" },
+        .{ .clause = "having b.nm @ 'ab'", .label = "HAVING", .table = "rh" },
+    }) |c| {
+        g_test_last_unsup = "";
+        var d = diag.Diagnostics.init(a);
+        const src = try std.fmt.allocPrint(a, "proc sql; create table {s} as select b.nm from b {s}; quit;", .{ c.table, c.clause });
+        runSql(a, &lib, &d, src) catch |e| switch (e) {
+            error.OutOfMemory => return e,
+            else => {},
+        };
+        const named = try std.fmt.allocPrint(a, "{s}: unconsumed token `at`", .{c.label});
+        try t.expect(std.mem.indexOf(u8, g_test_last_unsup, named) != null);
+        try t.expect(lib.find(c.table) == null);
+    }
 }
 
 test "PROC SQL: the equi-join hash fast path survives the ON desugar (BUG-sqlonpredicates GH#18)" {

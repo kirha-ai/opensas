@@ -1,0 +1,6 @@
+having_contains_word
+name
+apple
+having_contains_alias
+name
+apple

@@ -590,7 +590,7 @@ pub fn parseSpec(text: []const u8) Spec {
     // then peel the final digits off as w (QA-e8601put: `E8601DT19.` is name
     // E8601DT + w 19; the old letters-only scan made it name "e" + w 8601 → the
     // Ew. scientific format, silent wrong output). Underscores are ALWAYS part
-    // of the name (CNTLIN codelists like `VISNUM_ALL_PERIOD.`, QA-svvisnum);
+    // of the name (CNTLIN codelists like `FMT_NAME_WITH_UNDERSCORES.`);
     // names ending in letters split exactly as before (`comma8.`, `date9.`).
     while (i < text.len and (std.ascii.isAlphanumeric(text[i]) or text[i] == '_')) i += 1;
     var name_end = i;
@@ -639,7 +639,7 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // carry digits (E8601DT), which `parseSpec` would cut at the first digit, so
     // match the raw spec text (minus any leading `$`) for those.
     const nm = if (spec_text.len > 0 and spec_text[0] == '$') spec_text[1..] else spec_text;
-    if (startsWithCI(nm, "datetime")) return parseDatetime(field, .native);
+    if (startsWithCI(nm, "datetime")) return parseDatetime(field, .native, .extended_only);
     // GH#2 ISS-e8601dt-width: E8601DTw.d honors its width on the read side too
     // (Informats Reference pp.643-644 — same w Default 19 / Range 16-26 and the
     // same w=16 note as the format): slice to w so `input(x, e8601dt16.)` stops
@@ -651,12 +651,24 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     if (startsWithCI(nm, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
-        return parseDatetime(iso_fld, .iso);
+        return parseDatetime(iso_fld, .iso, .extended_only);
     }
     if (startsWithCI(nm, "b8601dt")) {
         checkWidthRange(spec_text, spec.w, 14, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
-        return parseDatetime(iso_fld, .iso);
+        return parseDatetime(iso_fld, .iso, .b8601_omitted_default);
+    }
+    if (startsWithCI(nm, "b8601dn")) {
+        checkWidthRange(spec_text, spec.w, 8, 10);
+        const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
+        if (parseIsoDate(iso_fld, .b8601_omitted_default)) |day| return .{ .num = @floatFromInt(day * 86400) };
+        return Value.missing;
+    }
+    if (startsWithCI(nm, "b8601dz")) {
+        checkWidthRange(spec_text, spec.w, 15, 26);
+        const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
+        if (parseDatetimeZ(iso_fld, .basic)) |utc| return .{ .num = utc };
+        return Value.missing;
     }
     // GH#5a ISS-e8601dndz: E8601DNw. reads ISO `yyyy-mm-dd` and returns a SAS
     // DATETIME at midnight (Informats Reference p.642: Default 10; "Requirement:
@@ -665,23 +677,23 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // it is invalid data → missing.
     if (startsWithCI(nm, "e8601dn")) {
         checkWidthRange(spec_text, spec.w, 10, 10);
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day * 86400) };
+        if (parseIsoDate(field, .extended_only)) |day| return .{ .num = @floatFromInt(day * 86400) };
         return Value.missing;
     }
     // E8601DZw.d (p.645: Default 26, Range 20-35) reads the UTC-offset datetime
     // and rebases it to the zero meridian — parseDatetimeZ below.
     if (startsWithCI(nm, "e8601dz")) {
         checkWidthRange(spec_text, spec.w, 20, 35);
-        if (parseDatetimeZ(field)) |utc| return .{ .num = utc };
+        if (parseDatetimeZ(field, .extended)) |utc| return .{ .num = utc };
         return Value.missing;
     }
     if (startsWithCI(nm, "e8601da")) { // ISO date yyyy-mm-dd → SAS day (GH#52)
         checkWidthRange(spec_text, spec.w, 10, 10);
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
+        if (parseIsoDate(field, .extended_only)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
     if (startsWithCI(nm, "b8601da")) { // BASIC date yyyymmdd → SAS day (GH#52)
-        if (parseIsoDate(field)) |day| return .{ .num = @floatFromInt(day) };
+        if (parseIsoDate(field, .b8601_omitted_default)) |day| return .{ .num = @floatFromInt(day) };
         return Value.missing;
     }
     // TIMEw. reads ONLY its documented separator forms (Informats Reference
@@ -723,7 +735,7 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // renderTod's mod-86400 (that datetime→time-of-day extraction is the whole
     // reason TOD exists next to TIME).
     if (eqi(spec.name, "tod")) {
-        const dt = parseDatetime(field, .native);
+        const dt = parseDatetime(field, .native, .extended_only);
         if (!dt.isMissing()) return .{ .num = @mod(dt.num, 86400) };
         if (parseTimeSecs(field)) |sc| return .{ .num = sc };
         return Value.missing;
@@ -755,9 +767,9 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
         return Value.missing;
     }
     if (eqi(spec.name, "anydtdtm")) {
-        const nat = parseDatetime(field, .native);
+        const nat = parseDatetime(field, .native, .extended_only);
         if (!nat.isMissing()) return nat;
-        const iso = parseDatetime(field, .iso);
+        const iso = parseDatetime(field, .iso, .extended_only);
         if (!iso.isMissing()) return iso;
         if (parseAnyDate(field)) |day| return .{ .num = @floatFromInt(day * 86400) };
         return Value.missing;
@@ -951,6 +963,7 @@ pub fn checkCharInformat(name: []const u8) void {
 }
 
 const DtStyle = enum { native, iso };
+const IsoDateMode = enum { extended_only, packed8_ok, b8601_omitted_default };
 
 /// Parse a datetime informat field → SAS datetime (seconds since 1960-01-01
 /// 00:00:00) = SAS-day × 86400 + seconds-of-day. `native` (DATETIMEw.):
@@ -959,15 +972,21 @@ const DtStyle = enum { native, iso };
 /// the packed basic digits too (parseIsoTimeSecs). A missing time defaults to
 /// 00:00:00; unparseable →
 /// missing. Reuses the same civil-day math as the DATE informats.
-fn parseDatetime(field: []const u8, style: DtStyle) Value {
+fn parseDatetime(field: []const u8, style: DtStyle, iso_date_mode: IsoDateMode) Value {
     const s = std.mem.trim(u8, field, " ");
     const sep = switch (style) {
         .native => std.mem.indexOfScalar(u8, s, ':') orelse return Value.missing,
-        .iso => std.mem.indexOfAny(u8, s, "Tt") orelse return Value.missing,
+        .iso => std.mem.indexOfAny(u8, s, "Tt") orelse {
+            if (iso_date_mode == .b8601_omitted_default) {
+                const day = parseIsoDate(s, .b8601_omitted_default) orelse return Value.missing;
+                return .{ .num = @floatFromInt(day * 86400) };
+            }
+            return Value.missing;
+        },
     };
     const day = (switch (style) {
         .native => parseDDMMMYYYY(s[0..sep]),
-        .iso => parseIsoDate(s[0..sep]),
+        .iso => parseIsoDate(s[0..sep], iso_date_mode),
     }) orelse return Value.missing;
     // The time half: native DATETIME's `hh:mm:ss` via parseTimeSecs; the ISO
     // styles also accept the basic packed `hhmmss<ffffff>` (B8601DT p.619's own
@@ -981,19 +1000,16 @@ fn parseDatetime(field: []const u8, style: DtStyle) Value {
     return .{ .num = @as(f64, @floatFromInt(day * 86400)) + secs };
 }
 
-/// E8601DZw.d informat (Informats Reference p.645): the COMPLETE extended form —
-/// `yyyy-mm-ddThh:mm:ss[.f…]` followed by `+hh:mm` / `-hh:mm` or a trailing `Z` —
-/// rebased to the zero meridian. SAS adjusts for the offset (Language Reference:
-/// Concepts p.557: reading 2018-09-15T15:53:00+05:00 yields 1852645980 = 10:53
-/// UTC), so UTC = local − offset. Null when any part fails to parse or the
-/// offset is absent — a plain `yyyy-mm-ddThh:mm:ss` is not the complete
-/// representation this informat names, so it is invalid data → missing.
-/// ponytail: `+hh:mm` only (the doc's shape); the packed `+hhmm` is B8601DZ
-/// territory — add a packed branch there, not here, if a program needs it.
-fn parseDatetimeZ(field: []const u8) ?f64 {
+const DzStyle = enum { extended, basic };
+
+/// E8601DZ/B8601DZ informat helper: COMPLETE ISO datetime with a zero-meridian
+/// marker or offset, rebased to UTC. Extended uses `+hh:mm`; BASIC uses packed
+/// `+hhmm`. SAS adjusts for the offset (Language Reference: Concepts p.557:
+/// local − offset = UTC). Null when the offset is absent or any part fails.
+fn parseDatetimeZ(field: []const u8, style: DzStyle) ?f64 {
     const s = std.mem.trim(u8, field, " ");
     const sep = std.mem.indexOfAny(u8, s, "Tt") orelse return null;
-    const day = parseIsoDate(s[0..sep]) orelse return null;
+    const day = parseIsoDate(s[0..sep], if (style == .basic) .b8601_omitted_default else .extended_only) orelse return null;
     const base = @as(f64, @floatFromInt(day * 86400));
     // The offset sign is the FIRST `+`/`-` in the TIME part — the date's own
     // hyphens (`2018-09-15`) live before the `T`, so the search must not see
@@ -1002,11 +1018,20 @@ fn parseDatetimeZ(field: []const u8) ?f64 {
     const sign_at = std.mem.indexOfAny(u8, tail, "+-") orelse {
         // no offset sign: a trailing `Z` names the zero meridian (+00:00)
         if (tail.len == 0 or (tail[tail.len - 1] != 'Z' and tail[tail.len - 1] != 'z')) return null;
-        const secs = parseTimeSecs(tail[0 .. tail.len - 1]) orelse return null;
+        const secs = switch (style) {
+            .extended => parseTimeSecs(tail[0 .. tail.len - 1]),
+            .basic => parseIsoTimeSecs(tail[0 .. tail.len - 1]),
+        } orelse return null;
         return base + secs;
     };
-    const secs = parseTimeSecs(tail[0..sign_at]) orelse return null;
-    const off = parseUtcOffset(tail[sign_at..]) orelse return null;
+    const secs = switch (style) {
+        .extended => parseTimeSecs(tail[0..sign_at]),
+        .basic => parseIsoTimeSecs(tail[0..sign_at]),
+    } orelse return null;
+    const off = switch (style) {
+        .extended => parseUtcOffset(tail[sign_at..]),
+        .basic => parseUtcOffsetBasic(tail[sign_at..]),
+    } orelse return null;
     return base + secs - off; // local − offset = UTC (lrcon p.557)
 }
 
@@ -1017,6 +1042,16 @@ fn parseUtcOffset(text: []const u8) ?f64 {
     if (text.len != 6 or (text[0] != '+' and text[0] != '-') or text[3] != ':') return null;
     const hh = std.fmt.parseInt(i64, text[1..3], 10) catch return null;
     const mm = std.fmt.parseInt(i64, text[4..6], 10) catch return null;
+    if (hh > 23 or mm > 59) return null;
+    const v: f64 = @floatFromInt(hh * 3600 + mm * 60);
+    return if (text[0] == '-') -v else v;
+}
+
+/// Packed `+hhmm` / `-hhmm` BASIC UTC offset.
+fn parseUtcOffsetBasic(text: []const u8) ?f64 {
+    if (text.len != 5 or (text[0] != '+' and text[0] != '-')) return null;
+    const hh = std.fmt.parseInt(i64, text[1..3], 10) catch return null;
+    const mm = std.fmt.parseInt(i64, text[3..5], 10) catch return null;
     if (hh > 23 or mm > 59) return null;
     const v: f64 = @floatFromInt(hh * 3600 + mm * 60);
     return if (text[0] == '-') -v else v;
@@ -1055,7 +1090,7 @@ fn parseAnyDate(field: []const u8) ?i64 {
     if (parseDDMMMYYYY(field)) |d| return d;
     if (parseDateParts(field, true)) |d| return d; // DDMMYY
     if (parseDateParts(field, false)) |d| return d; // MMDDYY
-    if (parseIsoDate(field)) |d| return d; // YMD
+    if (parseIsoDate(field, .packed8_ok)) |d| return d; // YMD, including packed-8 auto-detect
     return null;
 }
 
@@ -1128,27 +1163,53 @@ fn parseJulian(field: []const u8) ?i64 {
     return jan1 + doy - 1;
 }
 
-/// `yyyy-mm-dd` (or `yyyy/mm/dd`) or the packed basic form `yyyymmdd` (8 digits,
-/// no separators, e.g. B8601DA) → SAS day number, or null. Both the INPUT
-/// statement (readNumeric) and the INPUT() function route here, so both read the
-/// packed form (E8601DA-packed-input).
+/// `yyyy-mm-dd` (or `yyyy/mm/dd`) or selected BASIC digit forms → SAS day
+/// number, or null. Mode keeps the cross-read cases separate:
+/// - extended_only: separated full dates only (E8601DA/DN oracle);
+/// - packed8_ok: separated full dates plus packed yyyymmdd, no omitted pieces
+///   (ANYDTDTE auto-detect);
+/// - b8601_omitted_default: BASIC/B8601 read paths where omitted month/day
+///   default to 1 (`2018` → 01JAN2018, `201809` → 01SEP2018).
 /// ponytail: packed DATE only. A packed datetime keeps its `T` (`yyyymmddThhmmss`),
 /// so parseDatetime still splits it and the date part lands here; a fully-packed
 /// `yyyymmddhhmmss` (no T) is out of scope — add a length split in parseDatetime
 /// if a fixture ever needs it.
-fn parseIsoDate(s0: []const u8) ?i64 {
+fn parseIsoDate(s0: []const u8, mode: IsoDateMode) ?i64 {
     const s = std.mem.trim(u8, s0, " ");
-    if (s.len == 8 and std.mem.indexOfNone(u8, s, "0123456789") == null) {
-        return sasDayChecked(
-            expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
-            std.fmt.parseInt(i64, s[4..6], 10) catch return null,
-            std.fmt.parseInt(i64, s[6..8], 10) catch return null,
-        );
+    if (std.mem.indexOfNone(u8, s, "0123456789") == null) {
+        return switch (mode) {
+            .extended_only => null,
+            .packed8_ok => if (s.len == 8) sasDayChecked(
+                expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                std.fmt.parseInt(i64, s[4..6], 10) catch return null,
+                std.fmt.parseInt(i64, s[6..8], 10) catch return null,
+            ) else null,
+            .b8601_omitted_default => switch (s.len) {
+                4 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    1,
+                    1,
+                ),
+                6 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    std.fmt.parseInt(i64, s[4..6], 10) catch return null,
+                    1,
+                ),
+                8 => sasDayChecked(
+                    expandYear(std.fmt.parseInt(i64, s[0..4], 10) catch return null),
+                    std.fmt.parseInt(i64, s[4..6], 10) catch return null,
+                    std.fmt.parseInt(i64, s[6..8], 10) catch return null,
+                ),
+                else => null,
+            },
+        };
     }
     var it = std.mem.tokenizeAny(u8, s, "-/");
     const y = expandYear(std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null);
-    const m = std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null;
-    const d = std.fmt.parseInt(i64, it.next() orelse return null, 10) catch return null;
+    const default_omitted = mode == .b8601_omitted_default;
+    const m = if (it.next()) |part| std.fmt.parseInt(i64, part, 10) catch return null else if (default_omitted) 1 else return null;
+    const d = if (it.next()) |part| std.fmt.parseInt(i64, part, 10) catch return null else if (default_omitted) 1 else return null;
+    if (it.next() != null) return null;
     if (m < 1 or m > 12 or d < 1 or d > 31) return null;
     return sasDayChecked(y, m, d);
 }
@@ -1185,7 +1246,7 @@ pub fn importDateGuess(field: []const u8) ?ImportDate {
     // YMD order); parseIsoDate's packed 8-digit form is excluded (EFI reads
     // that as a plain number, never a date).
     if (f.len >= 8 and f.len <= 10 and std.mem.indexOfAny(u8, f, "-/") != null and allDigits(f[0..4])) {
-        if (parseIsoDate(f)) |day| return .{ .kind = .yymmdd, .value = @floatFromInt(day) };
+        if (parseIsoDate(f, .extended_only)) |day| return .{ .kind = .yymmdd, .value = @floatFromInt(day) };
     }
     if (std.mem.indexOfScalar(u8, f, ':')) |colon| {
         // datetime `ddMONyy[yy]:hh:mm[:ss]` — BOTH sides strict: parseDatetime
@@ -1591,9 +1652,8 @@ fn isKnownNumFmt(name: []const u8) bool {
 /// stand-in for the digit-bearing E8601 names — parseSpec preserves those whole
 /// (it peels only the TRAILING width digits, QA-e8601put), so they are listed
 /// verbatim. There is deliberately NO `b`: B8601 names survive parseSpec too,
-/// and a bare `b` here would only silence the not-yet-implemented B8601DZ/DN/TZ
-/// reads at the functions.zig whitelist (GH#5a rider — the old comment claimed
-/// `b` coverage this list never had).
+/// and a bare `b` would silence unsupported B8601 names that still lack read
+/// branches.
 pub fn isKnownInformat(name: []const u8) bool {
     if (name.len == 0) return true; // plain w.d
     const known = [_][]const u8{
@@ -1604,7 +1664,7 @@ pub fn isKnownInformat(name: []const u8) bool {
         "time",   "hhmmss",   "datetime", "tod",    "julian",
         "anydtdte", "anydtdtm", "anydttme", // GAP-anydtinformat
         "e8601da", "e8601dn", "e8601dt", "e8601dz", "e8601tm", // GH#5a: dn/dz
-        "b8601da", "b8601dt", "b8601tm",
+        "b8601da", "b8601dn", "b8601dt", "b8601dz", "b8601tm",
     };
     for (known) |k| if (eqi(name, k)) return true;
     return false;
@@ -1648,7 +1708,7 @@ fn invalidNumeric(field: []const u8) Value {
 /// pattern (BUG-unknownfmtsilent). `options nofmterr` suppresses it, like the
 /// other format errors.
 fn checkWidth(spec_text: []const u8, spec: Spec) usize {
-    const cap: usize = if (spec.is_char) 32767 else 32;
+    const cap: usize = if (spec.is_char) 32767 else if (eqi(spec.name, "e8601dz") or eqi(spec.name, "b8601dz")) 35 else 32;
     if (spec.w <= cap) return spec.w;
     if (!g_nofmterr) {
         g_fmt_error = true;
@@ -1681,6 +1741,20 @@ fn checkWidthRange(spec_text: []const u8, w: usize, lo: usize, hi: usize) void {
         std.debug.print("ERROR: Width specified for format {s} is invalid (must be {d}).\n", .{ spec_text, lo });
     } else {
         std.debug.print("ERROR: Width specified for format {s} is invalid (valid {d}-{d}).\n", .{ spec_text, lo, hi });
+    }
+}
+
+/// Per-format decimal-precision guard for formats whose entries document a
+/// narrower `.d` range than ordinary numeric formats. SAS reports this as
+/// ERROR 30-185; keep it in the user-program error class, twin to width errors.
+fn checkDecimalRange(spec_text: []const u8, d: usize, hi: usize) void {
+    if (d <= hi) return;
+    if (g_nofmterr) return;
+    g_fmt_error = true;
+    if (@import("builtin").is_test) {
+        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Decimal specified for format {s} is invalid (valid 0-{d}).", .{ spec_text, hi }) catch "invalid-format-decimal";
+    } else {
+        std.debug.print("ERROR: Decimal specified for format {s} is invalid (valid 0-{d}).\n", .{ spec_text, hi });
     }
 }
 
@@ -1872,7 +1946,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "mmyyp")) return renderYymm(arena, valToNum(v), spec.w, '.', true);
     if (eqi(spec.name, "mmyys")) return renderYymm(arena, valToNum(v), spec.w, '/', true);
     if (eqi(spec.name, "time"))
-        return renderTime(arena, valToNum(v), spec.w, spec.d, false);
+        return renderTime(arena, valToNum(v), spec.w, spec.d, false, false);
     // WRITE-side date/time cluster (BUG-dateformats) — all fell through to the
     // numeric renderer and printed the raw SAS number.
     if (eqi(spec.name, "monyy")) return renderMonyy(arena, valToNum(v), spec.w);
@@ -1897,20 +1971,23 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     // render below (w 0 → 19).
     if (eqi(spec.name, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
-        return renderE8601Dt(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderE8601Dt(arena, valToNum(v), spec.w, spec.d);
     }
-    // GH#5a ISS-e8601dndz: E8601DZw. (Formats Reference p.204: Default 26,
+    // GH#5a ISS-e8601dndz: E8601DZw.d (Formats Reference p.204: Default 26,
     // Range 20-35 — loud outside) writes the zero-meridian datetime; the doc's
     // two notations form a width ladder rendered by renderE8601Dz below.
     if (eqi(spec.name, "e8601dz")) {
         checkWidthRange(spec_text, spec.w, 20, 35);
-        return renderE8601Dz(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderE8601Dz(arena, valToNum(v), spec.w, spec.d);
     }
     // E8601TMw. — ISO time hh:mm:ss (a time value); same body as TIME. E8601DNw. —
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
     if (eqi(spec.name, "e8601tm")) {
         checkWidthRange(spec_text, spec.w, 8, 15);
-        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, 0, true); // ISO: zero-pad hh
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, spec.d, true, true); // ISO: zero-pad hh
     }
     if (eqi(spec.name, "e8601dn")) {
         checkWidthRange(spec_text, spec.w, 10, 10);
@@ -1927,13 +2004,24 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
         checkWidthRange(spec_text, spec.w, 8, 10);
         return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, null);
     }
+    if (eqi(spec.name, "b8601dn")) {
+        checkWidthRange(spec_text, spec.w, 8, 10);
+        return renderYymmddX(arena, datePartOf(valToNum(v)), if (spec.w == 0) 10 else spec.w, null);
+    }
     if (eqi(spec.name, "b8601dt")) {
         checkWidthRange(spec_text, spec.w, 15, 26);
-        return renderB8601Dt(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderB8601Dt(arena, valToNum(v), spec.w, spec.d);
+    }
+    if (eqi(spec.name, "b8601dz")) {
+        checkWidthRange(spec_text, spec.w, 20, 35);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderB8601Dz(arena, valToNum(v), spec.w, spec.d);
     }
     if (eqi(spec.name, "b8601tm")) {
         checkWidthRange(spec_text, spec.w, 6, 15);
-        return renderB8601Tm(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderB8601Tm(arena, valToNum(v), spec.w, spec.d);
     }
     if (eqi(spec.name, "yymon")) return renderYymon(arena, valToNum(v), spec.w);
     // NENGOw. — Japanese era date (p.257; GAP-fmtwrite-unimpl).
@@ -1946,7 +2034,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "words")) return renderWords(arena, valToNum(v), spec.w);
     // NL* en_US approximations, same house pattern as NLDATE→WORDDATE above.
     if (eqi(spec.name, "nldatm")) return renderNldatm(arena, valToNum(v), spec.w);
-    if (eqi(spec.name, "nltime")) return renderTime(arena, valToNum(v), spec.w, 0, false);
+    if (eqi(spec.name, "nltime")) return renderTime(arena, valToNum(v), spec.w, 0, false, false);
     // ponytail: d==0 (unspecified or explicit .0 — indistinguishable) → 2
     // decimals, the en_US currency default; use DOLLARw.0 for 0 decimals.
     if (eqi(spec.name, "nlmny")) return renderNum(arena, valToNum(v), spec.w, if (spec.d == 0) 2 else spec.d, true, true, false);
@@ -2836,16 +2924,25 @@ fn renderDatePart(arena: std.mem.Allocator, x: f64, w: usize, part: DatePart) Er
 /// with a 1-digit hour, `h:mm:ss` (7 chars) fits TIME7 and its seconds render, where
 /// a zero-padded `01:01:01` (8) would overflow and drop them. Capped at 2 digits so a
 /// 2-/3-digit hour keeps the historic width-5 (mm) / width-8 (ss) thresholds exactly.
-fn renderTime(arena: std.mem.Allocator, x: f64, w: usize, d: usize, zero_pad_hour: bool) Error![]const u8 {
+fn decimalDigits(n: u64) usize {
+    var digits: usize = 1;
+    var value = n;
+    while (value >= 10) : (value /= 10) digits += 1;
+    return digits;
+}
+
+fn renderTime(arena: std.mem.Allocator, x: f64, w: usize, d: usize, zero_pad_hour: bool, fit_fraction: bool) Error![]const u8 {
     if (std.math.isNan(x)) return justRight(arena, ".", w);
     if (!(x > -1.0e11 and x < 1.0e11)) // guard @intFromFloat; covers every real time
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
     const ax = @abs(x);
     var total: i64 = @intFromFloat(@floor(ax));
     // ponytail: fraction capped at 6 digits (µs) — keeps pow10 in exact-f64 range.
-    const dd: usize = @min(d, 6);
+    const hour_digits = if (zero_pad_hour) @max(2, decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))))) else decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))));
+    const base_len = @as(usize, @intFromBool(x < 0)) + hour_digits + 6;
+    const dd: usize = if (fit_fraction) @min(@min(d, 6), w -| (base_len + 1)) else @min(d, 6);
     const p10 = pow10f(@intCast(dd));
-    var frac: i64 = @intFromFloat(@round((ax - @floor(ax)) * p10));
+    var frac: i64 = if (fit_fraction and dd == 0) 0 else @intFromFloat(@round((ax - @floor(ax)) * p10));
     if (@as(f64, @floatFromInt(frac)) >= p10) { // rounding carried into the seconds
         total += 1;
         frac = 0;
@@ -2990,14 +3087,22 @@ fn renderDatetime(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]
 /// `:ss` (3 columns) can't partially render (the renderDatetime ladder's rule),
 /// so 17-18 interpolate the same seconds-less body, right-justified into the
 /// wider field (1-2 leading blanks) — real SAS unprobed for 17/18.
-/// `.d` fractional seconds (Range 0-6) still not rendered; add with the p.201
-/// example (`e8601dt25.3` → `2018-09-15T14:52:22.000`).
-fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// `.d` fractional seconds (Range 0-6, checked at dispatch) use as many
+/// digits as fit after the decimal point, matching the runtime width probes.
+fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    var total: i64 = @intFromFloat(fx);
+    const dd: usize = @min(@min(d, 6), width -| 20);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3014,13 +3119,17 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     if (width >= 19) { // seconds only when the whole `:ss` fits (16-18 omit them)
         try body.append(arena, ':');
         try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+        if (dd > 0) {
+            try body.append(arena, '.');
+            try appendPadded(arena, &body, @intCast(frac), dd);
+        }
     }
     // right-justify in every padded width — GH#11 ISS-e8601rightalign (real-SAS
     // verified; the catalog `Alignment: Left` header field is not oracle, D-025)
     return justRight(arena, body.items, width);
 }
 
-/// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
+/// E8601DZw.d — a SAS datetime as ISO 8601 extended with the zero-meridian
 /// offset appended (Formats Reference p.204: Default 26, Range 20-35 — checked
 /// loud at the dispatch site; catalog Alignment: Left is verified-wrong for
 /// PUT padding direction, D-025). The entry's two notations are a
@@ -3032,14 +3141,28 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
 /// by using the zero meridian offset value of +00:00"). Runtime oracle pins
 /// right-justification for both rungs: e8601dz26. has one leading blank before
 /// the 25-column `+00:00` body, and e8601dz22. has two before the 20-column `Z`
-/// body. ponytail: no `.d` — the entry defines no d parameter (unlike
-/// E8601DTw.d).
-fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// body. With `.d`, the wide rung includes `.fff` before `+00:00`; if that
+/// cannot fit, the `Z` rung keeps as many fractional digits as fit.
+fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 26 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    const dd_full: usize = @min(d, 6);
+    const plus_body_len = 19 + (if (dd_full > 0) @as(usize, 1) + dd_full else 0) + 6;
+    const use_plus = width >= plus_body_len;
+    const frac_digits = if (use_plus) dd_full else @min(dd_full, width -| 21);
+    var total: i64 = @intFromFloat(fx);
+    var frac: i64 = 0;
+    if (frac_digits > 0) {
+        const p10 = pow10f(@intCast(frac_digits));
+        frac = @intFromFloat(@round((x - fx) * p10));
+        if (@as(f64, @floatFromInt(frac)) >= p10) {
+            total += 1;
+            frac = 0;
+        }
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3055,21 +3178,72 @@ fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
     try body.append(arena, ':');
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
-    if (width >= 25) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
+    if (frac_digits > 0) {
+        try body.append(arena, '.');
+        try appendPadded(arena, &body, @intCast(frac), frac_digits);
+    }
+    if (use_plus) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
     return justRight(arena, body.items, width);
 }
 
-/// B8601DTw. — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss` (no
+/// B8601DZw.d — BASIC ISO zero-meridian datetime. The wide rung appends packed
+/// `+0000`; when fractional seconds leave too little room, SAS falls back to a
+/// trailing `Z` and rounds the fraction to the digits that fit.
+fn renderB8601Dz(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
+    const width = if (w == 0) 26 else w;
+    if (std.math.isNan(x)) return justRight(arena, ".", width);
+    if (!(x > -3.0e12 and x < 3.0e12))
+        return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
+    const fx = @floor(x);
+    const dd_full: usize = @min(d, 6);
+    const base_len = "yyyymmddThhmmss".len;
+    const plus_body_len = base_len + dd_full + 5; // +0000
+    const frac_digits = if (width >= plus_body_len) dd_full else @min(dd_full, width -| (base_len + 1)); // Z
+    var total: i64 = @intFromFloat(fx);
+    var frac: i64 = 0;
+    if (frac_digits > 0) {
+        const p10 = pow10f(@intCast(frac_digits));
+        frac = @intFromFloat(@round((x - fx) * p10));
+        if (@as(f64, @floatFromInt(frac)) >= p10) {
+            total += 1;
+            frac = 0;
+        }
+    }
+    const day = @divFloor(total, 86400);
+    const secs = total - day * 86400; // 0..86399
+    const ymd = civilFromDays(day - unix_epoch_sas_day);
+
+    var body: std.ArrayList(u8) = .empty;
+    try appendPadded(arena, &body, @intCast(ymd.y), 4);
+    try appendPadded(arena, &body, ymd.m, 2);
+    try appendPadded(arena, &body, ymd.d, 2);
+    try body.append(arena, 'T');
+    try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
+    try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
+    try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+    if (frac_digits > 0) try appendPadded(arena, &body, @intCast(frac), frac_digits);
+    if (width >= body.items.len + 5) try body.appendSlice(arena, "+0000") else try body.append(arena, 'Z');
+    return justRight(arena, body.items, width);
+}
+
+/// B8601DTw.d — a SAS datetime as ISO 8601 BASIC `yyyymmddThhmmss<ffffff>` (no
 /// separators, GAP-fmtwritebatch). Default w 19 (Formats Reference p.152;
 /// runtime oracle: `put(x,b8601dt.)` stores four leading blanks before the
-/// 15-column body). ponytail: no fractional seconds; add when a program needs
-/// sub-second.
-fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// 15-column body). Fractional seconds are packed digits, not `.fff`.
+fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    var total: i64 = @intFromFloat(fx);
+    const dd: usize = @min(@min(d, 6), width -| 15);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3081,23 +3255,35 @@ fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
+    if (dd > 0) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
-/// B8601TMw. — a SAS time as ISO 8601 BASIC `hhmmss` (GAP-fmtwritebatch).
-/// Default w 8. Hours are not capped at 24 (same as TIMEw.). ponytail: no
-/// fractional seconds.
-fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// B8601TMw.d — a SAS time as ISO 8601 BASIC `hhmmss<ffffff>`
+/// (GAP-fmtwritebatch). Default w 8. Hours are not capped at 24 (same as
+/// TIMEw.). Fractional seconds are packed digits, not `.fff`.
+fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 8 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -1.0e11 and x < 1.0e11))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(@abs(x)));
+    const ax = @abs(x);
+    const fx = @floor(ax);
+    var total: i64 = @intFromFloat(fx);
+    const base_len = @as(usize, @intFromBool(x < 0)) + @max(2, decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))))) + 4;
+    const dd: usize = @min(@min(d, 6), width -| base_len);
+    const p10 = pow10f(@intCast(dd));
+    var frac: i64 = if (dd > 0) @intFromFloat(@round((ax - fx) * p10)) else 0;
+    if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
+        total += 1;
+        frac = 0;
+    }
     var body: std.ArrayList(u8) = .empty;
     if (x < 0) try body.append(arena, '-');
     try appendPadded(arena, &body, @intCast(@divFloor(total, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(total, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(total, 60)), 2);
+    if (dd > 0) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
@@ -3413,7 +3599,7 @@ fn renderTod(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const
     if (std.math.isNan(x)) return justRight(arena, ".", w);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
-    return renderTime(arena, @mod(x, 86400.0), w, d, true);
+    return renderTime(arena, @mod(x, 86400.0), w, d, true, false);
 }
 
 /// HHMMw.d — a SAS time (seconds since midnight) as `hh:mm` (no seconds). Hour is
@@ -3975,6 +4161,28 @@ test "BUG-8601packtime: ISO 8601 packed hhmmss reads as hh:mm:ss, not hours" {
     try t.expect(!formatErrored());
 }
 
+test "BUG-8601yearonly: B8601 date/datetime default omitted pieces, E8601 stays strict" {
+    // B8601 informats explicitly default omitted month/day to 1 and omitted
+    // hour/min/sec to 0. The doc's year-only example is 2018 -> SAS day 21185.
+    try t.expectEqual(@as(f64, 21185), readNumeric("b8601da.", "2018").num);
+    try t.expectEqual(@as(f64, 21428), readNumeric("b8601da.", "201809").num); // 01SEP2018
+    try t.expectEqual(@as(f64, 21185), readNumericStmt("b8601da.", "2018").num);
+    try t.expectEqual(@as(f64, 1830384000), readNumeric("b8601dt.", "2018").num);
+    try t.expectEqual(@as(f64, 1830384000), readNumeric("b8601dt.", "201801").num);
+    try t.expectEqual(@as(f64, 1830438000), readNumeric("b8601dt.", "2018T15").num); // 15:00:00
+    try t.expectEqual(@as(f64, 1830384000), readNumericStmt("b8601dt.", "2018").num);
+
+    try t.expect(readNumeric("e8601da.", "2018").isMissing());
+    try t.expect(readNumeric("e8601da10.", "20180915").isMissing());
+    try t.expect(readNumericStmt("e8601da10.", "20180915").isMissing());
+    try t.expect(readNumeric("e8601dn10.", "20180915").isMissing());
+    try t.expect(readNumericStmt("e8601dn10.", "20180915").isMissing());
+    try t.expectEqual(@as(f64, 21442), readNumeric("b8601da10.", "2018-09-15").num);
+    try t.expectEqual(@as(f64, 21442), readNumeric("b8601da8.", "20180915").num);
+    try t.expect(readNumeric("e8601dt.", "2018").isMissing());
+    try t.expect(readNumeric("e8601dt.", "2018-09").isMissing());
+}
+
 test "readNumeric informat: w.d implied decimal and PERCENT (BUG-informatdec/percentinformat)" {
     // implied decimal — a field with no explicit `.` is scaled by 10^-d
     try t.expectEqual(@as(f64, 123.45), readNumeric("5.2", "12345").num);
@@ -4440,9 +4648,9 @@ test "parseSpec: digit-carrying names split at the TRAILING digit run (QA-e8601p
     const e = parseSpec("e12.");
     try t.expectEqualStrings("e", e.name);
     try t.expectEqual(@as(usize, 12), e.w);
-    // underscore CNTLIN names keep the whole name, no width (QA-svvisnum)
-    const u = parseSpec("VISNUM_ALL_PERIOD.");
-    try t.expectEqualStrings("VISNUM_ALL_PERIOD", u.name);
+    // underscore CNTLIN names keep the whole name, no width.
+    const u = parseSpec("FMT_NAME_WITH_UNDERSCORES.");
+    try t.expectEqualStrings("FMT_NAME_WITH_UNDERSCORES", u.name);
     try t.expectEqual(@as(usize, 0), u.w);
     // plain w.d unchanged
     const p = parseSpec("8.2");
@@ -4512,6 +4720,77 @@ test "E8601DTw. stored value: w>19 leading blanks keep length() at w (GH#11 ISS-
     try expectFmt("2025-01-16T13:53", .{ .num = dt }, "e8601dt16.");
 }
 
+test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
+    // 15SEP2018:14:52:22.125 = 1852642342.125; 14:52:22.125 = 53542.125.
+    // SAS 9.4: extended E8601 formats use `.fff`, BASIC B8601 formats append
+    // packed fraction digits. E8601DZ is tested separately below.
+    const dt: f64 = 1852642342.125;
+    const tm: f64 = 53542.125;
+
+    try expectFmt("  2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt25.3");
+    try expectFmt("2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt23.3");
+    try expectFmt("2018-09-15T14:52:22.13", .{ .num = dt }, "e8601dt22.3");
+    try expectFmt("2018-09-15T14:52:22.125000", .{ .num = dt }, "e8601dt26.6");
+    try expectFmt("14:52:22.125", .{ .num = tm }, "e8601tm12.3");
+    try expectFmt("14:52:22.13", .{ .num = tm }, "e8601tm11.3");
+
+    try expectFmt("    20180915T145222125", .{ .num = dt }, "b8601dt22.3");
+    try expectFmt("20180915T145222125", .{ .num = dt }, "b8601dt18.3");
+    try expectFmt("20180915T14522213", .{ .num = dt }, "b8601dt17.3");
+    try expectFmt(" 145222125", .{ .num = tm }, "b8601tm10.3");
+    try expectFmt("145222125", .{ .num = tm }, "b8601tm9.3");
+    try expectFmt("14522213", .{ .num = tm }, "b8601tm8.3");
+
+    try expectFmt(" 2018-09-15T14:52:22.125+00:00", .{ .num = dt }, "e8601dz30.3");
+
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    for ([_][]const u8{ "e8601dt25.7", "e8601tm15.7", "b8601dt22.7", "b8601tm12.7" }) |spec| {
+        g_test_last_err = "";
+        _ = try apply(a, .{ .num = dt }, spec);
+        try t.expect(formatErrored());
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "Decimal specified for format") != null);
+        try t.expect(std.mem.indexOf(u8, g_test_last_err, "0-6") != null);
+        g_fmt_error = false;
+    }
+}
+
+test "BUG-8601fracfit: ISO DT/TM precision is limited by remaining width" {
+    const dt: f64 = 1852642342.125;
+    const tm: f64 = 53542.125;
+    try expectFmt("2018-09-15T14:52:22.1", .{ .num = dt }, "e8601dt21.3");
+    try expectFmt(" 2018-09-15T14:52:22", .{ .num = dt }, "e8601dt20.2");
+    try expectFmt("20180915T1452221", .{ .num = dt }, "b8601dt16.3");
+    try expectFmt("20180915T145222", .{ .num = dt }, "b8601dt15.3");
+    try expectFmt("14:52:22.1", .{ .num = tm }, "e8601tm10.2");
+    try expectFmt("14:52:22.125", .{ .num = tm }, "e8601tm12.4");
+    try expectFmt("14:52:22", .{ .num = tm }, "e8601tm8.3");
+    try expectFmt("1452221", .{ .num = tm }, "b8601tm7.3");
+    try expectFmt("145222", .{ .num = tm }, "b8601tm6.3");
+    try expectFmt("14:52:23.0", .{ .num = 53542.999 }, "e8601tm10.3");
+    try expectFmt("1452230", .{ .num = 53542.999 }, "b8601tm7.3");
+}
+
+test "BUG-8601dzfrac: E8601DZ keeps fractional seconds on both offset rungs" {
+    const dt: f64 = 1852642342.125;
+    try expectFmt(" 2018-09-15T14:52:22.125+00:00", .{ .num = dt }, "e8601dz30.3");
+    try expectFmt("  2018-09-15T14:52:22.125Z", .{ .num = dt }, "e8601dz26.3");
+    try expectFmt(" 2018-09-15T14:52:22+00:00", .{ .num = dt }, "e8601dz26.");
+
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = try apply(arena.allocator(), .{ .num = dt }, "e8601dz30.7");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "0-6") != null);
+    g_fmt_error = false;
+}
+
 test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
     // Formats Reference pp.200-201 Range 16-26; SAS: `ERROR 29-185: Width
     // specified for format E8601DT is invalid.` — a user-program error, so the
@@ -4556,8 +4835,12 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
         .{ .spec = "e8601tm16.", .range = "8-15" },
         .{ .spec = "b8601da7.", .range = "8-10" },
         .{ .spec = "b8601da11.", .range = "8-10" },
+        .{ .spec = "b8601dn7.", .range = "8-10" },
+        .{ .spec = "b8601dn11.", .range = "8-10" },
         .{ .spec = "b8601dt14.", .range = "15-26" },
         .{ .spec = "b8601dt27.", .range = "15-26" },
+        .{ .spec = "b8601dz19.", .range = "20-35" },
+        .{ .spec = "b8601dz36.", .range = "maximum 35" },
         .{ .spec = "b8601tm5.", .range = "6-15" },
         .{ .spec = "b8601tm16.", .range = "6-15" },
     }) |bad| {
@@ -4574,8 +4857,12 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
         .{ .spec = "e8601da12.", .field = "2020-07-04", .range = "must be 10" },
         .{ .spec = "e8601tm7.", .field = "14:05:06", .range = "8-15" },
         .{ .spec = "e8601tm16.", .field = "14:05:06", .range = "8-15" },
+        .{ .spec = "b8601dn7.", .field = "20200704", .range = "8-10" },
+        .{ .spec = "b8601dn11.", .field = "20200704", .range = "8-10" },
         .{ .spec = "b8601dt13.", .field = "20200704T140506", .range = "14-26" },
         .{ .spec = "b8601dt27.", .field = "20200704T140506", .range = "14-26" },
+        .{ .spec = "b8601dz14.", .field = "20200704T140506Z", .range = "15-26" },
+        .{ .spec = "b8601dz27.", .field = "20200704T140506Z", .range = "15-26" },
         .{ .spec = "b8601tm5.", .field = "140506", .range = "6-15" },
         .{ .spec = "b8601tm16.", .field = "140506", .range = "6-15" },
     }) |bad| {
@@ -4600,6 +4887,26 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
 
     g_test_last_err = "";
     g_fmt_error = false; // reset module state for other tests
+}
+
+test "GAP-8601b8601dndz: BASIC DN/DZ read and write" {
+    const dt: f64 = 1852642342;
+    const frac_dt: f64 = 1852642342.123456;
+
+    try expectFmt("  20180915", .{ .num = dt }, "b8601dn.");
+    try expectFmt("20180915", .{ .num = dt }, "b8601dn8.");
+    try expectFmt("      20180915T145222+0000", .{ .num = dt }, "b8601dz.");
+    try expectFmt("20180915T145222+0000", .{ .num = dt }, "b8601dz20.");
+    try expectFmt(" 20180915T145222+0000", .{ .num = dt }, "b8601dz21.");
+    try expectFmt("   20180915T145222123Z", .{ .num = frac_dt }, "b8601dz22.3");
+    try expectFmt("20180915T145222123+0000", .{ .num = frac_dt }, "b8601dz23.3");
+    try expectFmt("20180915T1452221235Z", .{ .num = frac_dt }, "b8601dz20.6");
+
+    try t.expectEqual(@as(f64, 1852588800), readNumeric("b8601dn8.", "20180915").num);
+    try t.expectEqual(@as(f64, 1852624342), readNumeric("b8601dz20.", "20180915T145222+0500").num);
+    try t.expectEqual(@as(f64, 1852642342), readNumeric("b8601dz16.", "20180915T145222Z").num);
+    try t.expectEqual(@as(f64, 1852624342.5), readNumeric("b8601dz21.", "20180915T1452225+0500").num);
+    try t.expect(readNumeric("b8601dz15.", "20180915T145222Z").isMissing());
 }
 
 test "E8601DT informat honors w: e8601dt16. reads seconds as 00 (GH#2 ISS-e8601dt-width)" {
@@ -4705,11 +5012,10 @@ test "E8601DZw. format writes the zero-meridian offset; Z rung below w=25 (GH#5a
 test "isKnownInformat: dn/dz whitelisted; `e` is the Ew.d alias, there is no `b` (GH#5a rider)" {
     try t.expect(isKnownInformat("e8601dn"));
     try t.expect(isKnownInformat("e8601dz"));
+    try t.expect(isKnownInformat("b8601dn"));
+    try t.expect(isKnownInformat("b8601dz"));
     try t.expect(isKnownInformat("e")); // Ew.d w.d alias — not a digit-name stand-in
-    // deliberately absent: B8601 names survive parseSpec whole, so a bare `b`
-    // would only silence the not-yet-implemented B8601DZ/DN/TZ reads
     try t.expect(!isKnownInformat("b"));
-    try t.expect(!isKnownInformat("b8601dz"));
 }
 
 test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write formats" {
@@ -4737,7 +5043,9 @@ test "GAP-fmtwritebatch: YYMON/JULDAY/ROMAN/WORDS/DATEAMPM/MMSS/B8601/NL* write 
     try expectFmt("  845:06", .{ .num = 50706 }, "mmss8.");
     try expectFmt("  20200704", .{ .num = 22100 }, "b8601da10.");
     try expectFmt("20200704", .{ .num = 22100 }, "b8601da8.");
+    try expectFmt("  20200704", .{ .num = 1909490706 }, "b8601dn.");
     try expectFmt("    20200704T140506", .{ .num = 1909490706 }, "b8601dt.");
+    try expectFmt("      20200704T140506+0000", .{ .num = 1909490706 }, "b8601dz.");
     try expectFmt("  140506", .{ .num = 50706 }, "b8601tm.");
     try expectFmt("140506", .{ .num = 50706 }, "b8601tm6.");
     try expectFmt("04Jul2020:14:05:06", .{ .num = 1909490706 }, "nldatm.");
@@ -4825,7 +5133,7 @@ test "user-defined VALUE format decodes coded values (BUG-userformat)" {
     try std.testing.expectEqualStrings("High", try apply(a, .{ .str = "H" }, "$grp."));
     try std.testing.expectEqualStrings("Low", try apply(a, .{ .str = "L " }, "$grp.")); // trailing blank
     // a char VALUE resolves the char format WITHOUT the `$` too — the CNTLIN
-    // TYPE='C' codelist apply idiom `put(VISIT, VISNUM_ALL_PERIOD.)`
+    // TYPE='C' codelist apply idiom `put(CODE, FMT_NAME_WITH_UNDERSCORES.)`
     // (QA-charfmtnodollar); a $-less name on a NUM value must NOT match it.
     try std.testing.expectEqualStrings("High", try apply(a, .{ .str = "H" }, "grp."));
     try std.testing.expect(!std.mem.eql(u8, "High", try apply(a, .{ .num = 1 }, "grp.")));
@@ -5387,6 +5695,8 @@ test "ANYDTDTE/ANYDTDTM/ANYDTTME informats read any date form (GAP-anydtinformat
     try t.expectEqual(@as(f64, 21929), readNumeric("anydtdte10.", "01/15/2020").num); // MMDDYY (DMY impossible → falls through)
     try t.expectEqual(@as(f64, 21929), readNumeric("anydtdte10.", "2020-01-15").num); // YMD
     try t.expectEqual(@as(f64, 21929), readNumeric("anydtdte8.", "20200115").num); // packed YMD
+    try t.expect(readNumeric("anydtdte4.", "2020").isMissing()); // no B8601 omitted defaults here
+    try t.expect(readNumeric("anydtdte6.", "202001").isMissing());
     // datetime: native and ISO forms → SAS day x 86400 + time (10:30:00 = 37800)
     const want: f64 = 21929 * 86400 + 37800;
     try t.expectEqual(want, readNumeric("anydtdtm19.", "15JAN2020:10:30:00").num);

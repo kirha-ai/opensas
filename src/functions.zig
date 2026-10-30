@@ -3968,11 +3968,15 @@ pub fn readInformat(spec: []const u8, s: []const u8) Value {
     const sw = std.ascii.startsWithIgnoreCase;
     // ISS-e8601dainf: ISO-8601 DATE informats (extended `e8601da`, basic `b8601da`)
     // read yyyy-mm-dd / yyyymmdd → a SAS day number. Digit-bearing names, so match
-    // the raw spec (informatName stops at "e"); dateFromYMD handles both separators.
-    if (sw(bare, "e8601da") or sw(bare, "b8601da")) return dateFromYMD(s);
+    // the raw spec (informatName stops at "e"). Route through readNumeric so
+    // E8601DA keeps its extended-only oracle and B8601DA keeps its omitted
+    // month/day defaults on both the function and statement paths.
+    if (sw(bare, "e8601da")) return format.readNumeric(spec, s);
+    if (sw(bare, "b8601da")) return format.readNumeric(spec, s);
     // BUG-percentinputfn: PERCENTw. must strip `%` and divide by 100 — readNumeric
     // does both; numFromSpec below only strips comma/dollar, so route percent here.
     if (sw(bare, "datetime") or sw(bare, "e8601dt") or sw(bare, "b8601dt") or
+        sw(bare, "b8601dn") or sw(bare, "b8601dz") or
         sw(bare, "e8601tm") or sw(bare, "b8601tm") or eqi(nm, "time") or eqi(nm, "hhmmss") or eqi(nm, "percent") or
         eqi(nm, "monyy") or eqi(nm, "yyq") or eqi(nm, "yyqc") or // MONYY/YYQ: read-side date informats
         eqi(nm, "julian") or // JULIANw.: readNumeric has the parser (BUG-julianinputfn)
@@ -6031,6 +6035,8 @@ test "coercion across the num/char boundary" {
     const want_dt: f64 = @floatFromInt(23735 * 86400 + 37800);
     try t.expectEqual(want_dt, (try dispatch(&e, "input", &.{ strV("25DEC2024:10:30:00"), strV("datetime20.") })).num);
     try t.expectEqual(want_dt, (try dispatch(&e, "input", &.{ strV("2024-12-25T10:30:00"), strV("e8601dt.") })).num);
+    try t.expectEqual(@as(f64, 21185), (try dispatch(&e, "input", &.{ strV("2018"), strV("b8601da.") })).num);
+    try t.expectEqual(@as(f64, 1830384000), (try dispatch(&e, "input", &.{ strV("2018"), strV("b8601dt.") })).num);
     try t.expectEqual(@as(f64, 0), (try dispatch(&e, "input", &.{ strV("01JAN1960:00:00:00"), strV("datetime.") })).num); // epoch
     try t.expectEqual(@as(f64, 37800), (try dispatch(&e, "input", &.{ strV("10:30:00"), strV("time8.") })).num); // time-of-day secs
     try t.expectEqualStrings("       7", (try dispatch(&e, "put", &.{ numV(7), strV("8.") })).str);

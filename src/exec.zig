@@ -450,6 +450,7 @@ const MergeState = struct {
     // 0 = numeric or no declared width → compare raw. Length == nby.
     by_len: []const usize = &.{},
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-mergeunsorted)
+    by_ling: bool = false, // sortedness verify collation carried from PROC SORT (else current system default)
     slots: []const []usize = &.{}, // per-source column→PDV-slot maps for loadRow (PERF-loadrowdual)
     // first./last. BY-flag levels for the current group (BUG-mergefirstlast):
     // level >= first_level is 1 on the group's first obs (where the key first
@@ -540,6 +541,7 @@ const SetState = struct {
     di: usize = 0, // concatenate: current dataset
     ri: usize = 0, // concatenate: current row within `di`
     by_cols: ?[]const []const ?usize = null, // per-dataset BY column indices; null → concatenate
+    by_ling: bool = false, // sortedness verify collation carried from PROC SORT (else current system default)
     cursors: []usize = &.{}, // interleave: per-dataset next-row index
     prev_by: ?[]Value = null, // last emitted BY key — detects unsorted input (BUG-setbyunsorted)
     last_contrib: ?usize = null, // source of the last read — a change resets SET vars (BUG-setsourcereset)
@@ -562,6 +564,7 @@ const UpdateState = struct {
     mi: usize = 0, // master row cursor
     ti: usize = 0, // transaction row cursor
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-setbyunsorted)
+    by_ling: bool = false, // sortedness verify collation carried from PROC SORT (else current system default)
     m_slots: []const usize = &.{}, // master's column→PDV-slot map for loadRow (PERF-loadrowdual)
     t_slots: []const usize = &.{}, // transaction's, for the per-read reset (BUG-prefixmergewipe)
     // `in=` flags on the two sources (BUG-updateinflag). The Statements ref's
@@ -572,6 +575,11 @@ const UpdateState = struct {
     in_m: ?[]const u8 = null, // master's `in=` flag (1 = this group came from the master)
     in_t: ?[]const u8 = null, // transaction's `in=` flag (1 = ≥1 trans obs applied here)
 };
+
+fn byVerifyLing(dss: []const *Dataset) bool {
+    for (dss) |ds| if (ds.sortseq_linguistic) |ling| return ling;
+    return io.global_sortseq_linguistic;
+}
 
 /// An ADDITIONAL SET statement beyond the driving one (MULTISET-impl). SAS makes
 /// every SET executable with its OWN read position, so `set a; set b;` reads a[k]
@@ -3553,6 +3561,7 @@ pub const Executor = struct {
                 }
                 if (!self.by_notsorted) {
                     st.by_cols = by_cols;
+                    st.by_ling = byVerifyLing(dss.items);
                     st.cursors = try zeros(self.arena, dss.items.len);
                 }
             }
@@ -3761,7 +3770,7 @@ pub const Executor = struct {
             // properly sorted", errhalt-killing every later step of a valid
             // program. The GROUP arm below stays BYTE-EXACT: fold-equal
             // neighbours (A vs a) pass the verify yet form separate BY groups.
-            if (sd.prev_by) |pb| if (self.cmpBy(tup, pb, io.global_sortseq_linguistic) == .lt) {
+            if (sd.prev_by) |pb| if (self.cmpBy(tup, pb, sd.by_ling) == .lt) {
                 self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
                 return false;
             };
@@ -3922,6 +3931,7 @@ pub const Executor = struct {
             .dss = dss,
             .by_cols = by_cols,
             .by_len = by_len,
+            .by_ling = byVerifyLing(dss),
             .cur = try zeros(self.arena, dss.len),
             .group_start = try zeros(self.arena, dss.len),
             .group_count = try zeros(self.arena, dss.len),
@@ -3980,6 +3990,7 @@ pub const Executor = struct {
             .trans = trans.?,
             .m_by = m_by,
             .t_by = t_by,
+            .by_ling = byVerifyLing(&.{ master.?, trans.? }),
             .m_slots = try io.columnSlots(self.pdv, master.?),
             .t_slots = try io.columnSlots(self.pdv, trans.?),
             .in_m = in_m,
@@ -4020,7 +4031,7 @@ pub const Executor = struct {
         // means an unsorted source — fail loud, don't silently mis-apply
         // transactions (BUG-setbyunsorted). The verify folds under the sort's
         // collation, like the SET arm (BUG-sortseq-byverify-datastep).
-        if (u.prev_g) |pg| if (self.cmpBy(gkey, pg, io.global_sortseq_linguistic) == .lt) {
+        if (u.prev_g) |pg| if (self.cmpBy(gkey, pg, u.by_ling) == .lt) {
             self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
             return false;
         };
@@ -4411,6 +4422,7 @@ pub const Executor = struct {
             if (!io.globalObsActive()) return self.stampPhys(try self.finishResolve(ds, &.{}, where_first, srcobs), ds.rowCount());
             const copy = try self.arena.create(Dataset);
             copy.* = Dataset.init(self.arena, ds.name);
+            copy.sortseq_linguistic = ds.sortseq_linguistic;
             try copy.columns.appendSlice(self.arena, ds.columns.items);
             try copy.rows.appendSlice(self.arena, ds.rows.items);
             try io.applyDatasetOptionsObs(self.arena, copy, &.{}, self.diags, true, where_first, srcobs, &.{}); // INPUT
@@ -4420,6 +4432,7 @@ pub const Executor = struct {
         const opts = ref0.opts;
         const copy = try self.arena.create(Dataset);
         copy.* = Dataset.init(self.arena, src.name);
+        copy.sortseq_linguistic = src.sortseq_linguistic;
         try copy.columns.appendSlice(self.arena, src.columns.items);
         try copy.rows.appendSlice(self.arena, src.rows.items);
         const toks = self.lexOpts(opts) catch |e| return if (e == error.OutOfMemory) error.OutOfMemory else copy;
@@ -4632,7 +4645,7 @@ pub const Executor = struct {
             // rows (which `if a and b` then filters away). Fail loud, don't truncate
             // (BUG-mergeunsorted / CLIN-failloud). The verify folds under the
             // sort's collation, like the SET arm (BUG-sortseq-byverify-datastep).
-            if (md.prev_g) |pg| if (self.cmpBy(g, pg, io.global_sortseq_linguistic) == .lt) {
+            if (md.prev_g) |pg| if (self.cmpBy(g, pg, md.by_ling) == .lt) {
                 self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
                 return false;
             };
@@ -6454,18 +6467,25 @@ pub const Executor = struct {
                 try self.hashLoadDataset(h);
             }
         } else if (eqi(op.method, "add")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashAdd(h, op.args);
         } else if (eqi(op.method, "replace")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashReplace(h, op.args);
         } else if (eqi(op.method, "find")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashFind(h, op.args);
         } else if (eqi(op.method, "find_next")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashFindNext(h);
         } else if (eqi(op.method, "check")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashCheck(h, op.args);
         } else if (eqi(op.method, "remove")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashRemove(h, op.args);
         } else if (eqi(op.method, "output")) {
+            try self.hashRequireDefineDone(h, op.method);
             rc = try self.hashOutput(h, op.args);
         } else if (eqi(op.method, "first")) {
             rc = try self.hashIterMove(h, .first);
@@ -6479,6 +6499,7 @@ pub const Executor = struct {
             // SAS CLEAR (GAP-hashitermethods): remove every item; the object
             // stays usable. A bound hiter's cursor is now out of range, so its
             // next move reports exhaustion — coherent, never a stale read.
+            try self.hashRequireDefineDone(h, op.method);
             h.entries.clearRetainingCapacity();
             h.index.clearRetainingCapacity();
             h.md_key = null; // find_next after clear must not walk stale records
@@ -6502,6 +6523,7 @@ pub const Executor = struct {
             // Language Reference: Concepts p.623 hash ATTRIBUTES — reachable parenless (`n = h.num_items;`)
             // or as `h.num_items()`; both land here with an empty arg list
             // (GAP-hashnumitems).
+            try self.hashRequireDefineDone(h, op.method);
             if (op.args.len != 0) {
                 return self.diags.fail(error.ExecError, 0, "hash attribute {s} takes no arguments", .{op.method});
             } else if (eqi(op.method, "num_items")) {
@@ -6520,6 +6542,11 @@ pub const Executor = struct {
             return self.diags.fail(error.ExecError, 0, "hash method {s}() is not supported yet", .{op.method});
         }
         if (op.target) |tgt| try self.pdv.set(tgt, .{ .num = rc });
+    }
+
+    fn hashRequireDefineDone(self: *Executor, h: *const HashObject, method: []const u8) Error!void {
+        if (!h.done)
+            return self.diags.fail(error.ExecError, 0, "hash object {s}: defineDone() must be called before {s}()", .{ h.name, method });
     }
 
     /// Approximate per-item byte size for `h.item_size` (Language Reference: Concepts p.623): the sum
@@ -8131,8 +8158,9 @@ pub const Executor = struct {
     /// inverted, so "smallest first" is exactly the SAS group order for mixed
     /// ascending/descending keys (GAP-batch-qa107). Equality is unaffected.
     /// `ling` folds the character arm to SORTSEQ=LINGUISTIC dictionary order.
-    /// ONLY the three sortedness verifies pass the system flag
-    /// (io.global_sortseq_linguistic, BUG-sortseq-byverify-datastep): every
+    /// ONLY the three sortedness verifies pass the dataset/system collation flag
+    /// (Dataset.sortseq_linguistic fallback to io.global_sortseq_linguistic,
+    /// BUG-sortseq-byverify-datastep): every
     /// other caller — the interleave/group picks and the group-change checks —
     /// passes `false` and stays BYTE-EXACT, so fold-equal neighbours (A vs a)
     /// pass the order check yet remain separate BY groups. The same
@@ -12775,6 +12803,31 @@ test "hash attributes: num_items live count, item_size width sum, unknown/args f
     try t.expect(f.pdv.get("y") == null);
 }
 
+test "NOTE-hashpredefinedone: add/find before defineDone fail loud before execution" {
+    inline for (.{ "add", "find" }) |method| {
+        var f = fixture();
+        defer f.deinit();
+        f.prime();
+        var ex = f.exec();
+
+        _ = try f.pdv.declare("k", .num);
+        _ = try f.pdv.declare("v", .num);
+        try ex.hashDeclare(.{ .name = "h", .args = &.{} });
+        const key_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
+        const data_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "v" }) }};
+        try ex.hashOp(.{ .target = null, .obj = "h", .method = "defineKey", .args = &key_def });
+        try ex.hashOp(.{ .target = null, .obj = "h", .method = "defineData", .args = &data_def });
+
+        const args = [_]ast.HashArg{ .{ .name = "key", .value = f.num(1) }, .{ .name = "data", .value = f.num(10) } };
+        const call_args = if (eqi(method, "add")) args[0..] else args[0..1];
+        try t.expectError(error.ExecError, ex.hashOp(.{ .target = "rc", .obj = "h", .method = method, .args = call_args }));
+        try t.expect(diagsHave(&f.diags, "defineDone() must be called before"));
+        try t.expect(std.mem.indexOf(u8, f.diags.list.items[f.diags.count() - 1].message, method) != null);
+        try t.expect(f.pdv.get("rc") == null); // no fabricated rc to branch on
+        try t.expectEqual(@as(usize, 0), ex.findHash("h").?.entries.items.len); // add did not mutate
+    }
+}
+
 test "unsupported hash methods fail loud AND HALT the step, fabricating no rc; suminc: tag loud (GAP-hashmethods + BUG-hashexprdeferredhalt)" {
     var f = fixture();
     defer f.deinit();
@@ -13669,15 +13722,16 @@ test "NOTE-hashofhash: a hash-valued data item (nested hash) fails loud instead 
 // a `.sas` file may hold exactly one error (BUG-errhalt), and each of these
 // two conditions is caught by a DIFFERENT one of the two guard sites, so each
 // stays green when the other site is reverted.
-test "BUG-hashofhashexplicit: the EXPLICIT key:/data: spelling reaches the nested-hash guard (collectArgs backstop)" {
+test "NOTE-hashpredefinedone: keyed methods fail before the collectArgs backstop when defineDone was omitted" {
     var f = fixture();
     defer f.deinit();
     f.prime();
     var x = f.exec();
 
-    // No defineDone — so the define-time guard never runs and collectArgs is
-    // the only thing standing between an explicit `data:` tag and a silently
-    // stored missing. Pre-fix this returned rc 0 and appended an entry.
+    // No defineDone — the keyed operation is malformed before its key:/data:
+    // payload is meaningful. Pre-fix this returned rc 0 and appended an entry
+    // (then later fixes made collectArgs a backstop for one narrow payload
+    // class). Now the object lifecycle error wins before execution.
     const key_arg = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
     const data_arg = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "inner" }) }};
     const explicit = [_]ast.HashArg{
@@ -13694,12 +13748,7 @@ test "BUG-hashofhashexplicit: the EXPLICIT key:/data: spelling reaches the neste
 
     var out = Dataset.init(f.a(), "out");
     x.run(&prog, &out) catch {};
-    var found = false;
-    for (f.diags.list.items) |d|
-        if (d.severity == .err and std.mem.indexOf(u8, d.message, "hash-valued data items (nested hash) are not supported") != null) {
-            found = true;
-        };
-    try t.expect(found);
+    try t.expect(diagsHave(&f.diags, "defineDone() must be called before add()"));
     // The DIAGNOSTIC IS HALF THE ASSERTION. What made this the worst class is
     // the fabricated value, so pin that nothing was stored.
     try t.expectEqual(@as(usize, 0), x.findHash("h").?.entries.items.len);
