@@ -10067,6 +10067,25 @@ test "CALL MISSING sets numeric args to . and char args to blank, leaving others
     try t.expect(diagsHave(&f.diags, "CALL nosuchroutine() is not supported"));
 }
 
+test "GAP-callvlabel: real SAS rejects CALL VLABEL as an unknown subroutine" {
+    // Real SAS 9.4: ERROR 251-185, "The subroutine VLABEL is unknown".
+    // CALL VNAME is valid, but VLABEL exists only as a function.
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    diag.resetGap();
+    var x = f.exec();
+    try f.pdv.set("age", .{ .num = 42 });
+    _ = try f.pdv.define("out", .char);
+
+    const args = [_]ast.Expr{ .{ .variable = "age" }, .{ .variable = "out" } };
+    const stmt: ast.Stmt = .{ .call_ = .{ .name = "VLABEL", .args = &args } };
+    try t.expectError(error.ExecError, x.runStmt(&stmt));
+    try t.expect(diagsHave(&f.diags, "CALL VLABEL() is not supported"));
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), f.diags.hasErrors()));
+    try t.expectEqualStrings("", f.pdv.get("out").?.str);
+}
+
 test "bare output fans out to every DATA-named dataset; named output routes single (BUG-multioutput)" {
     var f = fixture();
     defer f.deinit();
