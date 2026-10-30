@@ -15,9 +15,10 @@
    Reference: Concepts calls it "the CONTAINS (?) operator" for the DATA-step
    WHERE). Before GAP-sqlcontainsquestion, `?` lexed as a token the SQL
    expression path could not consume; now it desugars to the same row set as
-   spelled-out CONTAINS.
+   spelled-out CONTAINS. The final `@` is a lexer token the SQL expression
+   parser cannot consume; refusing it pins the guard.
 
-   Invented data (D-011). */
+   Invented data (D-011). expect-rc: 2 */
 
 data a;
   do x = 1, 5, 9; output; end;
@@ -40,4 +41,8 @@ proc sql;
   /* alias: must match the positive control above. */
   title 'contains_alias';
   select a.x, b.nm from a join b on b.nm ? 'ab';
+quit;
+
+proc sql;
+  select a.x, b.nm from a join b on b.nm @ 'ab';
 quit;

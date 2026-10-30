@@ -10163,7 +10163,7 @@ test "PROC SQL: a JOIN ON desugars its SQL predicates (BUG-sqlonpredicates GH#18
     try t.expectEqualStrings("abc", lib.find("h").?.row(0)[0].str);
 }
 
-test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates (BUG-sqlonpredicates GH#18)" {
+test "PROC SQL: WHERE, HAVING, and ON tails fail loud, never truncate (NOTE-tailguardpins)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -10195,6 +10195,33 @@ test "PROC SQL: an ON tail the parser cannot consume fails loud, never truncates
     try runSql(a, &lib, &dc, "proc sql; create table rc as select a.x from a join b on b.nm contains 'ab'; quit;");
     try t.expect(!dc.hasErrors());
     try t.expectEqual(@as(usize, 3), lib.find("rc").?.rowCount());
+
+    // `@` is lexed but cannot continue an SQL expression. The whole-span
+    // guard must refuse it, and no table with a truncated predicate may be created.
+    g_test_last_unsup = "";
+    var dt = diag.Diagnostics.init(a);
+    runSql(a, &lib, &dt, "proc sql; create table rt as select a.x from a join b on b.nm @ 'ab'; quit;") catch |e| switch (e) {
+        error.OutOfMemory => return e,
+        else => {},
+    };
+    try t.expect(std.mem.indexOf(u8, g_test_last_unsup, "JOIN ON: unconsumed token `at`") != null);
+    try t.expect(lib.find("rt") == null);
+
+    for ([_]struct { clause: []const u8, label: []const u8, table: []const u8 }{
+        .{ .clause = "where b.nm @ 'ab'", .label = "WHERE", .table = "rw" },
+        .{ .clause = "having b.nm @ 'ab'", .label = "HAVING", .table = "rh" },
+    }) |c| {
+        g_test_last_unsup = "";
+        var d = diag.Diagnostics.init(a);
+        const src = try std.fmt.allocPrint(a, "proc sql; create table {s} as select b.nm from b {s}; quit;", .{ c.table, c.clause });
+        runSql(a, &lib, &d, src) catch |e| switch (e) {
+            error.OutOfMemory => return e,
+            else => {},
+        };
+        const named = try std.fmt.allocPrint(a, "{s}: unconsumed token `at`", .{c.label});
+        try t.expect(std.mem.indexOf(u8, g_test_last_unsup, named) != null);
+        try t.expect(lib.find(c.table) == null);
+    }
 }
 
 test "PROC SQL: the equi-join hash fast path survives the ON desugar (BUG-sqlonpredicates GH#18)" {
