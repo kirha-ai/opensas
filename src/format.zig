@@ -1946,7 +1946,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "mmyyp")) return renderYymm(arena, valToNum(v), spec.w, '.', true);
     if (eqi(spec.name, "mmyys")) return renderYymm(arena, valToNum(v), spec.w, '/', true);
     if (eqi(spec.name, "time"))
-        return renderTime(arena, valToNum(v), spec.w, spec.d, false);
+        return renderTime(arena, valToNum(v), spec.w, spec.d, false, false);
     // WRITE-side date/time cluster (BUG-dateformats) — all fell through to the
     // numeric renderer and printed the raw SAS number.
     if (eqi(spec.name, "monyy")) return renderMonyy(arena, valToNum(v), spec.w);
@@ -1986,7 +1986,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "e8601tm")) {
         checkWidthRange(spec_text, spec.w, 8, 15);
         checkDecimalRange(spec_text, spec.d, 6);
-        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, spec.d, true); // ISO: zero-pad hh
+        return renderTime(arena, valToNum(v), if (spec.w == 0) 8 else spec.w, spec.d, true, true); // ISO: zero-pad hh
     }
     if (eqi(spec.name, "e8601dn")) {
         checkWidthRange(spec_text, spec.w, 10, 10);
@@ -2033,7 +2033,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "words")) return renderWords(arena, valToNum(v), spec.w);
     // NL* en_US approximations, same house pattern as NLDATE→WORDDATE above.
     if (eqi(spec.name, "nldatm")) return renderNldatm(arena, valToNum(v), spec.w);
-    if (eqi(spec.name, "nltime")) return renderTime(arena, valToNum(v), spec.w, 0, false);
+    if (eqi(spec.name, "nltime")) return renderTime(arena, valToNum(v), spec.w, 0, false, false);
     // ponytail: d==0 (unspecified or explicit .0 — indistinguishable) → 2
     // decimals, the en_US currency default; use DOLLARw.0 for 0 decimals.
     if (eqi(spec.name, "nlmny")) return renderNum(arena, valToNum(v), spec.w, if (spec.d == 0) 2 else spec.d, true, true, false);
@@ -2923,16 +2923,25 @@ fn renderDatePart(arena: std.mem.Allocator, x: f64, w: usize, part: DatePart) Er
 /// with a 1-digit hour, `h:mm:ss` (7 chars) fits TIME7 and its seconds render, where
 /// a zero-padded `01:01:01` (8) would overflow and drop them. Capped at 2 digits so a
 /// 2-/3-digit hour keeps the historic width-5 (mm) / width-8 (ss) thresholds exactly.
-fn renderTime(arena: std.mem.Allocator, x: f64, w: usize, d: usize, zero_pad_hour: bool) Error![]const u8 {
+fn decimalDigits(n: u64) usize {
+    var digits: usize = 1;
+    var value = n;
+    while (value >= 10) : (value /= 10) digits += 1;
+    return digits;
+}
+
+fn renderTime(arena: std.mem.Allocator, x: f64, w: usize, d: usize, zero_pad_hour: bool, fit_fraction: bool) Error![]const u8 {
     if (std.math.isNan(x)) return justRight(arena, ".", w);
     if (!(x > -1.0e11 and x < 1.0e11)) // guard @intFromFloat; covers every real time
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
     const ax = @abs(x);
     var total: i64 = @intFromFloat(@floor(ax));
     // ponytail: fraction capped at 6 digits (µs) — keeps pow10 in exact-f64 range.
-    const dd: usize = @min(d, 6);
+    const hour_digits = if (zero_pad_hour) @max(2, decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))))) else decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))));
+    const base_len = @as(usize, @intFromBool(x < 0)) + hour_digits + 6;
+    const dd: usize = if (fit_fraction) @min(@min(d, 6), w -| (base_len + 1)) else @min(d, 6);
     const p10 = pow10f(@intCast(dd));
-    var frac: i64 = @intFromFloat(@round((ax - @floor(ax)) * p10));
+    var frac: i64 = if (fit_fraction and dd == 0) 0 else @intFromFloat(@round((ax - @floor(ax)) * p10));
     if (@as(f64, @floatFromInt(frac)) >= p10) { // rounding carried into the seconds
         total += 1;
         frac = 0;
@@ -3077,8 +3086,8 @@ fn renderDatetime(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]
 /// `:ss` (3 columns) can't partially render (the renderDatetime ladder's rule),
 /// so 17-18 interpolate the same seconds-less body, right-justified into the
 /// wider field (1-2 leading blanks) — real SAS unprobed for 17/18.
-/// `.d` fractional seconds (Range 0-6, checked at dispatch) render when they
-/// fit, matching p.201's `e8601dt25.3` example.
+/// `.d` fractional seconds (Range 0-6, checked at dispatch) use as many
+/// digits as fit after the decimal point, matching the runtime width probes.
 fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 19 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
@@ -3086,7 +3095,7 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
     const fx = @floor(x);
     var total: i64 = @intFromFloat(fx);
-    const dd: usize = @min(d, 6);
+    const dd: usize = @min(@min(d, 6), width -| 20);
     const p10 = pow10f(@intCast(dd));
     var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
     if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
@@ -3109,7 +3118,7 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
     if (width >= 19) { // seconds only when the whole `:ss` fits (16-18 omit them)
         try body.append(arena, ':');
         try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
-        if (dd > 0 and body.items.len + 1 + dd <= width) {
+        if (dd > 0) {
             try body.append(arena, '.');
             try appendPadded(arena, &body, @intCast(frac), dd);
         }
@@ -3209,7 +3218,7 @@ fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
     const fx = @floor(x);
     var total: i64 = @intFromFloat(fx);
-    const dd: usize = @min(d, 6);
+    const dd: usize = @min(@min(d, 6), width -| 15);
     const p10 = pow10f(@intCast(dd));
     var frac: i64 = if (dd > 0) @intFromFloat(@round((x - fx) * p10)) else 0;
     if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
@@ -3227,7 +3236,7 @@ fn renderB8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
     try appendPadded(arena, &body, @intCast(@divFloor(secs, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
-    if (dd > 0 and body.items.len + dd <= width) try appendPadded(arena, &body, @intCast(frac), dd);
+    if (dd > 0) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
@@ -3242,7 +3251,8 @@ fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
     const ax = @abs(x);
     const fx = @floor(ax);
     var total: i64 = @intFromFloat(fx);
-    const dd: usize = @min(d, 6);
+    const base_len = @as(usize, @intFromBool(x < 0)) + @max(2, decimalDigits(@as(u64, @intCast(@divFloor(total, 3600))))) + 4;
+    const dd: usize = @min(@min(d, 6), width -| base_len);
     const p10 = pow10f(@intCast(dd));
     var frac: i64 = if (dd > 0) @intFromFloat(@round((ax - fx) * p10)) else 0;
     if (dd > 0 and @as(f64, @floatFromInt(frac)) >= p10) {
@@ -3254,7 +3264,7 @@ fn renderB8601Tm(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
     try appendPadded(arena, &body, @intCast(@divFloor(total, 3600)), 2);
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(total, 3600), 60)), 2);
     try appendPadded(arena, &body, @intCast(@mod(total, 60)), 2);
-    if (dd > 0 and body.items.len + dd <= width) try appendPadded(arena, &body, @intCast(frac), dd);
+    if (dd > 0) try appendPadded(arena, &body, @intCast(frac), dd);
     return justRight(arena, body.items, width);
 }
 
@@ -3570,7 +3580,7 @@ fn renderTod(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const
     if (std.math.isNan(x)) return justRight(arena, ".", w);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), w);
-    return renderTime(arena, @mod(x, 86400.0), w, d, true);
+    return renderTime(arena, @mod(x, 86400.0), w, d, true, false);
 }
 
 /// HHMMw.d — a SAS time (seconds since midnight) as `hh:mm` (no seconds). Hour is
@@ -4700,17 +4710,17 @@ test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
 
     try expectFmt("  2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt25.3");
     try expectFmt("2018-09-15T14:52:22.125", .{ .num = dt }, "e8601dt23.3");
-    try expectFmt("   2018-09-15T14:52:22", .{ .num = dt }, "e8601dt22.3"); // .d does not force overflow
+    try expectFmt("2018-09-15T14:52:22.13", .{ .num = dt }, "e8601dt22.3");
     try expectFmt("2018-09-15T14:52:22.125000", .{ .num = dt }, "e8601dt26.6");
     try expectFmt("14:52:22.125", .{ .num = tm }, "e8601tm12.3");
-    try expectFmt("   14:52:22", .{ .num = tm }, "e8601tm11.3");
+    try expectFmt("14:52:22.13", .{ .num = tm }, "e8601tm11.3");
 
     try expectFmt("    20180915T145222125", .{ .num = dt }, "b8601dt22.3");
     try expectFmt("20180915T145222125", .{ .num = dt }, "b8601dt18.3");
-    try expectFmt("  20180915T145222", .{ .num = dt }, "b8601dt17.3");
+    try expectFmt("20180915T14522213", .{ .num = dt }, "b8601dt17.3");
     try expectFmt(" 145222125", .{ .num = tm }, "b8601tm10.3");
     try expectFmt("145222125", .{ .num = tm }, "b8601tm9.3");
-    try expectFmt("  145222", .{ .num = tm }, "b8601tm8.3");
+    try expectFmt("14522213", .{ .num = tm }, "b8601tm8.3");
 
     // E8601DZ has a separate entry and no documented d parameter per this task;
     // leave its renderer and width ladder unchanged.
@@ -4729,6 +4739,22 @@ test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
         try t.expect(std.mem.indexOf(u8, g_test_last_err, "0-6") != null);
         g_fmt_error = false;
     }
+}
+
+test "BUG-8601fracfit: ISO DT/TM precision is limited by remaining width" {
+    const dt: f64 = 1852642342.125;
+    const tm: f64 = 53542.125;
+    try expectFmt("2018-09-15T14:52:22.1", .{ .num = dt }, "e8601dt21.3");
+    try expectFmt(" 2018-09-15T14:52:22", .{ .num = dt }, "e8601dt20.2");
+    try expectFmt("20180915T1452221", .{ .num = dt }, "b8601dt16.3");
+    try expectFmt("20180915T145222", .{ .num = dt }, "b8601dt15.3");
+    try expectFmt("14:52:22.1", .{ .num = tm }, "e8601tm10.2");
+    try expectFmt("14:52:22.125", .{ .num = tm }, "e8601tm12.4");
+    try expectFmt("14:52:22", .{ .num = tm }, "e8601tm8.3");
+    try expectFmt("1452221", .{ .num = tm }, "b8601tm7.3");
+    try expectFmt("145222", .{ .num = tm }, "b8601tm6.3");
+    try expectFmt("14:52:23.0", .{ .num = 53542.999 }, "e8601tm10.3");
+    try expectFmt("1452230", .{ .num = 53542.999 }, "b8601tm7.3");
 }
 
 test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
