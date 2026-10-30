@@ -590,7 +590,7 @@ pub fn parseSpec(text: []const u8) Spec {
     // then peel the final digits off as w (QA-e8601put: `E8601DT19.` is name
     // E8601DT + w 19; the old letters-only scan made it name "e" + w 8601 → the
     // Ew. scientific format, silent wrong output). Underscores are ALWAYS part
-    // of the name (CNTLIN codelists like `VISNUM_ALL_PERIOD.`, QA-svvisnum);
+    // of the name (CNTLIN codelists like `FMT_NAME_WITH_UNDERSCORES.`);
     // names ending in letters split exactly as before (`comma8.`, `date9.`).
     while (i < text.len and (std.ascii.isAlphanumeric(text[i]) or text[i] == '_')) i += 1;
     var name_end = i;
@@ -4440,9 +4440,9 @@ test "parseSpec: digit-carrying names split at the TRAILING digit run (QA-e8601p
     const e = parseSpec("e12.");
     try t.expectEqualStrings("e", e.name);
     try t.expectEqual(@as(usize, 12), e.w);
-    // underscore CNTLIN names keep the whole name, no width (QA-svvisnum)
-    const u = parseSpec("VISNUM_ALL_PERIOD.");
-    try t.expectEqualStrings("VISNUM_ALL_PERIOD", u.name);
+    // underscore CNTLIN names keep the whole name, no width.
+    const u = parseSpec("FMT_NAME_WITH_UNDERSCORES.");
+    try t.expectEqualStrings("FMT_NAME_WITH_UNDERSCORES", u.name);
     try t.expectEqual(@as(usize, 0), u.w);
     // plain w.d unchanged
     const p = parseSpec("8.2");
@@ -4825,7 +4825,7 @@ test "user-defined VALUE format decodes coded values (BUG-userformat)" {
     try std.testing.expectEqualStrings("High", try apply(a, .{ .str = "H" }, "$grp."));
     try std.testing.expectEqualStrings("Low", try apply(a, .{ .str = "L " }, "$grp.")); // trailing blank
     // a char VALUE resolves the char format WITHOUT the `$` too — the CNTLIN
-    // TYPE='C' codelist apply idiom `put(VISIT, VISNUM_ALL_PERIOD.)`
+    // TYPE='C' codelist apply idiom `put(CODE, FMT_NAME_WITH_UNDERSCORES.)`
     // (QA-charfmtnodollar); a $-less name on a NUM value must NOT match it.
     try std.testing.expectEqualStrings("High", try apply(a, .{ .str = "H" }, "grp."));
     try std.testing.expect(!std.mem.eql(u8, "High", try apply(a, .{ .num = 1 }, "grp.")));

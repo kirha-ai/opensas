@@ -1,17 +1,16 @@
-/* The exact SV VISNUM chain (QA-svpostfix): a permanent format built from a
-   CNTLIN= control dataset whose FMTNAME has underscores (VISNUM_ALL_PERIOD),
-   then resolved by name at apply time. Guards GAP-permformat (CNTLIN build) x
-   QA-svvisnum f93d388 (name parse not truncating at '_') together — the SV
-   codelist path, verified end-to-end. */
+/* A permanent format built from a CNTLIN= control dataset whose FMTNAME has
+   underscores (FMT_NAME_WITH_UNDERSCORES), then resolved by name at apply time.
+   Guards GAP-permformat (CNTLIN build) x underscore format-name parsing
+   together, verified end-to-end. */
 data ctl;
   length fmtname $32 label $20;
-  fmtname="VISNUM_ALL_PERIOD"; start=1; end=1; label="Screening"; output;
-  fmtname="VISNUM_ALL_PERIOD"; start=2; end=3; label="Treatment"; output;
+  fmtname="FMT_NAME_WITH_UNDERSCORES"; start=1; end=1; label="Screening"; output;
+  fmtname="FMT_NAME_WITH_UNDERSCORES"; start=2; end=3; label="Treatment"; output;
 run;
 proc format library=work cntlin=ctl; run;
 data sv;
   input visitnum;
-  vislbl = put(visitnum, VISNUM_ALL_PERIOD.);
+  vislbl = put(visitnum, FMT_NAME_WITH_UNDERSCORES.);
   datalines;
 1
 2
