@@ -3975,6 +3975,7 @@ pub fn readInformat(spec: []const u8, s: []const u8) Value {
     // BUG-percentinputfn: PERCENTw. must strip `%` and divide by 100 — readNumeric
     // does both; numFromSpec below only strips comma/dollar, so route percent here.
     if (sw(bare, "datetime") or sw(bare, "e8601dt") or sw(bare, "b8601dt") or
+        sw(bare, "b8601dn") or sw(bare, "b8601dz") or
         sw(bare, "e8601tm") or sw(bare, "b8601tm") or eqi(nm, "time") or eqi(nm, "hhmmss") or eqi(nm, "percent") or
         eqi(nm, "monyy") or eqi(nm, "yyq") or eqi(nm, "yyqc") or // MONYY/YYQ: read-side date informats
         eqi(nm, "julian") or // JULIANw.: readNumeric has the parser (BUG-julianinputfn)
