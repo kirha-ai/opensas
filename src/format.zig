@@ -1905,7 +1905,7 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     // so any output would be a guess (GAP-fmtwrite-unimpl) — and PDJULG/PDJULI
     // (packed-byte forms).
     if (eqi(spec.name, "b8601da")) {
-        checkWidthRange(spec_text, spec.w, 8, 32);
+        checkWidthRange(spec_text, spec.w, 8, 10);
         return renderYymmddX(arena, valToNum(v), if (spec.w == 0) 10 else spec.w, null);
     }
     if (eqi(spec.name, "b8601dt")) {
@@ -4535,7 +4535,8 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
         .{ .spec = "e8601dn12.", .range = "must be 10" },
         .{ .spec = "e8601tm7.", .range = "8-15" },
         .{ .spec = "e8601tm16.", .range = "8-15" },
-        .{ .spec = "b8601da7.", .range = "8-32" },
+        .{ .spec = "b8601da7.", .range = "8-10" },
+        .{ .spec = "b8601da11.", .range = "8-10" },
         .{ .spec = "b8601dt14.", .range = "15-26" },
         .{ .spec = "b8601dt27.", .range = "15-26" },
         .{ .spec = "b8601tm5.", .range = "6-15" },
