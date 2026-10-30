@@ -1974,12 +1974,13 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
         checkDecimalRange(spec_text, spec.d, 6);
         return renderE8601Dt(arena, valToNum(v), spec.w, spec.d);
     }
-    // GH#5a ISS-e8601dndz: E8601DZw. (Formats Reference p.204: Default 26,
+    // GH#5a ISS-e8601dndz: E8601DZw.d (Formats Reference p.204: Default 26,
     // Range 20-35 — loud outside) writes the zero-meridian datetime; the doc's
     // two notations form a width ladder rendered by renderE8601Dz below.
     if (eqi(spec.name, "e8601dz")) {
         checkWidthRange(spec_text, spec.w, 20, 35);
-        return renderE8601Dz(arena, valToNum(v), spec.w);
+        checkDecimalRange(spec_text, spec.d, 6);
+        return renderE8601Dz(arena, valToNum(v), spec.w, spec.d);
     }
     // E8601TMw. — ISO time hh:mm:ss (a time value); same body as TIME. E8601DNw. —
     // the DATE part of an ISO DATETIME as yyyy-mm-dd (datepart then E8601DA). GAP-timeformats.
@@ -3128,7 +3129,7 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
     return justRight(arena, body.items, width);
 }
 
-/// E8601DZw. — a SAS datetime as ISO 8601 extended with the zero-meridian
+/// E8601DZw.d — a SAS datetime as ISO 8601 extended with the zero-meridian
 /// offset appended (Formats Reference p.204: Default 26, Range 20-35 — checked
 /// loud at the dispatch site; catalog Alignment: Left is verified-wrong for
 /// PUT padding direction, D-025). The entry's two notations are a
@@ -3140,14 +3141,28 @@ fn renderE8601Dt(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]c
 /// by using the zero meridian offset value of +00:00"). Runtime oracle pins
 /// right-justification for both rungs: e8601dz26. has one leading blank before
 /// the 25-column `+00:00` body, and e8601dz22. has two before the 20-column `Z`
-/// body. ponytail: no `.d` — the entry defines no d parameter (unlike
-/// E8601DTw.d).
-fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
+/// body. With `.d`, the wide rung includes `.fff` before `+00:00`; if that
+/// cannot fit, the `Z` rung keeps as many fractional digits as fit.
+fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize, d: usize) Error![]const u8 {
     const width = if (w == 0) 26 else w;
     if (std.math.isNan(x)) return justRight(arena, ".", width);
     if (!(x > -3.0e12 and x < 3.0e12))
         return justRight(arena, try std.fmt.allocPrint(arena, "{d}", .{x}), width);
-    const total: i64 = @intFromFloat(@floor(x));
+    const fx = @floor(x);
+    const dd_full: usize = @min(d, 6);
+    const plus_body_len = 19 + (if (dd_full > 0) @as(usize, 1) + dd_full else 0) + 6;
+    const use_plus = width >= plus_body_len;
+    const frac_digits = if (use_plus) dd_full else @min(dd_full, width -| 21);
+    var total: i64 = @intFromFloat(fx);
+    var frac: i64 = 0;
+    if (frac_digits > 0) {
+        const p10 = pow10f(@intCast(frac_digits));
+        frac = @intFromFloat(@round((x - fx) * p10));
+        if (@as(f64, @floatFromInt(frac)) >= p10) {
+            total += 1;
+            frac = 0;
+        }
+    }
     const day = @divFloor(total, 86400);
     const secs = total - day * 86400; // 0..86399
     const ymd = civilFromDays(day - unix_epoch_sas_day);
@@ -3163,7 +3178,11 @@ fn renderE8601Dz(arena: std.mem.Allocator, x: f64, w: usize) Error![]const u8 {
     try appendPadded(arena, &body, @intCast(@divFloor(@mod(secs, 3600), 60)), 2);
     try body.append(arena, ':');
     try appendPadded(arena, &body, @intCast(@mod(secs, 60)), 2);
-    if (width >= 25) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
+    if (frac_digits > 0) {
+        try body.append(arena, '.');
+        try appendPadded(arena, &body, @intCast(frac), frac_digits);
+    }
+    if (use_plus) try body.appendSlice(arena, "+00:00") else try body.append(arena, 'Z');
     return justRight(arena, body.items, width);
 }
 
@@ -4704,7 +4723,7 @@ test "E8601DTw. stored value: w>19 leading blanks keep length() at w (GH#11 ISS-
 test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
     // 15SEP2018:14:52:22.125 = 1852642342.125; 14:52:22.125 = 53542.125.
     // SAS 9.4: extended E8601 formats use `.fff`, BASIC B8601 formats append
-    // packed fraction digits. E8601DZ is deliberately untouched by this ticket.
+    // packed fraction digits. E8601DZ is tested separately below.
     const dt: f64 = 1852642342.125;
     const tm: f64 = 53542.125;
 
@@ -4722,9 +4741,7 @@ test "BUG-8601dparam: ISO DT/TM write formats render fractional seconds" {
     try expectFmt("145222125", .{ .num = tm }, "b8601tm9.3");
     try expectFmt("14522213", .{ .num = tm }, "b8601tm8.3");
 
-    // E8601DZ has a separate entry and no documented d parameter per this task;
-    // leave its renderer and width ladder unchanged.
-    try expectFmt("     2018-09-15T14:52:22+00:00", .{ .num = dt }, "e8601dz30.3");
+    try expectFmt(" 2018-09-15T14:52:22.125+00:00", .{ .num = dt }, "e8601dz30.3");
 
     var arena = std.heap.ArenaAllocator.init(t.allocator);
     defer arena.deinit();
@@ -4755,6 +4772,23 @@ test "BUG-8601fracfit: ISO DT/TM precision is limited by remaining width" {
     try expectFmt("145222", .{ .num = tm }, "b8601tm6.3");
     try expectFmt("14:52:23.0", .{ .num = 53542.999 }, "e8601tm10.3");
     try expectFmt("1452230", .{ .num = 53542.999 }, "b8601tm7.3");
+}
+
+test "BUG-8601dzfrac: E8601DZ keeps fractional seconds on both offset rungs" {
+    const dt: f64 = 1852642342.125;
+    try expectFmt(" 2018-09-15T14:52:22.125+00:00", .{ .num = dt }, "e8601dz30.3");
+    try expectFmt("  2018-09-15T14:52:22.125Z", .{ .num = dt }, "e8601dz26.3");
+    try expectFmt(" 2018-09-15T14:52:22+00:00", .{ .num = dt }, "e8601dz26.");
+
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    g_fmt_error = false;
+    g_nofmterr = false;
+    g_test_last_err = "";
+    _ = try apply(arena.allocator(), .{ .num = dt }, "e8601dz30.7");
+    try t.expect(formatErrored());
+    try t.expect(std.mem.indexOf(u8, g_test_last_err, "0-6") != null);
+    g_fmt_error = false;
 }
 
 test "E8601DTw. width outside 16-26 fails LOUD (GH#2, SAS 29-185)" {
