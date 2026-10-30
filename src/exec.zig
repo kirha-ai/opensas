@@ -550,8 +550,8 @@ const SetState = struct {
     slots: []const []usize = &.{}, // per-source column→PDV-slot maps for loadRow (PERF-loadrowdual)
 };
 
-/// `update master trans; by k;` input. Both sources are sorted by the BY key,
-/// unique in the master. One output row per master BY group: the master values
+/// `update master trans; by k;` input. Both sources are sorted by the BY key.
+/// One output row per master observation: the master values
 /// with each matching transaction obs applied in order (a non-missing transaction
 /// value overwrites; a missing one keeps master). A transaction key absent from
 /// the master is added as a new obs; a master key with no transaction passes
@@ -564,6 +564,7 @@ const UpdateState = struct {
     mi: usize = 0, // master row cursor
     ti: usize = 0, // transaction row cursor
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-setbyunsorted)
+    duplicate_master: bool = false, // current master row repeats the prior BY key
     by_ling: bool = false, // sortedness verify collation carried from PROC SORT (else current system default)
     m_slots: []const usize = &.{}, // master's column→PDV-slot map for loadRow (PERF-loadrowdual)
     t_slots: []const usize = &.{}, // transaction's, for the per-read reset (BUG-prefixmergewipe)
@@ -1272,6 +1273,10 @@ pub const Executor = struct {
                 try self.pdv.set("_error_", .{ .num = 0 });
                 self.obs_handled = false; // MODIFY REPLACE/REMOVE reset (FEAT-datamodify-rest)
             }
+            // UPDATE detects duplicate master keys during loadNext, before the
+            // per-iteration _ERROR_ reset above. SAS flags each extra master row.
+            if (driver == .update and driver.update.duplicate_master)
+                try self.pdv.set("_error_", .{ .num = 1 });
             // `_IORC_` (BUG-modifybynomatch / BUG-modifybymasterdriven): MODIFY
             // return-code automatic — 0 (_SOK) on a matched read, _DSENMR
             // (1230015) when modifyNext flagged this obs as a transaction with
@@ -4035,6 +4040,9 @@ pub const Executor = struct {
             self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
             return false;
         };
+        u.duplicate_master = use_master and u.prev_g != null and self.cmpBy(gkey, u.prev_g.?, u.by_ling) == .eq;
+        if (u.duplicate_master)
+            try self.diags.warn(0, "The MASTER data set contains more than one observation for a BY group.", .{});
         // first.<by k> turns on from the level where this group's key first
         // differs from the previous group's (BUG-updatefirstlast, as mergeNext).
         const first_level = if (u.prev_g) |pg| changeLevel(gkey, pg) else 0;
@@ -12075,6 +12083,50 @@ test "UPDATE applies transaction rows to master by BY key (BUG-updatebroken)" {
     try t.expectEqual(@as(f64, 300), out.row(2)[yi].num); // missing trans y kept master 300
     try t.expectEqual(@as(f64, 40), out.row(3)[xi].num); // new key
     try t.expectEqual(@as(f64, 400), out.row(3)[yi].num);
+}
+
+test "NOTE-updatedupmaster: warn for each extra master BY row and set _ERROR_" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    const master = f.newDs("master");
+    _ = try master.addColumn("id", .num);
+    _ = try master.addColumn("v", .num);
+    for ([_][2]f64{ .{ 1, 10 }, .{ 2, 20 }, .{ 2, 21 }, .{ 2, 22 }, .{ 3, 30 } }) |row|
+        try master.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] } });
+    try f.lib.put("master", master);
+    const trans = f.newDs("trans");
+    _ = try trans.addColumn("id", .num);
+    _ = try trans.addColumn("v", .num);
+    try trans.appendRow(&.{ .{ .num = 2 }, .{ .num = 99 } });
+    try f.lib.put("trans", trans);
+
+    const up_names = [_][]const u8{ "master", "trans" };
+    const by_names = [_][]const u8{"id"};
+    const prog = [_]ast.Stmt{
+        .{ .update = &up_names },
+        .{ .by = &by_names },
+        .{ .assign = .{ .target = "flag", .value = f.vbl("_error_") } },
+    };
+    var out = Dataset.init(f.a(), "out");
+    try x.run(&prog, &out);
+
+    try t.expectEqual(@as(usize, 5), out.rowCount());
+    const vi = out.indexOf("v").?;
+    const fi = out.indexOf("flag").?;
+    for ([_]f64{ 10, 99, 21, 22, 30 }, 0..) |want, i|
+        try t.expectEqual(want, out.row(i)[vi].num);
+    for ([_]f64{ 0, 0, 1, 1, 0 }, 0..) |want, i|
+        try t.expectEqual(want, out.row(i)[fi].num);
+    var warnings: usize = 0;
+    for (f.diags.list.items) |d| if (d.severity == .warning) {
+        try t.expectEqualStrings("The MASTER data set contains more than one observation for a BY group.", d.message);
+        warnings += 1;
+    };
+    try t.expectEqual(@as(usize, 2), warnings);
+    try t.expect(!f.diags.hasErrors());
 }
 
 test "MODIFY-BY no-match: ERROR + _IORC_=_DSENMR, unmatched row NOT fabricated (BUG-modifybynomatch)" {
