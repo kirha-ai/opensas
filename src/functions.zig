@@ -3968,9 +3968,10 @@ pub fn readInformat(spec: []const u8, s: []const u8) Value {
     const sw = std.ascii.startsWithIgnoreCase;
     // ISS-e8601dainf: ISO-8601 DATE informats (extended `e8601da`, basic `b8601da`)
     // read yyyy-mm-dd / yyyymmdd → a SAS day number. Digit-bearing names, so match
-    // the raw spec (informatName stops at "e"). B8601DA routes through
-    // readNumeric so its omitted month/day defaults match the statement path.
-    if (sw(bare, "e8601da")) return dateFromYMD(s);
+    // the raw spec (informatName stops at "e"). Route through readNumeric so
+    // E8601DA keeps its extended-only oracle and B8601DA keeps its omitted
+    // month/day defaults on both the function and statement paths.
+    if (sw(bare, "e8601da")) return format.readNumeric(spec, s);
     if (sw(bare, "b8601da")) return format.readNumeric(spec, s);
     // BUG-percentinputfn: PERCENTw. must strip `%` and divide by 100 — readNumeric
     // does both; numFromSpec below only strips comma/dollar, so route percent here.
