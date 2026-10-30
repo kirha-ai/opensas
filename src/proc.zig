@@ -157,6 +157,7 @@ pub fn procInputObs(arena: std.mem.Allocator, ds: *Dataset, toks: []const Token,
 fn dupDataset(arena: std.mem.Allocator, src: *const Dataset) !*Dataset {
     const ds = try arena.create(Dataset);
     ds.* = Dataset.init(arena, src.name);
+    ds.sortseq_linguistic = src.sortseq_linguistic;
     for (src.columns.items) |c| try ds.columns.append(arena, c);
     for (src.rows.items) |r| try ds.rows.append(arena, r);
     return ds;
@@ -379,6 +380,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
     const target = if (out_name != null and !eqi(out_name.?, src.name)) blk: {
         const o = try arena.create(Dataset);
         o.* = Dataset.init(arena, out_name.?);
+        o.sortseq_linguistic = src.sortseq_linguistic;
         for (src.columns.items) |c| try o.columns.append(arena, c); // full struct: keep format/informat/label (GH#49)
         try o.rows.appendSlice(arena, src.rows.items);
         if (!out_null) try lib.put(out_name.?, o);
@@ -488,6 +490,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
         unsupported("PROC SORT: empty BY list");
         return;
     }
+    target.sortseq_linguistic = linguistic;
 
     // BY validated. A 0-observation (with-schema) input sorts to itself — nothing
     // to reorder — so return before the no-op sort/dedup (NOTE-sort0obsvalidation).
@@ -1560,7 +1563,7 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
         while (s < rows.len) {
             var e = s + 1;
             while (e < rows.len and byEqual(rows[s], rows[e], obcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc)) |k|
+            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
             s = e;
         }
@@ -2194,9 +2197,10 @@ fn byLess(l: []const Value, r: []const Value, bcols: []const usize) bool {
 /// sorted descending BY THAT VARIABLE, so the check flips per key).
 ///
 /// BUG-sortseq-byverify: the comparison runs under the SAME collation the
-/// sort used — `options sortseq=linguistic;` (io.global_sortseq_linguistic,
-/// the same seed runSort reads) folds case via cmpColl — because the data the
-/// user presents IS linguistically ordered (apple < Banana < Zebra; A a b B c
+/// sort used — the PROC SORT target records SORTSEQ=LINGUISTIC (or falls back
+/// to the current system default when no recorded sort exists), then this folds
+/// case via cmpColl — because the data the user presents IS linguistically ordered
+/// (apple < Banana < Zebra; A a b B c
 /// with the mixed-case pairs fold-equal). Byte-comparing here rejected that
 /// valid order as "not sorted in ascending sequence" at rc 1 — a valid
 /// program killed, and BUG-errhalt then skipped every later step (Language
@@ -2207,8 +2211,7 @@ fn byLess(l: []const Value, r: []const Value, bcols: []const usize) bool {
 /// grouping stays byte-exact (byEqual is untouched), so the groups stay
 /// separate; only the ORDER check folds. The DESCENDING inversion is
 /// orthogonal and applies unchanged to the folded comparison.
-fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize, descs: []const bool) ?usize {
-    const ling = io.global_sortseq_linguistic; // BUG-sortseq-byverify: verify under the sort's collation
+fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize, descs: []const bool, ling: bool) ?usize {
     for (bcols, 0..) |ci, k| switch (cmpColl(nxt[ci], cur[ci], ling)) {
         .lt => return if (k < descs.len and descs[k]) null else k,
         .gt => return if (k < descs.len and descs[k]) k else null,
@@ -4280,7 +4283,7 @@ pub fn runTranspose(cx: ProcCtx, toks: []const Token) diag.Error!void {
             // ERRORs like SAS's SET/BY guard (main.zig:1713) instead of emitting
             // a duplicate/wrong BY group at exit 0. Per-key under BY DESCENDING
             // (GAP-procbydescending); BY NOTSORTED drops the check.
-            if (e < rows.len and !pb.notsorted) if (byOrderViolation(rows[e], rows[s], byIdx.items, pb.desc)) |k|
+            if (e < rows.len and !pb.notsorted) if (byOrderViolation(rows[e], rows[s], byIdx.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
             try groups.append(arena, .{ s, e });
             s = e;
@@ -5829,7 +5832,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         while (s < rows.len) {
             var e = s + 1;
             while (e < rows.len and byEqual(rows[s], rows[e], obcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc)) |k|
+            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
             s = e;
         }
@@ -6522,7 +6525,7 @@ pub fn runRank(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         while (s < rows.len) {
             var e = s + 1;
             while (e < rows.len and byEqual(rows[s], rows[e], bcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], bcols.items, bdesc.items)) |k|
+            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], bcols.items, bdesc.items, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (bdesc.items[k]) "descending" else "ascending" });
             s = e;
         }
@@ -6714,7 +6717,7 @@ pub fn runStandard(cx: ProcCtx, toks: []const Token) diag.Error!void {
         while (s < rows.len) {
             var e = s + 1;
             while (e < rows.len and byEqual(rows[s], rows[e], bcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], bcols.items, pb.desc)) |k|
+            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], bcols.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
             s = e;
         }
@@ -8597,7 +8600,7 @@ pub fn runTabulate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
         while (s < rows.len) {
             var e = s + 1;
             while (e < rows.len and byEqual(rows[s], rows[e], obcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc)) |k|
+            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
                 return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
             s = e;
         }
@@ -12677,6 +12680,7 @@ test "SORTSEQ=LINGUISTIC sorts case-folded; unknown SORT option fails loud (BUG-
     try t.expectEqualStrings("apple", ds.row(0)[0].str);
     try t.expectEqualStrings("Banana", ds.row(1)[0].str);
     try t.expectEqualStrings("cherry", ds.row(2)[0].str);
+    try t.expectEqual(true, ds.sortseq_linguistic.?);
 
     // a bogus header option must not vanish silently — a typo is the user's
     // rc 1 via diags (BUG-proctypoexits2 split; the gap arm keeps g_test_last_unsup)
@@ -13545,6 +13549,16 @@ test "BUG-sortseq-byverify: the BY verify honors the linguistic collation the so
         try t.expectError(error.ParseError, runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks));
         try t.expect(std.mem.indexOf(u8, try diags.render(), "not sorted in ascending sequence") != null);
         try t.expectEqual(@as(usize, 0), out.items.len);
+    }
+
+    { // PROC-level SORTSEQ=LINGUISTIC is carried on the dataset even with the system option off.
+        ds.sortseq_linguistic = true;
+        var diags = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const toks = try lex.tokenize(a, "proc means data=ling mean; by g; var x; run;", &diags);
+        try runMeans(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, toks);
+        try t.expect(!diags.hasErrors());
+        ds.sortseq_linguistic = null;
     }
 
     { // the fix: same data, system option on — the verify uses the sort's
