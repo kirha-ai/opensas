@@ -647,14 +647,14 @@ fn readNumericImpl(spec_text: []const u8, field: []const u8, slice_w: bool) Valu
     // slices (readNumeric, slice_w) — the STATEMENT path hands the whole token
     // over for list/colon reads and column reads arrive pre-sliced to w, so a
     // re-slice there would corrupt the token (same rule as the plain w.d slice
-    // below). B8601DT keeps its own (undocumented-here) range and stays unsliced.
+    // below). B8601DT keeps its own read-side range (14-26) and slice behavior.
     if (startsWithCI(nm, "e8601dt")) {
         checkWidthRange(spec_text, spec.w, 16, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
         return parseDatetime(iso_fld, .iso);
     }
     if (startsWithCI(nm, "b8601dt")) {
-        checkWidthRange(spec_text, spec.w, 15, 26);
+        checkWidthRange(spec_text, spec.w, 14, 26);
         const iso_fld = if (slice_w and spec.w > 0 and spec.w < field.len) field[0..spec.w] else field;
         return parseDatetime(iso_fld, .iso);
     }
@@ -4555,8 +4555,8 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
         .{ .spec = "e8601da12.", .field = "2020-07-04", .range = "must be 10" },
         .{ .spec = "e8601tm7.", .field = "14:05:06", .range = "8-15" },
         .{ .spec = "e8601tm16.", .field = "14:05:06", .range = "8-15" },
-        .{ .spec = "b8601dt14.", .field = "20200704T140506", .range = "15-26" },
-        .{ .spec = "b8601dt27.", .field = "20200704T140506", .range = "15-26" },
+        .{ .spec = "b8601dt13.", .field = "20200704T140506", .range = "14-26" },
+        .{ .spec = "b8601dt27.", .field = "20200704T140506", .range = "14-26" },
         .{ .spec = "b8601tm5.", .field = "140506", .range = "6-15" },
         .{ .spec = "b8601tm16.", .field = "140506", .range = "6-15" },
     }) |bad| {
@@ -4572,6 +4572,7 @@ test "BUG-8601widths: ISO date/time width ranges fail loud on format and informa
     // B8601DT's INPUT()-function path must slice to w like E8601DT; otherwise
     // the packed fractional tail changes the parsed value instead of being
     // outside the field.
+    try t.expectEqual(@as(f64, 1909446050), readNumeric("b8601dt14.", "20200704T140506").num);
     try t.expectEqual(@as(f64, 1909490706), readNumeric("b8601dt15.", "20200704T140506999999").num);
     try t.expectEqual(@as(f64, 1909490706.999999), readNumeric("b8601dt21.", "20200704T140506999999").num);
 
