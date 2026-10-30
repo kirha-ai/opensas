@@ -1326,6 +1326,12 @@ fn parseTableConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: 
 /// CREATE and skip the constraint.
 fn appendCheckCons(arena: std.mem.Allocator, diags: *diag.Diagnostics, cons: *std.ArrayList(Constraint), pred: ?[]const Token, line: usize) !void {
     const p = pred orelse return;
+    // GAP-sqlcasenolibrary: parser_expr cannot validate SQL CASE, and a CHECK
+    // constraint has no Library in scope at CREATE time to collapse a subquery in
+    // that CASE. Skipping the constraint would let later rows through with a
+    // plausible answer, so surface the same rc-2 gap as the other lib-less CASE
+    // subquery sites.
+    if (hasCase(p) and hasSubquery(p)) return caseSubqGap(diags, p);
     const desug = try desugarPredicates(arena, diags, p);
     var pp = pe.Parser.init(arena, try withEof(arena, desug), diags);
     _ = pp.parseExpr() catch {
@@ -9532,7 +9538,7 @@ test "BUG-sqltypeconsistency: mixed-type COALESCE arguments fail loud" {
     try t.expectEqualStrings("hi", ok.row(0)[1].str);
 }
 
-test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-less sites are a LOUD rc-2 gap that emits NO rows" {
+test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; lib-less sites are LOUD rc-2 gaps with NO rows" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -9586,13 +9592,15 @@ test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-le
     try t.expectEqual(@as(f64, 30), b3.row(2)[0].num);
     try t.expect(!diag.gapHit()); // nothing above is a gap
 
-    // The two sites with no Library in scope stay LOUD and emit NOTHING. `out` is
+    // The four sites with no Library in scope stay LOUD and emit NOTHING. `out` is
     // asserted empty because the whole point of this bug was that the wrong rows
     // reached output BEFORE the diagnostic — a loud error after a printed answer is
     // still a silent-wrong-output failure for whoever read stdout (D-002).
     inline for (.{
         "proc sql; select sum(case when qty > (select avg(qty) from part) then 1 else 0 end) as n from part; quit;",
         "proc sql; select qty from part order by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
+        "proc sql; select count(*) as n from part group by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
+        "proc sql; create table ck (qty num, check (case when qty > (select avg(qty) from part) then 1 else 0 end = 1)); insert into ck values(10); quit;",
     }) |src| {
         diag.resetGap();
         var dg = diag.Diagnostics.init(a);
@@ -9610,6 +9618,7 @@ test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; the lib-le
             };
         try t.expect(loud);
     }
+    try t.expect(lib.find("ck") == null); // the CHECK gap aborts CREATE; no unenforced table remains
 }
 
 test "BUG-sqltypeconsistency: char literal into a NUMERIC column converts (NOTE), never raw text" {
