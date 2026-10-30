@@ -1,9 +1,8 @@
 /* PERF-inlist: eval-time membership-set for all-literal IN / NOT-IN chains.
    Proves CORRECTNESS (not speed): each chain is desugared to an OR/AND chain,
    recognized once at eval time, then probed per row. Covers an optimized IN
-   (>=8 numeric literals, hits + misses), an optimized NOT IN, and bail cases
-   (a short <8 list and a char-var IN) that must still return the right answer
-   via the unchanged OR-chain. */
+   (>=8 numeric literals, hits + misses), an optimized NOT IN, and a short <8
+   list that must still return the right answer via the OR-chain. */
 data _null_;
   do x = 1 to 12;
     /* 8 numeric literals -> optimized IN membership set */
@@ -16,7 +15,7 @@ data _null_;
   y = 5;
   short = y in (4, 5, 6);
   put "short=" short;
-  /* bail: char-var IN (string literals, not .num) -> OR-chain, still correct */
+  /* short char-var IN still uses the OR-chain */
   c = "B";
   cin = c in ("A", "B", "C");
   put "cin=" cin;

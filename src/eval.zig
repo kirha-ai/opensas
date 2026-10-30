@@ -40,17 +40,17 @@ pub const CallFn = *const fn (ev: *Evaluator, name: []const u8, args: []const Va
 
 /// PERF-inlist: a literal `x in (v1,…,vK)` is desugared (parser_expr `parseInList`)
 /// into a left-leaning `x=v1 or x=v2 or …` chain, so eval re-walked a K-deep tree
-/// per row → O(rows·K). When the chain is a variable tested against an all-numeric,
-/// all-finite literal list of ≥ IN_SET_MIN elements, we recognize it ONCE, build a
-/// membership set, and probe O(1)/row instead. NOT IN (`and` of `ne`) is the same
-/// set, negated. Any non-literal / non-`.num` / special-missing operand, a mixed
-/// range, a non-variable lhs, or a short list → left unrecognized (the correct
-/// OR-chain runs unchanged). See `buildInSet`.
+/// per row → O(rows·K). Homogeneous numeric or character literal lists of at
+/// least IN_SET_MIN elements become a membership set, probed O(1)/row. NOT IN
+/// (`and` of `ne`) uses the same set, negated. Other shapes keep the OR-chain.
 const IN_SET_MIN = 8;
 const InSet = struct {
     negated: bool, // true: NOT IN (and-of-ne); false: IN (or-of-eq)
     var_name: []const u8, // the shared lhs variable
-    set: std.AutoHashMapUnmanaged(u64, void), // canonical f64 bits of each literal
+    set: union(enum) {
+        num: std.AutoHashMapUnmanaged(u64, void), // canonical f64 bits
+        str: std.StringHashMapUnmanaged(void), // trailing blanks trimmed
+    },
 };
 
 pub const Evaluator = struct {
@@ -216,47 +216,54 @@ pub const Evaluator = struct {
         const gop = try self.in_sets.getOrPut(self.stateArena(), e);
         if (!gop.found_existing) gop.value_ptr.* = try self.buildInSet(e, b);
         const is = gop.value_ptr.* orelse return self.evalBinary(b);
-        // The chain compares `var` numerically to every (numeric) literal, so the
-        // per-row test is numeric regardless of var type — matching the OR-chain's
-        // `cmp`, which coerces a char operand via toNum. ponytail: a char var emits
-        // ONE conversion NOTE here vs one-per-element in the OR-chain (the value is
-        // identical, and once-per-comparison is the more SAS-faithful log anyway).
-        const x = try self.toNum(self.pdv.get(is.var_name) orelse Value.missing);
-        var member = false;
-        if (!std.math.isNan(x)) { // finite-only set: a missing var never matches
-            var k = x;
-            if (k == 0) k = 0; // -0.0 → +0.0 (they compare equal under cmpNum)
-            member = is.set.contains(@as(u64, @bitCast(k)));
-        }
+        const member = switch (is.set) {
+            .num => |set| blk: {
+                // Numeric literals coerce a character variable as the OR-chain does.
+                const x = try self.toNum(self.pdv.get(is.var_name) orelse Value.missing);
+                if (std.math.isNan(x)) break :blk false;
+                const k: f64 = if (x == 0) 0 else x; // -0.0 compares equal to +0.0
+                break :blk set.contains(@as(u64, @bitCast(k)));
+            },
+            .str => |set| blk: {
+                const v = try self.evalVariable(is.var_name);
+                // A numeric lhs uses numeric coercion for each literal. Preserve
+                // those comparisons and their diagnostics through the original tree.
+                if (v != .str) return self.evalBinary(b);
+                break :blk set.contains(std.mem.trimEnd(u8, v.str, " "));
+            },
+        };
         return boolVal(if (is.negated) !member else member);
     }
 
     /// Recognize a left-leaning `x=v1 or … or x=vK` (IN) or `x<>v1 and … and x<>vK`
-    /// (NOT IN) where `x` is one variable and every `vi` is a FINITE numeric literal
-    /// (K ≥ IN_SET_MIN). Returns the membership set, or null to keep the OR-chain
-    /// (any non-literal operand, a range, a non-variable lhs, a special-missing/NaN
-    /// literal, or a short list). Runs once per node; the set lives in state_arena.
+    /// (NOT IN) where `x` is one variable and the literals are homogeneous
+    /// finite numerics or strings (K ≥ IN_SET_MIN). Other shapes keep the tree.
     fn buildInSet(self: *Evaluator, e: *const ast.Expr, b: ast.Binary) Error!?InSet {
         const negated = b.op == .@"and";
         const want: ast.BinOp = if (negated) .ne else .eq;
         var var_name: ?[]const u8 = null;
-        var vals: std.ArrayList(f64) = .empty; // temp; the set is what we keep
+        var vals: std.ArrayList(Value) = .empty; // temp; the set is what we keep
+        var char_mode: ?bool = null;
         var node: *const ast.Expr = e;
         // walk the left spine: each rhs is one comparison element
         while (node.* == .binary and node.binary.op == b.op) {
-            if (!try collectInElem(node.binary.rhs, want, &var_name, &vals, self.arena)) return null;
+            if (!try collectInElem(node.binary.rhs, want, &var_name, &char_mode, &vals, self.arena)) return null;
             node = node.binary.lhs;
         }
-        if (!try collectInElem(node, want, &var_name, &vals, self.arena)) return null; // leftmost element
+        if (!try collectInElem(node, want, &var_name, &char_mode, &vals, self.arena)) return null; // leftmost element
         if (vals.items.len < IN_SET_MIN) return null;
-        var set: std.AutoHashMapUnmanaged(u64, void) = .empty;
         const sa = self.stateArena();
+        if (char_mode.?) {
+            var set: std.StringHashMapUnmanaged(void) = .empty;
+            for (vals.items) |v| try set.put(sa, std.mem.trimEnd(u8, v.str, " "), {});
+            return .{ .negated = negated, .var_name = var_name.?, .set = .{ .str = set } };
+        }
+        var set: std.AutoHashMapUnmanaged(u64, void) = .empty;
         for (vals.items) |v| {
-            var k = v;
-            if (k == 0) k = 0; // canonicalize -0.0
+            const k: f64 = if (v.num == 0) 0 else v.num;
             try set.put(sa, @as(u64, @bitCast(k)), {});
         }
-        return InSet{ .negated = negated, .var_name = var_name.?, .set = set };
+        return .{ .negated = negated, .var_name = var_name.?, .set = .{ .num = set } };
     }
 
     /// The name-taking `…x` twin of a V-metadata function, or null if `name`
@@ -656,24 +663,25 @@ pub fn specialArrayNames(arena: std.mem.Allocator, pdv: *const pdv_mod.Pdv, kind
 
 /// PERF-inlist: one element of a candidate IN/NOT-IN chain. `node` must be a
 /// `.binary` whose op is `want` (`.eq` for IN, `.ne` for NOT-IN), comparing a
-/// bare `.variable` against a FINITE `.num` literal. The variable must be the
-/// same across every element (recorded in `var_name` on the first, compared
-/// case-insensitively after). Appends the literal to `vals` and returns true;
-/// returns false on ANY mismatch (wrong op, both-var, both-literal, non-finite
-/// literal, or a different variable) → buildInSet bails, OR-chain runs unchanged.
-fn collectInElem(node: *const ast.Expr, want: ast.BinOp, var_name: *?[]const u8, vals: *std.ArrayList(f64), arena: std.mem.Allocator) Error!bool {
+/// bare `.variable` against a finite `.num` or `.str` literal. The variable
+/// and literal type must agree across the chain; otherwise keep the OR-chain.
+fn collectInElem(node: *const ast.Expr, want: ast.BinOp, var_name: *?[]const u8, char_mode: *?bool, vals: *std.ArrayList(Value), arena: std.mem.Allocator) Error!bool {
     if (node.* != .binary or node.binary.op != want) return false;
     const b = node.binary;
     var vname: []const u8 = undefined;
-    var lit: f64 = undefined;
-    if (b.lhs.* == .variable and b.rhs.* == .num) {
+    var lit: Value = undefined;
+    if (b.lhs.* == .variable and (b.rhs.* == .num or b.rhs.* == .str)) {
         vname = b.lhs.variable;
-        lit = b.rhs.num;
-    } else if (b.rhs.* == .variable and b.lhs.* == .num) {
+        lit = if (b.rhs.* == .num) .{ .num = b.rhs.num } else .{ .str = b.rhs.str };
+    } else if (b.rhs.* == .variable and (b.lhs.* == .num or b.lhs.* == .str)) {
         vname = b.rhs.variable;
-        lit = b.lhs.num;
+        lit = if (b.lhs.* == .num) .{ .num = b.lhs.num } else .{ .str = b.lhs.str };
     } else return false; // both-var, both-literal, or any other operand shape
-    if (!std.math.isFinite(lit)) return false; // special-missing / NaN / inf never joins the set
+    const is_char = lit == .str;
+    if (!is_char and !std.math.isFinite(lit.num)) return false;
+    if (char_mode.*) |prev| {
+        if (prev != is_char) return false;
+    } else char_mode.* = is_char;
     if (var_name.*) |prev| {
         if (!std.ascii.eqlIgnoreCase(prev, vname)) return false; // a second variable → not a single-var IN
     } else var_name.* = vname;
@@ -1006,6 +1014,29 @@ test "comparisons yield 1/0; missing is lowest, not propagated" {
     // blank-padded string equality: "abc" = "abc "
     try t.expectEqual(@as(f64, 1), (try e.eval(b.bin(.eq, b.str("abc"), b.str("abc ")))).num);
     try t.expectEqual(@as(f64, 1), (try e.eval(b.bin(.lt, b.str("abc"), b.str("abd")))).num);
+}
+
+test "PERF-inlistchar: character set recognition and mixed-list guard" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var e = f.ev();
+    const b = f.b();
+    const lhs = b.vbl("c");
+    const literals = [_][]const u8{ "A", "B ", "C", "D", "E", "F", "G", "H" };
+    var chain = b.bin(.eq, lhs, b.str(literals[0]));
+    for (literals[1..]) |s| chain = b.bin(.@"or", chain, b.bin(.eq, lhs, b.str(s)));
+
+    const recognized = (try e.buildInSet(chain, chain.binary)) orelse return error.TestUnexpectedResult;
+    try t.expect(recognized.set == .str);
+    try f.pdv.set("c", .{ .str = "B" });
+    try t.expectEqual(@as(f64, 1), (try e.eval(chain)).num);
+
+    // The last literal is inspected first. A numeric at the left end must
+    // still reject a mixed list after the first character literal is seen.
+    var mixed = b.bin(.eq, lhs, b.num(2));
+    for (literals[1..]) |s| mixed = b.bin(.@"or", mixed, b.bin(.eq, lhs, b.str(s)));
+    try t.expect((try e.buildInSet(mixed, mixed.binary)) == null);
 }
 
 test "logical and/or/not over SAS truthiness" {
