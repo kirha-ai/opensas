@@ -2330,18 +2330,16 @@ fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *
     st.macro_call_depth += 1;
     try process(st, m.body, out); // depth-guarded inside process()
     st.macro_call_depth -= 1;
-    if (st.macro_call_depth == 0) {
-        const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
-        if (fragment.len > 0) {
-            const owner = st.scopes.items[st.scopes.items.len - 1].owner;
-            try traceLine(st, "MPRINT({s}):   {s}", .{ owner, fragment });
-        }
-        st.mprint_pending.clearRetainingCapacity();
-        st.mprint_quote = 0;
-        st.mprint_slash = false;
-        st.mprint_comment = false;
-        st.mprint_comment_star = false;
+    const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
+    if (fragment.len > 0) {
+        const owner = st.scopes.items[st.scopes.items.len - 1].owner;
+        try traceLine(st, "MPRINT({s}):   {s}", .{ owner, fragment });
     }
+    st.mprint_pending.clearRetainingCapacity();
+    st.mprint_quote = 0;
+    st.mprint_slash = false;
+    st.mprint_comment = false;
+    st.mprint_comment_star = false;
     if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Ending execution.", .{try upperDup(st.a, name)});
     st.minoperator = prev_minop;
     st.mindelimiter = prev_mindelim;

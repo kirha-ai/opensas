@@ -3751,6 +3751,32 @@ test "BUG-mprintfragmenddrop: MPRINT flushes a pending fragment at macro end" {
     );
 }
 
+test "BUG-mprintfragnestedmend: nested macro flushes its MPRINT fragment before MLOGIC end" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint mlogic;\n" ++
+        "%macro inner; put %mend;\n" ++
+        "%macro outer; data _null_; %inner \"hi\"; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings("hi\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MLOGIC(OUTER):  Beginning execution.\n" ++
+            "MPRINT(OUTER):   data _null_;\n" ++
+            "MLOGIC(INNER):  Beginning execution.\n" ++
+            "MPRINT(INNER):   put\n" ++
+            "MLOGIC(INNER):  Ending execution.\n" ++
+            "MPRINT(OUTER):   \"hi\";\n" ++
+            "MPRINT(OUTER):   run;\n" ++
+            "MLOGIC(OUTER):  Ending execution.\n",
+        log,
+    );
+}
+
 fn expectRun(src: []const u8, want: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
