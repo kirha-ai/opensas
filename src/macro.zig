@@ -313,6 +313,16 @@ const State = struct {
     /// to stderr only in a real run (GAP-macroputnote); everywhere else it
     /// stays on the captured-diagnostics channel.
     plain_put: bool = false,
+    mprint: bool = false,
+    symbolgen: bool = false,
+    mlogic: bool = false,
+    mprint_pending: std.ArrayList(u8) = .empty,
+    mprint_quote: u8 = 0,
+    mprint_slash: bool = false,
+    mprint_comment: bool = false,
+    mprint_comment_star: bool = false,
+    mprint_output: ?*std.ArrayList(u8) = null,
+    mprint_cursor: usize = 0,
     /// Pooled expansion scratch for resolveText (PERF-resolvetextscratch).
     /// process() re-enters resolveText mid-scan (a %sysfunc/macro-fn arg
     /// resolving while an outer resolveText is still appending), so one shared
@@ -1037,6 +1047,17 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
     }
     st.call_depth += 1;
     defer st.call_depth -= 1;
+    const prior_output = st.mprint_output;
+    const prior_cursor = st.mprint_cursor;
+    const same_output = prior_output == out;
+    if (!same_output) {
+        st.mprint_output = out;
+        st.mprint_cursor = out.items.len;
+    }
+    defer if (!same_output) {
+        st.mprint_output = prior_output;
+        st.mprint_cursor = prior_cursor;
+    };
 
     var i: usize = 0;
     // Inside a "double-quoted" string SAS still resolves &/% but a ' is a literal
@@ -1137,8 +1158,10 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
             if (e < src.len) e += 1; // past ';'
             try out.appendSlice(st.a, src[i..e]);
             i = e;
+            try traceGenerated(st, out);
             try st.exec_fn.?(st.exec_ctx.?, try unmaskTriggers(st.a, out.items));
             out.clearRetainingCapacity();
+            st.mprint_cursor = 0;
             // GAP-macroautovars: a step just RAN — refresh &SYSERR. The callback
             // records step failures in diags and swallows them, so a sticky
             // 4-once-any-step-errored is all that's observable from here; clean
@@ -1180,6 +1203,60 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
         } else {
             try out.append(st.a, c);
             i += 1;
+        }
+        try traceGenerated(st, out);
+    }
+    try traceGenerated(st, out);
+}
+
+fn traceLine(st: *State, comptime fmt: []const u8, args: anytype) Error!void {
+    if (!st.plain_put) return; // the setup expansion is deliberately silent
+    const line = try std.fmt.allocPrint(st.a, fmt, args);
+    if (@import("builtin").is_test) {
+        try st.diags.plainLine(line);
+    } else {
+        std.debug.print("{s}\n", .{line});
+    }
+}
+
+fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
+    if (st.mprint_output != out) return;
+    if (st.mprint_cursor > out.items.len) st.mprint_cursor = 0;
+    const fresh = out.items[st.mprint_cursor..];
+    st.mprint_cursor = out.items.len;
+    if (!st.plain_put or !st.mprint or st.macro_call_depth == 0 or !st.sq_masks_triggers) return;
+    for (fresh) |ch| {
+        if (st.mprint_comment) {
+            if (st.mprint_comment_star and ch == '/') st.mprint_comment = false;
+            st.mprint_comment_star = ch == '*';
+            continue;
+        }
+        if (st.mprint_quote == 0 and st.mprint_slash) {
+            st.mprint_slash = false;
+            if (ch == '*') {
+                st.mprint_comment = true;
+                st.mprint_comment_star = false;
+                try st.mprint_pending.append(st.a, ' ');
+                continue;
+            }
+            try st.mprint_pending.append(st.a, '/');
+        }
+        if (st.mprint_quote == 0 and ch == '/') {
+            st.mprint_slash = true;
+            continue;
+        }
+        try st.mprint_pending.append(st.a, ch);
+        if (st.mprint_quote != 0) {
+            if (ch == st.mprint_quote) st.mprint_quote = 0;
+        } else if (ch == '\'' or ch == '"') {
+            st.mprint_quote = ch;
+        } else if (ch == ';') {
+            const statement = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
+            if (statement.len > 1) {
+                const owner = st.scopes.items[st.scopes.items.len - 1].owner;
+                try traceLine(st, "MPRINT({s}):   {s}", .{ owner, statement });
+            }
+            st.mprint_pending.clearRetainingCapacity();
         }
     }
 }
@@ -1237,6 +1314,22 @@ fn applyOptionsStmt(st: *State, stmt: []const u8) void {
                 st.minoperator = true;
             } else if (eqi(w, "nominoperator")) {
                 st.minoperator = false;
+            } else if (eqi(w, "mprint")) {
+                st.mprint = true;
+            } else if (eqi(w, "nomprint")) {
+                st.mprint = false;
+                st.mprint_pending.clearRetainingCapacity();
+                st.mprint_quote = 0;
+                st.mprint_slash = false;
+                st.mprint_comment = false;
+            } else if (eqi(w, "symbolgen")) {
+                st.symbolgen = true;
+            } else if (eqi(w, "nosymbolgen")) {
+                st.symbolgen = false;
+            } else if (eqi(w, "mlogic")) {
+                st.mlogic = true;
+            } else if (eqi(w, "nomlogic")) {
+                st.mlogic = false;
             } else if (eqi(w, "mindelimiter")) {
                 var ignored: usize = undefined;
                 if (parseMindelim(st, stmt, i, &ignored)) |d| st.mindelimiter = d;
@@ -1337,6 +1430,7 @@ fn resolveAmpRun(st: *State, run: []const u8) Error![]const u8 {
                 var j = i + 1;
                 while (j < cur.len and isNameChar(cur[j])) j += 1;
                 if (st.getVar(cur[i + 1 .. j])) |val| {
+                    if (st.symbolgen) try traceLine(st, "SYMBOLGEN:  Macro variable {s} resolves to {s}", .{ try upperDup(st.a, cur[i + 1 .. j]), try unmaskTriggers(st.a, val) });
                     try out.appendSlice(st.a, val);
                     if (j < cur.len and cur[j] == '.') j += 1; // delimiter dot
                     changed = true;
@@ -1768,6 +1862,8 @@ fn handleLet(st: *State, src: []const u8, from: usize) Error!usize {
         if (st.macro_call_depth > 0) st.returning = true;
         return if (k < src.len) k + 1 else k;
     }
+    if (st.mlogic and st.macro_call_depth > 0)
+        try traceLine(st, "MLOGIC({s}):  %LET (variable name is {s})", .{ st.scopes.items[st.scopes.items.len - 1].owner, try upperDup(st.a, name) });
     const val = try resolveText(st, std.mem.trim(u8, src[vs..k], " \t\r\n"));
     // BUG-macrobareletscope: a bare %let of a BRAND-NEW name inside a macro is
     // LOCAL to that invocation in SAS 9.4 (was leaking to global). A name any
@@ -1793,6 +1889,8 @@ fn handleLet(st: *State, src: []const u8, from: usize) Error!usize {
 fn handlePut(st: *State, src: []const u8, from: usize) Error!usize {
     const k = macroValueEnd(src, from, null);
     const raw = std.mem.trim(u8, src[from..k], " \t\r\n");
+    if (st.mlogic and st.macro_call_depth > 0)
+        try traceLine(st, "MLOGIC({s}):  %PUT {s}", .{ st.scopes.items[st.scopes.items.len - 1].owner, raw });
     // F7 (GAP-macroautofeatures): a bare _ALL_/_USER_/_GLOBAL_/_LOCAL_/
     // _AUTOMATIC_ keyword dumps the matching symbol-table group instead of
     // printing the keyword literally (SAS %PUT keyword form).
@@ -2129,6 +2227,7 @@ fn handleMacro(st: *State, src: []const u8, from: usize) Error!usize {
 fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *std.ArrayList(u8)) Error!usize {
     var k = skipWs(src, from);
     const m = st.getMacro(name).?;
+    if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Beginning execution.", .{try upperDup(st.a, name)});
     // Collect raw arg spans (comma-separated, respecting nested parens), then split
     // into positional values and keyword (name=value) args (SAS keyword params).
     var pos: std.ArrayList([]const u8) = .empty;
@@ -2200,6 +2299,7 @@ fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *
         } else {
             try st.setVar(p.name, p.default);
         }
+        if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Parameter {s} has value {s}", .{ try upperDup(st.a, name), try upperDup(st.a, p.name), st.getVar(p.name) orelse "" });
     }
     // Surplus positional args (more than declared positional params) are a SAS
     // error — silently dropping them is silent-wrong. Fail loud (too-FEW args is
@@ -2230,6 +2330,14 @@ fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *
     st.macro_call_depth += 1;
     try process(st, m.body, out); // depth-guarded inside process()
     st.macro_call_depth -= 1;
+    if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Ending execution.", .{try upperDup(st.a, name)});
+    if (st.macro_call_depth == 0) {
+        st.mprint_pending.clearRetainingCapacity();
+        st.mprint_quote = 0;
+        st.mprint_slash = false;
+        st.mprint_comment = false;
+        st.mprint_comment_star = false;
+    }
     st.minoperator = prev_minop;
     st.mindelimiter = prev_mindelim;
     try st.setVar("sysmacroname", prev_macroname);
@@ -3368,6 +3476,12 @@ fn handleIf(st: *State, src: []const u8, from: usize, out: *std.ArrayList(u8)) E
         return from;
     };
     const cond = try evalCond(st, src[from..then_at]);
+    if (st.mlogic and st.macro_call_depth > 0)
+        try traceLine(st, "MLOGIC({s}):  %IF condition {s} is {s}", .{
+            st.scopes.items[st.scopes.items.len - 1].owner,
+            std.mem.trim(u8, src[from..then_at], " \t\r\n"),
+            if (cond) "TRUE" else "FALSE",
+        });
 
     var k = skipWs(src, then_at + "%then".len);
     const tb = branchUnit(src, k);

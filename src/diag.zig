@@ -41,6 +41,7 @@ pub const Diagnostic = struct {
     line: usize,
     /// Arena-owned message text.
     message: []const u8,
+    plain: bool = false,
     /// A RECOVERABLE error: loud in the log and counts toward hasErrors()/
     /// exit code, but does NOT trigger step-skipping syntax-check mode
     /// (BUG-errhalt is about STEP errors). Two species: a macro-language
@@ -163,6 +164,16 @@ pub const Diagnostics = struct {
         return self.report(.note, line, fmt, args);
     }
 
+    /// Macro tracing is plain log text, not a NOTE; NONOTES does not hide it.
+    pub fn plainLine(self: *Diagnostics, line: []const u8) error{OutOfMemory}!void {
+        try self.list.append(self.arena, .{
+            .severity = .note,
+            .line = 0,
+            .message = try self.arena.dupe(u8, line),
+            .plain = true,
+        });
+    }
+
     pub fn count(self: *const Diagnostics) usize {
         return self.list.items.len;
     }
@@ -207,7 +218,9 @@ pub const Diagnostics = struct {
     pub fn render(self: *const Diagnostics) error{OutOfMemory}![]const u8 {
         var buf: std.ArrayList(u8) = .empty;
         for (self.list.items) |d| {
-            if (d.line == 0) {
+            if (d.plain) {
+                try buf.print(self.arena, "{s}\n", .{d.message});
+            } else if (d.line == 0) {
                 try buf.print(self.arena, "{s}: {s}\n", .{ d.severity.tag(), d.message });
             } else if (d.expanded) {
                 // GH#17: post-expansion offset, not a source line — say so, so the
