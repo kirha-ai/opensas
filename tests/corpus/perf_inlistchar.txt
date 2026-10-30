@@ -1,0 +1,5 @@
+trailing=1 0
+leading=0
+blank=1 0
+literalpad=1
+case=0
