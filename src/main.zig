@@ -1741,7 +1741,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 return;
             } else if (isInertOption(t.text)) {
                 i += 1;
-                i += skipOptionValue(toks, i);
+                i += skipOptionValue(toks, i, t.text);
             } else {
                 // Neither honoured nor a known-inert option: a typo (`obbs=2`)
                 // or a real option nobody filed → LOUD, naming it (D-002).
@@ -1947,7 +1947,7 @@ fn isInertOption(name: []const u8) bool {
 /// value — a scalar (number/string/name, optionally signed) or a balanced (…)
 /// group (`fmtsearch=(lib work)`). A dangling `=` consumes nothing; the main
 /// loop's non-name guard then errors on it.
-fn skipOptionValue(toks: []const Token, i: usize) usize {
+fn skipOptionValue(toks: []const Token, i: usize, option_name: []const u8) usize {
     if (i >= toks.len or toks[i].tag != .eq) return 0;
     var j = i + 1;
     if (j < toks.len and toks[j].tag == .lparen) {
@@ -1966,23 +1966,31 @@ fn skipOptionValue(toks: []const Token, i: usize) usize {
         return j - i;
     }
     if (j + 1 < toks.len and (toks[j].tag == .minus or toks[j].tag == .plus) and toks[j + 1].tag == .number) {
-        if (j + 2 < toks.len and toks[j + 2].tag == .name and isOptionNumericSuffix(toks[j + 2].text)) return 4;
+        if (j + 2 < toks.len and toks[j + 2].tag == .name and isOptionNumericSuffix(option_name, toks[j + 2].text)) return 4;
         return 3;
     }
     if (j < toks.len and toks[j].tag == .number) {
         // A suffix lexes as a separate name: size (`bufsize=64k`) or page
         // dimension (`leftmargin=0.5in`, BUG-marginunit-suffix).
-        if (j + 1 < toks.len and toks[j + 1].tag == .name and isOptionNumericSuffix(toks[j + 1].text)) return 3;
+        if (j + 1 < toks.len and toks[j + 1].tag == .name and isOptionNumericSuffix(option_name, toks[j + 1].text)) return 3;
         return 2;
     }
     if (j < toks.len and (toks[j].tag == .string or toks[j].tag == .name)) return 2;
     return 0;
 }
 
-fn isOptionNumericSuffix(text: []const u8) bool {
+fn isOptionNumericSuffix(option_name: []const u8, text: []const u8) bool {
     if (text.len == 1 and std.mem.indexOfScalar(u8, "kmgKMg", text[0]) != null) return true;
-    inline for (.{ "in", "cm", "mm", "pt" }) |unit| {
+    if (!isMarginOption(option_name)) return false;
+    inline for (.{ "in", "cm" }) |unit| {
         if (eqi(text, unit)) return true;
+    }
+    return false;
+}
+
+fn isMarginOption(name: []const u8) bool {
+    inline for (.{ "topmargin", "bottommargin", "leftmargin", "rightmargin" }) |margin| {
+        if (eqi(name, margin)) return true;
     }
     return false;
 }
@@ -5069,6 +5077,34 @@ test "GAP-listingwidth: LINESIZE=/PAGESIZE= captured (inert), garbage fails loud
     try interpret(a, &out, &diags, "options pagesize=abc;\n", null);
     try std.testing.expect(diags.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, try diags.render(), "Invalid value for the PAGESIZE option.") != null);
+}
+
+test "BUG-marginunitmmpt: OPTIONS margin units accept IN/CM but reject MM/PT" {
+    try expectRun(
+        "options leftmargin=0.5in rightmargin=1cm topmargin=2IN bottommargin=3CM;\n" ++
+            "data _null_; put \"ok\"; run;\n",
+        "ok\n",
+    );
+
+    const Case = struct { src: []const u8, msg: []const u8 };
+    const cases = [_]Case{
+        .{ .src = "options topmargin=5mm;\n", .msg = "system option mm is not recognized" },
+        .{ .src = "options bottommargin=12pt;\n", .msg = "system option pt is not recognized" },
+    };
+    for (cases) |c| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        var diags = sas.diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        try interpret(a, &out, &diags, c.src, null);
+        try std.testing.expect(diags.hasErrors());
+        const rendered = try diags.render();
+        if (std.mem.indexOf(u8, rendered, c.msg) == null) {
+            std.debug.print("for {s}: wanted '{s}' in:\n{s}", .{ c.src, c.msg, rendered });
+            return error.TestUnexpectedResult;
+        }
+    }
 }
 
 test "BUG-optionsstmtswallow: OPTIONS fails LOUD on typos/unsupported; the inert allowlist + honoured set stay accepted" {
