@@ -892,6 +892,17 @@ pub fn free(id: u32) void {
     if (entryAt(id)) |e| e.freed = true;
 }
 
+/// A literal PRXPARSE call site returns the same id on later executions. After
+/// PRXFREE, SAS makes that id usable again when the call site runs once more.
+pub fn reuse(id: u32) void {
+    if (entryAt(id)) |e| if (e.freed) {
+        e.freed = false;
+        e.last_src = "";
+        e.last_caps = &.{};
+        e.last_which = 0;
+    };
+}
+
 /// PRXCHANGE: apply the entry's s/// substitution to `source`, up to `times`
 /// replacements (< 0 or the /g flag → all), returning the result in `out_a`.
 pub fn change(out_a: std.mem.Allocator, id: u32, times: i64, source: []const u8) ![]const u8 {

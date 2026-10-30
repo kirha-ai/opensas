@@ -24,6 +24,7 @@ const std = @import("std");
 const ast = @import("ast.zig");
 const diag = @import("diag.zig");
 const pdv_mod = @import("pdv.zig");
+const prx = @import("prx.zig");
 const Value = @import("value.zig").Value;
 const format = @import("format.zig"); // expandYear — the shared YEARCUTOFF window (BUG-date-literal-2digityear)
 
@@ -73,6 +74,9 @@ pub const Evaluator = struct {
     /// (`*const ast.Expr`, stable across rows). `null` = examined, not optimizable
     /// (cached so we don't re-walk it each row). Lives in `state_arena` like `lag`.
     in_sets: std.AutoHashMapUnmanaged(*const ast.Expr, ?InSet) = .empty,
+    /// SAS compiles a literal PRXPARSE once per call site, then returns that
+    /// site's ID on later rows. Separate sites and variable patterns get new IDs.
+    prx_literal_ids: std.AutoHashMapUnmanaged(*const ast.Expr, u32) = .empty,
     /// BUG-declaredobjnamevalue: the names this DATA step declared as COMPONENT
     /// OBJECTS (`declare hash h;` / `declare hiter hi;` / `h = _new_ hash();`).
     /// Component Objects Ref printed p.12: "The DECLARE statement tells the
@@ -98,7 +102,7 @@ pub const Evaluator = struct {
             // PERF-inlist: an OR/AND chain may be an all-literal IN/NOT-IN — probe
             // the membership-set fast path (falls through to evalBinary if not).
             .binary => |b| if (b.op == .@"or" or b.op == .@"and") self.evalOrAnd(e, b) else self.evalBinary(b),
-            .call => |c| self.evalCall(c),
+            .call => |c| self.evalCall(e, c),
             .array_ref => |ar| self.evalArrayRef(ar),
         };
     }
@@ -288,7 +292,13 @@ pub const Evaluator = struct {
         return null;
     }
 
-    fn evalCall(self: *Evaluator, c: ast.Call) Error!Value {
+    fn evalCall(self: *Evaluator, site: *const ast.Expr, c: ast.Call) Error!Value {
+        const literal_prxparse = std.ascii.eqlIgnoreCase(c.name, "prxparse") and
+            c.args.len == 1 and c.args[0] == .str;
+        if (literal_prxparse) if (self.prx_literal_ids.get(site)) |id| {
+            prx.reuse(id);
+            return .{ .num = @floatFromInt(id) };
+        };
         // __dimchk — synthetic node the parser emits for a MULTI-dimensional array
         // reference (parser_expr.arraySubscript). SAS 9.4 checks EACH subscript
         // against ITS dimension's bounds BEFORE folding to a flat index; without
@@ -461,7 +471,12 @@ pub const Evaluator = struct {
             };
             try argv.append(self.arena, try self.eval(arg));
         }
-        if (self.call_fn) |f| return f(self, c.name, argv.items);
+        if (self.call_fn) |f| {
+            const result = try f(self, c.name, argv.items);
+            if (literal_prxparse and result == .num)
+                try self.prx_literal_ids.put(self.stateArena(), site, @intFromFloat(result.num));
+            return result;
+        }
         try self.diags.report(.err, 0, "function {s}() is not supported yet", .{c.name});
         return Value.missing;
     }
