@@ -1,0 +1,7 @@
+i=1 a=1 b=2 c=3
+i=2 a=1 b=2 c=4
+i=3 a=1 b=2 c=5
+m=1
+j=1 rx=6 mt=1
+j=2 rx=6 mt=1
+j=3 rx=6 mt=1
