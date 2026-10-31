@@ -24,11 +24,14 @@
 //! (each dedups unless `ALL`), not by SAS's INTERSECT-binds-tighter precedence; the
 //! bare-select report is a simple aligned listing, not SAS's format.
 //!
-//! CREATE TABLE (…) integrity constraints (`[constraint name] primary key(…) /
+//! CREATE TABLE (…) integrity constraints (`constraint <name> primary key(…) /
 //! unique(…) / check(…) / foreign key(…) references …`, plus the column-level
 //! `not null` / `primary key` / `unique` / `check(…)` / `references …` forms) are
 //! parsed as constraints — never as phantom columns — and enforced per row on
 //! INSERT/UPDATE: a violating row is rejected with an ERROR (BUG-sqlconstraints).
+//! The `constraint <name>` prefix is MANDATORY on a CREATE TABLE table-level
+//! clause and OPTIONAL on ALTER TABLE ADD, matching SAS 9.4 exactly
+//! (BUG-sqlbareconstraintaccept).
 //! FOREIGN KEY is enforced child-side only (an inserted/updated value must exist
 //! in the referenced table); parent-side RESTRICT is not enforced.
 
@@ -918,10 +921,18 @@ fn runAlter(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, s
                 // (BUG-sqlconstraints) rather than growing a second one; that also
                 // makes the column-vs-keyword ambiguity resolve identically in both
                 // statements, which is the only defensible way for it to differ.
+                // BUG-sqlbareconstraintaccept: it now differs in exactly ONE way, and
+                // real SAS forces that — ALTER TABLE ADD accepts the clause with or
+                // without a name (bare, SAS auto-names it `_PK0001_`; oracle probes
+                // p14/p16 2026-11-01: `alter table t add primary key(id)` logs
+                // "Table WORK.T16 has been modified", DESCRIBE TABLE lists
+                // `_PK0001_ Primary Key id`, and a dup INSERT is then refused),
+                // whereas CREATE TABLE requires the name. So ALTER keeps the lenient
+                // entry point; the shared clause parser below is the same one.
                 if (tkKw(stmt[i], "constraint") or isTableConstraintStart(stmt[i])) {
                     const cstart = i;
                     i = alterItemEnd(stmt, i);
-                    try parseColumnOrConstraint(arena, diags, ds.?, &acons, stmt[cstart..i]);
+                    try parseBareOrNamedTableConstraint(arena, diags, ds.?, &acons, stmt[cstart..i]);
                     if (atTag(stmt, i, .comma)) {
                         i += 1;
                         continue;
@@ -1158,6 +1169,19 @@ fn runCreate(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
     unsupported("PROC SQL: unsupported CREATE TABLE");
 }
 
+/// A table-level constraint clause with an OPTIONAL `constraint <name>` prefix —
+/// the ALTER TABLE ADD spelling (real SAS auto-names a bare one). CREATE TABLE must
+/// NOT use this: there the name is mandatory (BUG-sqlbareconstraintaccept).
+fn parseBareOrNamedTableConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Dataset, cons: *std.ArrayList(Constraint), item: []const Token) !void {
+    if (item.len == 0) return;
+    var i: usize = 0;
+    if (tkKw(item[0], "constraint")) {
+        i = 1;
+        if (atTag(item, i, .name)) i += 1; // the name is metadata only; skip it
+    }
+    return parseTableConstraint(arena, diags, ds, cons, item[i..]);
+}
+
 /// True for the first token of a table-level constraint clause.
 fn isTableConstraintStart(tok: Token) bool {
     inline for (.{ "primary", "unique", "distinct", "check", "foreign" }) |kw|
@@ -1207,17 +1231,24 @@ fn appendCheckedCons(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Da
 }
 
 /// Interpret one top-level-comma item of a CREATE TABLE (…) body: a column def
-/// (add it to `ds`) or a table-level constraint clause (append to `cons`).
+/// (add it to `ds`) or a NAMED table-level constraint clause (append to `cons`).
+///
+/// BUG-sqlbareconstraintaccept: a table-level clause here MUST carry the
+/// `constraint <name>` prefix. Real SAS 9.4 parses every other item of the body as
+/// a column definition, full stop — the keywords `primary`/`unique`/`distinct`/
+/// `check`/`foreign` are ordinary column names there — so a bare `primary key(id)`
+/// is read as a column named `primary` whose data type is then missing. We
+/// reproduce that by NOT special-casing the keyword and letting the missing-type
+/// check below fire (see it for the oracle evidence). ALTER TABLE ADD is different
+/// and keeps the bare form: `parseBareOrNamedTableConstraint`.
 fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Dataset, cons: *std.ArrayList(Constraint), item: []const Token) !void {
     if (item.len == 0) return;
-    // `[constraint <name>] <clause>` — the name is metadata only; skip it.
+    // `constraint <name> <clause>` — the name is metadata only; skip it.
     if (tkKw(item[0], "constraint")) {
         var i: usize = 1;
         if (atTag(item, i, .name)) i += 1;
         return parseTableConstraint(arena, diags, ds, cons, item[i..]);
     }
-    if (isTableConstraintStart(item[0]))
-        return parseTableConstraint(arena, diags, ds, cons, item);
     if (item[0].tag != .name) return; // a stray token — pre-fix code skipped these too
     const cname = item[0].text;
     // A duplicate column name is a malformed column list: fail LOUD at CREATE and
@@ -1250,6 +1281,36 @@ fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, d
     if (type_kws > 1) {
         try diags.report(.err, item[0].line, "PROC SQL: malformed column definition for {s} in CREATE TABLE {s} (unexpected extra type token)", .{ cname, ds.name });
         return;
+    }
+    // No data type at all → this item is not a legal column def, which is exactly
+    // how real SAS 9.4 REJECTS an unnamed table-level constraint clause
+    // (BUG-sqlbareconstraintaccept). Oracle, 2026-11-01, /tmp probes: each of
+    //   create table t (id num, primary key(id));        -- probe p1
+    //   create table t (age num, check (age >= 18));     -- p5
+    //   create table t (k num, unique(k));               -- p8
+    //   create table t (id num, distinct(id));           -- p12
+    //   create table t (cid num, foreign key(cid) references par(id)); -- p10
+    //   create table t (id num, constraint c1 primary key(id), unique(id)); -- p18
+    // logs `ERROR 22-322: Syntax error, expecting one of the following: CHAR,
+    // CHARACTER, DATE, DEC, DECIMAL, DOUBLE, FLOAT, INT, INTEGER, NUM, NUMERIC,
+    // REAL, SMALLINT, VARCHAR.` + `ERROR 76-322: Syntax error, statement will be
+    // ignored.`, the table is NOT created, and PROC SQL switches to NOEXEC for the
+    // rest of the step. A typeless ordinary column (`create table t (id);`, p17)
+    // gets the same 22-322 — one rule covers both. Named clauses stay accepted
+    // (p2/p11), and so do the column-level suffixes SAS allows unnamed
+    // (`a num not null` p3, `k num unique` p4, `id num primary key` p7,
+    // `age num check (…)` p6). The keywords remain legal column NAMES when a type
+    // follows (`create table t (primary num, id num)` p9, `(check num, …)` p13) —
+    // which is why the test is "no type", not "starts with a keyword".
+    // opensas used to ACCEPT and ENFORCE the bare clause: silently running a
+    // program real SAS refuses is the worst failure class here (D-002), so this
+    // abandons the statement (rc 1, a user-program error per D-009).
+    if (type_kws == 0) {
+        if (isTableConstraintStart(item[0]))
+            try diags.report(.err, item[0].line, "PROC SQL: CREATE TABLE {s}: an unnamed table-level {s} constraint is not valid SAS — write `constraint <name> {s} …` (SAS 9.4: ERROR 22-322, statement ignored)", .{ ds.name, cname, cname })
+        else
+            try diags.report(.err, item[0].line, "PROC SQL: CREATE TABLE {s}: column {s} has no data type (expecting CHAR, VARCHAR, NUM, INT, DATE, …)", .{ ds.name, cname });
+        return error.ExecError;
     }
     if (pdv_mod.createNameTooLong(cname)) {
         try pdv_mod.reportCreateNameError(arena, diags, item[0].line, cname);
@@ -9123,7 +9184,7 @@ test "BUG-sqlconstraints: PK/NOT NULL/CHECK/UNIQUE enforced, no phantom columns"
 
     // table-level PRIMARY KEY: dup rejected, and no phantom `primary`/`constraint` column
     try runSql(a, &lib, &diags,
-        "proc sql; create table pkt (id num, primary key(id)); insert into pkt values(1); insert into pkt values(1); quit;");
+        "proc sql; create table pkt (id num, constraint pkt_pk primary key(id)); insert into pkt values(1); insert into pkt values(1); quit;");
     const pkt = lib.find("pkt").?;
     try t.expectEqual(@as(usize, 1), pkt.columns.items.len); // no phantom column
     try t.expectEqualStrings("id", pkt.columns.items[0].name);
@@ -9145,7 +9206,7 @@ test "BUG-sqlconstraints: PK/NOT NULL/CHECK/UNIQUE enforced, no phantom columns"
     // the missing row is rejected as well.
     var d3 = diag.Diagnostics.init(a);
     try runSql(a, &lib, &d3,
-        "proc sql; create table ckt (age num, check (age >= 18)); " ++
+        "proc sql; create table ckt (age num, constraint ckt_ck check (age >= 18)); " ++
             "insert into ckt values(20); insert into ckt values(7); insert into ckt values(.); quit;");
     const ckt = lib.find("ckt").?;
     try t.expectEqual(@as(usize, 1), ckt.rowCount()); // only 20 survives
@@ -9171,6 +9232,126 @@ test "BUG-sqlconstraints: PK/NOT NULL/CHECK/UNIQUE enforced, no phantom columns"
     try t.expect(d5.hasErrors());
 }
 
+test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level constraint" {
+    // The bug: opensas ACCEPTED `create table pk (id int, primary key(id))`, enforced
+    // it, and exited 0 printing `id` — while real SAS 9.4 refuses the program. Silently
+    // running SAS that SAS itself rejects is the D-002 failure class, so this must be
+    // loud. Asserted through the CAPTURED diagnostics reporter (CLAUDE.md): no process
+    // is spawned, so a green run stays quiet.
+    //
+    // Oracle, real SAS 9.4, 2026-11-01, /tmp probes — the whole rule in one table:
+    //   p1  create table t (id num, primary key(id));                     ERROR 22-322
+    //   p5  create table t (age num, check (age >= 18));                  ERROR 22-322
+    //   p8  create table t (k num, unique(k));                            ERROR 22-322
+    //   p12 create table t (id num, distinct(id));                        ERROR 22-322
+    //   p10 create table t (cid num, foreign key(cid) references par(id));ERROR 22-322
+    //   p18 … constraint c1 primary key(id), unique(id));                 ERROR 22-322
+    //   p17 create table t (id);                                          ERROR 22-322
+    //   p2  … constraint pk_p primary key(id));                           created
+    //   p11 … constraint u1 distinct(id));                                created
+    //   p3  create table t (a num not null, b char(3));                   created
+    //   p4  create table t (k num unique);                                created
+    //   p6  create table t (age num check (age >= 18));                   created
+    //   p7  create table t (id num primary key);                          created
+    //   p9  create table t (primary num, id num);                         created (2 cols)
+    //   p13 create table t (check num, id num);                           created (2 cols)
+    //   p14 create table t (id num); alter table t add primary key(id);   accepted
+    // i.e. the mandatory-name rule is CREATE-TABLE-only, it is really "a body item
+    // with no data type is not a column def", and the keywords stay legal column names.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    // (1) REJECTED: every unnamed table-level spelling. Loud, no table, never a gap
+    // (this is a wrong user program → rc 1, not an opensas gap → rc 2; D-009).
+    inline for (.{
+        .{ "bpk", "proc sql; create table bpk (id int, primary key(id)); select * from bpk; quit;" },
+        .{ "bck", "proc sql; create table bck (age num, check (age >= 18)); quit;" },
+        .{ "buq", "proc sql; create table buq (k num, unique(k)); quit;" },
+        .{ "bds", "proc sql; create table bds (k num, distinct(k)); quit;" },
+        .{ "bfk", "proc sql; create table bfk (x num, foreign key (x) references par); quit;" },
+        // a correctly named clause does NOT license a bare sibling (oracle p18)
+        .{ "bmx", "proc sql; create table bmx (id num, constraint c1 primary key(id), unique(id)); quit;" },
+    }) |case| {
+        diag.resetGap();
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        var titles: Titles = .{};
+        const toks = try lex.tokenize(a, case[1], &d);
+        run(a, &out, &lib, &d, &titles, toks) catch {};
+        try t.expect(d.hasErrors()); // loud …
+        try t.expect(!diag.gapHit()); // … as a user error, not a gap
+        try t.expect(lib.find(case[0]) == null); // "statement will be ignored": no table
+        try t.expectEqual(@as(usize, 0), out.items.len); // and not one row of output
+        var named = false;
+        for (d.list.items) |m| {
+            if (m.severity == .err and std.mem.indexOf(u8, m.message, "unnamed table-level") != null) {
+                named = true;
+            }
+        }
+        try t.expect(named); // the diagnostic says WHY, so the user can fix the program
+    }
+
+    // A typeless ordinary column is the same SAS error, reported as such (oracle p17).
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        runSql(a, &lib, &d, "proc sql; create table nt (id); quit;") catch {};
+        try t.expect(d.hasErrors());
+        try t.expect(lib.find("nt") == null);
+        var saw = false;
+        for (d.list.items) |m| {
+            if (std.mem.indexOf(u8, m.message, "has no data type") != null) {
+                saw = true;
+            }
+        }
+        try t.expect(saw);
+    }
+
+    // (2) ACCEPTED — the forms real SAS takes must keep working, or the fix is just a
+    // differently-shaped bug. Named table-level, every unnamed COLUMN-level suffix,
+    // and the keywords used as plain column names.
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        try runSql(a, &lib, &d,
+            "proc sql; create table np (id num, constraint np_pk primary key(id)); " ++ // p2
+                "create table nd (id num, constraint nd_u distinct(id)); " ++ // p11
+                "create table cl (a num not null, b num unique, c num primary key, d num check (d >= 0)); " ++ // p3/p4/p6/p7
+                "create table kw (primary num, check num, foreign num); quit;"); // p9/p13
+        try t.expect(!d.hasErrors());
+        try t.expect(!diag.gapHit());
+        try t.expectEqual(@as(usize, 1), lib.find("np").?.columns.items.len);
+        try t.expectEqual(@as(usize, 4), lib.find("cl").?.columns.items.len);
+        // the keyword columns are COLUMNS, not swallowed constraints
+        const kw = lib.find("kw").?;
+        try t.expectEqual(@as(usize, 3), kw.columns.items.len);
+        try t.expectEqualStrings("primary", kw.columns.items[0].name);
+        try t.expectEqualStrings("check", kw.columns.items[1].name);
+        try t.expectEqualStrings("foreign", kw.columns.items[2].name);
+        // …and the named PK is still ENFORCED (rejecting is not "stopped parsing it")
+        var d2 = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d2, "proc sql; insert into np values(1); insert into np values(1); quit;");
+        try t.expectEqual(@as(usize, 1), lib.find("np").?.rowCount());
+        try t.expect(d2.hasErrors());
+    }
+
+    // (3) ALTER TABLE ADD is the ONE place the bare clause stays legal — real SAS
+    // auto-names it (`_PK0001_`) and enforces it (oracle p14/p16). Narrowing the
+    // CREATE rule must not leak into ALTER.
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        try runSql(a, &lib, &d, "proc sql; create table ap (id num); alter table ap add primary key(id); quit;");
+        try t.expect(!d.hasErrors());
+        var d2 = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d2, "proc sql; insert into ap values(1); insert into ap values(1); quit;");
+        try t.expectEqual(@as(usize, 1), lib.find("ap").?.rowCount()); // the dup was refused
+        try t.expect(d2.hasErrors());
+    }
+}
+
 test "BUG-sqlconstraints: FOREIGN KEY enforced child-side (both forms)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -9179,7 +9360,7 @@ test "BUG-sqlconstraints: FOREIGN KEY enforced child-side (both forms)" {
     var lib = Library.init(a);
 
     try runSql(a, &lib, &diags,
-        "proc sql; create table par (id num, primary key(id)); insert into par values(1); insert into par values(2); " ++
+        "proc sql; create table par (id num, constraint par_pk primary key(id)); insert into par values(1); insert into par values(2); " ++
             "create table chi (cid num, pid num references par(id)); " ++
             "insert into chi values(10, 1); insert into chi values(11, 99); insert into chi values(12, .); quit;");
     const chi = lib.find("chi").?;
@@ -9190,7 +9371,7 @@ test "BUG-sqlconstraints: FOREIGN KEY enforced child-side (both forms)" {
     // table-level foreign key … references (bare → parent's PRIMARY KEY)
     var d2 = diag.Diagnostics.init(a);
     try runSql(a, &lib, &d2,
-        "proc sql; create table ch2 (x num, foreign key (x) references par); " ++
+        "proc sql; create table ch2 (x num, constraint ch2_fk foreign key (x) references par); " ++
             "insert into ch2 values(2); insert into ch2 values(7); quit;");
     try t.expectEqual(@as(usize, 1), lib.find("ch2").?.rowCount());
     try t.expect(d2.hasErrors());
@@ -9216,7 +9397,7 @@ test "BUG-sqlconsleak: the constraint registry is bounded by the LIVE library, n
         var d1 = diag.Diagnostics.init(a1);
         var lib1 = Library.init(a1);
         try runSql(a1, &lib1, &d1,
-            "proc sql; create table r1 (x num, primary key(x)); create table r2 (y num not null); " ++
+            "proc sql; create table r1 (x num, constraint r1_pk primary key(x)); create table r2 (y num not null); " ++
                 "create table r3 (z num unique); quit;");
         // EXACTLY three — every earlier test's registration was pruned on entry,
         // which is the same assertion as "a prior program's entries are gone".
@@ -9231,7 +9412,7 @@ test "BUG-sqlconsleak: the constraint registry is bounded by the LIVE library, n
     const a = arena2.allocator();
     var d2 = diag.Diagnostics.init(a);
     var lib = Library.init(a);
-    try runSql(a, &lib, &d2, "proc sql; create table k (x num, primary key(x)); quit;");
+    try runSql(a, &lib, &d2, "proc sql; create table k (x num, constraint k_pk primary key(x)); quit;");
     try t.expectEqual(@as(usize, 1), g_cons_len);
 
     // CONTROL: pruning must not disarm enforcement. The surviving PK still rejects
@@ -9611,7 +9792,7 @@ test "BUG-sqlcasesubquery: a subquery in a SELECT-list CASE resolves; lib-less s
         "proc sql; select sum(case when qty > (select avg(qty) from part) then 1 else 0 end) as n from part; quit;",
         "proc sql; select qty from part order by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
         "proc sql; select count(*) as n from part group by case when qty > (select avg(qty) from part) then 1 else 2 end; quit;",
-        "proc sql; create table ck (qty num, check (case when qty > (select avg(qty) from part) then 1 else 0 end = 1)); insert into ck values(10); quit;",
+        "proc sql; create table ck (qty num, constraint ck_ck check (case when qty > (select avg(qty) from part) then 1 else 0 end = 1)); insert into ck values(10); quit;",
     }) |src| {
         diag.resetGap();
         var dg = diag.Diagnostics.init(a);
@@ -10325,7 +10506,7 @@ test "BUG-sqlreportnotgated: an erroring SELECT prints NO listing (real SAS prin
     out.clearRetainingCapacity();
     var d3 = diag.Diagnostics.init(a);
     try run(a, &out, &lib, &d3, &titles, try lex.tokenize(a,
-        "proc sql; create table k (id num, primary key(id)); insert into k values(1); " ++
+        "proc sql; create table k (id num, constraint k_pk primary key(id)); insert into k values(1); " ++
             "insert into k values(1); select * from k; quit;", &d3));
     try t.expect(d3.hasStepErrors());
     try t.expectEqual(@as(usize, 0), out.items.len);
