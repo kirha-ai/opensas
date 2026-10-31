@@ -2,7 +2,16 @@
    phantom `constraint`/`primary` COLUMNS and were never enforced — dup PK,
    failed CHECK, dup UNIQUE, NULL in NOT NULL all inserted silently.
    Now: the violating INSERT is an ERROR (stderr) and the row is rejected;
-   a clean table has exactly its declared columns.
+   a clean table has exactly its declared columns. Enforcement is pinned by
+   the BUG-sqlconstraints unit tests in src/sql.zig.
+   BUG-sqlreportnotgated re-derived this golden: the four `select *` listings
+   it used to pin were printed WITH step errors live — a wrong baseline.
+   Oracle (real SAS 9.4, 2026-10-31, /tmp probe dev1-cons3.sas): after the
+   duplicate-PK INSERT ERROR the whole PROC SQL step halts ("NOTE: The SAS
+   System stopped processing this step because of errors."), the following
+   SELECT never runs, and stdout carries NO listing at all (SAS exits 2 by
+   its own convention; opensas 1 per D-009). So the expected stdout here is
+   EMPTY and the ERRORs + step-halt NOTE on stderr carry the fixture.
    expect-rc: 1 */
 proc sql;
   create table pk (id num, primary key(id));
