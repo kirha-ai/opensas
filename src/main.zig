@@ -3958,6 +3958,116 @@ test "BUG-mprintfragnestedmend: nested macro flushes its MPRINT fragment before 
     );
 }
 
+// BUG-mprintfragownerwrong — MPRINT attributes each line to the macro that
+// GENERATED the text, not to whichever macro happens to be returning when the
+// pending fragment is flushed. Every expectation below is a byte-for-byte copy of
+// a real SAS 9.4 log (`sasrun <probe> -l -`); the probe name is on each test.
+// These pin the OWNER only; see `mprintBoundary` in macro.zig for the break-column
+// divergence that stays accepted.
+
+test "BUG-mprintfragownerwrong: a text-less callee does not steal the caller's fragment" {
+    // oracle probe `mnoop`: %noop generates nothing, so `set` stays OUTER's.
+    // Was: MPRINT(NOOP):   set
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro noop; %mend;\n" ++
+        "%macro outer; data t; set %noop src; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MPRINT(OUTER):   src;\n" ++
+            "MPRINT(OUTER):   run;\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a %let-only silent macro does not steal the fragment" {
+    // oracle probe `mlet`: a macro that executes macro language but emits no text
+    // is the same shape as %noop. Was: MPRINT(SILENT):   set
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro silent; %let q=1; %mend;\n" ++
+        "%macro outer; data t; set %silent src; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MPRINT(OUTER):   src;\n" ++
+            "MPRINT(OUTER):   run;\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a statement split across a callee splits its MPRINT line" {
+    // oracle probe `mordlogic` — THE discriminating shape: the callee DOES emit
+    // text, so entry must flush the caller's half under the caller before the
+    // callee's own line. Was one merged line: MPRINT(INNER):   set  src;
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint mlogic;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro inner; src; %mend;\n" ++
+        "%macro outer; data t; set %inner run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MLOGIC(OUTER):  Beginning execution.\n" ++
+            "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MLOGIC(INNER):  Beginning execution.\n" ++
+            "MPRINT(INNER):   src;\n" ++
+            "MLOGIC(INNER):  Ending execution.\n" ++
+            "MPRINT(OUTER):   run;\n" ++
+            "MLOGIC(OUTER):  Ending execution.\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a macro boundary inside a literal does not sever it" {
+    // oracle probe `mquote`: real SAS never splits a string across a boundary
+    // (`MPRINT(Q1):   put` / `MPRINT(Q1):   "x  y";`). opensas keeps the literal
+    // whole on ONE line — the break column differs, the literal does not. Was
+    // worse than either: `MPRINT(NOOP):   put "x` then a reset mprint_quote
+    // mis-terminated the rest, joining `y"; run;` into a single bogus line.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint;\n" ++
+        "%macro noop; %mend;\n" ++
+        "%macro q1; data _null_; put \"x %noop y\"; run; %mend;\n" ++
+        "%q1\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings("x  y\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MPRINT(Q1):   data _null_;\n" ++
+            "MPRINT(Q1):   put \"x  y\";\n" ++
+            "MPRINT(Q1):   run;\n",
+        log,
+    );
+}
+
 fn expectRun(src: []const u8, want: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

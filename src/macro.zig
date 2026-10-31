@@ -336,6 +336,14 @@ const State = struct {
     /// NOAUTOCALL and ALL key on (ch.20 p.454).
     autocall_depth: usize = 0,
     mprint_pending: std.ArrayList(u8) = .empty,
+    /// WATERMARK (BUG-mprintfragownerwrong): the macro that GENERATED the text now
+    /// sitting in `mprint_pending`, recorded when its first character lands — NOT
+    /// read at flush time. Real SAS attributes every MPRINT line to the generating
+    /// scope, so a text-less callee (`%macro noop; %mend;`, or a `%let`-only macro)
+    /// must not steal its caller's half-built statement. Reading `scopes.last` at
+    /// flush time is what BUG-mprintfragnestedmend's fix got wrong (oracle: probe
+    /// `mnoop`/`mlet` → `MPRINT(OUTER):   set`, never `MPRINT(NOOP)`).
+    mprint_owner: []const u8 = "",
     mprint_quote: u8 = 0,
     mprint_slash: bool = false,
     mprint_comment: bool = false,
@@ -1314,6 +1322,45 @@ fn traceLine(st: *State, comptime fmt: []const u8, args: anytype) Error!void {
     }
 }
 
+/// The macro currently executing ("" in open code) — the generating scope that
+/// an MPRINT/MLOGIC line is attributed to.
+fn currentOwner(st: *State) []const u8 {
+    if (st.scopes.items.len == 0) return "";
+    return st.scopes.items[st.scopes.items.len - 1].owner;
+}
+
+/// A macro-execution BOUNDARY: drain whatever the generating scope has emitted so
+/// far, then flush the half-built statement under its watermark owner. Real SAS
+/// breaks the MPRINT line at every boundary — entering a macro call AND returning
+/// from one — so a statement split across `%m` shows the caller's half first
+/// (oracle probe `mord`: `%macro outer; data t; set %inner run; %mend;` with
+/// `%macro inner; src; %mend;` logs `MPRINT(OUTER):   set` / `MPRINT(INNER):   src;`
+/// / `MPRINT(OUTER):   run;`). Flushing only at return merged those into one line
+/// under one owner, so one of the two owners was always wrong.
+///
+/// An OPEN quote or `/* */` is deliberately NOT a flush point: real SAS never
+/// splits a literal (oracle `mquote`: `put "x %noop y";` → `MPRINT(Q1):   put` /
+/// `MPRINT(Q1):   "x  y";` — the string arrives whole). Flushing mid-literal also
+/// reset `mprint_quote`, which mis-terminated every following statement in the
+/// macro (baseline emitted `put "x` then `y"; run;` as ONE line).
+///
+/// ponytail: owner attribution is now oracle-exact; the COLUMN the break lands on
+/// is not, and is left alone. Real SAS splits at its consuming parser's token-pull
+/// granularity, which differs per consumer and which opensas (expand-then-parse)
+/// does not model: `set srcx1 %noop ;` logs `set` / `srcx1 ;` but
+/// `proc print data=x noobs %noop ;` logs the whole `proc print data=x noobs` /
+/// `;`. opensas always breaks at the macro call. Accepted: log-only, every line
+/// carries the RIGHT owner and the concatenated text is identical. Also accepted:
+/// real SAS logs a lone `MPRINT(…):   ;` line where `statement.len > 1` below
+/// suppresses ours. Both are their own slice (needs a token-pull model).
+fn mprintBoundary(st: *State, out: *std.ArrayList(u8)) Error!void {
+    try traceGenerated(st, out); // drain IN the generating scope, before it changes
+    if (st.mprint_quote != 0 or st.mprint_comment or st.mprint_slash) return;
+    const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
+    if (fragment.len > 0) try traceLine(st, "MPRINT({s}):   {s}", .{ st.mprint_owner, fragment });
+    st.mprint_pending.clearRetainingCapacity();
+}
+
 fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
     if (st.mprint_output != out) return;
     if (st.mprint_cursor > out.items.len) st.mprint_cursor = 0;
@@ -1321,6 +1368,10 @@ fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
     st.mprint_cursor = out.items.len;
     if (!st.plain_put or !st.mprint or st.macro_call_depth == 0 or !st.sq_masks_triggers) return;
     for (fresh) |ch| {
+        // Watermark the pending statement with whoever is executing as its first
+        // character lands. While the buffer is empty this just tracks the current
+        // scope, so the owner is always the scope that generated the text.
+        if (st.mprint_pending.items.len == 0) st.mprint_owner = currentOwner(st);
         if (st.mprint_comment) {
             if (st.mprint_comment_star and ch == '/') st.mprint_comment = false;
             st.mprint_comment_star = ch == '*';
@@ -1348,8 +1399,9 @@ fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
         } else if (ch == ';') {
             const statement = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
             if (statement.len > 1) {
-                const owner = st.scopes.items[st.scopes.items.len - 1].owner;
-                try traceLine(st, "MPRINT({s}):   {s}", .{ owner, statement });
+                // The watermark, not `scopes.last`: a statement OPENED by the caller
+                // and terminated after a callee returned belongs to the caller.
+                try traceLine(st, "MPRINT({s}):   {s}", .{ st.mprint_owner, statement });
             }
             st.mprint_pending.clearRetainingCapacity();
         }
@@ -2538,6 +2590,10 @@ fn handleMacro(st: *State, src: []const u8, from: usize) Error!usize {
 fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *std.ArrayList(u8)) Error!usize {
     var k = skipWs(src, from);
     const m = st.getMacro(name).?;
+    // Entry is a boundary: the caller's half-built statement flushes under the
+    // CALLER before this macro's first trace line (oracle `mordlogic`:
+    // `MPRINT(OUTER):   set` precedes `MLOGIC(INNER):  Beginning execution.`).
+    try mprintBoundary(st, out);
     if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Beginning execution.", .{try upperDup(st.a, name)});
     // Collect raw arg spans (comma-separated, respecting nested parens), then split
     // into positional values and keyword (name=value) args (SAS keyword params).
@@ -2640,17 +2696,15 @@ fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *
     st.mindelimiter = if (m.has_mindelim) m.mindelim else prev_mindelim;
     st.macro_call_depth += 1;
     try process(st, m.body, out); // depth-guarded inside process()
+    // Return is the other boundary — BEFORE the depth decrement, so the drain still
+    // runs at the depth that generated the text. A text-less body leaves `pending`
+    // untouched and flushes nothing, which is the whole point of the watermark:
+    // the caller's fragment stays the caller's and survives to the caller's own
+    // next boundary (BUG-mprintfragownerwrong). `mprintBoundary` is also the only
+    // place the `;`-scanner state resets, so a `%mend` reached mid-literal no
+    // longer severs the string (see its doc comment).
+    try mprintBoundary(st, out);
     st.macro_call_depth -= 1;
-    const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
-    if (fragment.len > 0) {
-        const owner = st.scopes.items[st.scopes.items.len - 1].owner;
-        try traceLine(st, "MPRINT({s}):   {s}", .{ owner, fragment });
-    }
-    st.mprint_pending.clearRetainingCapacity();
-    st.mprint_quote = 0;
-    st.mprint_slash = false;
-    st.mprint_comment = false;
-    st.mprint_comment_star = false;
     if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Ending execution.", .{try upperDup(st.a, name)});
     st.minoperator = prev_minop;
     st.mindelimiter = prev_mindelim;
