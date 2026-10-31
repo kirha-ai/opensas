@@ -943,14 +943,23 @@ fn runAlter(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, s
                 i += 1;
                 const tstart = i;
                 i = alterItemEnd(stmt, i);
-                var ty: VarType = .num;
-                var awidth: ?usize = null; // declared char(n) width, as in CREATE (GAP-sqldatatypewidth)
-                for (tstart..i) |k|
-                    if (tkKw(stmt[k], "char") or tkKw(stmt[k], "varchar") or tkKw(stmt[k], "character")) {
-                        ty = .char;
-                        if (atTag(stmt, k + 1, .lparen) and atTag(stmt, k + 2, .number) and atTag(stmt, k + 3, .rparen))
-                            awidth = std.fmt.parseInt(usize, stmt[k + 2].text, 10) catch null;
-                    };
+                // BUG-sqlbarechecktypebypass (sibling half): read the type off the
+                // TYPE REGION, through the SAME scanner CREATE uses. This loop used
+                // to sweep the WHOLE item for `char`/`varchar`/`character`, so a type
+                // keyword nested in an inline CHECK predicate silently decided the
+                // ADDed column's type: on a table with a column called `char`,
+                // `alter table t add flag num check(char = 1)` made `flag` CHARACTER.
+                // Real SAS makes it NUMERIC — oracle r1/r3, 2026-11-01: SAS accepts
+                // the statement with no ERROR and `select flag, flag + 1` prints
+                // 3.5 / 4.5 with no character-to-numeric conversion NOTE, whereas
+                // opensas emitted that NOTE. A wrong column TYPE at exit 0 is the
+                // same silent-wrong-output class as the CREATE half and has the same
+                // cause, which is why both paths now go through one function.
+                // (ALTER stays lenient about a type being ABSENT — it still defaults
+                // to num; only CREATE's missing-type rule is oracle-settled, D-028.)
+                const atr = scanTypeRegion(stmt[tstart..i], 0);
+                const ty = atr.ty;
+                const awidth = atr.width; // declared char(n) width (GAP-sqldatatypewidth)
                 const idx = try ds.?.addColumn(cname, ty);
                 if (awidth) |w| ds.?.columns.items[idx].len = w;
                 for (ds.?.rows.items) |*r| { // back-fill existing rows with missing
@@ -9498,6 +9507,37 @@ test "BUG-sqlbareconstraintaccept + BUG-sqlbarechecktypebypass: CREATE TABLE rej
         var d2 = diag.Diagnostics.init(a);
         try runSql(a, &lib, &d2, "proc sql; insert into ap values(1); insert into ap values(1); quit;");
         try t.expectEqual(@as(usize, 1), lib.find("ap").?.rowCount()); // the dup was refused
+        try t.expect(d2.hasErrors());
+    }
+
+    // (4) The SIBLING half of BUG-sqlbarechecktypebypass, in the ALTER path. Its
+    // type scan swept the whole ADD item, so a `char` nested in an inline CHECK
+    // predicate typed the new column: on a table whose column is called `char`,
+    // `alter table ap2 add flag num check(char = 1)` produced a CHARACTER `flag`.
+    // Oracle r1/r3, real SAS 9.4, 2026-11-01: SAS accepts the statement with no
+    // ERROR and the column is NUMERIC (`select flag, flag + 1` → 3.5 / 4.5, and
+    // SAS logs no character-to-numeric conversion NOTE; opensas did).
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        try runSql(a, &lib, &d,
+            "proc sql; create table ap2 (char num, x num); " ++
+                "alter table ap2 add flag num check(char = 1); " ++
+                // a real char(3) in the type position must still land as char(3) —
+                // the narrowing may not cost the legitimate width either
+                "alter table ap2 add nm char(3) check (nm <> ''); quit;");
+        try t.expect(!d.hasErrors());
+        const ap2 = lib.find("ap2").?;
+        try t.expectEqual(@as(usize, 4), ap2.columns.items.len);
+        try t.expectEqualStrings("flag", ap2.columns.items[2].name);
+        try t.expectEqual(VarType.num, ap2.columns.items[2].type); // NOT char
+        try t.expectEqualStrings("nm", ap2.columns.items[3].name);
+        try t.expectEqual(VarType.char, ap2.columns.items[3].type);
+        try t.expectEqual(@as(?usize, 3), ap2.columns.items[3].len);
+        // and the inline CHECK the predicate came from is still ENFORCED
+        var d2 = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d2, "proc sql; insert into ap2 values(1, 2, 3, 'ab'); insert into ap2 values(9, 2, 3, 'cd'); quit;");
+        try t.expectEqual(@as(usize, 1), lib.find("ap2").?.rowCount());
         try t.expect(d2.hasErrors());
     }
 }
