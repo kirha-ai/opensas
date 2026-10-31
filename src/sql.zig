@@ -1196,6 +1196,68 @@ fn isTypeKeyword(tok: Token) bool {
     return false;
 }
 
+/// What `scanTypeRegion` found in one DDL body item's type region.
+const TypeRegion = struct {
+    ty: VarType = .num,
+    width: ?usize = null, // declared char(n)/varchar(n) width (GAP-sqldatatypewidth)
+    kws: usize = 0, // type keywords in the region
+    first_kw: ?usize = null, // index of the first one, relative to `item`
+    end: usize, // first token past the region (the suffix start)
+};
+
+/// The TYPE REGION of one DDL body item: from `start` (the token right after the
+/// column name) up to the first column-level constraint keyword or column modifier
+/// — **at parenthesis depth 0 only**.
+///
+/// BUG-sqlbarechecktypebypass: the depth rule is the whole point of this function
+/// existing, and it is why CREATE TABLE and ALTER TABLE ADD must both go through it.
+/// Both used to decide the datatype by looking for a type keyword ANYWHERE in the
+/// item's flat token span, so a type keyword that merely happened to sit inside a
+/// nested CHECK predicate counted as the column's type. That was two bugs with one
+/// cause: in CREATE it satisfied the missing-type guard and let an unnamed
+/// table-level constraint back in as a column (`create table t (x num,
+/// check(num >= 0))` exited 0 printing `x check`), and in ALTER it silently typed
+/// the ADDed column from the predicate (`add flag num check(char = 1)` made `flag`
+/// CHARACTER; real SAS makes it numeric — oracle r1/r3, 2026-11-01). A datatype is
+/// only a datatype in the column-definition position, and nothing inside `(…)` —
+/// a predicate, a `char(n)` width, a `(p,s)` scale, a constraint's column list — is
+/// ever in it. Callers that need the POSITION too compare `first_kw` to `start`.
+fn scanTypeRegion(item: []const Token, start: usize) TypeRegion {
+    var r: TypeRegion = .{ .end = item.len };
+    var depth: usize = 0;
+    var i = start;
+    while (i < item.len) : (i += 1) {
+        if (item[i].tag == .lparen) {
+            depth += 1;
+            continue;
+        }
+        if (item[i].tag == .rparen) {
+            if (depth > 0) depth -= 1;
+            continue;
+        }
+        // Nested: not this column's type, and it does not end the region either —
+        // `check(date is not null)` must not break the scan on its inner `not`.
+        if (depth > 0) continue;
+        if (isColConstraintStart(item[i]) or isColModAt(item, i)) {
+            r.end = i;
+            return r;
+        }
+        if (isTypeKeyword(item[i])) {
+            r.kws += 1;
+            if (r.first_kw == null) r.first_kw = i;
+        }
+        if (tkKw(item[i], "char") or tkKw(item[i], "varchar") or tkKw(item[i], "character")) {
+            r.ty = .char;
+            // `char ( n )` — the declared storage width. A numeric type's `(p,s)` is
+            // precision/scale metadata: SAS stores every numeric as a double
+            // regardless, so only char widths are captured.
+            if (atTag(item, i + 1, .lparen) and atTag(item, i + 2, .number) and atTag(item, i + 3, .rparen))
+                r.width = std.fmt.parseInt(usize, item[i + 2].text, 10) catch null;
+        }
+    }
+    return r;
+}
+
 /// True for the first token of a column-level constraint clause (it ends the
 /// type region of a column def).
 fn isColConstraintStart(tok: Token) bool {
@@ -1241,6 +1303,12 @@ fn appendCheckedCons(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Da
 /// reproduce that by NOT special-casing the keyword and letting the missing-type
 /// check below fire (see it for the oracle evidence). ALTER TABLE ADD is different
 /// and keeps the bare form: `parseBareOrNamedTableConstraint`.
+///
+/// BUG-sqlbarechecktypebypass: "its data type is missing" is a POSITIONAL test —
+/// the type must follow the column name directly, at paren depth 0 of the item.
+/// Asking only whether a type keyword occurs SOMEWHERE in the item let a nested
+/// predicate supply one (`check(num >= 0)`), which is the same bare clause walking
+/// straight back in.
 fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, ds: *Dataset, cons: *std.ArrayList(Constraint), item: []const Token) !void {
     if (item.len == 0) return;
     // `constraint <name> <clause>` — the name is metadata only; skip it.
@@ -1258,27 +1326,16 @@ fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, d
         try diags.report(.err, item[0].line, "PROC SQL: duplicate column name {s} in CREATE TABLE {s}", .{ cname, ds.name });
         return;
     }
-    var i: usize = 1;
-    // type region: everything up to the first constraint keyword or column
-    // modifier (`num`, `char(8)`, …). More than one type keyword in it
-    // (`c num num`) is a stray extra token — fail LOUD and skip the item (same
-    // BUG). Unknown trailing single names keep the old lenient skip, so
-    // `double precision`-style phrases pass.
-    var ty: VarType = .num;
-    var width: ?usize = null; // declared char(n)/varchar(n) width (GAP-sqldatatypewidth)
-    var type_kws: usize = 0;
-    while (i < item.len and !isColConstraintStart(item[i]) and !isColModAt(item, i)) : (i += 1) {
-        if (isTypeKeyword(item[i])) type_kws += 1;
-        if (tkKw(item[i], "char") or tkKw(item[i], "varchar") or tkKw(item[i], "character")) {
-            ty = .char;
-            // `char ( n )` — the declared storage width. A numeric type's
-            // `(p,s)` is precision/scale metadata: SAS stores every numeric as
-            // a double regardless, so only char widths are captured.
-            if (atTag(item, i + 1, .lparen) and atTag(item, i + 2, .number) and atTag(item, i + 3, .rparen))
-                width = std.fmt.parseInt(usize, item[i + 2].text, 10) catch null;
-        }
-    }
-    if (type_kws > 1) {
+    // The declared type comes from the TYPE REGION only — see `scanTypeRegion`,
+    // which is the one definition of where a datatype may legally sit.
+    const tr = scanTypeRegion(item, 1);
+    const ty = tr.ty;
+    const width = tr.width;
+    const i = tr.end; // where the constraint/modifier suffix begins
+    // Two type keywords in the region (`c num num`) is a stray extra token — fail
+    // LOUD and skip the item (BUG-sqlbareconstraintaccept). Unknown trailing single
+    // names keep the old lenient skip, so `double precision` passes (oracle q7).
+    if (tr.kws > 1) {
         try diags.report(.err, item[0].line, "PROC SQL: malformed column definition for {s} in CREATE TABLE {s} (unexpected extra type token)", .{ cname, ds.name });
         return;
     }
@@ -1305,9 +1362,31 @@ fn parseColumnOrConstraint(arena: std.mem.Allocator, diags: *diag.Diagnostics, d
     // opensas used to ACCEPT and ENFORCE the bare clause: silently running a
     // program real SAS refuses is the worst failure class here (D-002), so this
     // abandons the statement (rc 1, a user-program error per D-009).
-    if (type_kws == 0) {
+    //
+    // BUG-sqlbarechecktypebypass refines the test from "no type ANYWHERE in the
+    // item" to "no type in the COLUMN-DEFINITION POSITION" (index 1, depth 0) — the
+    // flat-span version had a hole for every clause whose parenthesized body can
+    // mention a type keyword. Second oracle round, real SAS 9.4 on this box,
+    // 2026-11-01, /tmp/dev1probe2 — ALL of these log the SAME 22-322 + 76-322 and
+    // `ERROR: File WORK.<t>.DATA does not exist.`, i.e. no table, step NOEXEC:
+    //   q1  create table t (x num, check(num >= 0));          -- the ticket's repro
+    //   q2  create table t (x num, check(date is not null));   -- nested `not` too
+    //   q3  create table t (x char(4), check(char(x) = 'a'));  -- type kw as a call
+    //   q4  create table t (k num, unique(num));               -- not just CHECK
+    //   q10 create table t (x num, primary key(num));          -- nor just UNIQUE
+    //   q6  … constraint c1 check(x > 0), check(num >= 0));    -- named sibling: no
+    //   q8  create table t (x not null num);                   -- misplaced type
+    //   q5  create table t (k num, unique(k) num);             -- 22-322 + 200-322
+    // q5 and q8 are why the rule is POSITIONAL and not merely depth-aware: there the
+    // type keyword IS at depth 0, just not where a datatype goes. ACCEPTED in the
+    // same round (control, no ERROR, table created): q7 `(x double precision)` and
+    // q9 `(num num, constraint c1 check(num >= 0))` — `num` is a fine column name,
+    // and a type keyword inside a NAMED clause's predicate is none of our business.
+    if (tr.first_kw == null or tr.first_kw.? != 1) {
         if (isTableConstraintStart(item[0]))
             try diags.report(.err, item[0].line, "PROC SQL: CREATE TABLE {s}: an unnamed table-level {s} constraint is not valid SAS — write `constraint <name> {s} …` (SAS 9.4: ERROR 22-322, statement ignored)", .{ ds.name, cname, cname })
+        else if (tr.first_kw != null)
+            try diags.report(.err, item[0].line, "PROC SQL: CREATE TABLE {s}: column {s} has no data type in the column-definition position — the type must follow the column name directly, not sit inside `(…)` (SAS 9.4: ERROR 22-322, statement ignored)", .{ ds.name, cname })
         else
             try diags.report(.err, item[0].line, "PROC SQL: CREATE TABLE {s}: column {s} has no data type (expecting CHAR, VARCHAR, NUM, INT, DATE, …)", .{ ds.name, cname });
         return error.ExecError;
@@ -9232,7 +9311,7 @@ test "BUG-sqlconstraints: PK/NOT NULL/CHECK/UNIQUE enforced, no phantom columns"
     try t.expect(d5.hasErrors());
 }
 
-test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level constraint" {
+test "BUG-sqlbareconstraintaccept + BUG-sqlbarechecktypebypass: CREATE TABLE rejects an UNNAMED table-level constraint, and a type keyword nested in its predicate does not license one" {
     // The bug: opensas ACCEPTED `create table pk (id int, primary key(id))`, enforced
     // it, and exited 0 printing `id` — while real SAS 9.4 refuses the program. Silently
     // running SAS that SAS itself rejects is the D-002 failure class, so this must be
@@ -9258,6 +9337,15 @@ test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level c
     //   p14 create table t (id num); alter table t add primary key(id);   accepted
     // i.e. the mandatory-name rule is CREATE-TABLE-only, it is really "a body item
     // with no data type is not a column def", and the keywords stay legal column names.
+    //
+    // BUG-sqlbarechecktypebypass (PR review round 2) refines ONE word of that:
+    // "no data type" means no data type IN THE COLUMN-DEFINITION POSITION — directly
+    // after the column name, at paren depth 0 of the item. The first cut counted type
+    // keywords anywhere in the item's flat token span, so a bare clause whose own
+    // predicate happened to mention one slipped through and was accepted as a column
+    // (`create table t (x num, check(num >= 0))` exited 0 printing `x  check`). The
+    // q-numbered cases below are the second oracle round, 2026-11-01, that settled
+    // the refined boundary; every p-number above still holds unchanged.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -9272,6 +9360,23 @@ test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level c
         .{ "bfk", "proc sql; create table bfk (x num, foreign key (x) references par); quit;" },
         // a correctly named clause does NOT license a bare sibling (oracle p18)
         .{ "bmx", "proc sql; create table bmx (id num, constraint c1 primary key(id), unique(id)); quit;" },
+        // BUG-sqlbarechecktypebypass — the hole this guard had: a type keyword
+        // NESTED in the clause's own parentheses used to satisfy it, so each of
+        // these was accepted as a column and the program exited 0. Second oracle
+        // round, real SAS 9.4, 2026-11-01, /tmp/dev1probe2: ALL eight log the same
+        // 22-322 (+76-322, or +200-322/202-322 for the two misplaced-type forms)
+        // and `ERROR: File WORK.<t>.DATA does not exist.`
+        .{ "qck", "proc sql; create table qck (x num, check(num >= 0)); select * from qck; quit;" }, // q1
+        .{ "qdt", "proc sql; create table qdt (x num, check(date is not null)); quit;" }, // q2
+        .{ "qfn", "proc sql; create table qfn (x char(4), check(char(x) = 'a')); quit;" }, // q3
+        .{ "quq", "proc sql; create table quq (k num, unique(num)); quit;" }, // q4
+        .{ "qpk", "proc sql; create table qpk (x num, primary key(num)); quit;" }, // q10
+        .{ "qmx", "proc sql; create table qmx (x num, constraint c1 check(x > 0), check(num >= 0)); quit;" }, // q6
+        // the type keyword is at DEPTH 0 here, just not in the datatype position —
+        // which is why the rule is positional and not merely depth-aware (q5)
+        .{ "qps", "proc sql; create table qps (k num, unique(k) num); quit;" },
+        // the same, nested one level deeper: a predicate inside a predicate
+        .{ "qnn", "proc sql; create table qnn (x num, check((num + 1) > 0)); quit;" },
     }) |case| {
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
@@ -9309,6 +9414,18 @@ test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level c
         try t.expect(saw);
     }
 
+    // An ORDINARY column whose type is present but MISPLACED is the same rejection
+    // with its own wording (oracle q8 `(x not null num)`: 22-322 + 202-322, no
+    // table). This is the second reason the rule has to be positional.
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        runSql(a, &lib, &d, "proc sql; create table mp (x not null num); quit;") catch {};
+        try t.expect(d.hasErrors());
+        try t.expect(!diag.gapHit());
+        try t.expect(lib.find("mp") == null);
+    }
+
     // (2) ACCEPTED — the forms real SAS takes must keep working, or the fix is just a
     // differently-shaped bug. Named table-level, every unnamed COLUMN-level suffix,
     // and the keywords used as plain column names.
@@ -9334,6 +9451,39 @@ test "BUG-sqlbareconstraintaccept: CREATE TABLE rejects an UNNAMED table-level c
         var d2 = diag.Diagnostics.init(a);
         try runSql(a, &lib, &d2, "proc sql; insert into np values(1); insert into np values(1); quit;");
         try t.expectEqual(@as(usize, 1), lib.find("np").?.rowCount());
+        try t.expect(d2.hasErrors());
+    }
+
+    // (2b) BUG-sqlbarechecktypebypass must not swing the other way: narrowing the
+    // guard to the column-definition position may NOT start rejecting a type keyword
+    // that legitimately appears somewhere else in a legal item. Oracle q7/q9,
+    // 2026-11-01: both are created with no ERROR.
+    {
+        var d = diag.Diagnostics.init(a);
+        var lib = Library.init(a);
+        try runSql(a, &lib, &d,
+            "proc sql; create table pq (num num, constraint pq_ck check(num >= 0)); " ++ // q9
+                "create table dp (x double precision, nm char(3) check (nm <> '')); " ++ // q7
+                // the deeper nestings of the rejected set, made legal by a name
+                "create table dn (x num, constraint dn_ck check((num + 1) > 0), constraint dn_u unique(x)); quit;");
+        try t.expect(!d.hasErrors());
+        try t.expect(!diag.gapHit());
+        // `num` is a COLUMN here, not a datatype hiding in a predicate
+        const pq = lib.find("pq").?;
+        try t.expectEqual(@as(usize, 1), pq.columns.items.len);
+        try t.expectEqualStrings("num", pq.columns.items[0].name);
+        try t.expectEqual(VarType.num, pq.columns.items[0].type);
+        // `double precision` is still ONE numeric column, and the nested `char(3)`
+        // width is still read off the type region and not off the CHECK predicate
+        const dp = lib.find("dp").?;
+        try t.expectEqual(@as(usize, 2), dp.columns.items.len);
+        try t.expectEqual(VarType.num, dp.columns.items[0].type);
+        try t.expectEqual(VarType.char, dp.columns.items[1].type);
+        try t.expectEqual(@as(?usize, 3), dp.columns.items[1].len);
+        // …and the named CHECK is ENFORCED, so "accepted" is not "parsed and dropped"
+        var d2 = diag.Diagnostics.init(a);
+        try runSql(a, &lib, &d2, "proc sql; insert into pq values(7); insert into pq values(-1); quit;");
+        try t.expectEqual(@as(usize, 1), lib.find("pq").?.rowCount());
         try t.expect(d2.hasErrors());
     }
 
