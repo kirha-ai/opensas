@@ -830,7 +830,18 @@ fn runStmt(arena: std.mem.Allocator, out: *std.ArrayList(u8), lib: *Library, dia
             // its output — SAS syntax-checks and produces no listing (F1).
             // NOPRINT (F5) also suppresses the listing, but the query RAN: rows
             // were computed and INTO macro vars were bound inside execSelect.
-            if (!g_opts.noexec and !g_opts.noprint) {
+            // BUG-sqlreportnotgated: a STEP ERROR suppresses the listing too.
+            // A caught per-row failure (eval's `catch Value.missing`) leaves a
+            // fabricated value in `res` while the ERROR goes to the log — printing
+            // it would put a clean-looking table on stdout beside a stderr ERROR.
+            // Real SAS 9.4 prints NO listing at all for an erroring SQL step
+            // (oracle: `order by case when max(x)=3 then lag(x) …` → empty stdout,
+            // 3 ERROR lines, rc 2) — the DATA-step "keep partial results + WARNING"
+            // doctrine (D-024's not-replaced half) does NOT extend to SQL listings.
+            // hasStepErrors() is the per-step class the executor already spends
+            // (D-024: main arms/spends it around steps, so here it reads as this
+            // step's own errors) — not a new gate.
+            if (!g_opts.noexec and !g_opts.noprint and !diags.hasStepErrors()) {
                 try titles.emitTitles(arena, out);
                 try report(arena, out, res);
                 try titles.emitFootnotes(arena, out);
@@ -10269,4 +10280,53 @@ test "PROC SQL: the equi-join hash fast path survives the ON desugar (BUG-sqlonp
         try t.expectEqual(c.fast, try extractEqKeys(a, acc, tb, "b", cond, &keys));
         if (c.fast) try t.expect(keys.items.len > 0);
     }
+}
+
+test "BUG-sqlreportnotgated: an erroring SELECT prints NO listing (real SAS prints none)" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+
+    const d = try a.create(Dataset);
+    d.* = Dataset.init(a, "t");
+    _ = try d.addColumn("g", .num);
+    _ = try d.addColumn("x", .num);
+    for ([_][2]f64{ .{ 1, 3 }, .{ 1, 2 }, .{ 0, 2 }, .{ 0, 1 } }) |r|
+        try d.appendRow(&.{ numV(r[0]), numV(r[1]) });
+    try lib.put("t", d);
+
+    var out: std.ArrayList(u8) = .empty;
+    var titles: Titles = .{};
+
+    // Control: a clean SELECT in its own step still lists — the gate must not
+    // over-suppress.
+    var d1 = diag.Diagnostics.init(a);
+    try run(a, &out, &lib, &d1, &titles, try lex.tokenize(a,
+        "proc sql; select g, sum(x) as s from t group by g; quit;", &d1));
+    try t.expect(!d1.hasStepErrors());
+    try t.expect(out.items.len > 0);
+
+    // The reproducer: per-row eval catches the lag() failure as Value.missing
+    // while diags records the ERROR — report() must not print the fabricated
+    // table. Oracle (real SAS 9.4, 2026-10-31): NO listing at all, 3 ERROR
+    // lines, the step stops.
+    out.clearRetainingCapacity();
+    var d2 = diag.Diagnostics.init(a);
+    try run(a, &out, &lib, &d2, &titles, try lex.tokenize(a,
+        "proc sql; select g, max(x) as mx from t group by g " ++
+            "order by case when max(x)=3 then lag(x) else 0 end; quit;", &d2));
+    try t.expect(d2.hasStepErrors()); // loud …
+    try t.expectEqual(@as(usize, 0), out.items.len); // …but NO listing
+
+    // Runtime shape: a SELECT AFTER a constraint-violation ERROR in the SAME
+    // step (oracle probe: real SAS halts the whole step there, so its SELECT
+    // never runs — the conservative gate prints no listing either).
+    out.clearRetainingCapacity();
+    var d3 = diag.Diagnostics.init(a);
+    try run(a, &out, &lib, &d3, &titles, try lex.tokenize(a,
+        "proc sql; create table k (id num, primary key(id)); insert into k values(1); " ++
+            "insert into k values(1); select * from k; quit;", &d3));
+    try t.expect(d3.hasStepErrors());
+    try t.expectEqual(@as(usize, 0), out.items.len);
 }
