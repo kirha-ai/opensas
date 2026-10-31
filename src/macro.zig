@@ -1256,9 +1256,7 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
             while (e < src.len) : (e += 1) {
                 if (src[e] == ';') break;
                 if (src[e] == '\'' or src[e] == '"') { // a quoted ';' doesn't end it
-                    const q = src[e];
-                    e += 1;
-                    while (e < src.len and src[e] != q) e += 1;
+                    e = skipQuoted(src, e) -| 1;
                 }
             }
             applyOptionsStmt(st, src[i..e], .all);
@@ -1604,10 +1602,7 @@ fn skipOptValue(stmt: []const u8, from: usize) ?usize {
     p = skipOptsSpace(stmt, p + 1);
     if (p >= stmt.len) return p;
     if (stmt[p] == '\'' or stmt[p] == '"') {
-        const q = stmt[p];
-        p += 1;
-        while (p < stmt.len and stmt[p] != q) p += 1;
-        return if (p < stmt.len) p + 1 else p;
+        return skipQuoted(stmt, p);
     }
     if (stmt[p] == '(') return skipBalancedParenText(stmt, p) orelse stmt.len;
     if ((stmt[p] == '&' or stmt[p] == '%') and p + 1 < stmt.len and isNameStart(stmt[p + 1])) {
@@ -1638,9 +1633,7 @@ fn skipBalancedParenText(stmt: []const u8, at: usize) ?usize {
     var p = at;
     while (p < stmt.len) : (p += 1) {
         if (stmt[p] == '\'' or stmt[p] == '"') {
-            const q = stmt[p];
-            p += 1;
-            while (p < stmt.len and stmt[p] != q) p += 1;
+            p = skipQuoted(stmt, p) -| 1;
             continue;
         }
         if (stmt[p] == '(') depth += 1;
@@ -5547,6 +5540,19 @@ test "BUG-mcompilenotevarlate: a MACRO-VARIABLE-valued ch.20 option takes effect
                 "NOTE: TWO\n",
             try d.render(),
         );
+    }
+    // BUG-macrooptescapedquotealias: a word after a SAS doubled-quote escape
+    // is still option VALUE text, not a new option. Oracle probe 2026-11-01:
+    // `options sysparm="a""nomreplace";` does not set NOMREPLACE.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand(
+            "options sysparm=\"a\"\"nomreplace\";" ++
+                "%macro m;%put ONE;%mend;" ++
+                "%macro m;%put TWO;%mend;%m",
+        );
+        try std.testing.expectEqualStrings("NOTE: TWO\n", try d.render());
     }
     // Same for a `%`-valued setting — the resolution pass is the ordinary one,
     // so a macro function in the value works for free.
