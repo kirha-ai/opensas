@@ -12,9 +12,24 @@
    SELECT never runs, and stdout carries NO listing at all (SAS exits 2 by
    its own convention; opensas 1 per D-009). So the expected stdout here is
    EMPTY and the ERRORs + step-halt NOTE on stderr carry the fixture.
+   BUG-sqlbareconstraintaccept rewrote every TABLE-level clause below to the
+   `constraint <name> …` spelling. The previous text used the UNNAMED form
+   (`primary key(id)`, `check (age >= 18)`), which real SAS 9.4 REJECTS with
+   ERROR 22-322 + "ERROR 76-322: Syntax error, statement will be ignored." — so
+   as written the fixture could never reach the enforcement path it claims to
+   test. The SQL Procedure User's Guide ch.4 p.143 writes a table constraint as
+   `constraint prim_key primary key(state)`; oracle 2026-11-01 (/tmp probes
+   p1/p2) confirms the bare form errors with the table NOT created and the named
+   one logs "NOTE: Table WORK.T2 created". Column-level `not null` / `unique`
+   stay UNNAMED below — oracle p3/p4 confirm SAS accepts those unnamed. Both the
+   expected stdout (still EMPTY) and the expected return code are unchanged: the
+   rewrite restores the intended path rather than changing the outcome. Re-oracled
+   2026-11-01 on the rewritten text — SAS creates PK, inserts one row, refuses the
+   duplicate ("…do not comply with integrity constraint pk_pk"), halts the step,
+   and writes nothing to stdout.
    expect-rc: 1 */
 proc sql;
-  create table pk (id num, primary key(id));
+  create table pk (id num, constraint pk_pk primary key(id));
   insert into pk values(1);
   insert into pk values(1);  /* ERROR: duplicate primary key — row rejected */
   select * from pk;          /* one row, and NO phantom constraint column */
@@ -25,7 +40,7 @@ proc sql;
   insert into nn(b) values('y'); /* ERROR: NOT NULL column a missing */
   select * from nn;
 
-  create table ck (age num, check (age >= 18));
+  create table ck (age num, constraint ck_ck check (age >= 18));
   insert into ck values(20);
   insert into ck values(7);   /* ERROR: CHECK failed */
   select * from ck;
