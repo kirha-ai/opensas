@@ -1536,6 +1536,11 @@ fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) void {
             } else if (!fam and st.plain_put and eqi(w, "yearcutoff")) {
                 if (parseTrailingYearcutoff(stmt, i)) |n| format.setYearCutoff(n);
             }
+            if (skipOptValue(stmt, i)) |e| i = e;
+        } else if ((stmt[i] == '&' or stmt[i] == '%') and i + 1 < stmt.len and isNameStart(stmt[i + 1])) {
+            const e = skipMacroTriggerWord(stmt, i);
+            const q = skipOptsSpace(stmt, e);
+            i = if (stmt[i] == '%' and q < stmt.len and stmt[q] == '(') skipBalancedParenText(stmt, q) orelse stmt.len else e;
         } else i += 1;
     }
 }
@@ -1586,6 +1591,44 @@ fn parseOptWordValue(stmt: []const u8, from: usize, end: *usize) ?[]const u8 {
     if (p == s) return null;
     end.* = p;
     return stmt[s..p];
+}
+
+/// If `from` is followed by `=<value>`, return the first byte after that value.
+/// The raw OPTIONS hook is a read-time scanner for option WORDS, not a parser for
+/// arbitrary option values: a name inside `mcompilenote=&nomreplace`,
+/// `sysparm="nomreplace"` or `foo=%upcase(nomreplace)` is data until macro
+/// resolution makes the statement text real (BUG-macrooptvarnamealias).
+fn skipOptValue(stmt: []const u8, from: usize) ?usize {
+    var p = skipOptsSpace(stmt, from);
+    if (p >= stmt.len or stmt[p] != '=') return null;
+    p = skipOptsSpace(stmt, p + 1);
+    if (p >= stmt.len) return p;
+    if (stmt[p] == '\'' or stmt[p] == '"') {
+        const q = stmt[p];
+        p += 1;
+        while (p < stmt.len and stmt[p] != q) p += 1;
+        return if (p < stmt.len) p + 1 else p;
+    }
+    if (stmt[p] == '(') return skipBalancedParenText(stmt, p) orelse stmt.len;
+    if ((stmt[p] == '&' or stmt[p] == '%') and p + 1 < stmt.len and isNameStart(stmt[p + 1])) {
+        p = skipMacroTriggerWord(stmt, p);
+        const q = skipOptsSpace(stmt, p);
+        if (q < stmt.len and stmt[q] == '(') return skipBalancedParenText(stmt, q) orelse stmt.len;
+        return p;
+    }
+    while (p < stmt.len and stmt[p] != ' ' and stmt[p] != '\t' and stmt[p] != '\r' and stmt[p] != '\n' and stmt[p] != ';') p += 1;
+    return p;
+}
+
+fn skipMacroTriggerWord(stmt: []const u8, at: usize) usize {
+    var p = at + 1;
+    while (p < stmt.len and stmt[p] == stmt[at]) p += 1;
+    if (p < stmt.len and isNameStart(stmt[p])) {
+        p += 1;
+        while (p < stmt.len and isNameChar(stmt[p])) p += 1;
+        if (stmt[at] == '&' and p < stmt.len and stmt[p] == '.') p += 1;
+    }
+    return p;
 }
 
 /// Index just past the `)` matching the `(` at `at`, quotes respected; null when
@@ -5483,6 +5526,25 @@ test "BUG-mcompilenotevarlate: a MACRO-VARIABLE-valued ch.20 option takes effect
             // line (D-003); in a real run it goes straight to the log. What is
             // pinned here is that the compilation NOTE precedes it.
             "NOTE: The macro Q completed compilation without errors.\nNOTE: hello\n",
+            try d.render(),
+        );
+    }
+    // BUG-macrooptvarnamealias: the NAME part of `&nomreplace` is a macro
+    // reference inside MCOMPILENOTE='s value, not an OPTIONS NOMREPLACE word.
+    // The raw pass must wait for the resolved statement (`mcompilenote=all`)
+    // instead of refusing the second definition before resolution.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand(
+            "%let nomreplace=all;options mcompilenote=&nomreplace;" ++
+                "%macro m;%put ONE;%mend;" ++
+                "%macro m;%put TWO;%mend;%m",
+        );
+        try std.testing.expectEqualStrings(
+            "NOTE: The macro M completed compilation without errors.\n" ++
+                "NOTE: The macro M completed compilation without errors.\n" ++
+                "NOTE: TWO\n",
             try d.render(),
         );
     }
