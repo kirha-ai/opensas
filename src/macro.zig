@@ -3235,7 +3235,20 @@ fn sysfuncDispatch(a: std.mem.Allocator, fname: []const u8, args: []const []cons
         }
         break;
     }
-    const r = functions.dispatch(&ev, fname, vals) catch return "";
+    // BUG-badaritywrongtype: dispatch now aborts the DATA step on a wrong-arity
+    // call, but the %SYSFUNC boundary must keep real SAS's macro semantics —
+    // oracle (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` logs "ERROR: The
+    // function ABS referenced by the %SYSFUNC or %QSYSFUNC macro function has
+    // too many arguments." and STILL runs later steps (`data _null_; put
+    // 'stepran';` printed, rc 2). So the swallow stays, but the hard step error
+    // dispatch recorded is downgraded to macro-class recoverable (or later
+    // steps would be syntax-check-skipped) and the yield is missing — the old
+    // soft path's render (bestNum(NaN) = "."), which the oracle prints too.
+    // OutOfMemory records no .err diagnostic; leave the list untouched for it.
+    const r = functions.dispatch(&ev, fname, vals) catch |derr| {
+        if (derr != error.OutOfMemory) diags.recoverLastErr();
+        return ".";
+    };
     return switch (r) {
         .str => |s| s,
         // SAS default: a numeric %sysfunc result renders through BEST12. (its

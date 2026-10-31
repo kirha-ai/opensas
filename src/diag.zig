@@ -213,6 +213,21 @@ pub const Diagnostics = struct {
         }
     }
 
+    /// Mark the most recently recorded ERROR recoverable — used at the %SYSFUNC
+    /// boundary (macro.zig's sysfuncDispatch), where a function's hard step
+    /// error (BUG-badaritywrongtype: a wrong-arity call) must not poison later
+    /// steps: real SAS logs "ERROR: The function ABS referenced by the %SYSFUNC
+    /// or %QSYSFUNC macro function has too many arguments." and STILL executes
+    /// the steps after it (oracle probe 2026-10-31: a following `data _null_`
+    /// step ran, rc 2). Same recoverable class as macroErr/rcErr, scoped to the
+    /// LAST diagnostic so only this call's error is downgraded. Callers must
+    /// not invoke it for OutOfMemory (which records no .err to downgrade).
+    pub fn recoverLastErr(self: *Diagnostics) void {
+        if (self.list.items.len == 0) return;
+        const last = &self.list.items[self.list.items.len - 1];
+        if (last.severity == .err) last.recoverable = true;
+    }
+
     /// Render every diagnostic as a SAS-style log, one per line, into the arena.
     /// `ERROR(L12): message` when located, `ERROR: message` when line == 0.
     pub fn render(self: *const Diagnostics) error{OutOfMemory}![]const u8 {

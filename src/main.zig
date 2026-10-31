@@ -3831,6 +3831,42 @@ test "BUG-sqlerrorswallow: PROC SQL select of a non-existent column fails loud (
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Bob") != null);
 }
 
+test "BUG-badaritywrongtype: wrong arity aborts the DATA step; a %sysfunc bad call stays macro-scoped" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    // DATA step: the reproducer shape — `x=abs(1,2)` then two PUTs. Real SAS
+    // rejects the call at COMPILE time (oracle 2026-10-31: "ERROR 72-185: The
+    // ABS function call has too many arguments.", step never runs). opensas
+    // checks at runtime dispatch, so the settled shape is the BUG-arrayoorerror
+    // one: ERROR on the FIRST bad call, step output withheld (the aborting
+    // step's buffer is dropped, as for every step error), later steps skipped.
+    var out: std.ArrayList(u8) = .empty;
+    var d1 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d1,
+        "data _null_; length a $5; put 'before'; x=abs(1,2); put 'reached1'; a=upcase('abc','x'); put 'reached2'; run;\n" ++
+            "data _null_; put 'skipped'; run;\n", null);
+    try std.testing.expect(d1.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "reached") == null); // step stopped at the call
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "skipped") == null); // BUG-errhalt: post-error step skipped
+
+    // %SYSFUNC boundary: the SAME abort must not poison later steps — oracle
+    // (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` then a DATA step → the
+    // step RAN ("stepran y=1"), rc 2. The hard step error dispatch recorded is
+    // downgraded to recoverable at the boundary, so the syntax-check gate stays
+    // open. The %PUT line itself is suppressed by NOTE-puttevalpartial (its own
+    // resolution recorded the ERROR) — pre-existing, unchanged here.
+    out.clearRetainingCapacity();
+    var d2 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d2,
+        "%put x=%sysfunc(abs(1,2));\n" ++
+            "data _null_; y=1; put 'stepran' y=; run;\n", null);
+    try std.testing.expect(d2.hasErrors()); // loud in the log, exit-code weight kept
+    try std.testing.expect(!d2.hasStepErrors()); // recoverable: not a step error
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "stepran") != null); // later step ran
+}
+
 test "PROC PRINT BY on unsorted data fails loud like SAS (BUG-printbyunsorted)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
