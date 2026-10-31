@@ -365,6 +365,11 @@ const State = struct {
     /// Null (the setup pass, unit tests) = expand the whole body at once, no flush.
     exec_ctx: ?*anyopaque = null,
     exec_fn: ?*const fn (*anyopaque, []const u8) Error!void = null,
+    /// FILENAME fileref resolver installed by main.zig for real sessions.
+    /// Read-time OPTIONS SASAUTOS= needs it because a following same-chunk macro
+    /// invocation searches autocall before handleGlobal re-validates OPTIONS.
+    fileref_fn: ?*const fn ([]const u8) ?[]const u8 = null,
+    fileref_bind_fn: ?*const fn ([]const u8, []const u8) void = null,
 
     /// Open the local symbol table for an invocation of macro `owner`.
     fn pushScope(st: *State, owner: []const u8) Error!void {
@@ -677,6 +682,14 @@ pub const Session = struct {
 
     pub fn setMcompileNote(self: *Session, note: McompileNote) void {
         self.st.mcompilenote = note;
+    }
+
+    pub fn setFilerefResolver(self: *Session, cb: ?*const fn ([]const u8) ?[]const u8) void {
+        self.st.fileref_fn = cb;
+    }
+
+    pub fn setFilerefBinder(self: *Session, cb: ?*const fn ([]const u8, []const u8) void) void {
+        self.st.fileref_bind_fn = cb;
     }
 
     pub fn expand(self: *Session, src: []const u8) Error![]const u8 {
@@ -1244,6 +1257,23 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
                 try st.setVar("syserr", "4");
                 try st.setVar("syscc", "4"); // F5: session condition code mirrors &SYSERR
             }
+        } else if (!in_dq and (c == 'f' or c == 'F') and st.plain_put and stmtBoundary(out.items) and stmtKw(src, i, "filename")) {
+            // `FILENAME ref "path";` is a global statement, but main.zig's
+            // handler runs after macro expansion of this chunk. Publish the
+            // simple DISK binding when READ so a following same-chunk
+            // `options sasautos=ref; %macrocall` can search the resolved path.
+            // handleGlobal remains the validator and will re-apply/fail loud.
+            var e = i;
+            while (e < src.len) : (e += 1) {
+                if (src[e] == ';') break;
+                if (src[e] == '\'' or src[e] == '"') e = skipQuoted(src, e) -| 1;
+            }
+            const mark = out.items.len;
+            try out.append(st.a, c);
+            const se = if (e < src.len) e + 1 else e;
+            try process(st, src[i + 1 .. se], out);
+            if (out.items.len > mark) try applyFilenameStmt(st, out.items[mark..]);
+            i = se;
         } else if (!in_dq and (c == 'o' or c == 'O') and stmtBoundary(out.items) and stmtKw(src, i, "options")) {
             // `OPTIONS MINOPERATOR [MINDELIMITER='c'];` — the SYSTEM-option form
             // of the `in`/`#` gate (BUG-minoperatoropt). It takes effect when
@@ -1529,7 +1559,7 @@ fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) void {
                 // statement (BUG-mcompilenotevarlate); main.zig's handleGlobal
                 // still re-applies the resolved value and owns validation.
                 var vend: usize = i;
-                applySasautosRaw(stmt, i, &vend);
+                applySasautosRaw(st, stmt, i, &vend);
                 i = vend;
             } else if (!fam and st.plain_put and eqi(w, "yearcutoff")) {
                 if (parseTrailingYearcutoff(stmt, i)) |n| format.setYearCutoff(n);
@@ -1645,10 +1675,12 @@ fn skipBalancedParenText(stmt: []const u8, at: usize) ?usize {
     return null;
 }
 
+const SasautosSpec = struct { text: []const u8, bare: bool };
+
 /// One SASAUTOS library-specification from raw text at `*p`: a quoted host
 /// location or a bare run up to whitespace/`,`/paren/`;`. Advances `*p` past
-/// what it took; empty when nothing recognizable sits there.
-fn parseQuotedSpec(stmt: []const u8, p: *usize) []const u8 {
+/// what it took; empty text when nothing recognizable sits there.
+fn parseSasautosSpec(stmt: []const u8, p: *usize) SasautosSpec {
     const at = p.*;
     if (at < stmt.len and (stmt[at] == '\'' or stmt[at] == '"')) {
         const q = stmt[at];
@@ -1656,16 +1688,50 @@ fn parseQuotedSpec(stmt: []const u8, p: *usize) []const u8 {
         while (e < stmt.len and stmt[e] != q) e += 1;
         if (e >= stmt.len) {
             p.* = stmt.len;
-            return stmt[(at + 1)..stmt.len]; // unterminated quote: take the tail
+            return .{ .text = stmt[(at + 1)..stmt.len], .bare = false }; // unterminated quote: take the tail
         }
         p.* = e + 1;
-        return stmt[(at + 1)..e];
+        return .{ .text = stmt[(at + 1)..e], .bare = false };
     }
     var e = at;
     while (e < stmt.len and stmt[e] != ' ' and stmt[e] != '\t' and stmt[e] != '\n' and
         stmt[e] != '\r' and stmt[e] != ',' and stmt[e] != '(' and stmt[e] != ')' and stmt[e] != ';') e += 1;
     p.* = e;
-    return stmt[at..e];
+    return .{ .text = stmt[at..e], .bare = true };
+}
+
+fn resolveSasautosSpec(st: *State, spec: SasautosSpec) []const u8 {
+    if (spec.bare) if (st.fileref_fn) |resolve| if (resolve(spec.text)) |path| return path;
+    return spec.text;
+}
+
+fn parseBareWord(stmt: []const u8, p: *usize) []const u8 {
+    const s = p.*;
+    if (s >= stmt.len or !isNameStart(stmt[s])) return "";
+    p.* += 1;
+    while (p.* < stmt.len and isNameChar(stmt[p.*])) p.* += 1;
+    return stmt[s..p.*];
+}
+
+/// Read-time FILENAME apply for the simple DISK form main.zig implements:
+/// `filename REF "path";` or `filename REF disk "path";`. It is deliberately
+/// permissive and silent; the real statement handler validates the full surface.
+fn applyFilenameStmt(st: *State, stmt: []const u8) Error!void {
+    const bind = st.fileref_bind_fn orelse return;
+    var p: usize = "filename".len;
+    p = skipOptsSpace(stmt, p);
+    const name = parseBareWord(stmt, &p);
+    if (name.len == 0) return;
+    p = skipOptsSpace(stmt, p);
+    if (p < stmt.len and isNameStart(stmt[p])) {
+        const device = parseBareWord(stmt, &p);
+        if (!eqi(device, "disk")) return;
+        p = skipOptsSpace(stmt, p);
+    }
+    if (p >= stmt.len or (stmt[p] != '\'' and stmt[p] != '"')) return;
+    const spec = parseSasautosSpec(stmt, &p);
+    if (spec.bare or spec.text.len == 0) return;
+    bind(try st.a.dupe(u8, name), try st.a.dupe(u8, spec.text));
 }
 
 /// Read-time SASAUTOS= apply (ch.20 p.482): `spec` or `(spec, spec, …)` — comma
@@ -1675,11 +1741,10 @@ fn parseQuotedSpec(stmt: []const u8, p: *usize) []const u8 {
 /// `end` is advanced past the whole value so applyOptionsStmt's word scan
 /// cannot mistake a directory name inside the parens for an option word
 /// (`sasautos=(mautosource)` is a directory named mautosource, not the toggle).
-/// ponytail: a bare spec is a fileref in SAS — opensas has no macro-layer
-/// fileref registry, so it is taken as a path (main.zig resolves registered
-/// filerefs at flush time); unresolvable specs simply never hit a file and the
-/// invocation warns "apparent … not resolved".
-fn applySasautosRaw(stmt: []const u8, from: usize, end: *usize) void {
+/// A bare spec is a fileref in SAS; main.zig installs its current FILENAME
+/// registry resolver for real sessions so the read-time list matches the later
+/// flush-time validator. Unresolvable specs remain path text and naturally miss.
+fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void {
     var p = skipOptsSpace(stmt, from);
     if (p >= stmt.len or stmt[p] != '=') return; // value-less `sasautos` — executor's
     p = skipOptsSpace(stmt, p + 1);
@@ -1704,8 +1769,8 @@ fn applySasautosRaw(stmt: []const u8, from: usize, end: *usize) void {
                 q += 1;
                 continue;
             }
-            const spec = parseQuotedSpec(stmt, &q);
-            if (spec.len == 0) {
+            const spec = parseSasautosSpec(stmt, &q);
+            if (spec.text.len == 0) {
                 // unparseable char: mark unclean and STEP PAST it — this loop
                 // has no continue-expression, so leaving q unmoved would spin
                 // forever on the same byte.
@@ -1713,14 +1778,14 @@ fn applySasautosRaw(stmt: []const u8, from: usize, end: *usize) void {
                 q += 1;
                 continue;
             }
-            if (n < max_autocall_dirs) specs[n] = spec;
+            if (n < max_autocall_dirs) specs[n] = resolveSasautosSpec(st, spec);
             n += 1;
         }
     } else {
-        const spec = parseQuotedSpec(stmt, &p);
+        const spec = parseSasautosSpec(stmt, &p);
         end.* = p;
-        if (spec.len == 0) return;
-        specs[0] = spec;
+        if (spec.text.len == 0) return;
+        specs[0] = resolveSasautosSpec(st, spec);
         n = 1;
     }
     if (!clean or n == 0 or n > max_autocall_dirs) return;

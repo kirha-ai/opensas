@@ -234,6 +234,8 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // output) is run afterwards. CALL SYMPUT vars feed back into the session so
     // later macro code (%put/%if/%do &n) sees them.
     var session = sas.macro.Session.init(a, diags);
+    session.setFilerefResolver(findFileref);
+    session.setFilerefBinder(registerFilerefReadTime);
     // GH#13 GAP-callexecutemacro: publish the run's Session to the macro layer
     // so exec.zig's CALL EXECUTE can macro-process its argument at CALL TIME
     // (Macro Language: Reference printed p.123 — macro elements execute
@@ -2074,6 +2076,16 @@ fn registerFileref(diags: *sas.diag.Diagnostics, line: usize, name: []const u8, 
 fn findFileref(name: []const u8) ?[]const u8 {
     for (filerefs[0..fileref_count]) |f| if (eqi(f.name, name)) return f.path;
     return null;
+}
+
+fn registerFilerefReadTime(name: []const u8, path: []const u8) void {
+    for (filerefs[0..fileref_count]) |*f| if (eqi(f.name, name)) {
+        f.path = path;
+        return;
+    };
+    if (fileref_count == max_filerefs) return; // handleGlobal reports the real error later
+    filerefs[fileref_count] = .{ .name = name, .path = path };
+    fileref_count += 1;
 }
 
 /// GAP-macrooptfamily §5 report: a documented Macro-facility system option
@@ -5461,6 +5473,25 @@ test "GAP-filenameref: FILENAME fileref resolves for INFILE and FILE; PIPE fails
         try std.testing.expect(diags2.hasErrors());
         try std.testing.expect(std.mem.indexOf(u8, try diags2.render(), "FILENAME device pipe is not supported") != null);
     }
+}
+
+test "BUG-sasautosfilerefreadlate: OPTIONS SASAUTOS=fileref feeds same-chunk autocall" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    // Macro Language Reference ch.20 p.482 permits a fileref in SASAUTOS=.
+    // The FILENAME statement is a preceding global segment, so the read-time
+    // OPTIONS scan must resolve AF before this same-chunk invocation searches.
+    try interpret(a, &out, &diags,
+        "filename af \"tests/autocall\";\n" ++
+            "options sasautos=af mautosource;\n" ++
+            "%greet(x)\n",
+        null);
+    try std.testing.expect(!diags.hasErrors());
+    try std.testing.expectEqualStrings("Hello x\n", out.items);
+    try std.testing.expect(std.mem.indexOf(u8, try diags.render(), "Apparent invocation of macro GREET not resolved") == null);
 }
 
 test "BUG-filenameconcatnoop: FILENAME concatenation form fails loud AT the FILENAME statement" {
