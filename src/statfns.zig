@@ -75,6 +75,8 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
     // ── numeric aggregates: ignore missing, return missing only if none present
     if (eqi(name, "sum")) return agg(.sum, args);
     if (eqi(name, "mean")) return agg(.mean, args);
+    // SAS 9.4 DATA-step MIN/MAX coerce character arguments to numeric; the
+    // >< and <> operators have separate character comparison semantics.
     if (eqi(name, "min")) return agg(.min, args);
     if (eqi(name, "max")) return agg(.max, args);
     if (eqi(name, "n")) return agg(.n, args);

@@ -21,9 +21,10 @@
      - BOTH id=2 transactions (Y then Z) land on that first obs, so it is 'Z'
        and not 'Y' — the parenthesised sentence above.
 
-   The Statements Ref is SILENT on whether SAS also logs a "MASTER contains
-   more than one observation for a BY group" WARNING; that half stays parked.
-   This fixture pins the DATA, which the doc does settle. */
+   Real SAS also logs "The MASTER data set contains more than one observation
+   for a BY group." for each extra id=2 master row, and sets _ERROR_=1 on those
+   rows (NOTE-updatedupmaster). This fixture pins the DATA; the executor test
+   pins the captured warnings and _ERROR_ flags. */
 data master;
   input id v $;
 datalines;

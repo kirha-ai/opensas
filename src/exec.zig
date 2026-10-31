@@ -550,8 +550,8 @@ const SetState = struct {
     slots: []const []usize = &.{}, // per-source column→PDV-slot maps for loadRow (PERF-loadrowdual)
 };
 
-/// `update master trans; by k;` input. Both sources are sorted by the BY key,
-/// unique in the master. One output row per master BY group: the master values
+/// `update master trans; by k;` input. Both sources are sorted by the BY key.
+/// One output row per master observation: the master values
 /// with each matching transaction obs applied in order (a non-missing transaction
 /// value overwrites; a missing one keeps master). A transaction key absent from
 /// the master is added as a new obs; a master key with no transaction passes
@@ -564,6 +564,7 @@ const UpdateState = struct {
     mi: usize = 0, // master row cursor
     ti: usize = 0, // transaction row cursor
     prev_g: ?[]Value = null, // last group's BY key — detects unsorted input (BUG-setbyunsorted)
+    duplicate_master: bool = false, // current master row repeats the prior BY key
     by_ling: bool = false, // sortedness verify collation carried from PROC SORT (else current system default)
     m_slots: []const usize = &.{}, // master's column→PDV-slot map for loadRow (PERF-loadrowdual)
     t_slots: []const usize = &.{}, // transaction's, for the per-read reset (BUG-prefixmergewipe)
@@ -1272,6 +1273,10 @@ pub const Executor = struct {
                 try self.pdv.set("_error_", .{ .num = 0 });
                 self.obs_handled = false; // MODIFY REPLACE/REMOVE reset (FEAT-datamodify-rest)
             }
+            // UPDATE detects duplicate master keys during loadNext, before the
+            // per-iteration _ERROR_ reset above. SAS flags each extra master row.
+            if (driver == .update and driver.update.duplicate_master)
+                try self.pdv.set("_error_", .{ .num = 1 });
             // `_IORC_` (BUG-modifybynomatch / BUG-modifybymasterdriven): MODIFY
             // return-code automatic — 0 (_SOK) on a matched read, _DSENMR
             // (1230015) when modifyNext flagged this obs as a transaction with
@@ -4035,6 +4040,9 @@ pub const Executor = struct {
             self.diags.report(.err, 0, "BY variables are not properly sorted", .{}) catch {};
             return false;
         };
+        u.duplicate_master = use_master and u.prev_g != null and self.cmpBy(gkey, u.prev_g.?, u.by_ling) == .eq;
+        if (u.duplicate_master)
+            try self.diags.warn(0, "The MASTER data set contains more than one observation for a BY group.", .{});
         // first.<by k> turns on from the level where this group's key first
         // differs from the previous group's (BUG-updatefirstlast, as mergeNext).
         const first_level = if (u.prev_g) |pg| changeLevel(gkey, pg) else 0;
@@ -10067,6 +10075,25 @@ test "CALL MISSING sets numeric args to . and char args to blank, leaving others
     try t.expect(diagsHave(&f.diags, "CALL nosuchroutine() is not supported"));
 }
 
+test "GAP-callvlabel: real SAS rejects CALL VLABEL as an unknown subroutine" {
+    // Real SAS 9.4: ERROR 251-185, "The subroutine VLABEL is unknown".
+    // CALL VNAME is valid, but VLABEL exists only as a function.
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    diag.resetGap();
+    var x = f.exec();
+    try f.pdv.set("age", .{ .num = 42 });
+    _ = try f.pdv.define("out", .char);
+
+    const args = [_]ast.Expr{ .{ .variable = "age" }, .{ .variable = "out" } };
+    const stmt: ast.Stmt = .{ .call_ = .{ .name = "VLABEL", .args = &args } };
+    try t.expectError(error.ExecError, x.runStmt(&stmt));
+    try t.expect(diagsHave(&f.diags, "CALL VLABEL() is not supported"));
+    try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), f.diags.hasErrors()));
+    try t.expectEqualStrings("", f.pdv.get("out").?.str);
+}
+
 test "bare output fans out to every DATA-named dataset; named output routes single (BUG-multioutput)" {
     var f = fixture();
     defer f.deinit();
@@ -12058,6 +12085,50 @@ test "UPDATE applies transaction rows to master by BY key (BUG-updatebroken)" {
     try t.expectEqual(@as(f64, 400), out.row(3)[yi].num);
 }
 
+test "NOTE-updatedupmaster: warn for each extra master BY row and set _ERROR_" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var x = f.exec();
+
+    const master = f.newDs("master");
+    _ = try master.addColumn("id", .num);
+    _ = try master.addColumn("v", .num);
+    for ([_][2]f64{ .{ 1, 10 }, .{ 2, 20 }, .{ 2, 21 }, .{ 2, 22 }, .{ 3, 30 } }) |row|
+        try master.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] } });
+    try f.lib.put("master", master);
+    const trans = f.newDs("trans");
+    _ = try trans.addColumn("id", .num);
+    _ = try trans.addColumn("v", .num);
+    try trans.appendRow(&.{ .{ .num = 2 }, .{ .num = 99 } });
+    try f.lib.put("trans", trans);
+
+    const up_names = [_][]const u8{ "master", "trans" };
+    const by_names = [_][]const u8{"id"};
+    const prog = [_]ast.Stmt{
+        .{ .update = &up_names },
+        .{ .by = &by_names },
+        .{ .assign = .{ .target = "flag", .value = f.vbl("_error_") } },
+    };
+    var out = Dataset.init(f.a(), "out");
+    try x.run(&prog, &out);
+
+    try t.expectEqual(@as(usize, 5), out.rowCount());
+    const vi = out.indexOf("v").?;
+    const fi = out.indexOf("flag").?;
+    for ([_]f64{ 10, 99, 21, 22, 30 }, 0..) |want, i|
+        try t.expectEqual(want, out.row(i)[vi].num);
+    for ([_]f64{ 0, 0, 1, 1, 0 }, 0..) |want, i|
+        try t.expectEqual(want, out.row(i)[fi].num);
+    var warnings: usize = 0;
+    for (f.diags.list.items) |d| if (d.severity == .warning) {
+        try t.expectEqualStrings("The MASTER data set contains more than one observation for a BY group.", d.message);
+        warnings += 1;
+    };
+    try t.expectEqual(@as(usize, 2), warnings);
+    try t.expect(!f.diags.hasErrors());
+}
+
 test "MODIFY-BY no-match: ERROR + _IORC_=_DSENMR, unmatched row NOT fabricated (BUG-modifybynomatch)" {
     // Language Reference: Concepts p.599 Table 23.4 (_DSENMR) + p.600 worked example: a MODIFY … BY
     // transaction obs with no master match is an ERROR — "No matching
@@ -12760,6 +12831,36 @@ test "BUG-hashkeytypesilent: a type-mismatched KEY:/DATA: argument fails LOUD on
     const keyCx = [_]ast.HashArg{.{ .name = "key", .value = f.e(.{ .str = "x" }) }};
     try t.expectEqual(@as(f64, 160038), try ex.hashFind(hc, &keyCx)); // real miss on a char key
     try t.expectEqual(@as(usize, 1), h.entries.items.len); // no failed call stored anything
+}
+
+test "NOTE-hashkeytypemismatch: numeric hash key rejects a character find argument during step execution" {
+    var f = fixture();
+    defer f.deinit();
+    f.prime();
+    var ex = f.exec();
+
+    _ = try f.pdv.declare("k", .num);
+    _ = try f.pdv.declare("v", .char);
+    const key_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "k" }) }};
+    const data_def = [_]ast.HashArg{.{ .name = null, .value = f.e(.{ .str = "v" }) }};
+    const bad_key = [_]ast.HashArg{.{ .name = "key", .value = f.e(.{ .str = "1" }) }};
+    const prog = [_]ast.Stmt{
+        .{ .hash_decl = .{ .name = "h", .args = &.{} } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineKey", .args = &key_def } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineData", .args = &data_def } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "defineDone", .args = &.{} } },
+        .{ .assign = .{ .target = "k", .value = f.num(1) } },
+        .{ .assign = .{ .target = "v", .value = f.e(.{ .str = "one" }) } },
+        .{ .hash_op = .{ .target = null, .obj = "h", .method = "add", .args = &.{} } },
+        .{ .hash_op = .{ .target = "rc", .obj = "h", .method = "find", .args = &bad_key } },
+        .{ .assign = .{ .target = "after_find", .value = f.num(1) } },
+    };
+    var out = Dataset.init(f.a(), "out");
+    try t.expectError(error.ExecError, ex.run(&prog, &out));
+    try t.expect(diagsHave(&f.diags, "key k is numeric but the key: argument is character"));
+    try t.expectEqual(@as(usize, 0), out.rowCount());
+    if (f.pdv.get("rc")) |rc| try t.expect(rc == .num and std.math.isNan(rc.num));
+    if (f.pdv.get("after_find")) |after| try t.expect(after == .num and std.math.isNan(after.num));
 }
 
 test "hash attributes: num_items live count, item_size width sum, unknown/args fail loud (GAP-hashnumitems)" {

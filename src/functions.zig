@@ -111,11 +111,12 @@ pub const bit_binops = [_]struct { name: []const u8, op: BitOp }{
     .{ .name = "brshift", .op = .brshift },
 };
 
-/// A bitwise arg → u32, or null if missing / out of the 0..2^32-1 range.
+/// A bitwise arg -> u32, or null if missing / out of the 0..2^32-1 range.
+/// SAS truncates fractional operands toward zero (NOTE-bitfracround oracle).
 pub fn toU32(v: Value) ?u32 {
     const x = toNum(v);
     if (isMiss(x) or x < 0 or x > 4294967295) return null;
-    return @intFromFloat(@round(x));
+    return @intFromFloat(@trunc(x));
 }
 
 /// THE guard for every `@intFromFloat` on a user-supplied value (BUG-intfromfloat):
@@ -3749,7 +3750,8 @@ var conv_ev: ?*eval.Evaluator = null;
 /// SAS char→num: trimmed empty or unparseable → missing (NaN). Every non-blank
 /// implicit conversion logs the SAS NOTE (GH#74b), matching eval.zig's `toNum`
 /// and pdv.zig's char→num assignment note — unparsable text adds the paired
-/// "Invalid numeric data" note. Blank (→ missing) is silent, as in eval.zig.
+/// "Invalid numeric data" note and sets _ERROR_=1. Blank (→ missing) is silent,
+/// as in eval.zig.
 pub fn toNum(v: Value) f64 {
     return switch (v) {
         .num => |x| x,
@@ -3764,8 +3766,10 @@ pub fn toNum(v: Value) f64 {
                 // current line and AST expressions carry no source span, so the
                 // only printable position was a frozen 0/0 literal. Omitted, not
                 // frozen — same wording as eval.zig's and pdv.zig's notes.
-                if (conv_ev) |e|
+                if (conv_ev) |e| {
                     e.diags.note(0, "Invalid numeric data, '{s}'.", .{s}) catch {};
+                    e.setError() catch {};
+                }
                 break :blk std.math.nan(f64);
             };
         },
@@ -5370,13 +5374,33 @@ test "NOTE-bitrangenote: an out-of-range bitwise arg NOTEs and sets _ERROR_ (val
     try t.expect((try dispatch(&e, "band", &.{ Value.missing, numV(3) })).isMissing());
     try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
 
-    // in-range values and the flag are untouched — and NOTE-bitfracround stays
-    // parked: an in-range FRACTION still rounds (band(1.9,3)=2), because the
-    // entries never say round-or-truncate. Pinned so the park is visible.
+    // In-range integer values keep their value and a clean flag.
     try h.pdv.set("_error_", .{ .num = 0 });
     try t.expectEqual(@as(f64, 8), (try dispatch(&e, "band", &.{ numV(12), numV(10) })).num);
-    try t.expectEqual(@as(f64, 2), (try dispatch(&e, "band", &.{ numV(1.9), numV(3) })).num);
     try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+}
+
+test "NOTE-bitfracround: bitwise operands truncate fractional parts" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // Real SAS 9.4 oracle: these exact DATA-step calls produced the values below.
+    const cases = [_]struct { name: []const u8, args: []const Value, want: f64 }{
+        .{ .name = "band", .args = &.{ numV(1.9), numV(3) }, .want = 1 },
+        .{ .name = "band", .args = &.{ numV(1.5), numV(3) }, .want = 1 },
+        .{ .name = "bor", .args = &.{ numV(1.9), numV(0) }, .want = 1 },
+        .{ .name = "bxor", .args = &.{ numV(1.9), numV(3) }, .want = 2 },
+        .{ .name = "bnot", .args = &.{numV(1.9)}, .want = 4294967294 },
+        .{ .name = "blshift", .args = &.{ numV(1.9), numV(1) }, .want = 2 },
+        .{ .name = "brshift", .args = &.{ numV(7), numV(1.9) }, .want = 3 },
+    };
+    for (cases) |c| {
+        try h.pdv.set("_error_", .{ .num = 0 });
+        try t.expectEqual(c.want, (try dispatch(&e, c.name, c.args)).num);
+        try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+    }
 }
 
 test "GAP-bondrangenote (value half): an unchecked out-of-range arg no longer computes a plausible number" {
@@ -5508,6 +5532,27 @@ test "GH#74b: functions.zig toStr/toNum log the SAS implicit-conversion NOTEs" {
     _ = try dispatch(&e, "abs", &.{strV("xyz")});
     try t.expectEqual(@as(usize, 4), h.diags.count());
     try t.expect(std.mem.indexOf(u8, h.diags.list.items[3].message, "Invalid numeric data, 'xyz'") != null);
+}
+
+test "NOTE-minmaxcharargs-oracle: MIN/MAX coerce character args and flag invalid numeric data" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+    try h.pdv.set("_error_", .{ .num = 0 });
+
+    // SAS 9.4: max('9','10')=10, min('9','10')=9, _ERROR_=0.
+    try t.expectEqual(@as(f64, 10), (try dispatch(&e, "max", &.{ strV("9"), strV("10") })).num);
+    try t.expectEqual(@as(f64, 9), (try dispatch(&e, "min", &.{ strV("9"), strV("10") })).num);
+    try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+
+    // SAS 9.4: both invalid calls return missing and set _ERROR_=1.
+    try t.expect((try dispatch(&e, "max", &.{ strV("LOW"), strV("HIGH") })).isMissing());
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+    try t.expect((try dispatch(&e, "min", &.{ strV("LOW"), strV("HIGH") })).isMissing());
+    const log = try h.diags.render();
+    try t.expect(std.mem.indexOf(u8, log, "Invalid numeric data, 'LOW'.") != null);
+    try t.expect(std.mem.indexOf(u8, log, "Invalid numeric data, 'HIGH'.") != null);
 }
 
 test "NOTE-invalidnumdataloc: toNum's invalid-data NOTE omits the position, never freezes 0/0 (GH#78)" {

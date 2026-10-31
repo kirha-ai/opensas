@@ -2107,19 +2107,22 @@ pub const Parser = struct {
                 // optional format: `put x 8.2`
                 .name => blk: {
                     _ = self.p.advance();
-                    // array element ref `a[i]` / whole array `a[*]` — brackets/braces
-                    // both lex as lbrace (BUG-putarrayref).
-                    if (self.p.check(.lbrace)) if (self.p.lookupArray(t.text)) |def| {
-                        // `a{*}` — the whole array (null index). Peek past `{` for the star.
+                    // Array element and whole-array refs accept (), [], or {} subscripts.
+                    if (self.p.check(.lbrace) or self.p.check(.lparen)) if (self.p.lookupArray(t.text)) |def| {
+                        // `a{*}` / `a(*)` — the whole array (null index).
                         if (self.p.pos + 1 < self.p.toks.len and self.p.toks[self.p.pos + 1].tag == .star) {
-                            _ = self.p.advance(); // '[' / '{'
+                            const paren = self.p.check(.lparen);
+                            _ = self.p.advance(); // '(', '[' or '{'
                             _ = self.p.advance(); // '*'
-                            _ = try self.p.expect(.rbrace, "']' / '}}' after array subscript");
+                            if (paren)
+                                _ = try self.p.expect(.rparen, "')' after array subscript")
+                            else
+                                _ = try self.p.expect(.rbrace, "']' / '}}' after array subscript");
                             break :blk .{ .array_elem = .{ .name = t.text, .elements = def.elements, .index = null, .special = def.special } };
                         }
-                        // `a{i}` / `a{i,j}` — fold to a flat index (GAP-multidimarray).
+                        // Fold an element's (possibly multidimensional) subscript.
                         const r = try self.p.parseArraySubscript(t);
-                        // `put a[i]=;` — named output: a trailing `=` marks it, same
+                        // `put a(i)=;` — named output: a trailing `=` marks it, same
                         // as a plain `x=` item (FEAT-putarraynamed). `a[*]=` is not
                         // consumed → stays fail-loud like any stray `=`.
                         const named = self.p.eat(.eq);

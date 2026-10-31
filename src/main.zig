@@ -1395,9 +1395,8 @@ fn stepEnd(toks: []const Token, from: usize) usize {
 const Globals = sas.sql.Titles;
 
 /// A top-level global statement. TITLE/FOOTNOTE update the persistent state
-/// (emitted later by the listing procs); OPTIONS/FILENAME/ODS/X are accepted and
-/// produce no output (opensas: parse + accept) — EXCEPT the ODS sub-statements
-/// that change WHAT is produced (SELECT/EXCLUDE/OUTPUT/TRACE), which fail LOUD.
+/// (emitted later by the listing procs); OPTIONS applies runtime settings,
+/// including macro log tracing; FILENAME/ODS/X have their own handling below.
 fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics, toks: []const Token) !void {
     if (try g.set(a, diags, toks)) return; // TITLE/FOOTNOTE — consumed into the shared state
     const kw = toks[0].text;
@@ -1412,7 +1411,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     // lexes as a separate token and vanished). Three classes below:
     //   (a) RESULT-CHANGING options — honoured here (Language Reference: Concepts citation per arm),
     //       or LOUD as unsupported when honouring lives in the exec layer;
-    //   (b) an explicit INERT allowlist (isInertOption) — display/log/session
+    //   (b) an explicit INERT allowlist (isInertOption) — display/session
     //       cosmetics a batch interpreter genuinely cannot observe. The D-014
     //       lesson: erroring on THOSE kills every real program, so they stay
     //       accepted — but ENUMERATED, so the chain has a real final `else`;
@@ -1748,6 +1747,13 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 }
                 try diags.report(.err, t.line, "Invalid value for the VALIDVARNAME option.", .{});
                 return;
+            } else if (eqi(t.text, "mprint") or eqi(t.text, "nomprint") or
+                eqi(t.text, "symbolgen") or eqi(t.text, "nosymbolgen") or
+                eqi(t.text, "mlogic") or eqi(t.text, "nomlogic"))
+            {
+                // Applied by macro.zig when the scanner reads OPTIONS, before
+                // it expands the next macro call. These are observable log modes.
+                i += 1;
             } else if (isInertOption(t.text)) {
                 i += 1;
                 i += skipOptionValue(toks, i, t.text);
@@ -1929,10 +1935,9 @@ fn isInertOption(name: []const u8) bool {
         "source",       "nosource",    "source2",    "nosource2",   "echo",
         "noecho",       "msglevel",    "stimer",     "nostimer",    "fullstimer",
         "nofullstimer",
-        // macro toggles/debugging (the macro processor runs regardless; the
-        // `in` gate itself was already applied by macro.zig — see above)
-        "mprint",       "nomprint",    "mlogic",     "nomlogic",    "symbolgen",
-        "nosymbolgen",  "mrecall",     "nomrecall",  "merror",      "nomerror",
+        // Remaining macro toggles (the `in` gate is applied by macro.zig;
+        // MPRINT/SYMBOLGEN/MLOGIC have observable log behavior above).
+        "mrecall",      "nomrecall",   "merror",     "nomerror",
         "serror",       "noserror",    "quotelenmax", "noquotelenmax",
         "minoperator",  "nominoperator", "mindelimiter", "mstored",  "nomstored",
         "sasmstore",
@@ -3669,6 +3674,107 @@ fn rcOf(a: std.mem.Allocator, out: *std.ArrayList(u8), src: []const u8, log: *[]
     };
     log.* = try d.render();
     return testRc(&d);
+}
+
+test "GAP-mprint-loglines: macro trace options emit plain lines through NONOTES and honor NO toggles" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint symbolgen mlogic;\n" ++
+        "%let name=alpha;\n" ++
+        "%macro inner(x); %let y=&x; put \"inner=&y\"; %mend;\n" ++
+        "%macro outer(x); data _null_; %inner(&x) run; %mend;\n" ++
+        "%outer(&name)\n" ++
+        "options nomprint nosymbolgen nomlogic;\n" ++
+        "%outer(beta)\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings("inner=alpha\ninner=beta\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MLOGIC(OUTER):  Beginning execution.\n" ++
+            "SYMBOLGEN:  Macro variable NAME resolves to alpha\n" ++
+            "MLOGIC(OUTER):  Parameter X has value alpha\n" ++
+            "MPRINT(OUTER):   data _null_;\n" ++
+            "MLOGIC(INNER):  Beginning execution.\n" ++
+            "SYMBOLGEN:  Macro variable X resolves to alpha\n" ++
+            "MLOGIC(INNER):  Parameter X has value alpha\n" ++
+            "MLOGIC(INNER):  %LET (variable name is Y)\n" ++
+            "SYMBOLGEN:  Macro variable X resolves to alpha\n" ++
+            "SYMBOLGEN:  Macro variable Y resolves to alpha\n" ++
+            "MPRINT(INNER):   put \"inner=alpha\";\n" ++
+            "MLOGIC(INNER):  Ending execution.\n" ++
+            "MPRINT(OUTER):   run;\n" ++
+            "MLOGIC(OUTER):  Ending execution.\n",
+        log,
+    );
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out,
+        "options mprint nonotes;\n" ++
+            "%macro m; data _null_; /* comment; inside */ put 'left;right'; run; %mend;\n" ++
+            "%m\n", &log));
+    try std.testing.expectEqualStrings("left;right\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MPRINT(M):   data _null_;\n" ++
+            "MPRINT(M):   put 'left;right';\n" ++
+            "MPRINT(M):   run;\n",
+        log,
+    );
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out,
+        "options nonotes mlogic;\n" ++
+            "%macro choose(x); data _null_; %if &x > 0 %then put \"yes\"; %else put \"no\"; run; %mend;\n" ++
+            "%choose(1) %choose(0)\n", &log));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "\n"));
+    try std.testing.expect(std.mem.indexOf(u8, log, "MLOGIC(CHOOSE):  %IF condition &x > 0 is TRUE\n") != null);
+    try std.testing.expect(std.mem.indexOf(u8, log, "MLOGIC(CHOOSE):  %IF condition &x > 0 is FALSE\n") != null);
+}
+
+test "BUG-mprintfragmenddrop: MPRINT flushes a pending fragment at macro end" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro a; data t; set %mend;\n" ++
+        "%macro b; src; run; %mend;\n" ++
+        "%a %b\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(A):   data t;\n" ++
+            "MPRINT(A):   set\n" ++
+            "MPRINT(B):   src;\n" ++
+            "MPRINT(B):   run;\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragnestedmend: nested macro flushes its MPRINT fragment before MLOGIC end" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint mlogic;\n" ++
+        "%macro inner; put %mend;\n" ++
+        "%macro outer; data _null_; %inner \"hi\"; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings("hi\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MLOGIC(OUTER):  Beginning execution.\n" ++
+            "MPRINT(OUTER):   data _null_;\n" ++
+            "MLOGIC(INNER):  Beginning execution.\n" ++
+            "MPRINT(INNER):   put\n" ++
+            "MLOGIC(INNER):  Ending execution.\n" ++
+            "MPRINT(OUTER):   \"hi\";\n" ++
+            "MPRINT(OUTER):   run;\n" ++
+            "MLOGIC(OUTER):  Ending execution.\n",
+        log,
+    );
 }
 
 fn expectRun(src: []const u8, want: []const u8) !void {
