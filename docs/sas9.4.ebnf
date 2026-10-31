@@ -1033,7 +1033,16 @@ references     = "REFERENCES" dataset [ "(" column { "," column } ")" ] ; (* ope
                    list is given); parent-side RESTRICT is not enforced *)
 col_def        = column datatype { column_attr | col_constraint } ; (* opensas *)
                  (* char/varchar -> char, else numeric; attrs per column_attr
-                   (fixture sql_coldef_attrs) *)
+                   (fixture sql_coldef_attrs). The POSITION of `datatype` here is
+                   normative, not incidental: it sits directly after `column`, so a
+                   type keyword appearing inside a col_constraint's sql_expr does
+                   NOT satisfy it. Reading this rule as "a type keyword occurs
+                   somewhere in the item" is what let `create table t (x num,
+                   check(num >= 0))` through as a column called `check` at rc 0
+                   until BUG-sqlbarechecktypebypass (D-028 amendment, fixture
+                   sql_bare_check_type_bypass); ALTER TABLE ADD typed its new
+                   column off the same flat read. Both now scan the type region at
+                   paren depth 0 only, via one shared sql.zig function *)
 col_constraint = [ "CONSTRAINT" name ] ( "NOT" "NULL"            (* opensas *)
                  | "PRIMARY" "KEY" | "UNIQUE" | "DISTINCT"
                  | "CHECK" "(" sql_expr ")" | references ) ;
