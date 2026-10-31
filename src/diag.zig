@@ -178,6 +178,19 @@ pub const Diagnostics = struct {
         return self.list.items.len;
     }
 
+    /// Any ERROR recorded at or after `from` (a snapshot of `count`)? Decides
+    /// MCOMPILENOTE's "with errors" wording (macro.zig's handleMacro): a compile
+    /// that recorded its own ERROR — duplicate parameter, rejected %MACRO option
+    /// list, %MEND mismatch — still "completed", just not cleanly (ch.20 p.454
+    /// shows both wordings). Reads only, so a pure query.
+    pub fn errSince(self: *const Diagnostics, from: usize) bool {
+        var i = from;
+        while (i < self.list.items.len) : (i += 1) {
+            if (self.list.items[i].severity == .err) return true;
+        }
+        return false;
+    }
+
     pub fn hasErrors(self: *const Diagnostics) bool {
         for (self.list.items) |d| {
             if (d.severity == .err) return true;
