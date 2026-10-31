@@ -1399,7 +1399,10 @@ const Globals = sas.sql.Titles;
 /// including macro log tracing; FILENAME/ODS/X have their own handling below.
 /// `session` (GAP-macrooptfamily): the run's macro session, so the OPTIONS chain
 /// can re-apply the macro-facility options whose VALUE it validates — the macro
-/// layer already applied literal values at scan time (applyOptionsStmt).
+/// layer already applied them at scan time, macro-variable values included
+/// (applyOptionsStmt; BUG-mcompilenotevarlate), so this chain is the VALIDATOR
+/// and a backstop for a hoisted statement the scan hook can miss, never the
+/// first point at which a ch.20 setting takes effect.
 fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics, session: *sas.macro.Session, toks: []const Token) !void {
     if (try g.set(a, diags, toks)) return; // TITLE/FOOTNOTE — consumed into the shared state
     const kw = toks[0].text;
