@@ -1503,6 +1503,14 @@ fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) void {
     const fam = arms == .macro_family; // family arms only — see OptScanArms
     var i: usize = 0;
     while (i < stmt.len) {
+        if (i + 1 < stmt.len and stmt[i] == '/' and stmt[i + 1] == '*') {
+            const close = std.mem.indexOf(u8, stmt[i + 2 ..], "*/") orelse {
+                i = stmt.len;
+                continue;
+            };
+            i += close + 4;
+            continue;
+        }
         if (isNameStart(stmt[i])) {
             const s = i;
             while (i < stmt.len and isNameChar(stmt[i])) i += 1;
