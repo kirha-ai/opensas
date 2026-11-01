@@ -1298,7 +1298,7 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
                     e = skipQuoted(src, e) -| 1;
                 }
             }
-            applyOptionsStmt(st, src[i..e], .all);
+            try applyOptionsStmt(st, src[i..e], .all);
             // Do NOT consume the statement: it used to be copied to `out`
             // verbatim, which bypassed the ordinary scan — so an `&ref` in an
             // OPTIONS statement was never resolved (`%let v=nodate; options
@@ -1338,7 +1338,7 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
             // `…; run;` step would have flushed and cleared `out` (D-004), so
             // `mark` no longer points into it — no resolved text to re-read, and
             // handleGlobal remains the authority as before.
-            if (out.items.len > mark) applyOptionsStmt(st, out.items[mark..], .macro_family);
+            if (out.items.len > mark) try applyOptionsStmt(st, out.items[mark..], .macro_family);
             i = se;
         } else {
             try out.append(st.a, c);
@@ -1499,7 +1499,7 @@ const OptScanArms = enum { all, macro_family };
 /// A literal YEARCUTOFF=<n> at statement end also takes effect when READ, before
 /// a same-flush DATA step is tokenized. Garbage/unresolved values deliberately
 /// stay the executor's business, so its fail-loud validator remains authoritative.
-fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) void {
+fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) Error!void {
     const fam = arms == .macro_family; // family arms only — see OptScanArms
     var i: usize = 0;
     while (i < stmt.len) {
@@ -1576,7 +1576,7 @@ fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) void {
                 // statement (BUG-mcompilenotevarlate); main.zig's handleGlobal
                 // still re-applies the resolved value and owns validation.
                 var vend: usize = i;
-                applySasautosRaw(st, stmt, i, &vend);
+                try applySasautosRaw(st, stmt, i, &vend);
                 i = vend;
             } else if (!fam and st.plain_put and eqi(w, "yearcutoff")) {
                 if (parseTrailingYearcutoff(stmt, i)) |n| format.setYearCutoff(n);
@@ -1697,18 +1697,39 @@ const SasautosSpec = struct { text: []const u8, bare: bool };
 /// One SASAUTOS library-specification from raw text at `*p`: a quoted host
 /// location or a bare run up to whitespace/`,`/paren/`;`. Advances `*p` past
 /// what it took; empty text when nothing recognizable sits there.
-fn parseSasautosSpec(stmt: []const u8, p: *usize) SasautosSpec {
+fn parseSasautosSpec(a: std.mem.Allocator, stmt: []const u8, p: *usize) Error!SasautosSpec {
     const at = p.*;
     if (at < stmt.len and (stmt[at] == '\'' or stmt[at] == '"')) {
         const q = stmt[at];
         var e = at + 1;
-        while (e < stmt.len and stmt[e] != q) e += 1;
+        var doubled = false;
+        while (e < stmt.len) {
+            if (stmt[e] == q) {
+                if (e + 1 < stmt.len and stmt[e + 1] == q) {
+                    doubled = true;
+                    e += 2;
+                    continue;
+                }
+                break;
+            }
+            e += 1;
+        }
         if (e >= stmt.len) {
             p.* = stmt.len;
             return .{ .text = stmt[(at + 1)..stmt.len], .bare = false }; // unterminated quote: take the tail
         }
         p.* = e + 1;
-        return .{ .text = stmt[(at + 1)..e], .bare = false };
+        const raw = stmt[(at + 1)..e];
+        if (!doubled) return .{ .text = raw, .bare = false };
+        const decoded = try a.alloc(u8, raw.len);
+        var i: usize = 0;
+        var j: usize = 0;
+        while (i < raw.len) : (i += 1) {
+            decoded[j] = raw[i];
+            j += 1;
+            if (raw[i] == q and i + 1 < raw.len and raw[i + 1] == q) i += 1;
+        }
+        return .{ .text = decoded[0..j], .bare = false };
     }
     var e = at;
     while (e < stmt.len and stmt[e] != ' ' and stmt[e] != '\t' and stmt[e] != '\n' and
@@ -1741,7 +1762,7 @@ fn applyFilenameStmt(st: *State, stmt: []const u8) Error!void {
         p = skipOptsSpace(stmt, p);
     }
     if (p >= stmt.len or (stmt[p] != '\'' and stmt[p] != '"')) return;
-    const spec = parseSasautosSpec(stmt, &p);
+    const spec = try parseSasautosSpec(st.a, stmt, &p);
     if (spec.bare or spec.text.len == 0) return;
     bind(try st.a.dupe(u8, name), try st.a.dupe(u8, spec.text));
 }
@@ -1756,8 +1777,7 @@ fn applyFilenameStmt(st: *State, stmt: []const u8) Error!void {
 /// A bare spec is a fileref in SAS; main.zig installs its current FILENAME
 /// registry resolver for real sessions. Keep the bare name so a later FILENAME
 /// rebind is visible when the autocall search actually occurs.
-fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void {
-    _ = st;
+fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) Error!void {
     var p = skipOptsSpace(stmt, from);
     if (p >= stmt.len or stmt[p] != '=') return; // value-less `sasautos` — executor's
     p = skipOptsSpace(stmt, p + 1);
@@ -1782,7 +1802,7 @@ fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void
                 q += 1;
                 continue;
             }
-            const spec = parseSasautosSpec(stmt, &q);
+            const spec = try parseSasautosSpec(st.a, stmt, &q);
             if (spec.text.len == 0) {
                 // unparseable char: mark unclean and STEP PAST it — this loop
                 // has no continue-expression, so leaving q unmoved would spin
@@ -1795,7 +1815,7 @@ fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void
             n += 1;
         }
     } else {
-        const spec = parseSasautosSpec(stmt, &p);
+        const spec = try parseSasautosSpec(st.a, stmt, &p);
         end.* = p;
         if (spec.text.len == 0) return;
         specs[0] = .{ .text = spec.text, .is_fileref = spec.bare };
