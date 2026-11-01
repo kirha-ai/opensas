@@ -1815,14 +1815,14 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // spec | (spec, spec, …) (ch.20 p.482) REPLACES the autocall
                 // directory list the engine (macro.zig tryAutocall) searches in
                 // order — until now only --sasautos/$SASAUTOS could reach it. A
-                // spec is a quoted host path or a fileref; a bare spec naming a
-                // REGISTERED fileref resolves through it. The scanner applied an
-                // all-literal list at read time; this arm is the value AUTHORITY:
+                // spec is a quoted host path or a fileref. Keep bare fileref
+                // names for lookup at autocall search time, including after a
+                // later FILENAME rebind. This arm is the value AUTHORITY:
                 // it sees `&ref` values resolved, fails LOUD on a value-less or
                 // malformed form (a typo'd VALUE stays rc 1 — D-018), and gaps a
                 // list longer than the engine's 8 slots (an opensas ceiling, not
                 // a SAS one — D-009b(i), the FILENAME fileref precedent).
-                var specs: [sas.macro.max_autocall_dirs][]const u8 = undefined;
+                var specs: [sas.macro.max_autocall_dirs]sas.macro.AutocallSpec = undefined;
                 var n: usize = 0;
                 var malformed = false;
                 if (i + 2 < toks.len and toks[i + 1].tag == .eq) {
@@ -1835,15 +1835,12 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                                 malformed = true;
                                 break;
                             }
-                            if (n < specs.len) specs[n] = if (toks[j].tag == .name)
-                                findFileref(toks[j].text) orelse toks[j].text
-                            else
-                                toks[j].text;
+                            if (n < specs.len) specs[n] = .{ .text = toks[j].text, .is_fileref = toks[j].tag == .name };
                             n += 1;
                         }
                         if (j < toks.len and toks[j].tag == .rparen) j += 1 else malformed = true;
                     } else if (toks[j].tag == .string or toks[j].tag == .name) {
-                        specs[0] = if (toks[j].tag == .name) findFileref(toks[j].text) orelse toks[j].text else toks[j].text;
+                        specs[0] = .{ .text = toks[j].text, .is_fileref = toks[j].tag == .name };
                         n = 1;
                         j += 1;
                     } else malformed = true;
@@ -1859,7 +1856,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                     try diags.report(.err, t.line, "too many SASAUTOS locations (max {d})", .{specs.len});
                     return;
                 }
-                sas.macro.setAutocallDirs(specs[0..n]);
+                sas.macro.setAutocallSpecs(specs[0..n]);
             } else if (eqi(t.text, "macro") or eqi(t.text, "nomacro") or
                 eqi(t.text, "blotkeywords") or eqi(t.text, "noblotkeywords"))
             {

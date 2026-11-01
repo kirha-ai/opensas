@@ -366,8 +366,7 @@ const State = struct {
     exec_ctx: ?*anyopaque = null,
     exec_fn: ?*const fn (*anyopaque, []const u8) Error!void = null,
     /// FILENAME fileref resolver installed by main.zig for real sessions.
-    /// Read-time OPTIONS SASAUTOS= needs it because a following same-chunk macro
-    /// invocation searches autocall before handleGlobal re-validates OPTIONS.
+    /// Autocall resolves bare SASAUTOS entries through the current binding.
     fileref_fn: ?*const fn ([]const u8) ?[]const u8 = null,
     fileref_bind_fn: ?*const fn ([]const u8, []const u8) void = null,
 
@@ -548,7 +547,8 @@ const State = struct {
 /// An empty list disables autocall (the warn-and-skip path).
 /// ponytail: fixed 8 slots — main.zig gaps louder when the statement names more.
 pub const max_autocall_dirs = 8;
-var g_sasautos_dirs: [max_autocall_dirs][]const u8 = undefined;
+pub const AutocallSpec = struct { text: []const u8, is_fileref: bool = false };
+var g_sasautos_dirs: [max_autocall_dirs]AutocallSpec = undefined;
 var g_sasautos_count: usize = 0;
 /// MAUTOSOURCE | NOMAUTOSOURCE (Macro Ref ch.20 p.453; default MAUTOSOURCE):
 /// gates the autocall search without clearing the list, so re-enabling
@@ -560,13 +560,22 @@ pub fn setAutocallDir(dir: ?[]const u8) void {
     setAutocallDirs(if (dir) |d| &[_][]const u8{d} else &[_][]const u8{});
 }
 
-/// The OPTIONS-statement entry (read-time and main's flush-time re-apply):
-/// REPLACE the list (SASAUTOS= is an assignment, not an append).
+/// Literal directory entry for CLI and callers without filerefs.
 pub fn setAutocallDirs(dirs: []const []const u8) void {
     g_sasautos_count = 0;
     for (dirs) |d| {
         if (g_sasautos_count == max_autocall_dirs) return;
-        g_sasautos_dirs[g_sasautos_count] = d;
+        g_sasautos_dirs[g_sasautos_count] = .{ .text = d };
+        g_sasautos_count += 1;
+    }
+}
+
+/// OPTIONS SASAUTOS= replaces the list, retaining bare filerefs for late lookup.
+pub fn setAutocallSpecs(specs: []const AutocallSpec) void {
+    g_sasautos_count = 0;
+    for (specs) |spec| {
+        if (g_sasautos_count == max_autocall_dirs) return;
+        g_sasautos_dirs[g_sasautos_count] = spec;
         g_sasautos_count += 1;
     }
 }
@@ -1700,11 +1709,6 @@ fn parseSasautosSpec(stmt: []const u8, p: *usize) SasautosSpec {
     return .{ .text = stmt[at..e], .bare = true };
 }
 
-fn resolveSasautosSpec(st: *State, spec: SasautosSpec) []const u8 {
-    if (spec.bare) if (st.fileref_fn) |resolve| if (resolve(spec.text)) |path| return path;
-    return spec.text;
-}
-
 fn parseBareWord(stmt: []const u8, p: *usize) []const u8 {
     const s = p.*;
     if (s >= stmt.len or !isNameStart(stmt[s])) return "";
@@ -1742,13 +1746,14 @@ fn applyFilenameStmt(st: *State, stmt: []const u8) Error!void {
 /// cannot mistake a directory name inside the parens for an option word
 /// (`sasautos=(mautosource)` is a directory named mautosource, not the toggle).
 /// A bare spec is a fileref in SAS; main.zig installs its current FILENAME
-/// registry resolver for real sessions so the read-time list matches the later
-/// flush-time validator. Unresolvable specs remain path text and naturally miss.
+/// registry resolver for real sessions. Keep the bare name so a later FILENAME
+/// rebind is visible when the autocall search actually occurs.
 fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void {
+    _ = st;
     var p = skipOptsSpace(stmt, from);
     if (p >= stmt.len or stmt[p] != '=') return; // value-less `sasautos` — executor's
     p = skipOptsSpace(stmt, p + 1);
-    var specs: [max_autocall_dirs][]const u8 = undefined;
+    var specs: [max_autocall_dirs]AutocallSpec = undefined;
     var n: usize = 0;
     var clean = true;
     if (p < stmt.len and stmt[p] == '(') {
@@ -1778,18 +1783,18 @@ fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) void
                 q += 1;
                 continue;
             }
-            if (n < max_autocall_dirs) specs[n] = resolveSasautosSpec(st, spec);
+            if (n < max_autocall_dirs) specs[n] = .{ .text = spec.text, .is_fileref = spec.bare };
             n += 1;
         }
     } else {
         const spec = parseSasautosSpec(stmt, &p);
         end.* = p;
         if (spec.text.len == 0) return;
-        specs[0] = resolveSasautosSpec(st, spec);
+        specs[0] = .{ .text = spec.text, .is_fileref = spec.bare };
         n = 1;
     }
     if (!clean or n == 0 or n > max_autocall_dirs) return;
-    setAutocallDirs(specs[0..n]);
+    setAutocallSpecs(specs[0..n]);
 }
 
 /// MINDELIMITER= value parser (F10): SAS takes a SINGLE character. The value
@@ -2065,7 +2070,11 @@ fn tryAutocall(st: *State, word: []const u8) Error!bool {
     const uname = try upperDup(st.a, word);
     var text: ?[]const u8 = null;
     var name: []const u8 = "";
-    outer: for (g_sasautos_dirs[0..g_sasautos_count]) |dir_path| {
+    outer: for (g_sasautos_dirs[0..g_sasautos_count]) |spec| {
+        const dir_path = if (spec.is_fileref and st.fileref_fn != null)
+            st.fileref_fn.?(spec.text) orelse spec.text
+        else
+            spec.text;
         for ([_][]const u8{ word, lname, uname }) |cand| {
             const full = try std.fmt.allocPrint(st.a, "{s}/{s}.sas", .{ dir_path, cand });
             if (readFileText(st.a, full)) |t| {
