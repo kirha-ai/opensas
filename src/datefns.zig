@@ -305,47 +305,47 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
         if (args.len != 0) return badArity(ev, name, "0", args.len);
         return numVal(@floatFromInt(currentSasDate()));
     }
-    if (eqi(name, "year")) return dateField(ev, name, args, struct {
+    if (eqi(name, "year")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return civilFromSas(n).y;
         }
     }.f);
-    if (eqi(name, "month")) return dateField(ev, name, args, struct {
+    if (eqi(name, "month")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return civilFromSas(n).m;
         }
     }.f);
-    if (eqi(name, "day")) return dateField(ev, name, args, struct {
+    if (eqi(name, "day")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return civilFromSas(n).d;
         }
     }.f);
-    if (eqi(name, "qtr")) return dateField(ev, name, args, struct {
+    if (eqi(name, "qtr")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return @divFloor(civilFromSas(n).m - 1, 3) + 1;
         }
     }.f);
-    if (eqi(name, "weekday")) return dateField(ev, name, args, struct {
+    if (eqi(name, "weekday")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return weekdayOf(n); // 1 = Sunday … 7 = Saturday
         }
     }.f);
-    if (eqi(name, "hour")) return dateField(ev, name, args, struct {
+    if (eqi(name, "hour")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return @divFloor(@mod(n, 86400), 3600);
         }
     }.f);
-    if (eqi(name, "minute")) return dateField(ev, name, args, struct {
+    if (eqi(name, "minute")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return @divFloor(@mod(n, 3600), 60);
         }
     }.f);
-    if (eqi(name, "second")) return dateField(ev, name, args, struct {
+    if (eqi(name, "second")) return try dateField(ev, name, args, struct {
         fn f(n: i64) i64 {
             return @mod(n, 60);
         }
     }.f);
-    if (eqi(name, "datepart")) return dateField(ev, name, args, struct {
+    if (eqi(name, "datepart")) return try dateField(ev, name, args, struct {
         fn f(dt: i64) i64 {
             return @divFloor(dt, 86400); // datetime seconds → date days
         }
@@ -404,7 +404,7 @@ pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval
         if (args.len != 0) return badArity(ev, name, "0", args.len);
         return numVal(@floatFromInt(currentSecondOfDay()));
     }
-    if (eqi(name, "timepart")) return dateField(ev, name, args, struct {
+    if (eqi(name, "timepart")) return try dateField(ev, name, args, struct {
         fn f(dt: i64) i64 {
             return @mod(dt, 86400); // datetime seconds → time-of-day seconds
         }

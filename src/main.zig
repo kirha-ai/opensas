@@ -234,6 +234,8 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // output) is run afterwards. CALL SYMPUT vars feed back into the session so
     // later macro code (%put/%if/%do &n) sees them.
     var session = sas.macro.Session.init(a, diags);
+    session.setFilerefResolver(findFileref);
+    session.setFilerefBinder(registerFilerefReadTime);
     // GH#13 GAP-callexecutemacro: publish the run's Session to the macro layer
     // so exec.zig's CALL EXECUTE can macro-process its argument at CALL TIME
     // (Macro Language: Reference printed p.123 — macro elements execute
@@ -405,7 +407,7 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
                 const nl = try parseLibnames(a, null, toks[seg.start..seg.end]);
                 for (nl.items) |lr| try rebindLibref(ctx, lr);
             }
-            try handleGlobal(a, ctx.globals, ctx.diags, toks[seg.start..seg.end]);
+            try handleGlobal(a, ctx.globals, ctx.diags, ctx.session, toks[seg.start..seg.end]);
         } else if (seg.bad) {
             // BUG-opencodestmtswallow: the unrecognized open-code statement,
             // reported LOUD in source position — steps BEFORE it ran; this .err
@@ -1397,7 +1399,13 @@ const Globals = sas.sql.Titles;
 /// A top-level global statement. TITLE/FOOTNOTE update the persistent state
 /// (emitted later by the listing procs); OPTIONS applies runtime settings,
 /// including macro log tracing; FILENAME/ODS/X have their own handling below.
-fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics, toks: []const Token) !void {
+/// `session` (GAP-macrooptfamily): the run's macro session, so the OPTIONS chain
+/// can re-apply the macro-facility options whose VALUE it validates — the macro
+/// layer already applied them at scan time, macro-variable values included
+/// (applyOptionsStmt; BUG-mcompilenotevarlate), so this chain is the VALIDATOR
+/// and a backstop for a hoisted statement the scan hook can miss, never the
+/// first point at which a ch.20 setting takes effect.
+fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics, session: *sas.macro.Session, toks: []const Token) !void {
     if (try g.set(a, diags, toks)) return; // TITLE/FOOTNOTE — consumed into the shared state
     const kw = toks[0].text;
     // `X <command>;` in open code — NOT executed (settled, D-022), but no longer
@@ -1754,6 +1762,160 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // Applied by macro.zig when the scanner reads OPTIONS, before
                 // it expands the next macro call. These are observable log modes.
                 i += 1;
+            } else if (eqi(t.text, "mautosource") or eqi(t.text, "nomautosource")) {
+                // GAP-macrooptfamily — HONOURED. MAUTOSOURCE (Macro Ref ch.20
+                // p.453, the SAS default) gates the autocall search: an
+                // undefined macro invocation searches the SASAUTOS= directories
+                // only with it on; NOMAUTOSOURCE suspends the search without
+                // clearing the list. The scanner applies the statement when READ
+                // (macro.zig applyOptionsStmt, so a macro invoked later in the
+                // same chunk resolves); this flush-time re-apply covers a
+                // hoisted statement the scan hook can miss, and is idempotent.
+                sas.macro.setMautosource(eqi(t.text, "mautosource"));
+                i += 1;
+            } else if (eqi(t.text, "mreplace") or eqi(t.text, "nomreplace")) {
+                // GAP-macrooptfamily — HONOURED. MREPLACE (ch.20 p.478, the SAS
+                // default) is opensas's existing redefine-allows behavior;
+                // NOMREPLACE makes a REdefinition ERROR in SAS's own wording and
+                // keeps the original definition (macro.zig handleMacro; oracle
+                // probe 2026-10-31: the second %macro errors, a following
+                // invocation runs the FIRST body, execution continues). Same
+                // read-time + flush-time pair as MAUTOSOURCE.
+                session.setMreplace(eqi(t.text, "mreplace"));
+                i += 1;
+            } else if (eqi(t.text, "mcompilenote")) {
+                // GAP-macrooptfamily — HONOURed where honest. MCOMPILENOTE=
+                // NONE|NOAUTOCALL|ALL (ch.20 p.454, default NONE): a NOTE at
+                // macro compile completion; NOAUTOCALL skips autocall-loaded
+                // macros, ALL includes them (macro.zig emits the doc's own
+                // example line; real SAS's "<n> instructions <m> bytes." second
+                // line is ponytail'd — no honest number for a tree-walker). A
+                // value outside the doc's three (e.g. AUTOCALL, not on the 9.4
+                // syntax line) is a typo'd VALUE → rc 1, not a gap (D-018: the
+                // doc enumerates these values in one place).
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .name) {
+                    const v = toks[i + 2].text;
+                    if (eqi(v, "none")) {
+                        session.setMcompileNote(.none);
+                    } else if (eqi(v, "noautocall")) {
+                        session.setMcompileNote(.noautocall);
+                    } else if (eqi(v, "all")) {
+                        session.setMcompileNote(.all);
+                    } else {
+                        try diags.report(.err, t.line, "Invalid value for the MCOMPILENOTE option.", .{});
+                        return;
+                    }
+                    i += 3;
+                } else {
+                    try diags.report(.err, t.line, "Invalid value for the MCOMPILENOTE option.", .{});
+                    return;
+                }
+            } else if (eqi(t.text, "sasautos")) {
+                // GAP-macrooptfamily — HONOURED, the sharpest arm. SASAUTOS=
+                // spec | (spec, spec, …) (ch.20 p.482) REPLACES the autocall
+                // directory list the engine (macro.zig tryAutocall) searches in
+                // order — until now only --sasautos/$SASAUTOS could reach it. A
+                // spec is a quoted host path or a fileref. Keep bare fileref
+                // names for lookup at autocall search time, including after a
+                // later FILENAME rebind. This arm is the value AUTHORITY:
+                // it sees `&ref` values resolved, fails LOUD on a value-less or
+                // malformed form (a typo'd VALUE stays rc 1 — D-018), and gaps a
+                // list longer than the engine's 8 slots (an opensas ceiling, not
+                // a SAS one — D-009b(i), the FILENAME fileref precedent).
+                var specs: [sas.macro.max_autocall_dirs]sas.macro.AutocallSpec = undefined;
+                var n: usize = 0;
+                var malformed = false;
+                if (i + 2 < toks.len and toks[i + 1].tag == .eq) {
+                    var j = i + 2;
+                    if (toks[j].tag == .lparen) {
+                        j += 1;
+                        while (j < toks.len and toks[j].tag != .rparen) : (j += 1) {
+                            if (toks[j].tag == .comma) continue;
+                            if (toks[j].tag != .string and toks[j].tag != .name) {
+                                malformed = true;
+                                break;
+                            }
+                            if (n < specs.len) specs[n] = .{ .text = toks[j].text, .is_fileref = toks[j].tag == .name };
+                            n += 1;
+                        }
+                        if (j < toks.len and toks[j].tag == .rparen) j += 1 else malformed = true;
+                    } else if (toks[j].tag == .string or toks[j].tag == .name) {
+                        specs[0] = .{ .text = toks[j].text, .is_fileref = toks[j].tag == .name };
+                        n = 1;
+                        j += 1;
+                    } else malformed = true;
+                    if (!malformed and n > 0) i = j;
+                } else malformed = true;
+                if (malformed or n == 0) {
+                    try diags.report(.err, t.line, "Invalid value for the SASAUTOS option.", .{});
+                    return;
+                }
+                if (n > specs.len) {
+                    // our ceiling, valid SAS refused by opensas → gap, rc 2
+                    sas.diag.markGap();
+                    try diags.report(.err, t.line, "too many SASAUTOS locations (max {d})", .{specs.len});
+                    return;
+                }
+                sas.macro.setAutocallSpecs(specs[0..n]);
+            } else if (eqi(t.text, "macro") or eqi(t.text, "nomacro") or
+                eqi(t.text, "blotkeywords") or eqi(t.text, "noblotkeywords"))
+            {
+                // GAP-macrooptfamily. MACRO|NOMACRO (ch.20 p.449) and
+                // BLOTKEYWORDS|NOBLOTKEYWORDS (p.444) are the only ch.20 options
+                // whose Valid-in line EXCLUDES the OPTIONS statement
+                // (configuration file / SAS invocation only) — and real SAS
+                // matches that: an OPTIONS use draws `WARNING 11-12: SAS option
+                // MACRO is valid only at startup of the SAS System or startup of
+                // a SAS process. The SAS option is ignored.` (BLOTKEYWORDS draws
+                // the same shape, WARNING 30-12) and the run continues with the
+                // macro facility still on (oracle probes 2026-10-31). opensas
+                // honours that exact shape: warn, ignore, keep expanding. NOT a
+                // D-018 rc-2 gap — real SAS ignores the runtime form too, so
+                // there is no unimplemented behavior to gap.
+                try diags.warn(t.line, "SAS option {s} is valid only at startup of the SAS System or startup of a SAS process. The SAS option is ignored.", .{t.text});
+                i += 1;
+            } else if (eqi(t.text, "mcompile")) {
+                // MCOMPILE (ch.20 p.453) is the SAS default and opensas's
+                // behavior (new macro definitions allowed) → inert. Its other
+                // half NOMCOMPILE is a gap arm below.
+                i += 1;
+            } else if (eqi(t.text, "nomcompile") or
+                eqi(t.text, "mcoverage") or eqi(t.text, "nomcoverage") or
+                eqi(t.text, "mexecnote") or eqi(t.text, "nomexecnote") or
+                eqi(t.text, "mfile") or eqi(t.text, "nomfile") or
+                eqi(t.text, "mlogicnest") or eqi(t.text, "nomlogicnest") or
+                eqi(t.text, "mprintnest") or eqi(t.text, "nomprintnest") or
+                eqi(t.text, "cmdmac") or eqi(t.text, "nocmdmac") or
+                eqi(t.text, "implmac") or eqi(t.text, "noimplmac") or
+                eqi(t.text, "mautocomploc") or eqi(t.text, "nomautocomploc") or
+                eqi(t.text, "mautolocdisplay") or eqi(t.text, "nomautolocdisplay") or
+                eqi(t.text, "mautolocindes") or eqi(t.text, "nomautolocindes"))
+            {
+                // GAP-macrooptfamily §5: documented Macro-facility TOGGLES
+                // ("Valid in: … OPTIONS statement", ch.20) opensas cannot
+                // honour. Accepted + rc-2 gap + RECOVERABLE (the run continues),
+                // never rc 1 "not recognized" + errhalt-skip — that pair was the
+                // MED run-killer this ticket files.
+                try gapMacroOption(diags, t.line, t.text);
+                i += 1;
+            } else if (eqi(t.text, "mcoverageloc") or eqi(t.text, "mexecsize") or
+                eqi(t.text, "msymtabmax") or eqi(t.text, "mvarsize"))
+            {
+                // §5, value form: MCOVERAGELOC=fileref|file-specification
+                // (p.459), MEXECSIZE=n|nK|nM|nG|nT|hexX|MIN|MAX (p.461),
+                // MSYMTABMAX=/MVARSIZE= n|nK|nM|nG|MAX (p.479/480). Same
+                // recoverable gap class; the VALUE is consumed so the rest of
+                // the statement still applies, and a value-less form is a
+                // typo'd VALUE (rc 1), not a gap.
+                if (i + 1 < toks.len and toks[i + 1].tag == .eq and i + 2 < toks.len and
+                    (toks[i + 2].tag == .number or toks[i + 2].tag == .name or toks[i + 2].tag == .string))
+                {
+                    try gapMacroOption(diags, t.line, t.text);
+                    i += 1 + skipOptionValue(toks, i + 1, t.text);
+                } else {
+                    try diags.report(.err, t.line, "Invalid value for the {s} option.", .{t.text});
+                    return;
+                }
             } else if (isInertOption(t.text)) {
                 i += 1;
                 i += skipOptionValue(toks, i, t.text);
@@ -1911,6 +2073,34 @@ fn registerFileref(diags: *sas.diag.Diagnostics, line: usize, name: []const u8, 
 fn findFileref(name: []const u8) ?[]const u8 {
     for (filerefs[0..fileref_count]) |f| if (eqi(f.name, name)) return f.path;
     return null;
+}
+
+fn registerFilerefReadTime(name: []const u8, path: []const u8) void {
+    for (filerefs[0..fileref_count]) |*f| if (eqi(f.name, name)) {
+        f.path = path;
+        return;
+    };
+    if (fileref_count == max_filerefs) return; // handleGlobal reports the real error later
+    filerefs[fileref_count] = .{ .name = name, .path = path };
+    fileref_count += 1;
+}
+
+/// GAP-macrooptfamily §5 report: a documented Macro-facility system option
+/// (Macro Ref ch.20, "Valid in: … OPTIONS statement") opensas cannot honour.
+/// markGap → rc 2 ("file an opensas issue", D-009); macroErr makes it
+/// RECOVERABLE — real SAS runs these options clean, so errhalt-skipping the
+/// rest of the run would change the program's result while pointing the user
+/// at their own SAS. That rc-1-plus-errhalt pair was the MED run-killer this
+/// ticket files; the caller keeps consuming the statement so any remaining
+/// options still apply.
+fn gapMacroOption(diags: *sas.diag.Diagnostics, line: usize, name: []const u8) !void {
+    sas.diag.markGap();
+    var buf: [32]u8 = undefined; // option names are short; stack upper-case
+    const uname = if (name.len <= buf.len) blk: {
+        for (name, 0..) |c, k| buf[k] = std.ascii.toUpper(c);
+        break :blk buf[0..name.len];
+    } else name;
+    try diags.macroErr(line, "system option {s} is not supported", .{uname});
 }
 
 /// The D-014 INERT allowlist for the OPTIONS statement (BUG-optionsstmtswallow):
@@ -3777,6 +3967,116 @@ test "BUG-mprintfragnestedmend: nested macro flushes its MPRINT fragment before 
     );
 }
 
+// BUG-mprintfragownerwrong — MPRINT attributes each line to the macro that
+// GENERATED the text, not to whichever macro happens to be returning when the
+// pending fragment is flushed. Every expectation below is a byte-for-byte copy of
+// a real SAS 9.4 log (`sasrun <probe> -l -`); the probe name is on each test.
+// These pin the OWNER only; see `mprintBoundary` in macro.zig for the break-column
+// divergence that stays accepted.
+
+test "BUG-mprintfragownerwrong: a text-less callee does not steal the caller's fragment" {
+    // oracle probe `mnoop`: %noop generates nothing, so `set` stays OUTER's.
+    // Was: MPRINT(NOOP):   set
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro noop; %mend;\n" ++
+        "%macro outer; data t; set %noop src; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MPRINT(OUTER):   src;\n" ++
+            "MPRINT(OUTER):   run;\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a %let-only silent macro does not steal the fragment" {
+    // oracle probe `mlet`: a macro that executes macro language but emits no text
+    // is the same shape as %noop. Was: MPRINT(SILENT):   set
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options mprint nonotes;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro silent; %let q=1; %mend;\n" ++
+        "%macro outer; data t; set %silent src; run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MPRINT(OUTER):   src;\n" ++
+            "MPRINT(OUTER):   run;\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a statement split across a callee splits its MPRINT line" {
+    // oracle probe `mordlogic` — THE discriminating shape: the callee DOES emit
+    // text, so entry must flush the caller's half under the caller before the
+    // callee's own line. Was one merged line: MPRINT(INNER):   set  src;
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint mlogic;\n" ++
+        "data src; x=1; run;\n" ++
+        "%macro inner; src; %mend;\n" ++
+        "%macro outer; data t; set %inner run; %mend;\n" ++
+        "%outer\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings(
+        "MLOGIC(OUTER):  Beginning execution.\n" ++
+            "MPRINT(OUTER):   data t;\n" ++
+            "MPRINT(OUTER):   set\n" ++
+            "MLOGIC(INNER):  Beginning execution.\n" ++
+            "MPRINT(INNER):   src;\n" ++
+            "MLOGIC(INNER):  Ending execution.\n" ++
+            "MPRINT(OUTER):   run;\n" ++
+            "MLOGIC(OUTER):  Ending execution.\n",
+        log,
+    );
+}
+
+test "BUG-mprintfragownerwrong: a macro boundary inside a literal does not sever it" {
+    // oracle probe `mquote`: real SAS never splits a string across a boundary
+    // (`MPRINT(Q1):   put` / `MPRINT(Q1):   "x  y";`). opensas keeps the literal
+    // whole on ONE line — the break column differs, the literal does not. Was
+    // worse than either: `MPRINT(NOOP):   put "x` then a reset mprint_quote
+    // mis-terminated the rest, joining `y"; run;` into a single bogus line.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const src =
+        "options nonotes mprint;\n" ++
+        "%macro noop; %mend;\n" ++
+        "%macro q1; data _null_; put \"x %noop y\"; run; %mend;\n" ++
+        "%q1\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, src, &log));
+    try std.testing.expectEqualStrings("x  y\n", out.items);
+    try std.testing.expectEqualStrings(
+        "MPRINT(Q1):   data _null_;\n" ++
+            "MPRINT(Q1):   put \"x  y\";\n" ++
+            "MPRINT(Q1):   run;\n",
+        log,
+    );
+}
+
 fn expectRun(src: []const u8, want: []const u8) !void {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -3829,6 +4129,42 @@ test "BUG-sqlerrorswallow: PROC SQL select of a non-existent column fails loud (
     try interpret(a, &out, &d2, mk ++ "proc sql; select name, age from class where age > 13; quit;\n", null);
     try std.testing.expect(!d2.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Bob") != null);
+}
+
+test "BUG-badaritywrongtype: wrong arity aborts the DATA step; a %sysfunc bad call stays macro-scoped" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+
+    // DATA step: the reproducer shape — `x=abs(1,2)` then two PUTs. Real SAS
+    // rejects the call at COMPILE time (oracle 2026-10-31: "ERROR 72-185: The
+    // ABS function call has too many arguments.", step never runs). opensas
+    // checks at runtime dispatch, so the settled shape is the BUG-arrayoorerror
+    // one: ERROR on the FIRST bad call, step output withheld (the aborting
+    // step's buffer is dropped, as for every step error), later steps skipped.
+    var out: std.ArrayList(u8) = .empty;
+    var d1 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d1,
+        "data _null_; length a $5; put 'before'; x=abs(1,2); put 'reached1'; a=upcase('abc','x'); put 'reached2'; run;\n" ++
+            "data _null_; put 'skipped'; run;\n", null);
+    try std.testing.expect(d1.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "reached") == null); // step stopped at the call
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "skipped") == null); // BUG-errhalt: post-error step skipped
+
+    // %SYSFUNC boundary: the SAME abort must not poison later steps — oracle
+    // (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` then a DATA step → the
+    // step RAN ("stepran y=1"), rc 2. The hard step error dispatch recorded is
+    // downgraded to recoverable at the boundary, so the syntax-check gate stays
+    // open. The %PUT line itself is suppressed by NOTE-puttevalpartial (its own
+    // resolution recorded the ERROR) — pre-existing, unchanged here.
+    out.clearRetainingCapacity();
+    var d2 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d2,
+        "%put x=%sysfunc(abs(1,2));\n" ++
+            "data _null_; y=1; put 'stepran' y=; run;\n", null);
+    try std.testing.expect(d2.hasErrors()); // loud in the log, exit-code weight kept
+    try std.testing.expect(!d2.hasStepErrors()); // recoverable: not a step error
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "stepran") != null); // later step ran
 }
 
 test "PROC PRINT BY on unsorted data fails loud like SAS (BUG-printbyunsorted)" {
@@ -5136,6 +5472,25 @@ test "GAP-filenameref: FILENAME fileref resolves for INFILE and FILE; PIPE fails
     }
 }
 
+test "BUG-sasautosfilerefreadlate: OPTIONS SASAUTOS=fileref feeds same-chunk autocall" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    // Macro Language Reference ch.20 p.482 permits a fileref in SASAUTOS=.
+    // The FILENAME statement is a preceding global segment, so the read-time
+    // OPTIONS scan must resolve AF before this same-chunk invocation searches.
+    try interpret(a, &out, &diags,
+        "filename af \"tests/autocall\";\n" ++
+            "options sasautos=af mautosource;\n" ++
+            "%greet(x)\n",
+        null);
+    try std.testing.expect(!diags.hasErrors());
+    try std.testing.expectEqualStrings("Hello x\n", out.items);
+    try std.testing.expect(std.mem.indexOf(u8, try diags.render(), "Apparent invocation of macro GREET not resolved") == null);
+}
+
 test "BUG-filenameconcatnoop: FILENAME concatenation form fails loud AT the FILENAME statement" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -6101,6 +6456,73 @@ test "GAP-ebnfrcwrongclass: documented-but-unimplemented LIBNAME options (INENCO
         try std.testing.expect(std.mem.indexOf(u8, try d.render(), " is not supported") != null);
         try std.testing.expectEqual(@as(u8, 1), testRc(&d));
     }
+}
+
+test "GAP-macrooptfamily: documented-but-absent macro options are rc-2 gaps that do NOT errhalt; typos/values/startup-only keep their classes" {
+    // D-018/D-009: a ch.20 option "Valid in: … OPTIONS statement" that opensas
+    // cannot honour is a NAMED rc-2 gap — and RECOVERABLE, because real SAS
+    // runs it clean: errhalt-skipping the rest of the run was the MED
+    // run-killer. The whole family, one statement, so every name is covered by
+    // the same walk; a later step still RUNS (its stdout is the proof), and a
+    // trailing OBS= in the same statement still applies.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    resetRcSignals();
+    var out: std.ArrayList(u8) = .empty;
+    var d = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d,
+        \\options nomcompile mcoverage nomcoverage mcoverageloc=covlib mexecnote nomexecnote
+        \\        mexecsize=64k mfile nomfile mlogicnest nomlogicnest mprintnest nomprintnest
+        \\        msymtabmax=2m mvarsize=1m cmdmac nocmdmac implmac noimplmac
+        \\        mautocomploc nomautocomploc mautolocdisplay nomautolocdisplay
+        \\        mautolocindes nomautolocindes obs=1;
+        \\data _null_; put "STILL-RUNNING"; run;
+    , null);
+    const rendered = try d.render();
+    for ([_][]const u8{ "NOMCOMPILE", "MCOVERAGE", "MCOVERAGELOC", "MEXECNOTE", "MEXECSIZE", "MFILE", "MLOGICNEST", "MPRINTNEST", "MSYMTABMAX", "MVARSIZE", "CMDMAC", "IMPLMAC", "MAUTOCOMPLOC", "MAUTOLOCDISPLAY", "MAUTOLOCINDES" }) |name| {
+        const want = try std.fmt.allocPrint(a, "system option {s} is not supported", .{name});
+        try std.testing.expect(std.mem.indexOf(u8, rendered, want) != null);
+    }
+    try std.testing.expect(!d.hasStepErrors()); // recoverable — no syntax-check halt
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "STILL-RUNNING") != null);
+    try std.testing.expectEqual(@as(u8, 2), testRc(&d));
+
+    // MACRO/NOMACRO/BLOTKEYWORDS: Valid-in EXCLUDES the OPTIONS statement and
+    // real SAS warns + ignores (oracle probes 2026-10-31) — warn, keep the
+    // macro facility on, rc 0.
+    resetRcSignals();
+    out.clearRetainingCapacity();
+    var d2 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d2,
+        \\options nomacro blotkeywords;
+        \\%macro m; %mend m;
+        \\data _null_; put "MACRO-STILL-ON"; run;
+    , null);
+    try std.testing.expect(!d2.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, try d2.render(), "is valid only at startup") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "MACRO-STILL-ON") != null);
+    try std.testing.expectEqual(@as(u8, 0), testRc(&d2));
+
+    // A value off the doc's MCOMPILENOTE= syntax line (AUTOCALL is NOT on the
+    // 9.4 line — D-018: the doc enumerates it in one place) and a value-less
+    // SASAUTOS are typo'd VALUES → rc 1.
+    for ([_][]const u8{ "options mcompilenote=autocall;", "options sasautos=;" }) |src| {
+        resetRcSignals();
+        var d3 = sas.diag.Diagnostics.init(a);
+        try interpret(a, &out, &d3, src, null);
+        try std.testing.expect(d3.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, try d3.render(), "Invalid value") != null);
+        try std.testing.expectEqual(@as(u8, 1), testRc(&d3));
+    }
+
+    // A genuine typo (`mautocomp`, one letter short of MAUTOCOMPLOC) keeps the
+    // rc-1 "not recognized" class — the catch-all arm is still a catch-all.
+    resetRcSignals();
+    var d4 = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d4, "options mautocomp;\n", null);
+    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "not recognized") != null);
+    try std.testing.expectEqual(@as(u8, 1), testRc(&d4));
 }
 
 test "NOTE-libnameengine: an unknown LIBNAME engine fails loud (SAS: 'engine cannot be found'); BASE/V9/XPORT bind" {

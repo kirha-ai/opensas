@@ -930,7 +930,7 @@ proc_sql       = "PROC" "SQL" [ "NOPRINT" | "NUMBER" ]  ";"       (* opensas *)
 
 sql_statement  = select_query ";"                                (* opensas *)
                | "CREATE" "TABLE" dataset "AS" select_query ";"  (* opensas *)
-               | "CREATE" "TABLE" dataset "(" col_def { "," col_def } ")" ";" (* opensas *)
+               | "CREATE" "TABLE" dataset "(" create_item { "," create_item } ")" ";" (* opensas *)
                | "INSERT" "INTO" dataset insert_body ";"         (* opensas *)
                | "DELETE" "FROM" dataset [ "WHERE" sql_expr ] ";" (* opensas *)
                | "UPDATE" dataset "SET" { assign } [ "WHERE" sql_expr ] ";" (* opensas *)
@@ -1001,9 +1001,56 @@ case_expr      = "CASE" [ sql_expr ]                              (* opensas —
                    sql_case_subquery_gap) *)
                  { "WHEN" sql_expr "THEN" sql_expr }
                  [ "ELSE" sql_expr ] "END" ;
-col_def        = column datatype [ column_attr ] ;               (* opensas *)
+create_item    = col_def                                         (* opensas *)
+               | "CONSTRAINT" name table_constraint ;
+                 (* THE NAME IS MANDATORY on a table-level clause here — there is
+                   deliberately NO bare `table_constraint` alternative. Real SAS
+                   9.4 parses every non-CONSTRAINT-prefixed item as a col_def, so
+                   `create table t (id num, primary key(id))` is read as a column
+                   called `primary` with no datatype and draws "ERROR 22-322:
+                   Syntax error, expecting one of the following: CHAR, …, VARCHAR."
+                   + "ERROR 76-322: Syntax error, statement will be ignored.";
+                   the table is not created and the step goes NOEXEC. SQL
+                   Procedure User's Guide ch.4 (printed p.143) likewise spells one
+                   `constraint prim_key primary key(state)`. opensas accepted and
+                   ENFORCED the bare form at rc 0 until BUG-sqlbareconstraintaccept;
+                   it is now a loud rc-1 user error (fixture
+                   sql_bare_table_constraint). Two consequences of the "it is just
+                   a col_def" reading, both oracle-confirmed: the keywords are
+                   legal COLUMN names when a datatype follows
+                   (`create table t (primary num, check num)` is a 2-column table),
+                   and a typeless ordinary column (`create table t (id);`) draws
+                   the SAME 22-322. ALTER TABLE ADD is the one place the bare
+                   clause IS legal — SAS auto-names it `_PK0001_` — so the parser
+                   keeps accepting it there *)
+table_constraint = "PRIMARY" "KEY" "(" column { "," column } ")"  (* opensas *)
+               | ( "UNIQUE" | "DISTINCT" ) "(" column { "," column } ")"
+               | "CHECK" "(" sql_expr ")"
+               | "FOREIGN" "KEY" "(" column { "," column } ")" references ;
+references     = "REFERENCES" dataset [ "(" column { "," column } ")" ] ; (* opensas *)
+                 (* enforced child-side only: an inserted/updated value must
+                   exist in the referenced table (its PRIMARY KEY when no column
+                   list is given); parent-side RESTRICT is not enforced *)
+col_def        = column datatype { column_attr | col_constraint } ; (* opensas *)
                  (* char/varchar -> char, else numeric; attrs per column_attr
-                   (fixture sql_coldef_attrs) *)
+                   (fixture sql_coldef_attrs). The POSITION of `datatype` here is
+                   normative, not incidental: it sits directly after `column`, so a
+                   type keyword appearing inside a col_constraint's sql_expr does
+                   NOT satisfy it. Reading this rule as "a type keyword occurs
+                   somewhere in the item" is what let `create table t (x num,
+                   check(num >= 0))` through as a column called `check` at rc 0
+                   until BUG-sqlbarechecktypebypass (D-028 amendment, fixture
+                   sql_bare_check_type_bypass); ALTER TABLE ADD typed its new
+                   column off the same flat read. Both now scan the type region at
+                   paren depth 0 only, via one shared sql.zig function *)
+col_constraint = [ "CONSTRAINT" name ] ( "NOT" "NULL"            (* opensas *)
+                 | "PRIMARY" "KEY" | "UNIQUE" | "DISTINCT"
+                 | "CHECK" "(" sql_expr ")" | references ) ;
+                 (* here the name is OPTIONAL — SAS accepts the unnamed
+                   column-level suffixes (`a num not null`, `k num unique`,
+                   `id num primary key`, `age num check (age >= 18)`), which is
+                   why BUG-sqlbareconstraintaccept's rule is table-level only
+                   (fixture sql_constraints) *)
 insert_body    = [ "(" column { "," column } ")" ]               (* opensas *)
                  ( "VALUES" "(" value { "," value } ")"
                    { "VALUES" "(" value { "," value } ")" }
@@ -1118,9 +1165,10 @@ datatype       = ( "CHAR" | "VARCHAR" | "NUMERIC" | "INTEGER" | "FLOAT" (* opens
                  INSERT/UPDATE and CONTENTS reports the declared width
                  (sql_charwidth_trunc); a numeric (p,s) is precision/scale
                  metadata — SAS stores numerics as doubles regardless *)
-column_attr    = "NOT" "NULL" | "INFORMAT" "=" informat_ref       (* opensas *)
+column_attr    = "INFORMAT" "=" informat_ref                      (* opensas *)
                | "FORMAT" "=" format_ref | "LABEL" "=" string ;
-                 (* NOT NULL is constraint-enforced on INSERT/UPDATE; FORMAT=
+                 (* NOT NULL moved to col_constraint, where it belongs — it is
+                 constraint-enforced on INSERT/UPDATE, not an attribute; FORMAT=
                  renders and LABEL= shows in CONTENTS (sql_coldef_attrs);
                  INFORMAT= is APPLIED to VALUES/UPDATE character input with the
                  INPUT() function's semantics — '15JAN2020' under date9. reads

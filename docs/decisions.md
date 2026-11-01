@@ -522,3 +522,104 @@ these caused real regressions (see D-001).
   15MAR2021, dollar10.2→DSD-quoted `$8,765.40`, formatted missing → empty,
   BEST12. controls `wide`/`ratio`; io.zig unit test pins the internal writer
   unchanged).
+- D-028 **IN `CREATE TABLE (…)` A TABLE-LEVEL CONSTRAINT REQUIRES A
+  `constraint <name>` PREFIX — AND THE MECHANISM, NOT THE SYMPTOM, IS THE RULE**
+  (2026-11-01, BUG-sqlbareconstraintaccept, PR review; oracle-verified on 16
+  probes). SAS 9.4 parses **every non-`constraint`-prefixed item of the body as a
+  COLUMN DEFINITION**, full stop. So a bare `primary key(id)` is read as a column
+  named `primary` whose datatype is then missing, and that is what raises
+  `ERROR 22-322: Syntax error, expecting one of the following: CHAR, CHARACTER,
+  DATE, DEC, DECIMAL, DOUBLE, FLOAT, INT, INTEGER, NUM, NUMERIC, REAL, SMALLINT,
+  VARCHAR.` + `ERROR 76-322: Syntax error, statement will be ignored.`, after
+  which the table is NOT created and PROC SQL goes NOEXEC for the rest of the
+  step. **The implementable rule is therefore "a body item with no datatype is not
+  a column def" — fail loud there (rc 1, a wrong user program per D-009; abandon
+  the statement) and the constraint case falls out for free.** Do NOT re-express
+  this as "reject items starting with a constraint keyword": that spelling is
+  wrong in both directions, as the fallout below shows.
+  **`ALTER TABLE … ADD` IS DELIBERATELY NOT SUBJECT TO THIS.** Real SAS accepts a
+  bare clause there and auto-names it `_PK0001_`, so that path keeps its own
+  lenient entry point (`parseBareOrNamedTableConstraint` in sql.zig). The two
+  statements legitimately differ here; the shared clause parser below them does
+  not. Column-level suffixes SAS allows unnamed (`not null`, `unique`,
+  `primary key`, `check (…)`, `references …`) are unaffected.
+  **TWO FALLOUT CHANGES THAT WILL LOOK LIKE REGRESSIONS TO A FUTURE READER AND ARE
+  NOT** — both are the faithful rule generalizing, both oracle-confirmed:
+  (i) `create table t (primary num, check num)` now makes the 2-column table SAS
+  makes (the keywords ARE legal column names once a datatype follows); opensas
+  used to swallow them as constraints. (ii) A typeless `create table t (id);` now
+  ERRORs instead of silently becoming a numeric column — SAS gives it the SAME
+  22-322, because it is the same rule.
+  Evidence: real SAS 9.4 on the dev box, 2026-11-01, probes p1–p18 under
+  /tmp/dev1probe. REJECTED by SAS: `(id num, primary key(id))` p1,
+  `(age num, check (age >= 18))` p5, `(k num, unique(k))` p8,
+  `(id num, distinct(id))` p12, `(cid num, foreign key(cid) references par(id))`
+  p10, `(id num, constraint c1 primary key(id), unique(id))` p18 — a name on a
+  SIBLING does not license a bare clause — and `(id)` p17. ACCEPTED by SAS:
+  `constraint pk_p primary key(id)` p2, `constraint u1 distinct(id)` p11, the four
+  column-level suffixes p3/p4/p6/p7, the keyword-named columns p9/p13, and
+  `alter table t add primary key(id)` p14/p16 (DESCRIBE TABLE lists `_PK0001_
+  Primary Key id` and a duplicate INSERT is then refused). Doc corroboration: SQL
+  Procedure User's Guide ch.4 (printed p.143) spells a table constraint
+  `constraint prim_key primary key(state)`.
+  Grammar: docs/sas9.4.ebnf `create_item` has deliberately NO bare
+  `table_constraint` alternative, while `col_constraint` makes the name optional.
+  Fixtures: tests/corpus/sql_bare_table_constraint.sas pins the rejection with the
+  ACCEPTED forms FIRST in their own step, so its non-empty golden also proves
+  CREATE TABLE still works; tests/corpus/sql_constraints.sas was itself written in
+  the invalid unnamed form and, with an empty golden, passed either way — **the
+  lesson worth keeping is that an empty golden cannot distinguish "the feature
+  fired" from "the statement was refused", so a fail-loud fixture needs a positive
+  control that PRINTS.**
+  **AMENDED 2026-11-01 (BUG-sqlbarechecktypebypass, PR review round 2) — THE
+  MISSING-DATATYPE TEST IS POSITIONAL, AND THIS ENTRY AS FIRST WRITTEN IS WHAT GOT
+  IT WRONG.** The implementable rule above, "a body item with no datatype is not a
+  column def", reads as a question about the item's TOKENS, and that is how it was
+  implemented: count type keywords over the item's flat token span. So a bare
+  table-level clause whose own predicate merely MENTIONS a type keyword satisfied
+  the guard and was accepted as a column — `create table t (x num,
+  check(num >= 0)); select * from t;` exited 0 and printed the columns `x  check`.
+  The `num` INSIDE the predicate defeated it. The rule needs the qualifier it
+  always implied: **the datatype must appear in the COLUMN-DEFINITION POSITION —
+  directly after the column name, at parenthesis depth 0 of that item — never
+  nested inside a predicate or any parenthesized sub-expression.** Nothing inside
+  `(…)` is ever the column's type, and nothing inside `(…)` ends the type region
+  either (`check(date is not null)` must not end the scan on its inner `not`).
+  **Both halves are load-bearing**: depth-awareness alone still accepts
+  `unique(k) num`, and the position requirement alone is what makes the test
+  "the item has the shape `name type [modifiers]`" instead of "a type token is in
+  here somewhere". Oracle, real SAS 9.4 on the dev box, 2026-11-01,
+  /tmp/dev1probe2 — all of the following log the same `ERROR 22-322` and
+  `ERROR: File WORK.T<n>.DATA does not exist.`, i.e. no table, step NOEXEC:
+  q1 `(x num, check(num >= 0))`, q2 `(x num, check(date is not null))`,
+  q3 `(x char(4), check(char(x) = 'a'))`, q4 `(k num, unique(num))`,
+  q10 `(x num, primary key(num))`,
+  q6 `(x num, constraint c1 check(x > 0), check(num >= 0))` (+76-322 each),
+  q5 `(k num, unique(k) num)` (+200-322) and q8 `(x not null num)` (+202-322) —
+  the last two being where the type keyword IS at depth 0 but not in the datatype
+  position. ACCEPTED, same round, created with no ERROR: q7 `(x double precision)`
+  and q9 `(num num, constraint c1 check(num >= 0))` — `num` is a legal column NAME,
+  and a type keyword inside a NAMED clause's predicate is nobody's business.
+  **THE GRAMMAR WAS ALREADY RIGHT AND THE PROSE WAS NOT**, which is the
+  transferable lesson: `docs/sas9.4.ebnf` has said `col_def = column datatype
+  { column_attr | col_constraint }` all along — positional by construction — while
+  this entry's prose could be satisfied by a token count. When a settled rule is
+  restated as something cheaper to implement than the grammar it came from, state
+  the position, not just the presence.
+  **SIBLING, SAME CAUSE, FIXED IN THE SAME ROUND:** `ALTER TABLE … ADD` decided the
+  ADDed column's TYPE by the same flat sweep, so a `char` nested in an inline CHECK
+  predicate silently made the column character — on a table with a column called
+  `char`, `alter table t add flag num check(char = 1)` typed `flag` as CHARACTER,
+  where SAS makes it NUMERIC (oracle r1/r3: SAS accepts it with no ERROR, and
+  `select flag, flag + 1` prints 3.5 / 4.5 with no character-to-numeric conversion
+  NOTE; opensas emitted that NOTE). CREATE and ALTER now share ONE scanner,
+  `scanTypeRegion` in sql.zig, which is the single definition of where a datatype
+  may legally sit. **This is the divergence this entry already warned about,
+  arriving through the machinery rather than the rule**: the two statements differ
+  in exactly one way (the `constraint <name>` prefix) and everything below that
+  must stay shared, or the same bug grows twice. ALTER remains deliberately lenient
+  about a datatype being ABSENT (defaults to num) — only CREATE's missing-type rule
+  is oracle-settled. Fixture: tests/corpus/sql_bare_check_type_bypass.sas, positive
+  control first per the lesson above; the eight rejected spellings, the two accept
+  controls and the ALTER column types are pinned in the src/sql.zig test block
+  through the CAPTURED diagnostics reporter.

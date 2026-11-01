@@ -178,6 +178,19 @@ pub const Diagnostics = struct {
         return self.list.items.len;
     }
 
+    /// Any ERROR recorded at or after `from` (a snapshot of `count`)? Decides
+    /// MCOMPILENOTE's "with errors" wording (macro.zig's handleMacro): a compile
+    /// that recorded its own ERROR — duplicate parameter, rejected %MACRO option
+    /// list, %MEND mismatch — still "completed", just not cleanly (ch.20 p.454
+    /// shows both wordings). Reads only, so a pure query.
+    pub fn errSince(self: *const Diagnostics, from: usize) bool {
+        var i = from;
+        while (i < self.list.items.len) : (i += 1) {
+            if (self.list.items[i].severity == .err) return true;
+        }
+        return false;
+    }
+
     pub fn hasErrors(self: *const Diagnostics) bool {
         for (self.list.items) |d| {
             if (d.severity == .err) return true;
@@ -211,6 +224,21 @@ pub const Diagnostics = struct {
         for (self.list.items) |*d| {
             if (d.severity == .err and !d.recoverable) d.recoverable = true;
         }
+    }
+
+    /// Mark the most recently recorded ERROR recoverable — used at the %SYSFUNC
+    /// boundary (macro.zig's sysfuncDispatch), where a function's hard step
+    /// error (BUG-badaritywrongtype: a wrong-arity call) must not poison later
+    /// steps: real SAS logs "ERROR: The function ABS referenced by the %SYSFUNC
+    /// or %QSYSFUNC macro function has too many arguments." and STILL executes
+    /// the steps after it (oracle probe 2026-10-31: a following `data _null_`
+    /// step ran, rc 2). Same recoverable class as macroErr/rcErr, scoped to the
+    /// LAST diagnostic so only this call's error is downgraded. Callers must
+    /// not invoke it for OutOfMemory (which records no .err to downgrade).
+    pub fn recoverLastErr(self: *Diagnostics) void {
+        if (self.list.items.len == 0) return;
+        const last = &self.list.items[self.list.items.len - 1];
+        if (last.severity == .err) last.recoverable = true;
     }
 
     /// Render every diagnostic as a SAS-style log, one per line, into the arena.

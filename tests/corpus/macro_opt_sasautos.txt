@@ -1,0 +1,4 @@
+DIR2 A
+[B]
+psst D
+END

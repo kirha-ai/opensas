@@ -1087,7 +1087,9 @@ fn fuzzInt(x: f64) f64 {
     return if (@abs(x - @round(x)) < 1e-12) @round(x) else x;
 }
 
-pub fn unary(ev: *eval.Evaluator, name: []const u8, args: []const Value, op: UnaryFn) Value {
+/// `eval.Error!Value` (was `Value`): the arity guard aborts the step
+/// (BUG-badaritywrongtype), so the wrapper must be able to propagate it.
+pub fn unary(ev: *eval.Evaluator, name: []const u8, args: []const Value, op: UnaryFn) eval.Error!Value {
     if (args.len != 1) return badArity(ev, name, "1", args.len);
     const x = toNum(args[0]);
     if (isMiss(x)) return Value.missing;
@@ -3827,9 +3829,41 @@ pub fn catStr(ev: *eval.Evaluator, v: Value) eval.Error![]const u8 {
     };
 }
 
-pub fn badArity(ev: *eval.Evaluator, name: []const u8, expected: []const u8, got: usize) Value {
-    note(ev, "{s}() expects {s} argument(s), got {d}", .{ name, expected, got });
-    return Value.missing;
+/// BUG-badaritywrongtype: a wrong-arity call is a SAS ERROR that aborts the
+/// step, not a NOTE-and-missing. Real SAS 9.4 rejects it at COMPILE time
+/// (oracle, sasrun 2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
+/// function call has too many arguments."; `x=abs();` → "ERROR 71-185: The ABS
+/// function call does not have enough arguments."; `x=substr('abc');` the
+/// too-few twin — the step never executes ("stopped processing this step
+/// because of errors"), rc 2. opensas checks arity at RUNTIME dispatch, so the
+/// settled shape is: fire on the FIRST wrong-arity call, log an ERROR, set
+/// _ERROR_, and abort the step via ExecError (the BUG-arrayoorerror path) —
+/// never yield missing and keep running: the old soft path let a typo'd call
+/// produce plausible-looking wrong numbers in a clinical program. Because the
+/// step aborts, no caller observes a value, hence the `eval.Error` return —
+/// `return badArity(...)` still typechecks at every arity-guard site, and the
+/// once-mooted per-function char twin is dead. House wording (not 71/72-185:
+/// the min/max bounds are a per-site string, not numbers badArity can compare).
+/// KNOWN DIVERGENCE (oracle, same probe day): PROC SQL too-MANY is a WARNING in
+/// real SAS ("Function ABS requires at most 1 argument(s). The extra one(s)
+/// will be ignored." — extras dropped, query runs, rc nonzero) while its
+/// too-FEW is the same ERROR class as the DATA step ("Function SUBSTR requires
+/// at least 2 argument(s)." + NOEXEC). opensas fails BOTH loud in SQL too:
+/// matching the warn-and-ignore half needs a numeric max-arity table per
+/// function (the refactor this ticket settled as moot), and a loud ERROR is
+/// safer than a silently-ignored argument. ponytail: SQL-specific degrade if a
+/// study program ever needs it.
+pub fn badArity(ev: *eval.Evaluator, name: []const u8, expected: []const u8, got: usize) eval.Error {
+    // SAS prints the name in caps ("The ABS function call …"); names are
+    // case-insensitive, so normalize for the log. OOM keeps the raw spelling —
+    // the ERROR itself must not fail.
+    const up: []const u8 = blk: {
+        const buf = ev.arena.alloc(u8, name.len) catch break :blk name;
+        break :blk std.ascii.upperString(buf, name);
+    };
+    const e = ev.diags.fail(error.ExecError, 0, "The {s} function call expects {s} argument(s), got {d}.", .{ up, expected, got });
+    ev.setError() catch {}; // _ERROR_=1; losing it to OOM doesn't soften the abort
+    return e;
 }
 
 /// A PRX regex handle: a numeric id from PRXPARSE, or a literal pattern compiled
@@ -5026,7 +5060,9 @@ pub fn timeGrow(amount: f64, from: i64, base: i64, iv: []const u8, pairs: []cons
     return amount / f;
 }
 
-pub fn dateField(ev: *eval.Evaluator, name: []const u8, args: []const Value, comptime f: fn (i64) i64) Value {
+/// `eval.Error!Value` for the same reason as `unary`: the arity guard aborts
+/// the step (BUG-badaritywrongtype).
+pub fn dateField(ev: *eval.Evaluator, name: []const u8, args: []const Value, comptime f: fn (i64) i64) eval.Error!Value {
     if (args.len != 1) return badArity(ev, name, "1", args.len);
     const x = toNum(args[0]);
     if (isMiss(x)) return Value.missing;
@@ -5130,6 +5166,37 @@ test "MISC-fnseterror: invalid function argument sets _ERROR_=1 via the PDV (NOT
     try h.pdv.set("_error_", .{ .num = 0 });
     _ = try dispatch(&e, "substr", &.{ strV("hello"), numV(2), numV(3) });
     try t.expectEqual(@as(f64, 0), h.pdv.get("_error_").?.num);
+}
+
+test "BUG-badaritywrongtype: wrong arity is an ERROR that aborts the step — both directions" {
+    var h = harness();
+    defer h.deinit();
+    h.prime();
+    var e = h.ev();
+
+    // Oracle (sasrun 2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
+    // function call has too many arguments."; `x=abs();` → "ERROR 71-185: The
+    // ABS function call does not have enough arguments."; `x=substr('abc');`
+    // the too-few twin — all COMPILE-time in SAS, the step never executes,
+    // rc 2. opensas checks arity at runtime dispatch, so the settled shape is
+    // the BUG-arrayoorerror one: ERROR + _ERROR_ + ExecError out of dispatch —
+    // never the old NOTE-and-missing that kept the step running at rc 0. The
+    // abort is asserted here via the CAPTURED diagnostics reporter (house
+    // rule); the end-to-end halt (no PUT output) is pinned by
+    // tests/corpus/bug_badarity.sas.
+    try t.expectError(error.ExecError, dispatch(&e, "abs", &.{ numV(1), numV(2) }));
+    try t.expect(h.diags.hasErrors());
+    try t.expect(std.mem.indexOf(u8, h.diags.list.items[0].message, "The ABS function call expects 1 argument(s), got 2.") != null);
+    try t.expectEqual(@as(f64, 1), h.pdv.get("_error_").?.num);
+
+    // too-few is the same ERROR class in SAS (71-185) — same abort here.
+    try t.expectError(error.ExecError, dispatch(&e, "abs", &.{}));
+    try t.expectError(error.ExecError, dispatch(&e, "substr", &.{strV("abc")}));
+    // the shared wrappers (unary/dateField, now `eval.Error!Value`) abort too
+    try t.expectError(error.ExecError, dispatch(&e, "sqrt", &.{ numV(1), numV(2) }));
+    try t.expectError(error.ExecError, dispatch(&e, "year", &.{ numV(0), numV(1) }));
+    // arity aborts latch no evaluator state: a correct call still evaluates
+    try t.expectEqual(@as(f64, 3), (try dispatch(&e, "abs", &.{numV(-3)})).num);
 }
 
 test "GH#5 ISS-informatfallback: INPUT() on an unloaded informat reads MISSING + NOTE + _ERROR_=1" {
@@ -5887,9 +5954,10 @@ test "unary table (TASTE-unarytable): each folded fn maps to its own op" {
     try t.expect((try dispatch(&e, "log1px", &.{numV(-1)})).isMissing());
     try t.expect((try dispatch(&e, "gamma", &.{numV(-2)})).isMissing());
     try t.expect((try dispatch(&e, "lfact", &.{numV(-1)})).isMissing());
-    // missing propagates; bad arity reports
+    // missing propagates; bad arity aborts (BUG-badaritywrongtype — was
+    // NOTE-and-missing; real SAS 9.4 rejects the call outright, ERROR 72-185)
     try t.expect((try dispatch(&e, "erf", &.{Value.missing})).isMissing());
-    try t.expect((try dispatch(&e, "logistic", &.{ numV(1), numV(2) })).isMissing());
+    try t.expectError(error.ExecError, dispatch(&e, "logistic", &.{ numV(1), numV(2) }));
 }
 
 test "scalar numeric: abs/int/round/sqrt/mod/ceil/floor, missing propagates" {
@@ -6099,7 +6167,7 @@ test "coercion across the num/char boundary" {
     try t.expectEqual(@as(f64, 14), (try dispatch(&e, "input", &.{ strV("1960-01-15"), strV("yymmdd10.") })).num); // valid still works
 }
 
-test "unknown function and bad arity report and yield missing" {
+test "unknown function reports and yields missing; wrong arity aborts the step" {
     var h = harness();
     defer h.deinit();
     h.prime();
@@ -6108,8 +6176,10 @@ test "unknown function and bad arity report and yield missing" {
     try t.expect((try dispatch(&e, "frobnicate", &.{numV(1)})).isMissing());
     try t.expect(h.diags.hasErrors());
 
-    try t.expect((try dispatch(&e, "abs", &.{ numV(1), numV(2) })).isMissing()); // wrong arity
-    try t.expect(h.diags.count() >= 2);
+    // BUG-badaritywrongtype: a wrong-arity call is a step-aborting ERROR, not a
+    // NOTE-and-missing (oracle: "ERROR 72-185: The ABS function call has too
+    // many arguments.", step never executes) — pinned separately and in
+    // detail by the dedicated test above; this one keeps the unknown-name half.
 }
 
 test "catx strips and joins non-blank args; yrdif over the three bases" {

@@ -66,7 +66,7 @@ fn bitArgInvalid(ev: *eval.Evaluator, name: []const u8, arg: Value) Value {
 
 pub fn dispatch(ev: *eval.Evaluator, name: []const u8, args: []const Value) eval.Error!?Value {
     // ── scalar numeric: missing propagates
-    inline for (unary_math) |u| if (eqi(name, u.name)) return unary(ev, name, args, u.op);
+    inline for (unary_math) |u| if (eqi(name, u.name)) return try unary(ev, name, args, u.op);
     if (eqi(name, "sqrt")) {
         if (args.len != 1) return badArity(ev, name, "1", args.len);
         const x = toNum(args[0]);

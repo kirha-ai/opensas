@@ -241,6 +241,11 @@ fn unmaskTriggers(a: std.mem.Allocator, s: []const u8) Error![]const u8 {
     return out.items;
 }
 
+/// MCOMPILENOTE= values (Macro Ref ch.20 p.454): NONE default, NOAUTOCALL skips
+/// autocall-loaded macros, ALL notes every compile. `AUTOCALL` is deliberately
+/// absent — the 9.4 syntax line is exactly `NONE | NOAUTOCALL | ALL`.
+pub const McompileNote = enum { none, noautocall, all };
+
 const State = struct {
     a: std.mem.Allocator,
     /// Values are OWNED malloc'd buffers (functions.VarVal), reused across
@@ -316,7 +321,29 @@ const State = struct {
     mprint: bool = false,
     symbolgen: bool = false,
     mlogic: bool = false,
+    /// MREPLACE | NOMREPLACE (Macro Ref ch.20 p.478, default MREPLACE):
+    /// NOMREPLACE refuses to REDEFINE an already-compiled macro — the original
+    /// definition stays in effect (oracle probe 2026-10-31: the second `%macro`
+    /// ERRORs, a following invocation runs the FIRST body).
+    mreplace: bool = true,
+    /// MCOMPILENOTE= NONE | NOAUTOCALL | ALL (ch.20 p.454, default NONE): NOTE
+    /// at macro compile completion. NOAUTOCALL skips autocall-loaded macros;
+    /// ALL includes them. ponytail: real SAS's note carries a second line
+    /// ("<n> instructions <m> bytes." — oracle probe) that opensas's tree-walking
+    /// "compiler" has no honest number for; the NOTE itself is the doc's example.
+    mcompilenote: McompileNote = .none,
+    /// >0 while compiling an autocall file (tryAutocall) — what MCOMPILENOTE=
+    /// NOAUTOCALL and ALL key on (ch.20 p.454).
+    autocall_depth: usize = 0,
     mprint_pending: std.ArrayList(u8) = .empty,
+    /// WATERMARK (BUG-mprintfragownerwrong): the macro that GENERATED the text now
+    /// sitting in `mprint_pending`, recorded when its first character lands — NOT
+    /// read at flush time. Real SAS attributes every MPRINT line to the generating
+    /// scope, so a text-less callee (`%macro noop; %mend;`, or a `%let`-only macro)
+    /// must not steal its caller's half-built statement. Reading `scopes.last` at
+    /// flush time is what BUG-mprintfragnestedmend's fix got wrong (oracle: probe
+    /// `mnoop`/`mlet` → `MPRINT(OUTER):   set`, never `MPRINT(NOOP)`).
+    mprint_owner: []const u8 = "",
     mprint_quote: u8 = 0,
     mprint_slash: bool = false,
     mprint_comment: bool = false,
@@ -338,6 +365,10 @@ const State = struct {
     /// Null (the setup pass, unit tests) = expand the whole body at once, no flush.
     exec_ctx: ?*anyopaque = null,
     exec_fn: ?*const fn (*anyopaque, []const u8) Error!void = null,
+    /// FILENAME fileref resolver installed by main.zig for real sessions.
+    /// Autocall resolves bare SASAUTOS entries through the current binding.
+    fileref_fn: ?*const fn ([]const u8) ?[]const u8 = null,
+    fileref_bind_fn: ?*const fn ([]const u8, []const u8) void = null,
 
     /// Open the local symbol table for an invocation of macro `owner`.
     fn pushScope(st: *State, owner: []const u8) Error!void {
@@ -503,13 +534,56 @@ const State = struct {
     }
 };
 
-/// Autocall (SASAUTOS) directory: when an invoked macro is undefined, look for
+/// Autocall (SASAUTOS) directories: when an invoked macro is undefined, look for
 /// `<dir>/<name>.sas` (case-insensitively — real autocall libraries are mixed case),
-/// compile it (which defines the macro), and retry. Set once by the CLI from
-/// `--sasautos`/`$SASAUTOS`; null disables autocall (the warn-and-skip path).
-var g_sasautos: ?[]const u8 = null;
+/// compile it (which defines the macro), and retry. TWO sources feed ONE list,
+/// searched in order (Macro Ref ch.20 p.482: "it opens and searches each location
+/// in the same order that it is specified in the SASAUTOS option"): the CLI
+/// (`--sasautos`/`$SASAUTOS` via setAutocallDir) and the OPTIONS statement
+/// `SASAUTOS= spec | (spec, spec, …)` — applied when READ by applyOptionsStmt
+/// (a macro-variable value is resolved first, so it takes effect at the same
+/// point in the stream as a literal — BUG-mcompilenotevarlate) and
+/// validated+re-applied by main.handleGlobal (GAP-macrooptfamily).
+/// An empty list disables autocall (the warn-and-skip path).
+/// ponytail: fixed 8 slots — main.zig gaps louder when the statement names more.
+pub const max_autocall_dirs = 8;
+pub const AutocallSpec = struct { text: []const u8, is_fileref: bool = false };
+var g_sasautos_dirs: [max_autocall_dirs]AutocallSpec = undefined;
+var g_sasautos_count: usize = 0;
+/// MAUTOSOURCE | NOMAUTOSOURCE (Macro Ref ch.20 p.453; default MAUTOSOURCE):
+/// gates the autocall search without clearing the list, so re-enabling
+/// MAUTOSOURCE restores it (SAS's own suspend/resume shape).
+var g_mautosource = true;
+
+/// The CLI entry (`--sasautos`/`$SASAUTOS`): ONE dir, replacing any list.
 pub fn setAutocallDir(dir: ?[]const u8) void {
-    g_sasautos = dir;
+    setAutocallDirs(if (dir) |d| &[_][]const u8{d} else &[_][]const u8{});
+}
+
+/// Literal directory entry for CLI and callers without filerefs.
+pub fn setAutocallDirs(dirs: []const []const u8) void {
+    g_sasautos_count = 0;
+    for (dirs) |d| {
+        if (g_sasautos_count == max_autocall_dirs) return;
+        g_sasautos_dirs[g_sasautos_count] = .{ .text = d };
+        g_sasautos_count += 1;
+    }
+}
+
+/// OPTIONS SASAUTOS= replaces the list, retaining bare filerefs for late lookup.
+pub fn setAutocallSpecs(specs: []const AutocallSpec) void {
+    g_sasautos_count = 0;
+    for (specs) |spec| {
+        if (g_sasautos_count == max_autocall_dirs) return;
+        g_sasautos_dirs[g_sasautos_count] = spec;
+        g_sasautos_count += 1;
+    }
+}
+
+/// MAUTOSOURCE/NOMAUTOSOURCE from either the OPTIONS statement or main's
+/// flush-time re-apply (a hoisted statement the scan-time hook can miss).
+pub fn setMautosource(on: bool) void {
+    g_mautosource = on;
 }
 
 /// Expand `src` into arena-owned text with all macro constructs resolved.
@@ -605,6 +679,26 @@ pub const Session = struct {
     /// %let/%local of the same name already owns it in macro scope this session.
     pub fn seedVar(self: *Session, name: []const u8, val: []const u8) Error!void {
         try self.st.setVar(name, val);
+    }
+
+    /// GAP-macrooptfamily: flush-time re-apply of the MREPLACE|NOMREPLACE and
+    /// MCOMPILENOTE= OPTIONS statements. The scan-time hook (applyOptionsStmt)
+    /// already applied the value (resolved — BUG-mcompilenotevarlate); main.zig's
+    /// handleGlobal owns value VALIDATION and re-asserts it here. Idempotent.
+    pub fn setMreplace(self: *Session, on: bool) void {
+        self.st.mreplace = on;
+    }
+
+    pub fn setMcompileNote(self: *Session, note: McompileNote) void {
+        self.st.mcompilenote = note;
+    }
+
+    pub fn setFilerefResolver(self: *Session, cb: ?*const fn ([]const u8) ?[]const u8) void {
+        self.st.fileref_fn = cb;
+    }
+
+    pub fn setFilerefBinder(self: *Session, cb: ?*const fn ([]const u8, []const u8) void) void {
+        self.st.fileref_bind_fn = cb;
     }
 
     pub fn expand(self: *Session, src: []const u8) Error![]const u8 {
@@ -1172,6 +1266,23 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
                 try st.setVar("syserr", "4");
                 try st.setVar("syscc", "4"); // F5: session condition code mirrors &SYSERR
             }
+        } else if (!in_dq and (c == 'f' or c == 'F') and st.plain_put and stmtBoundary(out.items) and stmtKw(src, i, "filename")) {
+            // `FILENAME ref "path";` is a global statement, but main.zig's
+            // handler runs after macro expansion of this chunk. Publish the
+            // simple DISK binding when READ so a following same-chunk
+            // `options sasautos=ref; %macrocall` can search the resolved path.
+            // handleGlobal remains the validator and will re-apply/fail loud.
+            var e = i;
+            while (e < src.len) : (e += 1) {
+                if (src[e] == ';') break;
+                if (src[e] == '\'' or src[e] == '"') e = skipQuoted(src, e) -| 1;
+            }
+            const mark = out.items.len;
+            try out.append(st.a, c);
+            const se = if (e < src.len) e + 1 else e;
+            try process(st, src[i + 1 .. se], out);
+            if (out.items.len > mark) try applyFilenameStmt(st, out.items[mark..]);
+            i = se;
         } else if (!in_dq and (c == 'o' or c == 'O') and stmtBoundary(out.items) and stmtKw(src, i, "options")) {
             // `OPTIONS MINOPERATOR [MINDELIMITER='c'];` — the SYSTEM-option form
             // of the `in`/`#` gate (BUG-minoperatoropt). It takes effect when
@@ -1184,22 +1295,51 @@ fn process(st: *State, src: []const u8, out: *std.ArrayList(u8)) Error!void {
             while (e < src.len) : (e += 1) {
                 if (src[e] == ';') break;
                 if (src[e] == '\'' or src[e] == '"') { // a quoted ';' doesn't end it
-                    const q = src[e];
-                    e += 1;
-                    while (e < src.len and src[e] != q) e += 1;
+                    e = skipQuoted(src, e) -| 1;
                 }
             }
-            applyOptionsStmt(st, src[i..e]);
+            try applyOptionsStmt(st, src[i..e], .all);
             // Do NOT consume the statement: it used to be copied to `out`
             // verbatim, which bypassed the ordinary scan — so an `&ref` in an
             // OPTIONS statement was never resolved (`%let v=nodate; options
             // &v;` errored where SAS runs clean) and never recorded, which is
             // what let OPTIONS swallow the unresolved-reference warning
-            // (NOTE-globalstmtunresolved). Emit just the 'o'; the ordinary
-            // loop scans the rest — resolving/recording `&` and honouring
+            // (NOTE-globalstmtunresolved). Emit just the 'o' and scan the rest
+            // through the ORDINARY loop — resolving/recording `&` and honouring
             // quotes — exactly as it does for any other statement.
+            //
+            // BUG-mcompilenotevarlate: that ordinary scan is run HERE, for this
+            // statement's extent, and the option words are then re-read off the
+            // RESOLVED text. The raw pass above can only see a bare literal, so
+            // a macro-variable-valued setting (`options mcompilenote=&mode;`)
+            // reached no read-time applier at all and only landed at main.zig's
+            // flush-time handleGlobal — which runs AFTER a following `%macro` in
+            // the same chunk has already compiled, so MCOMPILENOTE='s
+            // compilation NOTE was never written. The whole ch.20 family
+            // (SASAUTOS= / MAUTOSOURCE / MREPLACE / MCOMPILENOTE=) shared that
+            // window; scanning the value here closes it for all of them, and for
+            // a `%`-valued setting (`mcompilenote=%upcase(all)`) too.
+            // Resolution stays EXACTLY ONCE: same code, same `out` buffer, so
+            // SYMBOLGEN tracing, MPRINT and the unresolved-reference recording
+            // fire here instead of one outer iteration later. The re-read is
+            // scoped to `.macro_family` (see OptScanArms) — those arms are pure
+            // setters, so re-running them is idempotent, while MINDELIMITER=
+            // (fails loud) and YEARCUTOFF (bounded-literal rule) must stay
+            // single-pass. The raw `.all` pass stays FIRST so a literal still
+            // takes effect BEFORE the statement's own text is emitted (an
+            // `options mprint;` inside a macro body traces itself).
+            const mark = out.items.len;
+            // The leading 'o' must be emitted BEFORE the nested scan: text that
+            // still began with `options` would re-enter this very arm forever.
             try out.append(st.a, c);
-            i += 1;
+            const se = if (e < src.len) e + 1 else e; // include the ';'
+            try process(st, src[i + 1 .. se], out);
+            // ponytail: an OPTIONS statement whose value expands to a whole
+            // `…; run;` step would have flushed and cleared `out` (D-004), so
+            // `mark` no longer points into it — no resolved text to re-read, and
+            // handleGlobal remains the authority as before.
+            if (out.items.len > mark) try applyOptionsStmt(st, out.items[mark..], .macro_family);
+            i = se;
         } else {
             try out.append(st.a, c);
             i += 1;
@@ -1219,6 +1359,45 @@ fn traceLine(st: *State, comptime fmt: []const u8, args: anytype) Error!void {
     }
 }
 
+/// The macro currently executing ("" in open code) — the generating scope that
+/// an MPRINT/MLOGIC line is attributed to.
+fn currentOwner(st: *State) []const u8 {
+    if (st.scopes.items.len == 0) return "";
+    return st.scopes.items[st.scopes.items.len - 1].owner;
+}
+
+/// A macro-execution BOUNDARY: drain whatever the generating scope has emitted so
+/// far, then flush the half-built statement under its watermark owner. Real SAS
+/// breaks the MPRINT line at every boundary — entering a macro call AND returning
+/// from one — so a statement split across `%m` shows the caller's half first
+/// (oracle probe `mord`: `%macro outer; data t; set %inner run; %mend;` with
+/// `%macro inner; src; %mend;` logs `MPRINT(OUTER):   set` / `MPRINT(INNER):   src;`
+/// / `MPRINT(OUTER):   run;`). Flushing only at return merged those into one line
+/// under one owner, so one of the two owners was always wrong.
+///
+/// An OPEN quote or `/* */` is deliberately NOT a flush point: real SAS never
+/// splits a literal (oracle `mquote`: `put "x %noop y";` → `MPRINT(Q1):   put` /
+/// `MPRINT(Q1):   "x  y";` — the string arrives whole). Flushing mid-literal also
+/// reset `mprint_quote`, which mis-terminated every following statement in the
+/// macro (baseline emitted `put "x` then `y"; run;` as ONE line).
+///
+/// ponytail: owner attribution is now oracle-exact; the COLUMN the break lands on
+/// is not, and is left alone. Real SAS splits at its consuming parser's token-pull
+/// granularity, which differs per consumer and which opensas (expand-then-parse)
+/// does not model: `set srcx1 %noop ;` logs `set` / `srcx1 ;` but
+/// `proc print data=x noobs %noop ;` logs the whole `proc print data=x noobs` /
+/// `;`. opensas always breaks at the macro call. Accepted: log-only, every line
+/// carries the RIGHT owner and the concatenated text is identical. Also accepted:
+/// real SAS logs a lone `MPRINT(…):   ;` line where `statement.len > 1` below
+/// suppresses ours. Both are their own slice (needs a token-pull model).
+fn mprintBoundary(st: *State, out: *std.ArrayList(u8)) Error!void {
+    try traceGenerated(st, out); // drain IN the generating scope, before it changes
+    if (st.mprint_quote != 0 or st.mprint_comment or st.mprint_slash) return;
+    const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
+    if (fragment.len > 0) try traceLine(st, "MPRINT({s}):   {s}", .{ st.mprint_owner, fragment });
+    st.mprint_pending.clearRetainingCapacity();
+}
+
 fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
     if (st.mprint_output != out) return;
     if (st.mprint_cursor > out.items.len) st.mprint_cursor = 0;
@@ -1226,6 +1405,10 @@ fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
     st.mprint_cursor = out.items.len;
     if (!st.plain_put or !st.mprint or st.macro_call_depth == 0 or !st.sq_masks_triggers) return;
     for (fresh) |ch| {
+        // Watermark the pending statement with whoever is executing as its first
+        // character lands. While the buffer is empty this just tracks the current
+        // scope, so the owner is always the scope that generated the text.
+        if (st.mprint_pending.items.len == 0) st.mprint_owner = currentOwner(st);
         if (st.mprint_comment) {
             if (st.mprint_comment_star and ch == '/') st.mprint_comment = false;
             st.mprint_comment_star = ch == '*';
@@ -1253,8 +1436,9 @@ fn traceGenerated(st: *State, out: *std.ArrayList(u8)) Error!void {
         } else if (ch == ';') {
             const statement = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
             if (statement.len > 1) {
-                const owner = st.scopes.items[st.scopes.items.len - 1].owner;
-                try traceLine(st, "MPRINT({s}):   {s}", .{ owner, statement });
+                // The watermark, not `scopes.last`: a statement OPENED by the caller
+                // and terminated after a callee returned belongs to the caller.
+                try traceLine(st, "MPRINT({s}):   {s}", .{ st.mprint_owner, statement });
             }
             st.mprint_pending.clearRetainingCapacity();
         }
@@ -1297,45 +1481,111 @@ fn stmtKw(src: []const u8, i: usize, word: []const u8) bool {
     return after >= src.len or !isNameChar(src[after]);
 }
 
+/// Which arms an OPTIONS word scan may fire (BUG-mcompilenotevarlate).
+/// `.all` is the FIRST pass, over the RAW statement text. `.macro_family` is the
+/// SECOND pass, over the same statement RESOLVED — it re-fires only the ch.20
+/// macro family (SASAUTOS= / MAUTOSOURCE / MREPLACE / MCOMPILENOTE=), whose arms
+/// are pure setters, so re-running them with the resolved value is idempotent.
+/// The other arms are deliberately NOT re-run: MINDELIMITER= FAILS LOUD, so a
+/// second pass would double its ERROR, and YEARCUTOFF's bounded-literal rule
+/// (BUG-yearcutoffscanwindow) deliberately leaves an `&ref` value to
+/// handleGlobal. Widening `.macro_family` therefore needs those two answered
+/// first — it is not a free generalisation.
+const OptScanArms = enum { all, macro_family };
+
 /// Scan an `OPTIONS …` statement body (sans `;`) for read-time effects the
 /// macro layer itself can observe. MINOPERATOR/NOMINOPERATOR toggle the `in`/`#`
 /// gate; MINDELIMITER='c' sets its list delimiter (BUG-minoperatoropt).
 /// A literal YEARCUTOFF=<n> at statement end also takes effect when READ, before
 /// a same-flush DATA step is tokenized. Garbage/unresolved values deliberately
 /// stay the executor's business, so its fail-loud validator remains authoritative.
-fn applyOptionsStmt(st: *State, stmt: []const u8) void {
+fn applyOptionsStmt(st: *State, stmt: []const u8, arms: OptScanArms) Error!void {
+    const fam = arms == .macro_family; // family arms only — see OptScanArms
     var i: usize = 0;
     while (i < stmt.len) {
+        if (i + 1 < stmt.len and stmt[i] == '/' and stmt[i + 1] == '*') {
+            const close = std.mem.indexOf(u8, stmt[i + 2 ..], "*/") orelse {
+                i = stmt.len;
+                continue;
+            };
+            i += close + 4;
+            continue;
+        }
         if (isNameStart(stmt[i])) {
             const s = i;
             while (i < stmt.len and isNameChar(stmt[i])) i += 1;
             const w = stmt[s..i];
-            if (eqi(w, "minoperator")) {
+            if (!fam and eqi(w, "minoperator")) {
                 st.minoperator = true;
-            } else if (eqi(w, "nominoperator")) {
+            } else if (!fam and eqi(w, "nominoperator")) {
                 st.minoperator = false;
-            } else if (eqi(w, "mprint")) {
+            } else if (!fam and eqi(w, "mprint")) {
                 st.mprint = true;
-            } else if (eqi(w, "nomprint")) {
+            } else if (!fam and eqi(w, "nomprint")) {
                 st.mprint = false;
                 st.mprint_pending.clearRetainingCapacity();
                 st.mprint_quote = 0;
                 st.mprint_slash = false;
                 st.mprint_comment = false;
-            } else if (eqi(w, "symbolgen")) {
+            } else if (!fam and eqi(w, "symbolgen")) {
                 st.symbolgen = true;
-            } else if (eqi(w, "nosymbolgen")) {
+            } else if (!fam and eqi(w, "nosymbolgen")) {
                 st.symbolgen = false;
-            } else if (eqi(w, "mlogic")) {
+            } else if (!fam and eqi(w, "mlogic")) {
                 st.mlogic = true;
-            } else if (eqi(w, "nomlogic")) {
+            } else if (!fam and eqi(w, "nomlogic")) {
                 st.mlogic = false;
-            } else if (eqi(w, "mindelimiter")) {
+            } else if (!fam and eqi(w, "mindelimiter")) {
                 var ignored: usize = undefined;
                 if (parseMindelim(st, stmt, i, &ignored)) |d| st.mindelimiter = d;
-            } else if (st.plain_put and eqi(w, "yearcutoff")) {
+            } else if (eqi(w, "mreplace")) {
+                // MREPLACE | NOMREPLACE (ch.20 p.478) — read by handleMacro at
+                // every %macro definition. Default MREPLACE (State init).
+                st.mreplace = true;
+            } else if (eqi(w, "nomreplace")) {
+                st.mreplace = false;
+            } else if (eqi(w, "mcompilenote")) {
+                // MCOMPILENOTE=NONE|NOAUTOCALL|ALL (ch.20 p.454). Read-time
+                // applies a clean literal value; anything else stays the
+                // executor's business (handleGlobal fails it loud). A `&ref`
+                // value reaches here as a literal too — process() re-runs this
+                // scan over the RESOLVED statement text, so a macro-variable
+                // value lands at the same point in the stream as a bare one
+                // (BUG-mcompilenotevarlate).
+                var vend: usize = i;
+                if (parseOptWordValue(stmt, i, &vend)) |v| {
+                    if (eqi(v, "none")) {
+                        st.mcompilenote = .none;
+                    } else if (eqi(v, "noautocall")) {
+                        st.mcompilenote = .noautocall;
+                    } else if (eqi(v, "all")) {
+                        st.mcompilenote = .all;
+                    }
+                    i = vend;
+                }
+            } else if (st.plain_put and (eqi(w, "mautosource") or eqi(w, "nomautosource"))) {
+                // MAUTOSOURCE gates the autocall search (ch.20 p.453). Module
+                // global, so the SILENT setup pass must not leak a later
+                // statement's setting backwards — plain_put gate, same shape as
+                // the SASAUTOS arm below.
+                setMautosource(eqi(w, "mautosource"));
+            } else if (st.plain_put and eqi(w, "sasautos")) {
+                // SASAUTOS= (ch.20 p.482): REPLACES the autocall directory list.
+                // Same plain_put gate (module global + setup pass). An `&ref`
+                // spec arrives resolved on process()'s second pass over this
+                // statement (BUG-mcompilenotevarlate); main.zig's handleGlobal
+                // still re-applies the resolved value and owns validation.
+                var vend: usize = i;
+                try applySasautosRaw(st, stmt, i, &vend);
+                i = vend;
+            } else if (!fam and st.plain_put and eqi(w, "yearcutoff")) {
                 if (parseTrailingYearcutoff(stmt, i)) |n| format.setYearCutoff(n);
             }
+            if (skipOptValue(stmt, i)) |e| i = e;
+        } else if ((stmt[i] == '&' or stmt[i] == '%') and i + 1 < stmt.len and isNameStart(stmt[i + 1])) {
+            const e = skipMacroTriggerWord(stmt, i);
+            const q = skipOptsSpace(stmt, e);
+            i = if (stmt[i] == '%' and q < stmt.len and stmt[q] == '(') skipBalancedParenText(stmt, q) orelse stmt.len else e;
         } else i += 1;
     }
 }
@@ -1371,6 +1621,208 @@ fn skipOptsSpace(stmt: []const u8, from: usize) usize {
         break;
     }
     return p;
+}
+
+/// `=<word>` after an option keyword in a raw OPTIONS statement (MCOMPILENOTE=
+/// NONE|NOAUTOCALL|ALL): returns the word and sets `end` just past it. No `=`
+/// or no word → null, `end` untouched. Read-time appliers take only clean
+/// literal values; handleGlobal stays the value authority.
+fn parseOptWordValue(stmt: []const u8, from: usize, end: *usize) ?[]const u8 {
+    var p = skipOptsSpace(stmt, from);
+    if (p >= stmt.len or stmt[p] != '=') return null;
+    p = skipOptsSpace(stmt, p + 1);
+    const s = p;
+    while (p < stmt.len and isNameChar(stmt[p])) p += 1;
+    if (p == s) return null;
+    end.* = p;
+    return stmt[s..p];
+}
+
+/// If `from` is followed by `=<value>`, return the first byte after that value.
+/// The raw OPTIONS hook is a read-time scanner for option WORDS, not a parser for
+/// arbitrary option values: a name inside `mcompilenote=&nomreplace`,
+/// `sysparm="nomreplace"` or `foo=%upcase(nomreplace)` is data until macro
+/// resolution makes the statement text real (BUG-macrooptvarnamealias).
+fn skipOptValue(stmt: []const u8, from: usize) ?usize {
+    var p = skipOptsSpace(stmt, from);
+    if (p >= stmt.len or stmt[p] != '=') return null;
+    p = skipOptsSpace(stmt, p + 1);
+    if (p >= stmt.len) return p;
+    if (stmt[p] == '\'' or stmt[p] == '"') {
+        return skipQuoted(stmt, p);
+    }
+    if (stmt[p] == '(') return skipBalancedParenText(stmt, p) orelse stmt.len;
+    if ((stmt[p] == '&' or stmt[p] == '%') and p + 1 < stmt.len and isNameStart(stmt[p + 1])) {
+        p = skipMacroTriggerWord(stmt, p);
+        const q = skipOptsSpace(stmt, p);
+        if (q < stmt.len and stmt[q] == '(') return skipBalancedParenText(stmt, q) orelse stmt.len;
+        return p;
+    }
+    while (p < stmt.len and stmt[p] != ' ' and stmt[p] != '\t' and stmt[p] != '\r' and stmt[p] != '\n' and stmt[p] != ';') p += 1;
+    return p;
+}
+
+fn skipMacroTriggerWord(stmt: []const u8, at: usize) usize {
+    var p = at + 1;
+    while (p < stmt.len and stmt[p] == stmt[at]) p += 1;
+    if (p < stmt.len and isNameStart(stmt[p])) {
+        p += 1;
+        while (p < stmt.len and isNameChar(stmt[p])) p += 1;
+        if (stmt[at] == '&' and p < stmt.len and stmt[p] == '.') p += 1;
+    }
+    return p;
+}
+
+/// Index just past the `)` matching the `(` at `at`, quotes respected; null when
+/// unbalanced (runs to end of statement, so callers consume the rest).
+fn skipBalancedParenText(stmt: []const u8, at: usize) ?usize {
+    var depth: usize = 0;
+    var p = at;
+    while (p < stmt.len) : (p += 1) {
+        if (stmt[p] == '\'' or stmt[p] == '"') {
+            p = skipQuoted(stmt, p) -| 1;
+            continue;
+        }
+        if (stmt[p] == '(') depth += 1;
+        if (stmt[p] == ')') {
+            depth -= 1;
+            if (depth == 0) return p + 1;
+        }
+    }
+    return null;
+}
+
+const SasautosSpec = struct { text: []const u8, bare: bool };
+
+/// One SASAUTOS library-specification from raw text at `*p`: a quoted host
+/// location or a bare run up to whitespace/`,`/paren/`;`. Advances `*p` past
+/// what it took; empty text when nothing recognizable sits there.
+fn parseSasautosSpec(a: std.mem.Allocator, stmt: []const u8, p: *usize) Error!SasautosSpec {
+    const at = p.*;
+    if (at < stmt.len and (stmt[at] == '\'' or stmt[at] == '"')) {
+        const q = stmt[at];
+        var e = at + 1;
+        var doubled = false;
+        while (e < stmt.len) {
+            if (stmt[e] == q) {
+                if (e + 1 < stmt.len and stmt[e + 1] == q) {
+                    doubled = true;
+                    e += 2;
+                    continue;
+                }
+                break;
+            }
+            e += 1;
+        }
+        if (e >= stmt.len) {
+            p.* = stmt.len;
+            return .{ .text = stmt[(at + 1)..stmt.len], .bare = false }; // unterminated quote: take the tail
+        }
+        p.* = e + 1;
+        const raw = stmt[(at + 1)..e];
+        if (!doubled) return .{ .text = raw, .bare = false };
+        const decoded = try a.alloc(u8, raw.len);
+        var i: usize = 0;
+        var j: usize = 0;
+        while (i < raw.len) : (i += 1) {
+            decoded[j] = raw[i];
+            j += 1;
+            if (raw[i] == q and i + 1 < raw.len and raw[i + 1] == q) i += 1;
+        }
+        return .{ .text = decoded[0..j], .bare = false };
+    }
+    var e = at;
+    while (e < stmt.len and stmt[e] != ' ' and stmt[e] != '\t' and stmt[e] != '\n' and
+        stmt[e] != '\r' and stmt[e] != ',' and stmt[e] != '(' and stmt[e] != ')' and stmt[e] != ';') e += 1;
+    p.* = e;
+    return .{ .text = stmt[at..e], .bare = true };
+}
+
+fn parseBareWord(stmt: []const u8, p: *usize) []const u8 {
+    const s = p.*;
+    if (s >= stmt.len or !isNameStart(stmt[s])) return "";
+    p.* += 1;
+    while (p.* < stmt.len and isNameChar(stmt[p.*])) p.* += 1;
+    return stmt[s..p.*];
+}
+
+/// Read-time FILENAME apply for the simple DISK form main.zig implements:
+/// `filename REF "path";` or `filename REF disk "path";`. It is deliberately
+/// permissive and silent; the real statement handler validates the full surface.
+fn applyFilenameStmt(st: *State, stmt: []const u8) Error!void {
+    const bind = st.fileref_bind_fn orelse return;
+    var p: usize = "filename".len;
+    p = skipOptsSpace(stmt, p);
+    const name = parseBareWord(stmt, &p);
+    if (name.len == 0) return;
+    p = skipOptsSpace(stmt, p);
+    if (p < stmt.len and isNameStart(stmt[p])) {
+        const device = parseBareWord(stmt, &p);
+        if (!eqi(device, "disk")) return;
+        p = skipOptsSpace(stmt, p);
+    }
+    if (p >= stmt.len or (stmt[p] != '\'' and stmt[p] != '"')) return;
+    const spec = try parseSasautosSpec(st.a, stmt, &p);
+    if (spec.bare or spec.text.len == 0) return;
+    bind(try st.a.dupe(u8, name), try st.a.dupe(u8, spec.text));
+}
+
+/// Read-time SASAUTOS= apply (ch.20 p.482): `spec` or `(spec, spec, …)` — comma
+/// OR blank separated, each a quoted host path or a bare word. Replaces the
+/// autocall directory list when EVERY spec parses clean and the list fits;
+/// otherwise leaves the list for handleGlobal (the value authority). Either way
+/// `end` is advanced past the whole value so applyOptionsStmt's word scan
+/// cannot mistake a directory name inside the parens for an option word
+/// (`sasautos=(mautosource)` is a directory named mautosource, not the toggle).
+/// A bare spec is a fileref in SAS; main.zig installs its current FILENAME
+/// registry resolver for real sessions. Keep the bare name so a later FILENAME
+/// rebind is visible when the autocall search actually occurs.
+fn applySasautosRaw(st: *State, stmt: []const u8, from: usize, end: *usize) Error!void {
+    var p = skipOptsSpace(stmt, from);
+    if (p >= stmt.len or stmt[p] != '=') return; // value-less `sasautos` — executor's
+    p = skipOptsSpace(stmt, p + 1);
+    var specs: [max_autocall_dirs]AutocallSpec = undefined;
+    var n: usize = 0;
+    var clean = true;
+    if (p < stmt.len and stmt[p] == '(') {
+        const close = skipBalancedParenText(stmt, p) orelse {
+            end.* = stmt.len;
+            return;
+        };
+        end.* = close;
+        // the CONTENT runs to just before the closing ')' (close-1); stopping
+        // at `close` instead would read the ')' as an empty spec and mark a
+        // clean list unclean.
+        const content_end = close - 1;
+        var q = p + 1;
+        while (q < content_end) {
+            q = skipOptsSpace(stmt, q);
+            if (q >= content_end) break;
+            if (stmt[q] == ',') {
+                q += 1;
+                continue;
+            }
+            const spec = try parseSasautosSpec(st.a, stmt, &q);
+            if (spec.text.len == 0) {
+                // unparseable char: mark unclean and STEP PAST it — this loop
+                // has no continue-expression, so leaving q unmoved would spin
+                // forever on the same byte.
+                clean = false;
+                q += 1;
+                continue;
+            }
+            if (n < max_autocall_dirs) specs[n] = .{ .text = spec.text, .is_fileref = spec.bare };
+            n += 1;
+        }
+    } else {
+        const spec = try parseSasautosSpec(st.a, stmt, &p);
+        end.* = p;
+        if (spec.text.len == 0) return;
+        specs[0] = .{ .text = spec.text, .is_fileref = spec.bare };
+        n = 1;
+    }
+    if (!clean or n == 0 or n > max_autocall_dirs) return;
+    setAutocallSpecs(specs[0..n]);
 }
 
 /// MINDELIMITER= value parser (F10): SAS takes a SINGLE character. The value
@@ -1601,10 +2053,12 @@ fn handlePercent(st: *State, src: []const u8, at: usize, out: *std.ArrayList(u8)
     if (st.getMacro(word) != null) return handleCall(st, src, j, word, out);
 
     // Autocall (SASAUTOS): an undefined invocation may be defined in a file
-    // `<name>.sas` under the autocall dir. Load+compile it, then retry as a
-    // normal call. If it stays undefined (no file / bad file), fall through to
-    // the warn-and-skip below.
-    if (g_sasautos != null and try tryAutocall(st, word)) {
+    // `<name>.sas` under an autocall directory (set by --sasautos/$SASAUTOS or
+    // `options sasautos=…`), and MAUTOSOURCE must be on (Macro Ref ch.20 p.453
+    // search order: session-compiled first, then autocall). Load+compile it,
+    // then retry as a normal call. If it stays undefined (no file / bad file),
+    // fall through to the warn-and-skip below.
+    if (g_mautosource and g_sasautos_count > 0 and try tryAutocall(st, word)) {
         return handleCall(st, src, j, word, out);
     }
 
@@ -1622,13 +2076,15 @@ fn handlePercent(st: *State, src: []const u8, at: usize, out: *std.ArrayList(u8)
     return j; // bare %word: drop the token, emit nothing
 }
 
-/// SASAUTOS autocall: find `<word>.sas` (case-insensitive) in `g_sasautos`,
-/// compile it so its `%macro` registers, and report whether `word` is now
-/// defined. Each name is attempted at most once per run. A missing dir/file is
-/// silent (caller falls back to warn-and-skip); a file that fails to compile is
-/// surfaced as a diagnostic naming the autocall file — never a crash.
+/// SASAUTOS autocall: find `<word>.sas` (case-insensitive) in each autocall
+/// directory in list order, compile the first hit so its `%macro` registers, and
+/// report whether `word` is now defined. Each name is attempted at most once per
+/// run. A missing dir/file is silent (caller falls back to warn-and-skip); a
+/// file that fails to compile is surfaced as a diagnostic naming the autocall
+/// file — never a crash. `autocall_depth` marks compiles that happen in here, so
+/// MCOMPILENOTE=NOAUTOCALL can skip exactly the macros SAS means (ch.20 p.454).
 fn tryAutocall(st: *State, word: []const u8) Error!bool {
-    const dir_path = g_sasautos orelse return false;
+    if (g_sasautos_count == 0) return false;
     const key = try lowerDup(st.a, word);
     if (st.autoload_attempted.contains(key)) return st.getMacro(word) != null;
     try st.autoload_attempted.put(st.a, key, {});
@@ -1642,12 +2098,18 @@ fn tryAutocall(st: *State, word: []const u8) Error!bool {
     const uname = try upperDup(st.a, word);
     var text: ?[]const u8 = null;
     var name: []const u8 = "";
-    for ([_][]const u8{ word, lname, uname }) |cand| {
-        const full = try std.fmt.allocPrint(st.a, "{s}/{s}.sas", .{ dir_path, cand });
-        if (readFileText(st.a, full)) |t| {
-            text = t;
-            name = try std.fmt.allocPrint(st.a, "{s}.sas", .{cand});
-            break;
+    outer: for (g_sasautos_dirs[0..g_sasautos_count]) |spec| {
+        const dir_path = if (spec.is_fileref and st.fileref_fn != null)
+            st.fileref_fn.?(spec.text) orelse spec.text
+        else
+            spec.text;
+        for ([_][]const u8{ word, lname, uname }) |cand| {
+            const full = try std.fmt.allocPrint(st.a, "{s}/{s}.sas", .{ dir_path, cand });
+            if (readFileText(st.a, full)) |t| {
+                text = t;
+                name = try std.fmt.allocPrint(st.a, "{s}.sas", .{cand});
+                break :outer;
+            }
         }
     }
     if (text == null) return false; // no file in any casing → caller warn-skips
@@ -1656,6 +2118,8 @@ fn tryAutocall(st: *State, word: []const u8) Error!bool {
     // so a malformed macro file cannot crash here — it just leaves the macro
     // undefined, which we report so the caller warns naming the file.
     var scratch: std.ArrayList(u8) = .empty;
+    st.autocall_depth += 1;
+    defer st.autocall_depth -= 1;
     process(st, text.?, &scratch) catch |e| {
         try st.diags.warn(0, "autocall file {s} failed to compile ({t})", .{ name, e });
         return st.getMacro(word) != null;
@@ -2062,6 +2526,10 @@ fn dumpPutVars(st: *State, kw: []const u8) Error!void {
 
 /// `%macro name(p1,p2); body %mend [name];` — body kept raw until expansion.
 fn handleMacro(st: *State, src: []const u8, from: usize) Error!usize {
+    // MCOMPILENOTE (ch.20 p.454): "with errors" vs "without errors" is decided
+    // by any ERROR this compile records (a duplicate parameter, a rejected
+    // option list, a %MEND mismatch), so snapshot where the compile starts.
+    const diag_before = st.diags.count();
     var k = skipWs(src, from);
     const ns = k;
     while (k < src.len and isNameChar(src[k])) k += 1;
@@ -2203,8 +2671,41 @@ fn handleMacro(st: *State, src: []const u8, from: usize) Error!usize {
     // after a failed %MACRO compile — the ERROR above already failed the run's
     // exit code, and calls warn "apparent invocation … not resolved" instead
     // of running a macro whose options we could not honour (D-002).
-    if (!bad_opt)
-        try st.macros.put(st.a, try lowerDup(st.a, name), .{ .params = params.items, .body = src[bs..be], .pbuff = pbuff, .minop = minop, .mindelim = mindelim, .has_mindelim = has_mindelim });
+    //
+    // NOMREPLACE (ch.20 p.478, GAP-macrooptfamily): redefining an
+    // already-compiled macro is REFUSED — SAS's own wording, oracle probe
+    // 2026-10-31 ("ERROR: The macro M1 will not be compiled because the
+    // NOMREPLACE option is set.  Source code will be discarded until a
+    // corresponding %MEND statement is encountered.") — the ORIGINAL definition
+    // stays in effect and execution continues (macroErr = recoverable, so a
+    // later invocation still runs the old body, exactly like the probe).
+    var refused_nomreplace = false;
+    if (!bad_opt) {
+        const key = try lowerDup(st.a, name);
+        if (st.macros.contains(key) and !st.mreplace) {
+            try st.diags.macroErr(0, "The macro {s} will not be compiled because the NOMREPLACE option is set.  Source code will be discarded until a corresponding %MEND statement is encountered.", .{try upperDup(st.a, name)});
+            refused_nomreplace = true;
+        } else {
+            try st.macros.put(st.a, key, .{ .params = params.items, .body = src[bs..be], .pbuff = pbuff, .minop = minop, .mindelim = mindelim, .has_mindelim = has_mindelim });
+        }
+    }
+    // MCOMPILENOTE= (ch.20 p.454, GAP-macrooptfamily): SAS writes the NOTE
+    // "upon the completion of the compilation of a macro" — the doc's example
+    // line exactly (its example output has no instruction count; the real log's
+    // "<n> instructions <m> bytes." second line is ponytail'd above). NONE is
+    // the default; NOAUTOCALL skips macros compiled by an autocall load; ALL
+    // notes every compile. A NOMREPLACE refusal never compiled anything, so no
+    // note — SAS's probe log shows none either.
+    if (st.mcompilenote != .none and !refused_nomreplace) {
+        const skip_autocall = st.autocall_depth > 0 and st.mcompilenote != .all;
+        if (!skip_autocall and st.plain_put) {
+            const clean = !st.diags.errSince(diag_before);
+            try st.diags.note(0, "The macro {s} completed compilation {s}.", .{
+                try upperDup(st.a, name),
+                if (clean) "without errors" else "with errors",
+            });
+        }
+    }
 
     if (mend) |m| {
         var e = m + "%mend".len;
@@ -2227,6 +2728,10 @@ fn handleMacro(st: *State, src: []const u8, from: usize) Error!usize {
 fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *std.ArrayList(u8)) Error!usize {
     var k = skipWs(src, from);
     const m = st.getMacro(name).?;
+    // Entry is a boundary: the caller's half-built statement flushes under the
+    // CALLER before this macro's first trace line (oracle `mordlogic`:
+    // `MPRINT(OUTER):   set` precedes `MLOGIC(INNER):  Beginning execution.`).
+    try mprintBoundary(st, out);
     if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Beginning execution.", .{try upperDup(st.a, name)});
     // Collect raw arg spans (comma-separated, respecting nested parens), then split
     // into positional values and keyword (name=value) args (SAS keyword params).
@@ -2329,17 +2834,15 @@ fn handleCall(st: *State, src: []const u8, from: usize, name: []const u8, out: *
     st.mindelimiter = if (m.has_mindelim) m.mindelim else prev_mindelim;
     st.macro_call_depth += 1;
     try process(st, m.body, out); // depth-guarded inside process()
+    // Return is the other boundary — BEFORE the depth decrement, so the drain still
+    // runs at the depth that generated the text. A text-less body leaves `pending`
+    // untouched and flushes nothing, which is the whole point of the watermark:
+    // the caller's fragment stays the caller's and survives to the caller's own
+    // next boundary (BUG-mprintfragownerwrong). `mprintBoundary` is also the only
+    // place the `;`-scanner state resets, so a `%mend` reached mid-literal no
+    // longer severs the string (see its doc comment).
+    try mprintBoundary(st, out);
     st.macro_call_depth -= 1;
-    const fragment = std.mem.trim(u8, st.mprint_pending.items, " \t\r\n");
-    if (fragment.len > 0) {
-        const owner = st.scopes.items[st.scopes.items.len - 1].owner;
-        try traceLine(st, "MPRINT({s}):   {s}", .{ owner, fragment });
-    }
-    st.mprint_pending.clearRetainingCapacity();
-    st.mprint_quote = 0;
-    st.mprint_slash = false;
-    st.mprint_comment = false;
-    st.mprint_comment_star = false;
     if (st.mlogic) try traceLine(st, "MLOGIC({s}):  Ending execution.", .{try upperDup(st.a, name)});
     st.minoperator = prev_minop;
     st.mindelimiter = prev_mindelim;
@@ -3235,7 +3738,20 @@ fn sysfuncDispatch(a: std.mem.Allocator, fname: []const u8, args: []const []cons
         }
         break;
     }
-    const r = functions.dispatch(&ev, fname, vals) catch return "";
+    // BUG-badaritywrongtype: dispatch now aborts the DATA step on a wrong-arity
+    // call, but the %SYSFUNC boundary must keep real SAS's macro semantics —
+    // oracle (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` logs "ERROR: The
+    // function ABS referenced by the %SYSFUNC or %QSYSFUNC macro function has
+    // too many arguments." and STILL runs later steps (`data _null_; put
+    // 'stepran';` printed, rc 2). So the swallow stays, but the hard step error
+    // dispatch recorded is downgraded to macro-class recoverable (or later
+    // steps would be syntax-check-skipped) and the yield is missing — the old
+    // soft path's render (bestNum(NaN) = "."), which the oracle prints too.
+    // OutOfMemory records no .err diagnostic; leave the list untouched for it.
+    const r = functions.dispatch(&ev, fname, vals) catch |derr| {
+        if (derr != error.OutOfMemory) diags.recoverLastErr();
+        return ".";
+    };
     return switch (r) {
         .str => |s| s,
         // SAS default: a numeric %sysfunc result renders through BEST12. (its
@@ -4972,6 +5488,237 @@ test "MACRO-autocall: unresolved %m(args) loads <name>.sas from SASAUTOS, case-i
         "WARNING: Apparent invocation of macro NOPE not resolved.\n",
         try diags.render(),
     );
+}
+
+// ── GAP-macrooptfamily: the OPTIONS-statement macro system options ──────────
+// ch.20 ("Valid in: … OPTIONS statement") — honoured arms. A Session (not the
+// bare expand) because the read-time OPTIONS hook applies SASAUTOS=/MAUTOSOURCE
+// only in a real run (plain_put): the CLI's silent setup pass must not leak a
+// later statement's setting backwards.
+
+test "GAP-macrooptfamily: OPTIONS SASAUTOS=(dir) feeds the autocall engine, first dir wins, NOMAUTOSOURCE suspends" {
+    setAutocallDirs(&.{});
+    defer setAutocallDirs(&.{});
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    var session = Session.init(a, &diags);
+    // (dir2 dir1): both hold greet.sas — the FIRST listed location wins
+    // (ch.20 p.482 "opens and searches each location in the same order"). The
+    // comma-separated form is the doc's own syntax. %shout exists only in dir1,
+    // proving dir1 is still searched after dir2 misses.
+    const out = try session.expand(
+        "options sasautos=('tests/autocall2', 'tests/autocall') mautosource;" ++
+        "%greet(A) %shout(B)",
+    );
+    try std.testing.expect(std.mem.indexOf(u8, out, "DIR2 A") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out, "[B]") != null);
+    try std.testing.expectEqualStrings("", try diags.render());
+}
+
+test "GAP-macrooptfamily: OPTIONS NOMAUTOSOURCE skips the autocall search; MAUTOSOURCE resumes" {
+    setAutocallDirs(&.{});
+    defer setAutocallDirs(&.{});
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    var session = Session.init(a, &diags);
+    // %shout(two) is the probe: shout is NOT yet session-compiled there, so it
+    // needs the autocall search anew — exactly what NOMAUTOSOURCE suspends.
+    // (greet opens: after its first call it stays compiled, so only a FRESH
+    // name can observe the suspension.)
+    const out = try session.expand(
+        "options sasautos=('tests/autocall') mautosource;" ++
+        "%greet(one) options nomautosource; %shout(two) options mautosource; %shout(three)",
+    );
+    try std.testing.expect(std.mem.indexOf(u8, out, "Hello one") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out, "[TWO]") == null); // dropped
+    try std.testing.expect(std.mem.indexOf(u8, out, "[THREE]") != null);
+    try std.testing.expectEqualStrings(
+        "WARNING: Apparent invocation of macro SHOUT not resolved.\n",
+        try diags.render(),
+    );
+}
+
+test "GAP-macrooptfamily: NOMREPLACE refuses a redefinition (SAS wording), original stays, MREPLACE restores" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diags = diag.Diagnostics.init(a);
+    var session = Session.init(a, &diags);
+    const out = try session.expand(
+        "%macro m1;one-body;%mend m1;" ++
+        "options nomreplace;" ++
+        "%macro m1;two-body;%mend m1;" ++
+        "%m1 " ++
+        "options mreplace;" ++
+        "%macro m1;three-body;%mend m1;" ++
+        "%m1",
+    );
+    // The refused redefinition is discarded to its %MEND (SAS: "Source code
+    // will be discarded…"); the ORIGINAL body answers the first call, the
+    // post-MREPLACE redefinition the second.
+    try std.testing.expect(std.mem.indexOf(u8, out, "one-body") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out, "two-body") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out, "three-body") != null);
+    try std.testing.expect(std.mem.indexOf(u8, try diags.render(),
+        "ERROR: The macro M1 will not be compiled because the NOMREPLACE option is set.  Source code will be discarded until a corresponding %MEND statement is encountered.") != null);
+}
+
+test "GAP-macrooptfamily: MCOMPILENOTE= NONE default / ALL / NOAUTOCALL, without-errors wording" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // default NONE: no note
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("%macro q1;a;%mend q1;");
+        try std.testing.expectEqualStrings("", try d.render());
+    }
+    // ALL: every compile — session AND autocall-loaded (ch.20 p.454)
+    {
+        setAutocallDirs(&.{"tests/autocall"});
+        defer setAutocallDirs(&.{});
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("options mcompilenote=all sasautos=('tests/autocall') mautosource; %greet(x) %macro q2;a;%mend q2;");
+        const log = try d.render();
+        try std.testing.expect(std.mem.indexOf(u8, log, "NOTE: The macro GREET completed compilation without errors.") != null);
+        try std.testing.expect(std.mem.indexOf(u8, log, "NOTE: The macro Q2 completed compilation without errors.") != null);
+    }
+    // NOAUTOCALL: skips the autocall load, still notes session compiles
+    {
+        setAutocallDirs(&.{"tests/autocall"});
+        defer setAutocallDirs(&.{});
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("options mcompilenote=noautocall sasautos=('tests/autocall') mautosource; %greet(x) %macro q3;a;%mend q3;");
+        const log = try d.render();
+        try std.testing.expect(std.mem.indexOf(u8, log, "GREET") == null);
+        try std.testing.expect(std.mem.indexOf(u8, log, "NOTE: The macro Q3 completed compilation without errors.") != null);
+    }
+}
+
+test "BUG-mcompilenotevarlate: a MACRO-VARIABLE-valued ch.20 option takes effect where a literal does" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // MCOMPILENOTE=&mode — the ticket's repro. Oracle (real SAS 9.4, probe
+    // 2026-11-01): `%let mode=all; options mcompilenote=&mode; %macro q; %put
+    // hello; %mend q; %q` logs "NOTE: The macro Q completed compilation without
+    // errors." BEFORE `hello`. Before the fix the value only reached main.zig's
+    // flush-time handleGlobal, i.e. AFTER %macro Q had already compiled, so the
+    // NOTE was never written at all. Exact render equality pins the ORDER too.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("%let mode=all;options mcompilenote=&mode;%macro q;%put hello;%mend q;%q");
+        try std.testing.expectEqualStrings(
+            // `NOTE: hello` is the CAPTURED reporter's rendering of the %PUT
+            // line (D-003); in a real run it goes straight to the log. What is
+            // pinned here is that the compilation NOTE precedes it.
+            "NOTE: The macro Q completed compilation without errors.\nNOTE: hello\n",
+            try d.render(),
+        );
+    }
+    // BUG-macrooptvarnamealias: the NAME part of `&nomreplace` is a macro
+    // reference inside MCOMPILENOTE='s value, not an OPTIONS NOMREPLACE word.
+    // The raw pass must wait for the resolved statement (`mcompilenote=all`)
+    // instead of refusing the second definition before resolution.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand(
+            "%let nomreplace=all;options mcompilenote=&nomreplace;" ++
+                "%macro m;%put ONE;%mend;" ++
+                "%macro m;%put TWO;%mend;%m",
+        );
+        try std.testing.expectEqualStrings(
+            "NOTE: The macro M completed compilation without errors.\n" ++
+                "NOTE: The macro M completed compilation without errors.\n" ++
+                "NOTE: TWO\n",
+            try d.render(),
+        );
+    }
+    // BUG-macrooptescapedquotealias: a word after a SAS doubled-quote escape
+    // is still option VALUE text, not a new option. Oracle probe 2026-11-01:
+    // `options sysparm="a""nomreplace";` does not set NOMREPLACE.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand(
+            "options sysparm=\"a\"\"nomreplace\";" ++
+                "%macro m;%put ONE;%mend;" ++
+                "%macro m;%put TWO;%mend;%m",
+        );
+        try std.testing.expectEqualStrings("NOTE: TWO\n", try d.render());
+    }
+    // Same for a `%`-valued setting — the resolution pass is the ordinary one,
+    // so a macro function in the value works for free.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("options mcompilenote=%upcase(all);%macro q;a;%mend q;");
+        try std.testing.expectEqualStrings(
+            "NOTE: The macro Q completed compilation without errors.\n",
+            try d.render(),
+        );
+    }
+    // NOMREPLACE through `options &rep;` — the SAME timing, on another family
+    // member: the refusal must fire for the NEXT %macro in the chunk, and the
+    // ORIGINAL body must still answer the call. Oracle probe 2026-11-01 logs the
+    // ERROR between the two definitions and runs the first body.
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        const out = try s.expand(
+            "%macro m1;one-body;%mend m1;" ++
+                "%let rep=nomreplace;options &rep;" ++
+                "%macro m1;two-body;%mend m1;%m1",
+        );
+        try std.testing.expect(std.mem.indexOf(u8, out, "one-body") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out, "two-body") == null);
+        try std.testing.expect(std.mem.indexOf(u8, try d.render(),
+            "ERROR: The macro M1 will not be compiled because the NOMREPLACE option is set.") != null);
+    }
+    // SASAUTOS=&dir + MAUTOSOURCE: the autocall list a macro variable names must
+    // be searchable by an invocation LATER IN THE SAME CHUNK (before any flush).
+    {
+        setAutocallDirs(&.{});
+        defer setAutocallDirs(&.{});
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        const out = try s.expand("%let d1=tests/autocall2;options mautosource sasautos=(\"&d1\");%greet(A)");
+        try std.testing.expect(std.mem.indexOf(u8, out, "DIR2 &A") == null); // param bound, not leaked
+        try std.testing.expect(std.mem.indexOf(u8, out, "DIR2 A") != null);
+        try std.testing.expectEqualStrings("", try d.render()); // no "not resolved" warning
+    }
+    // The resolution happens EXACTLY ONCE: process() now scans the statement's
+    // extent itself instead of letting the outer iteration do it, so SYMBOLGEN
+    // must trace &MODE a single time (a second, bookkeeping-only pass would
+    // double every & in every OPTIONS statement in a traced run).
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        _ = try s.expand("%let mode=all;options symbolgen;options mcompilenote=&mode;");
+        try std.testing.expectEqualStrings(
+            "SYMBOLGEN:  Macro variable MODE resolves to all\n",
+            try d.render(),
+        );
+    }
+    // An UNRESOLVED reference still applies nothing here (it is not a literal
+    // value) and is left verbatim for handleGlobal — the CALL SYMPUT late-bind
+    // window the family shares with every other option (D-004).
+    {
+        var d = diag.Diagnostics.init(a);
+        var s = Session.init(a, &d);
+        const out = try s.expand("options mcompilenote=&nosuchvar;%macro q;a;%mend q;");
+        try std.testing.expect(std.mem.indexOf(u8, out, "mcompilenote=&nosuchvar") != null);
+        try std.testing.expectEqualStrings("", try d.render()); // default NONE: no note
+    }
 }
 
 test "BUG-sysfuncformat(a): unsupported %sysfunc format warns + falls back to raw, never fatal" {
