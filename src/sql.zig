@@ -1218,6 +1218,9 @@ const TypeRegion = struct {
 /// column name) up to the first column-level constraint keyword or column modifier
 /// — **at parenthesis depth 0 only**.
 ///
+/// D-028 Except (implementation): CREATE and ALTER share this one scanner; only
+/// CREATE's missing-type rule is oracle-settled — ALTER may default an absent
+/// type to num (see the ALTER ADD call site below).
 /// BUG-sqlbarechecktypebypass: the depth rule is the whole point of this function
 /// existing, and it is why CREATE TABLE and ALTER TABLE ADD must both go through it.
 /// Both used to decide the datatype by looking for a type keyword ANYWHERE in the
