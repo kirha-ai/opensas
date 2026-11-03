@@ -87,23 +87,14 @@ these caused real regressions (see D-001).
   CONFORMANT SAS 9.4 — NOT a non-conformant extension. BUG-chainedcmp's premise
   (that SAS is left-assoc `(5>4)>3`=0) was WRONG; the "arbitration" is resolved:
   keep AND-chaining, do not flip to left-assoc. Verified `5>4>3`→1.
-- D-014 A statement loop may skip a mid-step global only if something else
-  handles it. [files: src/parser.zig, src/main.zig, src/proc.zig]
-  Every PROC statement loop and the DATA-step parser (`atGlobalStmt`) skip
-  mid-step globals through ONE predicate, `parser.isMidStepSkippable` =
-  hoisted (executed by `main.segments` before the step; its tokens stay in the
-  step) + LIBNAME (the `parseLibnames` pre-pass) + inert (D-022). Not the wider
-  `isGlobalKw`, and not the hoist predicate alone. Add a skip arm only when the
-  statement is handled elsewhere (or widen the hoist in the same commit);
-  never keep a private keyword list.
-  Why both directions fail: no skip arm makes a legal `title` an unknown-statement
-  ERROR, which starts syntax-check mode and skips EVERY LATER STEP (BUG-errhalt);
-  skipping something nobody handles is a SILENT NO-OP, the worse class (`filename`
-  mid-step used to leave `file f;` writing the old path at rc 0).
-  Except: inert keywords (`page`, `skip`, `symbol1`…) are also valid DATA-step
-  identifiers, so match them positively (`page = 5;` stays an assignment).
-  Check: parser.zig test "global-statement predicates: D-014 layering holds";
-  corpus `bug_filenamemidstep`, `proc_substmt_allowlist`, `qa_tick322_page_midstep`.
+- D-014 Skip only handled mid-step globals.
+  [files: src/parser.zig, src/main.zig, src/proc.zig]
+  PROC and DATA-step loops skip mid-step globals only via
+  `parser.isMidStepSkippable` (hoisted + LIBNAME pre-pass + inert; D-022) —
+  not `isGlobalKw`, not the hoist predicate alone. Widen skip only when the
+  handling path (and any required diagnostic) is updated in the same change;
+  never keep a private keyword list. Goal: legal globals must neither hard-error
+  nor silently lose their effects. Check: parser.zig D-014 layering test.
 
 - D-022 **X AND `ODS <destination>` ARE INERT BY DESIGN — AND THE TWO THAT ARE
   OBSERVABLE FROM OUTSIDE THE SESSION CARRY A NOTE, SO D-002 HAS AN EXPLICIT
