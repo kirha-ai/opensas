@@ -87,16 +87,23 @@ these caused real regressions (see D-001).
   CONFORMANT SAS 9.4 — NOT a non-conformant extension. BUG-chainedcmp's premise
   (that SAS is left-assoc `(5>4)>3`=0) was WRONG; the "arbitration" is resolved:
   keep AND-chaining, do not flip to left-assoc. Verified `5>4>3`→1.
-- D-014 Skip only handled mid-step globals.
-  [files: src/parser.zig, src/main.zig, src/proc.zig]
-  PROC statement loops use `parser.isMidStepSkippable`: hoisted globals,
-  LIBNAME handled by the pre-pass, and explicitly inert statements. This is
-  not just the hoist predicate. Keep the skip classification, actual handling,
-  and required diagnostics aligned (inert exceptions: D-022). Legal globals
-  must neither trigger unknown-statement errors nor silently lose their effects.
-  When widening rejection or skip rules, check the handling path and add a
-  regression case. Checks: parser.zig's global-statement predicate test;
-  tests/corpus/bug_filenamemidstep.sas and proc_substmt_allowlist.sas.
+- D-014 A statement loop may skip a mid-step global only if something else
+  handles it. [files: src/parser.zig, src/main.zig, src/proc.zig]
+  Every PROC statement loop and the DATA-step parser (`atGlobalStmt`) skip
+  mid-step globals through ONE predicate, `parser.isMidStepSkippable` =
+  hoisted (executed by `main.segments` before the step; its tokens stay in the
+  step) + LIBNAME (the `parseLibnames` pre-pass) + inert (D-022). Not the wider
+  `isGlobalKw`, and not the hoist predicate alone. Add a skip arm only when the
+  statement is handled elsewhere (or widen the hoist in the same commit);
+  never keep a private keyword list.
+  Why both directions fail: no skip arm makes a legal `title` an unknown-statement
+  ERROR, which starts syntax-check mode and skips EVERY LATER STEP (BUG-errhalt);
+  skipping something nobody handles is a SILENT NO-OP, the worse class (`filename`
+  mid-step used to leave `file f;` writing the old path at rc 0).
+  Except: inert keywords (`page`, `skip`, `symbol1`…) are also valid DATA-step
+  identifiers, so match them positively (`page = 5;` stays an assignment).
+  Check: parser.zig test "global-statement predicates: D-014 layering holds";
+  corpus `bug_filenamemidstep`, `proc_substmt_allowlist`, `qa_tick322_page_midstep`.
 
 - D-022 **X AND `ODS <destination>` ARE INERT BY DESIGN — AND THE TWO THAT ARE
   OBSERVABLE FROM OUTSIDE THE SESSION CARRY A NOTE, SO D-002 HAS AN EXPLICIT
@@ -225,18 +232,27 @@ these caused real regressions (see D-001).
   ticket's `[owns:]` line is stale too — BUG-hashattrput named exec.zig and the
   actual fix had to live in parser.zig, so an ownership reservation made from an
   old line can lock the wrong file. Related: `[[verify-backlog-todo-before-dispatch]]`.
-- D-018 Distinguish unsupported features from invalid input using evidence.
-  Apply D-009: known unsupported SAS 9.4 features are gaps (rc 2); established
-  invalid values and typos are user errors (rc 1). Absence from local manuals
-  alone proves neither. For a candidate with supporting evidence but unresolved
-  version/platform coverage, retain its gap classification and record the
-  evidence and remaining oracle question. Do not classify arbitrary unknown
-  names as gaps merely because no reference explicitly excludes them.
-  A documented user-defined namespace may require an unavailable catalog to
-  distinguish valid names from typos; keep that limitation explicit and loud.
-  Derive closed name lists in full from the applicable reference, checking both
-  missing valid entries and incorrectly admitted entries. Verify maintenance
-  version and scope before using a restriction to reject a value (D-015a).
+- D-018 A catch-all splits gap (rc 2) from typo (rc 1) on evidence, not on
+  absence from local docs. [files: src/main.zig, src/format.zig]
+  A value that reaches a catch-all is a gap when SAS 9.4 documents or
+  evidences it and opensas lacks it; a typo or a value the reference excludes
+  is rc 1 (D-009). Not finding it in `docs/` proves neither: TEMP/DDE FILENAME
+  devices and the NLNUM-family informats are real but live in volumes we do
+  not carry, so they stay gaps.
+  Why asymmetric: a wrong rc 2 costs one spurious "file an issue"; a wrong
+  rc 1 tells a user their valid SAS is broken, the failure the rc split
+  exists to remove. So an undecided candidate WITH supporting evidence stays a
+  gap, evidence and open question recorded at the site.
+  Except: never gap an arbitrary unknown name merely because nothing excludes
+  it; that needs positive evidence. Reject a value on a doc restriction only
+  after checking the maintenance release it applies to (D-015a): the
+  LINGUISTIC exclusion was refuted this way and its collating-options went back
+  to the gap arm. A documented DEFAULT (`NOPAD`) is accepted, not gapped.
+  Closed lists are re-derived in full from the doc entry and checked in BOTH
+  directions, missing valid members and wrongly admitted ones (the SORTSEQ
+  guard failed both ways in seven lines).
+  Check: main.zig `isUnimplSortseq`, `isDocFilenameDevice`, test
+  "GAP-macrooptfamily"; format.zig `doc_inf_num`.
 - D-017 **A STDOUT DIFFERENTIAL MUST CLEAN THE TREE BETWEEN PASSES** (2026-07-29
   tick398, promoted from @coder-ex's tick397j slice note where it would have been
   lost). The differential — run every `tests/**/*.sas` on a baseline binary, then on
