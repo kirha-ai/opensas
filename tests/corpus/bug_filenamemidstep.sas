@@ -1,4 +1,4 @@
-/* BUG-filenamemidstep (QA tick336 F1 — the fourth live D-014a violation):
+/* BUG-filenamemidstep (QA tick336 F1 — the fourth live D-014 violation):
    the DATA-step parser's global-statement skip arm (atGlobalStmt) claimed the
    wide isGlobalKw while the top level only HANDLED hoisted ∪ pre-pass ∪ inert
    statements mid-step — a mid-DATA-step `filename f 'new';` was swallowed

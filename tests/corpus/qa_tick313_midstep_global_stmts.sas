@@ -4,7 +4,7 @@
    executes global statements wherever they appear. Pre-fix the PROC statement
    loops used parser.isGlobalKw as their skip predicate while the hoist used
    main.isMidStepGlobal and open code used main.isInertOpenCode — three
-   disagreeing keyword lists (D-014a): GOPTIONS/SASFILE/PAGE/DM mid-PROC were
+   disagreeing keyword lists (D-014): GOPTIONS/SASFILE/PAGE/DM mid-PROC were
    "not supported" at exit 2 (fatal inside, harmless outside), while
    ODS/LIBNAME/FILENAME mid-PROC were silently skipped but never executed
    (a silent no-op). Now ONE layered predicate family in parser.zig:
