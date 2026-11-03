@@ -232,27 +232,15 @@ these caused real regressions (see D-001).
   ticket's `[owns:]` line is stale too — BUG-hashattrput named exec.zig and the
   actual fix had to live in parser.zig, so an ownership reservation made from an
   old line can lock the wrong file. Related: `[[verify-backlog-todo-before-dispatch]]`.
-- D-018 A catch-all splits gap (rc 2) from typo (rc 1) on evidence, not on
-  absence from local docs. [files: src/main.zig, src/format.zig]
-  A value that reaches a catch-all is a gap when SAS 9.4 documents or
-  evidences it and opensas lacks it; a typo or a value the reference excludes
-  is rc 1 (D-009). Not finding it in `docs/` proves neither: TEMP/DDE FILENAME
-  devices and the NLNUM-family informats are real but live in volumes we do
-  not carry, so they stay gaps.
-  Why asymmetric: a wrong rc 2 costs one spurious "file an issue"; a wrong
-  rc 1 tells a user their valid SAS is broken, the failure the rc split
-  exists to remove. So an undecided candidate WITH supporting evidence stays a
-  gap, evidence and open question recorded at the site.
-  Except: never gap an arbitrary unknown name merely because nothing excludes
-  it; that needs positive evidence. Reject a value on a doc restriction only
-  after checking the maintenance release it applies to (D-015a): the
-  LINGUISTIC exclusion was refuted this way and its collating-options went back
-  to the gap arm. A documented DEFAULT (`NOPAD`) is accepted, not gapped.
-  Closed lists are re-derived in full from the doc entry and checked in BOTH
-  directions, missing valid members and wrongly admitted ones (the SORTSEQ
-  guard failed both ways in seven lines).
-  Check: main.zig `isUnimplSortseq`, `isDocFilenameDevice`, test
-  "GAP-macrooptfamily"; format.zig `doc_inf_num`.
+- D-018 Distinguish unsupported features from invalid input using evidence.
+  [files: src/main.zig, src/format.zig]
+  Absence from local manuals alone is not a user error (rc 1). A candidate with
+  supporting evidence but unresolved version/platform coverage stays a gap
+  (rc 2), with the evidence recorded; established illegal values and typos are
+  rc 1 (D-009). Do not gap arbitrary unknown names merely because nothing
+  excludes them. Derive closed option lists in full from the applicable
+  reference (both missing valids and wrongly admitted ones). Check a
+  restriction's maintenance release before using it to reject (D-015a).
 - D-017 **A STDOUT DIFFERENTIAL MUST CLEAN THE TREE BETWEEN PASSES** (2026-07-29
   tick398, promoted from @coder-ex's tick397j slice note where it would have been
   lost). The differential — run every `tests/**/*.sas` on a baseline binary, then on
