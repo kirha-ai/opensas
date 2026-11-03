@@ -1,6 +1,6 @@
 /* QA tick322 F6 / NOTE-pagemidstep — the log-only inert globals (PAGE/SKIP,
    Language Reference: Concepts p.209) are accepted in open code and mid-PROC; the DATA-step parser
-   now AGREES (D-014a, atGlobalStmt gains the isInertGlobalKw set). Pre-fix a
+   now AGREES (D-014, atGlobalStmt gains the isInertGlobalKw set). Pre-fix a
    mid-DATA-step `page;` fell through to parseAssign and died with the
    misleading "expected '=' in assignment", naming the wrong construct (same
    shape as NOTE-removenamedds). */

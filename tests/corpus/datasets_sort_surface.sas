@@ -5,7 +5,7 @@
    corpus run cannot contain an ERROR. This fixture is the POSITIVE control:
    every implemented sub-statement below must keep working, and a mid-step
    TITLE/FOOTNOTE/OPTIONS inside PROC DATASETS is hoisted by main.zig and its
-   leftover tokens skipped (D-014/D-014a), never mistaken for a sub-statement. */
+   leftover tokens skipped (D-014), never mistaken for a sub-statement. */
 data d;
   input x v;
   datalines;

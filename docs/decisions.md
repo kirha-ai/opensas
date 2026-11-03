@@ -87,35 +87,14 @@ these caused real regressions (see D-001).
   CONFORMANT SAS 9.4 — NOT a non-conformant extension. BUG-chainedcmp's premise
   (that SAS is left-assoc `(5>4)>3`=0) was WRONG; the "arbitration" is resolved:
   keep AND-chaining, do not flip to left-assoc. Verified `5>4>3`→1.
-- D-014 A PROC statement-loop fail-loud MUST skip hoisted global statements
-  (2026-07-25, QA tick284 F1 — BUG-transposeglobalstmt, a shipped REGRESSION):
-  `main.zig:807-826` hoists a mid-step TITLE/FOOTNOTE/OPTIONS/ODS/LIBNAME/FILENAME
-  to its own global segment but deliberately LEAVES ITS TOKENS in the step,
-  documented there as harmlessly skipped. So any PROC whose statement loop gains
-  a D-002 fail-loud on unknown statements MUST first skip a
-  `parser.isGlobalKw(tok.text)` statement to its semicolon — otherwise a legal
-  `proc x; title "t"; ...` becomes a hard ERROR, and because a step ERROR triggers
-  syntax-check mode (BUG-errhalt) it then skips EVERY LATER STEP of the program.
-  One legal TITLE silently kills the run. This bit TRANSPOSE (471645f, fixed
-  61de2c7) and COMPARE (pre-existing, same commit). The per-landing suite gate does
-  NOT catch it — no fixture used a mid-step global inside a PROC — so the guard is a
-  review checklist item, not something green tests prove. When adding a fail-loud
-  statement loop to any remaining PROC, add the isGlobalKw arm in the same commit.
-- D-014a AMENDMENT to D-014 (2026-07-25, QA tick290 F5 — QA's critique of D-014 is
-  CORRECT and this supersedes the narrow wording): D-014 said a PROC statement-loop
-  fail-loud must skip `parser.isGlobalKw`. **The real invariant is that the SKIP
-  predicate and the HOIST predicate must be the SAME predicate.** They are not:
-  `parser.isGlobalKw` (the skip) covers `ods`/`libname`/`filename`, while
-  `main.isMidStepGlobal` (the hoist) does not. So satisfying D-014 as literally
-  written traded a hard ERROR for a SILENT NO-OP: an in-step `ods`/`filename` is now
-  skipped by the PROC loop but never hoisted to a global segment, i.e. it does
-  nothing at all, quietly. (LIBNAME survives only by accident, via the separate
-  `parseLibnames` pre-pass.) That is a worse failure class than the over-strict
-  error D-014 was written to fix. **Rule: when adding a skip arm, skip exactly what
-  the hoist actually handles — or widen the hoist in the same commit.** Whichever
-  side you change, the two predicates must be brought back into agreement, ideally
-  by having one call the other rather than duplicating a keyword list. Tracked as
-  GAP-globalpredicatemismatch.
+- D-014 Skip only handled mid-step globals.
+  [files: src/parser.zig, src/main.zig, src/proc.zig]
+  PROC and DATA-step loops skip mid-step globals only via
+  `parser.isMidStepSkippable` (hoisted + LIBNAME pre-pass + inert; D-022) —
+  not `isGlobalKw`, not the hoist predicate alone. Widen skip only when the
+  handling path (and any required diagnostic) is updated in the same change;
+  never keep a private keyword list. Goal: legal globals must neither hard-error
+  nor silently lose their effects. Check: parser.zig D-014 layering test.
 
 - D-022 **X AND `ODS <destination>` ARE INERT BY DESIGN — AND THE TWO THAT ARE
   OBSERVABLE FROM OUTSIDE THE SESSION CARRY A NOTE, SO D-002 HAS AN EXPLICIT
@@ -137,9 +116,8 @@ these caused real regressions (see D-001).
   (`data _null_; x "mkdir /tmp/d"; run;` gave zero output at rc 0 and no
   directory), and **DM with a FILE/OUT command** — log/output redirection, where
   the user's downstream log check reads a file nobody wrote. Silence there is a
-  D-002 violation of the exact **D-014a** shape: satisfying a rule as literally
-  written traded a loud failure for a SILENT NO-OP, "a worse failure class than
-  the over-strict error D-014 was written to fix".
+  D-002 violation: accepting an inert statement must still preserve its required
+  diagnostic, as D-014 requires; skipping it must not hide an unperformed effect.
   **A NOTE, NEVER AN ERROR — this is the load-bearing half.** An ERROR would
   errhalt (BUG-errhalt) and skip EVERY LATER STEP of any program that
   legitimately contains an X statement: one legal statement kills the run, which
@@ -245,28 +223,15 @@ these caused real regressions (see D-001).
   ticket's `[owns:]` line is stale too — BUG-hashattrput named exec.zig and the
   actual fix had to live in parser.zig, so an ownership reservation made from an
   old line can lock the wrong file. Related: `[[verify-backlog-todo-before-dispatch]]`.
-- D-018 **CLOSING A CATCH-ALL: REMOVE FROM THE GAP ARM ONLY WHERE THE DOC
-  *EXCLUDES* THE VALUE — A VALUE THE DOC MERELY FAILS TO MENTION IS KEPT AND
-  RECORDED** (2026-07-29 tick404, from @coder-f4, who needed this rule to tell
-  QA's F2 apart from its own TEMP/DDE case and found the ticket had not given it
-  one). The rc epic splits catch-alls so a documented-but-unimplemented value
-  exits 2 ("file an opensas issue") and a typo exits 1 ("fix your SAS"). Deciding
-  membership needs an asymmetry rule, because the two errors do not cost the same:
-  **keeping a possibly-bogus name at rc 2 costs one spurious "file an issue";
-  dropping a possibly-real one gives valid SAS a bogus rc 1 — which is the exact
-  failure the epic exists to remove.** So: `LINGUISTIC` leaves the gap arm because
-  Procedures Guide p.2415 *excludes* it from the system option; FILENAME `TEMP`
-  and `DDE` STAY at rc 2 with a note, despite zero grep hits across all eight
-  volumes, because they are real device types documented in a volume we do not
-  have (SAS Global Statements / the host companions) — absence from `docs/` is not
-  absence from SAS. Corollary, and the reason "did I miss any?" is only half the
-  check: §5d's SORTSEQ guard was wrong in BOTH DIRECTIONS IN THE SAME SEVEN LINES
-  — it omitted four documented values *and* admitted one the doc excludes. Pair
-  this with the tick397j predictor (what makes a catch-all splittable is whether
-  the doc enumerates it in ONE PLACE) and with the re-derivation rule: a list
-  closed against a doc must be re-derived from the doc IN FULL, never assembled
-  from the values that came to mind. Three devs have now independently re-derived
-  a count they were handed and each found more.
+- D-018 Distinguish unsupported features from invalid input using evidence.
+  [files: src/main.zig, src/format.zig]
+  Absence from local manuals alone is not a user error (rc 1). A candidate with
+  supporting evidence but unresolved version/platform coverage stays a gap
+  (rc 2), with the evidence recorded; established illegal values and typos are
+  rc 1 (D-009). Do not gap arbitrary unknown names merely because nothing
+  excludes them. Derive closed option lists in full from the applicable
+  reference (both missing valids and wrongly admitted ones). Check a
+  restriction's maintenance release before using it to reject (D-015a).
 - D-017 **A STDOUT DIFFERENTIAL MUST CLEAN THE TREE BETWEEN PASSES** (2026-07-29
   tick398, promoted from @coder-ex's tick397j slice note where it would have been
   lost). The differential — run every `tests/**/*.sas` on a baseline binary, then on

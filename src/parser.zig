@@ -42,7 +42,7 @@ const CharLen = struct { name: []const u8, len: usize };
 /// OPTIONS, FILENAME, ODS, LIBNAME. Used by main.segments' OPEN-CODE arm (a
 /// statement starting with one of these between steps is its own global
 /// segment). Mid-step the skip predicate is the narrower isMidStepSkippable
-/// (D-014a) — every member here is handled there: hoisted or pre-pass-bound.
+/// (D-014) — every member here is handled there: hoisted or pre-pass-bound.
 pub fn isGlobalKw(text: []const u8) bool {
     if (std.ascii.eqlIgnoreCase(text, "options") or std.ascii.eqlIgnoreCase(text, "filename") or std.ascii.eqlIgnoreCase(text, "ods") or std.ascii.eqlIgnoreCase(text, "libname")) return true;
     const base: []const u8 = if (startsWithI(text, "title")) "title" else if (startsWithI(text, "footnote")) "footnote" else return false;
@@ -52,7 +52,7 @@ pub fn isGlobalKw(text: []const u8) bool {
     return true;
 }
 
-// ── D-014a layering (GAP-globalpredicatemismatch) ────────────────────────────
+// ── D-014 layering (GAP-globalpredicatemismatch) ────────────────────────────
 // ONE home for every global-statement predicate, with real containment:
 //   isHoistedGlobalKw  ⊂  isGlobalKw   — mid-step: HOISTED by main.segments
 //       into its own global segment before the step and EXECUTED, so skipping
@@ -70,9 +70,9 @@ pub fn isGlobalKw(text: []const u8) bool {
 // errored in the loop). ODS/FILENAME are hoisted (below) since
 // BUG-filenamemidstep: skipping them un-executed was a silent no-op — a
 // mid-DATA-step `filename f 'new';` re-bound nothing, so `file f;` kept
-// writing to the OLD path at exit 0 (the exact sin D-014a was amended for).
+// writing to the OLD path at exit 0 (the exact sin D-014 was amended for).
 // Every isGlobalKw member is now handled mid-step: hoisted ∪ pre-pass — the
-// skip predicate and the handle predicate agree everywhere (D-014a closed).
+// skip predicate and the handle predicate agree everywhere (D-014 closed).
 
 /// The mid-step globals main.segments hoists OUT of a DATA/PROC step into
 /// their own global segment (executed BEFORE the step): TITLE[n]/FOOTNOTE[n]/
@@ -136,7 +136,7 @@ pub fn isInertGlobalKw(text: []const u8) bool {
 ///   DM … FILE/OUT …    — redirects the LOG or OUTPUT window to a FILE. A
 ///                        downstream log check then reads a file nobody wrote.
 /// Both were a silent rc-0 no-op, which D-002 forbids ("clinical: silent success
-/// is the dangerous failure"). This is the D-014a shape exactly: satisfying the
+/// is the dangerous failure"). This is the D-014 shape exactly: satisfying the
 /// letter of a rule traded a loud failure for a SILENT one, "a worse failure
 /// class than the over-strict error D-014 was written to fix".
 ///
@@ -183,7 +183,7 @@ fn dmRedirectsToFile(toks: []const Token) bool {
     return false;
 }
 
-/// THE mid-step skip predicate (D-014a: skip == what the top level handles
+/// THE mid-step skip predicate (D-014: skip == what the top level handles
 /// mid-step — hoisted ∪ inert ∪ LIBNAME-via-pre-pass). See the layering note.
 pub fn isMidStepSkippable(text: []const u8) bool {
     return isHoistedGlobalKw(text) or isInertGlobalKw(text) or std.ascii.eqlIgnoreCase(text, "libname");
@@ -2608,7 +2608,7 @@ pub const Parser = struct {
     }
 
     /// At a global statement keyword the top level HANDLES mid-step
-    /// (D-014a, parser.isMidStepSkippable — BUG-filenamemidstep): hoisted
+    /// (D-014, parser.isMidStepSkippable — BUG-filenamemidstep): hoisted
     /// globals (TITLE[n]/FOOTNOTE[n]/OPTIONS/FILENAME/ODS) EXECUTE via
     /// main.segments before the step, LIBNAME via the parseLibnames
     /// pre-pass, so skipping the leftover tokens here is honest. This used
@@ -2619,7 +2619,7 @@ pub const Parser = struct {
     /// form IS handled (parseStmt).
     /// NOTE-pagemidstep (QA tick322 F6): the batch-unobservable inert set
     /// (isInertGlobalKw — PAGE/SKIP Language Reference: Concepts p.209, GOPTIONS/DM/SASFILE/…) is
-    /// accepted in open code and mid-PROC, so agree here too (D-014a):
+    /// accepted in open code and mid-PROC, so agree here too (D-014):
     /// pre-fix a mid-DATA-step `page;` fell through to parseAssign and died
     /// with the misleading "expected '=' in assignment", naming the wrong
     /// construct. POSITIVE-match guard: the inert statement's second token
@@ -5095,10 +5095,10 @@ test "array: explicit dimension must match the explicit member count (BUG-arrayd
     try testing.expect(!ok.hasErrors());
 }
 
-test "global-statement predicates: D-014a layering holds (hoisted ⊂ global; inert ∩ global = ∅; skippable == hoisted ∪ inert ∪ libname)" {
+test "global-statement predicates: D-014 layering holds (hoisted ⊂ global; inert ∩ global = ∅; skippable == hoisted ∪ inert ∪ libname)" {
     // BUG-filenamemidstep: filename/ods joined the hoist — every isGlobalKw
     // member is now EXECUTED mid-step (hoisted ∪ pre-pass), so no skip arm
-    // anywhere can silent-no-op one (D-014a closed).
+    // anywhere can silent-no-op one (D-014 closed).
     const hoisted = [_][]const u8{ "title", "TITLE2", "footnote", "footnote10", "options", "filename", "ods" };
     const inert = [_][]const u8{ "run", "quit", "dm", "goptions", "sasfile", "catname", "page", "skip", "resetline", "sysecho", "checkpoint", "lock", "axis", "axis1", "legend12", "pattern255", "symbol1", "symbol255" };
     const neither = [_][]const u8{ "missing", "endsas", "zzzq", "var", "symbolize", "axle", "titlex", "footnote100", "symbol2555" };
@@ -5137,7 +5137,7 @@ test "NOTE-pagemidstep: inert globals parse clean mid-DATA-step; `page = 5;` sta
     // QA tick322 F6: `page;` mid-DATA-step fell through to parseAssign and
     // died with "expected '=' in assignment", naming the wrong construct.
     // The inert set is accepted in open code (Language Reference: Concepts p.209 log-only family),
-    // so agree here (D-014a) — all batch-unobservable, they leave NO ast.
+    // so agree here (D-014) — all batch-unobservable, they leave NO ast.
     var ok = diag.Diagnostics.init(a);
     const p = try prog(a, &ok, "x = 1; page; skip; goptions reset=all; symbol1 v=dot; lock; y = 2;");
     try testing.expect(!ok.hasErrors());

@@ -557,7 +557,7 @@ fn isDocLibnameGapOpt(opt: []const u8) bool {
 /// the option-list validation fires THERE — once per program over the fully
 /// expanded source — never in the segment re-bind (which passes null, so an
 /// executed libname isn't double-reported) and never in the statement loops
-/// (they keep skipping LIBNAME per isMidStepSkippable, D-014a — BUG-libnamemidstepboth).
+/// (they keep skipping LIBNAME per isMidStepSkippable, D-014 — BUG-libnamemidstepboth).
 fn parseLibnames(a: std.mem.Allocator, diags: ?*sas.diag.Diagnostics, toks: []const Token) !std.ArrayList(Libref) {
     var list: std.ArrayList(Libref) = .empty;
     for (toks, 0..) |t, i| {
@@ -3080,7 +3080,7 @@ fn printProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Libra
             continue;
         }
         // Global statements are legal mid-PROC. Skip exactly what the top
-        // level HANDLES there (D-014a, parser.isMidStepSkippable): a hoisted
+        // level HANDLES there (D-014, parser.isMidStepSkippable): a hoisted
         // TITLE/FOOTNOTE/OPTIONS/FILENAME/ODS was already EXECUTED by the
         // driver (main.segments hoists it to a global segment BEFORE this
         // step — BUG-filenamemidstep), and an inert statement (GOPTIONS/DM/
@@ -4587,7 +4587,7 @@ test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pr
 
     // F4 repro: a mid-PROC libname EXECUTED in the up-front parseLibnames
     // pre-pass and then ALSO errored in the statement loop (exit 2, listing
-    // lost). D-014a: the pre-pass handled it → the loop skips it.
+    // lost). D-014: the pre-pass handled it → the loop skips it.
     g_failed = false;
     var d1 = sas.diag.Diagnostics.init(a);
     try interpret(a, &out, &d1, mk ++ "proc print data=d noobs; libname zzzq \"nowhere\"; var x; run;\n", null);

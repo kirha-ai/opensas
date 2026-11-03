@@ -407,7 +407,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
         if (tkKw(toks[i], "where")) {
             while (i < toks.len and toks[i].tag != .semicolon) i += 1; // procInput applies it
         } else if (toks[i].tag == .name and @import("parser.zig").isMidStepSkippable(toks[i].text)) {
-            // D-014a mid-step globals: skip exactly what the top level HANDLES
+            // D-014 mid-step globals: skip exactly what the top level HANDLES
             // mid-step — hoisted TITLE/FOOTNOTE/OPTIONS and (since
             // BUG-filenamemidstep) FILENAME/ODS, the inert batch-unobservables,
             // LIBNAME via the parseLibnames pre-pass.
@@ -474,7 +474,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
         desc = false;
     }
     // GAP-procsubstmtswallow: statements AFTER the BY list get the identical
-    // policy — WHERE (procInput already applied it) and the D-014a mid-step
+    // policy — WHERE (procInput already applied it) and the D-014 mid-step
     // globals skip honestly; any other statement fails loud. One PROC, one
     // policy.
     while (i < toks.len and toks[i].tag != .eof) {
@@ -1432,7 +1432,7 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
         } else if (tkKw(toks[i], "where")) {
             while (i < toks.len and toks[i].tag != .semicolon) i += 1; // procInput applies it
         } else if (toks[i].tag == .name and @import("parser.zig").isMidStepSkippable(toks[i].text)) {
-            // D-014a mid-step globals: skip exactly what the top level HANDLES
+            // D-014 mid-step globals: skip exactly what the top level HANDLES
             // mid-step (see runSort's arm for the full note).
             while (i < toks.len and toks[i].tag != .semicolon) i += 1;
         } else if (toks[i].tag == .name) {
@@ -3155,7 +3155,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         } else if (tkKw(toks[i], "where")) {
             while (i < toks.len and toks[i].tag != .semicolon) i += 1; // procInput applies it
         } else if (toks[i].tag == .name and @import("parser.zig").isMidStepSkippable(toks[i].text)) {
-            // D-014a mid-step globals: skip exactly what the top level HANDLES
+            // D-014 mid-step globals: skip exactly what the top level HANDLES
             // mid-step (see runSort's arm for the full note).
             while (i < toks.len and toks[i].tag != .semicolon) i += 1;
         } else if (tkKw(toks[i], "exact") or tkKw(toks[i], "output") or tkKw(toks[i], "test")) {
@@ -4182,7 +4182,7 @@ pub fn runTranspose(cx: ProcCtx, toks: []const Token) diag.Error!void {
         } else if (tkKw(toks[i], "where")) {
             while (i < toks.len and toks[i].tag != .semicolon) i += 1; // procInput applies it
         } else if (toks[i].tag == .name and @import("parser.zig").isMidStepSkippable(toks[i].text)) {
-            // D-014a mid-step globals: skip exactly what the top level HANDLES
+            // D-014 mid-step globals: skip exactly what the top level HANDLES
             // here — a hoisted TITLE/FOOTNOTE/OPTIONS (main.zig hoists it to
             // its own global segment; its tokens STAY in the step) and the
             // batch-unobservable inert set (GOPTIONS/DM/SASFILE/PAGE/…).
@@ -6879,11 +6879,11 @@ pub fn runContents(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
     }
 
     // SAS PROC CONTENTS has NO sub-statements — so anything between the header
-    // and `run;` other than a D-014a mid-step global (skip exactly what the
+    // and `run;` other than a D-014 mid-step global (skip exactly what the
     // top level handles) is an unknown statement and fails loud
     // (GAP-procsubstmtswallow); it used to be silently ignored because no loop
     // ever scanned it. No WHERE arm: CONTENTS takes none, and no procInput runs
-    // here, so a skip would be a silent no-op (the sin D-014a was amended for).
+    // here, so a skip would be a silent no-op (the sin D-014 was amended for).
     if (atTag(toks, i, .semicolon)) i += 1; // past the header ';'
     while (i < toks.len and toks[i].tag != .eof) {
         if (tkKw(toks[i], "run") or tkKw(toks[i], "quit")) break;
@@ -7844,7 +7844,7 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
                 try diags.report(.err, 0, "PROC DATASETS: CONTENTS requires DATA=", .{});
             }
         } else if (kw.tag == .name and @import("parser.zig").isMidStepSkippable(kw.text)) {
-            // D-014/D-014a: skip exactly what the top level HANDLES mid-step —
+            // D-014: skip exactly what the top level HANDLES mid-step —
             // the main-hoisted globals (TITLE/FOOTNOTE/OPTIONS, hoisted to
             // their own segment with the tokens LEFT in the step) plus the
             // batch-unobservable inert set (GOPTIONS/DM/SASFILE/PAGE/…) — or
@@ -12800,7 +12800,7 @@ test "GAP-freqlow-tick276: unknown FREQ option fails loud; zero-weight stratum p
     }
 }
 
-test "GAP-procsubstmtswallow: SORT/MEANS/FREQ/CONTENTS statement loops fail loud; D-014a skip arms hold" {
+test "GAP-procsubstmtswallow: SORT/MEANS/FREQ/CONTENTS statement loops fail loud; D-014 skip arms hold" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -12808,7 +12808,7 @@ test "GAP-procsubstmtswallow: SORT/MEANS/FREQ/CONTENTS statement loops fail loud
     // An unknown SUB-STATEMENT was silently swallowed by SORT (whose own OPTION
     // loop was already loud — one PROC, two policies), MEANS, FREQ and CONTENTS
     // while PRINT/TRANSPOSE/SQL errored (D-002). Each loop now ends in a real
-    // else naming the statement, behind a parser.isMidStepSkippable arm (D-014a
+    // else naming the statement, behind a parser.isMidStepSkippable arm (D-014
     // — the CONVERGED predicate: after BUG-filenamemidstep, FILENAME/ODS are
     // hoisted too, so NO isGlobalKw member fails loud here anymore).
     {
@@ -12916,7 +12916,7 @@ test "GAP-procsubstmtswallow: SORT/MEANS/FREQ/CONTENTS statement loops fail loud
         try runContents(.{ .arena = a, .lib = &lib, .diags = &diags }, &out, t9);
         try t.expect(!diags.hasErrors());
     }
-    // D-014a CONVERGED (BUG-filenamemidstep): FILENAME/ODS joined the hoist, so
+    // D-014 CONVERGED (BUG-filenamemidstep): FILENAME/ODS joined the hoist, so
     // mid-step they skip HONESTLY now — the prior attempt's 'FILENAME fails
     // loud' arm went stale on exactly this and is deliberately NOT re-added.
     {
@@ -13012,7 +13012,7 @@ test "GAP-dsmgmt-tick262-264: DATASETS verbs named-loud; SORT BY GROUPFORMAT nam
         const first_word = verb[0..(std.mem.indexOfScalar(u8, verb, ' ') orelse verb.len)];
         try t.expect(std.mem.indexOf(u8, g_test_last_unsup, first_word) != null);
     }
-    // D-014/D-014a: a mid-step TITLE/FOOTNOTE/OPTIONS is hoisted by main.zig
+    // D-014: a mid-step TITLE/FOOTNOTE/OPTIONS is hoisted by main.zig
     // and its tokens left in the step — the loud else must skip them, never
     // UNSUPPORTED (was: `proc datasets; title "t"; …` died at exit 2).
     {
