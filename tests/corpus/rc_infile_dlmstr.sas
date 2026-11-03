@@ -3,7 +3,7 @@
    the doc self-confirms "DLMSTR= on page 128"): one multi-character
    delimiter string, where DLM= is a LIST of single-char delimiters
    (BUG-dlmmultichar). opensas has not implemented it. Valid SAS refused →
-   an opensas GAP, exit 2 ("file an opensas issue", D-009/D-009b(i)) — it
+   an opensas GAP, exit 2 ("file an opensas issue", D-009) — it
    used to take the rc-1 typo catch-all. Split, not re-tagged: a
    misspelling like `dlmstrr` still lands on the same ERROR text at rc 1
    (pinned in-source, parser.zig D-009 test), and the message text is

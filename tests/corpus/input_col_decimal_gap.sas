@@ -5,7 +5,7 @@
    power of 10 by which to divide the value. If the data contains decimal
    points, the .decimals value is ignored."). opensas does not implement it
    (applying the divisor is read-path work), so it refuses LOUD as a NAMED
-   rc-2 gap (D-009/D-009b(i)):
+   rc-2 gap (D-009):
      input: the column-input .decimals parameter (input x 1-5 .2;) is not supported
    — never the old rc-1 "expected ';' after input" that blamed punctuation.
    expect-rc: 2 */

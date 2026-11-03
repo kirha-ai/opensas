@@ -2,7 +2,7 @@
    (printed p.130, marker "=== pdf 141 ===") opensas has not implemented, and
    it is the doc's own prescribed substitute where END= is invalid ("Use the
    option EOF= on page 130 when END= is invalid"). Valid SAS refused → an
-   opensas GAP, exit 2 (D-009/D-009b(i)); it used to exit 1 via the typo
+   opensas GAP, exit 2 (D-009); it used to exit 1 via the typo
    catch-all. Message text byte-identical to the rc-1 arm; only the rc moves.
 
    ORDERING (from docs/findings/oracle-unblocked-readings.md item 3): the

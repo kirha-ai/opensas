@@ -1,4 +1,4 @@
-/* SEV-errhaltblastradius (D-009a corollary) — ABORT OUTRANKS ONLY WHAT IT
+/* SEV-errhaltblastradius (D-009 ABORT reachability) — ABORT OUTRANKS ONLY WHAT IT
    REACHES. `abort return 3` would exit 3 if its step ran (pinned by
    abort_rc.sas), but the earlier `format c 8.2` user error put the run into
    syntax-check mode, so the ABORT step is SKIPPED and the process exits

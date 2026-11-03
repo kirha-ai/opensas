@@ -458,12 +458,12 @@ pub const Parser = struct {
         // MISSING — declares the characters raw numeric input reads as special
         // missing values (.A-.Z/._; Language Reference: Concepts printed p.519, a worked example shown
         // TWICE). VALID SAS 9.4 opensas doesn't implement → a NAMED gap, rc 2
-        // (D-009/D-009b(i); BUG-missingstmtwrongclass). It used to fall through
+        // (D-009; BUG-missingstmtwrongclass). It used to fall through
         // to parseAssign → "expected '=' in assignment" — rc 1 blaming the
         // WRONG construct (the NOTE-removenamedds / GAP-liststmt precedent).
         // `missing = 5;` routes to parseAssign on the `IDENT =` check above, so
         // a `missing` reaching here IS the statement. Same message as main.zig's
-        // open-code arm (D-009b corollary: the twin settles by consistency).
+        // open-code arm (D-009 consistency rule: the twin settles by consistency).
         if (self.atKw("missing"))
             return failGap(self.p.diags, self.p.peek().line, "the MISSING statement (special missing values) is not supported", .{});
         if (self.atKw("continue")) {
@@ -652,7 +652,7 @@ pub const Parser = struct {
     /// empty macro variable would strip a date format and print 21929 instead of
     /// 15JAN2020, at rc 0. Loud costs one error message; silent costs a wrong number.
     ///
-    /// rc 1, not rc 2 (D-009 / D-009b(ii)): by (1)+(2) this is not valid DATA-step
+    /// rc 1, not rc 2 (D-009): by (1)+(2) this is not valid DATA-step
     /// SAS, so it is the USER's code that is wrong ("fix your SAS"), not an opensas
     /// gap ("file an opensas issue") — hence a plain `fail`, never `failGap`.
     ///
@@ -743,7 +743,7 @@ pub const Parser = struct {
                 // GAP-infileoptrc (3b): UNBUFFERED (alias UNBUF) is a documented
                 // INFILE option (Statements Ref printed p.138, marker
                 // "=== pdf 149 ===") opensas has not implemented — an opensas
-                // gap → rc 2 (D-009/D-009b(i)), split out of the rc-1 typo
+                // gap → rc 2 (D-009), split out of the rc-1 typo
                 // catch-all below. Same loud ERROR text; only the rc moves.
                 return failGap(self.p.diags, self.p.peek().line, "INFILE option {s} is not supported", .{self.p.peek().text});
             } else if (self.atKw("eof")) {
@@ -772,7 +772,7 @@ pub const Parser = struct {
                 // 146 ===") and DLMSTR= (printed p.128, marker "=== pdf 139
                 // ===", self-confirmed "DLMSTR= on page 128") are DOCUMENTED
                 // INFILE options opensas has not implemented → gap rc 2
-                // (D-009/D-009b(i)), split off the rc-1 typo catch-all below.
+                // (D-009), split off the rc-1 typo catch-all below.
                 // PAD deliberately stays loud rather than accept-and-ignore:
                 // it pads short records to LRECL=, and LRECL= is a no-op here,
                 // so there is nothing to pad TO (BUG-infilepadinert — loud
@@ -1031,7 +1031,7 @@ pub const Parser = struct {
     /// character minimum is NOT platform-dependent — "1 to 32767 bytes under
     /// all operating environments" is the same doc sentence — and numeric 0/1
     /// are out of range on every platform the doc lists, z/OS included. An
-    /// out-of-range length is a malformed program → rc 1 (D-009b(ii)), same
+    /// out-of-range length is a malformed program → rc 1 (D-009), same
     /// class and wording shape as the two maximum errors above.
     fn checkDeclLen(self: *Parser, is_char: bool, len: ?usize, name: []const u8, line: usize) Error!void {
         const l = len orelse return; // no width written (`length c $;`) — nothing to check
@@ -1676,7 +1676,7 @@ pub const Parser = struct {
                 // divide the value. If the data contains decimal points, the
                 // .decimals value is ignored."). Applying the divisor is
                 // read-path work (exec/io), so it is refused HERE as a named
-                // gap, rc 2 (D-009/D-009b(i)) — it used to fall to "expected
+                // gap, rc 2 (D-009) — it used to fall to "expected
                 // ';' after input", rc 1 blaming punctuation. `.decimals` on
                 // a `$` item is not valid SAS → stays the user's rc 1.
                 if (!is_char and self.p.check(.number) and self.p.peek().text.len > 1 and self.p.peek().text[0] == '.')
@@ -2436,7 +2436,7 @@ pub const Parser = struct {
         if (descending)
             return diags.fail(error.ParseError, if (i.* < toks.len) toks[i.*].line else 0, "BY DESCENDING must be followed by a variable name", .{});
         // `by;` / `by notsorted;` — zero variables. sas9.4.ebnf by_stmt requires
-        // >= 1 var, so this is a USER error (rc 1, D-009b), never a silent no-op
+        // >= 1 var, so this is a USER error (rc 1, D-009), never a silent no-op
         // of the whole BY mechanism (BUG-bystmtempty). A macro spelling
         // (`by &bv;` with an empty &bv) lands here too: expansion is textual
         // before lex/parse (D-004), so the parser sees `by ;` either way.
@@ -2934,7 +2934,7 @@ fn expandArrayStars(a: std.mem.Allocator, toks: []const Token) Error![]const Tok
 /// through. LABEL Statement, Statements Ref printed p.207 (marker
 /// "=== pdf 218 ===", footer "LABEL Statement 207"): "text-string specifies a
 /// label of up to 256 bytes." Over the cap is a malformed program → rc 1
-/// (D-009b(ii)); ERROR-vs-truncate is doc-silent, and D-002 forbids the old
+/// (D-009); ERROR-vs-truncate is doc-silent, and D-002 forbids the old
 /// silent store either way.
 fn rideAsLabel(a: std.mem.Allocator, diags: *diag.Diagnostics, name: []const u8, label: []const u8, line: usize) Error![]const u8 {
     if (label.len > 256)
@@ -3435,7 +3435,7 @@ test "BUG-attrboundssilent: declared-length floors and the 256-byte label cap fa
 
     // 4a — the floors an upper-bounds-only checkDeclLen swallowed. Captured
     // reporter (D-003), and each is a USER error: rc 1, never gap-tagged
-    // (D-009b(ii) — `length c $0` is not valid SAS on ANY platform).
+    // (D-009 — `length c $0` is not valid SAS on ANY platform).
     const lows = [_][]const u8{
         "length c $0;", // char: "1 to 32767 bytes under all operating environments"
         "attrib c length=$0;", // ATTRIB spelling of the same declaration (p.34)
@@ -3623,7 +3623,7 @@ test "array/retain initial values are CONSTANTS ONLY — a variable or expressio
     // the variable NAMES outside the parentheses. `array v[2](a1 a2);` used to
     // parse clean and declare phantom v1/v2 seeded from an unevaluated variable
     // read, leaving a1/a2 untouched at rc 0. Same hole in `retain x (a);`.
-    // rc CLASS: the user wrote invalid SAS → 1, not 2 (D-009, and D-009b(ii) —
+    // rc CLASS: the user wrote invalid SAS → 1, not 2 (D-009 —
     // the rc reports the class in real-SAS terms).
     const bad = [_]struct { src: []const u8, needle: []const u8 }{
         .{ .src = "array v[2](a1 a2);", .needle = "The variable a1 is not a valid initial value for the array v" },
@@ -4031,7 +4031,7 @@ test "BUG-missingstmtwrongclass: DATA-step MISSING is a NAMED rc-2 gap, not an a
 
     // `missing A B;` used to fall through to parseAssign → "expected '=' in
     // assignment" — rc 1 naming the WRONG construct. Now it names MISSING and
-    // flags the gap (rc 2, D-009/D-009b(i)). Assert via the CAPTURED reporter,
+    // flags the gap (rc 2, D-009). Assert via the CAPTURED reporter,
     // never a spawned process (D-003).
     diag.resetGap();
     var diags = diag.Diagnostics.init(a);
@@ -4053,7 +4053,7 @@ test "GAP-inputcoldecimal F10: column input `.decimals` is a NAMED rc-2 gap (pri
     // `input x 1-5 .2;` used to die "expected ';' after input" (rc 1, blaming
     // punctuation) — the parameter is VALID SAS (SAS 9.4 DATA Step Statements:
     // Reference, INPUT Statement: Column, printed p.183). Now it names the
-    // parameter and flags the gap (rc 2, D-009/D-009b(i)).
+    // parameter and flags the gap (rc 2, D-009).
     diag.resetGap();
     var diags = diag.Diagnostics.init(a);
     try testing.expectError(error.ParseError, prog(a, &diags, "input x 1-5 .2;"));
@@ -4559,7 +4559,7 @@ test "D-009: a recognized-but-unsupported syntax gap exits 2, a real syntax erro
     }
 
     // The SAME five pointer guards keep rc 1 for what real SAS 9.4 also
-    // rejects — a typo must not be re-tagged as a gap (D-009b: rc reports the
+    // rejects — a typo must not be re-tagged as a gap (D-009: rc reports the
     // class in real-SAS terms). `@'string'` string search is INPUT-only
     // (Table 2.3, not in PUT's Table 2.5) — same decision GAP-atexpression-put
     // made for `@(character-expression)`; the rest are plain garbage.
@@ -4941,7 +4941,7 @@ test "BUG-bystmtempty: `by;` (zero variables) fails loud rc-1-side; legal BY for
     const a = arena.allocator();
 
     // `by;` — the literal empty spelling. EBNF by_stmt requires >= 1 var, so
-    // this is a user error (ParseError → rc 1, D-009b), never a silent no-op.
+    // this is a user error (ParseError → rc 1, D-009), never a silent no-op.
     {
         var diags = diag.Diagnostics.init(a);
         try testing.expectError(error.ParseError, prog(a, &diags, "by;"));

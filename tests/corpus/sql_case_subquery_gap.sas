@@ -14,7 +14,7 @@
 
    They are now a GAP: valid SAS 9.4 (sql-expression Component, printed p.401, lists
    "a query expression" as an operand, and the CASE entry makes its arms
-   sql-expressions) that opensas does not implement, so rc 2 per D-009/D-009b(i) —
+   sql-expressions) that opensas does not implement, so rc 2 per D-009 —
    NEVER rc 1, which would tell the caller to fix correct SAS. Critically the guard
    fires BEFORE the fold / before the sort key loop, not inside it: both of those
    loops swallow the error with `catch Value.missing`, so a guard placed inside them

@@ -1,7 +1,7 @@
 /* GAP-ebnfrcwrongclass (libname_option row): the LIBNAME option catch-all's
    message NAMED the option but exited rc 1 — "your SAS is broken" — even for
    DOCUMENTED options real SAS 9.4 runs clean. Those are OUR gaps: NAMED rc 2
-   (D-009/D-009b(i)), message byte-identical (the isFreqTablesGapOption split
+   (D-009), message byte-identical (the isFreqTablesGapOption split
    shape). The documented, clean-in-real-SAS, unimplemented set:
      - INENCODING=/OUTENCODING= — Procedures Guide === pdf 582/583 ===
        (printed pp. 532-533): the CVP example's own

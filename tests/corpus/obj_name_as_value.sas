@@ -18,7 +18,7 @@
    The volumes give no verbatim log text for this, so the BASIS for erroring at
    all is the house fail-loud rule; the doc settles only what is cited above,
    that the name is an object reference and not a value. rc 1, not 2: writing an
-   object name where a value belongs is invalid user SAS (D-009b(ii)), so it
+   object name where a value belongs is invalid user SAS (D-009), so it
    does NOT go through failGap.
 
    THE POINT OF THE PUTs IN THE LAST STEP IS THE VALUE, NOT THE DIAGNOSTIC.

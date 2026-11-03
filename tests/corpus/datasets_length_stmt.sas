@@ -7,7 +7,7 @@
    using the LENGTH statement or the LENGTH= option in an ATTRIB
    statement", and LENGTH is absent from MODIFY's p.576
    subordinate-statement syntax diagram. rc 1, not 2 — the user's SAS is
-   wrong, the ATTRIB arm's own verdict (D-009 / D-009b corollary).
+   wrong, the ATTRIB arm's own verdict (D-009 consistency rule).
    expect-rc: 1 */
 data m;
   length c $8;

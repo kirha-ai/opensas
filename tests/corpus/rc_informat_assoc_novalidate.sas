@@ -17,7 +17,7 @@
      rc_informat_bogus_typo.sas (list), rc_informat_negparen_typo.sas
      (direction-sensitive), rc_informat_unimpl_gap.sas (rc-2 gap arm) and
      informat_char_unknown.sas (char, step-halting).
-   - D-009b corollary (internal consistency, no citation needed): the
+   - Consistent treatment of the same error condition (D-009): the
      write-side twin `format y zzzbogus99.;` is measured silent at association
      and loud at first use (rc_fmt_bogus_typo.sas) — both statements defer
      name validation to first use SYMMETRICALLY, so the read side deferring

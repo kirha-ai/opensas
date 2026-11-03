@@ -94,7 +94,7 @@ pub fn main(init: std.process.Init) !void {
     if (rc != 0) std.process.exit(rc);
 }
 
-/// THE exit code for a finished run — D-009 plus the D-009a ABORT override.
+/// THE exit code for a finished run — D-009, including its ABORT override.
 /// 0 clean, 1 user-program error (their SAS is wrong — parse/exec/data errors
 /// reported via `diags`, or a format error via `format.formatErrored`), 2 opensas
 /// defect/gap (any UNSUPPORTED: path — `failLoud`'s `g_failed` or proc's
@@ -102,7 +102,7 @@ pub fn main(init: std.process.Init) !void {
 /// outranks a user error so a calling agent files an opensas issue on 2 and fixes
 /// the SAS on 1. (CLIN-failloud: a fail-loud still exits non-zero.)
 ///
-/// ABORT ABEND n / ABORT RETURN n (D-009a, BUG-abortreturncode) outranks all of
+/// ABORT ABEND n / ABORT RETURN n (D-009, BUG-abortreturncode) outranks all of
 /// it: the user's ABORT halted the session and their return code becomes the
 /// process exit code, deliberately NOT confined to {0,1,2}.
 ///
@@ -417,9 +417,9 @@ fn runExpanded(ctx: *StepCtx, text: []const u8, allow_anon: bool) sas.diag.Error
             if (eqi(bt.text, "missing") and (seg.start + 1 >= seg.end or toks[seg.start + 1].tag != .eq)) {
                 // BUG-missingstmtwrongclass: the MISSING statement (Language Reference: Concepts printed
                 // p.519, a worked example shown TWICE) is VALID SAS opensas
-                // doesn't implement → a named gap, rc 2 (D-009/D-009b(i)) — not
+                // doesn't implement → a named gap, rc 2 (D-009) — not
                 // "your SAS is not valid in open code" rc 1. Same message as
-                // parser.zig's DATA-step arm (D-009b corollary: the twin
+                // parser.zig's DATA-step arm (D-009 consistency rule: the twin
                 // settles by internal consistency). `missing = 5;` keeps the
                 // generic open-code error (the `=` guard).
                 sas.diag.markGap();
@@ -514,7 +514,7 @@ fn interleaveStep(ctx_ptr: *anyopaque, text: []const u8) std.mem.Allocator.Error
             // GAP-gapsexitingone §5d: an error with NO diagnostic is OUR defect,
             // never the user's — the CLI surface of this same invariant
             // (runFile's `failLoud("{t}")`, audit §2 row 67) already exits 2, and
-            // the D-009b corollary settles the twin by internal consistency alone.
+            // D-009 requires the same exit code for this error on both paths.
             // The report is still swallowed for macro continuation, as before.
             sas.diag.markGap();
             try ctx.diags.report(.err, 0, "step ended with an unreported error ({t}) and was skipped", .{e});
@@ -640,7 +640,7 @@ fn parseLibnames(a: std.mem.Allocator, diags: ?*sas.diag.Diagnostics, toks: []co
             } else {
                 if (diags) |d| {
                     // The documented-but-unimplemented set is OUR gap (rc 2,
-                    // D-009/D-009b(i)) — a user running valid SAS must not be
+                    // D-009) — a user running valid SAS must not be
                     // told their code is broken; the byte-identical message
                     // already NAMES the option. Typos and unfiled engine
                     // options keep rc 1 (never a false rc 2).
@@ -1821,7 +1821,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // it sees `&ref` values resolved, fails LOUD on a value-less or
                 // malformed form (a typo'd VALUE stays rc 1 — D-018), and gaps a
                 // list longer than the engine's 8 slots (an opensas ceiling, not
-                // a SAS one — D-009b(i), the FILENAME fileref precedent).
+                // a SAS one — D-009, the FILENAME fileref precedent).
                 var specs: [sas.macro.max_autocall_dirs]sas.macro.AutocallSpec = undefined;
                 var n: usize = 0;
                 var malformed = false;
@@ -2062,7 +2062,7 @@ fn registerFileref(diags: *sas.diag.Diagnostics, line: usize, name: []const u8, 
     if (fileref_count == max_filerefs) {
         // GAP-gapsexitingone §5d: the 64-slot ceiling is OURS — SAS 9.4 has no
         // fileref limit, so a program tripping it is valid SAS refused by an
-        // opensas limitation → gap, rc 2 (D-009b(i)).
+        // opensas limitation → gap, rc 2 (D-009).
         sas.diag.markGap();
         return diags.fail(error.ParseError, line, "too many FILENAME filerefs (max {d})", .{max_filerefs});
     }
@@ -3840,7 +3840,7 @@ fn resetRcSignals() void {
     g_failed = false;
     g_test_last_err = "";
     sas.format.g_fmt_error = false;
-    sas.exec.g_abort_rc = null; // D-009a override; interpret clears it too
+    sas.exec.g_abort_rc = null; // D-009 ABORT override; interpret clears it too
     sas.pdv.setValidVarName(.v7);
     sas.diag.resetGap(); // (interpret resets this too; explicit so testRc is honest before a run)
 }
@@ -4285,7 +4285,7 @@ test "GAP-gapsexitingone §5d: main.zig's gaps exit 2 — and every split's typo
     // The OTHER D-009 direction in this file: these sites reported through
     // `diags` (rc 1, "fix your SAS") for constructs that are valid SAS 9.4 —
     // and a gap is rc 2 ("file an opensas issue") even though real SAS exits 0
-    // (D-009b(i)). Every case pins the RC, not the message: the message alone
+    // (D-009). Every case pins the RC, not the message: the message alone
     // passed with the wrong rc for years (audit §6/I1). Each SPLIT pins BOTH
     // arms — documented operand at 2, typo at 1 — so the gap arm can never be
     // re-tagged wholesale and eat a typo again. The CONFLATED catch-alls
@@ -4463,7 +4463,7 @@ test "BUG-fmterrorneverreset: format.zig's run-scoped globals must NOT leak into
     resetRcSignals();
 }
 
-test "BUG-wasmignoresabortrc / D-009a: the ABORT rc outranks D-009 in the ONE shared exit-code function" {
+test "BUG-wasmignoresabortrc / D-009: ABORT overrides normal error classification in the shared exit-code function" {
     // `wasm.run` re-derived the rc from the two D-009 signals and `diag.exitCode`,
     // which silently dropped the ABORT line that sits ABOVE them in `main` — so
     // `abort return 3` exited 3 on the CLI and returned 1 in the browser. Both
@@ -4482,8 +4482,8 @@ test "BUG-wasmignoresabortrc / D-009a: the ABORT rc outranks D-009 in the ONE sh
     var out: std.ArrayList(u8) = .empty;
     const mk = "data a; x=1; ";
 
-    // THE SHARPEST CASE FIRST — ABORT reports an ERROR diagnostic, so D-009 alone
-    // says 1. It must be 3. If the override is ever dropped again this is the
+    // THE SHARPEST CASE FIRST — ABORT reports an ERROR diagnostic, which would
+    // ordinarily give rc 1. Its explicit rc 3 overrides that under D-009. This is the
     // assertion that names why: `hasErrors()` and the rc deliberately disagree.
     resetRcSignals();
     var d1 = sas.diag.Diagnostics.init(a);
@@ -4505,7 +4505,7 @@ test "BUG-wasmignoresabortrc / D-009a: the ABORT rc outranks D-009 in the ONE sh
     try std.testing.expectEqual(@as(u8, 1), testRc(&d3));
 
     // The override is an OVERRIDE, not a maximum: `abort return 0` exits 0 even
-    // though the run recorded an ERROR. D-009a says the user-supplied rc becomes
+    // though the run recorded an ERROR. D-009 says the user-supplied rc becomes
     // the exit code, full stop — pinned so nobody "fixes" it into a max().
     resetRcSignals();
     out.clearRetainingCapacity();
@@ -4527,7 +4527,7 @@ test "BUG-wasmignoresabortrc / D-009a: the ABORT rc outranks D-009 in the ONE sh
     try std.testing.expect(g_failed); // a real gap was hit…
     try std.testing.expectEqual(@as(u8, 7), testRc(&d5)); // …and the ABORT still wins
 
-    // CONTROLS. Plain `abort;` names no rc, so D-009 applies unchanged; and the
+    // CONTROLS. Plain `abort;` names no rc, so normal classification applies; the
     // NEXT program in a wasm session must not inherit the last one's abort code.
     resetRcSignals();
     out.clearRetainingCapacity();
@@ -5767,8 +5767,8 @@ test "BUG-opencodestmtswallow: unknown open-code statements fail LOUD naming the
 test "BUG-missingstmtwrongclass: open-code MISSING is a NAMED rc-2 gap (was rc-1 'not valid in open code'); `missing =` stays the generic error" {
     // The MISSING statement declares special missing values (Language Reference: Concepts printed
     // p.519, a worked example shown TWICE) — VALID SAS real SAS runs clean, so
-    // refusing it is OUR gap: rc 2 (D-009/D-009b(i)), with a message naming
-    // MISSING, identical to parser.zig's DATA-step arm (D-009b corollary).
+    // refusing it is OUR gap: rc 2 (D-009), with a message naming
+    // MISSING, identical to parser.zig's DATA-step arm (D-009 consistency rule).
     {
         var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
         defer arena.deinit();
@@ -6423,7 +6423,7 @@ test "GAP-libnameopt + GAP-filenameopt: LIBNAME/FILENAME option lists end in a r
 test "GAP-ebnfrcwrongclass: documented-but-unimplemented LIBNAME options (INENCODING=/OUTENCODING=/CVPMULTIPLIER=) are NAMED rc-2 gaps; typos and plain cvp= stay rc 1" {
     // The catch-all's message already NAMED the option but exited rc 1 — "your
     // SAS is broken" — for options real SAS runs clean. The documented set is
-    // OUR gap: rc 2 (D-009/D-009b(i)), message byte-identical (proc.zig's
+    // OUR gap: rc 2 (D-009), message byte-identical (proc.zig's
     // isFreqTablesGapOption split shape). Citations in isDocLibnameGapOpt.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -6648,8 +6648,8 @@ test "BUG-dropoptfalsewarn: output dataset-option drop=/keep=/rename= of a refer
     // STATEMENT path (`drop e;`) already stayed silent by validating against
     // the PDV (exec.assertReferenced); the OPTION path validated against the
     // FINALIZED schema, which the executor had already stripped of the end=
-    // temp. Now both spellings reach the same PDV answer (D-009b's
-    // corollary) — pinned for all THREE lists the message names, plus the
+    // temp. Now both spellings reach the same PDV answer (D-009's
+    // consistency rule) — pinned for all THREE lists the message names, plus the
     // in= temp and the statement form so they cannot drift apart again.
     {
         var diags = sas.diag.Diagnostics.init(a);

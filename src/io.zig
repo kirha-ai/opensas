@@ -1955,7 +1955,7 @@ pub fn applyDatasetOptions(a: std.mem.Allocator, ds: *Dataset, opt_toks: []const
 /// vars) — `data b(drop=e); set a end=e;` false-warned though `e` was plainly
 /// referenced. The STATEMENT path validates against the PDV
 /// (exec.assertReferenced); handing the same set in makes both spellings of
-/// DROP/KEEP/RENAME reach the SAME answer (D-009b's corollary).
+/// DROP/KEEP/RENAME reach the SAME answer (D-009's consistency rule).
 pub fn applyDatasetOptionsRefs(a: std.mem.Allocator, ds: *Dataset, opt_toks: []const lex.Token, diags: *diag.Diagnostics, input: bool, pdv_refs: []const []const u8) diag.Error!void {
     return applyDatasetOptionsObs(a, ds, opt_toks, diags, input, false, null, pdv_refs);
 }

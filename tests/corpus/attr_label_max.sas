@@ -5,7 +5,7 @@
    single choke point both label producers (LABEL statement, ATTRIB LABEL=)
    route through; the cap is enforced there so no sibling path stays silent.
    ERROR-vs-truncate is doc-silent — D-002 forbids the silent store either
-   way, and an over-cap label is a malformed program -> rc 1 (D-009b(ii)).
+   way, and an over-cap label is a malformed program -> rc 1 (D-009).
 
    The legal edge (exactly 256 bytes) is pinned green by attr_bounds_doc.sas,
    which must not move. Parse-time failure -> empty golden; the rc is the pin.

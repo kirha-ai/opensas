@@ -1,9 +1,9 @@
 //! WASM entry — the web-demo build (`zig build wasm`). A reactor module (no
 //! main): JS calls `alloc` to place the SAS source in linear memory, then `run`,
 //! then reads program output via `outPtr`/`outLen` and rendered diagnostics via
-//! `logPtr`/`logLen`. `run` returns the CLI exit-code contract (0/1/2, D-009) —
-//! and, per D-009a, the rc an `ABORT ABEND n` / `ABORT RETURN n` chose, which is
-//! deliberately outside {0,1,2}. That i32 return IS the exit-code channel on this
+//! `logPtr`/`logLen`. `run` returns the CLI exit-code contract (D-009): normally
+//! 0/1/2, overridden by an executed `ABORT ABEND n` / `ABORT RETURN n`, whose rc
+//! need not be in {0,1,2}. That i32 return IS the exit-code channel on this
 //! surface; there is no process to exit, so a caller must route on it exactly as
 //! a shell routes on `$?` (see web/index.html's status line).
 //!
@@ -52,7 +52,7 @@ export fn run(src_ptr: [*]const u8, src_len: usize) i32 {
     g_out = out.items;
     g_log = diags.render() catch "";
     // BUG-wasmignoresabortrc: this used to open-code `diag.exitCode` over the two
-    // D-009 signals, which silently DROPPED the D-009a line that sits above them
+    // D-009 signals, which silently DROPPED the ABORT override that sits above them
     // in `main` — so `abort return 3` came back 1 here and 3 on the CLI. The rc is
     // now the single shared `processExitCode`, abort override included, so the two
     // surfaces cannot disagree again. The channel carries it: `run`'s i32 return
