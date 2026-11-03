@@ -23,13 +23,12 @@ these caused real regressions (see D-001).
   D-004 flush stayed live here, a generated `data ...; run;` would execute
   re-entrantly in the middle of the calling step, which is the exact timing GH#13
   forbids.
-- D-005 Directory LIBNAME persistence and source protection.
-  [files: src/main.zig, src/io.zig]
-  `writeLibOutputs`/`writeMember` write native `.sas7bdat` as the authoritative
-  reload format plus a CSV sidecar for inspection/legacy consumers. Readers use
-  `io.member_exts` order: `.sas7bdat`, `.xpt`, `.csv`. Do not shadow an existing
-  directory `member.xpt` with new native/CSV output, or rewrite unchanged
-  read-only-loaded inputs (`shouldPersist`).
+- D-005 Preserve directory LIBNAME sources. [files: src/main.zig, src/io.zig]
+  Do not write native/CSV output beside an existing `member.xpt`.
+  `writeLibOutputs` skips datasets still represented by the same object
+  recorded in `loaded_ro` (`shouldPersist` checks identity, not contents).
+  Directory outputs otherwise use authoritative `.sas7bdat` plus a CSV
+  sidecar; `io.member_exts` reload priority is `.sas7bdat`, `.xpt`, `.csv`.
 - D-006 Hermetic suites (unit/corpus/programs) live in `zig build`; env-heavy
   acceptance benches (study data, absolute paths, minutes) live in `scripts/`.
   Every bench-found interpreter bug gets distilled into a committed fixture.
