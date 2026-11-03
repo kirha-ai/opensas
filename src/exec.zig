@@ -3666,7 +3666,7 @@ pub const Executor = struct {
     /// the one-helper/one-predicate shape is exactly what makes this rule a
     /// single guard instead of four — and only the premise is corrected.
     ///
-    /// D-015a checked, since this rests on an undated Restriction: the whole
+    /// D-015 checked (maintenance-release markers), since this rests on an undated Restriction: the whole
     /// INFILE chapter contains NO dated feature sentence ("maintenance
     /// release" / "Beginning with SAS 9.4" / "9.4M"), though the volume does
     /// use that notation elsewhere. So p.130 is not superseded prose.
