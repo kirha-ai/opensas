@@ -3,7 +3,7 @@
    "PAD | NOPAD controls whether SAS pads the records that are read ... with
    blanks to the length that is specified in the LRECL= option") that opensas
    has not implemented. Valid SAS refused → an opensas GAP, exit 2 ("file an
-   opensas issue", D-009/D-009b(i)) — it used to take the rc-1 typo catch-all
+   opensas issue", D-009) — it used to take the rc-1 typo catch-all
    ("fix your SAS" about SAS that is fine). Split, not re-tagged: a
    misspelling like `padd` still lands on the same ERROR text at rc 1, and
    NOPAD — the documented DEFAULT of the same entry — is accepted-inert

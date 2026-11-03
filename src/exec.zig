@@ -2439,7 +2439,7 @@ pub const Executor = struct {
     /// it does not have to: `outputNamed`'s other caller already answers the very
     /// same relation ("this name is not one of the step's output data sets") with
     /// an ERROR at rc 1 for `output <undeclared>;`, so internal consistency
-    /// decides it (D-009b). Hard error rather than report-and-continue so `b` is
+    /// decides it (D-009). Hard error rather than report-and-continue so `b` is
     /// never registered — main.zig's "was not replaced" gate deliberately EXEMPTS
     /// MODIFY steps (the re-emitted master IS the edit), and that exemption's
     /// premise is exactly what is false here, so a soft error would have left an
@@ -3658,7 +3658,7 @@ pub const Executor = struct {
     /// consequence out — "Restriction END= cannot be used with POINT=. When
     /// random access is used, the END= variable is never set to 1." opensas
     /// already implements THAT half the never-set way, so the tree had voted
-    /// one way on SET and the other on INFILE (D-009b).
+    /// one way on SET and the other on INFILE (D-009).
     ///
     /// This REVERSES part of a green, gated landing (e7ac8ee7,
     /// BUG-infileendmultirec) whose premise came from a QA expectation of
@@ -5403,7 +5403,7 @@ pub const Executor = struct {
                 // No live Session: the CLI setup pass / a unit test. Queueing
                 // verbatim here is the OLD bug, so refuse loudly instead —
                 // rc 2, because a program that reaches this is valid SAS we
-                // simply cannot run from this context (D-009b(i)).
+                // simply cannot run from this context (D-009).
                 return failGap(self.diags, "CALL EXECUTE needs the macro processor, which is not available in this context", .{});
             // A macro TRIGGER that survived expansion means `process` left it
             // masked on purpose (%nrstr) — the drain cannot run it. Fail at the
@@ -10239,7 +10239,7 @@ test "GH#13 GAP-callexecutemacro: no live macro session → loud rc-2 gap, never
 
     // No Session published. Queueing verbatim here is exactly the bug, so the
     // call refuses LOUDLY at the GAP class rather than letting the drain's lexer
-    // report a user error for an opensas limitation (D-009b(i)).
+    // report a user error for an opensas limitation (D-009).
     macro.setLiveSession(null);
     diag.resetGap();
     const a1 = [_]ast.Expr{.{ .str = "data _null_; put \"one\"; run;" }};
@@ -15909,7 +15909,7 @@ test "D-009 §5c: a valid-SAS DATA-step shape exec.zig doesn't model exits 2, no
         try t.expectEqual(@as(u8, 2), rcOf(&f));
     }
     // A MERGE driving a DOW loop: real SAS accepts it, so stopping rather than
-    // spinning is OUR limit — macro.zig's iterative-%DO gap, exactly (D-009b i).
+    // spinning is OUR limit — macro.zig's iterative-%DO gap, exactly (D-009).
     {
         diag.resetGap();
         var f = fixture();

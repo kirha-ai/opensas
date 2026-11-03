@@ -8,7 +8,7 @@
    accepted SILENTLY at rc 0 and the descriptor then took the assigned value's
    width — `c='hi'` reported Char 2 in PROC CONTENTS, not even the Char 1
    tick272 recorded. No check PLUS a fabricated width. An out-of-range length
-   is a malformed program → rc 1 (D-009b(ii)), never a silent accept.
+   is a malformed program → rc 1 (D-009), never a silent accept.
 
    The legal edge ($1) is pinned green by attr_bounds_doc.sas, which must not
    move. Parse-time failure → no step runs → the golden is empty; the rc is

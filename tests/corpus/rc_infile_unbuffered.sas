@@ -2,7 +2,7 @@
    (DATA Step Statements: Reference, printed p.138, marker "=== pdf 149 ===";
    alias UNBUF, "UNBUFFERED on page 138" cross-referenced from p.130) that
    opensas has not implemented. Valid SAS refused → an opensas GAP, exit 2
-   ("file an opensas issue", D-009/D-009b(i)) — it used to take the rc-1
+   ("file an opensas issue", D-009) — it used to take the rc-1
    typo catch-all ("fix your SAS" about SAS that is fine). Split, not
    re-tagged: a misspelling like `unbuff` still lands on the same ERROR text
    at rc 1 (pinned in-source, parser.zig D-009 test), and the message text

@@ -120,7 +120,7 @@ pub const Evaluator = struct {
     /// SAS 9.4 volumes give no verbatim log text for this, so the BASIS is the
     /// house fail-loud rule plus the type fact cited at `objects` above. rc 1,
     /// not 2: writing an object name where a value belongs is invalid SAS, a
-    /// user error (D-009b(ii)), so it must NOT be routed through `failGap`.
+    /// user error (D-009), so it must NOT be routed through `failGap`.
     /// ponytail: checked at the READ, so a never-executed `if 0 then x = h;`
     /// stays quiet where SAS 9.4 rejects it at compile time — no value is
     /// fabricated either way; add a compile-pass scan if a program needs the

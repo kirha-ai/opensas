@@ -4,7 +4,7 @@
    DROP CONSTRAINT is valid SAS that opensas cannot do: a parsed Constraint
    carries no NAME (CREATE TABLE reads `constraint <name>` as metadata and skips
    it), so there is nothing to look a named constraint up by. That is a gap →
-   rc 2 per D-009/D-009b(i), which it already returned — but it returned it
+   rc 2 per D-009, which it already returned — but it returned it
    through "ALTER TABLE DROP — column not found", because `constraint` fell into
    the DROP-COLUMN loop and missed. The rc was right for the wrong reason and the
    message sent the reader hunting a column that was never the subject.

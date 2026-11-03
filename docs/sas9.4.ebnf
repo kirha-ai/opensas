@@ -174,7 +174,7 @@ missing_stmt   = "MISSING" letter { letter } ";" ;
                    in assignment" rc 1 (site: parser.zig parseStmtRaw →
                    parseAssign fall-through). Loud, but the DATA-step message
                    names the WRONG construct (it is not an assignment) and
-                   BOTH rcs are the wrong class per D-009b(i): a gap on valid
+                   BOTH rcs are the wrong class per D-009: a gap on valid
                    SAS is rc 2. Parse sites are parser.zig/main.zig — reported,
                    not fixed (wrong-owner files for that ticket).
                    NOT implemented, NOT marked. *)

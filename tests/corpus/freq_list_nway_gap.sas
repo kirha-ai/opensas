@@ -5,7 +5,7 @@
    clean. opensas only has the crosstab grid, so the render loop refuses LOUD
    rather than silently substitute the wrong layout (NOTE-freqlistfmt) — but
    it exited rc 1 "your SAS is broken". Refusing a documented option is OUR
-   gap: NAMED rc 2 (D-009/D-009b(i)), message byte-identical. One-way / list
+   gap: NAMED rc 2 (D-009), message byte-identical. One-way / list
    stays the documented no-op (a one-way table is list form already), and
    `/ freq` stays the rc-1 typo class — Table 3.9 closes the TABLES option
    set and FREQ is not in it (pinned by the captured test in src/proc.zig).

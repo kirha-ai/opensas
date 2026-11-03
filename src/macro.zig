@@ -816,7 +816,7 @@ pub fn expandForExecute(text: []const u8) Error!?[]const u8 {
 /// GENERATES `%nrstr(%tally(1))` hands us text our queue drain cannot run (it
 /// lexes, it does not macro-process). Without this check that text reaches the
 /// lexer as `unexpected character '%'` — a USER-error rc 1 for what is in fact
-/// an opensas gap, which D-009/D-009b(i) says must be rc 2.
+/// an opensas gap, which D-009 says must be rc 2.
 ///
 /// Quote handling mirrors `process`: `/* … */` and `'…'` spans are skipped
 /// because the macro processor never scanned them either (`sq_masks_triggers`),

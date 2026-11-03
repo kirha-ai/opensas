@@ -8,7 +8,7 @@
    as a column the user never wrote — "the following columns were not found
    in the contributing tables: escape" at rc 1, the user-error class for a
    program real SAS runs clean. Now the named gap "WHERE LIKE: the ESCAPE
-   clause is not supported", marked rc 2 (D-009/D-009b(i): a gap stays 2
+   clause is not supported", marked rc 2 (D-009: a gap stays 2
    even though real SAS exits 0). The clean LIKE above prints, so an rc 2
    here is the gap and not a dead interpreter; the golden holds only that
    clean stdout — the ERROR is stderr-side.

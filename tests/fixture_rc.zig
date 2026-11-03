@@ -89,7 +89,7 @@ test "expected: opt-in, parses, and is loud about a typo" {
     try std.testing.expectEqual(@as(?u8, null), try expected("data a; x=1; run;\n"));
     try std.testing.expectEqual(@as(?u8, 0), try expected("/* clean\n   expect-rc: 0 */\n"));
     try std.testing.expectEqual(@as(?u8, 1), try expected("/* expect-rc: 1 */\n"));
-    try std.testing.expectEqual(@as(?u8, 3), try expected("/* D-009a: abort return 3\n   expect-rc: 3 */\n"));
+    try std.testing.expectEqual(@as(?u8, 3), try expected("/* D-009: abort return 3\n   expect-rc: 3 */\n"));
     try std.testing.expectError(error.BadMarker, expected("/* expect-rc: one */\n"));
     try std.testing.expectError(error.BadMarker, expected("/* expect-rc: */\n"));
 }

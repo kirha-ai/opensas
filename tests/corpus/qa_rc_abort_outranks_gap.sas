@@ -1,7 +1,7 @@
-/* QA tick397 cross-landing sweep — D-009a's ABORT override, composed with the
+/* QA tick397 cross-landing sweep — D-009's ABORT override, composed with the
    gap direction that landed all around it.
 
-   D-009a: `abort return n` propagates n, deliberately outside {0,1,2}.
+   D-009: `abort return n` propagates n, deliberately outside {0,1,2}.
    `main.processExitCode` checks `g_abort_rc` ABOVE `gap or user_err`, and five
    landings in this batch touched that path (userErr, markGap, rcErr,
    recoverable, the wasm alias). `abort_rc.sas` pins the ABORT rc ALONE; nothing

@@ -4,7 +4,7 @@
    errors.") — the user named a table that is not there, a USER error (D-009),
    rc 1. The old warn+skip at rc 0 (SORT-emptytol's absent half) let a pipeline
    run on an absent input; the DATA-step SET has hard-errored the identical
-   shape since BUG-setmissingquiet, so SORT now matches it (D-009b: same
+   shape since BUG-setmissingquiet, so SORT now matches it (D-009: same
    condition, same text, same rc). The ERROR + NOTE go to stderr (pinned by
    the captured-diagnostics test in src/proc.zig); stdout pins the BATCH
    consequence (BUG-errhalt syntax-check mode): "before" runs, the SORT step

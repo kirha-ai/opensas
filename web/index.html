@@ -239,10 +239,10 @@ function runProgram() {
   span.className = rc ? "e" : "";
   span.textContent = (stderrBuf + diags) || "NOTE: no errors, no warnings.";
   log.appendChild(span);
-  // BUG-wasmignoresabortrc: rc 3+ is D-009a — the SAS program's own ABORT rc, not
+  // BUG-wasmignoresabortrc: run() returns ABORT's rc under D-009; rc 3+ is not
   // an opensas gap. The old `rc === 1 ? … : "unsupported feature"` labelled every
-  // `abort return n` as a missing feature, which is the exact mis-routing D-009a
-  // warns about (and it never showed, because run() used to return 1 there).
+  // `abort return n` as a missing feature, misrouting the ABORT exception
+  // (and it never showed, because run() used to return 1 there).
   const label = rc === 0 ? "ok" : rc === 1 ? "program error" : rc === 2 ? "unsupported feature" : `ABORT rc ${rc}`;
   status.textContent = `· ${label} · ${ms} ms`;
   status.className = rc === 0 ? "ok" : rc === 2 ? "gap" : "err";

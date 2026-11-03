@@ -339,7 +339,7 @@ pub fn runSort(cx: ProcCtx, toks: []const Token) diag.Error!void {
         // isn't there. The old warn+skip justified itself as "like the
         // DATA-step SET", but that went STALE when BUG-setmissingquiet made
         // SET hard-error the identical shape ("File {s} does not exist",
-        // exec.zig) — SORT now matches it byte-for-byte (D-009b corollary:
+        // exec.zig) — SORT now matches it byte-for-byte (D-009 consistency rule:
         // same condition, same text, same rc). NOT unsupported(): that would
         // file a rc 2 opensas gap for the user's own missing table.
         // Mechanism mirrors the DUPOUT-collision arm below: a plain .err
@@ -3265,7 +3265,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         // GAP-ebnfrcwrongclass: LIST is a DOCUMENTED TABLES option — Table 3.9
         // (Base SAS 9.4 Procedures Guide: Statistical Procedures, printed
         // p.105, === pdf 108 ===: "LIST Displays two-way to n-way tables in
-        // list format") — so refusing it is OUR gap, rc 2 (D-009/D-009b(i)),
+        // list format") — so refusing it is OUR gap, rc 2 (D-009),
         // not rc 1 "your SAS is broken"; the message already NAMES list.
         if (req.list and req.vars.items.len > 1)
             return failGap(diags, 0, "PROC FREQ: TABLES option list (n-way list layout) is not yet supported — refusing to emit the crosstab grid in its place", .{});
@@ -7772,8 +7772,8 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
                         ds.columns.items[ix].informat = spec;
                     } else {
                         // Same verdict as FORMAT/RENAME/LABEL: unknown variable
-                        // in valid-SAS terms is the user's error → rc 1 (D-009;
-                        // D-009b's corollary: the tree has already voted).
+                        // in valid-SAS terms is the user's error → rc 1
+                        // (D-009: same error condition, same rc).
                         return diags.fail(error.ExecError, stmt[k].line, "PROC DATASETS: MODIFY {s}: variable {s} not found", .{ ds.name, stmt[k].text });
                     }
                 }
@@ -7799,8 +7799,8 @@ pub fn runDatasets(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) di
             // an ATTRIB statement" — and LENGTH is not among MODIFY's
             // subordinate statements (the p.576 syntax diagram runs ATTRIB …
             // XATTR with no LENGTH). rc 1, not 2: the user's SAS is wrong,
-            // not an opensas gap — the ATTRIB LENGTH= arm's verdict (D-009;
-            // D-009b's corollary: the tree has already voted). Same message
+            // not an opensas gap — the ATTRIB LENGTH= arm's verdict
+            // (D-009: same error condition, same rc). Same message
             // vocabulary as that arm so the family reads consistently.
             return diags.fail(error.ExecError, kw.line, "PROC DATASETS: the LENGTH statement is not valid in the DATASETS procedure (a variable's length cannot be changed after creation — use a DATA step)", .{});
         } else if (tkKw(kw, "contents")) {
@@ -7937,7 +7937,7 @@ fn applyAttrib(arena: std.mem.Allocator, ds: *Dataset, toks: []const Token, diag
             // D-002: LENGTH= is NOT one of the three options ATTRIB accepts inside
             // DATASETS (p.598) — real SAS rejects it, and silently dropping it left
             // the user believing a width change happened. rc 1, not 2: this is the
-            // user's SAS being wrong, not an opensas gap (D-009 / D-009b(ii)).
+            // user's SAS being wrong, not an opensas gap (D-009).
             return diags.fail(error.ExecError, toks[k].line, "PROC DATASETS: ATTRIB LENGTH= is not valid in the DATASETS procedure (only FORMAT=, INFORMAT= and LABEL= are)", .{});
         }
         k = e;
@@ -10063,7 +10063,7 @@ pub fn runExport(cx: ProcCtx, toks: []const Token) diag.Error!void {
         // path typo. Same shape as the five BUG-procmissingrc2 absent-input arms
         // (MEANS/FREQ/TRANSPOSE/REPORT/UNIVARIATE) and as exec.zig's INFILE open
         // failure, which has always been rc 1 ("Physical file does not exist,
-        // {s}") — D-009b corollary: one condition must not carry two rcs. The
+        // {s}") — D-009 consistency rule: one condition must not carry two rcs. The
         // plain .err report (NOT unsupported(), NOT a fail() propagation) is what
         // lets runExpanded emit THIS step's halt NOTE and arm BUG-errhalt's
         // later-step skip. writeFileRaw collapses every open/write error into
@@ -10222,8 +10222,8 @@ pub fn runImport(cx: ProcCtx, toks: []const Token) diag.Error!void {
         // not an interpreter bug); rc 2 undid that by telling a downstream agent
         // to file an opensas issue. Same shape as the five BUG-procmissingrc2
         // absent-input arms and as exec.zig's INFILE open failure, rc 1 since
-        // ISS-infilemissing ("Physical file does not exist, {s}") — D-009b
-        // corollary: one condition must not carry two rcs. ONE read site covers
+        // ISS-infilemissing ("Physical file does not exist, {s}") — D-009
+        // consistency rule: one condition must not carry two rcs. ONE read site covers
         // every DBMS we support (CSV, DLM/TAB, XLSX/EXCEL/XLS), and the DBMS gap
         // guard above already ran, so an UNSUPPORTED dbms still exits 2 — as does
         // a successfully-read but unparseable XLSX below (a real opensas gap).
@@ -12015,7 +12015,7 @@ test "PROC DATASETS MODIFY: the LENGTH statement fails loud rc 1 (BUG-datasetsle
     // statement", and LENGTH is absent from MODIFY's p.576
     // subordinate-statement syntax diagram. Captured ERROR at rc 1 — the
     // user's SAS is wrong, the same verdict the ATTRIB LENGTH= arm reached
-    // (D-009 / D-009b corollary). D-003: captured reporter, no child process.
+    // (D-009 consistency rule). D-003: captured reporter, no child process.
     {
         diag.resetGap(); // process-global: an earlier test's gap would leak in
         var lib = Library.init(a);
@@ -12100,7 +12100,7 @@ test "PROC DATASETS MODIFY: the INFORMAT statement sets/strips informats (GAP-da
     }
     // (4) Unknown variable: the FORMAT/RENAME/LABEL arms' shared verdict —
     // captured ERROR "variable z not found", rc 1 (the user's SAS is wrong,
-    // D-009 / D-009b corollary). D-003: captured reporter, no child process.
+    // D-009 consistency rule). D-003: captured reporter, no child process.
     {
         diag.resetGap();
         var lib = Library.init(a);
@@ -12444,7 +12444,7 @@ test "BUG-procmissingfilerc (GH#21): an unreadable/unwritable EXTERNAL file is a
     // when the truth is "your path is wrong" (D-009: 1 = fix your SAS). The fix
     // is the five BUG-procmissingrc2 arms' shape — a plain .err report at rc 1,
     // NEVER diag.markGap() — and it matches exec.zig's INFILE open failure,
-    // which has been rc 1 since ISS-infilemissing (D-009b corollary: the same
+    // which has been rc 1 since ISS-infilemissing (D-009 consistency rule: the same
     // condition must not carry two rcs). D-003: captured reporter, no child.
     //
     // A directory that nothing in the suite creates, so the read really fails
@@ -16507,7 +16507,7 @@ test "NOTE-freqlistfmt: n-way / list fails loud (no silent grid substitute); one
 test "GAP-ebnfrcwrongclass: n-way TABLES / LIST is a NAMED rc-2 gap (was rc 1); one-way / list and / freq keep their classes" {
     // LIST is a DOCUMENTED TABLES option (Table 3.9, Statistical Procedures
     // printed p.105, === pdf 108 ===) that real SAS runs clean, so refusing
-    // the n-way list layout is OUR gap: markGap → rc 2 (D-009/D-009b(i)),
+    // the n-way list layout is OUR gap: markGap → rc 2 (D-009),
     // not rc 1 "your SAS is broken". The message already NAMES list.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

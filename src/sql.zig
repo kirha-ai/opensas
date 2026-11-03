@@ -3209,7 +3209,7 @@ pub fn desugarPredicates(arena: std.mem.Allocator, diags: *diag.Diagnostics, tok
                 // desugar the bare LIKE and leave `escape 'c'` in the stream,
                 // so `escape` was blamed as an unknown COLUMN the user never
                 // wrote, at rc 1. Honest gap instead: name the clause, rc 2 —
-                // real SAS runs this clean (D-009/D-009b(i)).
+                // real SAS runs this clean (D-009).
                 if (atKw(toks, j, "escape")) {
                     diag.markGap();
                     return diags.fail(error.ExecError, tok.line, "WHERE LIKE: the ESCAPE clause is not supported (SQL Procedure User's Guide printed p.389; Statements ref printed p.364)", .{});
@@ -3850,7 +3850,7 @@ fn buildJoin(arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, 
 /// (joined-table Component, printed p.373 / pdf 389) admits every operator in
 /// Table 8.2 "Operators and Order of Evaluation" (printed p.403 / pdf 419), so
 /// a tail we cannot consume is legal SAS that opensas has not implemented —
-/// D-009/D-009b(i). Null = already reported; the caller abandons the statement.
+/// D-009. Null = already reported; the caller abandons the statement.
 /// WHERE/HAVING desugar first, then route here too; every SQL predicate span must
 /// be consumed as a whole or refused loudly.
 fn parseWholeSpan(arena: std.mem.Allocator, diags: *diag.Diagnostics, toks: []const Token, what: []const u8) diag.Error!?*const ast.Expr {
@@ -5228,7 +5228,7 @@ fn isLagDif(name: []const u8) bool {
 /// summary-function argument, a CHECK constraint. It is valid SAS (a CASE operand may
 /// be "a query expression" — SQL Procedure Reference, sql-expression Component p.401)
 /// that opensas does not implement at those sites, so it is an opensas GAP
-/// (rc 2, D-009/D-009b(i)) and it ABORTS the statement. It must abort rather than fold
+/// (rc 2, D-009) and it ABORTS the statement. It must abort rather than fold
 /// a MISSING, because the per-row `catch Value.missing` callers would otherwise print a
 /// plausible wrong row BEFORE the error — exactly the failure class this bug was filed
 /// for. Callers that CAN reach a Library resolve the subquery instead (evalCase).
@@ -5460,7 +5460,7 @@ fn validateWhereCols(diags: *diag.Diagnostics, ds: *Dataset, q: Query) diag.Erro
             // the DATA-step WHERE has the same clause, Statements ref printed
             // p.364) that we do not implement. Catch it HERE, before the name
             // check below misblames `escape` as an unknown COLUMN the user
-            // never wrote (rc 1) — honest gap, rc 2 (D-009/D-009b(i)). The
+            // never wrote (rc 1) — honest gap, rc 2 (D-009). The
             // `pat_end > i + 1` guard keeps a pattern that IS the name
             // `escape` on its old "expected an operand" error instead of a
             // false positive. desugarPredicates refuses the same clause on the

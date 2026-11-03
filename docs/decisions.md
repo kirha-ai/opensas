@@ -23,9 +23,13 @@ these caused real regressions (see D-001).
   D-004 flush stayed live here, a generated `data ...; run;` would execute
   re-entrantly in the middle of the calling step, which is the exact timing GH#13
   forbids.
-- D-005 `writeLibOutputs` never writes `member.csv` where a binary source
-  (`member.xpt`/`.sas7bdat`) exists in the same dir — a CSV shadow silently
-  bypasses the binary readers on the next run (BUG-csvshadow).
+- D-005 Directory LIBNAME persistence and source protection.
+  [files: src/main.zig, src/io.zig]
+  `writeLibOutputs`/`writeMember` write native `.sas7bdat` as the authoritative
+  reload format plus a CSV sidecar for inspection/legacy consumers. Readers use
+  `io.member_exts` order: `.sas7bdat`, `.xpt`, `.csv`. Do not shadow an existing
+  directory `member.xpt` with new native/CSV output, or rewrite unchanged
+  read-only-loaded inputs (`shouldPersist`).
 - D-006 Hermetic suites (unit/corpus/programs) live in `zig build`; env-heavy
   acceptance benches (study data, absolute paths, minutes) live in `scripts/`.
   Every bench-found interpreter bug gets distilled into a committed fixture.
@@ -34,52 +38,19 @@ these caused real regressions (see D-001).
 - D-008 File I/O uses portable `std.fs` (cwd().createFile/openFile), never raw
   `std.posix.openat`/`AT.FDCWD` — Windows target has no posix AT layer
   (BUG: BUILD-windows).
-- D-009 Exit-code contract (FLY-exitcodes): 0 = clean run; 1 = user-program
-  error (their SAS code is wrong: parse/exec/data errors in valid-SAS terms);
-  2 = opensas defect or gap (UNSUPPORTED feature, internal panic). Downstream
-  agents route on this: rc=1 → fix your SAS; rc=2 → file an opensas issue.
-- D-009b **THE TWO REDUCTIOS THAT DECIDE A BORDERLINE rc** (amended 2026-07-29
-  tick396x by the manager, on a proposal @coder-d9 correctly declined to make
-  itself). Both directions of the 1-vs-2 question kept getting re-argued, so
-  both are now settled here rather than per-ticket:
-  (i) **A gap stays rc=2 even though real SAS runs the program clean.** Every
-  gap is BY CONSTRUCTION valid SAS that real SAS accepts, so "but SAS exits 0
-  here" cannot downgrade one — if it could, rc=2 would be unreachable and the
-  contract meaningless. Settled at 321b444e.
-  (ii) **A user error stays rc=1 even when opensas might have misdetected it.**
-  Whether OUR detection is right is a separate bug; the rc reports the CLASS the
-  condition belongs to in real-SAS terms, not our confidence in spotting it.
-  Without (ii), every rc-1 verdict in `docs/findings/audit-exitcodecontract.md`
-  can be re-opened indefinitely.
-  Corollary, from 2a57cc33: when two sites emit the SAME SAS ERROR TEXT with
-  different rcs, that is settled by internal consistency alone — no citation
-  needed, the tree has already voted.
-- D-009a **ABORT is an EXCEPTION to D-009 and propagates its own rc** (amended
-  2026-07-27 tick359, manager-verified by probe, not by report). `abort abend 4`
-  exits **4** and `abort return 3` exits **3** — the user-supplied return code
-  becomes the process exit code, SAS-batch-like, so an ABORT rc is NOT confined
-  to the 0/1/2 set. A downstream agent routing on D-009 must treat an exit code
-  outside {0,1,2} as "the SAS program chose this rc", not as an opensas defect.
-  History worth keeping: the EBNF's `abort_stmt` note asserted the OPPOSITE
-  ("the rc is surfaced in the log message, not propagated to the process exit
-  (D-009)") and that claim was **stale** — the tick356 EBNF audit caught it by
-  probing and corrected the note in 9be19dba. I re-ran the probes here before
-  amending, because replacing one unverified claim with another is how this
-  file stops being trustworthy.
-  **PRECONDITION, added 2026-07-29 tick400 from QA's cross-landing rc sweep
-  (F1): ABORT OUTRANKS EVERYTHING IT REACHES — and only what it reaches.** An
-  `abort return 3` propagates its rc only if its step actually RUNS. Any earlier
-  step error puts the run into syntax-check mode (BUG-errhalt), which SKIPS every
-  later step, so the ABORT never executes and the process exits with the earlier
-  error's rc instead: `proc print; run;` (no dataset — a user error) followed by
-  `data _null_; abort return 3; run;` exits **1, not 3**. This is not a defect and
-  it predates the rc epic — a `proc means` error did the same at baseline — but
-  D-009a as written promises the ABORT rc unconditionally, and a downstream agent
-  routing on exit codes needs to know the promise is conditional on reachability.
-  STILL OPEN, filed as DEC-abortrcvsD009: the same audit found **gap exit codes
-  are inconsistent (1 vs 2)** — D-009 says a gap is 2, and some gaps exit 1.
-  That is a conformance bug against our own contract, not a doc problem; it
-  needs a dev pass to make every gap path agree.
+- D-009 Exit-code contract. [files: src/diag.zig, src/main.zig, src/wasm.zig]
+  0 = clean run; 1 = user-program error in SAS 9.4 terms; 2 = a detected opensas
+  defect or unimplemented feature. A gap outranks a user error if both occur.
+  Downstream routing: 1 → check the SAS program; 2 → file an opensas issue.
+  Valid SAS that opensas cannot execute stays 2 even when real SAS succeeds.
+  Classify the error condition, not confidence in detecting it; fix false
+  positives in the detector. The same error condition must have the same rc
+  across execution paths.
+  Exception: an executed ABORT ABEND/RETURN overrides the normal classification
+  with its return code, including 0 (`abort return 3` exits 3). It has no effect
+  if its step is skipped: default SYNTAXCHECK can skip it after an earlier step
+  error; NOSYNTAXCHECK can make it reachable (D-024).
+  Check: `diag.exitCode` and `main.processExitCode` tests.
 - D-010 The board carries OPEN work only; after a task passes the authoritative
   gate, clear its ID from dependent tasks (unblocking any whose last dependency
   is now satisfied), then remove its line from `jira.md` the same tick. Do not
@@ -415,9 +386,9 @@ these caused real regressions (see D-001).
   DATA step would halt at compile and its output would be withheld. Verified by
   probe: under NOSYNTAXCHECK the failing step's replace is still withheld
   ("was not replaced because this step was stopped") while a later clean step
-  replaces the member, and D-009a's PRECONDITION now has a documented way to
-  make a later ABORT's step reachable (`abort return 3` after a step error exits
-  3 under NOSYNTAXCHECK, 1 under the default — the rc still requires its step to
+  replaces the member, making a later ABORT reachable as required by D-009:
+  `abort return 3` after a step error exits 3 under NOSYNTAXCHECK, 1 under the
+  default (the rc still requires its step to
   RUN). Parity, same ruling: real SAS ends the FAILING step ITSELF with
   `NOTE: The SAS System stopped processing this step because of errors.`
   (trailing period included, per Examples 8.2/8.4/8.8, LR:Concepts Ch.8) —

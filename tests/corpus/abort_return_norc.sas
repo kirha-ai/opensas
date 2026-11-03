@@ -4,7 +4,7 @@
    `if errcode=16 then abort return;` (printed p.19, marker "=== pdf 30 ==="),
    and RETURN without n "returns ... a condition code that indicates an
    error" (printed p.18, marker "=== pdf 29 ===") — an ERROR-class exit,
-   default rc 1, the same default ABEND-no-n takes (D-009a: the ABORT rc IS
+   default rc 1, the same default ABEND-no-n takes (D-009: the ABORT rc IS
    the process exit). Was REFUSED: "ABORT RETURN requires a return code".
    A stray word after RETURN stays a loud typo (pinned in-source, parser.zig
    "abort variants" test); NOLIST after it is still unimplemented and loud.
