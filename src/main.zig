@@ -3745,8 +3745,8 @@ fn isDocFilenameDevice(d: []const u8) bool {
     // might be available in some operating environments").  Keeping a
     // possibly-real name on the gap arm costs a spurious "file an opensas
     // issue"; dropping it would cost a real SAS program a bogus rc 1, which is
-    // the failure this ticket exists to remove.  D-015 removals are made only
-    // where the doc EXCLUDES the value outright, as it does for F2's LINGUISTIC.
+    // the failure this ticket exists to remove.  D-018: rc-1 removals are made only
+    // where the doc EXCLUDES the value outright (checked for maintenance release, D-015).
     const list = [_][]const u8{
         "activemq", "catalog", "clipboard", "dummy",    "ftp",      "gterm", "hadoop",
         "jms",      "pipe",    "plotter",   "printer",  "sftp",     "socket", "tape",

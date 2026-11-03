@@ -137,25 +137,24 @@ these caused real regressions (see D-001).
   belongs in that pass, calling the same emitter. Until then
   `tests/corpus/open_code_stmt_allowlist` is UNCHANGED and correct: it exercises
   the open-code path only.
-- D-015 A FUNCTION ABSENT FROM THE SAS 9.4 REFERENCE MUST NOT BE IMPLEMENTED, even if
-  it exists in a later SAS product (Viya) — keep it LOUD (2026-07-25, tick346, adjudicating
-  a direct disagreement between two devs on GAP-weekufn):
-  `@pi-ff` scanned the full 1742-page *Functions and CALL Routines Reference*, found no
-  WEEKU/WEEKW function entries, and resolved the ticket as documented-loud. `@pi-ff2`
-  then IMPLEMENTED them, justifying it as "the Viya function names" while conceding in
-  the same commit message that the 9.4 funcref ships only the `WEEKUw.`/`WEEKWw.`
-  FORMATS. **Manager verification:** WEEKU/WEEKW occur on exactly TWO pages of that
-  PDF, both inside the WEEK Function's "See Also" list under the headings `Formats:`
-  and `Informats:`, cross-referencing *SAS Formats and Informats: Reference*; the
-  string "WEEKU Function" appears nowhere. The dictionary jumps WEEK -> WEEKDAY.
-  **Ruling: ff is right, ff2's commit was NOT taken.** The reasoning generalizes:
-  implementing a nonexistent function is a SILENT SUPERSET — a program with a typo or a
-  Viya-only call computes a plausible number where real SAS 9.4 errors
-  "The function WEEKU is unknown". That is the same failure class as accepting the
-  nonexistent NEGPAREN informat (tick245 #14), which this project deliberately made
-  loud. The north star is SAS **9.4**; a later product's surface is not evidence.
-  Corollary for the EBNF/function trackers: do NOT tick `[x]` for such a function.
-
+- D-015 Compatibility target is SAS 9.4; later products are not evidence.
+  [files: src/functions.zig, src/main.zig]
+  Implement only what applicable SAS 9.4 evidence supports. Viya or other later
+  products do not count, and a name that is a format/informat in 9.4 is not
+  thereby a function: `WEEKU()`/`WEEKW()` stay loud (9.4 has only the
+  `WEEKUw.`/`WEEKWw.` formats). Accepting a name 9.4 rejects is a silent
+  superset: a typo or foreign call computes a plausible value where real SAS
+  errors. Never tick EBNF/function trackers for such names.
+  Conflicting passages: first confirm they cover the same feature and scope
+  (e.g. system option vs PROC statement option). Then a passage with a
+  maintenance-release marker ("Starting in the third maintenance release",
+  `9.4M6`) outranks an unmarked restriction, which may describe an older
+  release (SORTSEQ=LINGUISTIC as a system option). Before rejecting on a
+  restriction, grep the same chapter for such a marker.
+  Cannot tell if a name is in 9.4: do not implement it and do not call it a user
+  error. Report a gap (rc 2) and record what was searched and the open question
+  at the code site for human ruling (D-018).
+  Check: functions.zig test "GAP-weekufn".
 - D-021 **A LOUD GUARD PROVES NOTHING UNLESS SOMETHING REACHES IT — AND TWO BUGS CAN
   CONCEAL EACH OTHER** (2026-07-29 tick426, generalised by the manager after the same
   shape appeared FOUR times in one session). The pattern: a guard exists, is correct,
@@ -231,7 +230,7 @@ these caused real regressions (see D-001).
   rc 1 (D-009). Do not gap arbitrary unknown names merely because nothing
   excludes them. Derive closed option lists in full from the applicable
   reference (both missing valids and wrongly admitted ones). Check a
-  restriction's maintenance release before using it to reject (D-015a).
+  restriction's maintenance release before using it to reject (D-015).
 - D-017 **A STDOUT DIFFERENTIAL MUST CLEAN THE TREE BETWEEN PASSES** (2026-07-29
   tick398, promoted from @coder-ex's tick397j slice note where it would have been
   lost). The differential — run every `tests/**/*.sas` on a baseline binary, then on
@@ -293,25 +292,6 @@ these caused real regressions (see D-001).
   For audit sweeps, **the baseline is the head of the PREVIOUS sweep** — no gap,
   no double coverage — and it must be verified an ancestor with
   `merge-base --is-ancestor` rather than assumed.
-- D-015a **AN UNDATED RESTRICTION IS NOT EVIDENCE AGAINST A DATED FEATURE
-  STATEMENT** (2026-07-29 tick409, offered by @coder-f4 as a D-015 corollary while
-  REVERTING ITS OWN LANDED COMMIT from two ticks earlier). D-015 says do not
-  implement what the 9.4 reference does not contain. This is the other edge of the
-  same blade: the volumes describe a product that CHANGED ACROSS MAINTENANCE
-  RELEASES, and they mark the additions with an inline date ("Starting in the third
-  maintenance release of SAS 9.4, you can specify linguistic collation ... by
-  specifying the SORTSEQ=LINGUISTIC system option", Procedures Guide printed p.2403,
-  manager-verified) while leaving the superseded prose in place undated (p.2415's
-  Restrictions line, which says the opposite). **The word that settles a conflict
-  like this is a DATE, not a modality** — "starting in" says the capability was
-  ADDED, so the undated text describes the older product. The Statements Ref front
-  matter documents this `SAS 9.4M6` notation, so it is the volumes' own convention,
-  not an inference. Practical rule: before resting a verdict on a Restrictions or
-  "not available" line, grep the surrounding chapter for a dated sentence about the
-  same feature — twice here it was two pages away, in the same chapter.
-  **This is the FOURTH distinct way a citation has been wrong in the rc epic —
-  wrong page, wrong volume, wrong site, now wrong VINTAGE — and the only one that
-  page-marker discipline cannot catch.**
 - D-016 A TRACKER STATE IS NOT AN ACHIEVEMENT — verify a phase actually MOVED in the
   cycle before claiming it in release notes (2026-07-25, caught by the user):
   the v0.6.0 draft listed "Phase F is complete" as a headline highlight. It is a true
