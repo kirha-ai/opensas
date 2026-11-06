@@ -452,3 +452,10 @@ these caused real regressions (see D-001).
          docs/sas9.4.ebnf `col_def` is already positional.
   Check: tests/corpus/sql_bare_table_constraint.sas,
          tests/corpus/sql_bare_check_type_bypass.sas.
+- D-029 SAS/STAT procedures live in `src/stat/`, one file per PROC by default;
+  complex procedures may use a subdirectory (user decision 2026-11-06).
+  Reuse the existing interpreter and PROC dispatch; keep new implementations
+  out of `src/proc.zig`. Separate computation from parsing and rendering, and
+  extract shared numerical/modeling helpers as needed. Create files as features
+  land, not as empty placeholders.
+  Why: keep procedures maintainable while sharing algorithms.
