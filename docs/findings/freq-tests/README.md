@@ -78,7 +78,16 @@ Retained SAS sources/results/logs:
   OpenSAS. SAS default stopping gives 5.6279/-8.0927/-0.6714; this is convergence
   tolerance, not a formula discrepancy. The corpus specifies the tight criterion
   and the unit regression checks both Z values to half the last printed digit.
+  A separate default-CONVERGE unit regression retains oracle.sas coverage:
+  estimate/ASE/LR tolerance stays 0.00005; default Z tolerances are 0.00015
+  (3x3) and 0.001 (2x2), and the 2x2 upper-CL tolerance is 0.00015. These allow
+  the observed last-iterate differences and amplification through division by
+  ASE, not different statistical formulas. The tight checks retain 0.00005.
   User CONVERGE/MAXITER semantics remain intact; no hidden forced refinement.
+  The manual conflicts internally on MAXITER: option reference p.127 says 50,
+  computation narrative p.173 says 20. We follow the option reference (50).
+  MAXITER=1 nonconvergence is oracle-tested; these probes do not distinguish
+  the two possible default iteration caps, so no stronger default claim is made.
 - expected-semantics/expected-precedence: list accumulation, dataset precedence,
   alias priority, absent datasets and deliberate invalid cases. test-semantics:
   TEST implication/cardinality, intentional duplicate/mixed-source errors.
@@ -109,5 +118,12 @@ No existing corpus golden required changing. The former CHISQ and TEST captured
 unit negatives now assert supported CHISQ and invalid unknown TEST respectively;
 AGREE/ALL/CMH/EXACT and typo guards remain fail-loud.
 
-Final acceptance requires a clean local rebase onto feat/stat/batch-1 and all
-three gates (unit, corpus, programs). Manager owns landing, pushes and Jira.
+Final local acceptance: rebase onto feat/stat/batch-1 at 6fc6373 was already
+up to date. Unpiped gates exited 0: `zig build test --summary all` 1073/1073,
+`zig build corpus` 1999/1999, `zig build programs` 11/11. The final review
+follow-up adds only the default-control unit regression and this numerical
+qualification; the unit gate was rerun after that addition. The numerical audit
+matched 1,912 decimal fields across the nine positive public groups. Fifteen
+new corpus cases are included in the count; none was skipped. Implementation
+and SAS evidence are separate from the corpus golden commit. Ticket is ready
+for manager landing/gates; manager owns pushes and Jira.

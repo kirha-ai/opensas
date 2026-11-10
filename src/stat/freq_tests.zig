@@ -918,3 +918,25 @@ test "FEAT-freq-tests SAS TABLE RANK RIDIT MODRIDIT scores are not ordinal level
         try std.testing.expectApproxEqAbs(table.spearman.estimate.?, result.spearman.estimate.?, 1e-12);
     }
 }
+
+test "FEAT-freq-tests SAS default polychoric convergence allows Newton path rounding" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // oracle.sas uses default CONVERGE=1e-4. SAS and our Newton paths stop
+    // at slightly different iterates: preserve default coverage separately
+    // from poly-precision's tight optimum. Estimates/ASE retain half-digit
+    // tolerance; division by ASE amplifies the last-iterate error in Wald Z.
+    const three = try polychoric(a, .{ .rows = 3, .cols = 3, .counts = &.{ 12, 5, 3, 4, 17, 6, 2, 8, 13 } }, .{});
+    try std.testing.expect(three.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5906), three.coefficient.estimate.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1049), three.coefficient.ase.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 5.6279), three.coefficient.z.?, 0.00015);
+    try std.testing.expectApproxEqAbs(@as(f64, 18.2978), three.likelihood_ratio.?.statistic, 0.00005);
+    const two = try polychoric(a, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 9, 11, 3 } }, .{});
+    try std.testing.expect(two.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.8859), two.coefficient.estimate.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1095), two.coefficient.ase.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, -8.0927), two.coefficient.z.?, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.6714), two.coefficient.upper.?, 0.00015);
+}
