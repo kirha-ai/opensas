@@ -1,0 +1,20 @@
+
+default p0_00
+default p85_1
+default p85_12
+default p85_99
+
+explicit2 p86
+explicit2 p0_01
+explicit2 p85_1
+explicit2 p85_13
+
+explicit0 p0
+explicit0 p85
+explicit0 p86
+
+explicit4 p0_1235
+explicit4 p85_1235
+
+explicit5 p0_12346
+explicit5 p85_12346

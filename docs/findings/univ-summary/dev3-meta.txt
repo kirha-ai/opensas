@@ -1,0 +1,74 @@
+
+11 c the corrected sum of squares, x
+6 cv the coefficient of variation, x
+35 gi Gini's mean difference, x
+44 gm geometric mean, x
+45 hm harmonic mean, x
+10 ku kurtosis, x
+2 m the mean, x
+15 ma the largest value, x
+36 mad MAD, x
+20 md the median, x
+25 mi the smallest value, x
+28 mo the most frequent value, x
+30 ms the sign statistic, x
+1 n number of nonmissing values, x
+13 nm number of missing values, x
+14 no number of observations, x
+24 p1 the 1st percentile, x
+23 p5 the 5th percentile, x
+22 p10 the 10th percentile, x
+18 p90 the 90th percentile, x
+17 p95 the 95th percentile, x
+16 p99 the 99th percentile, x
+33 pm p-value of the sign statistic, x
+34 ps p-value of signed rank stat, x
+32 pt p-value of the t statistic, x
+21 q1 the lower quartile, x
+19 q3 the upper quartile, x
+38 qn Qn, x
+27 qr the interquartile range, x
+26 r the range, x
+3 s the standard deviation, x
+12 se the standard error of the mean, x
+40 sg standard deviation from GINI, x
+4 sk skewness, x
+41 sm standard deviation from MAD, x
+37 sn Sn, x
+43 sq standard deviation from QN, x
+39 sqr standard deviation from QRANGE, x
+31 sr the signed rank statistic, x
+42 ss standard deviation from SN, x
+8 su the sum, x
+7 sw sum of the weights, x
+29 t Student's t statistic, x
+5 u the uncorrected sum of squares, x
+9 v the variance, x
+48 x_20 the  20.0000 percentile, x
+50 x_50 the  50.0000 percentile, x
+52 x_33_33 the  33.3330 percentile, x
+46 x_high the  85.1250 percentile, x
+49 y_20 the  20.0000 percentile, y
+51 y_50 the  50.0000 percentile, y
+53 y_33_33 the  33.3330 percentile, y
+47 y_high the  85.1250 percentile, y
+
+ 
+ 
+ 
+ 
+O                                                                   p  p  p         p
+b              s         c    s  s           k         s    n n  m  9  9  9  q  m q 1 p p m     q m          m
+s n  m    s    k   u     v    w  u    v      u   c     e    m o  a  9  5  0  3  d 1 0 5 1 i  r  r o    t     s
+
+1 4 15 12.9099 0 1400 86.0663 4 60 166.667 -1.2 500 6.45497 0 4 30 30 30 30 25 15 5 0 0 0 0 30 20 . 2.32379 1.5
+
+                                                                                                           x y
+                                                                                           x y             _ _
+                                                                                           _ _             3 3
+                                                                                           h h x y  x  y   3 3
+O                              m                  s                                        i i _ _  _  _   _ _
+b s    p      p    p     g     a    s      q      q       s       s      s       s    g h  g g 2 2  5  5   3 3
+s r    t      m    s     i     d    n      n      r       g       m      s       q    m m  h h 0 0  0  0   3 3
+
+1 3 0.10273 0.25 0.25 16.6667 10 11.926 22.219 14.8260 14.7704 14.826 11.3774 11.3761 0 . 30 4 0 1 15 2.5 10 2

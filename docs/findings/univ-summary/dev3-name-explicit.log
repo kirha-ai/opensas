@@ -1,0 +1,280 @@
+The SAS System
+
+36         
+37         data d;x=1;output;x=2;output;run;
+
+NOTE: The data set WORK.D has 2 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.46k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+38         proc univariate data=d noprint;var x;
+39         output out=a pctlpts=85.1299 85.125 85.1 0.0099 85.9999 pctlpre=p;
+40         output out=b pctlpts=85.1299 85.125 85.1 0.0099 85.9999 pctlpre=p pctlndec=2;
+41         output out=c pctlpts=85.9 85.1 0.0099 pctlpre=p pctlndec=0;
+42         output out=e pctlpts=85.123456789 0.123456789 pctlpre=p pctlndec=4;
+43         output out=f pctlpts=85.123456789 0.123456789 pctlpre=p pctlndec=5;
+44         run;
+
+WARNING: Variable p85_12 already exists on file WORK.A.
+WARNING: Variable p85_13 already exists on file WORK.B.
+NOTE: The data set WORK.A has 1 observations and 4 variables.
+NOTE: The data set WORK.B has 1 observations and 4 variables.
+NOTE: The data set WORK.C has 1 observations and 3 variables.
+NOTE: The data set WORK.E has 1 observations and 2 variables.
+NOTE: The data set WORK.F has 1 observations and 2 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3654.01k
+      OS Memory           14268.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        3  Switch Count  10
+      Page Faults                       0
+      Page Reclaims                     825
+      Page Swaps                        0
+      Voluntary Context Switches        43
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1320
+      
+
+45         proc contents data=a out=ca noprint;run;
+
+NOTE: The data set WORK.CA has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1054.32k
+      OS Memory           13488.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     164
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+45       !                                         data _null_;set ca;file print;put 'default ' name;run;
+
+NOTE: 4 lines were written to file PRINT.
+NOTE: There were 4 observations read from the data set WORK.CA.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              708.54k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     133
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         proc contents data=b out=cb noprint;run;
+
+NOTE: The data set WORK.CB has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.51k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     153
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+46       !                                         data _null_;set cb;file print;put 'explicit2 ' name;run;
+The SAS System
+
+
+NOTE: 4 lines were written to file PRINT.
+NOTE: There were 4 observations read from the data set WORK.CB.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              613.65k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     65
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         proc contents data=c out=cc noprint;run;
+
+NOTE: The data set WORK.CC has 3 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1054.26k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+47       !                                         data _null_;set cc;file print;put 'explicit0 ' name;run;
+
+NOTE: 3 lines were written to file PRINT.
+NOTE: There were 3 observations read from the data set WORK.CC.
+NOTE: The DATA step printed page 3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              609.35k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+48         proc contents data=e out=ce noprint;run;
+
+NOTE: The data set WORK.CE has 2 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1054.26k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        10  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     148
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+48       !                                         data _null_;set ce;file print;put 'explicit4 ' name;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 2 observations read from the data set WORK.CE.
+NOTE: The DATA step printed page 4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              608.67k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+49         proc contents data=f out=cf noprint;run;
+
+NOTE: The data set WORK.CF has 2 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1053.40k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        12  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     149
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+49       !                                         data _null_;set cf;file print;put 'explicit5 ' name;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 2 observations read from the data set WORK.CF.
+NOTE: The DATA step printed page 5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              610.68k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:38:34 AM
+      Step Count                        13  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+50         
+51         
+52         
+53         
+The SAS System
+
+54         

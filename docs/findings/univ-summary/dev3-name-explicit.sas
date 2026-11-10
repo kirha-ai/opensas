@@ -1,0 +1,13 @@
+data d;x=1;output;x=2;output;run;
+proc univariate data=d noprint;var x;
+output out=a pctlpts=85.1299 85.125 85.1 0.0099 85.9999 pctlpre=p;
+output out=b pctlpts=85.1299 85.125 85.1 0.0099 85.9999 pctlpre=p pctlndec=2;
+output out=c pctlpts=85.9 85.1 0.0099 pctlpre=p pctlndec=0;
+output out=e pctlpts=85.123456789 0.123456789 pctlpre=p pctlndec=4;
+output out=f pctlpts=85.123456789 0.123456789 pctlpre=p pctlndec=5;
+run;
+proc contents data=a out=ca noprint;run;data _null_;set ca;file print;put 'default ' name;run;
+proc contents data=b out=cb noprint;run;data _null_;set cb;file print;put 'explicit2 ' name;run;
+proc contents data=c out=cc noprint;run;data _null_;set cc;file print;put 'explicit0 ' name;run;
+proc contents data=e out=ce noprint;run;data _null_;set ce;file print;put 'explicit4 ' name;run;
+proc contents data=f out=cf noprint;run;data _null_;set cf;file print;put 'explicit5 ' name;run;
