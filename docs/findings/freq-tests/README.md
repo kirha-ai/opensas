@@ -110,3 +110,15 @@ dataset implication and precedence. Intentional errors/warnings are documented
 in that plan. These probes drove isolated parser fixes; no dev2 or procedure
 dispatch files were edited. The new TestStatement helper owns duplicate-TEST
 errors and empty/missing-TABLES warnings for the future parent integration.
+
+## LIST/score and zero-total acceptance follow-up
+
+list-scores.sas is a clean real-SAS probe covering LIST fallback to GRID, separate
+TABLES requests, NOPRINT, and actual TABLE/RANK/RIDIT/MODRIDIT score values and
+SCOROUT. The new usesList helper and score-display adapter are ready for parent
+integration, with numerical score-preservation regressions.
+
+zero-total.sas/.txt/.log retain the manager's oracle verbatim. The separate
+zero-total-options probe deliberately triggers three validation errors to pin
+precedence, while its valid zero-total cases emit only the no-positive-weights
+note. See integration-plan.md for the exact call/label requirements.

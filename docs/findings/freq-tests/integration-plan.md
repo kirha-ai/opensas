@@ -45,8 +45,10 @@ Line locations below identify this snapshot, not a stable patch offset.
    expectations. Dataset-only syntax without CHISQ produces no expected-value
    columns or GOF tests. Gate those columns on active CHISQ, not source alone.
 
-5. **One-way analysis projection (currently no equivalent of Slice.matrix).**
-   Use tab.dimensions[0].levels in their existing order and tab.count(key).
+5. **One-way analysis projection (updated dev2 API).**
+   Dev2 has now added Table.matrix(a,stratum), covering one-way and two-way
+   input. For one-way it returns rows=level_count, cols=1, the ordered counts,
+   row scores, and row_levels. Use this instead of building a second projection.
    Retain every nonexcluded level, including /ZEROS levels with zero count;
    include missing levels only when tab.include_missing. MISSPRINT displays
    missing rows but must not include them in the statistical vector. Do this
@@ -58,7 +60,8 @@ Line locations below identify this snapshot, not a stable patch offset.
 6. **One-way expected columns (renderOne, around 863).** Extend the render
    input with resolved expected values plus analysis-key mapping. TESTP adds
    Test Percent; TESTF adds Test Frequency. Missing rows excluded by MISSPRINT
-   have missing expected values. Respect NOPERCENT/NOCUM/MAXLEVELS while
+   have missing expected values. Zero-total tables have no expected-value
+   columns even with valid TESTP/TESTF. Respect NOPERCENT/NOCUM/MAXLEVELS while
    preserving the full analysis vector. Existing formatting helpers remain
    the owner of level labels, widths, attached formats and cumulative columns.
 
@@ -70,8 +73,10 @@ Line locations below identify this snapshot, not a stable patch offset.
    or allocation. Preserve zero-margin levels: do not silently shrink to an
    apparently valid table. The execute adapter renders the no-statistics case.
 
-   Statistical slicing MUST be outside the display-only `req.list` early
-   return. LIST and CROSSLIST still get per-stratum tests. Skip absent strata
+   Normalize req.list with usesList(req.list,req.statistics) AFTER TEST
+   implication. Live SAS switches LIST+statistics to the grid, with rc0 and
+   no warning, despite the manual saying the combination is not available.
+   A separate LIST-only request remains a list. CROSSLIST keeps its display. Skip absent strata
    and missing CONTROL levels unless /MISSING: Slice.excluded currently tests
    only the last two dimensions, so the caller must also test controls.
    MISSPRINT must not enable tests on an excluded missing control stratum.
@@ -89,8 +94,8 @@ Line locations below identify this snapshot, not a stable patch offset.
    (around 1040), giving each block its Statistics for Table heading and
    controlling values even with TABLES NOPRINT. Append Sample Size and Frequency
    Missing at the correct end, once. Do not interleave all display tables and
-   then all tests for GRID/CROSSLIST; preserve table/stratum adjacency. LIST's
-   aggregate display needs a following sequence of identified statistic blocks.
+   then all tests for GRID/CROSSLIST; preserve table/stratum adjacency. LIST
+   falls back to GRID for statistical requests, including implied TEST requests.
    Reconcile existing per-display missing footers explicitly, not by duplicating
    them. The adapter currently renders statistical bodies only.
 
@@ -143,3 +148,37 @@ The expected-semantics and expected-precedence probes further discriminate:
 
 The parser regression covers implication, accumulation, same-family dataset
 precedence and repeated-reference warnings without any PROC integration.
+
+
+## Final acceptance reminder: LIST, SCORES/SCOROUT and zero totals
+
+The clean `list-scores.sas` oracle run has zero errors/warnings. LIST CHISQ and
+LIST with implied TEST GAMMA switch to GRID, not a silent list lacking tests and
+not a user error. One-way LIST CHISQ runs the one-way test. PROC NOPRINT suppresses
+all display; TABLES NOPRINT retains statistics and SCOROUT. Separate LIST-only
+and MEASURES requests remain independently displayed. The usesList helper must
+be applied after TEST implication; never let the old LIST early return drop TEST.
+
+Pass the table's actual score arrays unchanged to CountMatrix. For nonuniform
+numeric TABLE scores [1,10,100] and [2,7,40], Pearson=0.3997 (ASE0.1143,
+nullSE0.1218), MH=11.0261. Rank, ridit and modridit give Pearson=0.4769
+(ASE0.1058,nullSE0.1197), MH=15.6920. Spearman independently retains its proper
+rank-estimation variance. These values are now unit-regressed.
+
+Copy req.scores to statistics.score_type using an explicit enum switch. This
+metadata only chooses score-specific MH/Pearson labels; it never changes arrays.
+For SCOROUT pass Table.score_display with row/column names and formatted level
+labels from ScoredMatrix's levels. The adapter displays the SAME supplied arrays
+before statistics, formatted through existing BEST8. It suppresses SCOROUT for
+PROC NOPRINT, not TABLES NOPRINT. Dev2's snapshot parses SCOROUT but does not yet
+have an active statistics-side score renderer; this adapter is the missing hook.
+
+The manager's zero-total.sas/.txt/.log pins WEIGHT /ZEROS with counts [0,0]:
+retain zero rows/missing percentages, no statistics and one NOTE identifying
+no positive weights. Pass the one-way variable name as execute.Table.name so the
+note identifies g. zero-total-options.sas establishes validation precedence:
+TESTP sum/count errors and explicit DF0 still error; valid TESTP, positive TESTF
+and DF=-1 produce the no-positive-weights note. The adapter validates expected
+shape/probabilities, then suppresses analysis before frequency-total and adjusted
+DF calculations. Both printed and PROC NOPRINT paths are regressed. Do not bypass
+this adapter merely because tab.total is zero; it owns these validations/notes.

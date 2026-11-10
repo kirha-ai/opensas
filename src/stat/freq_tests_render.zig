@@ -61,7 +61,12 @@ pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, fi
     try chiRow(a, out, "Chi-Square", result.pearson);
     try chiRow(a, out, "Likelihood Ratio Chi-Square", result.likelihood_ratio);
     if (result.continuity) |r| try chiRow(a, out, "Continuity Adj. Chi-Square", r);
-    if (result.mantel_haenszel) |r| try chiRow(a, out, "Mantel-Haenszel Chi-Square", r);
+    if (result.mantel_haenszel) |r| try chiRow(a, out, switch (opts.score_type) {
+        .table => "Mantel-Haenszel Chi-Square",
+        .rank => "MH Chi-Square (Rank Scores)",
+        .ridit => "MH Chi-Square (Ridit Scores)",
+        .modridit => "MH Chi-Square (Mod. Ridits)",
+    }, r);
     try coefficient(a, out, "Phi Coefficient", result.phi);
     try coefficient(a, out, "Contingency Coefficient", result.contingency);
     try coefficient(a, out, "Cramer's V", result.cramer_v);
@@ -104,7 +109,13 @@ fn testMeasure(a: A, out: *Out, label: []const u8, m: k.Measure, alpha: f64, pol
 pub fn measures(a: A, out: *Out, ordinal: k.Association, nominal: k.Nominal, poly: ?k.Polychoric, two: bool, opts: parse.Options, tests: parse.Tests) Error!void {
     if (opts.cl) try text(a, out, try std.fmt.allocPrint(a, "\nStatistic                              Value       ASE     {d}% Confidence Limits\n", .{100 * (1 - opts.alpha)})) else try text(a, out, "\nStatistic                              Value       ASE\n");
     try text(a, out, "----------------------------------------------------------------------------\n");
-    const names = [_][]const u8{ "Gamma", "Kendall's Tau-b", "Stuart's Tau-c", "Somers' D C|R", "Somers' D R|C", "Pearson Correlation", "Spearman Correlation" };
+    const pearson_name: []const u8 = switch (opts.score_type) {
+        .table => "Pearson Correlation",
+        .rank => "Pearson Correlation (Rank Scores)",
+        .ridit => "Pearson Correlation (Ridit Scores)",
+        .modridit => "Pearson Correlation (Mod. Ridits)",
+    };
+    const names = [_][]const u8{ "Gamma", "Kendall's Tau-b", "Stuart's Tau-c", "Somers' D C|R", "Somers' D R|C", pearson_name, "Spearman Correlation" };
     const ms = [_]k.Measure{ ordinal.gamma, ordinal.tau_b, ordinal.tau_c, ordinal.somers_cr, ordinal.somers_rc, ordinal.pearson, ordinal.spearman };
     const selected = [_]bool{ tests.gamma, tests.tau_b, tests.tau_c, tests.somers_cr, tests.somers_rc, tests.pearson, tests.spearman };
     for (names, ms) |name, m| try measureRow(a, out, name, m, opts.cl);
@@ -150,4 +161,45 @@ test "FEAT-freq-tests renderer retains automatic Fisher and requested TEST outpu
     try measures(a, &out, try k.association(a, m, 0.05), try k.nominal(a, m, 0.05), try k.polychoric(a, m, .{}), true, .{ .measures = true, .cl = true }, .{ .gamma = true, .polychoric = true });
     try risks(a, &out, try k.risks(m.counts, 0.05), 0.05);
     for ([_][]const u8{ "Fisher's Exact Test", "Two-sided Pr <= P", "ASE under H0", "Tetrachoric Correlation", "LR Chi-Square", "Uncertainty Coefficient Symmetric", "Relative Risk (Column 2)" }) |needle| try std.testing.expect(std.mem.indexOf(u8, out.items, needle) != null);
+}
+
+pub const ScoreDisplay = struct {
+    row_name: []const u8,
+    col_name: []const u8,
+    row_labels: []const []const u8,
+    col_labels: []const []const u8,
+};
+/// Display the supplied score arrays verbatim through SAS BEST8 formatting.
+/// Labels are prepared by the table layer; do not derive scores from labels.
+pub fn scores(a: A, out: *Out, m: k.CountMatrix, display: ScoreDisplay, kind: parse.ScoreType) Error!void {
+    const rs = m.row_scores orelse return error.ExecError;
+    const cs = m.col_scores orelse return error.ExecError;
+    if (rs.len != display.row_labels.len or cs.len != display.col_labels.len) return error.ExecError;
+    try text(a, out, try std.fmt.allocPrint(a, "\nScores for Table of {s} by {s}\nScore Type = {s}\n", .{
+        display.row_name, display.col_name,
+        switch (kind) {
+            .table => "TABLE",
+            .rank => "RANK",
+            .ridit => "RIDIT",
+            .modridit => "MODRIDIT",
+        },
+    }));
+    try scoreRows(a, out, "Row Scores", display.row_name, display.row_labels, rs);
+    try scoreRows(a, out, "Column Scores", display.col_name, display.col_labels, cs);
+}
+fn scoreRows(a: A, out: *Out, title: []const u8, variable: []const u8, labels: []const []const u8, values: []const f64) Error!void {
+    var width = variable.len;
+    for (labels) |label| width = @max(width, label.len);
+    try text(a, out, try std.fmt.allocPrint(a, "\n{s}\n\n", .{title}));
+    try pad(a, out, variable, width, true);
+    try pad(a, out, "Score", 12, true);
+    try text(a, out, "\n");
+    try out.appendNTimes(a, '-', width + 12);
+    try text(a, out, "\n");
+    for (labels, values) |label, value| {
+        try pad(a, out, label, width, true);
+        const formatted = try @import("../format.zig").apply(a, .{ .num = value }, "best8.");
+        try pad(a, out, std.mem.trim(u8, formatted, " "), 12, true);
+        try text(a, out, "\n");
+    }
 }

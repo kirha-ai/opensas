@@ -1,7 +1,8 @@
 //! PROC FREQ numeric kernels. No lexer, dataset, or listing dependencies.
 //! Input levels are already ordered by the table layer; counts include its
 //! missing/weight policy. SAS/STAT FREQ pp. 161–175; oracle evidence in
-//! docs/findings/freq-tests. Undefined statistics are null, never zero.
+//! docs/findings/freq-tests. Undefined statistics are nullable; Test.p uses
+//! NaN for the valid single-category default DF=0 case.
 const std = @import("std");
 const fns = @import("../functions.zig");
 pub const Error = @import("../diag.zig").Error;
@@ -51,30 +52,37 @@ fn chi(x: f64, df: f64) Test {
     return .{ .statistic = @max(0, x), .df = df, .p = if (df == 0) std.math.nan(f64) else chiTail(@max(0, x), df) };
 }
 
-pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
-    if (counts.len == 0 or !countValid(counts)) return error.ExecError;
-    const n = sum(counts);
-    // SAS permits a single observed category with default DF=0 and missing p.
-    // An explicit DF still goes through the ordinary validation path.
-    const df = if (counts.len == 1 and df_override == null) 0 else try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
+/// Validate expected-value shape/probabilities even for zero-total tables.
+/// SAS defers the TESTF total comparison when no positive weights exist.
+pub fn expectedFactor(level_count: usize, n: f64, expected: Expected) Error!f64 {
     var factor: f64 = 1;
     switch (expected) {
         .equal => {},
         .proportions, .frequencies => |values| {
-            if (values.len != counts.len) return error.ExecError;
+            if (values.len != level_count) return error.ExecError;
             for (values) |v| if (!std.math.isFinite(v) or v <= 0) return error.ExecError;
             const total = sum(values);
             switch (expected) {
                 .proportions => {
                     if (@abs(total - 1) < 1e-8) factor = n else if (@abs(total - 100) < 1e-6) factor = n / 100 else return error.ExecError;
                 },
-                .frequencies => if (@abs(total - n) > 1e-8 * @max(1, n)) {
+                .frequencies => if (n > 0 and @abs(total - n) > 1e-8 * @max(1, n)) {
                     return error.ExecError;
                 },
                 else => unreachable,
             }
         },
     }
+    return factor;
+}
+
+pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
+    if (counts.len == 0 or !countValid(counts)) return error.ExecError;
+    const n = sum(counts);
+    // SAS permits a single observed category with default DF=0 and missing p.
+    // An explicit DF still goes through the ordinary validation path.
+    const df = if (counts.len == 1 and df_override == null) 0 else try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
+    const factor = try expectedFactor(counts.len, n, expected);
     var pearson: f64 = 0;
     var lr: f64 = 0;
     var small: usize = 0;
@@ -880,4 +888,30 @@ test "FEAT-freq-tests SAS single category default DF zero is valid" {
     const specified = try goodnessOfFit(&.{3}, .{ .proportions = &.{100} }, null);
     try std.testing.expect(std.math.isNan(specified.likelihood_ratio.p));
     try std.testing.expect(!specified.sparse);
+}
+
+test "FEAT-freq-tests SAS TABLE RANK RIDIT MODRIDIT scores are not ordinal levels" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var m = CountMatrix{ .rows = 3, .cols = 3, .counts = &.{ 12, 5, 3, 4, 17, 6, 2, 8, 13 }, .row_scores = &.{ 1, 10, 100 }, .col_scores = &.{ 2, 7, 40 } };
+    const table = try association(a, m, 0.05);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.3997), table.pearson.estimate.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1143), table.pearson.ase.?, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1218), table.pearson.null_se.?, 0.00005);
+    for ([_]f64{ 1, 70, 71 }) |denominator| {
+        var rs = [_]f64{ 10.5, 34, 59 };
+        var cs = [_]f64{ 9.5, 33.5, 59.5 };
+        for (&rs) |*v| v.* /= denominator;
+        for (&cs) |*v| v.* /= denominator;
+        m.row_scores = &rs;
+        m.col_scores = &cs;
+        const result = try association(a, m, 0.05);
+        const chi_square = try contingency(a, m, null);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.4769), result.pearson.estimate.?, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.1058), result.pearson.ase.?, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.1197), result.pearson.null_se.?, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 15.6920), chi_square.mantel_haenszel.?.statistic, 0.00005);
+        try std.testing.expectApproxEqAbs(table.spearman.estimate.?, result.spearman.estimate.?, 1e-12);
+    }
 }

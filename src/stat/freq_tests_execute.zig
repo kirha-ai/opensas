@@ -7,7 +7,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const k = @import("freq_tests.zig");
 const p = @import("freq_tests_parse.zig");
 const render = @import("freq_tests_render.zig");
-pub const Table = struct { matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false };
+pub const Table = struct { name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
 pub const Report = struct { goodness_of_fit: ?k.GoodnessOfFit = null, chi_square: ?k.ChiSquare = null, warning: ?bool = null };
 fn canonicalName(name: []const u8) []const u8 {
     return if (name.len > 5 and std.ascii.eqlIgnoreCase(name[0..5], "work.")) name[5..] else name;
@@ -70,6 +70,19 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
     }
     if (table.one_way) {
         if (!options.chisq) return report;
+        var zero_total = m.counts.len > 0;
+        for (m.counts) |count| if (count != 0) {
+            zero_total = false;
+        };
+        if (zero_total) {
+            if (options.df) |df| if (!std.math.isFinite(df) or df == 0) return d.fail(error.ExecError, 0, "PROC FREQ: the CHISQ DF value must be finite and nonzero", .{});
+            _ = k.expectedFactor(m.counts.len, 0, expected) catch |err| {
+                if (err == error.OutOfMemory) return err;
+                return d.fail(error.ExecError, 0, "PROC FREQ: invalid TESTP/TESTF values or number of levels", .{});
+            };
+            if (table.name) |name| try d.report(.note, 0, "No statistics are computed for the table of {s} because it contains no observations with positive weights.", .{name}) else try d.report(.note, 0, "No statistics are computed for this table because it contains no observations with positive weights.", .{});
+            return report;
+        }
         const gof = k.goodnessOfFit(m.counts, expected, options.df) catch |err| {
             if (err == error.OutOfMemory) return err;
             return d.fail(error.ExecError, 0, "PROC FREQ: invalid goodness-of-fit counts, expected values, or degrees of freedom", .{});
@@ -96,6 +109,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (!proc_noprint) try out.appendSlice(a, "\nRow or column sum zero. No statistics computed for this table.\n");
         return report;
     }
+    if (!proc_noprint) if (table.score_display) |display| try render.scores(a, out, m, display, options.score_type);
     if (options.chisq) {
         const chisq = k.contingency(a, m, options.df) catch |err| {
             if (err == error.OutOfMemory) return err;
@@ -178,4 +192,55 @@ test "FEAT-freq-tests single category executes and renders without error or warn
     try std.testing.expectEqual(@as(usize, 2), missing_p_count);
     _ = try execute(a, &d, &out, table, .{ .chisq = true }, .{}, .equal, true);
     try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+}
+
+test "FEAT-freq-tests SCOROUT keeps supplied scores and PROC NOPRINT still computes" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const table = Table{ .matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 12, 5, 3, 4, 17, 6, 2, 8, 13 }, .row_scores = &.{ 1, 10, 100 }, .col_scores = &.{ 2, 7, 40 } }, .score_display = .{ .row_name = "r", .col_name = "c", .row_labels = &.{ "1", "10", "100" }, .col_labels = &.{ "2", "7", "40" } } };
+    const printed = try execute(a, &d, &out, table, .{ .chisq = true }, .{}, .equal, false);
+    try std.testing.expectApproxEqAbs(@as(f64, 11.0261), printed.chi_square.?.mantel_haenszel.?.statistic, 0.00005);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Score Type = TABLE") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "100         100") != null);
+    out.clearRetainingCapacity();
+    const hidden = try execute(a, &d, &out, table, .{ .chisq = true }, .{}, .equal, true);
+    try std.testing.expectEqual(printed.chi_square.?.mantel_haenszel.?.statistic, hidden.chi_square.?.mantel_haenszel.?.statistic);
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    try std.testing.expectError(error.ExecError, execute(a, &d, &out, .{ .one_way = true, .matrix = .{ .rows = 1, .cols = 2, .counts = &.{ 2, 3 } } }, .{ .chisq = true }, .{}, .{ .proportions = &.{ 0.2, 0.2 } }, true));
+    try std.testing.expect(d.hasErrors());
+}
+
+test "FEAT-freq-tests SAS zero-total table notes instead of errors with validation precedence" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const table = Table{ .name = "g", .one_way = true, .matrix = .{ .rows = 2, .cols = 1, .counts = &.{ 0, 0 } } };
+    for ([_]bool{ false, true }) |noprint| {
+        for ([_]k.Expected{ .equal, .{ .proportions = &.{ 50, 50 } }, .{ .frequencies = &.{ 1, 1 } } }) |expected| {
+            d.list.clearRetainingCapacity();
+            const report = try execute(a, &d, &out, table, .{ .chisq = true, .lrchi = true, .df = -1 }, .{}, expected, noprint);
+            try std.testing.expect(report.goodness_of_fit == null);
+            try std.testing.expectEqual(@as(usize, 0), out.items.len);
+            try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+            try std.testing.expectEqual(diag.Severity.note, d.list.items[0].severity);
+            try std.testing.expectEqualStrings("No statistics are computed for the table of g because it contains no observations with positive weights.", d.list.items[0].message);
+            try std.testing.expect(!d.hasErrors());
+        }
+    }
+    d.list.clearRetainingCapacity();
+    _ = try execute(a, &d, &out, table, .{ .chisq = true }, .{}, .equal, false);
+    try std.testing.expect(!d.hasErrors());
+    for ([_]k.Expected{ .{ .proportions = &.{ 20, 20 } }, .{ .proportions = &.{100} } }) |bad| {
+        d.list.clearRetainingCapacity();
+        try std.testing.expectError(error.ExecError, execute(a, &d, &out, table, .{ .chisq = true }, .{}, bad, true));
+        try std.testing.expect(d.hasErrors());
+    }
+    d.list.clearRetainingCapacity();
+    try std.testing.expectError(error.ExecError, execute(a, &d, &out, table, .{ .chisq = true, .df = 0 }, .{}, .equal, true));
+    try std.testing.expect(d.hasErrors());
 }

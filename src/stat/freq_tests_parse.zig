@@ -8,7 +8,10 @@ const kernels = @import("freq_tests.zig");
 pub const ExpectedSource = union(enum) { equal, proportions: []const f64, frequencies: []const f64, proportion_dataset: []const u8, frequency_dataset: []const u8 };
 pub const Warn = struct { display: bool = true, log: bool = true, output: bool = false };
 pub const Tests = packed struct { gamma: bool = false, tau_b: bool = false, tau_c: bool = false, somers_cr: bool = false, somers_rc: bool = false, pearson: bool = false, spearman: bool = false, polychoric: bool = false };
+pub const ScoreType = enum { table, rank, ridit, modridit };
 pub const Options = struct {
+    // Set from the table layer; this module does not parse or recompute SCORES.
+    score_type: ScoreType = .table,
     chisq: bool = false,
     lrchi: bool = false,
     measures: bool = false,
@@ -344,4 +347,22 @@ test "FEAT-freq-tests oracle list accumulation and dataset precedence" {
         try std.testing.expectEqual(@as(usize, if (index == 4) 1 else 0), d.list.items.len);
         try std.testing.expect(!d.hasErrors());
     }
+}
+
+/// SAS falls back to the grid when LIST accompanies statistical options.
+/// Apply after TEST implication, independent of either NOPRINT setting.
+pub fn usesList(requested: bool, opts: Options) bool {
+    return requested and !opts.chisq and !opts.measures and !opts.plcorr;
+}
+
+test "FEAT-freq-tests oracle LIST fallback follows TEST implication" {
+    try std.testing.expect(usesList(true, .{}));
+    try std.testing.expect(!usesList(true, .{ .chisq = true }));
+    try std.testing.expect(!usesList(true, .{ .measures = true }));
+    var one: Options = .{};
+    implyTests(&one, .{ .gamma = true }, 1);
+    try std.testing.expect(!usesList(true, one));
+    var multiple: Options = .{};
+    implyTests(&multiple, .{ .gamma = true }, 2);
+    try std.testing.expect(usesList(true, multiple));
 }
