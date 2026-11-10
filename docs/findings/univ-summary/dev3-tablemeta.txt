@@ -1,6 +1,0 @@
-
-_LABEL_ 40
-_VAR_ 31
-
-FZERO rows=0 cols=47 label=Summary Statistics
-CMISS rows=0 cols=48 label=Summary Statistics

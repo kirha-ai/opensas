@@ -1,7 +1,0 @@
-
-Obs     a    p50_00
-
- 1     50     .002 
-
-a the mean, x
-p50_00 the  50.0010 percentile, x

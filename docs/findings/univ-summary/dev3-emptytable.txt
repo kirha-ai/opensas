@@ -1,4 +1,0 @@
-
-rows=0 cols=0 label=
-
-rows=0 cols=47 label=Summary Statistics

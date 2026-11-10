@@ -1,6 +1,0 @@
-
-Obs    _VAR_
-
- 1       x  
-
-Selected Summary Statistics (Percentile Definition=Weighted)
