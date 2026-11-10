@@ -100,3 +100,13 @@ adjusted DF; explicit DF=0 reports that DF must be nonzero. The probe's two
 intentional invalid cases account for its sasrun exit2; neither is relaxed by
 the default-DF exception. DF=0 default suppresses the sparse flag; valid
 positive overrides retain the normal sparse computation.
+
+## Integration-readiness audit
+
+See integration-plan.md for the read-only dev2 API snapshot and exact parent
+hooks. test-semantics.sas pins TEST cardinality/implication/warnings;
+expected-semantics.sas and expected-precedence.sas pin TESTP/TESTF list versus
+dataset implication and precedence. Intentional errors/warnings are documented
+in that plan. These probes drove isolated parser fixes; no dev2 or procedure
+dispatch files were edited. The new TestStatement helper owns duplicate-TEST
+errors and empty/missing-TABLES warnings for the future parent integration.
