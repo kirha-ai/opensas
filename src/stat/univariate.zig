@@ -66,6 +66,7 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
 }
 pub const Options = struct {
     source: ?*Dataset = null,
+    nobs_source: ?*Dataset = null,
     source_rows: std.AutoHashMapUnmanaged(usize, []const Value) = .empty,
     obscol: ?usize = null,
     freqcol: ?usize = null,
@@ -624,6 +625,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 gd.columns = ds.columns;
                 try gd.rows.appendSlice(a, g.rows);
                 const analysis = try analysisView(a, &gd, acols, wc, opt);
+                const nobs = outputNobs(g.rows, bcols, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
                 for (spec.req.items) |r| if (eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
@@ -631,6 +633,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 };
                 for (acols, 0..) |ci, j| {
                     summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, mu0, robust);
+                    summaries[j].nobs = nobs;
                     if (table and wc == null and summaries[j].pairs.len > 65_526)
                         try cx.diags.warn(0, "UNIVARIATE: Qn is not computed by default above 65526 nonmissing observations for {s}", .{ds.columns.items[ci].name});
                     if (table and wc == null and summaries[j].pairs.len > 1_000_000)
@@ -1159,6 +1162,20 @@ pub fn analysisView(a: Allocator, ds: *Dataset, cols: []const usize, wc: ?usize,
     return .{ .ds = view, .weight = weight };
 }
 
+// SAS 9.4 Table 4.36: pooled/BY NOBS includes weight-excluded rows;
+// FREQ expands this count. CLASS instead counts retained analysis rows.
+// Oracle: matrix.sas under /tmp/opensas-review-fixes/BUG-univnobsexcl.
+fn outputNobs(rows: []const []const Value, bcols: []const usize, opt: Options) usize {
+    const source = opt.nobs_source orelse return rows.len;
+    if (bcols.len == 0) return source.rows.items.len;
+    if (rows.len == 0) return 0;
+    var count: usize = 0;
+    for (source.rows.items) |row| {
+        if (bySegment(opt, row) == bySegment(opt, rows[0])) count += 1;
+    }
+    return count;
+}
+
 fn bySegment(opt: Options, row: []const Value) usize {
     const obs: usize = @intFromFloat(h.toNum(row[opt.obscol.?]));
     var lo: usize = 0;
@@ -1284,4 +1301,103 @@ test "UNIVARIATE OUTTABLE honors the SAS default Qn sample-size limit" {
     try std.testing.expect(std.math.isNan(z.std_qn));
     try std.testing.expectApproxEqAbs(@as(f64, 19537.1732), z.sn, 1e-8);
     try std.testing.expectApproxEqAbs(@as(f64, 19537.441543), z.std_sn, 1e-6);
+}
+
+test "BUG-univnobsexcl pooled NOBS preserves excluded observations without changing N" {
+    // SAS 9.4 Table 4.36 p.460; repro.sas and freqones.sas in
+    // /tmp/opensas-review-fixes/BUG-univnobsexcl both give 2,1,7,2.5.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_][2]f64{ .{ 1, 1 }, .{ 2, nan }, .{ nan, nan }, .{ nan, 1 }, .{ 4, 1 }, .{ 5, 0 }, .{ 6, -1 } }) |r| {
+        try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = 0 }, .{ .num = r[1] }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    for ([_][]const u8{ "", "freq f;" }) |freq| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint exclnpwgt outtable=t; var x y; weight w; {s} output out=o n=n ny nmiss=nm nobs=no noy mean=m; run;", .{freq}));
+        const o = lib.find("o").?;
+        try std.testing.expectEqual(@as(usize, 1), o.rows.items.len);
+        try std.testing.expectEqual(@as(f64, 2), testCell(o, 0, "n"));
+        try std.testing.expectEqual(@as(f64, 3), testCell(o, 0, "ny"));
+        try std.testing.expectEqual(@as(f64, 1), testCell(o, 0, "nm"));
+        try std.testing.expectEqual(@as(f64, 7), testCell(o, 0, "no"));
+        try std.testing.expectEqual(@as(f64, 7), testCell(o, 0, "noy"));
+        try std.testing.expectEqual(@as(f64, 2.5), testCell(o, 0, "m"));
+        // OUTTABLE _NOBS_ is N, not OUTPUT NOBS.
+        try std.testing.expectEqual(@as(f64, 2), testCell(lib.find("t").?, 0, "_NOBS_"));
+    }
+}
+
+test "BUG-univnobsexcl BY segments FREQ and CLASS follow SAS counting boundaries" {
+    // Oracle matrix.sas: CLASS (N,NMISS,NOBS)=(5,1,6),(1,0,1);
+    // BY NOBS=11,2; pooled=14; FREQ pooled=24; FREQ BY=20,3.
+    // boundary.sas: FREQ CLASS=(3,2,5),(1,0,1). Fully excluded
+    // CLASS/BY groups produce no row; repeated NOTSORTED keys stay separate.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    // b,c,x,w,f from the oracle; testData stores x,c,w,f,b.
+    for ([_][5]f64{
+        .{ 1, 1, 1, 1, 2.9 }, .{ 1, 1, 2, nan, 3 },  .{ 1, 1, nan, 1, 2 },
+        .{ 1, 1, 4, 1, 1 },   .{ 1, 1, 5, 0, 4 },    .{ 1, 1, 6, -1, 5 },
+        .{ 1, 1, 7, 1, 0 },   .{ 1, 1, 8, 1, nan },  .{ 1, 1, 9, 1, -1 },
+        .{ 1, 2, 10, 0, 2 },  .{ 1, 2, 11, nan, 1 }, .{ 2, 1, 12, -1, 1 },
+        .{ 1, 1, 20, 1, 1 },  .{ 1, 1, 30, 0, 2 },
+    }) |r| {
+        try ds.appendRow(&.{ .{ .num = r[2] }, .{ .num = r[1] }, .{ .num = r[3] }, .{ .num = r[4] }, .{ .num = r[0] } });
+    }
+    const Case = struct { syntax: []const u8, nobs: []const f64, n: []const f64, nm: []const f64 };
+    for ([_]Case{
+        .{ .syntax = "by g notsorted; class y;", .nobs = &.{ 6, 1 }, .n = &.{ 5, 1 }, .nm = &.{ 1, 0 } },
+        .{ .syntax = "by g notsorted;", .nobs = &.{ 11, 2 }, .n = &.{ 5, 1 }, .nm = &.{ 1, 0 } },
+        .{ .syntax = "", .nobs = &.{14}, .n = &.{6}, .nm = &.{1} },
+        .{ .syntax = "freq f;", .nobs = &.{24}, .n = &.{4}, .nm = &.{2} },
+        .{ .syntax = "by g notsorted; freq f;", .nobs = &.{ 20, 3 }, .n = &.{ 3, 1 }, .nm = &.{ 2, 0 } },
+        .{ .syntax = "by g notsorted; class y; freq f;", .nobs = &.{ 5, 1 }, .n = &.{ 3, 1 }, .nm = &.{ 2, 0 } },
+    }) |case| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint exclnpwgt; {s} var x; weight w; output out=o n=n nmiss=nm nobs=no; run;", .{case.syntax}));
+        const o = lib.find("o").?;
+        try std.testing.expectEqual(case.nobs.len, o.rows.items.len);
+        for (case.nobs, case.n, case.nm, 0..) |no, n, nm, j| {
+            try std.testing.expectEqual(no, testCell(o, j, "no"));
+            try std.testing.expectEqual(n, testCell(o, j, "n"));
+            try std.testing.expectEqual(nm, testCell(o, j, "nm"));
+        }
+    }
+}
+
+test "BUG-univnobsexcl preserves eligible formatted CLASS identity and filtered input counts" {
+    // identity.sas oracle: formatted c=1.2 N=NOBS=1; MISSING adds c=.
+    // with N=NOBS=1; WHERE x<40 gives N=1 NOBS=3; no WEIGHT gives 5,5.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_][3]f64{ .{ 10, 1.1, 0 }, .{ 20, 1.2, 1 }, .{ 30, 1.3, nan }, .{ 40, nan, 1 }, .{ 50, 2.1, -1 } }) |r| {
+        try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = r[1] }, .{ .num = r[2] }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    for ([_][]const u8{ "", "(missing)" }, 1..) |option_text, count| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint exclnpwgt; class y{s}; format y 1.; var x; weight w; output out=o n=n nobs=no;run;", .{option_text}));
+        const o = lib.find("o").?;
+        try std.testing.expectEqual(count, o.rows.items.len);
+        try std.testing.expectEqual(@as(f64, 1.2), testCell(o, count - 1, "y"));
+        for (0..count) |j| {
+            try std.testing.expectEqual(@as(f64, 1), testCell(o, j, "n"));
+            try std.testing.expectEqual(@as(f64, 1), testCell(o, j, "no"));
+        }
+        if (count == 2) try std.testing.expect(std.math.isNan(testCell(o, 0, "y")));
+    }
+    try testRun(a, lib, "proc univariate data=d noprint exclnpwgt; where x<40; var x; weight w; output out=o n=n nobs=no;run;");
+    try std.testing.expectEqual(@as(f64, 1), testCell(lib.find("o").?, 0, "n"));
+    try std.testing.expectEqual(@as(f64, 3), testCell(lib.find("o").?, 0, "no"));
+    try testRun(a, lib, "proc univariate data=d noprint exclnpwgt; var x; output out=o n=n nobs=no;run;");
+    try std.testing.expectEqual(@as(f64, 5), testCell(lib.find("o").?, 0, "n"));
+    try std.testing.expectEqual(@as(f64, 5), testCell(lib.find("o").?, 0, "no"));
 }

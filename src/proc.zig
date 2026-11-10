@@ -4639,6 +4639,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     }
 
     if (extra.exclnpwgt) if (try resolveWeightCol(ds, weight_var, diags, toks[0].line)) |wc| {
+        // Keep pre-exclusion counts separate from eligible CLASS identities.
+        if (classes.items.len == 0) extra.nobs_source = ds;
         ds = try dropNonpositiveWeight(arena, ds, wc);
     };
 
