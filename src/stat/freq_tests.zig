@@ -214,6 +214,7 @@ fn measure(est: f64, variance: f64, null_variance: f64, alpha: f64) Measure {
         out.lower = @max(-1, est - critical * out.ase.?);
         out.upper = @min(1, est + critical * out.ase.?);
     }
+    if (std.math.isFinite(null_variance) and null_variance == 0) out.null_se = 0;
     if (std.math.isFinite(null_variance) and null_variance > 0) {
         out.null_se = @sqrt(null_variance);
         out.z = est / out.null_se.?;
@@ -851,4 +852,11 @@ test "FEAT-freq-tests SAS tetrachoric boundary independence and DF scope" {
     const chi_square = try contingency(a, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 9, 11, 3 } }, 3);
     try std.testing.expectEqual(@as(f64, 3), chi_square.continuity.?.df);
     try std.testing.expectEqual(@as(f64, 1), chi_square.mantel_haenszel.?.df);
+}
+
+test "FEAT-freq-tests zero null variance retains zero SE and missing test" {
+    const result = measure(1, 0, 0, 0.05);
+    try std.testing.expectEqual(@as(?f64, 0), result.null_se);
+    try std.testing.expectEqual(@as(?f64, 0), result.ase);
+    try std.testing.expect(result.z == null and result.p_two == null);
 }
