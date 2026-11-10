@@ -49,10 +49,10 @@ Signed Rank    S         5    Pr >= |S| 0.1250
 
            Value      Obs        Value      Obs
 
-                   1    1                6    6
-                   2    2                4    4
-                   4    4                2    2
-                   6    6                1    1
+                   1    1                1    1
+                   2    2                2    2
+                   4    4                4    4
+                   6    6                6    6
 UNIVARIATE already COMPUTES the count: n=4 nmiss=2 via OUTPUT
 UNIVARIATE already COMPUTES the count: n=4 nmiss=2 via OUTPUT
 n_   nm_

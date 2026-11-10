@@ -1,3 +1,8 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              resp   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
 
       Frequency Missing = 3
                                       The FREQ Procedure

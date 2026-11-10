@@ -1,0 +1,76 @@
+The CORR Procedure
+
+3 Variables: y x z
+Freq Variable: f
+Weight Variable: w
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+y 8 3.87500 0.83452 31.00000 2.00000 8.00000
+x 9 4.63636 3.05257 51.00000 1.00000 7.00000
+z 8 7.00000 0.00000 42.00000 7.00000 7.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable y x z
+y 1.00000 1.00000 .
+P - <.0001 .
+N 8 7 6
+x 1.00000 1.00000 .
+P <.0001 - .
+N 7 9 7
+z . . .
+P . . .
+N 6 7 8
+
+The CORR Procedure
+
+3 Variables: y x z
+Freq Variable: f
+Weight Variable: w
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+y 5 2.00000 0.00000 2.00000 2.00000 8.00000
+x 5 1.00000 0.00000 1.00000 1.00000 5.00000
+z 5 7.00000 0.00000 7.00000 7.00000 7.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable y x z
+y . . .
+P . . .
+N 5 5 5
+x . . .
+P . . .
+N 5 5 5
+z . . .
+P . . .
+N 5 5 5
+
+The CORR Procedure
+
+2 With Variables: y z
+1 Variables: x
+Freq Variable: f
+Weight Variable: w
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+y 4 3.87500 1.27475 31.00000 2.00000 5.00000
+z 4 7.00000 0.00000 42.00000 7.00000 7.00000
+x 5 4.63636 4.31699 51.00000 1.00000 7.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x
+y 1.00000
+P <.0001
+N 3
+z .
+P .
+N 3
+

@@ -1,0 +1,445 @@
+CASE LIST CHISQ
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |2       |7       |40      |  Total
+              ---------+--------+--------+--------+
+              1        |     12 |      5 |      3 |     20
+                       |  17.14 |   7.14 |   4.29 |  28.57
+                       |  60.00 |  25.00 |  15.00 |
+                       |  66.67 |  16.67 |  13.64 |
+              ---------+--------+--------+--------+
+              10       |      4 |     17 |      6 |     27
+                       |   5.71 |  24.29 |   8.57 |  38.57
+                       |  14.81 |  62.96 |  22.22 |
+                       |  22.22 |  56.67 |  27.27 |
+              ---------+--------+--------+--------+
+              100      |      2 |      8 |     13 |     23
+                       |   2.86 |  11.43 |  18.57 |  32.86
+                       |   8.70 |  34.78 |  56.52 |
+                       |  11.11 |  26.67 |  59.09 |
+              ---------+--------+--------+--------+
+              Total          18       30       22       70
+                          25.71    42.86    31.43   100.00
+
+Statistics for Table of r by c
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     24.4193    <.0001
+Likelihood Ratio Chi-Square      4     22.5979    0.0002
+Mantel-Haenszel Chi-Square       1     11.0261    0.0009
+Phi Coefficient                         0.5906
+Contingency Coefficient                 0.5086
+Cramer's V                              0.4176
+
+Sample Size = 70
+CASE ONE WAY LIST CHISQ
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              r      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1             20       28.57             20        28.57
+              10            27       38.57             47        67.14
+              100           23       32.86             70       100.00
+
+Chi-Square Test
+for Equal Proportions
+
+Chi-Square                  1.0571
+DF                               2
+Pr > ChiSq                  0.5894
+
+Sample Size = 70
+CASE LIST IMPLIED TEST
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |2       |7       |40      |  Total
+              ---------+--------+--------+--------+
+              1        |     12 |      5 |      3 |     20
+                       |  17.14 |   7.14 |   4.29 |  28.57
+                       |  60.00 |  25.00 |  15.00 |
+                       |  66.67 |  16.67 |  13.64 |
+              ---------+--------+--------+--------+
+              10       |      4 |     17 |      6 |     27
+                       |   5.71 |  24.29 |   8.57 |  38.57
+                       |  14.81 |  62.96 |  22.22 |
+                       |  22.22 |  56.67 |  27.27 |
+              ---------+--------+--------+--------+
+              100      |      2 |      8 |     13 |     23
+                       |   2.86 |  11.43 |  18.57 |  32.86
+                       |   8.70 |  34.78 |  56.52 |
+                       |  11.11 |  26.67 |  59.09 |
+              ---------+--------+--------+--------+
+              Total          18       30       22       70
+                          25.71    42.86    31.43   100.00
+
+Statistics for Table of r by c
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation                     0.3997    0.1143
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Gamma
+----------------------------------
+Estimate                    0.6210
+ASE                         0.1234
+95% Lower Conf Limit        0.3790
+95% Upper Conf Limit        0.8629
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.1433
+Z                           4.3327
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 70
+CASE SEPARATE LIST AND STATISTICS
+                                      The FREQ Procedure
+
+                                                Cumulative    Cumulative
+              r    c    Frequency     Percent      Frequency      Percent
+              ----------------------------------------------------------------------
+              1    2           12       17.14             12        17.14
+              1    7            5        7.14             17        24.29
+              1    40           3        4.29             20        28.57
+              10   2            4        5.71             24        34.29
+              10   7           17       24.29             41        58.57
+              10   40           6        8.57             47        67.14
+              100  2            2        2.86             49        70.00
+              100  7            8       11.43             57        81.43
+              100  40          13       18.57             70       100.00
+
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation                     0.3997    0.1143
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Gamma
+----------------------------------
+Estimate                    0.6210
+ASE                         0.1234
+95% Lower Conf Limit        0.3790
+95% Upper Conf Limit        0.8629
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.1433
+Z                           4.3327
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 70
+CASE TABLE SCORES
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Scores for Table of r by c
+Score Type = TABLE
+
+Row Scores
+
+  r       Score
+---------------
+  1           1
+ 10          10
+100         100
+
+Column Scores
+
+ c       Score
+--------------
+ 2           2
+ 7           7
+40          40
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     24.4193    <.0001
+Likelihood Ratio Chi-Square      4     22.5979    0.0002
+Mantel-Haenszel Chi-Square       1     11.0261    0.0009
+Phi Coefficient                         0.5906
+Contingency Coefficient                 0.5086
+Cramer's V                              0.4176
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation                     0.3997    0.1143
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Pearson Correlation
+----------------------------------
+Estimate                    0.3997
+ASE                         0.1143
+95% Lower Conf Limit        0.1757
+95% Upper Conf Limit        0.6238
+
+Test of H0: Pearson Correlation = 0
+
+ASE under H0                0.1218
+Z                           3.2821
+One-sided Pr > Z            0.0005
+Two-sided Pr > |Z|          0.0010
+
+Sample Size = 70
+CASE RANK SCORES
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Scores for Table of r by c
+Score Type = RANK
+
+Row Scores
+
+  r       Score
+---------------
+  1        10.5
+ 10          34
+100          59
+
+Column Scores
+
+ c       Score
+--------------
+ 2         9.5
+ 7        33.5
+40        59.5
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     24.4193    <.0001
+Likelihood Ratio Chi-Square      4     22.5979    0.0002
+MH Chi-Square (Rank Scores)      1     15.6920    <.0001
+Phi Coefficient                         0.5906
+Contingency Coefficient                 0.5086
+Cramer's V                              0.4176
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation (Rank Scores)       0.4769    0.1058
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Pearson Correlation (Rank Scores)
+----------------------------------
+Estimate                    0.4769
+ASE                         0.1058
+95% Lower Conf Limit        0.2696
+95% Upper Conf Limit        0.6842
+
+Test of H0: Pearson Correlation (Rank Scores) = 0
+
+ASE under H0                0.1197
+Z                           3.9856
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 70
+CASE RIDIT SCORES
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Scores for Table of r by c
+Score Type = RIDIT
+
+Row Scores
+
+  r       Score
+---------------
+  1        0.15
+ 10    0.485714
+100    0.842857
+
+Column Scores
+
+ c       Score
+--------------
+ 2    0.135714
+ 7    0.478571
+40        0.85
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     24.4193    <.0001
+Likelihood Ratio Chi-Square      4     22.5979    0.0002
+MH Chi-Square (Ridit Scores)     1     15.6920    <.0001
+Phi Coefficient                         0.5906
+Contingency Coefficient                 0.5086
+Cramer's V                              0.4176
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation (Ridit Scores)      0.4769    0.1058
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Pearson Correlation (Ridit Scores)
+----------------------------------
+Estimate                    0.4769
+ASE                         0.1058
+95% Lower Conf Limit        0.2696
+95% Upper Conf Limit        0.6842
+
+Test of H0: Pearson Correlation (Ridit Scores) = 0
+
+ASE under H0                0.1197
+Z                           3.9856
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 70
+CASE MODRIDIT SCORES
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Scores for Table of r by c
+Score Type = MODRIDIT
+
+Row Scores
+
+  r       Score
+---------------
+  1    0.147887
+ 10    0.478873
+100    0.830986
+
+Column Scores
+
+ c       Score
+--------------
+ 2    0.133803
+ 7    0.471831
+40    0.838028
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     24.4193    <.0001
+Likelihood Ratio Chi-Square      4     22.5979    0.0002
+MH Chi-Square (Mod. Ridits)      1     15.6920    <.0001
+Phi Coefficient                         0.5906
+Contingency Coefficient                 0.5086
+Cramer's V                              0.4176
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6210    0.1234
+Kendall's Tau-b                         0.4420    0.1002
+Stuart's Tau-c                          0.4353    0.1005
+Somers' D C|R                           0.4386    0.1002
+Somers' D R|C                           0.4455    0.1004
+Pearson Correlation (Mod. Ridits)       0.4769    0.1058
+Spearman Correlation                    0.4769    0.1063
+Lambda Asymmetric C|R                   0.3000    0.1289
+Lambda Asymmetric R|C                   0.3488    0.1110
+Lambda Symmetric                        0.3253    0.1130
+Uncertainty Coefficient C|R             0.1500    0.0611
+Uncertainty Coefficient R|C             0.1479    0.0605
+Uncertainty Coefficient Symmetric       0.1490    0.0608
+
+Pearson Correlation (Mod. Ridits)
+----------------------------------
+Estimate                    0.4769
+ASE                         0.1058
+95% Lower Conf Limit        0.2696
+95% Upper Conf Limit        0.6842
+
+Test of H0: Pearson Correlation (Mod. Ridits) = 0
+
+ASE under H0                0.1197
+Z                           3.9856
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 70

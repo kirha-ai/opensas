@@ -1,0 +1,301 @@
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.8214    0.1251
+Kendall's Tau-b                         0.5191    0.1396
+Stuart's Tau-c                          0.5097    0.1394
+Somers' D C|R                           0.5154    0.1398
+Somers' D R|C                           0.5227    0.1404
+Pearson Correlation                     0.5191    0.1396
+Spearman Correlation                    0.5191    0.1396
+Lambda Asymmetric C|R                   0.4375    0.1933
+Lambda Asymmetric R|C                   0.4706    0.1712
+Lambda Symmetric                        0.4545    0.1749
+Uncertainty Coefficient C|R             0.2065    0.1167
+Uncertainty Coefficient R|C             0.2044    0.1158
+Uncertainty Coefficient Symmetric       0.2054    0.1162
+
+Gamma
+----------------------------------
+Estimate                    0.8214
+ASE                         0.1251
+95% Lower Conf Limit        0.5761
+95% Upper Conf Limit        1.0000
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.2246
+Z                           3.6565
+One-sided Pr > Z            0.0001
+Two-sided Pr > |Z|          0.0003
+
+Sample Size = 38
+
+                        The FREQ Procedure
+
+                        Table of r by q
+
+
+Statistics for Table of r by q
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                  -0.2782    0.3550
+Kendall's Tau-b                        -0.1212    0.1622
+Stuart's Tau-c                         -0.1025    0.1383
+Somers' D C|R                          -0.1036    0.1398
+Somers' D R|C                          -0.1418    0.1892
+Pearson Correlation                    -0.1212    0.1622
+Spearman Correlation                   -0.1212    0.1622
+Lambda Asymmetric C|R                   0.0000    0.0000
+Lambda Asymmetric R|C                   0.0588    0.1712
+Lambda Symmetric                        0.0385    0.1127
+Uncertainty Coefficient C|R             0.0134    0.0357
+Uncertainty Coefficient R|C             0.0106    0.0285
+Uncertainty Coefficient Symmetric       0.0118    0.0317
+
+Gamma
+----------------------------------
+Estimate                   -0.2782
+ASE                         0.3550
+95% Lower Conf Limit       -0.9739
+95% Upper Conf Limit        0.4176
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.3755
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Sample Size = 38
+                                      The FREQ Procedure
+
+                                               Cumulative    Cumulative
+              r   c    Frequency     Percent      Frequency      Percent
+              ---------------------------------------------------------------------
+              1   1           12       31.58             12        31.58
+              1   2            5       13.16             17        44.74
+              2   1            4       10.53             21        55.26
+              2   2           17       44.74             38       100.00
+
+                        The FREQ Procedure
+
+                        Table of r by q
+
+
+Statistics for Table of r by q
+
+Statistic                              Value       ASE     90% Confidence Limits
+----------------------------------------------------------------------------
+Gamma                                  -0.2782    0.3550    -0.8621     0.3057
+Kendall's Tau-b                        -0.1212    0.1622    -0.3880     0.1456
+Stuart's Tau-c                         -0.1025    0.1383    -0.3300     0.1250
+Somers' D C|R                          -0.1036    0.1398    -0.3337     0.1264
+Somers' D R|C                          -0.1418    0.1892    -0.4530     0.1695
+Pearson Correlation                    -0.1212    0.1622    -0.3880     0.1456
+Spearman Correlation                   -0.1212    0.1622    -0.3880     0.1456
+Lambda Asymmetric C|R                   0.0000    0.0000     0.0000     0.0000
+Lambda Asymmetric R|C                   0.0588    0.1712     0.0000     0.3404
+Lambda Symmetric                        0.0385    0.1127     0.0000     0.2239
+Uncertainty Coefficient C|R             0.0134    0.0357     0.0000     0.0721
+Uncertainty Coefficient R|C             0.0106    0.0285     0.0000     0.0575
+Uncertainty Coefficient Symmetric       0.0118    0.0317     0.0000     0.0640
+
+Kendall's Tau-b
+----------------------------------
+Estimate                   -0.1212
+ASE                         0.1622
+90% Lower Conf Limit       -0.3880
+90% Upper Conf Limit        0.1456
+
+Test of H0: Kendall's Tau-b = 0
+
+ASE under H0                0.1636
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Stuart's Tau-c
+----------------------------------
+Estimate                   -0.1025
+ASE                         0.1383
+90% Lower Conf Limit       -0.3300
+90% Upper Conf Limit        0.1250
+
+Test of H0: Stuart's Tau-c = 0
+
+ASE under H0                0.1383
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Somers' D C|R
+----------------------------------
+Estimate                   -0.1036
+ASE                         0.1398
+90% Lower Conf Limit       -0.3337
+90% Upper Conf Limit        0.1264
+
+Test of H0: Somers' D C|R = 0
+
+ASE under H0                0.1399
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Somers' D R|C
+----------------------------------
+Estimate                   -0.1418
+ASE                         0.1892
+90% Lower Conf Limit       -0.4530
+90% Upper Conf Limit        0.1695
+
+Test of H0: Somers' D R|C = 0
+
+ASE under H0                0.1913
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Pearson Correlation
+----------------------------------
+Estimate                   -0.1212
+ASE                         0.1622
+90% Lower Conf Limit       -0.3880
+90% Upper Conf Limit        0.1456
+
+Test of H0: Pearson Correlation = 0
+
+ASE under H0                0.1636
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Spearman Correlation
+----------------------------------
+Estimate                   -0.1212
+ASE                         0.1622
+90% Lower Conf Limit       -0.3880
+90% Upper Conf Limit        0.1456
+
+Test of H0: Spearman Correlation = 0
+
+ASE under H0                0.1636
+Z                          -0.7409
+One-sided Pr < Z            0.2294
+Two-sided Pr > |Z|          0.4588
+
+Odds Ratio and Relative Risks
+
+Statistic                        Value       90% Confidence Limits
+------------------------------------------------------------------
+Odds Ratio                      0.5647        0.1593        2.0023
+Relative Risk (Column 1)        0.8720        0.6390        1.1899
+Relative Risk (Column 2)        1.5441        0.5888        4.0494
+
+Sample Size = 38
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.8214    0.1251
+Kendall's Tau-b                         0.5191    0.1396
+Stuart's Tau-c                          0.5097    0.1394
+Somers' D C|R                           0.5154    0.1398
+Somers' D R|C                           0.5227    0.1404
+Pearson Correlation                     0.5191    0.1396
+Spearman Correlation                    0.5191    0.1396
+Lambda Asymmetric C|R                   0.4375    0.1933
+Lambda Asymmetric R|C                   0.4706    0.1712
+Lambda Symmetric                        0.4545    0.1749
+Uncertainty Coefficient C|R             0.2065    0.1167
+Uncertainty Coefficient R|C             0.2044    0.1158
+Uncertainty Coefficient Symmetric       0.2054    0.1162
+
+Kendall's Tau-b
+----------------------------------
+Estimate                    0.5191
+ASE                         0.1396
+95% Lower Conf Limit        0.2454
+95% Upper Conf Limit        0.7927
+
+Test of H0: Kendall's Tau-b = 0
+
+ASE under H0                0.1420
+Z                           3.6565
+One-sided Pr > Z            0.0001
+Two-sided Pr > |Z|          0.0003
+
+Stuart's Tau-c
+----------------------------------
+Estimate                    0.5097
+ASE                         0.1394
+95% Lower Conf Limit        0.2365
+95% Upper Conf Limit        0.7829
+
+Test of H0: Stuart's Tau-c = 0
+
+ASE under H0                0.1394
+Z                           3.6565
+One-sided Pr > Z            0.0001
+Two-sided Pr > |Z|          0.0003
+
+Sample Size = 38
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              r      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1             17       44.74             17        44.74
+              2             21       55.26             38       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              c      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1             16       42.11             16        42.11
+              2             22       57.89             38       100.00
+
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              q      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1             29       76.32             29        76.32
+              2              9       23.68             38       100.00
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     12 |      5 |     17
+                       |  31.58 |  13.16 |  44.74
+                       |  70.59 |  29.41 |
+                       |  75.00 |  22.73 |
+              ---------+--------+--------+
+              2        |      4 |     17 |     21
+                       |  10.53 |  44.74 |  55.26
+                       |  19.05 |  80.95 |
+                       |  25.00 |  77.27 |
+              ---------+--------+--------+
+              Total          16       22       38
+                          42.11    57.89   100.00

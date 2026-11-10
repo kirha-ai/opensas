@@ -48,13 +48,13 @@ Variables      3
               Alphabetic List of Variables and Attributes
 
 #  Variable  Type  Len  Format  Informat  Label
-2  COUNT     Num     8
+2  COUNT     Num     8                    Frequency Count
 1  g         Num     8  BF.
-3  PERCENT   Num     8
+3  PERCENT   Num     8                    Percent of Total Frequency
 Obs      g   COUNT   PERCENT     y
 
-  1   High       2        50   300
-  2    Low       2        50   100
+  1    Low       2        50   100
+  2   High       2        50   300
 Obs   g       _TYPE_   _FREQ_    m
 
   1                0        3   20
@@ -76,6 +76,7 @@ Variables      4
                           The CONTENTS Procedure
 
 Data Set Name  ou
+Label          Selected Summary Statistics
 Observations   2
 Variables      2
 
@@ -83,4 +84,4 @@ Variables      2
 
 #  Variable  Type  Len  Format  Informat  Label
 1  g         Num     8  GF.
-2  mu        Num     8
+2  mu        Num     8                    the mean, x

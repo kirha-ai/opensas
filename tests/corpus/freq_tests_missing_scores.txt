@@ -1,0 +1,224 @@
+TABLE scores with numeric missing
+                        The FREQ Procedure
+
+                        Table of x by y
+
+              x         y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |10      |20      |30      |  Total
+              ---------+--------+--------+--------+
+              .        |     24 |     10 |      6 |     40
+                       |  15.00 |   6.25 |   3.75 |  25.00
+                       |  60.00 |  25.00 |  15.00 |
+                       |  63.16 |  17.86 |   9.09 |
+              ---------+--------+--------+--------+
+              2        |      8 |     30 |     12 |     50
+                       |   5.00 |  18.75 |   7.50 |  31.25
+                       |  16.00 |  60.00 |  24.00 |
+                       |  21.05 |  53.57 |  18.18 |
+              ---------+--------+--------+--------+
+              5        |      6 |     16 |     48 |     70
+                       |   3.75 |  10.00 |  30.00 |  43.75
+                       |   8.57 |  22.86 |  68.57 |
+                       |  15.79 |  28.57 |  72.73 |
+              ---------+--------+--------+--------+
+              Total          38       56       66      160
+                          23.75    35.00    41.25   100.00
+
+Statistics for Table of x by y
+
+Scores for Table of x by y
+Score Type = TABLE
+
+Row Scores
+
+x       Score
+-------------
+.           0
+2           1
+5           2
+
+Column Scores
+
+ y       Score
+--------------
+10          10
+20          20
+30          30
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     66.1627    <.0001
+Likelihood Ratio Chi-Square      4     61.5626    <.0001
+Mantel-Haenszel Chi-Square       1           .         .
+Phi Coefficient                         0.6431
+Contingency Coefficient                 0.5409
+Cramer's V                              0.4547
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6874    0.0713
+Kendall's Tau-b                         0.4993    0.0629
+Stuart's Tau-c                          0.4866    0.0622
+Somers' D C|R                           0.5002    0.0634
+Somers' D R|C                           0.4983    0.0628
+Pearson Correlation                          .         .
+Spearman Correlation                    0.5358    0.0662
+Lambda Asymmetric C|R                   0.3830    0.0709
+Lambda Asymmetric R|C                   0.3556    0.0778
+Lambda Symmetric                        0.3696    0.0710
+Uncertainty Coefficient C|R             0.1791    0.0437
+Uncertainty Coefficient R|C             0.1795    0.0439
+Uncertainty Coefficient Symmetric       0.1793    0.0438
+
+Gamma
+----------------------------------
+Estimate                    0.6874
+ASE                         0.0713
+95% Lower Conf Limit        0.5477
+95% Upper Conf Limit        0.8272
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.0879
+Z                           7.8220
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Spearman Correlation
+----------------------------------
+Estimate                    0.5358
+ASE                         0.0662
+95% Lower Conf Limit        0.4061
+95% Upper Conf Limit        0.6656
+
+Test of H0: Spearman Correlation = 0
+
+ASE under H0                0.0669
+Z                           8.0104
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 160
+RANK scores with numeric missing
+                        The FREQ Procedure
+
+                        Table of x by y
+
+              x         y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |10      |20      |30      |  Total
+              ---------+--------+--------+--------+
+              .        |     24 |     10 |      6 |     40
+                       |  15.00 |   6.25 |   3.75 |  25.00
+                       |  60.00 |  25.00 |  15.00 |
+                       |  63.16 |  17.86 |   9.09 |
+              ---------+--------+--------+--------+
+              2        |      8 |     30 |     12 |     50
+                       |   5.00 |  18.75 |   7.50 |  31.25
+                       |  16.00 |  60.00 |  24.00 |
+                       |  21.05 |  53.57 |  18.18 |
+              ---------+--------+--------+--------+
+              5        |      6 |     16 |     48 |     70
+                       |   3.75 |  10.00 |  30.00 |  43.75
+                       |   8.57 |  22.86 |  68.57 |
+                       |  15.79 |  28.57 |  72.73 |
+              ---------+--------+--------+--------+
+              Total          38       56       66      160
+                          23.75    35.00    41.25   100.00
+
+Statistics for Table of x by y
+
+Scores for Table of x by y
+Score Type = RANK
+
+Row Scores
+
+x       Score
+-------------
+.        20.5
+2        65.5
+5       125.5
+
+Column Scores
+
+ y       Score
+--------------
+10        19.5
+20        66.5
+30       127.5
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       4     66.1627    <.0001
+Likelihood Ratio Chi-Square      4     61.5626    <.0001
+MH Chi-Square (Rank Scores)      1     45.6487    <.0001
+Phi Coefficient                         0.6431
+Contingency Coefficient                 0.5409
+Cramer's V                              0.4547
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.6874    0.0713
+Kendall's Tau-b                         0.4993    0.0629
+Stuart's Tau-c                          0.4866    0.0622
+Somers' D C|R                           0.5002    0.0634
+Somers' D R|C                           0.4983    0.0628
+Pearson Correlation (Rank Scores)       0.5358    0.0661
+Spearman Correlation                    0.5358    0.0662
+Lambda Asymmetric C|R                   0.3830    0.0709
+Lambda Asymmetric R|C                   0.3556    0.0778
+Lambda Symmetric                        0.3696    0.0710
+Uncertainty Coefficient C|R             0.1791    0.0437
+Uncertainty Coefficient R|C             0.1795    0.0439
+Uncertainty Coefficient Symmetric       0.1793    0.0438
+
+Gamma
+----------------------------------
+Estimate                    0.6874
+ASE                         0.0713
+95% Lower Conf Limit        0.5477
+95% Upper Conf Limit        0.8272
+
+Test of H0: Gamma = 0
+
+ASE under H0                0.0879
+Z                           7.8220
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Pearson Correlation (Rank Scores)
+----------------------------------
+Estimate                    0.5358
+ASE                         0.0661
+95% Lower Conf Limit        0.4062
+95% Upper Conf Limit        0.6654
+
+Test of H0: Pearson Correlation (Rank Scores) = 0
+
+ASE under H0                0.0750
+Z                           7.1478
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Spearman Correlation
+----------------------------------
+Estimate                    0.5358
+ASE                         0.0662
+95% Lower Conf Limit        0.4061
+95% Upper Conf Limit        0.6656
+
+Test of H0: Spearman Correlation = 0
+
+ASE under H0                0.0669
+Z                           8.0104
+One-sided Pr > Z            <.0001
+Two-sided Pr > |Z|          <.0001
+
+Sample Size = 160

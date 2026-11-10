@@ -2839,8 +2839,8 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
     // given (BUG-summarydefaultprint).
     const listing = eqi(proc, "print") or eqi(proc, "means") or
-        eqi(proc, "freq") or eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
-        eqi(proc, "univariate") or eqi(proc, "contents") or
+        eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
+        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
         (eqi(proc, "summary") and procHasKw(toks, "print"));
     // BUG-byvaltitle: a TITLE/FOOTNOTE carrying #BYVAL/#BYVAR is re-resolved
     // per BY group, so PROC PRINT then owns its title/footnote emission
@@ -2859,8 +2859,18 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         try printProc(a, out, lib, diags, toks, if (print_bysubst) g else null);
     } else if (eqi(proc, "means") or eqi(proc, "summary")) {
         try sas.proc.runMeans(pcx, out, toks);
+    } else if (eqi(proc, "corr")) {
+        try sas.corr.run(pcx, out, toks);
     } else if (eqi(proc, "freq")) {
-        try sas.proc.runFreq(pcx, out, toks);
+        // FREQ owns PROC versus TABLES NOPRINT semantics. Stamp only an
+        // actual listing, without mistaking option values or variable names.
+        var body: std.ArrayList(u8) = .empty;
+        try sas.proc.runFreq(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "transpose")) {
         try sas.proc.runTranspose(pcx, toks);
     } else if (eqi(proc, "sql")) {
@@ -6031,7 +6041,7 @@ test "GAP-procprint: bad var / char SUM are user ERRORs (rc=1); unknown option i
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs") == null); // Obs replaced by id
 }
 
-test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / FREQ BY fail loud; plain PRINT BY sections" {
+test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / FREQ BY sections; plain PRINT BY sections" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -6069,13 +6079,14 @@ test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / F
         try std.testing.expectEqual(@as(u8, 1), testRc(&d));
         try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs") == null);
     }
-    // FREQ BY → captured ERROR, no GLOBAL table (was: BY ignored entirely)
+    // FREQ BY produces separate tables, including missing groups (NOTE-freqallmissnone).
     {
         var out: std.ArrayList(u8) = .empty;
         var d = sas.diag.Diagnostics.init(a);
         try interpret(a, &out, &d, mk ++ "proc freq data=d; by g; tables x; run;", null);
-        try std.testing.expect(d.hasErrors());
-        try std.testing.expect(std.mem.indexOf(u8, out.items, "Frequency") == null);
+        try std.testing.expect(!d.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "g=1") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "g=2") != null);
     }
 }
 

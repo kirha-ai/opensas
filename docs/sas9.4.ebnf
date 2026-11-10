@@ -845,6 +845,17 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
                  [ "OUT" "=" dataset ] [ "NODUPKEY" | "NODUP" ] ";"
                  "BY" { [ "DESCENDING" ] var } ";" step_boundary ;
 
+(* PROC CORR core — FEAT-corr-core, Statistical Procedures pp.8–23,34–36.
+   Typed Pearson results retain pair-specific N/p, weights and centered moments.
+   OUTP=/other correlation measures and modeling options remain fail-loud. *)
+proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
+                 | "EXCLNPWGT" | "EXCLNPWGTS" | "NOPRINT" | "NOSIMPLE"
+                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP" | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
+                 { "VAR" var_list ";" | "WITH" var_list ";"
+                 | "BY" { [ "DESCENDING" ] var } [ "NOTSORTED" ] ";"
+                 | "FREQ" var ";" | "WEIGHT" var ";"
+                 | "WHERE" expression ";" } step_boundary ; (* opensas *)
+
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
                  { stat_keyword } [ "NWAY" | "NOPRINT" ] ";"
@@ -863,27 +874,76 @@ output_stat    = stat_keyword "=" var_list ;                      (* opensas *)
                  (* OUTPUT OUT= builds a summary dataset, one column per stat=
                    (fixtures means_output_id, means_output_names) *)
 
-(* 5.4 PROC FREQ *)
-proc_freq      = "PROC" "FREQ" [ "DATA" "=" dataset ] ";"         (* opensas *)
-                 { "TABLES" table_request { table_option } ";"
-                 | "BY" var_list ";" } step_boundary ;
-table_request  = var { "*" var } ;                               (* opensas *)
-                 (* one var → one-way table; `a*b` → two-way crosstab
-                   (freq_crosstabpct); `a*b*c` → three-way (freq_nway_out) *)
-table_option   = "/" | "NOCUM" | "NOPERCENT" | "MISSING" | "LIST"  (* opensas: NOCUM drops the
-                 cumulative columns, NOPERCENT the percent column, MISSING counts
-                 missings (freq_missing); OUT= is honored via the generic form
-                 (freq_nway_out). LIST: DOCUMENTED no-op on one-way tables — the
-                 SAS 9.4 TABLES-statement doc scopes LIST to "two-way to n-way
-                 tables", a one-way table being list-form already (rendered
-                 byte-identically with and without it, fixture
-                 freq_list_report_usage); on n-way requests LIST FAILS LOUD —
-                 no silent grid substitute (NOTE-freqlistfmt, captured test) *)
-               | name [ "=" value ] ;                             (* opensas: association/exact/
-                 cell-statistic options FAIL LOUD (refusing to emit a table
-                 without the requested statistics, FREQ-hardening) and any other
-                 unknown option FAILS LOUD naming it (GAP-freqignoreopt) — the
-                 chain has a real final else (GAP-tableopt) *)
+(* 5.4 PROC FREQ — GAP-freq-table-complete / FEAT-freq-tests; oracle evidence in docs/findings.
+   Missing TABLES defaults to one-way requests excluding BY/WEIGHT variables.
+   Bare TABLES is invalid. BY supports DESCENDING and NOTSORTED. *)
+proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
+                 { ( "TABLES" | "TABLE" ) table_request { table_request }
+                   [ "/" { table_option } ] ";"
+                 | "BY" var_list ";"
+                 | "WEIGHT" var [ "/" "ZEROS" ] ";"
+                 | "FORMAT" var_list format_ref ";"
+                 | "WHERE" expression ";"
+                 | "TEST" { freq_test } ";" } step_boundary ;
+freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
+                 | "NOPRINT" | "NLEVELS"
+                 | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
+table_request  = table_factor { "*" table_factor } ;              (* opensas *)
+table_factor   = freq_var | "(" freq_var { freq_var } ")" ;
+freq_var       = var | var "-" var | var "--" var | name ":"
+               | special_var_list | "_CHAR_" ;
+                 (* numbered and descriptor ranges, prefixes, _ALL_, _NUMERIC_,
+                    _CHARACTER_/_CHAR_; parentheses distribute Cartesian products,
+                    first factor varies fastest. ORDER supports INTERNAL,
+                    FORMATTED, DATA, FREQ; missing levels always come first. *)
+table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
+               | "MISSING" | "MISSPRINT" | "NOPRINT" | "LIST" | "LINE" | "TABLE"
+               | "CROSSLIST" [ "(" { "PEARSONRES" | "STDRES" } ")" ]
+               | "SPARSE" | "NOSPARSE" | "EXPECTED" | "DEVIATION" | "CELLCHI2"
+               | "CUMCOL" | "TOTPCT" | "PEARSONRES" | "STDRES" | "SCOROUT"
+               | "SCORES" "=" name | "FORMAT" "=" format_ref
+               | "MAXLEVELS" "=" number | "OUT" "=" dataset
+               | "OUTCUM" | "OUTEXPECT" | "OUTPCT"
+               | freq_stat_option ;              (* opensas *)
+                 (* SCORE, PEARSONRESID and STDRESID aliases are accepted.
+                    LIST is one whole n-way list; CROSSLIST is per-stratum with
+                    margins. LINE numbers LIST rows. TABLE is the SAS legacy
+                    default-table marker (oracle-verified). ZEROS implies SPARSE;
+                    NOSPARSE overrides the implication; explicit SPARSE+NOSPARSE
+                    and LIST+CROSSLIST are errors. OUT uses the last request and
+                    whole-table PERCENT; PCT_TABL is stratum-specific.
+                    Negative weights retain signed counts but suppress percents.
+                    MAXLEVELS affects only the one-way listing. NOFREQ/NOROW/NOCOL
+                    are crosstab-only, FORMAT/CUMCOL grid-only; residual options
+                    outside CROSSLIST warn, as SAS does. Scores are computed by
+                    the typed matrix API; SCOROUT alone emits no scores without
+                    statistical requests, matching SAS. LIST+statistics uses GRID
+                    after TEST implication. TABLES NOPRINT retains statistics;
+                    PROC NOPRINT computes/validates but suppresses the listing.
+                    PAGE/COMPRESS
+                    pagination and ODS CONTENTS fail explicitly as destination
+                    gaps; PAGE+COMPRESS is invalid SAS. Stray parentheses and
+                    values attached to flag options are errors. *)
+
+freq_stat_option = "CHISQ" [ "(" { freq_chisq_option } ")" ]
+                 | freq_expected | "MEASURES" [ "(" "CL" ")" ]
+                 | "CL" | "ALPHA" "=" number | "NOWARN"
+                 | ( "PLCORR" | "POLYCHORIC" )
+                   [ "(" { "ADJUST" | "CONVERGE" "=" number
+                           | "MAXITER" "=" number } ")" ] ;    (* opensas *)
+freq_chisq_option = "LRCHI" | "DF" "=" [ "-" | "+" ] number
+                  | freq_expected | "WARN" "="
+                    ( freq_warn | "(" freq_warn { [ "," ] freq_warn } ")" ) ;
+freq_warn      = "NONE" | "NOPRINT" | "NOLOG" | "OUTPUT" ;
+freq_expected  = ( "TESTP" | "TESTF" ) "="
+                 ( dataset | "(" number { [ "," ] number } ")" ) ;
+freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
+               | "SMDCR" | "SMDRC" | "PCORR" | "SCORR" | "PLCORR" ; (* opensas *)
+                 (* TEST implies MEASURES/PLCORR only with one TABLES statement.
+                    CHISQ includes automatic 2x2 Fisher for integer counts.
+                    TESTP/TESTF lists imply CHISQ; dataset references alone do not.
+                    AGREE/ALL/CMH, standalone EXACT and OUTPUT statistics datasets
+                    remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
 
 (* 5.5 PROC TRANSPOSE *)
 proc_transpose = "PROC" "TRANSPOSE" [ "DATA" "=" dataset ]        (* opensas *)

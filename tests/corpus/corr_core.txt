@@ -1,0 +1,20 @@
+The CORR Procedure
+
+2 Variables: x y
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 8 4.50000 2.44949 36.00000 1.00000 8.00000
+y 8 8.87500 4.94072 71.00000 2.00000 17.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.96204
+P - 0.0001
+N 8 8
+y 0.96204 1.00000
+P 0.0001 -
+N 8 8
+

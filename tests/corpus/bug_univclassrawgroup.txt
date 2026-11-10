@@ -1,7 +1,7 @@
 Obs      g   n    m
 
-  1   High   2   35
-  2    Low   2   15
+  1    Low   2   15
+  2   High   2   35
 Obs      g   _TYPE_   _FREQ_   n    m
 
   1      .        0        4   4   25
@@ -10,6 +10,7 @@ Obs      g   _TYPE_   _FREQ_   n    m
                           The CONTENTS Procedure
 
 Data Set Name  u
+Label          Selected Summary Statistics
 Observations   2
 Variables      3
 
@@ -17,12 +18,12 @@ Variables      3
 
 #  Variable  Type  Len  Format  Informat  Label
 1  g         Num     8  GG.
-3  m         Num     8
-2  n         Num     8
+3  m         Num     8                    the mean, x
+2  n         Num     8                    number of nonmissing values, x
 Obs      g   n    m    y
 
-  1   High   2   35   30
-  2    Low   2   15   10
+  1    Low   2   15   10
+  2   High   2   35   30
                                  The UNIVARIATE Procedure
 
 g=Low
@@ -74,8 +75,8 @@ Signed Rank    S       1.5    Pr >= |S| 0.5000
 
            Value      Obs        Value      Obs
 
-                  10    1               20    2
-                  20    2               10    1
+                  10    1               10    1
+                  20    2               20    2
 
 g=High
 Variable:  x
@@ -126,26 +127,27 @@ Signed Rank    S       1.5    Pr >= |S| 0.5000
 
            Value      Obs        Value      Obs
 
-                  30    1               40    2
-                  40    2               30    1
+                  30    3               30    3
+                  40    4               40    4
 Obs   b      g   n    m
 
-  1   1   High   2   35
-  2   1    Low   2   15
-  3   2   High   1   60
-  4   2    Low   1   50
+  1   1    Low   2   15
+  2   1   High   2   35
+  3   2    Low   1   50
+  4   2   High   1   60
                           The CONTENTS Procedure
 
 Data Set Name  cu
+Label          Selected Summary Statistics
 Observations   2
 Variables      3
 
               Alphabetic List of Variables and Attributes
 
 #  Variable  Type  Len  Format  Informat  Label
-1  g         Char    1  $CF.
-3  m         Num     8
-2  n         Num     8
+1  g         Char    8  $CF.
+3  m         Num     8                    the mean, x
+2  n         Num     8                    number of nonmissing values, x
 Obs   g    n    m
 
   1   AB   2   15
@@ -160,10 +162,10 @@ Obs     g   n    m
   2   Two   1   30
 Obs     g   n
 
-  1     3   1
-  2     4   1
-  3   One   1
-  4   Two   1
+  1   One   1
+  2   Two   1
+  3     3   1
+  4     4   1
 Obs     g   _TYPE_   _FREQ_   n
 
   1     .        0        4   4

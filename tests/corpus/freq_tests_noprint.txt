@@ -1,0 +1,45 @@
+VISIBLE TABLE STATS
+                        The FREQ Procedure
+
+                        Table of noprint by c
+
+
+Statistics for Table of noprint by c
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       1     10.2378    0.0014
+Likelihood Ratio Chi-Square      1     10.6804    0.0011
+Continuity Adj. Chi-Square       1      8.2327    0.0041
+Mantel-Haenszel Chi-Square       1      9.9684    0.0016
+Phi Coefficient                         0.5191
+Contingency Coefficient                 0.4607
+Cramer's V                              0.5191
+
+Fisher's Exact Test
+----------------------------------
+Cell (1,1) Frequency (F)        12
+Left-sided Pr <= F          0.9999
+Right-sided Pr >= F         0.0018
+Table Probability (P)       0.0017
+Two-sided Pr <= P           0.0026
+
+Sample Size = 38
+VISIBLE TABLE FOOTNOTE
+VISIBLE NAME
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              noprintFrequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1             17       44.74             17        44.74
+              2             21       55.26             38       100.00
+
+Chi-Square Test
+for Equal Proportions
+
+Chi-Square                  0.4211
+DF                               1
+Pr > ChiSq                  0.5164
+
+Sample Size = 38

@@ -1,0 +1,46 @@
+
+                                       g=1
+The CORR Procedure
+
+2 Variables: x y
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 3 4.00000 1.00000 12.00000 3.00000 5.00000
+y 3 7.33333 2.08167 22.00000 5.00000 9.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.96077
+P - 0.1789
+N 3 3
+y 0.96077 1.00000
+P 0.1789 -
+N 3 3
+
+
+                                       g=2
+The CORR Procedure
+
+2 Variables: x y
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 3 4.00000 1.00000 12.00000 3.00000 5.00000
+y 3 7.33333 2.08167 22.00000 5.00000 9.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.96077
+P - 0.1789
+N 3 3
+y 0.96077 1.00000
+P 0.1789 -
+N 3 3
+

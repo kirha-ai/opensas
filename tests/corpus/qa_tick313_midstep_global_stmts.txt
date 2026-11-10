@@ -52,7 +52,7 @@ Coeff Variation                .  Std Error Mean                 .
 
 Mean                          10  Std Deviation                  .
 Median                        10  Variance                       .
-Mode                           .  Range                          0
+Mode                          10  Range                          0
                                   Interquartile Range            0
 
                     Tests for Location: Mu0=0

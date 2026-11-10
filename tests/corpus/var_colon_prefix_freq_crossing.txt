@@ -1,0 +1,37 @@
+                        The FREQ Procedure
+
+                        Table of x1 by y
+
+              x1        y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |3       |  Total
+              ---------+--------+
+              1        |      1 |      1
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           1        1
+                         100.00   100.00
+
+                        The FREQ Procedure
+
+                        Table of x2 by y
+
+              x2        y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |3       |  Total
+              ---------+--------+
+              2        |      1 |      1
+                       | 100.00 | 100.00
+                       | 100.00 |
+                       | 100.00 |
+              ---------+--------+
+              Total           1        1
+                         100.00   100.00

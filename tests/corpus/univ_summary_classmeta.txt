@@ -1,0 +1,17 @@
+plain c=B raw=2 m=25
+plain c=A raw=4 m=25
+freq c=A raw=1 m=10
+freq c=B raw=2 m=25
+formatted c=A raw=4 m=25
+formatted c=B raw=2 m=25
+b=1 c=B raw=2 h=X m=20
+b=1 c=B raw=2 h=Y m=30
+b=1 c=A raw=4 h=X m=40
+b=1 c=A raw=4 h=Y m=10
+b=2 c=A raw=1 h=X m=10
+b=2 c=A raw=1 h=Y m=40
+b=2 c=B raw=3 h=X m=30
+b=2 c=B raw=3 h=Y m=20
+Obs   c   n     m
+
+  1   A   2   1.5

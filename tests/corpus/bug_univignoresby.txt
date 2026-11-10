@@ -50,8 +50,8 @@ Signed Rank    S       1.5    Pr >= |S| 0.5000
 
            Value      Obs        Value      Obs
 
-                  10    1               20    2
-                  20    2               10    1
+                  10    1               10    1
+                  20    2               20    2
 
                                        g=2
 
@@ -103,8 +103,8 @@ Signed Rank    S       1.5    Pr >= |S| 0.5000
 
            Value      Obs        Value      Obs
 
-                 100    1              200    2
-                 200    2              100    1
+                 100    3              100    3
+                 200    4              200    4
                                  The UNIVARIATE Procedure
 
 Variable:  x
@@ -155,10 +155,10 @@ Signed Rank    S         5    Pr >= |S| 0.1250
 
            Value      Obs        Value      Obs
 
-                  10    1              200    4
-                  20    2              100    3
-                 100    3               20    2
-                 200    4               10    1
+                  10    1               10    1
+                  20    2               20    2
+                 100    3              100    3
+                 200    4              200    4
                                  The UNIVARIATE Procedure
 
                                      g=2 h=1
@@ -180,7 +180,7 @@ Coeff Variation                .  Std Error Mean                 .
 
 Mean                         200  Std Deviation                  .
 Median                       200  Variance                       .
-Mode                           .  Range                          0
+Mode                         200  Range                          0
                                   Interquartile Range            0
 
                     Tests for Location: Mu0=0
@@ -232,7 +232,7 @@ Coeff Variation                .  Std Error Mean                 .
 
 Mean                         100  Std Deviation                  .
 Median                       100  Variance                       .
-Mode                           .  Range                          0
+Mode                         100  Range                          0
                                   Interquartile Range            0
 
                     Tests for Location: Mu0=0
@@ -263,7 +263,7 @@ Signed Rank    S       0.5    Pr >= |S| 1.0000
 
            Value      Obs        Value      Obs
 
-                 100    1              100    1
+                 100    2              100    2
 
                                      g=1 h=1
 
@@ -284,7 +284,7 @@ Coeff Variation                .  Std Error Mean                 .
 
 Mean                          20  Std Deviation                  .
 Median                        20  Variance                       .
-Mode                           .  Range                          0
+Mode                          20  Range                          0
                                   Interquartile Range            0
 
                     Tests for Location: Mu0=0
@@ -315,7 +315,7 @@ Signed Rank    S       0.5    Pr >= |S| 1.0000
 
            Value      Obs        Value      Obs
 
-                  20    1               20    1
+                  20    3               20    3
 
                                      g=1 h=2
 
@@ -336,7 +336,7 @@ Coeff Variation                .  Std Error Mean                 .
 
 Mean                          10  Std Deviation                  .
 Median                        10  Variance                       .
-Mode                           .  Range                          0
+Mode                          10  Range                          0
                                   Interquartile Range            0
 
                     Tests for Location: Mu0=0
@@ -367,10 +367,10 @@ Signed Rank    S       0.5    Pr >= |S| 1.0000
 
            Value      Obs        Value      Obs
 
-                  10    1               10    1
-g   h     m   n
+                  10    4               10    4
+g   h   n     m
 
-2   1   200   1
-2   2   100   1
-1   1    20   1
-1   2    10   1
+2   1   1   200
+2   2   1   100
+1   1   1    20
+1   2   1    10
