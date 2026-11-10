@@ -622,7 +622,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const groups = try h.collectGroups(a, &bd, ccols);
-            try orderGroups(a, &bd, groups, ccols, levels, opt);
+            try orderGroups(a, &bd, groups, ccols, levels, wc, opt);
             // collectGroups emits a pooled group even for an empty, unclassified input.
             for (groups) |g| {
                 if (!hasUsableWeight(g.rows, wc, opt)) continue;
@@ -657,7 +657,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                             if (opt.idout and !table) for (ids) |id| {
                                 if (ci == id and bs.rows.len > 0) row[j] = firstByRow(opt, bs.rows[0], bcols)[ci];
                             };
-                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, ci, row[j]);
+                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, wc, ccols, ci, g.rows[0]);
                         } else if (od.columns.items[j].type == .char) row[j] = .{ .str = "" };
                     }
                     var at = keycols.items.len;
@@ -806,12 +806,13 @@ fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
     }
     return ds.rows.items[obs - 1];
 }
-pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []const usize, levels: []const h.FmtLevels, opt: Options) !void {
+pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []const usize, levels: []const h.FmtLevels, wc: ?usize, opt: Options) !void {
     h.reorderGroupsFmt(groups, cols, levels);
     const C = struct {
         ds: *Dataset,
         cols: []const usize,
         levels: []const h.FmtLevels,
+        wc: ?usize,
         opt: Options,
         fn less(c: @This(), l: h.MeansGroup, r: h.MeansGroup) bool {
             for (c.cols, 0..) |ci, j| {
@@ -838,14 +839,14 @@ pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []c
                     if (lf != rf) return lf > rf;
                 }
                 if (eq(mode, "internal")) {
-                    if (h.fmtLevelsFor(c.levels, ci) != null) return h.compareValue(classRepresentative(c.ds, c.opt, ci, lv), classRepresentative(c.ds, c.opt, ci, rv)) == .lt;
+                    if (h.fmtLevelsFor(c.levels, ci) != null) return h.compareValue(classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, l.rep), classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, r.rep)) == .lt;
                 }
                 return h.compareValue(lv, rv) == .lt;
             }
             return false;
         }
     };
-    std.mem.sort(h.MeansGroup, groups, C{ .ds = ds, .cols = cols, .levels = levels, .opt = opt }, C.less);
+    std.mem.sort(h.MeansGroup, groups, C{ .ds = ds, .cols = cols, .levels = levels, .wc = wc, .opt = opt }, C.less);
     _ = a;
 }
 
@@ -1123,13 +1124,21 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
     try std.testing.expectApproxEqAbs(@as(f64, 10.0004), testCell(o, 0, "p50_00"), 1e-10);
 }
 
-/// A formatted CLASS level retains its first included raw value in this BY
-/// group. The representative is shared across crossed CLASS combinations.
-fn classRepresentative(ds: *Dataset, opt: Options, ci: usize, level: Value) Value {
+/// Select the first weight-eligible original value within this BY group and
+/// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
+/// missing weights must not supply a representative, even without EXCLNPWGT.
+fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
+    const level = rep[ci];
     const oi = opt.obscol orelse return level;
-    for (ds.rows.items) |row| if (h.compareValue(row[ci], level) == .eq) {
-        return sourceRow(opt.source orelse ds, opt, @intFromFloat(h.toNum(row[oi])))[ci];
-    };
+    rows: for (ds.rows.items) |row| {
+        for (cols) |key| {
+            if (h.compareValue(row[key], rep[key]) != .eq) continue :rows;
+            if (key == ci) break;
+        }
+        const raw = sourceRow(opt.source orelse ds, opt, @intFromFloat(h.toNum(row[oi])));
+        if (h.weightAt(raw, wc) == null) continue;
+        return raw[ci];
+    }
     return level;
 }
 /// CLASS grouping uses formatted keys, but an explicitly selected CLASS
@@ -1491,6 +1500,133 @@ test "BUG-univnmissweight NMISS respects FREQ EXCLNPWGT and BY CLASS groups" {
                 const no = if (gi == 0) case.no[0] + case.no[1] else if (gi == 1) case.no[j] else case.class_no[j];
                 try std.testing.expectEqual(no, testCell(o, j, "no"));
             }
+        }
+    }
+}
+
+test "BUG-univclassrepweight eligible raw keys preserve crossed CLASS BY FREQ and IDOUT" {
+    // SAS oracle: /tmp/opensas-review-r2-fixes/BUG-univclassrepweight/matrix.{sas,txt,log}.
+    // Explicit raw keys and counts from OUTPUT and OUTTABLE, in SAS row order.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "b", "c", "d", "x", "w", "f", "id" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][7]f64{
+        .{ 1, 1.1, 2.1, 10, nan, 1, 101 },
+        .{ 1, 1.2, 3.1, 20, 0, 2, 102 },
+        .{ 1, 1.3, 2.2, 30, -1, 1, 103 },
+        .{ 1, 1.4, 3.2, 40, 1, 0, 104 },
+        .{ 1, 1.5, 2.3, nan, 1, 2, 105 },
+        .{ 1, 1.6, 3.3, 60, 2, 1, 106 },
+        .{ 2, 1.7, 2.4, 70, nan, 1, 107 },
+        .{ 2, 1.8, 2.5, 80, 1, 1, 108 },
+    }) |r| {
+        var row: [7]Value = undefined;
+        for (r, 0..) |v, j| row[j] = .{ .num = v };
+        try ds.appendRow(&row);
+    }
+    try lib.put("d", ds);
+    const Case = struct { syntax: []const u8, excl: bool, by: bool, cross: bool, rows: []const [8]f64 };
+    for ([_]Case{
+        .{ .syntax = "weight w;", .excl = false, .by = false, .cross = false, .rows = &.{
+            .{ 0, 1.2, 0, 101, 3, 0, 3, 40 },
+            .{ 0, 1.5, 0, 101, 2, 1, 3, 66.666666667 },
+        } },
+        .{ .syntax = "weight w;", .excl = true, .by = false, .cross = false, .rows = &.{
+            .{ 0, 1.4, 0, 101, 1, 0, 1, 40 },
+            .{ 0, 1.5, 0, 101, 2, 1, 3, 66.666666667 },
+        } },
+        .{ .syntax = "weight w;freq f;", .excl = false, .by = false, .cross = false, .rows = &.{
+            .{ 0, 1.2, 0, 101, 3, 0, 3, nan },
+            .{ 0, 1.5, 0, 101, 2, 2, 4, 66.666666667 },
+        } },
+        .{ .syntax = "weight w;freq f;", .excl = true, .by = false, .cross = false, .rows = &.{
+            .{ 0, 1.5, 0, 101, 2, 2, 4, 66.666666667 },
+        } },
+        .{ .syntax = "weight w;", .excl = false, .by = true, .cross = false, .rows = &.{
+            .{ 1, 1.2, 0, 101, 3, 0, 3, 40 },
+            .{ 1, 1.5, 0, 101, 1, 1, 2, 60 },
+            .{ 2, 1.8, 0, 107, 1, 0, 1, 80 },
+        } },
+        .{ .syntax = "weight w;freq f;", .excl = false, .by = true, .cross = true, .rows = &.{
+            .{ 1, 1.2, 2.2, 101, 1, 0, 1, nan },
+            .{ 1, 1.2, 3.1, 101, 2, 0, 2, nan },
+            .{ 1, 1.5, 2.3, 101, 0, 2, 2, nan },
+            .{ 1, 1.5, 3.3, 101, 1, 0, 1, 60 },
+            .{ 2, 1.8, 2.5, 107, 1, 0, 1, 80 },
+        } },
+        .{ .syntax = "weight w;freq f;", .excl = true, .by = true, .cross = true, .rows = &.{
+            .{ 1, 1.5, 2.3, 101, 0, 2, 2, nan },
+            .{ 1, 1.5, 3.3, 101, 1, 0, 1, 60 },
+            .{ 2, 1.8, 2.5, 107, 1, 0, 1, 80 },
+        } },
+        .{ .syntax = "freq f;", .excl = false, .by = true, .cross = true, .rows = &.{
+            .{ 1, 1.1, 2.1, 101, 2, 0, 2, 20 },
+            .{ 1, 1.1, 3.1, 101, 2, 0, 2, 20 },
+            .{ 1, 1.5, 2.3, 101, 0, 2, 2, nan },
+            .{ 1, 1.5, 3.3, 101, 1, 0, 1, 60 },
+            .{ 2, 1.7, 2.4, 107, 1, 0, 1, 70 },
+            .{ 2, 1.7, 2.5, 107, 1, 0, 1, 80 },
+        } },
+    }) |case| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint idout {s} outtable=t; {s} {s} class c {s}; format c d 1.; var x; id id; output out=o n=n nmiss=nm nobs=no mean=m;run;", .{ if (case.excl) "exclnpwgt" else "", case.syntax, if (case.by) "by b;" else "", if (case.cross) "d" else "" }));
+        const o = lib.find("o").?;
+        const t = lib.find("t").?;
+        try std.testing.expectEqual(case.rows.len, o.rows.items.len);
+        try std.testing.expectEqual(case.rows.len, t.rows.items.len);
+        for (case.rows, 0..) |r, i| {
+            for ([_]*Dataset{ o, t }) |out| {
+                if (case.by) try std.testing.expectEqual(r[0], testCell(out, i, "b"));
+                try std.testing.expectEqual(r[1], testCell(out, i, "c"));
+                if (case.cross) try std.testing.expectEqual(r[2], testCell(out, i, "d"));
+            }
+            try std.testing.expectEqual(r[3], testCell(o, i, "id"));
+            try std.testing.expectEqual(r[4], testCell(o, i, "n"));
+            try std.testing.expectEqual(r[5], testCell(o, i, "nm"));
+            try std.testing.expectEqual(r[6], testCell(o, i, "no"));
+            try std.testing.expectEqual(r[4], testCell(t, i, "_NOBS_"));
+            try std.testing.expectEqual(r[5], testCell(t, i, "_NMISS_"));
+            for ([_]f64{ testCell(o, i, "m"), testCell(t, i, "_MEAN_") }) |mean| {
+                if (std.math.isNan(r[7])) try std.testing.expect(std.math.isNan(mean)) else try std.testing.expectApproxEqAbs(r[7], mean, 1e-8);
+            }
+        }
+    }
+}
+
+test "BUG-univclassrepweight raw-key ordering and ROUND preserve original weights" {
+    // SAS oracle: /tmp/opensas-review-r2-fixes/BUG-univclassrepweight/roles.{sas,txt,log}.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_][3]f64{ .{ nan, 5, nan }, .{ 1, 10, nan }, .{ 2, 20, 1 }, .{ 3, 30, 1 } }) |r|
+        try ds.appendRow(&.{ .{ .num = r[1] }, .{ .num = r[0] }, .{ .num = r[2] }, .{ .num = 1 }, .{ .num = 1 } });
+    var diags = diag.Diagnostics.init(a);
+    const toks = try @import("../lexer.zig").tokenize(a, "proc format; value band 1='A' 2='B' 3='A';run;", &diags);
+    try proc.runFormat(.{ .arena = a, .lib = lib, .diags = &diags }, toks);
+    try std.testing.expect(!diags.hasErrors());
+    for ([_]bool{ false, true }) |roles| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint {s} outtable=t; class y; format y band.; var {s}; weight {s}; output out=o n=n nobs=no mean=m;run;", .{ if (roles) "round=10" else "", if (roles) "y" else "x", if (roles) "y" else "w" }));
+        const o = lib.find("o").?;
+        const t = lib.find("t").?;
+        try std.testing.expectEqual(@as(usize, 2), o.rows.items.len);
+        try std.testing.expectEqual(@as(usize, 2), t.rows.items.len);
+        for (0..2) |i| {
+            const key: f64 = if (roles) (if (i == 0) 1 else 2) else (if (i == 0) 2 else 3);
+            const n: f64 = if (roles and i == 0) 2 else 1;
+            const mean: f64 = if (roles) 0 else (if (i == 0) 20 else 30);
+            try std.testing.expectEqual(key, testCell(o, i, "y"));
+            try std.testing.expectEqual(key, testCell(t, i, "y"));
+            try std.testing.expectEqual(n, testCell(o, i, "n"));
+            try std.testing.expectEqual(n, testCell(o, i, "no"));
+            try std.testing.expectEqual(n, testCell(t, i, "_NOBS_"));
+            try std.testing.expectEqual(mean, testCell(o, i, "m"));
+            try std.testing.expectEqual(mean, testCell(t, i, "_MEAN_"));
         }
     }
 }

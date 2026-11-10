@@ -4759,7 +4759,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
             // BY group.
             const groups = try collectGroups(arena, bd, ccols.items);
-            try univ.orderGroups(arena, bd, groups, ccols.items, fmt_levels.items, extra); // collapsed bands in raw-value order, as the MEANS listing (BUG-freqfmtorder)
+            try univ.orderGroups(arena, bd, groups, ccols.items, fmt_levels.items, wcol, extra); // collapsed bands in raw-value order, as the MEANS listing (BUG-freqfmtorder)
             for (groups) |g| {
                 if (!univ.hasUsableWeight(g.rows, wcol, extra)) continue;
                 var hdr: std.ArrayList(u8) = .empty;
