@@ -353,12 +353,24 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
             }
             if (mass(s, row)) |m| total_n += m.f;
         }
-        if (s.freq != null and total_freq == 0)
-            return cx.diags.fail(error.ParseError, 0, "Total frequency is 0 in the input data set.", .{});
-        if (s.weight != null and total_weight == 0)
-            return cx.diags.fail(error.ParseError, 0, "Total weight is 0 in the input data set.", .{});
-        if (s.options.nomiss and total_n == 0)
-            return cx.diags.fail(error.ParseError, 0, "The NOMISS option is specified, but all variables have at least one missing value for all observations in the input data set.", .{});
+        // A bad BY group must not discard earlier results or prevent later
+        // analyses (Statistical Procedures, CORR BY statement, p.16). Keep
+        // ordinary step errors armed: continuation is local to this PROC.
+        if (s.freq != null and total_freq == 0) {
+            try cx.diags.report(.err, 0, "Total frequency is 0 in the input data set.", .{});
+            if (s.by.len == 0) return error.ParseError;
+            continue;
+        }
+        if (s.weight != null and total_weight == 0) {
+            try cx.diags.report(.err, 0, "Total weight is 0 in the input data set.", .{});
+            if (s.by.len == 0) return error.ParseError;
+            continue;
+        }
+        if (s.options.nomiss and total_n == 0) {
+            try cx.diags.report(.err, 0, "The NOMISS option is specified, but all variables have at least one missing value for all observations in the input data set.", .{});
+            if (s.by.len == 0) return error.ParseError;
+            continue;
+        }
         if (total_n < 2) try cx.diags.warn(0, "Fewer than 2 observations in the input data set.", .{});
         var simple: std.ArrayList(Simple) = .empty;
         for (s.with) |c| try simple.append(cx.arena, computeSimple(s, bs.rows, c));
@@ -712,4 +724,54 @@ test "CORR translated weighted moments retain small spreads at large offsets" {
     try Testing.near(p.p, q.p);
     try Testing.near(p.cross / 1048576, q.cross);
     try Testing.near(p.css_x / 1048576, q.css_x);
+}
+
+test "BUG-corrbygroupabort retains valid groups before and after group errors" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // SAS oracle: each bad-first/middle/last FREQ, WEIGHT and NOMISS case
+    // reports one ERROR and both other groups have N=3, r=.96077, p=.1789.
+    // Evidence: /tmp/opensas-review-fixes/BUG-corrbygroupabort/{freq,weight,nomiss}_{1,2,3}.*
+    const sources = [_][]const u8{
+        "proc corr; by g; var x y; freq f; run;",
+        "proc corr; by g; var x y; weight f; run;",
+        "proc corr nomiss; by g; var x y; run;",
+    };
+    for (sources, [_][]const u8{ "Total frequency", "Total weight", "NOMISS" }, 0..) |source, message, kind| {
+        // The fourth case makes every group invalid; it must retain all errors.
+        for (0..4) |bad| {
+            const ds = try Testing.dataset(a, &.{ "g", "x", "y", "f" }, &.{});
+            for (0..3) |g| {
+                const invalid = bad == g or bad == 3;
+                for ([_]f64{ 3, 4, 5 }, [_]f64{ 5, 8, 9 }) |x, y| {
+                    try ds.appendRow(&.{
+                        .{ .num = @floatFromInt(g + 1) },                  .{ .num = x },
+                        .{ .num = if (invalid and kind == 2) nan else y }, .{ .num = if (invalid) 0 else 1 },
+                    });
+                }
+            }
+            var lib = @import("../exec.zig").Library.init(a);
+            try lib.put("d", ds);
+            var d = diag.Diagnostics.init(a);
+            const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+            const result = try compute(cx, try parse(cx, try lex.tokenize(a, source, &d)));
+            try std.testing.expectEqual(@as(usize, if (bad == 3) 0 else 2), result.groups.len);
+            try std.testing.expectEqual(@as(usize, if (bad == 3) 3 else 1), d.count());
+            try std.testing.expect(d.hasStepErrors() and d.syntax_check);
+            try std.testing.expectEqual(@as(u8, 1), diag.exitCode(false, d.hasErrors()));
+            for (d.list.items) |diagnostic| {
+                try std.testing.expect(std.mem.indexOf(u8, diagnostic.message, message) != null);
+            }
+            var previous: f64 = 0;
+            for (result.groups) |g| {
+                const key = g.by_values.?[0].num;
+                try std.testing.expect(key > previous and key != @as(f64, @floatFromInt(bad + 1)));
+                previous = key;
+                try Testing.near(3, g.pairs[1].n);
+                try std.testing.expectApproxEqAbs(@as(f64, 0.96077), g.pairs[1].r, 0.000005);
+                try std.testing.expectApproxEqAbs(@as(f64, 0.1789), g.pairs[1].p, 0.00005);
+            }
+        }
+    }
 }
