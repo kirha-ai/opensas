@@ -1,0 +1,208 @@
+The SAS System
+
+36         
+37         options nodate nonumber; ods graphics off;
+38         data ties; input r c w; datalines;
+
+NOTE: The data set WORK.TIES has 9 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+48         ;
+49         proc freq data=ties; weight w; tables r*c / measures(cl) chisq(df=-1); test measures; run;
+
+NOTE: There were 9 observations read from the data set WORK.TIES.
+NOTE: The PROCEDURE FREQ printed pages 1-4.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              3381.06k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        3  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     818
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+50         data frac; input r c w; datalines;
+
+NOTE: The data set WORK.FRAC has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.26k
+      OS Memory           13736.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     89
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+55         ;
+56         proc freq data=frac; weight w; tables r*c / chisq measures; run;
+
+NOTE: Fisher's exact test cannot be computed when there are noninteger frequencies.
+NOTE: There were 4 observations read from the data set WORK.FRAC.
+NOTE: The PROCEDURE FREQ printed pages 5-6.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1142.45k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     192
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+57         data zero; input r c w; datalines;
+
+NOTE: The data set WORK.ZERO has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.85k
+      OS Memory           13736.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+62         ;
+63         proc freq data=zero; weight w / zeros; tables r*c / chisq measures(cl) plcorr(adjust); test plcorr; run;
+
+NOTE: There were 4 observations read from the data set WORK.ZERO.
+NOTE: The PROCEDURE FREQ printed pages 7-8.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              1242.12k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        7  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     206
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+64         proc freq data=ties; weight w; tables r*c / plcorr(maxiter=1); test plcorr; run;
+
+NOTE: Polychoric correlation computations did not converge.
+NOTE: There were 9 observations read from the data set WORK.TIES.
+NOTE: The PROCEDURE FREQ printed pages 9-10.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1166.60k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        8  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+65         data margin; input r c w; datalines;
+
+NOTE: The data set WORK.MARGIN has 6 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.76k
+      OS Memory           13736.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     80
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+72         ;
+73         proc freq data=margin; weight w / zeros; tables r*c / chisq measures(cl) plcorr; run;
+
+The SAS System
+
+NOTE: There were 6 observations read from the data set WORK.MARGIN.
+NOTE: The PROCEDURE FREQ printed page 11.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1115.12k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 10:08:07 AM
+      Step Count                        10  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     181
+      Page Swaps                        0
+      Voluntary Context Switches        20
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+74         
+75         
+76         
+77         
+The SAS System
+
+78         
