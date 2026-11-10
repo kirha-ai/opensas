@@ -693,28 +693,29 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
     }
 }
 pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, pairs: []const h.XW, opt: Options, ids: []const usize) !void {
-    var extreme: std.ArrayList(h.XW) = .empty;
-    for (pairs) |p| {
-        var v = p;
-        if (opt.obscol) |ci| v.obs = @intFromFloat(h.toNum(ds.rows.items[p.obs - 1][ci]));
-        var found = false;
-        for (extreme.items) |e| {
-            if (e.obs == v.obs) found = true;
-        }
-        if (!found) try extreme.append(a, v);
-    }
-    std.mem.sort(h.XW, extreme.items, {}, struct {
-        fn less(_: void, l: h.XW, r: h.XW) bool {
-            return l.x < r.x or (l.x == r.x and l.obs > r.obs);
-        }
-    }.less);
-    const highest = try a.dupe(h.XW, extreme.items);
-    std.mem.sort(h.XW, highest, {}, struct {
-        fn less(_: void, l: h.XW, r: h.XW) bool {
-            return l.x < r.x or (l.x == r.x and l.obs < r.obs);
-        }
-    }.less);
     if (opt.nextrobs > 0) {
+        // Deduplicate FREQ copies by physical identity in expected O(N), then
+        // retain the SAS low/high tie orders with O(U log U) sorting.
+        var seen: std.AutoHashMapUnmanaged(usize, void) = .empty;
+        defer seen.deinit(a);
+        var extreme: std.ArrayList(h.XW) = .empty;
+        for (pairs) |p| {
+            var v = p;
+            if (opt.obscol) |ci| v.obs = @intFromFloat(h.toNum(ds.rows.items[p.obs - 1][ci]));
+            const entry = try seen.getOrPut(a, v.obs);
+            if (!entry.found_existing) try extreme.append(a, v);
+        }
+        std.mem.sort(h.XW, extreme.items, {}, struct {
+            fn less(_: void, l: h.XW, r: h.XW) bool {
+                return l.x < r.x or (l.x == r.x and l.obs > r.obs);
+            }
+        }.less);
+        const highest = try a.dupe(h.XW, extreme.items);
+        std.mem.sort(h.XW, highest, {}, struct {
+            fn less(_: void, l: h.XW, r: h.XW) bool {
+                return l.x < r.x or (l.x == r.x and l.obs < r.obs);
+            }
+        }.less);
         try out.appendSlice(a, "\n" ++ (" " ** 23) ++ "Extreme Observations\n\n");
         try out.appendSlice(a, (" " ** 11) ++ "----Lowest----" ++ (" " ** 8) ++ "---Highest---\n\n");
         try out.appendSlice(a, (" " ** 11) ++ "Value      Obs" ++ (" " ** 8) ++ "Value      Obs");
@@ -779,6 +780,53 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
     }
     _ = col;
 }
+
+test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY groups" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "x", "f" }) |name| _ = try ds.addColumn(name, .num);
+    _ = try ds.addColumn("id", .char);
+    // Real SAS probe: first row missing, then ties in two BY groups. FREQ
+    // copies must not consume extreme slots or renumber physical observations.
+    const rows = [_][3]f64{
+        .{ 1, nan, 1 }, .{ 1, 1, 3 }, .{ 1, 1, 2 }, .{ 1, 9, 2 }, .{ 1, 9, 3 },
+        .{ 2, 2, 2 }, .{ 2, 2, 3 }, .{ 2, 8, 3 }, .{ 2, 8, 2 },
+    };
+    for (rows, [_][]const u8{ "Missing", "A", "B", "C", "D", "E", "F", "G", "H" }) |row, id| {
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] }, .{ .str = id } });
+    }
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const toks = try @import("../lexer.zig").tokenize(a, "proc univariate data=d nextrobs=3; by g; var x; id id; freq f; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{
+        "1    3                1    3  B / B  2 / 2\n",
+        "1    2                9    4  A / C  3 / 2\n",
+        "9    5                9    5  D / D  3 / 3\n",
+        "2    7                2    7  F / F  3 / 3\n",
+        "2    6                8    8  E / G  2 / 3\n",
+        "8    9                8    9  H / H  2 / 2\n",
+    }) |line| try std.testing.expect(std.mem.indexOf(u8, out.items, line) != null);
+    out.clearRetainingCapacity();
+    const zero = try @import("../lexer.zig").tokenize(a, "proc univariate data=d nextrobs=0 nextrval=2 modes freq; by g; var x; freq f; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, zero);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Extreme Observations") == null);
+    for ([_][]const u8{
+        "Modes\nMode    Count\n1    5\n9    5\n",
+        "Modes\nMode    Count\n2    5\n8    5\n",
+        "Lowest Value Frequency    Highest Value Frequency\n1 5    1 5\n9 5    9 5\n",
+        "Lowest Value Frequency    Highest Value Frequency\n2 5    2 5\n8 5    8 5\n",
+        "Value Count Cell Cum\n1 5 50.0 50.0\n9 5 50.0 100.0\n",
+        "Value Count Cell Cum\n2 5 50.0 50.0\n8 5 50.0 100.0\n",
+    }) |section| try std.testing.expect(std.mem.indexOf(u8, out.items, section) != null);
+}
+
 fn cell(a: Allocator, v: Value) ![]const u8 {
     return switch (v) {
         .str => |s| s,
