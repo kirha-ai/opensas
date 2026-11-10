@@ -48,13 +48,15 @@ pub fn degreesOfFreedom(base: f64, override: ?f64) Error!f64 {
     return df;
 }
 fn chi(x: f64, df: f64) Test {
-    return .{ .statistic = @max(0, x), .df = df, .p = chiTail(@max(0, x), df) };
+    return .{ .statistic = @max(0, x), .df = df, .p = if (df == 0) std.math.nan(f64) else chiTail(@max(0, x), df) };
 }
 
 pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
-    if (counts.len < 2 or !countValid(counts)) return error.ExecError;
+    if (counts.len == 0 or !countValid(counts)) return error.ExecError;
     const n = sum(counts);
-    const df = try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
+    // SAS permits a single observed category with default DF=0 and missing p.
+    // An explicit DF still goes through the ordinary validation path.
+    const df = if (counts.len == 1 and df_override == null) 0 else try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
     var factor: f64 = 1;
     switch (expected) {
         .equal => {},
@@ -85,7 +87,7 @@ pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64)
         if (o > 0) lr += 2 * o * @log(o / e);
         if (e < 5) small += 1;
     }
-    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = small * 5 > counts.len, .total = n };
+    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = df > 0 and small * 5 > counts.len, .total = n };
 }
 
 const Margins = struct { row: []f64, col: []f64, n: f64, nr: usize, nc: usize };
@@ -859,4 +861,23 @@ test "FEAT-freq-tests zero null variance retains zero SE and missing test" {
     try std.testing.expectEqual(@as(?f64, 0), result.null_se);
     try std.testing.expectEqual(@as(?f64, 0), result.ase);
     try std.testing.expect(result.z == null and result.p_two == null);
+}
+
+test "FEAT-freq-tests SAS single category default DF zero is valid" {
+    const result = try goodnessOfFit(&.{3}, .equal, null);
+    try std.testing.expectEqual(@as(f64, 0), result.pearson.statistic);
+    try std.testing.expectEqual(@as(f64, 0), result.pearson.df);
+    try std.testing.expect(std.math.isNan(result.pearson.p));
+    try std.testing.expect(std.math.isNan(result.likelihood_ratio.p));
+    try std.testing.expectEqual(@as(f64, 3), result.total);
+    try std.testing.expect(!result.sparse);
+    try std.testing.expectError(error.ExecError, goodnessOfFit(&.{3}, .equal, 0));
+    try std.testing.expectError(error.ExecError, goodnessOfFit(&.{3}, .equal, -1));
+    const explicit = try goodnessOfFit(&.{3}, .equal, 2);
+    try std.testing.expectEqual(@as(f64, 2), explicit.pearson.df);
+    try std.testing.expectEqual(@as(f64, 1), explicit.pearson.p);
+    try std.testing.expect(explicit.sparse);
+    const specified = try goodnessOfFit(&.{3}, .{ .proportions = &.{100} }, null);
+    try std.testing.expect(std.math.isNan(specified.likelihood_ratio.p));
+    try std.testing.expect(!specified.sparse);
 }

@@ -83,3 +83,20 @@ execution; expected-value columns in one-way listings; integrated synthetic
 corpus fixtures and separate oracle-backed golden commit; EBNF update; final
 rebase onto feat/stat/batch-1 exactly once; all three final gates and landing
 report. Neither this checkpoint nor passing kernel tests closes the ticket.
+
+## First manager review correction: one observed category
+
+The manager's freq-onelevel.sas/.txt/.log were copied verbatim as
+onelevel.sas/.txt/.log. Three observations with g=1 and TABLES g/CHISQ
+return SAS rc0 with CHISQ=0, default DF=0, missing p-value, and no warning.
+The GOF kernel now permits this default case and represents the undefined
+p-value as NaN in Test.p; rendering maps it to SAS missing (.). The execution
+regression verifies no error/warning in both printed and PROC NOPRINT paths.
+
+The independent onelevel-df.sas probe verifies LRCHI and TESTP=(100) also
+return default DF=0/missing p without warning. Explicit DF=2 gives statistic0,
+p=1, and a displayed sparse warning. Explicit DF=-1 reports nonpositive
+adjusted DF; explicit DF=0 reports that DF must be nonzero. The probe's two
+intentional invalid cases account for its sasrun exit2; neither is relaxed by
+the default-DF exception. DF=0 default suppresses the sparse flag; valid
+positive overrides retain the normal sparse computation.

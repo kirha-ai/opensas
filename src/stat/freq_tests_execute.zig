@@ -153,3 +153,29 @@ test "FEAT-freq-tests execution WARN control and zero margins" {
     _ = try execute(a, &d, &out, .{ .matrix = .{ .rows = 3, .cols = 2, .counts = &.{ 0, 0, 3, 5, 4, 1 } } }, .{ .chisq = true, .measures = true }, .{}, .equal, false);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "No statistics computed") != null);
 }
+
+test "FEAT-freq-tests single category executes and renders without error or warning" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const table = Table{ .one_way = true, .matrix = .{ .rows = 1, .cols = 1, .counts = &.{3} } };
+    const report = try execute(a, &d, &out, table, .{ .chisq = true, .lrchi = true }, .{}, .equal, false);
+    try std.testing.expectEqual(@as(f64, 0), report.goodness_of_fit.?.pearson.df);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "nan") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "WARNING") == null);
+    var lines = std.mem.splitScalar(u8, out.items, '\n');
+    var missing_p_count: usize = 0;
+    while (lines.next()) |line| {
+        if (std.mem.startsWith(u8, line, "Pr > ChiSq")) {
+            try std.testing.expectEqualStrings(".", std.mem.trim(u8, line[10..], " "));
+            missing_p_count += 1;
+        }
+        if (std.mem.startsWith(u8, line, "DF")) try std.testing.expectEqualStrings("0", std.mem.trim(u8, line[2..], " "));
+    }
+    try std.testing.expectEqual(@as(usize, 2), missing_p_count);
+    _ = try execute(a, &d, &out, table, .{ .chisq = true }, .{}, .equal, true);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+}

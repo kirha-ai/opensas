@@ -9,7 +9,7 @@ fn text(a: A, out: *Out, s: []const u8) Error!void {
     try out.appendSlice(a, s);
 }
 fn number(a: A, value: ?f64) Error![]const u8 {
-    return if (value) |v| try std.fmt.allocPrint(a, "{d:.4}", .{v}) else ".";
+    return if (value) |v| (if (std.math.isFinite(v)) try std.fmt.allocPrint(a, "{d:.4}", .{v}) else ".") else ".";
 }
 fn probability(a: A, value: ?f64) Error![]const u8 {
     return if (value) |v| (if (v < 0.0001) "<.0001" else try number(a, v)) else ".";
@@ -22,7 +22,8 @@ fn pad(a: A, out: *Out, s: []const u8, width: usize, right: bool) Error!void {
 }
 fn pair(a: A, out: *Out, label: []const u8, value: ?f64, p: bool) Error!void {
     try pad(a, out, label, 25, false);
-    try pad(a, out, if (p) try probability(a, value) else try number(a, value), 9, true);
+    const rendered = if (std.mem.eql(u8, label, "DF") and value != null) try std.fmt.allocPrint(a, "{d}", .{value.?}) else if (p) try probability(a, value) else try number(a, value);
+    try pad(a, out, rendered, 9, true);
     try text(a, out, "\n");
 }
 pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Options) Error!void {
