@@ -29,11 +29,10 @@ page references below use printed page numbers.
 - [TODO] FEAT-corr-advanced (doc-finder, P1; pp. 21–33) — Add Spearman, Kendall, Hoeffding, supported partial correlations, Fisher z tests/confidence limits, polychoric/polyserial estimation and Cronbach alpha with their documented options. Check ties, singular controls, convergence, boundary correlations and one-/two-sided inference against SAS.
 
 
-- [DOING @dev4] FEAT-freq-tests (doc-finder, qa, oracle, P1; pp. 150–152, 159–176) — Implement one-way goodness-of-fit and contingency-table CHISQ tests, TESTP/TESTF, documented association measures and TEST requests. Check degrees of freedom, p-values, score conventions and sparse-table warnings. Repro: g=(0,0,0,0,1,1,1,1), h=(0,1,0,1,0,1,0,1), `proc freq data=d; tables g*h / chisq; run;` returns rc 2; SAS 9.4M9 gives Pearson chi-square=0, df=1, p=1. Acceptance: also verify nontrivial, tied and degenerate cases.
 
 - [TODO] FEAT-freq-risk (doc-finder, qa, P1; pp. 176–209) — Implement binomial proportions, sensitivity/specificity, risk differences, odds ratios and relative risks, including documented confidence-limit and noninferiority/equivalence options. Check event/column orientation, confidence levels, zero cells and boundary proportions. Exact variants use FEAT-freq-exact.
 
-- [TODO] FEAT-freq-stratified (doc-finder, qa, P1; pp. 195–230) — Implement CMH/pooled stratified estimates, homogeneity tests, trend/Jonckheere-Terpstra, agreement/kappa/McNemar/Bowker/Cochran Q and Gail-Simon as documented. Check stratum ordering, empty strata, score choices and degenerate tables; compare official examples 3.7–3.10 and additional asymmetric cases with SAS.  [deps: FEAT-freq-tests, FEAT-freq-risk]
+- [TODO] FEAT-freq-stratified (doc-finder, qa, P1; pp. 195–230) — Implement CMH/pooled stratified estimates, homogeneity tests, trend/Jonckheere-Terpstra, agreement/kappa/McNemar/Bowker/Cochran Q and Gail-Simon as documented. Check stratum ordering, empty strata, score choices and degenerate tables; compare official examples 3.7–3.10 and additional asymmetric cases with SAS.  [deps: FEAT-freq-risk]
 
 - [TODO] FEAT-freq-exact (doc-finder, qa, oracle, P1; pp. 81–89, 230–234) — Implement FISHER and the documented EXACT test/interval families, then Monte Carlo estimation and its controls. Check one-/two-sided definitions, tied probabilities, sparse tables, confidence bounds and resource limits. Exact results need small-table enumeration/oracle checks; Monte Carlo needs seed reproducibility and statistical tolerances.
 
