@@ -1024,7 +1024,7 @@ fn lgamma(x: f64) f64 {
 }
 
 /// Regularized incomplete beta I_x(a,b).
-fn betai(a: f64, b: f64, x: f64) f64 {
+pub fn betai(a: f64, b: f64, x: f64) f64 {
     if (x <= 0) return 0;
     if (x >= 1) return 1;
     const bt = @exp(lgamma(a + b) - lgamma(a) - lgamma(b) + a * @log(x) + b * @log(1 - x));
@@ -2212,7 +2212,7 @@ fn byLess(l: []const Value, r: []const Value, bcols: []const usize) bool {
 /// grouping stays byte-exact (byEqual is untouched), so the groups stay
 /// separate; only the ORDER check folds. The DESCENDING inversion is
 /// orthogonal and applies unchanged to the folded comparison.
-fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize, descs: []const bool, ling: bool) ?usize {
+pub fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize, descs: []const bool, ling: bool) ?usize {
     for (bcols, 0..) |ci, k| switch (cmpColl(nxt[ci], cur[ci], ling)) {
         .lt => return if (k < descs.len and descs[k]) null else k,
         .gt => return if (k < descs.len and descs[k]) k else null,
@@ -2223,12 +2223,12 @@ fn byOrderViolation(nxt: []const Value, cur: []const Value, bcols: []const usize
 
 /// One listing table-set's row slice: `rep` is the BY group's representative
 /// row (null without BY → no BY line, the pooled table).
-const BySlice = struct { rep: ?[]const Value, rows: []const []const Value };
+pub const BySlice = struct { rep: ?[]const Value, rows: []const []const Value };
 
 /// Contiguous BY-group slices of (sorted) rows, as SAS requires. No BY columns
 /// → a single null-rep slice over all rows (empty input included, so the pooled
 /// table still prints); BY over an empty dataset → no slices (title only).
-fn bySlices(arena: std.mem.Allocator, rows: []const []const Value, bcols: []const usize) ![]BySlice {
+pub fn bySlices(arena: std.mem.Allocator, rows: []const []const Value, bcols: []const usize) ![]BySlice {
     var slices: std.ArrayList(BySlice) = .empty;
     if (bcols.len == 0) {
         try slices.append(arena, .{ .rep = null, .rows = rows });
@@ -2244,7 +2244,7 @@ fn bySlices(arena: std.mem.Allocator, rows: []const []const Value, bcols: []cons
     return slices.items;
 }
 
-fn appendByLine(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, bcols: []const usize) !void {
+pub fn appendByLine(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, bcols: []const usize) !void {
     if (io.global_nobyline) return; // `options nobyline;` (BUG-optionsstmtswallow)
     var label: std.ArrayList(u8) = .empty;
     for (bcols, 0..) |ci, k| {
@@ -9997,7 +9997,7 @@ fn sortKeys(keys: [][]const u8, sums: []f64) void {
 
 /// Index just past the balanced `(…)` group starting at toks[i] (a .lparen) —
 /// for header scans that skip dataset-option groups like `data=d(keep=x)`.
-fn skipParen(toks: []const Token, start: usize) usize {
+pub fn skipParen(toks: []const Token, start: usize) usize {
     var i = start;
     var depth: usize = 0;
     while (i < toks.len) : (i += 1) {
@@ -10748,7 +10748,7 @@ pub fn decodeProcBy(arena: std.mem.Allocator, encoded: []const []const u8) error
     return .{ .names = names.items, .desc = desc.items, .notsorted = notsorted };
 }
 
-fn lastDataset(lib: *Library) ?*Dataset {
+pub fn lastDataset(lib: *Library) ?*Dataset {
     const n = lib.sets.items.len;
     return if (n == 0) null else lib.sets.items[n - 1];
 }

@@ -2840,7 +2840,7 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     // given (BUG-summarydefaultprint).
     const listing = eqi(proc, "print") or eqi(proc, "means") or
         eqi(proc, "freq") or eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
-        eqi(proc, "univariate") or eqi(proc, "contents") or
+        eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
         (eqi(proc, "summary") and procHasKw(toks, "print"));
     // BUG-byvaltitle: a TITLE/FOOTNOTE carrying #BYVAL/#BYVAR is re-resolved
     // per BY group, so PROC PRINT then owns its title/footnote emission
@@ -2859,6 +2859,8 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         try printProc(a, out, lib, diags, toks, if (print_bysubst) g else null);
     } else if (eqi(proc, "means") or eqi(proc, "summary")) {
         try sas.proc.runMeans(pcx, out, toks);
+    } else if (eqi(proc, "corr")) {
+        try sas.corr.run(pcx, out, toks);
     } else if (eqi(proc, "freq")) {
         try sas.proc.runFreq(pcx, out, toks);
     } else if (eqi(proc, "transpose")) {

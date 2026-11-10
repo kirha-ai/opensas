@@ -845,6 +845,17 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
                  [ "OUT" "=" dataset ] [ "NODUPKEY" | "NODUP" ] ";"
                  "BY" { [ "DESCENDING" ] var } ";" step_boundary ;
 
+(* PROC CORR core — FEAT-corr-core, Statistical Procedures pp.8–23,34–36.
+   Typed Pearson results retain pair-specific N/p, weights and centered moments.
+   OUTP=/other correlation measures and modeling options remain fail-loud. *)
+proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
+                 | "EXCLNPWGT" | "EXCLNPWGTS" | "NOPRINT" | "NOSIMPLE"
+                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP" | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
+                 { "VAR" var_list ";" | "WITH" var_list ";"
+                 | "BY" { [ "DESCENDING" ] var } [ "NOTSORTED" ] ";"
+                 | "FREQ" var ";" | "WEIGHT" var ";"
+                 | "WHERE" expression ";" } step_boundary ; (* opensas *)
+
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
                  { stat_keyword } [ "NWAY" | "NOPRINT" ] ";"

@@ -1,0 +1,94 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data d; input x y z f; datalines;
+
+NOTE: The data set WORK.D has 3 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.56k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 10:02:16 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+42         ;
+43         proc corr; var x; var y; run;
+
+NOTE: The PROCEDURE CORR printed page 1.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2611.01k
+      OS Memory           12968.00k
+      Timestamp           11/10/2026 10:02:16 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     623
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         proc corr; var x; with y; with z; run;
+
+NOTE: The PROCEDURE CORR printed page 2.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              636.82k
+      OS Memory           13224.00k
+      Timestamp           11/10/2026 10:02:16 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     67
+      Page Swaps                        0
+      Voluntary Context Switches        3
+The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         proc corr; var x y; freq f; run;
+
+NOTE: The PROCEDURE CORR printed page 3.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              641.43k
+      OS Memory           13224.00k
+      Timestamp           11/10/2026 10:02:16 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     51
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         
+47         
+48         
+49         
+The SAS System
+
+50         
