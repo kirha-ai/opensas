@@ -39,6 +39,7 @@ const io = @import("io.zig"); // reuse the DATA-step WHERE / dataset-option eval
 const dsfns = @import("dsfns.zig"); // libref→dir map for on-disk member deletes
 
 const Token = lex.Token;
+const freq_stat = @import("stat/freq.zig");
 
 /// The three deps every PROC handler needs (QL-B, taste #5): one bundle instead
 /// of `(arena, lib, diags)` threaded through all 15 run* signatures. `out` stays
@@ -1497,7 +1498,7 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
     // vars from the default VAR set); an explicit VAR naming that same var is
     // the ponytail edge noted at groupFormats.
     var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped CLASS col (BUG-freqfmtorder)
-    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags);
+    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, false);
 
     // BY: decode scanByList's wire encoding ONCE — clean names for every
     // indexOf below, per-key directions + NOTSORTED for the sortedness guard
@@ -2563,7 +2564,7 @@ fn parseProcFormat(arena: std.mem.Allocator, toks: []const Token, i: *usize, spe
 /// stores a raw value + the attached format there); a var in BOTH VAR and
 /// CLASS with a format sees its stats count as nmiss (split raw/formatted
 /// copies if a golden ever needs that).
-fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []const u8, stmt_specs: []const VarSpec, levels_out: *std.ArrayList(FmtLevels), diags: *diag.Diagnostics) diag.Error!*Dataset {
+fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []const u8, stmt_specs: []const VarSpec, levels_out: *std.ArrayList(FmtLevels), diags: *diag.Diagnostics, freq_missing: bool) diag.Error!*Dataset {
     const Target = struct { ci: usize, spec: []const u8 };
     var targets: std.ArrayList(Target) = .empty;
     for (varnames) |vn| {
@@ -2600,7 +2601,7 @@ fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []cons
         // NOTE-freqfmtoutraw: keep the RAW type + applied spec + each label's
         // lowest raw alongside the labels, so OUT= builders can store the raw
         // value with the format attached instead of the label string.
-        const lr = try fmtLabelsByRaw(arena, ds, tg.ci, tg.spec);
+        const lr = try fmtLabelsByRaw(arena, ds, tg.ci, tg.spec, freq_missing);
         try levels_out.append(arena, .{ .col = tg.ci, .labels = lr.labels, .raws = lr.raws, .ty = ds.columns.items[tg.ci].type, .spec = tg.spec });
         copy.columns.items[tg.ci].type = .char;
         copy.columns.items[tg.ci].format = null;
@@ -2608,7 +2609,7 @@ fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []cons
             const old = r.*[tg.ci];
             const nv = try arena.alloc(Value, r.*.len);
             @memcpy(nv, r.*);
-            nv[tg.ci] = if (isFreqMissing(old)) .{ .str = "" } else .{ .str = try format.apply(arena, old, tg.spec) };
+            nv[tg.ci] = if (!freq_missing and isFreqMissing(old)) .{ .str = "" } else .{ .str = try format.apply(arena, old, tg.spec) };
             r.* = nv;
         }
     }
@@ -2616,15 +2617,16 @@ fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []cons
 }
 
 /// Distinct formatted labels of column `ci`, in ASCENDING underlying-raw order
-/// (ORDER=INTERNAL, BUG-freqfmtorder). Missing raws are skipped: they collapse
-/// to a blank label that ranks first, matching SAS missing-first. Labels use the
+/// (ORDER=INTERNAL, BUG-freqfmtorder). FREQ includes missing raws so a mixed
+/// raw category inherits its missing representative; other callers retain
+/// their existing blank-category handling. Labels use the
 /// SAME `format.apply` groupFormats uses, so the byte strings match the rewritten
 /// cells exactly (padding and all).
-fn fmtLabelsByRaw(arena: std.mem.Allocator, ds: *Dataset, ci: usize, spec: []const u8) !FmtLabelsRaws {
+fn fmtLabelsByRaw(arena: std.mem.Allocator, ds: *Dataset, ci: usize, spec: []const u8, include_missing: bool) !FmtLabelsRaws {
     var raws: std.ArrayList(Value) = .empty;
     for (ds.rows.items) |r| {
         const v = r[ci];
-        if (isFreqMissing(v)) continue;
+        if (!include_missing and isFreqMissing(v)) continue;
         var seen = false;
         for (raws.items) |x| if (cmpValue(x, v) == .eq) {
             seen = true;
@@ -2684,8 +2686,7 @@ fn fmtRank(fl: FmtLevels, label: []const u8) i64 {
 
 /// The raw value an OUT= dataset stores for a format-collapsed group showing
 /// `label`: the LOWEST internal value (doc cite on FmtLevels). null ⇒ no raw
-/// produced this label — the blank missing group (missing raws never enter
-/// fmtLabelsByRaw), so the caller stores a missing of the ORIGINAL type.
+/// produced this label, so the caller stores a missing of the ORIGINAL type.
 /// ponytail: a real raw formatting to a label byte-equal to another's is
 /// impossible here (labels are deduped); a blank-LABELLED raw and a missing
 /// share the blank group and the raw wins — split them if a golden ever needs it.
@@ -2932,7 +2933,7 @@ fn isUnsupportedFreqStat(kw: []const u8) bool {
 /// handled upstream. Every name here is a recognized gap (rc 2); anything
 /// else reaching the catch-all is the user's typo (rc 1), never a false rc 2.
 fn isFreqTablesGapOption(kw: []const u8) bool {
-    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "missprint", "pearsonres", "printkwts", "scorout", "stdres", "contents", "format", "maxlevels", "nosparse", "nowarn", "plots" }) |opt|
+    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "pearsonres", "printkwts", "scorout", "stdres", "contents", "format", "maxlevels", "nosparse", "nowarn", "plots" }) |opt|
         if (eqi(kw, opt)) return true;
     return false;
 }
@@ -2955,10 +2956,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             // silently become INTERNAL (BUG-freqweightorder F3; mirrors the
             // PROC MEANS ORDER= validation).
             order = if (eqi(v, "freq")) .freq //
-            else if (eqi(v, "data")) .data //
-            else if (eqi(v, "internal")) .internal //
-            else if (eqi(v, "formatted")) .formatted //
-            else return diags.fail(error.ParseError, toks[i].line, "PROC FREQ: ORDER={s} is not valid — expected FREQ, DATA, INTERNAL, or FORMATTED", .{v});
+                else if (eqi(v, "data")) .data //
+                else if (eqi(v, "internal")) .internal //
+                else if (eqi(v, "formatted")) .formatted //
+                else return diags.fail(error.ParseError, toks[i].line, "PROC FREQ: ORDER={s} is not valid — expected FREQ, DATA, INTERNAL, or FORMATTED", .{v});
             i += 3;
         } else if (tkKw(toks[i], "noprint")) {
             noprint = true;
@@ -2999,6 +3000,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         vars: std.ArrayList([]const u8) = .empty,
         nocum: bool = false,
         disp: FreqDisp = .{}, // nofreq/nopercent/norow/nocol (FREQ-crosstabpct)
+        missprint: bool = false,
         missing: bool = false, // `/ missing` — include the missing level as a category (BUG-freqmissing)
         out_name: ?[]const u8 = null, // `/ out=DS` — COUNT/PERCENT dataset (GAP-freqnway)
         out_opts: []const Token = &.{}, // out=DS(rename=/keep=…) paren list, applied per request
@@ -3007,6 +3009,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         noprint: bool = false, // TABLES `/ noprint` — suppress THIS statement's table
     };
     var requests: std.ArrayList(FreqRequest) = .empty;
+    var bys: std.ArrayList([]const u8) = .empty;
     var weight_var: ?[]const u8 = null; // `weight w;` — Frequency = Σweight (BUG-freqweight)
     var weight_zeros = false; // `weight w / zeros;` — re-include zero-weight levels (BUG-freqweightorder F2)
     var fmt_specs: std.ArrayList(VarSpec) = .empty; // `format v spec;` — group by formatted value (NOTE-freqtablesfmt)
@@ -3077,14 +3080,42 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                     continue;
                 }
                 if (toks[i].tag != .name) continue; // the `/` itself
-                if (tkKw(toks[i], "nocum")) { req.nocum = true; continue; }
-                if (tkKw(toks[i], "missing")) { req.missing = true; continue; }
-                if (tkKw(toks[i], "noprint")) { req.noprint = true; continue; }
-                if (tkKw(toks[i], "nofreq")) { req.disp.nofreq = true; continue; }
-                if (tkKw(toks[i], "nopercent")) { req.disp.nopercent = true; continue; }
-                if (tkKw(toks[i], "norow")) { req.disp.norow = true; continue; }
-                if (tkKw(toks[i], "nocol")) { req.disp.nocol = true; continue; }
-                if (tkKw(toks[i], "outcum")) { req.outcum = true; continue; }
+                if (tkKw(toks[i], "nocum")) {
+                    req.nocum = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "missprint")) {
+                    req.missprint = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "missing")) {
+                    req.missing = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "noprint")) {
+                    req.noprint = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "nofreq")) {
+                    req.disp.nofreq = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "nopercent")) {
+                    req.disp.nopercent = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "norow")) {
+                    req.disp.norow = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "nocol")) {
+                    req.disp.nocol = true;
+                    continue;
+                }
+                if (tkKw(toks[i], "outcum")) {
+                    req.outcum = true;
+                    continue;
+                }
                 // LIST: a DOCUMENTED no-op on a ONE-way table — the SAS 9.4
                 // PROC FREQ TABLES-statement doc scopes LIST to "two-way to
                 // n-way tables" (a one-way table is list-form already), so
@@ -3094,7 +3125,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 // the grid to the one-row-per-cell list layout — not modeled,
                 // so the render loop fails loud instead of silently
                 // substituting the grid (NOTE-freqlistfmt, tick221 F4's fix).
-                if (tkKw(toks[i], "list")) { req.list = true; continue; }
+                if (tkKw(toks[i], "list")) {
+                    req.list = true;
+                    continue;
+                }
                 if (optAt(toks, i, "out")) |v| {
                     req.out_name = v;
                     i += 2; // past `= NAME`; a trailing `(rename=…)` is the lparen branch's
@@ -3107,7 +3141,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                     // hit is a recognized gap (rc 2) — a typo can't be in the list.
                     return failGap(diags, toks[i].line, "PROC FREQ: TABLES option {s} (association/exact/cell statistics) is not yet supported — refusing to emit a table without the requested statistics", .{toks[i].text});
                 } else if (isFreqTablesGapOption(toks[i].text)) {
-                    // The rest of Table 3.9's closed set (MISSPRINT, NOSPARSE,
+                    // The rest of Table 3.9's closed set (NOSPARSE,
                     // PLOTS=, ALPHA=, …) — documented but unimplemented, so a
                     // recognized gap (rc 2); the message stays byte-identical.
                     return failGap(diags, toks[i].line, "PROC FREQ: TABLES option {s} is not supported", .{toks[i].text});
@@ -3147,11 +3181,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         } else if (tkKw(toks[i], "format")) {
             try parseProcFormat(arena, toks, &i, &fmt_specs); // leaves i at the `;`
         } else if (tkKw(toks[i], "by")) {
-            // BY-group FREQ isn't modeled (per-group tables); silently ignoring
-            // it emitted ONE global table — silent wrong output
-            // (PROCBY-printfreq). FAIL LOUD until per-group tables exist. BY is a
-            // valid SAS 9.4 PROC FREQ statement → a gap (rc 2), not the user's 1.
-            return failGap(diags, toks[i].line, "PROC FREQ: BY-group processing is not yet supported", .{});
+            bys.clearRetainingCapacity();
+            try parseProcBy(arena, diags, toks, &i, &bys);
         } else if (tkKw(toks[i], "where")) {
             while (i < toks.len and toks[i].tag != .semicolon) i += 1; // procInput applies it
         } else if (toks[i].tag == .name and @import("parser.zig").isMidStepSkippable(toks[i].text)) {
@@ -3220,63 +3251,114 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         unsupported("PROC FREQ without a TABLES statement");
         return;
     }
-    var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped col (BUG-freqfmtorder)
-    { // FORMAT on a TABLES var → group + display by the formatted value
-        var tvars: std.ArrayList([]const u8) = .empty;
-        for (requests.items) |r| for (r.vars.items) |vn| try tvars.append(arena, vn);
-        ds = try groupFormats(arena, ds, tvars.items, fmt_specs.items, &fmt_levels, diags);
-    }
     // A named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
-    var rendered = false; // blank line between successive tables (nWayFreq's separator)
-    if (nlevels and !noprint) {
-        // NLEVELS prints BEFORE the frequency tables (SAS ordering). Each TABLES
-        // variable appears once, in first-appearance order, even across multiple
-        // or crossed (`a*b`) requests.
-        var nlvars: std.ArrayList([]const u8) = .empty;
-        for (requests.items) |r| for (r.vars.items) |vn| {
-            for (nlvars.items) |e| {
-                if (eqi(e, vn)) break;
-            } else try nlvars.append(arena, vn);
+    const pb = try decodeProcBy(arena, bys.items);
+    const bcols = try arena.alloc(usize, pb.names.len);
+    for (pb.names, 0..) |bn, k| bcols[k] = ds.indexOf(bn) orelse
+        return diags.fail(error.ParseError, 0, "PROC FREQ: BY variable {s} not in {s}", .{ bn, ds.name });
+    if (!pb.notsorted) for (1..@max(1, ds.rows.items.len)) |k| {
+        if (byOrderViolation(ds.rows.items[k], ds.rows.items[k - 1], bcols, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |j|
+            return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[j]) "descending" else "ascending" });
+    };
+    const input = ds;
+    const slices = try bySlices(arena, ds.rows.items, bcols);
+    const outputs = try arena.alloc(?*Dataset, requests.items.len);
+    @memset(outputs, null);
+    if (ds.rows.items.len == 0) try diags.report(.note, 0, "No observations in data set {s}.", .{ds.name});
+    // Empty BY input still creates the requested OUT= schema.
+    const work_slices = if (slices.len == 0) try bySlices(arena, ds.rows.items, &.{}) else slices;
+    for (work_slices) |bs| {
+        var view = input.*;
+        view.rows = .{ .items = @constCast(bs.rows), .capacity = bs.rows.len };
+        ds = &view;
+        var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped col (BUG-freqfmtorder)
+        { // FORMAT on a TABLES var → group + display by the formatted value
+            var tvars: std.ArrayList([]const u8) = .empty;
+            for (requests.items) |r| for (r.vars.items) |vn| try tvars.append(arena, vn);
+            ds = try groupFormats(arena, ds, tvars.items, fmt_specs.items, &fmt_levels, diags, true);
+        }
+
+        var any = false;
+        for (bs.rows) |row| if (weightKeepsRow(row, wcol, weight_zeros)) {
+            any = true;
+            break;
         };
-        if (nlvars.items.len > 0) {
-            try freqNLevels(arena, out, ds, nlvars.items, order, wcol, weight_zeros, fmt_levels.items);
+        if (!any and bs.rows.len > 0) try diags.report(.note, 0, "{s} contains 0 observations with nonzero weights.", .{if (bcols.len > 0) "BY group" else "Data set"});
+        if (any and !noprint) if (bs.rep) |row| try appendByLine(arena, out, input, row, bcols);
+        var rendered = false; // blank line between successive tables (nWayFreq's separator)
+        if (any and nlevels and !noprint) {
+            // NLEVELS prints BEFORE the frequency tables (SAS ordering). Each TABLES
+            // variable appears once, in first-appearance order, even across multiple
+            // or crossed (`a*b`) requests.
+            var nlvars: std.ArrayList([]const u8) = .empty;
+            for (requests.items) |r| for (r.vars.items) |vn| {
+                for (nlvars.items) |e| {
+                    if (eqi(e, vn)) break;
+                } else try nlvars.append(arena, vn);
+            };
+            if (nlvars.items.len > 0) {
+                try freqNLevels(arena, out, ds, nlvars.items, order, wcol, weight_zeros, fmt_levels.items);
+                rendered = true;
+            }
+        }
+        for (requests.items, 0..) |*req, request_index| {
+            if (req.vars.items.len == 0) continue; // a bare `tables;` contributes nothing (merged-list behavior)
+            const vcols = try arena.alloc(usize, req.vars.items.len);
+            for (req.vars.items, 0..) |vn, k| vcols[k] = ds.indexOf(vn) orelse {
+                unsupported("PROC FREQ: TABLES variable not found");
+                return;
+            };
+            if (req.out_name) |on| {
+                try buildFreqOutput(arena, lib, on, ds, vcols, wcol, weight_zeros, req.missing, req.outcum, fmt_levels.items);
+                const part = lib.find(on).?;
+                if (outputs[request_index] == null) {
+                    const combined = try arena.create(Dataset);
+                    combined.* = Dataset.init(arena, on);
+                    for (bcols) |ci| try combined.columns.append(arena, input.columns.items[ci]);
+                    for (part.columns.items, 0..) |column, j| {
+                        if (j < vcols.len and std.mem.indexOfScalar(usize, bcols, vcols[j]) != null) continue;
+                        try combined.columns.append(arena, column);
+                    }
+                    outputs[request_index] = combined;
+                }
+                for (part.rows.items) |row| {
+                    const cells = try arena.alloc(Value, outputs[request_index].?.columns.items.len);
+                    for (bcols, 0..) |ci, k| cells[k] = bs.rep.?[ci];
+                    var next = bcols.len;
+                    for (row, 0..) |cell, j| {
+                        if (j < vcols.len and std.mem.indexOfScalar(usize, bcols, vcols[j]) != null) continue;
+                        cells[next] = cell;
+                        next += 1;
+                    }
+                    try outputs[request_index].?.appendRow(cells);
+                }
+            }
+            if (!any or noprint or req.noprint) continue;
+            // NOTE-freqlistfmt: `/ list` on an n-way table must render SAS's
+            // one-row-per-cell list layout; we only have the grid. Fail loud (house
+            // rule) rather than silently emit the wrong layout. One-way is already
+            // list form; OUT= datasets are unaffected by LIST either way.
+            // GAP-ebnfrcwrongclass: LIST is a DOCUMENTED TABLES option — Table 3.9
+            // (Base SAS 9.4 Procedures Guide: Statistical Procedures, printed
+            // p.105, === pdf 108 ===: "LIST Displays two-way to n-way tables in
+            // list format") — so refusing it is OUR gap, rc 2 (D-009),
+            // not rc 1 "your SAS is broken"; the message already NAMES list.
+            if (req.list and req.vars.items.len > 1)
+                return failGap(diags, 0, "PROC FREQ: TABLES option list (n-way list layout) is not yet supported — refusing to emit the crosstab grid in its place", .{});
+            if (rendered) try out.append(arena, '\n');
+            switch (req.vars.items.len) {
+                1 => try oneWayFreq(arena, out, ds, req.vars.items[0], req.nocum, wcol, weight_zeros, req.missing, order, req.disp.nopercent, req.missprint, fmt_levels.items),
+                2 => try twoWayFreq(arena, out, ds, req.vars.items[0], req.vars.items[1], order, wcol, weight_zeros, 0, null, req.disp, req.missing, req.missprint, fmt_levels.items),
+                else => try nWayFreq(arena, out, ds, req.vars.items, vcols, order, wcol, weight_zeros, req.disp, req.missing, req.missprint, fmt_levels.items),
+            }
             rendered = true;
         }
     }
-    for (requests.items) |*req| {
-        if (req.vars.items.len == 0) continue; // a bare `tables;` contributes nothing (merged-list behavior)
-        const vcols = try arena.alloc(usize, req.vars.items.len);
-        for (req.vars.items, 0..) |vn, k| vcols[k] = ds.indexOf(vn) orelse {
-            unsupported("PROC FREQ: TABLES variable not found");
-            return;
-        };
-        if (req.out_name) |on| {
-            try buildFreqOutput(arena, lib, on, ds, vcols, wcol, weight_zeros, req.missing, req.outcum, fmt_levels.items);
-            // out=X(rename=/keep=…) — SDTM PC programs rename COUNT; the paren list was
-            // captured from THIS statement's `/` options (applyDatasetOptions's)
-            if (lib.find(on)) |od| if (req.out_opts.len > 0) try io.applyDatasetOptions(arena, od, req.out_opts, diags, false);
-        }
-        if (noprint or req.noprint) continue;
-        // NOTE-freqlistfmt: `/ list` on an n-way table must render SAS's
-        // one-row-per-cell list layout; we only have the grid. Fail loud (house
-        // rule) rather than silently emit the wrong layout. One-way is already
-        // list form; OUT= datasets are unaffected by LIST either way.
-        // GAP-ebnfrcwrongclass: LIST is a DOCUMENTED TABLES option — Table 3.9
-        // (Base SAS 9.4 Procedures Guide: Statistical Procedures, printed
-        // p.105, === pdf 108 ===: "LIST Displays two-way to n-way tables in
-        // list format") — so refusing it is OUR gap, rc 2 (D-009),
-        // not rc 1 "your SAS is broken"; the message already NAMES list.
-        if (req.list and req.vars.items.len > 1)
-            return failGap(diags, 0, "PROC FREQ: TABLES option list (n-way list layout) is not yet supported — refusing to emit the crosstab grid in its place", .{});
-        if (rendered) try out.append(arena, '\n');
-        switch (req.vars.items.len) {
-            1 => try oneWayFreq(arena, out, ds, req.vars.items[0], req.nocum, wcol, weight_zeros, req.missing, order, req.disp.nopercent, fmt_levels.items),
-            2 => try twoWayFreq(arena, out, ds, req.vars.items[0], req.vars.items[1], order, wcol, weight_zeros, 0, null, req.disp, req.missing, fmt_levels.items),
-            else => try nWayFreq(arena, out, ds, req.vars.items, vcols, order, wcol, weight_zeros, req.disp, req.missing, fmt_levels.items),
-        }
-        rendered = true;
-    }
+    for (requests.items, 0..) |req, k| if (outputs[k]) |od| {
+        if (req.out_opts.len > 0) try io.applyDatasetOptions(arena, od, req.out_opts, diags, false);
+        try lib.put(req.out_name.?, od);
+    };
 }
 
 /// PROC FREQ `NLEVELS` (proc-statement option, BUG-freqnlevels): the "Number of
@@ -3328,7 +3410,7 @@ const FreqDisp = struct {
 /// combination of the leading n-2 variables, headed `Table N of y by z` and
 /// `Controlling for a=… …`. Strata honor the proc's ORDER= (BUG-freqstrataorder);
 /// an obs missing in a controlling variable belongs to no stratum (SAS default).
-fn nWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, vcols: []const usize, order: FreqOrder, wcol: ?usize, zeros: bool, disp: FreqDisp, keep_missing: bool, fmt_levels: []const FmtLevels) !void {
+fn nWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, vcols: []const usize, order: FreqOrder, wcol: ?usize, zeros: bool, disp: FreqDisp, keep_missing: bool, missprint: bool, fmt_levels: []const FmtLevels) !void {
     const scols = vcols[0 .. vcols.len - 2];
     // Strata walk in the requested ORDER= (FREQ → descending stratum size, DATA
     // → first appearance); FORMATTED folds to ascending as in oneWayLevels (the
@@ -3344,7 +3426,7 @@ fn nWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, var
     next_stratum: for (strata) |st| {
         // BUG-freqmissingstrata: under /MISSING a missing control value is its
         // own stratum (SAS prints "Controlling for a=."); default still drops it.
-        if (!keep_missing) for (scols) |ci| if (isFreqMissing(st.rep[ci])) continue :next_stratum;
+        if (!keep_missing and !missprint) for (scols) |ci| if (freqLevelMissing(st.rep[ci], fmtLevelsFor(fmt_levels, ci))) continue :next_stratum;
         // GAP-freqlow-tick276 F5: a stratum whose obs ALL have zero weight has
         // NO observations (zero-weight obs are excluded by default — the same
         // weightKeepsRow rule the cells/levels apply), so SAS prints no table
@@ -3370,7 +3452,7 @@ fn nWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, var
         var ctl: std.ArrayList(u8) = .empty;
         try ctl.appendSlice(arena, "Controlling for");
         for (scols, 0..) |ci, k| try ctl.appendSlice(arena, try std.fmt.allocPrint(arena, " {s}={s}", .{ vars[k], try cellText(arena, st.rep[ci]) }));
-        try twoWayFreq(arena, out, sub, vars[vars.len - 2], vars[vars.len - 1], order, wcol, zeros, tno, ctl.items, disp, keep_missing, fmt_levels);
+        try twoWayFreq(arena, out, sub, vars[vars.len - 2], vars[vars.len - 1], order, wcol, zeros, tno, ctl.items, disp, keep_missing, missprint, fmt_levels);
     }
 }
 
@@ -3404,15 +3486,42 @@ fn buildFreqOutput(arena: std.mem.Allocator, lib: *Library, oname: []const u8, d
         _ = try o.addColumn("CUM_PCT", .num);
     }
 
-    // SAS default: an obs missing in ANY tables variable is excluded from the
-    // cells and the percent base; `/ missing` re-includes those levels.
+    // OUT= always retains missing cells; only MISSING includes their counts
+    // in the percentage base (Statistical Procedures pp.156,235–236).
     var rows: std.ArrayList([]const Value) = .empty;
-    next_row: for (ds.rows.items) |r| {
-        if (!keep_missing) for (vcols) |ci| if (isFreqMissing(r[ci])) continue :next_row;
+    for (ds.rows.items) |r| {
         if (!weightKeepsRow(r, wcol, zeros)) continue; // zero-weight-only combos form no OUT= row (BUG-freqoutzerocount)
         try rows.append(arena, r);
     }
     const groups = try collectGroupsRows(arena, rows.items, vcols, .internal);
+    // OUT= preserves the smallest raw representative and its INTERNAL order,
+    // including a format category that contains missing and nonmissing raws.
+    const OutputOrder = struct {
+        cols: []const usize,
+        formats: []const FmtLevels,
+        fn less(c: @This(), l: MeansGroup, r: MeansGroup) bool {
+            for (c.cols) |ci| {
+                const fl = fmtLevelsFor(c.formats, ci);
+                const lv = if (fl) |f| fmtRawFor(f, l.rep[ci].str) orelse l.rep[ci] else l.rep[ci];
+                const rv = if (fl) |f| fmtRawFor(f, r.rep[ci].str) orelse r.rep[ci] else r.rep[ci];
+                switch (cmpValue(lv, rv)) {
+                    .lt => return true,
+                    .gt => return false,
+                    .eq => {},
+                }
+            }
+            return false;
+        }
+    };
+    var formatted_missing = false;
+    for (fmt_levels) |fl| for (fl.raws) |rv| {
+        if (isFreqMissing(rv)) {
+            formatted_missing = true;
+            break;
+        }
+    };
+    if (formatted_missing) std.mem.sort(MeansGroup, groups, OutputOrder{ .cols = vcols, .formats = fmt_levels }, OutputOrder.less);
+
     const counts = try arena.alloc(f64, groups.len);
     for (groups, 0..) |g, k| {
         var c: f64 = 0;
@@ -3427,22 +3536,23 @@ fn buildFreqOutput(arena: std.mem.Allocator, lib: *Library, oname: []const u8, d
     const sctx = GroupKeyCtx{ .ccols = scols };
     for (groups, 0..) |g, k| {
         const e = try strata.getOrPutContext(arena, g.rep, sctx);
-        e.value_ptr.* = (if (e.found_existing) e.value_ptr.* else 0) + counts[k];
+        e.value_ptr.* = (if (e.found_existing) e.value_ptr.* else 0) + (if (freqRowMissing(g.rep, vcols, fmt_levels) and !keep_missing) @as(f64, 0) else counts[k]);
     }
     var cum_freq: f64 = 0;
     for (groups, 0..) |g, k| {
         const denom = strata.getContext(g.rep, sctx).?;
+        const excluded = !keep_missing and freqRowMissing(g.rep, vcols, fmt_levels);
         const cells = try arena.alloc(Value, vcols.len + 2 + 2 * @as(usize, @intFromBool(cum)));
         for (vcols, 0..) |ci, j| cells[j] = if (fmtLevelsFor(fmt_levels, ci)) |f|
             (fmtRawFor(f, g.rep[ci].str) orelse missingOf(f.ty)) // label → lowest raw; blank group = missing
         else
             g.rep[ci];
         cells[vcols.len] = .{ .num = counts[k] };
-        cells[vcols.len + 1] = .{ .num = ratioF(counts[k], denom) };
+        cells[vcols.len + 1] = .{ .num = if (excluded) std.math.nan(f64) else freq_stat.percent(counts[k], denom) };
         if (cum) {
-            cum_freq += counts[k];
-            cells[vcols.len + 2] = .{ .num = cum_freq };
-            cells[vcols.len + 3] = .{ .num = ratioF(cum_freq, denom) };
+            if (!excluded) cum_freq += counts[k];
+            cells[vcols.len + 2] = .{ .num = if (excluded) std.math.nan(f64) else cum_freq };
+            cells[vcols.len + 3] = .{ .num = if (excluded) std.math.nan(f64) else freq_stat.percent(cum_freq, denom) };
         }
         try o.appendRow(cells);
     }
@@ -3493,7 +3603,7 @@ fn oneWayLevels(arena: std.mem.Allocator, ds: *Dataset, col: usize, keep_missing
     var idx: std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage) = .empty;
     for (ds.rows.items) |r| {
         const v = r[col];
-        if (!keep_missing and isFreqMissing(v)) continue; // missing is not a category (unless `/ missing`)
+        if (!keep_missing and freqLevelMissing(v, fl)) continue; // missing is not a category (unless `/ missing`)
         if (!weightKeepsRow(r, wcol, zeros)) continue; // zero-weight obs form no level by default (BUG-freqweightorder F2)
         const gop = try idx.getOrPut(arena, v);
         if (!gop.found_existing) {
@@ -3564,7 +3674,7 @@ fn freqText(arena: std.mem.Allocator, x: f64) ![]const u8 {
     return format.bestNum(arena, x);
 }
 
-fn oneWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, varname: []const u8, nocum: bool, wcol: ?usize, zeros: bool, keep_missing: bool, order: FreqOrder, nopercent: bool, fmt_levels: []const FmtLevels) !void {
+fn oneWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, varname: []const u8, nocum: bool, wcol: ?usize, zeros: bool, keep_missing: bool, order: FreqOrder, nopercent: bool, missprint: bool, fmt_levels: []const FmtLevels) !void {
     const col = ds.indexOf(varname) orelse {
         unsupported("PROC FREQ: TABLES variable not found");
         return;
@@ -3572,7 +3682,7 @@ fn oneWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
     // Default: missing is not a category (percents over non-missing, a
     // `Frequency Missing = n` line below). `/ missing` re-includes it as a level
     // (percents over the full total, no trailing line) — BUG-freqmissing.
-    const cats = try oneWayLevels(arena, ds, col, keep_missing, order, wcol, zeros, fmtLevelsFor(fmt_levels, col));
+    const cats = try oneWayLevels(arena, ds, col, keep_missing or missprint, order, wcol, zeros, fmtLevelsFor(fmt_levels, col));
     // raw-value order for VALUE.-format groups (BUG-freqfmtorder)
     if (order == .internal) if (fmtLevelsFor(fmt_levels, col)) |f| {
         std.mem.sort(LevelCount, cats, f, struct {
@@ -3582,37 +3692,15 @@ fn oneWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
         }.less);
     };
     var total: f64 = 0;
-    for (cats) |c| total += c.w;
-    // All-missing TABLES variable: no levels to list, but SAS still "displays
-    // the number of missing observations following each table" (Base SAS 9.4
-    // Procedures Guide: Statistical Procedures, FREQ "Missing Values", p.156) —
-    // the count line prints even when the table itself is empty (NOTE-
-    // freqallmissnone). An empty or all-zero-weight table has no missing obs →
-    // the line is a no-op. Whether SAS also prints the table SHELL here is not
-    // settled by the chapter — we print no shell, matching the zero-weight "no
-    // phantom empty table" call (GAP-freqlow-tick276 F5).
-    //
-    // NOTE-freqallmissnoheader, searched and still DOC-SILENT: the bare
-    // `Frequency Missing = n` line also carries NO "The FREQ Procedure" heading,
-    // which looks like an omission but is the SAME unsettled question, not a new
-    // one — that heading is emitted from inside the table body below (ONEWAY_TITLE),
-    // so there is no header without a shell to hang it on. No volume prints an
-    // all-missing FREQ output: the chapter's only Missing Values example (Figure
-    // 3.12, printed pp.156–157) has two nonmissing levels, and "displays the number
-    // of missing observations following each table" (p.156) says where the count
-    // goes relative to a table, not what happens when there is none. Deliberately
-    // NOT pinned by a test — asserting the heading's absence would freeze a
-    // doc-silent guess and make a future correct fix look like a regression.
-    if (total == 0) {
-        if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol));
-        return;
-    }
+    for (cats) |c| if (keep_missing or !freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col))) {
+        total += c.w;
+    };
 
     // NOPERCENT drops the Percent columns (and, with NOCUM, everything but
     // Frequency). ponytail: column geometry for these variants is best-effort SAS
     // — the common default/NOCUM paths are unchanged (FREQ-crosstabpct/displayopts).
-    if (nopercent) return oneWayFreqNoPercent(arena, out, ds, col, varname, cats, keep_missing, nocum, wcol);
-    if (nocum) return oneWayFreqNoCum(arena, out, ds, col, varname, cats, total, keep_missing, wcol);
+    if (nopercent) return oneWayFreqNoPercent(arena, out, ds, col, varname, cats, keep_missing, nocum, wcol, fmt_levels);
+    if (nocum) return oneWayFreqNoCum(arena, out, ds, col, varname, cats, total, keep_missing, wcol, fmt_levels);
 
     try out.appendSlice(arena, ONEWAY_TITLE);
     try out.append(arena, '\n');
@@ -3639,18 +3727,19 @@ fn oneWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
     var cum: f64 = 0;
     for (cats) |c| {
         const cnt = c.w;
-        cum += cnt;
-        const pct = ratioF(cnt, total);
-        const cpct = ratioF(cum, total);
+        const excluded = !keep_missing and freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col));
+        if (!excluded) cum += cnt;
+        const pct = if (excluded) std.math.nan(f64) else freq_stat.percent(cnt, total);
+        const cpct = if (excluded) std.math.nan(f64) else freq_stat.percent(cum, total);
         const b = try line(arena, 72);
         putLeft(b, 15, try cellText(arena, c.v));
         putRight(b, 30, try freqText(arena, cnt));
         putRight(b, 42, try pctText(arena, pct));
-        putRight(b, 57, try freqText(arena, cum));
+        putRight(b, 57, if (!keep_missing and freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col))) "." else try freqText(arena, cum));
         putRight(b, 70, try pctText(arena, cpct));
         try flush(arena, out, b);
     }
-    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol));
+    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol, fmt_levels));
 }
 
 /// SAS prints `Frequency Missing = N` after the table when the TABLES
@@ -3666,7 +3755,7 @@ fn appendFreqMissing(arena: std.mem.Allocator, out: *std.ArrayList(u8), miss: f6
 
 /// `tables v / nocum;` — Frequency + Percent only (no cumulative pair, no super-
 /// header). The narrower table shifts the title and the column headers.
-fn oneWayFreqNoCum(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, varname: []const u8, cats: []const LevelCount, total: f64, keep_missing: bool, wcol: ?usize) !void {
+fn oneWayFreqNoCum(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, varname: []const u8, cats: []const LevelCount, total: f64, keep_missing: bool, wcol: ?usize, fmt_levels: []const FmtLevels) !void {
     try out.appendSlice(arena, ONEWAY_NOCUM_TITLE);
     try out.append(arena, '\n');
     { // column headers
@@ -3685,16 +3774,16 @@ fn oneWayFreqNoCum(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datas
         const b = try line(arena, 52);
         putLeft(b, 15, try cellText(arena, c.v));
         putRight(b, 30, try freqText(arena, c.w));
-        putRight(b, 42, try pctText(arena, ratioF(c.w, total)));
+        putRight(b, 42, try pctText(arena, if (!keep_missing and freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col))) std.math.nan(f64) else freq_stat.percent(c.w, total)));
         try flush(arena, out, b);
     }
-    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol));
+    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol, fmt_levels));
 }
 
 /// `tables v / nopercent;` — Frequency (+ Cumulative Frequency unless NOCUM), no
 /// Percent columns. ponytail: geometry is best-effort SAS (Cumulative Frequency
 /// placed compactly beside Frequency) pending gate verification against real SAS.
-fn oneWayFreqNoPercent(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, varname: []const u8, cats: []const LevelCount, keep_missing: bool, nocum: bool, wcol: ?usize) !void {
+fn oneWayFreqNoPercent(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, varname: []const u8, cats: []const LevelCount, keep_missing: bool, nocum: bool, wcol: ?usize, fmt_levels: []const FmtLevels) !void {
     try out.appendSlice(arena, ONEWAY_NOCUM_TITLE);
     try out.append(arena, '\n');
     if (!nocum) { // "Cumulative" super-header over the Cumulative Frequency column
@@ -3717,14 +3806,14 @@ fn oneWayFreqNoPercent(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *D
     }
     var cum: f64 = 0;
     for (cats) |c| {
-        cum += c.w;
+        if (keep_missing or !freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col))) cum += c.w;
         const b = try line(arena, 52);
         putLeft(b, 15, try cellText(arena, c.v));
         putRight(b, 30, try freqText(arena, c.w));
-        if (!nocum) putRight(b, 45, try freqText(arena, cum));
+        if (!nocum) putRight(b, 45, if (!keep_missing and freqLevelMissing(c.v, fmtLevelsFor(fmt_levels, col))) "." else try freqText(arena, cum));
         try flush(arena, out, b);
     }
-    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol));
+    if (!keep_missing) try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{col}, wcol, fmt_levels));
 }
 
 /// One crosstab. `table_no`/`control` are the n-way stratum headers: table_no 0
@@ -3734,7 +3823,7 @@ fn oneWayFreqNoPercent(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *D
 /// `disp` suppression options, with a legend box and marginal totals
 /// (FREQ-crosstabpct). Row/Col percents are blank in the Total column, and the
 /// marginal Total row carries only Frequency + Percent (SAS layout).
-fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v1: []const u8, v2: []const u8, order: FreqOrder, wcol: ?usize, zeros: bool, table_no: usize, control: ?[]const u8, disp: FreqDisp, keep_missing: bool, fmt_levels: []const FmtLevels) !void {
+fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v1: []const u8, v2: []const u8, order: FreqOrder, wcol: ?usize, zeros: bool, table_no: usize, control: ?[]const u8, disp: FreqDisp, keep_missing: bool, missprint: bool, fmt_levels: []const FmtLevels) !void {
     const c1 = ds.indexOf(v1) orelse {
         unsupported("PROC FREQ: TABLES row variable not found");
         return;
@@ -3749,8 +3838,8 @@ fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
     // path uses (was distinctSorted's O(N·L) dedup scan + an O(N) catWeight
     // rescan per level-pair under ORDER=FREQ) — identical filters/comparators, so
     // the level sets and orders are unchanged.
-    const rlevels = try oneWayLevels(arena, ds, c1, keep_missing, order, wcol, zeros, fmtLevelsFor(fmt_levels, c1));
-    const clevels = try oneWayLevels(arena, ds, c2, keep_missing, order, wcol, zeros, fmtLevelsFor(fmt_levels, c2));
+    const rlevels = try oneWayLevels(arena, ds, c1, keep_missing or missprint, order, wcol, zeros, fmtLevelsFor(fmt_levels, c1));
+    const clevels = try oneWayLevels(arena, ds, c2, keep_missing or missprint, order, wcol, zeros, fmtLevelsFor(fmt_levels, c2));
     const nr = rlevels.len;
     const nc = clevels.len;
     const rows = try arena.alloc(Value, nr);
@@ -3794,9 +3883,22 @@ fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
         const gop = try cells.getOrPut(arena, (@as(u64, @intCast(ri)) << 32) | @as(u64, @intCast(ci)));
         if (!gop.found_existing) gop.value_ptr.* = 0;
         gop.value_ptr.* += w;
+        if (!keep_missing and (freqLevelMissing(r[c1], fmtLevelsFor(fmt_levels, c1)) or freqLevelMissing(r[c2], fmtLevelsFor(fmt_levels, c2)))) continue;
         rowTot[ri] += w;
         colTot[ci] += w;
         grand += w;
+    }
+
+    if (!keep_missing and !missprint and (nr == 0 or nc == 0)) {
+        try out.appendSlice(arena, TWOWAY_TITLE);
+        try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\nFor {s} * {s}\nall data are missing because\nall levels of variable {s} are missing.\n", .{ v1, v2, if (nr == 0) v1 else v2 }));
+        return;
+    }
+    if (!keep_missing and !missprint and grand == 0 and freqMissingWeight(ds, &.{ c1, c2 }, wcol, fmt_levels) > 0) {
+        try out.appendSlice(arena, TWOWAY_TITLE);
+        try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\nTable of {s} by {s}\n\nSample Size = 0\n", .{ v1, v2 }));
+        try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{ c1, c2 }, wcol, fmt_levels));
+        return;
     }
 
     const sep = struct { // "|" position before column c (c in 0..=nc)
@@ -3894,19 +3996,20 @@ fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
             for (0..nc + 1) |c| putLeft(b, sep(c), "|");
             for (0..nc) |c| {
                 const cnt = cells.get((@as(u64, @intCast(ri)) << 32) | @as(u64, @intCast(c))) orelse 0;
-                const txt = switch (s) {
+                const excluded = !keep_missing and (freqLevelMissing(rows[ri], fmtLevelsFor(fmt_levels, c1)) or freqLevelMissing(cols[c], fmtLevelsFor(fmt_levels, c2)));
+                const txt = if (excluded and s != .freq) "." else switch (s) {
                     .freq => try freqText(arena, cnt),
-                    .pct => try pctText(arena, ratioF(cnt, grand)),
-                    .row => try pctText(arena, ratioF(cnt, rowTot[ri])),
-                    .col => try pctText(arena, ratioF(cnt, colTot[c])),
+                    .pct => try pctText(arena, freq_stat.percent(cnt, grand)),
+                    .row => try pctText(arena, freq_stat.percent(cnt, rowTot[ri])),
+                    .col => try pctText(arena, freq_stat.percent(cnt, colTot[c])),
                 };
                 putRight(b, rightOf(c), txt);
             }
             // Total column: Frequency → row total; Percent → row total's % of the
             // grand total; Row/Col Pct are left blank there (SAS).
             switch (s) {
-                .freq => putRight(b, rightOf(nc), try freqText(arena, rowTot[ri])),
-                .pct => putRight(b, rightOf(nc), try pctText(arena, ratioF(rowTot[ri], grand))),
+                .freq => putRight(b, rightOf(nc), if (!keep_missing and freqLevelMissing(rows[ri], fmtLevelsFor(fmt_levels, c1))) "." else try freqText(arena, rowTot[ri])),
+                .pct => putRight(b, rightOf(nc), try pctText(arena, if (!keep_missing and freqLevelMissing(rows[ri], fmtLevelsFor(fmt_levels, c1))) std.math.nan(f64) else freq_stat.percent(rowTot[ri], grand))),
                 .row, .col => {},
             }
             try flush(arena, out, b);
@@ -3918,21 +4021,21 @@ fn twoWayFreq(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, v
     if (!disp.nofreq) {
         const b = try line(arena, width);
         putLeft(b, 15, "Total");
-        for (0..nc) |c| putRight(b, rightOf(c), try freqText(arena, colTot[c]));
+        for (0..nc) |c| putRight(b, rightOf(c), if (!keep_missing and freqLevelMissing(cols[c], fmtLevelsFor(fmt_levels, c2))) "." else try freqText(arena, colTot[c]));
         putRight(b, rightOf(nc), try freqText(arena, grand));
         try flush(arena, out, b);
     }
     if (!disp.nopercent) {
         const b = try line(arena, width);
         if (disp.nofreq) putLeft(b, 15, "Total");
-        for (0..nc) |c| putRight(b, rightOf(c), try pctText(arena, ratioF(colTot[c], grand)));
-        putRight(b, rightOf(nc), try pctText(arena, 100.0));
+        for (0..nc) |c| putRight(b, rightOf(c), try pctText(arena, if (!keep_missing and freqLevelMissing(cols[c], fmtLevelsFor(fmt_levels, c2))) std.math.nan(f64) else freq_stat.percent(colTot[c], grand)));
+        putRight(b, rightOf(nc), try pctText(arena, freq_stat.percent(grand, grand)));
         try flush(arena, out, b);
     }
     if (!keep_missing) {
         // obs missing in EITHER variable were excluded — report the (weighted)
         // count, the same rule as the one-way line (SAS).
-        try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{ c1, c2 }, wcol));
+        try appendFreqMissing(arena, out, freqMissingWeight(ds, &.{ c1, c2 }, wcol, fmt_levels));
     }
 }
 
@@ -3962,15 +4065,27 @@ fn isFreqMissing(v: Value) bool {
 
 /// Σweight over the observations missing in ANY of `cols` (1/obs unweighted) —
 /// the weighted `Frequency Missing` count (see appendFreqMissing).
-fn freqMissingWeight(ds: *Dataset, cols: []const usize, wcol: ?usize) f64 {
+fn freqMissingWeight(ds: *Dataset, cols: []const usize, wcol: ?usize, fmt_levels: []const FmtLevels) f64 {
     var sum: f64 = 0;
     next_row: for (ds.rows.items) |r| {
-        for (cols) |ci| if (isFreqMissing(r[ci])) {
+        for (cols) |ci| if (freqLevelMissing(r[ci], fmtLevelsFor(fmt_levels, ci))) {
             sum += rowWeight(r, wcol);
             continue :next_row;
         };
     }
     return sum;
+}
+
+fn freqLevelMissing(v: Value, fl: ?FmtLevels) bool {
+    if (fl) |f| if (v == .str) {
+        return freq_stat.isMissing(fmtRawFor(f, v.str) orelse v);
+    };
+    return freq_stat.isMissing(v);
+}
+
+fn freqRowMissing(row: []const Value, cols: []const usize, levels: []const FmtLevels) bool {
+    for (cols) |ci| if (freqLevelMissing(row[ci], fmtLevelsFor(levels, ci))) return true;
+    return false;
 }
 
 /// PROC FREQ level ordering (ORDER= option). INTERNAL → ascending value (the
@@ -5772,7 +5887,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // Procedures Guide MEANS CLASS stmt Tip, printed p.1497 — a collapsing
     // format REDUCES the number of levels).
     var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped CLASS col (BUG-freqfmtorder)
-    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags);
+    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, false);
 
     // CLASS columns (BUG-univclass). Obs with a missing CLASS value are excluded
     // unless / MISSING (as MEANS, BUG-meansclassmiss); `cds` is the analysis view.
@@ -17593,14 +17708,14 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
-    { // FREQ TABLES: MISSPRINT is in Table 3.9 (rc 2); `chisqq` is a typo (rc 1)
+    { // FREQ TABLES: NOSPARSE remains a Table 3.9 gap (rc 2); `chisqq` is a typo (rc 1)
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
-        const toks = try lex.tokenize(a, "proc freq data=have; tables age / missprint; run;", &d);
+        const toks = try lex.tokenize(a, "proc freq data=have; tables age / nosparse; run;", &d);
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
-        try t.expect(std.mem.indexOf(u8, try d.render(), "PROC FREQ: TABLES option missprint is not supported") != null);
+        try t.expect(std.mem.indexOf(u8, try d.render(), "PROC FREQ: TABLES option nosparse is not supported") != null);
     }
     {
         diag.resetGap();
@@ -17888,7 +18003,7 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
-        const toks = try lex.tokenize(a, "proc freq data=have; by name; tables age; run;", &d);
+        const toks = try lex.tokenize(a, "proc freq data=have; test age; tables age; run;", &d);
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
@@ -18184,4 +18299,125 @@ test "PROC FORMAT PICTURE position-1 (format-options) split (BUG-picturepos1opts
         try t.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
     diag.resetGap();
+}
+
+test "NOTE-freqallmissnone: OUT missing rows, BY denominators, ZEROS and empty schema" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "b", "x", "w" }) |n| _ = try ds.addColumn(n, .num);
+    try ds.appendRow(&.{ Value.missing, Value.missing, numV(1) });
+    try ds.appendRow(&.{ Value.missing, Value.missing, numV(1) });
+    try ds.appendRow(&.{ numV(1), Value.missing, numV(0) });
+    try ds.appendRow(&.{ numV(1), numV(2), numV(0) });
+    try ds.appendRow(&.{ numV(2), Value.missing, numV(2) });
+    try ds.appendRow(&.{ numV(2), numV(2), numV(7) });
+    try lib.put("d", ds);
+    for ([_][]const u8{ "", "missprint", "missing", "missing missprint" }, 0..) |option, k| {
+        var d = diag.Diagnostics.init(a);
+        var listing: std.ArrayList(u8) = .empty;
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; by b; weight w / zeros; tables x / {s} out=o outcum; run;", .{option});
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, try lex.tokenize(a, src, &d));
+        try t.expect(!d.hasErrors());
+        const o = lib.find("o").?;
+        try t.expectEqual(@as(usize, 5), o.rows.items.len);
+        try t.expectEqualStrings("b", o.columns.items[0].name);
+        try t.expectEqual(@as(f64, 2), o.rows.items[0][2].num);
+        try t.expectEqual(@as(f64, 0), o.rows.items[2][2].num);
+        try t.expect(std.math.isNan(o.rows.items[2][3].num));
+        try t.expectEqual(@as(f64, 0), o.rows.items[2][4].num);
+        if (k < 2) {
+            try t.expect(std.math.isNan(o.rows.items[0][3].num));
+            try t.expect(std.math.isNan(o.rows.items[0][4].num));
+            try t.expectEqual(@as(f64, 100), o.rows.items[4][3].num);
+            try t.expect(std.mem.indexOf(u8, listing.items, "Frequency Missing = 2") != null);
+        } else {
+            try t.expectEqual(@as(f64, 100), o.rows.items[0][3].num);
+            try t.expectApproxEqAbs(@as(f64, 700.0 / 9.0), o.rows.items[4][3].num, 1e-10);
+            try t.expect(std.mem.indexOf(u8, listing.items, "Frequency Missing") == null);
+        }
+    }
+    // Without ZEROS the zero-weight BY group has neither table nor OUT row.
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, try lex.tokenize(a, "proc freq data=d; by b; weight w; tables x / out=o; run;", &d));
+    try t.expectEqual(@as(usize, 3), lib.find("o").?.rows.items.len);
+    try t.expect(std.mem.indexOf(u8, listing.items, "b=1") == null);
+    try t.expect(std.mem.indexOf(u8, try d.render(), "BY group contains 0 observations with nonzero weights") != null);
+    ds.rows.clearRetainingCapacity();
+    for ([_][]const u8{ "", "by b;" }) |by| {
+        listing.clearRetainingCapacity();
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; {s} tables x / out=o; run;", .{by});
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, try lex.tokenize(a, src, &d));
+        try t.expectEqual(@as(usize, 0), listing.items.len);
+        try t.expectEqual(@as(usize, 0), lib.find("o").?.rows.items.len);
+        try t.expectEqual(@as(usize, if (by.len == 0) 3 else 4), lib.find("o").?.columns.items.len);
+    }
+}
+
+test "NOTE-freqallmissnone: BY order diagnostics, descending and notsorted" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    _ = try ds.addColumn("b", .num);
+    _ = try ds.addColumn("x", .num);
+    try ds.appendRow(&.{ numV(2), Value.missing });
+    try ds.appendRow(&.{ numV(1), Value.missing });
+    try lib.put("d", ds);
+    for ([_][]const u8{ "b", "descending b", "b notsorted", "absent" }, 0..) |by, k| {
+        var d = diag.Diagnostics.init(a);
+        var listing: std.ArrayList(u8) = .empty;
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; by {s}; tables x / out=o; run;", .{by});
+        const toks = try lex.tokenize(a, src, &d);
+        if (k == 0 or k == 3) {
+            try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, toks));
+            try t.expect(d.hasErrors());
+        } else {
+            try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, toks);
+            try t.expectEqual(@as(usize, 2), lib.find("o").?.rows.items.len);
+        }
+    }
+}
+
+test "NOTE-freqallmissnone: a formatted category containing missing is wholly missing" {
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = Library.init(a);
+    var d = diag.Diagnostics.init(a);
+    format.clearUserFormats();
+    defer format.clearUserFormats();
+    try runFormat(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, "proc format; value $mix ' '='Unknown' 'X'='Unknown' 'Y'='Known'; run;", &d));
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    _ = try ds.addColumn("c", .char);
+    _ = try ds.addColumn("w", .num);
+    try ds.appendRow(&.{ strV(" "), numV(1) });
+    try ds.appendRow(&.{ strV("X"), numV(2) });
+    try ds.appendRow(&.{ strV("Y"), numV(3) });
+    try lib.put("d", ds);
+    for ([_][]const u8{ "", "missprint", "missing" }, 0..) |opt, k| {
+        var listing: std.ArrayList(u8) = .empty;
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; format c $mix.; weight w; tables c / {s} out=o outcum; run;", .{opt});
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &listing, try lex.tokenize(a, src, &d));
+        const o = lib.find("o").?;
+        try t.expectEqual(@as(usize, 2), o.rows.items.len);
+        try t.expectEqualStrings(" ", o.rows.items[0][0].str);
+        try t.expectEqual(@as(f64, 3), o.rows.items[0][1].num);
+        try t.expectEqual(@as(f64, 3), o.rows.items[1][1].num);
+        if (k < 2) {
+            try t.expect(std.math.isNan(o.rows.items[0][2].num));
+            try t.expectEqual(@as(f64, 100), o.rows.items[1][2].num);
+        } else {
+            try t.expectEqual(@as(f64, 50), o.rows.items[0][2].num);
+            try t.expectEqual(@as(f64, 6), o.rows.items[1][3].num);
+        }
+        try t.expectEqual(k > 0, std.mem.indexOf(u8, listing.items, "Unknown") != null);
+    }
 }

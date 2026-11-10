@@ -1,0 +1,64 @@
+
+Obs    x    COUNT    PERCENT
+
+ 1     1      1      33.3333
+ 2     2      2      66.6667
+
+The FREQ Procedure
+
+Table 1 of g by s
+Controlling for h=B
+
+g         s
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |Y       |  Total
+---------+--------+
+X        |      5 |      5
+         | 100.00 | 100.00
+         | 100.00 |
+         | 100.00 |
+---------+--------+
+Total           5        5
+           100.00   100.00
+
+The FREQ Procedure
+
+Table 1 of g by s
+Controlling for h=A
+
+g         s
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |Y       |  Total
+---------+--------+
+X        |      0 |      0
+         |      . |      .
+         |      . |
+         |      . |
+---------+--------+
+Total           0        0
+                .        .
+
+
+Table 2 of g by s
+Controlling for h=B
+
+g         s
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |Y       |  Total
+---------+--------+
+X        |      5 |      5
+         | 100.00 | 100.00
+         | 100.00 |
+         | 100.00 |
+---------+--------+
+Total           5        5
+           100.00   100.00

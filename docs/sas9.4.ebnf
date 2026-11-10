@@ -863,14 +863,15 @@ output_stat    = stat_keyword "=" var_list ;                      (* opensas *)
                  (* OUTPUT OUT= builds a summary dataset, one column per stat=
                    (fixtures means_output_id, means_output_names) *)
 
-(* 5.4 PROC FREQ *)
+(* 5.4 PROC FREQ: BY (DESCENDING/NOTSORTED), MISSPRINT, empty/all-missing
+   and OUT= missing rows supported; see NOTE-freqallmissnone oracle evidence. *)
 proc_freq      = "PROC" "FREQ" [ "DATA" "=" dataset ] ";"         (* opensas *)
                  { "TABLES" table_request { table_option } ";"
                  | "BY" var_list ";" } step_boundary ;
 table_request  = var { "*" var } ;                               (* opensas *)
                  (* one var → one-way table; `a*b` → two-way crosstab
                    (freq_crosstabpct); `a*b*c` → three-way (freq_nway_out) *)
-table_option   = "/" | "NOCUM" | "NOPERCENT" | "MISSING" | "LIST"  (* opensas: NOCUM drops the
+table_option   = "/" | "NOCUM" | "NOPERCENT" | "MISSING" | "MISSPRINT" | "LIST"  (* opensas: NOCUM drops the
                  cumulative columns, NOPERCENT the percent column, MISSING counts
                  missings (freq_missing); OUT= is honored via the generic form
                  (freq_nway_out). LIST: DOCUMENTED no-op on one-way tables — the

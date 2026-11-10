@@ -6031,7 +6031,7 @@ test "GAP-procprint: bad var / char SUM are user ERRORs (rc=1); unknown option i
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs") == null); // Obs replaced by id
 }
 
-test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / FREQ BY fail loud; plain PRINT BY sections" {
+test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / FREQ BY sections; plain PRINT BY sections" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -6069,13 +6069,14 @@ test "PROCBY-printfreq: PRINT BY DESCENDING honored (unsorted-per-spec loud) / F
         try std.testing.expectEqual(@as(u8, 1), testRc(&d));
         try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs") == null);
     }
-    // FREQ BY → captured ERROR, no GLOBAL table (was: BY ignored entirely)
+    // FREQ BY produces separate tables, including missing groups (NOTE-freqallmissnone).
     {
         var out: std.ArrayList(u8) = .empty;
         var d = sas.diag.Diagnostics.init(a);
         try interpret(a, &out, &d, mk ++ "proc freq data=d; by g; tables x; run;", null);
-        try std.testing.expect(d.hasErrors());
-        try std.testing.expect(std.mem.indexOf(u8, out.items, "Frequency") == null);
+        try std.testing.expect(!d.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "g=1") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "g=2") != null);
     }
 }
 
