@@ -3,11 +3,11 @@ control: no WEIGHT/FREQ -> n=4 nmiss=4
 n   nmiss
 
 4       4
-THE BUG: weight wt, no EXCLNPWGT -> n=3 nmiss=4 (row 7: x=7 PRESENT, only wt missing)
-THE BUG: weight wt, no EXCLNPWGT -> n=3 nmiss=4 (row 7: x=7 PRESENT, only wt missing)
+weight wt, no EXCLNPWGT -> n=3 nmiss=3 (missing weights excluded)
+weight wt, no EXCLNPWGT -> n=3 nmiss=3 (missing weights excluded)
 n   nmiss
 
-3       4
+3       3
 nonpositive FREQ already matched list 2 -> n=3 nmiss=3, must not move
 nonpositive FREQ already matched list 2 -> n=3 nmiss=3, must not move
 n   nmiss
