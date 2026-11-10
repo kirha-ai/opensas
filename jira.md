@@ -18,12 +18,6 @@ what it changes.
 
 ---
 
-## PR #48 review — round 2
-
-- [DOING @dev1] BUG-univclassrepweight (review, CRITICAL silent-wrong, pre-existing; non-blocking for PR #48) — A missing-weight row can supply the stored raw representative of a formatted UNIVARIATE CLASS level. Repro: `/tmp/pr48-review-r2/classweight-base.sas`: format c with 1-2='A',3-4='B'; input (c,x,w)=(1,10,.),(2,20,1),(3,30,1); `proc univariate data=d noprint;class c;var x;weight w;output out=o n=n mean=m;run;` then print an unformatted copy `raw=c`. EXPECTED first row `raw=2 n=1 m=20`; ACTUAL `raw=1 n=1 m=20`, rc 0, on both b7c7fdd and rebuilt 85856b86. Evidence: real SAS 9.4 `/tmp/pr48-review-r2/classweight.sas.txt` (same analysis also requests NOBS), `.sas.log`; Statistical Procedures pp.398,408 excludes missing weights, and p.321 describes formatted CLASS identity/order. Present before this PR; the new classRepresentative implementation in 6c7e628 (GAP-univ-summary-complete) preserves the defect by scanning weight-ineligible rows. Coordinate with BUG-univclassnobsweight, but retain the distinct non-blocking classification. (likely: src/stat/univariate.zig:1126, src/proc.zig:4641)
-
----
-
 ## Base SAS statistics completion — CORR / FREQ / UNIVARIATE
 
 Reference: `docs/sas94-procedures-statistical.txt`, Sixth Edition;
