@@ -2,6 +2,7 @@
 //! SAS 9.4 Statistical Procedures pp.299–306, 342, 353–358, 408–414, 460–466.
 const std = @import("std");
 const proc = @import("../proc.zig");
+const normality = @import("normality.zig");
 const h = proc.UnivariateHelpers;
 const diag = @import("../diag.zig");
 const Token = @import("../lexer.zig").Token;
@@ -69,6 +70,7 @@ pub const Options = struct {
     obscol: ?usize = null,
     freqcol: ?usize = null,
     round_units: []f64 = &.{},
+    by_starts: std.ArrayList(usize) = .empty,
     class_missing: [2]bool = .{ false, false },
     class_order: [2][]const u8 = .{ "internal", "internal" },
     freq: bool = false,
@@ -94,6 +96,17 @@ pub const Options = struct {
         }
         self.source = copy;
         return copy;
+    }
+    /// Record BY boundaries after input filtering but before FREQ exclusion.
+    pub fn markBy(self: *Options, a: Allocator, ds: *Dataset, cols: []const usize) !void {
+        if (cols.len == 0) return;
+        for (ds.rows.items, 0..) |row, j| {
+            var start = j == 0;
+            if (j > 0) for (cols) |ci| {
+                if (h.compareValue(row[ci], ds.rows.items[j - 1][ci]) != .eq) start = true;
+            };
+            if (start) try self.by_starts.append(a, @intFromFloat(h.toNum(row[self.obscol.?])));
+        }
     }
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
         i.* += 1;
@@ -151,25 +164,12 @@ pub const Options = struct {
         }
         return false;
     }
-    pub fn roundData(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize) diag.Error!*Dataset {
-        if (self.round.len == 0) return ds;
+    pub fn configureRounding(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize) diag.Error!void {
+        if (self.round.len == 0) return;
         if (self.round.len != 1 and self.round.len != cols.len) return d.fail(error.ParseError, 0, "UNIVARIATE: ROUND list must match VAR list", .{});
         self.round_units = try a.alloc(f64, ds.columns.items.len);
         @memset(self.round_units, 0);
         for (cols, 0..) |ci, j| self.round_units[ci] = self.round[if (self.round.len == 1) 0 else j];
-        const copy = try a.create(Dataset);
-        copy.* = Dataset.init(a, ds.name);
-        try copy.columns.appendSlice(a, ds.columns.items);
-        for (ds.rows.items) |row| {
-            const r = try a.dupe(Value, row);
-            for (cols, 0..) |col, j| {
-                const unit = self.round[if (self.round.len == 1) 0 else j];
-                const x = h.toNum(r[col]);
-                if (unit > 0 and std.math.isFinite(x)) r[col] = .{ .num = roundEven(x / unit) * unit };
-            }
-            try copy.rows.append(a, r);
-        }
-        return copy;
     }
 };
 fn roundEven(x: f64) f64 {
@@ -297,6 +297,8 @@ const Summary = struct {
     probm: f64 = nan,
     signrank: f64 = nan,
     probs: f64 = nan,
+    normaltest: f64 = nan,
+    probn: f64 = nan,
     gini: f64 = nan,
     mad: f64 = nan,
     sn: f64 = nan,
@@ -310,7 +312,7 @@ const Summary = struct {
         if (eq(key, "nobs")) return @floatFromInt(self.nobs);
         if (eq(key, "geomean")) return self.geo;
         if (eq(key, "harmean")) return self.harm;
-        inline for (.{ "msign", "probm", "signrank", "probs", "gini", "mad", "sn", "qn", "std_sn", "std_qn" }) |f| if (eq(key, f)) return @field(self, f);
+        inline for (.{ "msign", "probm", "signrank", "probs", "normaltest", "probn", "gini", "mad", "sn", "qn", "std_sn", "std_qn" }) |f| if (eq(key, f)) return @field(self, f);
         if (eq(key, "std_mad")) return self.mad * 1.4826;
         if (eq(key, "std_gini")) return self.gini * std.math.sqrt(std.math.pi) / 2;
         if (eq(key, "std_qrange")) return (h.univPercentile(self.pairs, 75, def) - h.univPercentile(self.pairs, 25, def)) / 1.34898;
@@ -391,7 +393,15 @@ fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, m
         }
         z.signrank = @as(f64, @floatFromInt(sum)) / 4;
         if (n > 0) z.probs = try h.signedRankP(a, ranks, sum, tie);
-        if (robust) try robustStats(a, &z);
+        if (robust) {
+            try robustStats(a, &z);
+            const sorted = try a.alloc(f64, z.pairs.len);
+            for (z.pairs, 0..) |pair, j| sorted[j] = pair.x;
+            if (try normality.compute(a, sorted)) |result| {
+                z.normaltest = result.statistic;
+                z.probn = result.p;
+            }
+        }
     }
     return z;
 }
@@ -421,12 +431,17 @@ fn robustStats(a: Allocator, z: *Summary) !void {
         return;
     }
     z.gini = 2 * total / (nf * (nf - 1));
-    const inner = try a.alloc(f64, n);
-    for (0..n) |i| inner[i] = distanceMedian(z.pairs, i);
-    std.mem.sort(f64, inner, {}, std.sort.asc(f64));
-    z.sn = 1.1926 * inner[(n - 1) / 2];
-    const half = n / 2 + 1;
-    z.qn = 2.2219 * pairDistance(z.pairs, half * (half - 1) / 2);
+    // SAS default limits (printed p.301); FORCEQN/FORCESN are separate options.
+    if (n <= 1_000_000) {
+        const inner = try a.alloc(f64, n);
+        for (0..n) |i| inner[i] = distanceMedian(z.pairs, i);
+        std.mem.sort(f64, inner, {}, std.sort.asc(f64));
+        z.sn = 1.1926 * inner[(n - 1) / 2];
+    }
+    if (n <= 65_526) {
+        const half = n / 2 + 1;
+        z.qn = 2.2219 * pairDistance(z.pairs, half * (half - 1) / 2);
+    }
     const cs = [_]f64{ 0, 0, 0.743, 1.851, 0.954, 1.351, 0.993, 1.198, 1.005, 1.131 };
     const cq = [_]f64{ 0, 0, 0.399, 0.994, 0.512, 0.844, 0.611, 0.857, 0.669, 0.872 };
     z.std_sn = z.sn * (if (n < 10) cs[n] else if (n % 2 == 1) nf / (nf - 0.9) else 1);
@@ -594,7 +609,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             }
             od.label = if (has_pct and wc != null) "Selected Summary Statistics (Percentile Definition=Weighted)" else if (has_pct) try std.fmt.allocPrint(a, "Selected Summary Statistics (Percentile Definition={d})", .{def}) else "Selected Summary Statistics";
         }
-        for (try h.bySlices(a, ds.rows.items, bcols)) |bs| {
+        for (try bySlices(a, ds.rows.items, bcols, opt)) |bs| {
             const first_row = od.rows.items.len;
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
@@ -603,31 +618,24 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             try orderGroups(a, &bd, groups, ccols, levels, opt);
             // collectGroups emits a pooled group even for an empty, unclassified input.
             for (groups) |g| {
-                if (wc) |wi| {
-                    var usable = false;
-                    for (g.rows) |row| {
-                        if (!std.math.isNan(h.toNum(row[wi]))) usable = true;
-                    }
-                    if (!usable) continue;
-                }
+                if (!hasUsableWeight(g.rows, wc, opt)) continue;
 
                 var gd = Dataset.init(a, ds.name);
                 gd.columns = ds.columns;
                 try gd.rows.appendSlice(a, g.rows);
-                const analysis = try analysisView(a, &gd, acols, opt);
+                const analysis = try analysisView(a, &gd, acols, wc, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
                 for (spec.req.items) |r| if (eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
                     robust = true;
                 };
-                if (table and wc == null) for (acols) |ci| {
-                    const stats = h.computeStatsV(analysis.rows.items, ci, null, vd);
-                    if (stats.n >= 2 and stats.std > 0) {
-                        diag.markGap();
-                        return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: OUTTABLE normality fields require the inference implementation; refusing fabricated missing statistics", .{});
-                    }
-                };
-                for (acols, 0..) |ci, j| summaries[j] = try summarize(a, analysis, ci, wc, vd, mu0, robust);
+                for (acols, 0..) |ci, j| {
+                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, mu0, robust);
+                    if (table and wc == null and summaries[j].pairs.len > 65_526)
+                        try cx.diags.warn(0, "UNIVARIATE: Qn is not computed by default above 65526 nonmissing observations for {s}", .{ds.columns.items[ci].name});
+                    if (table and wc == null and summaries[j].pairs.len > 1_000_000)
+                        try cx.diags.warn(0, "UNIVARIATE: Sn is not computed by default above 1000000 nonmissing observations for {s}", .{ds.columns.items[ci].name});
+                }
                 const nrows = if (table) acols.len else 1;
                 for (0..nrows) |vi| {
                     const row = try a.alloc(Value, od.columns.items.len);
@@ -940,7 +948,7 @@ fn firstByRow(opt: Options, row: []const Value, by: []const usize) []const Value
     return ds.rows.items[at];
 }
 
-test "UNIVARIATE OUTTABLE weighted schema and inference-owned guard" {
+test "UNIVARIATE OUTTABLE weighted schema and unweighted normality" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -953,14 +961,10 @@ test "UNIVARIATE OUTTABLE weighted schema and inference-owned guard" {
     try std.testing.expectEqual(@as(f64, 4), testCell(t, 0, "_NOBS_"));
     try std.testing.expectEqual(@as(f64, 250), testCell(t, 1, "_MEAN_"));
     try std.testing.expect(std.math.isNan(testCell(t, 0, "_NORMAL_")));
-    var d = diag.Diagnostics.init(a);
-    var out: std.ArrayList(u8) = .empty;
-    const tokens = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint outtable=unavailable; var x; run;", &d);
-    diag.resetGap();
-    defer diag.resetGap();
-    try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = lib, .diags = &d }, &out, tokens));
-    try std.testing.expect(diag.gapHit());
-    try std.testing.expect(lib.find("unavailable") == null);
+    try testRun(a, lib, "proc univariate data=d noprint outtable=normal; var x; run;");
+    const normal = lib.find("normal").?;
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9929120068), testCell(normal, 0, "_NORMAL_"), 1e-9);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9718770576), testCell(normal, 0, "_PROBN_"), 1e-7);
 }
 test "UNIVARIATE IDOUT retains excluded first source observation" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -975,9 +979,12 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
     try std.testing.expectEqual(@as(f64, 100), testCell(lib.find("o").?, 0, "y"));
 }
 
-pub fn hasUsableWeight(ds: *Dataset, wc: ?usize) bool {
+pub fn hasUsableWeight(rows: []const []const Value, wc: ?usize, opt: Options) bool {
     const ci = wc orelse return true;
-    for (ds.rows.items) |r| if (!std.math.isNan(h.toNum(r[ci]))) return true;
+    for (rows) |row| {
+        const raw = if (opt.source) |source| sourceRow(source, opt, @intFromFloat(h.toNum(row[opt.obscol.?]))) else row;
+        if (!std.math.isNan(h.toNum(raw[ci]))) return true;
+    }
     return false;
 }
 
@@ -1004,12 +1011,12 @@ fn distanceMedian(x: []const h.XW, i: usize) f64 {
 /// with two pointers, then tightens the bounds to actual observed distances.
 fn pairDistance(x: []const h.XW, k: usize) f64 {
     var low: f64 = 0;
-    var high = x[x.len - 1].x - x[0].x;
+    var high = @min(x[x.len - 1].x - x[0].x, std.math.floatMax(f64));
     while (low < high) {
         const mid = low + (high - low) / 2;
         var count: usize = 0;
         var below: f64 = 0;
-        var above = high;
+        var above = std.math.inf(f64);
         var j: usize = 0;
         for (x, 0..) |v, i| {
             j = @max(j, i + 1);
@@ -1050,6 +1057,8 @@ test "UNIVARIATE robust distance selection matches exhaustive order statistics" 
         const k = half * (half - 1) / 2;
         try std.testing.expectEqual(all.items[k - 1], pairDistance(pairs, k));
     }
+    const extreme = [_]h.XW{ .{ .x = -1e308, .w = 1 }, .{ .x = 0, .w = 1 }, .{ .x = 1e308, .w = 1 } };
+    try std.testing.expectEqual(@as(f64, 1e308), pairDistance(&extreme, 1));
 }
 
 test "UNIVARIATE percentile names distinguish omitted and explicit PCTLNDEC" {
@@ -1114,20 +1123,32 @@ fn classRepresentative(ds: *Dataset, opt: Options, ci: usize, level: Value) Valu
 }
 /// CLASS grouping uses formatted keys, but an explicitly selected CLASS
 /// variable is analyzed using its original numeric values, after ROUND.
-pub fn analysisView(a: Allocator, ds: *Dataset, cols: []const usize, opt: Options) !*Dataset {
-    const source = opt.source orelse return ds;
-    var restore: std.ArrayList(usize) = .empty;
-    for (cols) |ci| if (ds.columns.items[ci].type != .num and source.columns.items[ci].type == .num) try restore.append(a, ci);
-    if (restore.items.len == 0) return ds;
+pub const Analysis = struct { ds: *Dataset, weight: ?usize };
+/// Rounding changes analysis values only. Grouping keys and original weights
+/// remain intact even when one variable participates in multiple roles.
+pub fn analysisView(a: Allocator, ds: *Dataset, cols: []const usize, wc: ?usize, opt: Options) !Analysis {
+    const source = opt.source orelse ds;
+    var transform = false;
+    for (cols) |ci| {
+        if (ds.columns.items[ci].type != .num and source.columns.items[ci].type == .num) transform = true;
+        if (ci < opt.round_units.len and opt.round_units[ci] > 0) transform = true;
+    }
+    if (wc) |ci| if (ds.columns.items[ci].type != .num) {
+        transform = true;
+    };
+    if (!transform) return .{ .ds = ds, .weight = wc };
     const view = try a.create(Dataset);
     view.* = Dataset.init(a, ds.name);
     try view.columns.appendSlice(a, ds.columns.items);
-    for (restore.items) |ci| view.columns.items[ci] = source.columns.items[ci];
+    for (cols) |ci| view.columns.items[ci] = source.columns.items[ci];
+    const weight: ?usize = if (wc) |ci| try view.addColumnLike("__UNIV_ANALYSIS_WEIGHT__", source.columns.items[ci]) else null;
     for (ds.rows.items) |row| {
-        const values = try a.dupe(Value, row);
+        const values = try a.alloc(Value, view.columns.items.len);
+        @memcpy(values[0..row.len], row);
         const raw = sourceRow(source, opt, @intFromFloat(h.toNum(row[opt.obscol.?])));
-        for (restore.items) |ci| {
-            values[ci] = raw[ci];
+        if (wc) |ci| values[weight.?] = raw[ci];
+        for (cols) |ci| {
+            if (ds.columns.items[ci].type != .num) values[ci] = raw[ci];
             if (ci < opt.round_units.len and opt.round_units[ci] > 0 and std.math.isFinite(h.toNum(values[ci]))) {
                 const unit = opt.round_units[ci];
                 values[ci] = .{ .num = roundEven(h.toNum(values[ci]) / unit) * unit };
@@ -1135,7 +1156,94 @@ pub fn analysisView(a: Allocator, ds: *Dataset, cols: []const usize, opt: Option
         }
         try view.rows.append(a, values);
     }
-    return view;
+    return .{ .ds = view, .weight = weight };
+}
+
+fn bySegment(opt: Options, row: []const Value) usize {
+    const obs: usize = @intFromFloat(h.toNum(row[opt.obscol.?]));
+    var lo: usize = 0;
+    var hi = opt.by_starts.items.len;
+    while (lo < hi) {
+        const mid = lo + (hi - lo) / 2;
+        if (opt.by_starts.items[mid] <= obs) lo = mid + 1 else hi = mid;
+    }
+    return lo;
+}
+pub fn bySlices(a: Allocator, rows: []const []const Value, cols: []const usize, opt: Options) ![]proc.BySlice {
+    if (cols.len == 0 or opt.by_starts.items.len == 0) return h.bySlices(a, rows, cols);
+    var slices: std.ArrayList(proc.BySlice) = .empty;
+    var start: usize = 0;
+    while (start < rows.len) {
+        const segment = bySegment(opt, rows[start]);
+        var stop = start + 1;
+        while (stop < rows.len and bySegment(opt, rows[stop]) == segment) stop += 1;
+        try slices.append(a, .{ .rep = rows[start], .rows = rows[start..stop] });
+        start = stop;
+    }
+    return slices.toOwnedSlice(a);
+}
+
+test "UNIVARIATE FREQ exclusion preserves original NOTSORTED BY boundaries" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]f64{ 0, -1, nan, 0.9, -0.5 }) |excluded| {
+        const lib = try testData(a);
+        const ds = lib.find("d").?;
+        ds.rows.clearRetainingCapacity();
+        try ds.appendRow(&.{ .{ .num = 10 }, .{ .num = 100 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+        try ds.appendRow(&.{ .{ .num = 90 }, .{ .num = 900 }, .{ .num = 1 }, .{ .num = excluded }, .{ .num = 2 } });
+        try ds.appendRow(&.{ .{ .num = 30 }, .{ .num = 300 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+        try testRun(a, lib, "proc univariate data=d noprint idout;by g notsorted;var x;id y;freq f;output out=o n=n mean=m;run;");
+        const o = lib.find("o").?;
+        try std.testing.expectEqual(@as(usize, 2), o.rows.items.len);
+        try std.testing.expectEqual(@as(f64, 1), testCell(o, 0, "n"));
+        try std.testing.expectEqual(@as(f64, 10), testCell(o, 0, "m"));
+        try std.testing.expectEqual(@as(f64, 30), testCell(o, 1, "m"));
+        try std.testing.expectEqual(@as(f64, 300), testCell(o, 1, "y"));
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const tokens = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint;by g;var x;freq f;output out=bad n=n;run;", &d);
+        try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = lib, .diags = &d }, &out, tokens));
+        try std.testing.expect(d.hasErrors());
+    }
+}
+test "UNIVARIATE ID prefixes are excluded from default analysis" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.columns.items[0].name = "id1";
+    ds.columns.items[1].name = "id2";
+    ds.columns.items[4].name = "x";
+    try testRun(a, lib, "proc univariate data=d noprint outtable=t;id id:;freq f;weight w;run;");
+    const table = lib.find("t").?;
+    try std.testing.expectEqual(@as(usize, 1), table.rows.items.len);
+    try std.testing.expectEqualStrings("x", table.rows.items[0][table.indexOf("_VAR_").?].str);
+}
+
+test "UNIVARIATE ROUND leaves grouping keys and analysis weights unchanged" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_]f64{ 1.1, 1.2 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 10 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+    try testRun(a, lib, "proc univariate data=d noprint round=1;class x;var x;output out=c n=n mean=m;run;");
+    const c = lib.find("c").?;
+    try std.testing.expectEqual(@as(usize, 2), c.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 1.1), testCell(c, 0, "x"));
+    try std.testing.expectEqual(@as(f64, 1), testCell(c, 0, "m"));
+    try testRun(a, lib, "proc univariate data=d noprint round=1;by x;var x;output out=b n=n mean=m;run;");
+    const b = lib.find("b").?;
+    try std.testing.expectEqual(@as(usize, 2), b.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 1.2), testCell(b, 1, "x"));
+    try testRun(a, lib, "proc univariate data=d noprint round=1;weight x;var x;output out=w mean=m sumwgt=sw;run;");
+    const w = lib.find("w").?;
+    try std.testing.expectEqual(@as(f64, 1), testCell(w, 0, "m"));
+    try std.testing.expectApproxEqAbs(@as(f64, 2.3), testCell(w, 0, "sw"), 1e-12);
 }
 
 test "UNIVARIATE OUTTABLE distinguishes empty input and optional fixed-width labels" {
@@ -1156,4 +1264,24 @@ test "UNIVARIATE OUTTABLE distinguishes empty input and optional fixed-width lab
     const empty = lib.find("empty").?;
     try std.testing.expectEqual(@as(usize, 0), empty.columns.items.len);
     try std.testing.expect(empty.label == null);
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 }, .{ .num = nan }, .{ .num = 1 }, .{ .num = 1 } });
+    try testRun(a, lib, "proc univariate data=d noprint outtable=excluded;var x;weight w;run;");
+    const excluded = lib.find("excluded").?;
+    try std.testing.expectEqual(@as(usize, 0), excluded.rows.items.len);
+    try std.testing.expectEqualStrings("Summary Statistics", excluded.label.?);
+    try std.testing.expectEqual(@as(usize, 48), excluded.columns.items.len);
+}
+
+test "UNIVARIATE OUTTABLE honors the SAS default Qn sample-size limit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const pairs = try a.alloc(h.XW, 65527);
+    for (pairs, 0..) |*p, i| p.* = .{ .x = @floatFromInt(i + 1), .w = 1 };
+    var z: Summary = .{ .s = h.computeStatsV(&.{}, 0, null, .df), .pairs = pairs, .nmiss = 0, .nobs = pairs.len };
+    try robustStats(a, &z);
+    try std.testing.expect(std.math.isNan(z.qn));
+    try std.testing.expect(std.math.isNan(z.std_qn));
+    try std.testing.expectApproxEqAbs(@as(f64, 19537.1732), z.sn, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 19537.441543), z.std_sn, 1e-6);
 }

@@ -27,12 +27,12 @@ NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              932.92k
+      memory              930.46k
       OS Memory           12200.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        2  Switch Count  2
       Page Faults                       0
-      Page Reclaims                     213
+      Page Reclaims                     215
       Page Swaps                        0
       Voluntary Context Switches        8
       Involuntary Context Switches      0
@@ -47,15 +47,15 @@ NOTE: PROCEDURE UNIVARIATE used (Total process time):
       real time           0.06 seconds
       user cpu time       0.05 seconds
       system cpu time     0.00 seconds
-      memory              3804.67k
+      memory              3808.07k
       OS Memory           15024.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        3  Switch Count  2
       Page Faults                       0
-      Page Reclaims                     870
+      Page Reclaims                     875
       Page Swaps                        0
-      Voluntary Context Switches        11
-      Involuntary Context Switches      3
+      Voluntary Context Switches        12
+      Involuntary Context Switches      2
       Block Input Operations            0
       Block Output Operations           264
 The SAS System
@@ -74,9 +74,9 @@ NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              715.73k
+      memory              715.26k
       OS Memory           14504.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        4  Switch Count  0
       Page Faults                       0
       Page Reclaims                     101
@@ -99,9 +99,9 @@ NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              518.26k
+      memory              518.32k
       OS Memory           14504.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        5  Switch Count  2
       Page Faults                       0
       Page Reclaims                     88
@@ -121,12 +121,12 @@ NOTE: PROCEDURE UNIVARIATE used (Total process time):
 The SAS System
 
       system cpu time     0.00 seconds
-      memory              906.06k
+      memory              905.90k
       OS Memory           15020.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        6  Switch Count  2
       Page Faults                       0
-      Page Reclaims                     158
+      Page Reclaims                     157
       Page Swaps                        0
       Voluntary Context Switches        8
       Involuntary Context Switches      0
@@ -142,16 +142,16 @@ NOTE: The DATA step printed page 2.
 NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
-      system cpu time     0.00 seconds
-      memory              617.73k
+      system cpu time     0.01 seconds
+      memory              617.20k
       OS Memory           14760.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        7  Switch Count  0
       Page Faults                       0
       Page Reclaims                     50
       Page Swaps                        0
       Voluntary Context Switches        0
-      Involuntary Context Switches      1
+      Involuntary Context Switches      0
       Block Input Operations            0
       Block Output Operations           0
       
@@ -163,12 +163,12 @@ NOTE: PROCEDURE UNIVARIATE used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              943.76k
+      memory              944.39k
       OS Memory           15020.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        8  Switch Count  2
       Page Faults                       0
-      Page Reclaims                     120
+      Page Reclaims                     121
       Page Swaps                        0
       Voluntary Context Switches        8
       Involuntary Context Switches      0
@@ -185,11 +185,11 @@ NOTE: There were 2 observations read from the data set WORK.WEIGHTED.
 NOTE: The DATA step printed page 3.
 NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
-      user cpu time       0.00 seconds
+      user cpu time       0.01 seconds
       system cpu time     0.00 seconds
-      memory              617.53k
+      memory              617.37k
       OS Memory           14760.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        9  Switch Count  0
       Page Faults                       0
       Page Reclaims                     50
@@ -208,14 +208,14 @@ NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              798.73k
+      memory              798.26k
       OS Memory           15020.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        10  Switch Count  2
       Page Faults                       0
       Page Reclaims                     112
       Page Swaps                        0
-      Voluntary Context Switches        8
+      Voluntary Context Switches        10
       Involuntary Context Switches      0
       Block Input Operations            0
       Block Output Operations           264
@@ -229,9 +229,9 @@ NOTE: PROCEDURE UNIVARIATE used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              444.82k
+      memory              446.20k
       OS Memory           14760.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        11  Switch Count  2
       Page Faults                       0
       Page Reclaims                     55
@@ -253,9 +253,9 @@ NOTE: DATA statement used (Total process time):
       real time           0.00 seconds
       user cpu time       0.00 seconds
       system cpu time     0.00 seconds
-      memory              442.56k
+      memory              442.90k
       OS Memory           14500.00k
-      Timestamp           11/10/2026 12:48:42 PM
+      Timestamp           11/10/2026 02:00:02 PM
       Step Count                        12  Switch Count  0
       Page Faults                       0
       Page Reclaims                     29
@@ -266,10 +266,84 @@ NOTE: DATA statement used (Total process time):
       Block Output Operations           0
       
 
-75         
-76         
-77         
-78         
+75         data crossed;
+76         length c $1;
+77         do b=1 to 2;
+78         do k=1 to 2;
+79         if k=1 then c='A';else c='B';
+80         do i=1 to 8;
+81         x=i+10*(b-1);
+82         if k=1 then y=i*i;else y=mod(i,3);
+83         output;
+84         end;end;end;
+85         run;
+
+NOTE: The data set WORK.CROSSED has 32 observations and 6 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.32k
+      OS Memory           14760.00k
+      Timestamp           11/10/2026 02:00:02 PM
+      Step Count                        13  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+86         proc univariate data=crossed noprint outtable=group_normals;by b;class c;var x y;run;
+
 The SAS System
 
-79         
+NOTE: The data set WORK.GROUP_NORMALS has 8 observations and 49 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              916.09k
+      OS Memory           15020.00k
+      Timestamp           11/10/2026 02:00:02 PM
+      Step Count                        14  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+87         data _null_;set group_normals;file print;put 'CROSSED ' b= c= _VAR_= _NOBS_= _NORMAL_ 12.8 _PROBN_ 12.8;run;
+
+NOTE: 8 lines were written to file PRINT.
+NOTE: There were 8 observations read from the data set WORK.GROUP_NORMALS.
+NOTE: The DATA step printed page 5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              617.15k
+      OS Memory           14760.00k
+      Timestamp           11/10/2026 02:00:02 PM
+      Step Count                        15  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+88         
+89         
+90         
+91         
+The SAS System
+
+92         

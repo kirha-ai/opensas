@@ -1,0 +1,25 @@
+
+g=1 id=1 nx=1 ny=1 mx=10 my=20
+g=1 id=3 nx=1 ny=1 mx=20 my=40
+g=1 id=5 nx=1 ny=1 mx=30 my=60
+g=1 id=7 nx=1 ny=1 mx=40 my=80
+g=1 id=9 nx=1 ny=1 mx=50 my=100
+g=1 id=11 nx=1 ny=1 mx=60 my=120
+g=1 id=13 nx=1 ny=1 mx=70 my=140
+
+g=1 _VAR_=x _NOBS_=1 _MEAN_=10
+g=1 _VAR_=y _NOBS_=1 _MEAN_=20
+g=1 _VAR_=x _NOBS_=1 _MEAN_=20
+g=1 _VAR_=y _NOBS_=1 _MEAN_=40
+g=1 _VAR_=x _NOBS_=1 _MEAN_=30
+g=1 _VAR_=y _NOBS_=1 _MEAN_=60
+g=1 _VAR_=x _NOBS_=1 _MEAN_=40
+g=1 _VAR_=y _NOBS_=1 _MEAN_=80
+g=1 _VAR_=x _NOBS_=1 _MEAN_=50
+g=1 _VAR_=y _NOBS_=1 _MEAN_=100
+g=1 _VAR_=x _NOBS_=1 _MEAN_=60
+g=1 _VAR_=y _NOBS_=1 _MEAN_=120
+g=1 _VAR_=x _NOBS_=1 _MEAN_=70
+g=1 _VAR_=y _NOBS_=1 _MEAN_=140
+
+_VAR_=x _NOBS_=3 _MEAN_=20

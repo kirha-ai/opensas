@@ -1,0 +1,8 @@
+
+CLASS g=1.1 n=1 m=1
+CLASS g=1.2 n=1 m=1
+
+BY g=1.1 n=1 m=1
+BY g=1.2 n=1 m=1
+
+WEIGHT n=2 m=1 sw=2.3

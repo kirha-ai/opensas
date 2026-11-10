@@ -5857,9 +5857,13 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     try expandVarListPrefixes(arena, input_view.ds, &classes, diags, toks[0].line, "PROC UNIVARIATE");
     for (classes.items) |cn| if (ds.indexOf(cn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: CLASS variable {s} not found", .{cn});
+    try expandVarListPrefixes(arena, input_view.ds, &ids, diags, toks[0].line, "PROC UNIVARIATE");
     const checked_by = try decodeProcBy(arena, bys.items);
     for (checked_by.names) |bn| if (ds.indexOf(bn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: BY variable {s} not found", .{bn});
+    var boundary_cols: std.ArrayList(usize) = .empty;
+    for (checked_by.names) |bn| try boundary_cols.append(arena, ds.indexOf(bn).?);
+    try extra.markBy(arena, ds, boundary_cols.items);
     // FREQ f; — expand each obs to trunc(f) copies so N=Σf and every moment /
     // quantile / test is over the frequency-weighted sample (F2, mirrors MEANS).
     if (freq_var) |fv| {
@@ -5869,6 +5873,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         extra.freqcol = fcol;
         ds = try expandFreq(arena, diags, ds, fcol);
     }
+
+    if (extra.exclnpwgt) if (try resolveWeightCol(ds, weight_var, diags, toks[0].line)) |wc| {
+        ds = try dropNonpositiveWeight(arena, ds, wc);
+    };
 
     // A format on a CLASS var groups by the FORMATTED value — the SAME
     // groupFormats rewrite MEANS/SUMMARY/FREQ run, not a parallel grouping
@@ -5883,13 +5891,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // unless / MISSING (as MEANS, BUG-meansclassmiss); `cds` is the analysis view.
     var ccols: std.ArrayList(usize) = .empty;
     for (classes.items) |cn| if (ds.indexOf(cn)) |idx| try ccols.append(arena, idx);
-    if (extra.exclnpwgt) if (try resolveWeightCol(ds, weight_var, diags, toks[0].line)) |wc| {
-        ds = try dropNonpositiveWeight(arena, ds, wc);
-    };
     if (ccols.items.len > 2) return diags.fail(error.ParseError, 0, "UNIVARIATE: CLASS accepts at most two variables", .{});
     var excluded: std.ArrayList(usize) = .empty;
     for (ccols.items, 0..) |ci, j| if (!class_missing and !extra.class_missing[j]) try excluded.append(arena, ci);
-    var cds = if (excluded.items.len > 0) try dropMissingClass(arena, ds, excluded.items) else ds;
+    const cds = if (excluded.items.len > 0) try dropMissingClass(arena, ds, excluded.items) else ds;
 
     // the VAR list, else every numeric column (as MEANS does) — but never a CLASS
     // variable: SAS excludes CLASS vars from the default analysis list.
@@ -5918,15 +5923,14 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     if (outputs.items.len > 0 and vars.items.len == 0)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: OUTPUT requires a VAR statement", .{});
 
-    try expandVarListPrefixes(arena, input_view.ds, &ids, diags, toks[0].line, "PROC UNIVARIATE");
     var icols: std.ArrayList(usize) = .empty;
     for (ids.items) |id| try icols.append(arena, ds.indexOf(id) orelse
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: ID variable {s} not found", .{id}));
-    cds = try extra.roundData(arena, diags, cds, acols.items);
+    try extra.configureRounding(arena, diags, cds, acols.items);
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
-    if (wcol) |ci| if (ds.columns.items[ci].type != .num)
+    if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
 
     // SAS computes weighted percentiles with definition 5 only — say so rather
@@ -5952,7 +5956,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // POOLED out-of-order groups (listing) and emitted duplicate OUT= rows.
     // DESCENDING flips the check per key; NOTSORTED drops it.
     if (obcols.items.len > 0 and !pb.notsorted) {
-        const rows = ds.rows.items;
+        const rows = (extra.source orelse ds).rows.items;
         var s: usize = 0;
         while (s < rows.len) {
             var e = s + 1;
@@ -5972,7 +5976,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // ignored — the listing printed ONE pooled Moments block over ALL obs, the
     // number formatted exactly like the per-group answer asked for). bySlices
     // yields one null-rep slice without BY, so the pooled path is byte-identical.
-    for (try bySlices(arena, cds.rows.items, obcols.items)) |bs| {
+    for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra)) |bs| {
         if (bs.rep) |r| try appendByLine(arena, out, ds, r, obcols.items);
         // Shallow per-group view (columns shared, rows = the slice's) — the same
         // idiom the CLASS arm uses per level below.
@@ -5980,10 +5984,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         bd.* = Dataset.init(arena, ds.name);
         for (ds.columns.items) |c| try bd.columns.append(arena, c);
         for (bs.rows) |r| try bd.rows.append(arena, r);
-        if (!univ.hasUsableWeight(bd, wcol)) continue;
+        if (!univ.hasUsableWeight(bd.rows.items, wcol, extra)) continue;
         if (ccols.items.len == 0) {
-            const analysis = try univ.analysisView(arena, bd, acols.items, extra);
-            for (acols.items) |ix| try emitUnivariate(arena, out, analysis, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
+            const analysis = try univ.analysisView(arena, bd, acols.items, wcol, extra);
+            for (acols.items) |ix| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, mu0, extra, icols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
@@ -5991,11 +5995,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             const groups = try collectGroups(arena, bd, ccols.items);
             try univ.orderGroups(arena, bd, groups, ccols.items, fmt_levels.items, extra); // collapsed bands in raw-value order, as the MEANS listing (BUG-freqfmtorder)
             for (groups) |g| {
-                if (wcol) |wc| {
-                    var eligible = false;
-                    for (g.rows) |row| if (!std.math.isNan(toNum(row[wc]))) { eligible = true; };
-                    if (!eligible) continue;
-                }
+                if (!univ.hasUsableWeight(g.rows, wcol, extra)) continue;
                 var hdr: std.ArrayList(u8) = .empty;
                 for (ccols.items, 0..) |ci, k| {
                     if (k > 0) try hdr.appendSlice(arena, " ");
@@ -6010,9 +6010,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 gd.* = Dataset.init(arena, bd.name);
                 for (bd.columns.items) |c| try gd.columns.append(arena, c);
                 for (g.rows) |r| try gd.rows.append(arena, r);
-                if (!univ.hasUsableWeight(gd, wcol)) continue;
-                const analysis = try univ.analysisView(arena, gd, acols.items, extra);
-                for (acols.items) |ix| try emitUnivariate(arena, out, analysis, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
+                if (!univ.hasUsableWeight(gd.rows.items, wcol, extra)) continue;
+                const analysis = try univ.analysisView(arena, gd, acols.items, wcol, extra);
+                for (acols.items) |ix| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, mu0, extra, icols.items);
             }
         }
     }

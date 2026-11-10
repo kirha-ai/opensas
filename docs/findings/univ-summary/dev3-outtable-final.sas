@@ -36,3 +36,16 @@ data _null_;set weighted;file print;put 'WEIGHTED ' g= _NOBS_= _NORMAL_ 12.8 _PR
 data empty;set counts(obs=0);run;
 proc univariate data=empty noprint outtable=empty_table;var x;run;
 data _null_;ds=open('empty_table');rows=attrn(ds,'nobs');cols=attrn(ds,'nvars');rc=close(ds);file print;put 'EMPTY ' rows= cols=;run;
+data crossed;
+length c $1;
+do b=1 to 2;
+do k=1 to 2;
+if k=1 then c='A';else c='B';
+do i=1 to 8;
+x=i+10*(b-1);
+if k=1 then y=i*i;else y=mod(i,3);
+output;
+end;end;end;
+run;
+proc univariate data=crossed noprint outtable=group_normals;by b;class c;var x y;run;
+data _null_;set group_normals;file print;put 'CROSSED ' b= c= _VAR_= _NOBS_= _NORMAL_ 12.8 _PROBN_ 12.8;run;
