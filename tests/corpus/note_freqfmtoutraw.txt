@@ -76,6 +76,7 @@ Variables      4
                           The CONTENTS Procedure
 
 Data Set Name  ou
+Label          Selected Summary Statistics
 Observations   2
 Variables      2
 
@@ -83,4 +84,4 @@ Variables      2
 
 #  Variable  Type  Len  Format  Informat  Label
 1  g         Num     8  GF.
-2  mu        Num     8
+2  mu        Num     8                    the mean, x

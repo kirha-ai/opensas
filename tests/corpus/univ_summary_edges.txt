@@ -1,0 +1,146 @@
+                                 The UNIVARIATE Procedure
+
+                                       g=1
+
+c=1
+Variable:  x
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                          20  Sum Observations              60
+Std Deviation                  0  Variance                       0
+Skewness                       .  Kurtosis                       .
+Uncorrected SS              1200  Corrected SS                   0
+Coeff Variation                0  Std Error Mean                 0
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                          20  Std Deviation                  0
+Median                        20  Variance                       0
+Mode                          20  Range                          0
+                                  Interquartile Range            0
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+
+                    Quantiles (Definition 5)
+
+              100% Max              20
+              99%                   20
+              95%                   20
+              90%                   20
+              75% Q3                20
+              50% Median            20
+              25% Q1                20
+              10%                   20
+              5%                    20
+              1%                    20
+              0% Min                20
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs  id (Low/High)  Freq (Low/High)
+
+                  20    2               20    2  B / B  3 / 3
+
+Modes
+Mode    Count
+20    3
+
+Extreme Values
+Lowest Value Frequency    Highest Value Frequency
+20 3    20 3
+
+Weighted Frequency Counts
+Value Count Weighted Count Cell Cum
+20 3 3 100.0 100.0
+
+                                       g=2
+
+c=1
+Variable:  x
+
+                           Moments
+
+N                              1  Sum Weights                    0
+Mean                           .  Sum Observations               0
+Std Deviation                  .  Variance                       .
+Skewness                       .  Kurtosis                       .
+Uncorrected SS                 0  Corrected SS                   0
+Coeff Variation                .  Std Error Mean                 .
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           .  Std Deviation                  .
+Median                        40  Variance                       .
+Mode                          40  Range                          0
+                                  Interquartile Range            0
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|       .
+
+                    Quantiles (Definition 5)
+
+              100% Max              40
+              99%                   40
+              95%                   40
+              90%                   40
+              75% Q3                40
+              50% Median            40
+              25% Q1                40
+              10%                   40
+              5%                    40
+              1%                    40
+              0% Min                40
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs  id (Low/High)  Freq (Low/High)
+
+                  40    5               40    5  E / E  1 / 1
+
+Modes
+Mode    Count
+40    1
+
+Extreme Values
+Lowest Value Frequency    Highest Value Frequency
+40 1    40 1
+
+Weighted Frequency Counts
+Value Count Weighted Count Cell Cum
+40 1 0 . .
+g=1 c=1 id=B n=3 nm=1 no=4 m=20 p0=20 p50=20 p100=20
+g=2 c=1 id=E n=1 nm=0 no=1 m=40 p0=40 p50=40 p100=40
+_VAR_=x _NOBS_=3 _NMISS_=1 _SUMWGT_=3 _MODE_=20 _MEDIAN_=20 _NORMAL_=.
+_VAR_=x _NOBS_=1 _NMISS_=0 _SUMWGT_=0 _MODE_=40 _MEDIAN_=40 _NORMAL_=.
+                          The CONTENTS Procedure
+
+Data Set Name  e
+Label          Selected Summary Statistics
+Observations   0
+Variables      4
+
+              Alphabetic List of Variables and Attributes
+
+#  Variable  Type  Len  Format  Informat  Label
+2  m         Num     8                    the mean, x
+1  n         Num     8                    number of nonmissing values, x
+3  nm        Num     8                    number of missing values, x
+4  no        Num     8                    number of observations, x
+mx=-0.5 my=0.3 lx=-2 ly=0.2 hx=2 hy=0.4

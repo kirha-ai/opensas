@@ -48,11 +48,11 @@ Signed Rank    S      10.5    Pr >= |S| 0.0313
 
            Value      Obs        Value      Obs
 
-                  77    5               99    4
-                  78    3               97    2
-                  81    1               81    6
-                  81    6               81    1
-                  97    2               78    3
+                  77    5               78    3
+                  78    3               81    1
+                  81    6               81    6
+                  81    1               97    2
+                  97    2               99    4
                                  The UNIVARIATE Procedure
 
 Variable:  x
@@ -103,11 +103,11 @@ Signed Rank    S       7.5    Pr >= |S| 0.0625
 
            Value      Obs        Value      Obs
 
-                   1    1                5    5
-                   2    2                4    4
+                   1    1                1    1
+                   2    2                2    2
                    3    3                3    3
-                   4    4                2    2
-                   5    5                1    1
+                   4    4                4    4
+                   5    5                5    5
                                  The UNIVARIATE Procedure
 
 Variable:  y
@@ -158,6 +158,6 @@ Signed Rank    S         3    Pr >= |S| 0.2500
 
            Value      Obs        Value      Obs
 
-                   2    1                6    3
+                   2    1                2    1
                    4    2                4    2
-                   6    3                2    1
+                   6    3                6    3

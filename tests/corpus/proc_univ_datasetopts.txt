@@ -48,5 +48,5 @@ Signed Rank    S       1.5    Pr >= |S| 0.5000
 
            Value      Obs        Value      Obs
 
-                  30    2               40    1
-                  40    1               30    2
+                  30    2               30    2
+                  40    1               40    1
