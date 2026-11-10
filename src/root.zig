@@ -22,6 +22,10 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/freq_tests.zig");
+    _ = @import("stat/freq_tests_parse.zig");
+    _ = @import("stat/freq_tests_render.zig");
+    _ = @import("stat/freq_tests_execute.zig");
     // Pull every module's `test` blocks into `zig build test`. Append imports
     // here as modules land (ast.zig, diag.zig, …).
     _ = @import("value.zig");
