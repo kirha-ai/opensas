@@ -826,6 +826,10 @@ pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []c
                     var li: usize = c.ds.rows.items.len;
                     var ri: usize = c.ds.rows.items.len;
                     for (c.ds.rows.items, 0..) |row, k| {
+                        // FREQ expansion and EXCLNPWGT already apply; missing
+                        // original weights cannot establish CLASS order/counts.
+                        const raw = if (c.opt.source) |source| sourceRow(source, c.opt, @intFromFloat(h.toNum(row[c.opt.obscol.?]))) else row;
+                        if (h.weightAt(raw, c.wc) == null) continue;
                         if (h.compareValue(row[ci], lv) == .eq) {
                             lf += 1;
                             li = @min(li, k);
@@ -1627,6 +1631,58 @@ test "BUG-univclassrepweight raw-key ordering and ROUND preserve original weight
             try std.testing.expectEqual(n, testCell(t, i, "_NOBS_"));
             try std.testing.expectEqual(mean, testCell(o, i, "m"));
             try std.testing.expectEqual(mean, testCell(t, i, "_MEAN_"));
+        }
+    }
+}
+
+
+test "BUG-univclassorderweight DATA and FREQ use weight-eligible rows" {
+    // SAS oracle: /tmp/opensas-review-r3-fixes/BUG-univclassorderweight/matrix.{sas,txt,log}.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    const Case = struct { missing_weight: f64 = nan, excl: bool = false, freq: bool = false, by: bool = false, round: bool = false, weighted: bool = true };
+    for ([_]Case{
+        .{}, .{ .missing_weight = 0 }, .{ .missing_weight = -1 },
+        .{ .missing_weight = 0, .excl = true }, .{ .freq = true },
+        .{ .by = true }, .{ .round = true }, .{ .weighted = false },
+    }) |case| {
+        ds.rows.clearRetainingCapacity();
+        const ng: usize = if (case.by) 2 else 1;
+        for (0..ng) |g| {
+            for ([_][3]f64{ .{ 10, 2, nan }, .{ 20, 1, 1 }, .{ 30, 1, 1 }, .{ 40, 2, 1 }, .{ 50, 2, nan }, .{ 60, 2, nan } }) |r| {
+                const w = if (std.math.isNan(r[2])) case.missing_weight else if (case.round) @as(f64, 0.1) else r[2];
+                try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = if (g == 1) 3 - r[1] else r[1] }, .{ .num = w }, .{ .num = if (r[0] == 40) 4 else 1 }, .{ .num = @floatFromInt(g + 1) } });
+            }
+        }
+        for ([_][]const u8{ "data", "freq" }) |mode| {
+            try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint {s} {s} outtable=t; {s} class y(order={s}); var {s}; {s} {s} output out=o n=n mean=m;run;", .{
+                if (case.excl) "exclnpwgt" else "", if (case.round) "round=10" else "",
+                if (case.by) "by g;" else "", mode, if (case.round) "w" else "x",
+                if (case.weighted) "weight w;" else "", if (case.freq) "freq f;" else "",
+            }));
+            const o = lib.find("o").?;
+            const t = lib.find("t").?;
+            try std.testing.expectEqual(ng * 2, o.rows.items.len);
+            try std.testing.expectEqual(ng * 2, t.rows.items.len);
+            const include_missing = !case.weighted or (!std.math.isNan(case.missing_weight) and !case.excl);
+            const b_first = include_missing or (case.freq and eq(mode, "freq"));
+            for (0..ng) |g| for (0..2) |j| {
+                const b = (j == 0) == b_first;
+                const key: f64 = if (g == 1) (if (b) 1 else 2) else (if (b) 2 else 1);
+                const n: f64 = if (!b) 2 else if (case.freq or include_missing) 4 else 1;
+                const mean: f64 = if (case.round) 0 else if (!b) 25 else 40;
+                const i = g * 2 + j;
+                try std.testing.expectEqual(key, testCell(o, i, "y"));
+                try std.testing.expectEqual(key, testCell(t, i, "y"));
+                try std.testing.expectEqual(n, testCell(o, i, "n"));
+                try std.testing.expectEqual(n, testCell(t, i, "_NOBS_"));
+                try std.testing.expectEqual(mean, testCell(o, i, "m"));
+                try std.testing.expectEqual(mean, testCell(t, i, "_MEAN_"));
+                if (case.by) try std.testing.expectEqual(@as(f64, @floatFromInt(g + 1)), testCell(o, i, "g"));
+            };
         }
     }
 }
