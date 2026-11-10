@@ -1,0 +1,8 @@
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+g    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1           0         .               0          .    
+2           0         .               0          .    

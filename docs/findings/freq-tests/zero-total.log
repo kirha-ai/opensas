@@ -1,0 +1,58 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         ods graphics off;
+39         data d;
+40          input g w;
+41          datalines;
+
+NOTE: The data set WORK.D has 2 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.51k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 01:45:59 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+44         ;
+45         run;
+46         proc freq data=d; weight w / zeros; tables g / chisq; run;
+
+NOTE: No statistics are computed for the table of g because it contains no observations with positive weights.
+NOTE: There were 2 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2784.51k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 01:45:59 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     653
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+47         
+48         
+49         
+50         
+The SAS System
+
+51         

@@ -1,0 +1,235 @@
+The SAS System
+
+36         
+37         options nodate nonumber nosyntaxcheck; ods graphics off;
+38         data d; input r c w; datalines;
+
+NOTE: The data set WORK.D has 9 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+48         ;
+49         title 'CASE LIST CHISQ';
+50         proc freq data=d; weight w; tables r*c / list chisq; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3247.17k
+      OS Memory           13744.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        3  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     774
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+51         title 'CASE ONE WAY LIST CHISQ';
+52         proc freq data=d; weight w; tables r / list chisq; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              893.37k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        4  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     149
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+53         title 'CASE LIST IMPLIED TEST';
+54         proc freq data=d; weight w; tables r*c / list; test gamma; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 3-4.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1160.92k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     204
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+55         title 'CASE PROC NOPRINT LIST CHISQ';
+56         proc freq data=d noprint; weight w; tables r*c / list chisq; run;
+
+NOTE: Processing will terminate because there are no valid requests for displayed output or output data sets.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              325.70k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     51
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+57         title 'CASE SEPARATE LIST AND STATISTICS';
+58         proc freq data=d; weight w; tables r*c / list; tables r*c / measures noprint; test gamma; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 5-6.
+NOTE: PROCEDURE FREQ used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1640.28k
+      OS Memory           14776.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        7  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     346
+      Page Swaps                        0
+      Voluntary Context Switches        36
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+59         title 'CASE TABLE SCORES';
+60         proc freq data=d; weight w; tables r*c / chisq measures scores=table scorout noprint; test pcorr; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 7-8.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1118.95k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        8  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+61         title 'CASE RANK SCORES';
+62         proc freq data=d; weight w; tables r*c / chisq measures scores=rank scorout noprint; test pcorr; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 9-10.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1119.92k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        9  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+The SAS System
+
+      
+
+63         title 'CASE RIDIT SCORES';
+64         proc freq data=d; weight w; tables r*c / chisq measures scores=ridit scorout noprint; test pcorr; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 11-12.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1117.34k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        10  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+65         title 'CASE MODRIDIT SCORES';
+66         proc freq data=d; weight w; tables r*c / chisq measures scores=modridit scorout noprint; test pcorr; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 13-14.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1115.54k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:39:49 PM
+      Step Count                        11  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     186
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+67         
+68         
+69         
+70         
+The SAS System
+
+71         
