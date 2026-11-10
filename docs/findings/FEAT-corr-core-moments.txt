@@ -1,0 +1,135 @@
+
+The CORR Procedure
+
+   2        Variables:    x        y        
+     Weight Variable:     w                 
+
+
+             SSCP Matrix
+ 
+                  x                 y
+
+x        94.0000000       146.0000000
+y       146.0000000       228.0000000
+
+
+            CSSCP Matrix
+ 
+                  x                 y
+
+x       13.33333333       21.33333333
+y       21.33333333       35.33333333
+
+
+      Covariance Matrix, DF = 2
+ 
+                  x                 y
+
+x        6.66666667       10.66666667
+y       10.66666667       17.66666667
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       3.66667       2.58199      22.00000       1.00000       5.00000
+y                  3       5.66667       4.20317      34.00000       2.00000       8.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       0.98287
+                       0.1180
+
+y       0.98287       1.00000
+         0.1180              
+
+The CORR Procedure
+
+   1 With   Variables:    y        
+   1        Variables:    x        
+     Weight Variable:     w        
+
+
+Covariance Matrix, DF = 5
+ 
+                  x
+
+y       4.266666667
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+y                  3       5.66667       2.65832      34.00000       2.00000       8.00000
+x                  3       3.66667       1.63299      22.00000       1.00000       5.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x
+
+y       0.98287
+         0.1180
+
+The CORR Procedure
+
+   1 With   Variables:    y        
+   1        Variables:    x        
+     Weight Variable:     w        
+
+
+Sums of Squares and Crossproducts 
+  SSCP / Row Var SS / Col Var SS
+ 
+                  x
+
+y       86.00000000
+        52.00000000
+        148.0000000
+
+
+Corrected Sums of Squares and Crossproducts 
+     CSSCP / Row Var CSS / Col Var CSS
+ 
+                  x
+
+y       9.000000000
+        3.000000000
+        27.00000000
+
+
+             Variances and Covariances 
+Covariance / Row Var Variance / Col Var Variance / DF
+ 
+                  x
+
+y       3.000000000
+        1.000000000
+        9.000000000
+                  3
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+y                  5       3.80000       1.09545      19.00000       2.00000       8.00000
+x                  5       4.33333       3.29140      26.00000       1.00000       7.00000
+
+
+Pearson Correlation Coefficients 
+   Prob > |r| under H0: Rho=0 
+     Number of Observations
+ 
+              x
+
+y       1.00000
+         <.0001
+              4

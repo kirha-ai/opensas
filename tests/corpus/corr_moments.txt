@@ -1,0 +1,96 @@
+The CORR Procedure
+
+2 Variables: x y
+Weight Variable: w
+
+Sums of Squares and Crossproducts
+Row Column Crossproduct RowSS ColumnSS Divisor N
+x x 94.00000 94.00000 94.00000 2.00000 3
+x y 146.00000 94.00000 228.00000 2.00000 3
+y x 146.00000 228.00000 94.00000 2.00000 3
+y y 228.00000 228.00000 228.00000 2.00000 3
+
+Corrected Sums of Squares and Crossproducts
+Row Column Crossproduct RowSS ColumnSS Divisor N
+x x 13.33333 13.33333 13.33333 2.00000 3
+x y 21.33333 13.33333 35.33333 2.00000 3
+y x 21.33333 35.33333 13.33333 2.00000 3
+y y 35.33333 35.33333 35.33333 2.00000 3
+
+Covariance
+Row Column Covariance RowVariance ColumnVariance Divisor N
+x x 6.66667 6.66667 6.66667 2.00000 3
+x y 10.66667 6.66667 17.66667 2.00000 3
+y x 10.66667 17.66667 6.66667 2.00000 3
+y y 17.66667 17.66667 17.66667 2.00000 3
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 3 3.66667 2.58199 22.00000 1.00000 5.00000
+y 3 5.66667 4.20317 34.00000 2.00000 8.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.98287
+P - 0.1180
+N 3 3
+y 0.98287 1.00000
+P 0.1180 -
+N 3 3
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Weight Variable: w
+
+Covariance
+Row Column Covariance RowVariance ColumnVariance Divisor N
+y x 4.26667 7.06667 2.66667 5.00000 3
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+y 3 5.66667 2.65832 34.00000 2.00000 8.00000
+x 3 3.66667 1.63299 22.00000 1.00000 5.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x
+y 0.98287
+P 0.1180
+N 3
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Weight Variable: w
+
+Sums of Squares and Crossproducts
+Row Column Crossproduct RowSS ColumnSS Divisor N
+y x 86.00000 52.00000 148.00000 3.00000 4
+
+Corrected Sums of Squares and Crossproducts
+Row Column Crossproduct RowSS ColumnSS Divisor N
+y x 9.00000 3.00000 27.00000 3.00000 4
+
+Covariance
+Row Column Covariance RowVariance ColumnVariance Divisor N
+y x 3.00000 1.00000 9.00000 3.00000 4
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+y 5 3.80000 1.09545 19.00000 2.00000 8.00000
+x 5 4.33333 3.29140 26.00000 1.00000 7.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x
+y 1.00000
+P <.0001
+N 4
+

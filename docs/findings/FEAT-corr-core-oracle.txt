@@ -1,0 +1,197 @@
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  8       4.50000       2.44949      36.00000       1.00000       8.00000
+y                  8       8.87500       4.94072      71.00000       2.00000      17.00000
+
+
+Pearson Correlation Coefficients, N = 8 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       0.96204
+                       0.0001
+
+y       0.96204       1.00000
+         0.0001              
+
+The CORR Procedure
+
+   3        Variables:    y        x        z        
+     Freq   Variable:     f                          
+     Weight Variable:     w                          
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+y                  8       3.87500       0.83452      31.00000       2.00000       8.00000
+x                  9       4.63636       3.05257      51.00000       1.00000       7.00000
+z                  8       7.00000             0      42.00000       7.00000       7.00000
+
+
+     Pearson Correlation Coefficients 
+        Prob > |r| under H0: Rho=0 
+          Number of Observations
+ 
+              y             x             z
+
+y       1.00000       1.00000        .     
+                       <.0001         .    
+              8             7             6
+
+x       1.00000       1.00000        .     
+         <.0001                       .    
+              7             9             7
+
+z        .             .             .     
+          .             .             .    
+              6             7             8
+
+The CORR Procedure
+
+   3        Variables:    y        x        z        
+     Freq   Variable:     f                          
+     Weight Variable:     w                          
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+y                  5       2.00000             0       2.00000       2.00000       8.00000
+x                  5       1.00000             0       1.00000       1.00000       5.00000
+z                  5       7.00000             0       7.00000       7.00000       7.00000
+
+
+ Pearson Correlation Coefficients, N = 5 
+        Prob > |r| under H0: Rho=0
+ 
+              y             x             z
+
+y        .             .             .     
+          .             .             .    
+
+x        .             .             .     
+          .             .             .    
+
+z        .             .             .     
+          .             .             .    
+
+The CORR Procedure
+
+   2 With   Variables:    y        z        
+   1        Variables:    x                 
+     Freq   Variable:     f                 
+     Weight Variable:     w                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+y                  4       3.87500       1.27475      31.00000       2.00000       5.00000
+z                  4       7.00000             0      42.00000       7.00000       7.00000
+x                  5       4.63636       4.31699      51.00000       1.00000       7.00000
+
+
+Pearson Correlation Coefficients 
+   Prob > |r| under H0: Rho=0 
+     Number of Observations
+ 
+              x
+
+y       1.00000
+         <.0001
+              3
+
+z        .     
+          .    
+              3
+
+g=1
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  1       1.00000             .       1.00000       1.00000       1.00000
+y                  1       2.00000             .       2.00000       2.00000       2.00000
+
+
+Pearson Correlation Coefficients, N = 1 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x        .             .     
+          .             .    
+
+y        .             .     
+          .             .    
+
+g=2
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  2       1.50000       0.70711       3.00000       1.00000       2.00000
+y                  2       3.00000       1.41421       6.00000       2.00000       4.00000
+
+
+Pearson Correlation Coefficients, N = 2 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       1.00000
+          .             .    
+
+y       1.00000       1.00000
+          .             .    
+
+g=3
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       2.00000       1.00000       6.00000       1.00000       3.00000
+y                  3       4.00000       2.00000      12.00000       2.00000       6.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       1.00000
+                       <.0001
+
+y       1.00000       1.00000
+         <.0001              

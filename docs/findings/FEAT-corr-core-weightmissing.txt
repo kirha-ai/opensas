@@ -1,0 +1,5 @@
+
+The CORR Procedure
+
+   2        Variables:    x        y        
+     Weight Variable:     w                 
