@@ -333,6 +333,13 @@ const Parser = struct {
                 if (self.tag(.dot)) {
                     self.i += 1;
                     if (self.tag(.number)) self.i += 1;
+                } else if (self.toks[start].tag == .name and self.tag(.number) and std.mem.startsWith(u8, self.toks[self.i].text, ".")) {
+                    // Like parser.tryFormatSpec, accept the lexer's dotted-number
+                    // suffix: COMMA8.1 is a name followed by the number `.1`.
+                    const decimals = self.toks[self.i].text[1..];
+                    if (decimals.len == 0) return self.fail("FORMAT requires nonnegative integer decimals");
+                    for (decimals) |c| if (!std.ascii.isDigit(c)) return self.fail("FORMAT requires nonnegative integer decimals");
+                    self.i += 1;
                 }
                 var fmt: std.ArrayList(u8) = .empty;
                 for (self.toks[start..self.i]) |tok| {
@@ -1409,6 +1416,72 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     try flush(a, out, total);
     try flush(a, out, rule);
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+}
+
+test "TABLES FORMAT named decimals preserve weighted counts and width boundaries" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "r", "c", "w" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 3 }, .{ 1, 2, 1 }, .{ 2, 1, 2 }, .{ 2, 2, 4 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    try lib.put("d", ds);
+
+    // SAS 9.4 FREQ manual p.121: numeric formats, width <=24. Live SAS
+    // evidence: /tmp/opensas-review-fixes/BUG-freqformatdecimal/case*.{sas,txt,log}.
+    // COMMA8.1 displays cells 3.0,1.0,2.0,4.0 and total 10.0, no warnings/errors.
+    const Case = struct { spec: []const u8, places: usize };
+    for ([_]Case{
+        .{ .spec = "comma8.1", .places = 1 },
+        .{ .spec = "CoMmA8.2", .places = 2 },
+        .{ .spec = "comma8.0", .places = 0 },
+        .{ .spec = "comma8.", .places = 0 },
+        .{ .spec = "8.1", .places = 1 },
+        .{ .spec = "8.", .places = 0 },
+        .{ .spec = "comma24.1", .places = 1 },
+        .{ .spec = "24.1", .places = 1 },
+    }) |case| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; weight w; tables r*c / format={s} nopercent norow nocol; run;", .{case.spec});
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, src, &d));
+        try std.testing.expect(!d.hasErrors());
+        // Inspect frequency rows, not percentage substrings; verify all four
+        // cells and margins so truncating/ignoring the suffix cannot pass.
+        var lines = std.mem.splitScalar(u8, out.items, '\n');
+        var checked: usize = 0;
+        const expected = [_][3]usize{ .{ 3, 1, 4 }, .{ 2, 4, 6 }, .{ 5, 5, 10 } };
+        while (lines.next()) |raw| {
+            const row = std.mem.trim(u8, raw, " ");
+            if (!std.mem.startsWith(u8, row, "1 ") and !std.mem.startsWith(u8, row, "2 ") and !std.mem.startsWith(u8, row, "Total ")) continue;
+            var cells = std.mem.tokenizeAny(u8, row, " |\t");
+            _ = cells.next();
+            try std.testing.expect(checked < expected.len);
+            for (expected[checked]) |n| {
+                const suffix: []const u8 = switch (case.places) {
+                    0 => "",
+                    1 => ".0",
+                    else => ".00",
+                };
+                try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "{d}{s}", .{ n, suffix }), cells.next() orelse "");
+            }
+            checked += 1;
+        }
+        try std.testing.expectEqual(@as(usize, 3), checked);
+    }
+    for ([_][]const u8{ "comma25.1", "25.1", "$8.", "-8.1", "comma8.-1", "comma8.1.2", "comma8.1e2" }) |spec| {
+        var d = diag.Diagnostics.init(a);
+        var out: std.ArrayList(u8) = .empty;
+        diag.resetGap();
+        const src = try std.fmt.allocPrint(a, "proc freq data=d; weight w; tables r*c / format={s}; run;", .{spec});
+        try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, src, &d)));
+        try std.testing.expect(d.hasErrors());
+        try std.testing.expect(!diag.gapHit());
+        try std.testing.expectEqual(@as(usize, 0), out.items.len);
+    }
 }
 
 test "table syntax rejects invalid SAS and keeps destination gaps explicit" {
