@@ -18,12 +18,6 @@ what it changes.
 
 ---
 
-## PR #48 review — round 1
-
-- [DOING @dev1] BUG-univnmissweight (review, CRITICAL silent-wrong, pre-existing; non-blocking for PR #48) — NMISS includes observations whose analysis value and WEIGHT are both missing. Repro: `data d;input x w;datalines;` with rows `(1,1),(2,.),(.,.),(.,1),(4,1)`; `proc univariate data=d noprint;var x;weight w;output out=o n=n nmiss=nm mean=m;run; data _null_;set o;file print;put n= nm= m=;run;`. EXPECTED `n=2 nm=1 m=2.5`; ACTUAL `n=2 nm=2 m=2.5`, rc 0, on both PR HEAD and rebuilt merge-base 85856b86. Evidence: real SAS 9.4 `/tmp/pr48-review/univmiss.sas`/`.log` (also requests NOBS=5), baseline-compatible `/tmp/pr48-review/univmiss-base.sas`; Statistical Procedures pp.398,408 exclude missing-weight observations. Shared nmissCount ignores WEIGHT; do not blindly use rows.len-N, which also counts nonmissing analysis values excluded by weight. Present since de0471b; this PR newly reuses the helper for OUTTABLE. (likely: src/proc.zig:1997, src/stat/univariate.zig:330)
-
----
-
 ## Base SAS statistics completion — CORR / FREQ / UNIVARIATE
 
 Reference: `docs/sas94-procedures-statistical.txt`, Sixth Edition;
