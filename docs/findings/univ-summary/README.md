@@ -117,3 +117,34 @@ nonmissing FREQ-expanded input and optional statistic/p-value result; dev3 must
 integrate it, remove the guard, and verify unweighted OUTTABLE including n=2,
 constant samples, and the 2000/2001 switch before the ticket can become DONE.
 The minimum normality fields are explicitly part of this ticket's prerequisite.
+
+## Acceptance continuation after intermediate landing
+
+- `dev3-large`: 5,003 observations, two analysis variables, all PCTLDEF values,
+  arbitrary `alpha_`/`beta_` prefixes, and a FREQ/WEIGHT analysis containing 7,505
+  expanded observations. All emitted value tokens match SAS exactly.
+- `dev3-multigroup`: 20,012 physical observations, two BY groups, two crossed
+  CLASS variables (one formatted), two analysis variables, IDOUT, FREQ and
+  WEIGHT. Each analysis group has 5,003 physical / 7,505 expanded observations.
+  Values and descriptor names/order/types/lengths/formats/labels match SAS.
+  OUTTABLE orders rows by BY, then analysis variable, then CLASS combination.
+- `dev3-classrep` and `dev3-classcross`: UNIVARIATE stores the FIRST INCLUDED raw
+  value for a formatted CLASS level, shared across crossed levels and reset for
+  each BY group. FREQ-excluded rows do not provide that representative. INTERNAL
+  ordering uses this representative, not the lowest raw value. This corrects the
+  earlier reuse of the MEANS/FREQ raw-minimum map; those procedures are untouched.
+- `dev3-classvar`: SAS accepts the same numeric variable in CLASS and VAR. A
+  separate analysis view preserves its numeric data while grouping uses formatted
+  values. The sample [2,1] grouped into 'A' produces N=2, mean=1.5.
+- Removed probe-specific `label()` branches identified by manager review;
+  percentile labels are generated only by the generic percentile request path.
+
+Additional OUTTABLE descriptor evidence:
+- `dev3-emptytable` / `dev3-tablemeta`: no physical input observations yields a
+  zero-column, unlabeled OUTTABLE. Nonempty input excluded by FREQ/WEIGHT/CLASS
+  retains its descriptor. `_LABEL_` exists only when some analysis variable has
+  a nonblank label and has fixed length 40 (long labels truncate). `_VAR_` is at
+  least 8 characters and extends to the longest analysis variable name.
+- `dev3-outtable-final`: complete normality/robust oracle at n=1,2,3,8,11,12,
+  2000,2001,5003 and a constant sample, FREQ expansion across 2000/2001,
+  weighted bypass, and empty input. Integration comparison follows support landing.

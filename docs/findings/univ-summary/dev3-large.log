@@ -1,0 +1,308 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data large;
+39         do x=1 to 5003;y=2*x;w=1+mod(x,3);f=1+mod(x,2);output;end;
+40         run;
+
+NOTE: The data set WORK.LARGE has 5003 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              627.12k
+      OS Memory           11688.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     149
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           520
+      
+
+41         proc univariate data=large noprint pctldef=1;var x y;output out=q1 n=nx ny mean=mx my p25=qx qy
+41       ! pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: The data set WORK.Q1 has 1 observations and 12 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              3101.71k
+      OS Memory           13996.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     651
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+42         data _null_;set q1;file print;put 'DEF=1 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50=
+42       ! beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.Q1.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              702.34k
+      OS Memory           13992.00k
+      Timestamp           11/10/2026 12:22:51 PM
+The SAS System
+
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+43         proc univariate data=large noprint pctldef=2;var x y;output out=q2 n=nx ny mean=mx my p25=qx qy
+43       ! pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: The data set WORK.Q2 has 1 observations and 12 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1385.14k
+      OS Memory           14252.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     143
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+44         data _null_;set q2;file print;put 'DEF=2 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50=
+44       ! beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.Q2.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              589.42k
+      OS Memory           13992.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         proc univariate data=large noprint pctldef=3;var x y;output out=q3 n=nx ny mean=mx my p25=qx qy
+45       ! pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: The data set WORK.Q3 has 1 observations and 12 variables.
+The SAS System
+
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1384.07k
+      OS Memory           14252.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+46         data _null_;set q3;file print;put 'DEF=3 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50=
+46       ! beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.Q3.
+NOTE: The DATA step printed page 3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              589.53k
+      OS Memory           13992.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         proc univariate data=large noprint pctldef=4;var x y;output out=q4 n=nx ny mean=mx my p25=qx qy
+47       ! pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: The data set WORK.Q4 has 1 observations and 12 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1385.17k
+      OS Memory           14252.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           264
+      
+
+48         data _null_;set q4;file print;put 'DEF=4 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50=
+48       ! beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.Q4.
+NOTE: The DATA step printed page 4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              589.42k
+      OS Memory           13992.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+49         proc univariate data=large noprint pctldef=5;var x y;output out=q5 n=nx ny mean=mx my p25=qx qy
+49       ! pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: The data set WORK.Q5 has 1 observations and 12 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1384.50k
+      OS Memory           14252.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        11  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+50         data _null_;set q5;file print;put 'DEF=5 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50=
+50       ! beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.Q5.
+NOTE: The DATA step printed page 5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              589.53k
+The SAS System
+
+      OS Memory           13992.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        12  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+51         proc univariate data=large noprint pctldef=2;var x y;weight w;freq f;output out=weighted n=nx ny sumwgt=sx sy
+51       !  mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+
+NOTE: PCTLDEF option not allowed with a WEIGHT statement.
+NOTE: The data set WORK.WEIGHTED has 1 observations and 14 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1745.98k
+      OS Memory           14764.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        13  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     198
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+52         data _null_;set weighted;file print;put 'WEIGHT ' nx= ny= sx= sy= mx= my= qx= qy= alpha_12_34= beta_12_34=
+52       ! alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 1 observations read from the data set WORK.WEIGHTED.
+NOTE: The DATA step printed page 6.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              590.60k
+      OS Memory           14504.00k
+      Timestamp           11/10/2026 12:22:51 PM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+53         
+The SAS System
+
+54         
+55         
+56         
+The SAS System
+
+57         

@@ -1,0 +1,9 @@
+
+b=1 c=B raw=2 h=X m=20
+b=1 c=B raw=2 h=Y m=30
+b=1 c=A raw=4 h=X m=40
+b=1 c=A raw=4 h=Y m=10
+b=2 c=A raw=1 h=X m=10
+b=2 c=A raw=1 h=Y m=40
+b=2 c=B raw=3 h=X m=30
+b=2 c=B raw=3 h=Y m=20

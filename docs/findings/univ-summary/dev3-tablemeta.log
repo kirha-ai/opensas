@@ -1,0 +1,192 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data d;
+39         length analysis_name_longer_than_eight 8;
+40         label analysis_name_longer_than_eight='A deliberately long synthetic label containing more than forty
+40       ! characters';
+41         analysis_name_longer_than_eight=1;output;analysis_name_longer_than_eight=2;output;
+42         run;
+
+NOTE: The data set WORK.D has 2 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.46k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+43         proc univariate data=d noprint outtable=t;var analysis_name_longer_than_eight;run;
+
+NOTE: The data set WORK.T has 1 observations and 48 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2533.20k
+      OS Memory           13228.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     529
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+44         proc contents data=t out=c noprint;run;
+
+NOTE: The data set WORK.C has 48 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1091.04k
+      OS Memory           13488.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        4  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     152
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+45         data _null_;set c;if name in ('_VAR_','_LABEL_');file print;put name length;run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: There were 48 observations read from the data set WORK.C.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              707.73k
+      OS Memory           13224.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     142
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         data none;x=1;f=0;g=.;output;run;
+
+NOTE: The data set WORK.NONE has 1 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              515.34k
+      OS Memory           13224.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     84
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+47         proc univariate data=none noprint outtable=fzero;var x;freq f;run;
+
+WARNING: There are no observations with valid WEIGHT/FREQ values in the input data set.
+NOTE: The data set WORK.FZERO has 0 observations and 47 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              833.10k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+48         proc univariate data=none noprint outtable=cmiss;class g;var x;run;
+
+WARNING: Insufficient nonmissing data.
+NOTE: The data set WORK.CMISS has 0 observations and 48 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              840.10k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     113
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+49         data _null_;length label $256;
+50         ds=open('fzero');rows=attrn(ds,'nobs');cols=attrn(ds,'nvars');label=attrc(ds,'label');rc=close(ds);file print
+50       ! ;put 'FZERO ' rows= cols= label=;
+51         ds=open('cmiss');rows=attrn(ds,'nobs');cols=attrn(ds,'nvars');label=attrc(ds,'label');rc=close(ds);put 'CMISS
+51       !  ' rows= cols= label=;
+52         run;
+
+NOTE: 2 lines were written to file PRINT.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              579.92k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 12:53:49 PM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           0
+      
+
+53         
+54         
+55         
+56         
+The SAS System
+
+57         

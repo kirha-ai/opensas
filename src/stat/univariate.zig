@@ -65,6 +65,7 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
 }
 pub const Options = struct {
     source: ?*Dataset = null,
+    source_rows: std.AutoHashMapUnmanaged(usize, []const Value) = .empty,
     obscol: ?usize = null,
     freqcol: ?usize = null,
     round_units: []f64 = &.{},
@@ -89,6 +90,7 @@ pub const Options = struct {
             @memcpy(row[0..r.len], r);
             row[r.len] = .{ .num = @floatFromInt(if (obs) |v| v[j] else j + 1) };
             try copy.rows.append(a, row);
+            try self.source_rows.put(a, @intFromFloat(h.toNum(row[r.len])), row);
         }
         self.source = copy;
         return copy;
@@ -488,10 +490,6 @@ fn label(k: []const u8) []const u8 {
     if (eq(canonical(k), "t")) return "Student's t statistic";
     if (eq(canonical(k), "uss")) return "the uncorrected sum of squares";
     if (eq(canonical(k), "var")) return "the variance";
-    if (eq(canonical(k), "x_20")) return "the  20.0000 percentile";
-    if (eq(canonical(k), "x_50")) return "the  50.0000 percentile";
-    if (eq(canonical(k), "x_33_33")) return "the  33.3330 percentile";
-    if (eq(canonical(k), "x_high")) return "the  85.1250 percentile";
     return k;
 }
 
@@ -511,6 +509,13 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
         };
         const od = try a.create(Dataset);
         od.* = Dataset.init(a, name);
+        const source = opt.source orelse ds;
+        if (table and source.rows.items.len == 0) {
+            // SAS leaves an OUTTABLE created from an empty input undescribed.
+            try cx.lib.put(name, od);
+            continue;
+        }
+        var table_label = false;
         var keycols: std.ArrayList(usize) = .empty;
         try keycols.appendSlice(a, bcols);
         if (opt.idout and !table) for (ids) |ci| {
@@ -532,16 +537,19 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
         if (table) {
             _ = try od.addColumn("_VAR_", .char);
             var name_len: usize = 8;
-            var label_len: usize = 40;
             for (acols) |ci| {
                 name_len = @max(name_len, ds.columns.items[ci].name.len);
-                if (ds.columns.items[ci].label) |vl| label_len = @max(label_len, vl.len);
+                if (ds.columns.items[ci].label) |vl| if (std.mem.trim(u8, vl, " ").len > 0) {
+                    table_label = true;
+                };
             }
             od.setLen("_VAR_", name_len);
             od.setLabel("_VAR_", "Variable Name");
-            _ = try od.addColumn("_LABEL_", .char);
-            od.setLen("_LABEL_", label_len);
-            od.setLabel("_LABEL_", "Variable Label");
+            if (table_label) {
+                _ = try od.addColumn("_LABEL_", .char);
+                od.setLen("_LABEL_", 40);
+                od.setLabel("_LABEL_", "Variable Label");
+            }
             for (tableNames, tableLabels) |n, l| {
                 _ = try od.addColumn(n, .num);
                 od.setLabel(n, l);
@@ -587,6 +595,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             od.label = if (has_pct and wc != null) "Selected Summary Statistics (Percentile Definition=Weighted)" else if (has_pct) try std.fmt.allocPrint(a, "Selected Summary Statistics (Percentile Definition={d})", .{def}) else "Selected Summary Statistics";
         }
         for (try h.bySlices(a, ds.rows.items, bcols)) |bs| {
+            const first_row = od.rows.items.len;
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
@@ -605,19 +614,20 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 var gd = Dataset.init(a, ds.name);
                 gd.columns = ds.columns;
                 try gd.rows.appendSlice(a, g.rows);
+                const analysis = try analysisView(a, &gd, acols, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
                 for (spec.req.items) |r| if (eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
                     robust = true;
                 };
                 if (table and wc == null) for (acols) |ci| {
-                    const stats = h.computeStatsV(gd.rows.items, ci, null, vd);
+                    const stats = h.computeStatsV(analysis.rows.items, ci, null, vd);
                     if (stats.n >= 2 and stats.std > 0) {
                         diag.markGap();
                         return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: OUTTABLE normality fields require the inference implementation; refusing fabricated missing statistics", .{});
                     }
                 };
-                for (acols, 0..) |ci, j| summaries[j] = try summarize(a, &gd, ci, wc, vd, mu0, robust);
+                for (acols, 0..) |ci, j| summaries[j] = try summarize(a, analysis, ci, wc, vd, mu0, robust);
                 const nrows = if (table) acols.len else 1;
                 for (0..nrows) |vi| {
                     const row = try a.alloc(Value, od.columns.items.len);
@@ -628,14 +638,18 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                             if (opt.idout and !table) for (ids) |id| {
                                 if (ci == id and bs.rows.len > 0) row[j] = firstByRow(opt, bs.rows[0], bcols)[ci];
                             };
-                            if (h.fmtLevelsFor(levels, ci)) |fl| row[j] = h.fmtRawFor(fl, h.valStr(row[j])) orelse .{ .num = nan };
+                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, ci, row[j]);
                         } else if (od.columns.items[j].type == .char) row[j] = .{ .str = "" };
                     }
                     var at = keycols.items.len;
                     if (table) {
                         row[at] = .{ .str = ds.columns.items[acols[vi]].name };
-                        row[at + 1] = .{ .str = ds.columns.items[acols[vi]].label orelse "" };
-                        at += 2;
+                        at += 1;
+                        if (table_label) {
+                            const variable_label = ds.columns.items[acols[vi]].label orelse "";
+                            row[at] = .{ .str = variable_label[0..@min(variable_label.len, 40)] };
+                            at += 1;
+                        }
                         for (tableKeys, 0..) |k, j| row[at + j] = h.numV(summaries[vi].value(k, if (wc != null) 5 else def, vd, mu0));
                     } else for (spec.req.items, 0..) |r, j| {
                         const z = summaries[r.var_index];
@@ -643,6 +657,16 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                     }
                     try od.appendRow(row);
                 }
+            }
+            // OUTTABLE is BY-major, then analysis-variable-major, then CLASS.
+            // OUTPUT remains one row per CLASS combination within each BY group.
+            if (table and acols.len > 1) {
+                const rows = od.rows.items[first_row..];
+                const groups_count = rows.len / acols.len;
+                const original = try a.dupe([]const Value, rows);
+                for (0..acols.len) |vi| for (0..groups_count) |gi| {
+                    rows[vi * groups_count + gi] = original[gi * acols.len + vi];
+                };
             }
         }
         try cx.lib.put(name, od);
@@ -757,6 +781,7 @@ fn quantile(p: []const h.XW, q: f64, def: u8) f64 {
 }
 
 fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
+    if (opt.source_rows.get(obs)) |row| return row;
     if (opt.obscol) |ci| {
         for (ds.rows.items) |row| if (h.toNum(row[ci]) == @as(f64, @floatFromInt(obs))) return row;
     }
@@ -794,7 +819,7 @@ pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []c
                     if (lf != rf) return lf > rf;
                 }
                 if (eq(mode, "internal")) {
-                    if (h.fmtLevelsFor(c.levels, ci)) |fl| return h.compareValue(h.fmtRawFor(fl, h.valStr(lv)) orelse lv, h.fmtRawFor(fl, h.valStr(rv)) orelse rv) == .lt;
+                    if (h.fmtLevelsFor(c.levels, ci) != null) return h.compareValue(classRepresentative(c.ds, c.opt, ci, lv), classRepresentative(c.ds, c.opt, ci, rv)) == .lt;
                 }
                 return h.compareValue(lv, rv) == .lt;
             }
@@ -922,7 +947,7 @@ test "UNIVARIATE OUTTABLE weighted schema and inference-owned guard" {
     const lib = try testData(a);
     try testRun(a, lib, "proc univariate data=d noprint outtable=t; var x y; weight w; run;");
     const t = lib.find("t").?;
-    try std.testing.expectEqual(@as(usize, 48), t.columns.items.len);
+    try std.testing.expectEqual(@as(usize, 47), t.columns.items.len);
     try std.testing.expectEqual(@as(usize, 2), t.rows.items.len);
     try std.testing.expectEqualStrings("Summary Statistics", t.label.?);
     try std.testing.expectEqual(@as(f64, 4), testCell(t, 0, "_NOBS_"));
@@ -1076,4 +1101,59 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
     try std.testing.expectEqual(@as(usize, 2), o.columns.items.len);
     try std.testing.expectEqual(@as(f64, 15), testCell(o, 0, "a"));
     try std.testing.expectApproxEqAbs(@as(f64, 10.0004), testCell(o, 0, "p50_00"), 1e-10);
+}
+
+/// A formatted CLASS level retains its first included raw value in this BY
+/// group. The representative is shared across crossed CLASS combinations.
+fn classRepresentative(ds: *Dataset, opt: Options, ci: usize, level: Value) Value {
+    const oi = opt.obscol orelse return level;
+    for (ds.rows.items) |row| if (h.compareValue(row[ci], level) == .eq) {
+        return sourceRow(opt.source orelse ds, opt, @intFromFloat(h.toNum(row[oi])))[ci];
+    };
+    return level;
+}
+/// CLASS grouping uses formatted keys, but an explicitly selected CLASS
+/// variable is analyzed using its original numeric values, after ROUND.
+pub fn analysisView(a: Allocator, ds: *Dataset, cols: []const usize, opt: Options) !*Dataset {
+    const source = opt.source orelse return ds;
+    var restore: std.ArrayList(usize) = .empty;
+    for (cols) |ci| if (ds.columns.items[ci].type != .num and source.columns.items[ci].type == .num) try restore.append(a, ci);
+    if (restore.items.len == 0) return ds;
+    const view = try a.create(Dataset);
+    view.* = Dataset.init(a, ds.name);
+    try view.columns.appendSlice(a, ds.columns.items);
+    for (restore.items) |ci| view.columns.items[ci] = source.columns.items[ci];
+    for (ds.rows.items) |row| {
+        const values = try a.dupe(Value, row);
+        const raw = sourceRow(source, opt, @intFromFloat(h.toNum(row[opt.obscol.?])));
+        for (restore.items) |ci| {
+            values[ci] = raw[ci];
+            if (ci < opt.round_units.len and opt.round_units[ci] > 0 and std.math.isFinite(h.toNum(values[ci]))) {
+                const unit = opt.round_units[ci];
+                values[ci] = .{ .num = roundEven(h.toNum(values[ci]) / unit) * unit };
+            }
+        }
+        try view.rows.append(a, values);
+    }
+    return view;
+}
+
+test "UNIVARIATE OUTTABLE distinguishes empty input and optional fixed-width labels" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.columns.items[0].label = "A deliberately long synthetic label containing more than forty characters";
+    try testRun(a, lib, "proc univariate data=d noprint outtable=labeled;var x y;weight w;run;");
+    const labeled = lib.find("labeled").?;
+    const li = labeled.indexOf("_LABEL_").?;
+    try std.testing.expectEqual(@as(usize, 48), labeled.columns.items.len);
+    try std.testing.expectEqual(@as(?usize, 40), labeled.columns.items[li].len);
+    try std.testing.expectEqualStrings(ds.columns.items[0].label.?[0..40], labeled.rows.items[0][li].str);
+    ds.rows.clearRetainingCapacity();
+    try testRun(a, lib, "proc univariate data=d noprint outtable=empty;var x;run;");
+    const empty = lib.find("empty").?;
+    try std.testing.expectEqual(@as(usize, 0), empty.columns.items.len);
+    try std.testing.expect(empty.label == null);
 }

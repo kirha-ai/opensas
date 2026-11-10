@@ -5913,7 +5913,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         }
     }
     if (acols.items.len == 0) return unsupported("PROC UNIVARIATE: no numeric analysis variable");
-    for (acols.items) |ci| if (ds.columns.items[ci].type != .num)
+    for (acols.items) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: analysis variable {s} must be numeric", .{ds.columns.items[ci].name});
     if (outputs.items.len > 0 and vars.items.len == 0)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: OUTPUT requires a VAR statement", .{});
@@ -5982,7 +5982,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         for (bs.rows) |r| try bd.rows.append(arena, r);
         if (!univ.hasUsableWeight(bd, wcol)) continue;
         if (ccols.items.len == 0) {
-            for (acols.items) |ix| try emitUnivariate(arena, out, bd, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
+            const analysis = try univ.analysisView(arena, bd, acols.items, extra);
+            for (acols.items) |ix| try emitUnivariate(arena, out, analysis, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
@@ -6010,7 +6011,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 for (bd.columns.items) |c| try gd.columns.append(arena, c);
                 for (g.rows) |r| try gd.rows.append(arena, r);
                 if (!univ.hasUsableWeight(gd, wcol)) continue;
-                for (acols.items) |ix| try emitUnivariate(arena, out, gd, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
+                const analysis = try univ.analysisView(arena, gd, acols.items, extra);
+                for (acols.items) |ix| try emitUnivariate(arena, out, analysis, ix, wcol, vardef, pctldef, mu0, extra, icols.items);
             }
         }
     }

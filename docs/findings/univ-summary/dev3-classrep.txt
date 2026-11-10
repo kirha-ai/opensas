@@ -1,0 +1,9 @@
+
+plain c=B raw=2 m=25
+plain c=A raw=4 m=25
+
+freq c=A raw=1 m=10
+freq c=B raw=2 m=25
+
+formatted c=A raw=4 m=25
+formatted c=B raw=2 m=25

@@ -1,0 +1,16 @@
+options nodate nonumber;
+data large;
+do x=1 to 5003;y=2*x;w=1+mod(x,3);f=1+mod(x,2);output;end;
+run;
+proc univariate data=large noprint pctldef=1;var x y;output out=q1 n=nx ny mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set q1;file print;put 'DEF=1 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+proc univariate data=large noprint pctldef=2;var x y;output out=q2 n=nx ny mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set q2;file print;put 'DEF=2 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+proc univariate data=large noprint pctldef=3;var x y;output out=q3 n=nx ny mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set q3;file print;put 'DEF=3 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+proc univariate data=large noprint pctldef=4;var x y;output out=q4 n=nx ny mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set q4;file print;put 'DEF=4 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+proc univariate data=large noprint pctldef=5;var x y;output out=q5 n=nx ny mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set q5;file print;put 'DEF=5 ' nx= ny= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
+proc univariate data=large noprint pctldef=2;var x y;weight w;freq f;output out=weighted n=nx ny sumwgt=sx sy mean=mx my p25=qx qy pctlpts=12.345 50 99.9 pctlpre=alpha_ beta_;run;
+data _null_;set weighted;file print;put 'WEIGHT ' nx= ny= sx= sy= mx= my= qx= qy= alpha_12_34= beta_12_34= alpha_50= beta_50= alpha_99_9= beta_99_9=;run;
