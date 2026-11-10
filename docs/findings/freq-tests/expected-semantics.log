@@ -1,0 +1,169 @@
+The SAS System
+
+36         
+37         options nodate nonumber nosyntaxcheck; ods graphics off;
+38         data d; input r c w; datalines;
+
+NOTE: The data set WORK.D has 9 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+48         ;
+49         title 'CASE TESTF ALONE';
+50         proc freq data=d; weight w; tables r / testf=(14 21 35); run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3006.75k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     698
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+51         title 'CASE REPEATED TESTP';
+52         proc freq data=d; weight w; tables r / testp=(20 30 50) testp=(30 30 40); run;
+
+ERROR: The sum of the TESTP probabilities must equal one.
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              332.87k
+      OS Memory           13224.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        4  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+53         title 'CASE TWO WAY TESTP LIST';
+
+
+54         proc freq data=d; weight w; tables r*c / testp=(20 30 50) noprint; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 2.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1092.10k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     203
+      Page Swaps                        0
+      Voluntary Context Switches        20
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+55         title 'CASE TWO WAY TESTP DATASET';
+56         proc freq data=d; weight w; tables r*c / testp=absent noprint; run;
+ERROR: File WORK.ABSENT.DATA does not exist.
+
+NOTE: The SAS System stopped processing this step because of errors.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              296.90k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     58
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+57         data p; input _testp_ TestPercent Percent; datalines;
+
+NOTE: The data set WORK.P has 3 observations and 3 variables.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.60k
+      OS Memory           13736.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     90
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+61         ;
+62         title 'CASE SECONDARY ALIAS PRECEDENCE';
+63         proc freq data=d; weight w; tables r / testp=p; run;
+
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 3.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1055.43k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 12:41:41 PM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     155
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+64         
+65         
+66         
+67         
+The SAS System
+
+68         

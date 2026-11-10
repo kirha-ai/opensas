@@ -1,0 +1,137 @@
+
+CASE SPLIT TESTP LIST
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       20.00            20        28.57  
+2          27       38.57       30.00            47        67.14  
+3          23       32.86       50.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.4000
+DF                 2
+Pr > ChiSq    0.0150
+
+Sample Size = 70
+
+CASE DATASET WITHOUT CHISQ
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+r    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1          20       28.57            20        28.57  
+2          27       38.57            47        67.14  
+3          23       32.86            70       100.00  
+
+CASE ALIAS PRIORITY WITH CHISQ
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       20.00            20        28.57  
+2          27       38.57       30.00            47        67.14  
+3          23       32.86       50.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.4000
+DF                 2
+Pr > ChiSq    0.0150
+
+Sample Size = 70
+
+CASE REPEATED DATASET
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       20.00            20        28.57  
+2          27       38.57       30.00            47        67.14  
+3          23       32.86       50.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.4000
+DF                 2
+Pr > ChiSq    0.0150
+
+Sample Size = 70
+
+CASE LIST AND DATASET
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       20.00            20        28.57  
+2          27       38.57       30.00            47        67.14  
+3          23       32.86       50.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.4000
+DF                 2
+Pr > ChiSq    0.0150
+
+Sample Size = 70
+
+CASE DIFFERENT LIST THEN DATASET
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       40.00            20        28.57  
+2          27       38.57       40.00            47        67.14  
+3          23       32.86       20.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.1071
+DF                 2
+Pr > ChiSq    0.0174
+
+Sample Size = 70
+
+CASE DIFFERENT DATASET THEN LIST
+
+The FREQ Procedure
+
+                                 Test     Cumulative    Cumulative
+r    Frequency     Percent     Percent     Frequency      Percent
+------------------------------------------------------------------
+1          20       28.57       40.00            20        28.57  
+2          27       38.57       40.00            47        67.14  
+3          23       32.86       20.00            70       100.00  
+
+
+     Chi-Square Test
+for Specified Proportions
+
+Chi-Square    8.1071
+DF                 2
+Pr > ChiSq    0.0174
+
+Sample Size = 70

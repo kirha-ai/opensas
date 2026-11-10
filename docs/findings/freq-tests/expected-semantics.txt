@@ -1,0 +1,49 @@
+
+CASE TESTF ALONE
+
+The FREQ Procedure
+
+                     Test                  Cumulative    Cumulative
+r    Frequency    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------------------
+1          20           14       28.57            20        28.57  
+2          27           21       38.57            47        67.14  
+3          23           35       32.86            70       100.00  
+
+
+     Chi-Square Test
+for Specified Frequencies
+
+Chi-Square    8.4000
+DF                 2
+Pr > ChiSq    0.0150
+
+Sample Size = 70
+
+CASE TWO WAY TESTP LIST
+
+The FREQ Procedure
+
+Statistics for Table of r by c
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                     4     24.4193    <.0001
+Likelihood Ratio Chi-Square    4     22.5979    0.0002
+Mantel-Haenszel Chi-Square     1     15.9108    <.0001
+Phi Coefficient                       0.5906          
+Contingency Coefficient               0.5086          
+Cramer's V                            0.4176          
+
+Sample Size = 70
+
+CASE SECONDARY ALIAS PRECEDENCE
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+r    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1          20       28.57            20        28.57  
+2          27       38.57            47        67.14  
+3          23       32.86            70       100.00  
