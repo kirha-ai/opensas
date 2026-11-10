@@ -1,0 +1,18 @@
+options nodate nonumber;
+data d;
+length case $40;
+do shift=0,1e4,1e8,1e12;
+ do spread=1,1e-2,1e-4,1e-6;
+  case=cats('t',put(shift,best12.),'s',put(spread,best12.));
+  do i=1 to 8; x=shift+spread*i; output; end;
+ end;
+end;
+do n=1,2;
+ case=cats('short',n); do i=1 to n; x=i; output; end;
+end;
+case='tiny'; do i=1 to 8; x=i*1e-100; output; end;
+keep case x;
+run;
+proc sort data=d; by case; run;
+proc univariate data=d noprint outtable=r; by case; var x; run;
+data _null_; set r; file print; put case ' | ' _std_ best32. ' | ' _normal_ best32. ' | ' _probn_ best32.; run;

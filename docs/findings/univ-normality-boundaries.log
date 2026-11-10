@@ -1,0 +1,110 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data d;
+39         length case $40;
+40         do shift=0,1e4,1e8,1e12;
+41          do spread=1,1e-2,1e-4,1e-6;
+42           case=cats('t',put(shift,best12.),'s',put(spread,best12.));
+43           do i=1 to 8; x=shift+spread*i; output; end;
+44          end;
+45         end;
+46         do n=1,2;
+47          case=cats('short',n); do i=1 to n; x=i; output; end;
+48         end;
+49         case='tiny'; do i=1 to 8; x=i*1e-100; output; end;
+50         keep case x;
+51         run;
+
+NOTE: The data set WORK.D has 139 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              544.10k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 11:49:26 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     124
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+52         proc sort data=d; by case; run;
+
+NOTE: There were 139 observations read from the data set WORK.D.
+NOTE: The data set WORK.D has 139 observations and 2 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              778.26k
+      OS Memory           11692.00k
+      Timestamp           11/10/2026 11:49:26 AM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     153
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+53         proc univariate data=d noprint outtable=r; by case; var x; run;
+
+The SAS System
+
+NOTE: The data set WORK.R has 19 observations and 48 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              2788.07k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 11:49:26 AM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     629
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+54         data _null_; set r; file print; put case ' | ' _std_ best32. ' | ' _normal_ best32. ' | ' _probn_ best32.;
+54       ! run;
+
+NOTE: 22 lines were written to file PRINT.
+NOTE: There were 19 observations read from the data set WORK.R.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              728.01k
+      OS Memory           13480.00k
+      Timestamp           11/10/2026 11:49:26 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+55         
+56         
+57         
+58         
+The SAS System
+
+59         

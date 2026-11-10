@@ -16,6 +16,7 @@ pub const eval = @import("eval.zig");
 pub const functions = @import("functions.zig");
 pub const format = @import("format.zig");
 pub const exec = @import("exec.zig");
+pub const normality = @import("stat/normality.zig");
 pub const corr = @import("stat/corr.zig");
 pub const proc = @import("proc.zig");
 pub const macro = @import("macro.zig");
@@ -46,6 +47,7 @@ test {
     _ = @import("exec.zig");
     _ = @import("proc.zig");
     _ = @import("stat/corr.zig");
+    _ = @import("stat/normality.zig");
     _ = @import("macro.zig");
     _ = @import("sql.zig");
 }

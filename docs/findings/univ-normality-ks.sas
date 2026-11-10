@@ -1,0 +1,14 @@
+options nodate nonumber;
+data d;
+length case $40;
+do n=2001,5000;
+ do shape=.025,.03,.035,.04,.043,.045,.0475,.05,.052,.055,.057,.06;
+  case=cats('n',n,'s',put(shape,best12.));
+  do i=1 to n; z=probit((i-.375)/(n+.25)); x=z+shape*(z*z-1); output; end;
+ end;
+end;
+keep case x;
+run;
+proc sort data=d; by case; run;
+proc univariate data=d noprint outtable=r; by case; var x; run;
+data _null_; set r; file print; put case ' | ' _normal_ best32. ' | ' _probn_ best32.; run;

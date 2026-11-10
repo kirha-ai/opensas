@@ -1,0 +1,16 @@
+options nodate nonumber;
+data d;
+length case $40;
+do delta=.005,.008,.009,.0099,.01,.0101,.011,.012,.015,.02;
+ do n=3,8,12;
+  case=cats('u',n,'d',put(delta,best12.));
+  do i=1 to n; x=10000+delta*(i-1)/(n-1); output; end;
+  case=cats('t',n,'d',put(delta,best12.));
+  do i=1 to n; x=10000; if i=n then x=x+delta; output; end;
+ end;
+end;
+keep case x;
+run;
+proc sort data=d; by case; run;
+proc univariate data=d noprint outtable=r; by case; var x; run;
+data _null_; set r; file print; put case ' | ' _normal_ best32. ' | ' _probn_ best32.; run;
