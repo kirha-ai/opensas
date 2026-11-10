@@ -18,6 +18,13 @@ what it changes.
 
 ---
 
+## PR #48 review — round 3
+
+- [TODO] BUG-univclassorderweight (review, LOW result ordering) — CLASS ORDER=DATA/FREQ includes missing-WEIGHT rows when computing first appearance and level frequency. Repro: `/tmp/pr48-review-r3/classorder-regression.sas`; input (c,x,w)=(B,10,.),(A,20,1),(A,30,1),(B,40,1),(B,50,.),(B,60,.); `proc univariate data=d noprint;class c(order=freq);var x;weight w;output out=o n=n mean=m;run;` (repeat with ORDER=DATA). EXPECTED A(N=2,mean=25) then B(N=1,mean=40), because only eligible observations determine order; ACTUAL B then A, rc 0, for both options. Real SAS 9.4 `.sas.txt`/`.sas.log` has zero errors/warnings; rebuilt merge-base 85856b86 also outputs A then B on this discriminator. Evidence: Statistical Procedures pp.320-321 CLASS ORDER= definitions and pp.398,408 missing-weight exclusion. Introduced by a1b53eb (GAP-univ-summary-complete), orderGroups DATA/FREQ comparator; f5f95be fixes INTERNAL representatives only, leaving these branches unfiltered. This is a new ordering finding, not a refile of fixed NOBS/representative tickets. Preserve zero/negative-weight eligibility unless EXCLNPWGT, FREQ expansion, original weights under ROUND, and BY boundaries. (likely: src/stat/univariate.zig:828)
+- [TODO] NOTE-univextremequadratic (review, perf, MED; non-blocking optimization) — The new default UNIVARIATE extreme-observation renderer scans all previously collected observations for every input observation, even without FREQ, producing O(N^2) work to print five extremes. Repro: `data d;do x=1 to 80000;output;end;run;proc univariate data=d;var x;run;`. Serial same-host default Debug builds: HEAD 20k/40k/80k = 0.593/2.094/8.162 seconds; merge-base 85856b86 = 0.078/0.065/0.112 seconds. Earlier independent 10k/20k/40k pass gave HEAD 0.177/0.559/2.127 seconds. All rc 0, empty stderr; timings and synthetic inputs retained in `/tmp/pr48-review-r3/perf.json` and `univperf*.sas`. Static root is renderExtras' nested `for (pairs)` / `for (extreme.items)` identity dedup, introduced by a1b53eb (GAP-univ-summary-complete). Use bounded selection or efficient identity dedup while preserving SAS tie order, source observation numbers and FREQ dedup; avoid constructing unused extreme lists for NEXTROBS=0. No fixed latency contract or numerical failure is asserted; this is a measured regression recorded for an optimization slot, not a merge-blocking semantic finding. (likely: src/stat/univariate.zig:701)
+
+---
+
 ## Base SAS statistics completion — CORR / FREQ / UNIVARIATE
 
 Reference: `docs/sas94-procedures-statistical.txt`, Sixth Edition;
