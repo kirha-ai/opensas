@@ -1,0 +1,55 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data d;
+39          do i=1 to 3; g=1; output; end;
+40         run;
+
+NOTE: The data set WORK.D has 3 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.48k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 11:38:26 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+41         proc freq data=d; tables g / chisq; run;
+
+NOTE: A Deviation Plot is not displayed for the table of g because it contains only one nonmissing level.
+NOTE: There were 3 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3084.48k
+      OS Memory           13484.00k
+      Timestamp           11/10/2026 11:38:26 AM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     773
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           464
+      
+
+42         
+43         
+44         
+45         
+The SAS System
+
+46         
