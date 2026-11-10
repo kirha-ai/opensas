@@ -55,8 +55,8 @@ const ONEWAY_NOCUM_TITLE = (" " ** 22) ++ "The FREQ Procedure\n";
 const TWOWAY_TITLE = (" " ** 24) ++ "The FREQ Procedure\n";
 const NLEVELS_TITLE = (" " ** 21) ++ "The FREQ Procedure\n"; // narrow NLEVELS table (BUG-freqnlevels)
 
-/// Statistical inference options remain explicit gaps until dev4 integrates
-/// the independent freq_tests parser/executor with these prepared tables.
+/// Remaining named inference families outside FEAT-freq-tests fail loud.
+/// Supported options are consumed by freq_tests_parse before this guard.
 fn isUnsupportedFreqStat(kw: []const u8) bool {
     inline for (.{
         // association / independence tests
@@ -82,10 +82,16 @@ fn isFreqTablesGapOption(kw: []const u8) bool {
 }
 
 const table_model = @import("freq_table.zig");
+const stat_parse = @import("freq_tests_parse.zig");
+const stat_exec = @import("freq_tests_execute.zig");
+const stat_kernel = @import("freq_tests.zig");
+const stat_render = @import("freq_tests_render.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
 pub const Request = struct {
+    statistics: stat_parse.Options = .{},
+    resolved_expected: stat_kernel.Expected = .equal,
     vars: []const []const u8 = &.{},
     missing: bool = false,
     missprint: bool = false,
@@ -119,6 +125,8 @@ pub const Request = struct {
     scorout: bool = false,
 };
 const Options = struct {
+    tables_statement_count: usize = 0,
+    tests: stat_parse.TestStatement = .{},
     order: FreqOrder = .internal,
     noprint: bool = false,
     nlevels: bool = false,
@@ -231,6 +239,7 @@ const Parser = struct {
         return names.items;
     }
     fn tables(self: *Parser, ds: *Dataset, opts: *Options) diag.Error!void {
+        opts.tables_statement_count += 1;
         self.i += 1;
         var combos: std.ArrayList([]const []const u8) = .empty;
         while (!self.tag(.slash) and !self.tag(.semicolon) and !self.tag(.eof)) {
@@ -273,6 +282,7 @@ const Parser = struct {
     }
     fn tableOptions(self: *Parser, req: *Request) diag.Error!void {
         while (!self.tag(.semicolon) and !self.tag(.eof)) {
+            if (try stat_parse.consumeTableOption(self.a, self.toks, &self.i, &req.statistics, self.diags)) continue;
             if (!self.tag(.name)) return self.fail("unexpected token in TABLES options");
             const raw_name = self.toks[self.i].text;
             const name = if (eqi(raw_name, "line")) "line_numbers" else if (eqi(raw_name, "score")) "scores" else if (eqi(raw_name, "pearsonresid")) "pearsonres" else if (eqi(raw_name, "stdresid")) "stdres" else raw_name;
@@ -422,9 +432,15 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             try parseProcFormat(a, toks, &parser.i, &opts.formats);
         } else if (parser.kw("where") or (parser.tag(.name) and @import("../parser.zig").isMidStepSkippable(toks[parser.i].text))) {
             while (!parser.tag(.semicolon) and !parser.tag(.eof)) parser.i += 1;
-        } else if (parser.kw("exact") or parser.kw("output") or parser.kw("test")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
+        } else if (parser.kw("test")) {
+            parser.i += 1;
+            const begin = parser.i;
+            while (!parser.tag(.semicolon) and !parser.tag(.eof)) parser.i += 1;
+            try opts.tests.parse(toks[begin..parser.i], cx.diags);
+        } else if (parser.kw("exact") or parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
+    try opts.tests.finish(opts.tables_statement_count, cx.diags);
     if (opts.requests.items.len == 0) for (input.columns.items) |col| {
         if (opts.weight) |w| if (eqi(w, col.name)) continue;
         const bylist = try decodeProcBy(a, opts.bys.items);
@@ -438,6 +454,31 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         names[0] = col.name;
         try opts.requests.append(a, .{ .vars = names });
     };
+    const statistical_options = try a.alloc(stat_parse.Options, opts.requests.items.len);
+    for (opts.requests.items, 0..) |*req, index| {
+        stat_parse.implyTests(&req.statistics, opts.tests.requests, opts.tables_statement_count);
+        req.list = stat_parse.usesList(req.list, req.statistics);
+        req.statistics.score_type = switch (req.scores) {
+            .table => .table,
+            .rank => .rank,
+            .ridit => .ridit,
+            .modridit => .modridit,
+        };
+        statistical_options[index] = req.statistics;
+    }
+    try stat_exec.validateSecondarySources(statistical_options, raw.name, cx.diags);
+    for (opts.requests.items) |*req| {
+        const secondary = if (stat_exec.secondaryName(req.statistics.expected)) |name|
+            cx.lib.find(name) orelse return cx.diags.fail(error.ExecError, 0, "PROC FREQ: TESTP/TESTF dataset {s} does not exist", .{name})
+        else
+            null;
+        if (req.statistics.chisq and req.vars.len == 1) req.resolved_expected = try stat_exec.resolveExpected(a, req.statistics.expected, secondary, cx.diags);
+        // Literal probabilities are syntax-level constraints even on two-way requests.
+        if (req.statistics.expected == .proportions) {
+            const values = req.statistics.expected.proportions;
+            _ = stat_kernel.expectedFactor(values.len, 1, .{ .proportions = values }) catch return cx.diags.fail(error.ExecError, 0, "PROC FREQ: the sum of the TESTP probabilities must equal one or 100 percent", .{});
+        }
+    }
     const wc = try resolveWeightCol(input, opts.weight, cx.diags, 0);
     if (wc) |ci| if (input.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, 0, "PROC FREQ: WEIGHT variable {s} must be numeric", .{input.columns.items[ci].name});
     const pb = try decodeProcBy(a, opts.bys.items);
@@ -525,10 +566,16 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                     try outputs[k].?.appendRow(cells);
                 }
             }
-            if (!any or opts.noprint or req.noprint) continue;
-            if (rendered) try out.append(a, '\n');
-            try renderTable(a, out, &tab, req, opts);
-            rendered = true;
+            if (!any) continue;
+            if (hasStatistics(req.statistics)) {
+                if (rendered and !opts.noprint) try out.append(a, '\n');
+                try analyzeTable(cx, out, &tab, req, opts);
+                if (!opts.noprint) rendered = true;
+            } else if (!opts.noprint and !req.noprint) {
+                if (rendered) try out.append(a, '\n');
+                try renderTable(a, out, &tab, req, opts);
+                rendered = true;
+            }
         }
     }
     for (opts.requests.items, 0..) |req, k| if (outputs[k]) |ds| {
@@ -884,6 +931,7 @@ fn shown(l: table_model.Level, req: Request) bool {
     return req.missing or req.missprint or !l.missing;
 }
 fn renderOne(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: Request) !void {
+    if (req.statistics.chisq and req.resolved_expected != .equal and tab.total > 0 and !tab.negative) return renderOneExpected(a, out, tab, req);
     const levels = tab.dimensions[0].levels;
     const no_pct = req.nopercent or tab.negative;
     // NOFREQ/NOROW/NOCOL are crosstab-only options in SAS (oracle controls).
@@ -1520,4 +1568,188 @@ test "MISSPRINT controlling missing: conditional TOTPCT differs from OUT PERCENT
     const sl = try tab.slice(a, 0);
     try std.testing.expectEqual(@as(f64, 50), sl.basicMetrics(0, 0).total_percent);
     try std.testing.expectEqual(@as(f64, 100), sl.basicMetrics(0, 0).percent);
+}
+
+fn hasStatistics(opts: stat_parse.Options) bool {
+    return opts.chisq or opts.measures or opts.plcorr;
+}
+fn inferenceMatrix(m: CountMatrix) stat_kernel.CountMatrix {
+    return .{ .rows = m.rows, .cols = m.cols, .counts = m.counts, .row_scores = m.row_scores, .col_scores = m.col_scores };
+}
+fn scoreDisplay(a: std.mem.Allocator, tab: *Table, scored: table_model.ScoredMatrix) !stat_render.ScoreDisplay {
+    const rows = try a.alloc([]const u8, scored.row_levels.len);
+    const cols = try a.alloc([]const u8, scored.col_levels.len);
+    for (scored.row_levels, 0..) |l, i| rows[i] = try cellText(a, l.value);
+    for (scored.col_levels, 0..) |l, i| cols[i] = try cellText(a, l.value);
+    return .{ .row_name = tab.dimensions[tab.dimensions.len - 2].name, .col_name = tab.dimensions[tab.dimensions.len - 1].name, .row_labels = rows, .col_labels = cols };
+}
+/// Statistics execution is independent of TABLES display suppression. Buffers
+/// keep each displayed table adjacent to its own stratum's statistical results.
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options) diag.Error!void {
+    const a = cx.arena;
+    if (tab.negative) {
+        if (!opts.noprint and !req.noprint) try renderTable(a, out, tab, req, opts);
+        return; // The existing BY/table path already reported the negative-weight note.
+    }
+    if (tab.dimensions.len == 1) {
+        const scored = (try tab.matrix(a, 0)).?;
+        if (scored.matrix.counts.len == 0) {
+            if (!opts.noprint and !req.noprint) try renderOne(a, out, tab, req);
+            return;
+        }
+        var body: std.ArrayList(u8) = .empty;
+        const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, opts.tests.requests, req.resolved_expected, opts.noprint);
+        if (opts.noprint) return;
+        if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
+        try out.appendSlice(a, body.items);
+        if (result.goodness_of_fit) |gof| {
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, gof.total)}));
+            if (!req.missing) try appendFreqMissing(a, out, tab.missing);
+        }
+        return;
+    }
+    const n = tab.dimensions.len;
+    const nr = tab.dimensions[n - 2].levels.len;
+    const nc = tab.dimensions[n - 1].levels.len;
+    if (nr == 0 or nc == 0) return;
+    var number: usize = 0;
+    for (0..tab.cell_count / (nr * nc)) |stratum| {
+        var missing_control = false;
+        for (0..n - 2) |d| if (tab.level(stratum * nr * nc, d).missing) {
+            missing_control = true;
+        };
+        if (missing_control and !req.missing and !req.missprint) continue;
+        number += 1;
+        const sl = try tab.slice(a, stratum);
+        const eligible = sl.observed and !(missing_control and !req.missing) and !(sl.total == 0 and sl.missing != 0 and !req.missing);
+        var body: std.ArrayList(u8) = .empty;
+        if (eligible) {
+            const scored = (try tab.matrix(a, stratum)).?;
+            if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
+                _ = try stat_exec.execute(a, cx.diags, &body, .{
+                    .matrix = inferenceMatrix(scored.matrix),
+                    .numeric_table_scores_valid = scored.numeric_table_scores_valid,
+                    .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
+                }, req.statistics, opts.tests.requests, .equal, opts.noprint);
+            }
+        }
+        if (opts.noprint) continue;
+        if (number > 1) try out.append(a, '\n');
+        if (!req.noprint) {
+            if (req.crosslist) try renderCross(a, out, sl, req, number) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0);
+        }
+        if (body.items.len > 0) {
+            if (req.noprint) try tableHeading(a, out, sl, if (n > 2) number else 0, false);
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
+            try out.appendSlice(a, body.items);
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, sl.total)}));
+            if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+        }
+    }
+}
+
+fn expectedRow(a: std.mem.Allocator, out: *std.ArrayList(u8), values: []const []const u8, widths: []const usize, rule: bool) !void {
+    try out.appendNTimes(a, ' ', 14);
+    for (values, widths, 0..) |value, width, i| {
+        if (rule) {
+            try out.appendNTimes(a, '-', width);
+            continue;
+        }
+        if (i > 0) try out.appendNTimes(a, ' ', width - @min(width, value.len));
+        try out.appendSlice(a, value);
+        if (i == 0) try out.appendNTimes(a, ' ', width - @min(width, value.len));
+    }
+    try out.append(a, '\n');
+}
+/// Expected-value columns align to the complete analysis-level order, not the
+/// optional MAXLEVELS display subset, and exclude MISSPRINT-only missing rows.
+fn renderOneExpected(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: Request) !void {
+    const probabilities = req.resolved_expected == .proportions;
+    const values = switch (req.resolved_expected) {
+        .proportions, .frequencies => |v| v,
+        .equal => unreachable,
+    };
+    var sum_values: f64 = 0;
+    for (values) |v| sum_values += v;
+    var headers: std.ArrayList([]const u8) = .empty;
+    var tops: std.ArrayList([]const u8) = .empty;
+    try headers.appendSlice(a, &.{ tab.dimensions[0].name, "Frequency" });
+    try tops.appendSlice(a, &.{ "", "" });
+    if (!probabilities) {
+        try headers.append(a, "Frequency");
+        try tops.append(a, "Test");
+    }
+    if (!req.nopercent) {
+        try headers.append(a, "Percent");
+        try tops.append(a, "");
+    }
+    if (probabilities and !req.nopercent) {
+        try headers.append(a, "Percent");
+        try tops.append(a, "Test");
+    }
+    if (!req.nocum) {
+        try headers.append(a, "Frequency");
+        try tops.append(a, "Cumulative");
+        if (!req.nopercent) {
+            try headers.append(a, "Percent");
+            try tops.append(a, "Cumulative");
+        }
+    }
+    var rows: std.ArrayList([]const []const u8) = .empty;
+    var cumulative: f64 = 0;
+    var analysis_index: usize = 0;
+    var displayed: usize = 0;
+    var truncated = false;
+    for (tab.dimensions[0].levels, 0..) |l, key| {
+        const excluded = tab.excluded(key);
+        const index = analysis_index;
+        if (!excluded) analysis_index += 1;
+        if (!shown(l, req)) continue;
+        if (!excluded) {
+            if (req.maxlevels) |max| if (displayed >= max) {
+                truncated = true;
+                continue;
+            };
+            displayed += 1;
+            cumulative += tab.count(key);
+        }
+        const cells = try a.alloc([]const u8, headers.items.len);
+        var pos: usize = 0;
+        cells[pos] = try cellText(a, l.value);
+        pos += 1;
+        cells[pos] = try freqText(a, tab.count(key));
+        pos += 1;
+        if (!probabilities) {
+            cells[pos] = if (excluded) "." else try freqText(a, values[index]);
+            pos += 1;
+        }
+        if (!req.nopercent) {
+            cells[pos] = try pctText(a, tab.pct(key));
+            pos += 1;
+        }
+        if (probabilities and !req.nopercent) {
+            cells[pos] = if (excluded) "." else try pctText(a, 100 * values[index] / sum_values);
+            pos += 1;
+        }
+        if (!req.nocum) {
+            cells[pos] = if (excluded) "." else try freqText(a, cumulative);
+            pos += 1;
+            if (!req.nopercent) cells[pos] = if (excluded) "." else try pctText(a, percent(cumulative, tab.total));
+        }
+        try rows.append(a, cells);
+    }
+    const widths = try a.alloc(usize, headers.items.len);
+    for (headers.items, tops.items, 0..) |h, t, i| widths[i] = @max(@max(h.len, t.len) + 2, if (i == 0) @as(usize, 8) else 12);
+    for (rows.items) |row| for (row, 0..) |v, i| {
+        widths[i] = @max(widths[i], v.len + 2);
+    };
+    try out.appendSlice(a, ONEWAY_TITLE);
+    try out.append(a, '\n');
+    if (tab.dimensions[0].label) |label| try out.appendSlice(a, try std.fmt.allocPrint(a, "              {s}\n\n", .{label}));
+    try expectedRow(a, out, tops.items, widths, false);
+    try expectedRow(a, out, headers.items, widths, false);
+    try expectedRow(a, out, headers.items, widths, true);
+    for (rows.items) |row| try expectedRow(a, out, row, widths, false);
+    if (truncated) try out.appendSlice(a, try std.fmt.allocPrint(a, "\n      The first {d} nonmissing levels are displayed.\n", .{req.maxlevels.?}));
+    if (!req.missing) try appendFreqMissing(a, out, tab.missing);
 }

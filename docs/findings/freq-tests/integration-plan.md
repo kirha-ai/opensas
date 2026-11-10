@@ -1,4 +1,7 @@
-# FEAT-freq-tests integration patch plan (dependency still pending)
+# FEAT-freq-tests integration patch plan (implemented)
+
+Historical planning snapshot; all hooks below are now implemented in dev4.
+See README.md for the final surface inventory and evidence.
 
 Read-only snapshot of dev2's in-progress src/stat/freq.zig and
 src/stat/freq_table.zig on 2026-11-10. No edits to dev2 or PROC dispatch.
@@ -93,11 +96,11 @@ Line locations below identify this snapshot, not a stable patch offset.
 9. **Headings and footers.** Reuse the level/stratum identity from tableHeading
    (around 1040), giving each block its Statistics for Table heading and
    controlling values even with TABLES NOPRINT. Append Sample Size and Frequency
-   Missing at the correct end, once. Do not interleave all display tables and
+   Missing at the correct end of statistics; SAS also retains the frequency
+   table’s own missing footer. Do not interleave all display tables and
    then all tests for GRID/CROSSLIST; preserve table/stratum adjacency. LIST
    falls back to GRID for statistical requests, including implied TEST requests.
-   Reconcile existing per-display missing footers explicitly, not by duplicating
-   them. The adapter currently renders statistical bodies only.
+   Retain both per-display and statistical missing footers (cli-expected oracle). The adapter currently renders statistical bodies only.
 
 10. **Output marker.** Report.warning carries WARN=OUTPUT for integration with
     a supported OUTPUT CHISQ request. Existing OUTPUT remains fail-loud until

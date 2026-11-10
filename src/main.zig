@@ -2839,7 +2839,7 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
     // given (BUG-summarydefaultprint).
     const listing = eqi(proc, "print") or eqi(proc, "means") or
-        eqi(proc, "freq") or eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
+        eqi(proc, "report") or eqi(proc, "tabulate") or eqi(proc, "compare") or
         eqi(proc, "univariate") or eqi(proc, "contents") or (eqi(proc, "corr") and !procHasKw(toks, "noprint")) or
         (eqi(proc, "summary") and procHasKw(toks, "print"));
     // BUG-byvaltitle: a TITLE/FOOTNOTE carrying #BYVAL/#BYVAR is re-resolved
@@ -2862,7 +2862,15 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     } else if (eqi(proc, "corr")) {
         try sas.corr.run(pcx, out, toks);
     } else if (eqi(proc, "freq")) {
-        try sas.proc.runFreq(pcx, out, toks);
+        // FREQ owns PROC versus TABLES NOPRINT semantics. Stamp only an
+        // actual listing, without mistaking option values or variable names.
+        var body: std.ArrayList(u8) = .empty;
+        try sas.proc.runFreq(pcx, &body, toks);
+        if (body.items.len > 0) {
+            try g.emitTitles(a, out);
+            try out.appendSlice(a, body.items);
+            try g.emitFootnotes(a, out);
+        }
     } else if (eqi(proc, "transpose")) {
         try sas.proc.runTranspose(pcx, toks);
     } else if (eqi(proc, "sql")) {

@@ -15013,7 +15013,7 @@ test "proc freq two-way table (matches the fixture)" {
     try t.expect(has(o, "75.00    25.00   100.00")); // marginal Percent
 }
 
-test "FREQ-hardening: unsupported inference requests (chisq/agree/exact) fail loud (captured)" {
+test "FREQ-hardening: remaining unsupported inference requests fail loud (captured)" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -15028,7 +15028,7 @@ test "FREQ-hardening: unsupported inference requests (chisq/agree/exact) fail lo
     try lib.put("d", ds);
 
     // Each stat option must ParseError naming itself, never a table without the stat.
-    for ([_][]const u8{ "chisq", "agree", "exact", "measures", "cmh", "fisher", "relrisk", "trend" }) |opt| {
+    for ([_][]const u8{ "agree", "exact", "cmh", "all", "fisher", "relrisk", "trend" }) |opt| {
         var diags = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const src = try std.fmt.allocPrint(a, "proc freq data=d; tables g*h / {s}; run;", .{opt});
@@ -16750,8 +16750,9 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const toks = try lex.tokenize(a, "proc freq data=have; tables age / chisq; run;", &d);
-        try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
-        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks);
+        try t.expectEqual(@as(u8, 0), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try t.expect(std.mem.indexOf(u8, out.items, "Chi-Square Test") != null);
     }
     {
         diag.resetGap();
@@ -16759,7 +16760,7 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         var out: std.ArrayList(u8) = .empty;
         const toks = try lex.tokenize(a, "proc freq data=have; test age; tables age; run;", &d);
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
-        try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+        try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
     {
         diag.resetGap();

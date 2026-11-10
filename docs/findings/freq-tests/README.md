@@ -1,124 +1,113 @@
-# FEAT-freq-tests — dev4 work in progress
+# FEAT-freq-tests — public PROC integration
 
-Base: dev4 at c2e450c9dd5b80e4adbaf84bcab1f524e2c0a5f7 (parent bdfcd4f).
-This is NOT ticket completion: GAP-freq-table-complete is pending. No proc.zig
-integration is permitted until the manager releases that dependency. No EBNF
-support marker is asserted before the public interpreter supports the feature.
+Integrated on dev4 from local feat/stat/batch-1 at 6fc6373. The table dependency
+has landed. Public parsing, table projection, execution and listing are wired;
+EBNF now marks the supported inference surface. This is the fifth/final ticket,
+not a new FREQ table or exact-statistics project.
 
-## Table contract
+## Surface inventory
 
-`src/stat/freq_tests.zig` exposes `CountMatrix { rows: usize, cols: usize,
-counts: []const f64, row_scores: ?[]const f64, col_scores: ?[]const f64 }`.
-Counts are row-major. The table layer owns level ordering, formatted-level
-aggregation, missing policy, strata, weights and numeric TABLE scores. Null
-scores mean 1-based ordinal scores. Fractional counts remain fractional.
+- One-way equal-proportion GOF, TESTP/TESTF lists and secondary datasets, optional
+  LRCHI, positive DF overrides and negative adjustments. Expected-value columns
+  follow the analysis-level order, including ORDER=DATA, and respect NOPERCENT,
+  NOCUM, MISSPRINT and display-only MAXLEVELS. TESTP's column is hidden by
+  NOPERCENT; TESTF's frequency column remains. Zero totals validate options but
+  emit a no-positive-weights note, not statistics. A single category has default
+  DF0/missing p; explicit DF0 is invalid.
+- Contingency Pearson/LR/Mantel–Haenszel/2x2 continuity tests, signed Phi/V,
+  contingency coefficient, automatic integer-count 2x2 Fisher, fractional-count
+  Fisher omission with NOTE, sparse warning controls and DF/p-value reporting.
+- All 13 association MEASURES, estimate ASEs and confidence limits, seven
+  null-variance TEST requests and their aliases, plus polychoric/tetrachoric
+  estimates, Wald/LR tests and ADJUST/CONVERGE/MAXITER controls. Explicit MEASURES
+  implies 2x2 odds ratio/relative risks; TEST-only implication does not print them.
+- TEST cardinality counts TABLES statements, not expanded requests. One TABLES
+  implies its requested measures; multiple TABLES requires explicit activation.
+  Duplicate TEST errors; empty TEST and TEST without TABLES warn.
+- One-/two-/n-way tables, BY and strata, LIST-to-GRID fallback after statistical
+  implication, CROSSLIST, missing controls, missing/zero/negative weights and
+  zero margins. Frequency Missing appears with both the displayed frequency
+  table and its statistical summary, matching SAS.
+- Actual TABLE/RANK/RIDIT/MODRIDIT score arrays and SCOROUT. Numeric missing TABLE
+  scores retain display fallback but invalidate MH and Pearson inference only;
+  TEST PCORR is omitted and a warning explains why. RANK remains valid.
+- TABLES NOPRINT retains statistics/SCOROUT. PROC NOPRINT computes and validates
+  but suppresses all listing output, including TITLE/FOOTNOTE. Main dispatch
+  stamps FREQ titles only around an actual body, so datasets/variables named
+  NOPRINT cannot be confused with the procedure option.
+- Secondary aliases: _TESTP_/TestPercent/Percent and
+  _TESTF_/TestFrequency/Frequency (priority in that order). Values use ordered
+  rows, not joins or BY matching. Datasets override same-kind lists in either
+  order; repeated dataset references warn/ignore; conflicting secondary inputs
+  or using DATA= itself error. Lists imply CHISQ; dataset-only references do not.
 
-Kernels: `goodnessOfFit(counts, Expected, ?f64)`,
-`contingency(allocator, matrix, ?f64)`, `association(allocator, matrix, alpha)`,
-`nominal(allocator, matrix, alpha)`, `risks(counts_2x2, alpha)`, and
-`polychoric(allocator, matrix, PolychoricOptions)`. Shared error set: diag.Error.
-Expected is equal, proportions (sum 1 or 100), or frequencies (sum observed N).
+Remaining explicit gaps: AGREE/ALL/CMH, standalone EXACT and OUTPUT statistics
+datasets. No output dataset is silently claimed. WARN=OUTPUT records a marker
+only. Unsupported named families remain rc2, invalid syntax/options rc1.
+Existing destination gaps PAGE/COMPRESS/CONTENTS remain table-layer owned.
 
-`freq_tests_parse.zig`: `consumeTableOption` advances its token index to the NEXT
-unconsumed token, or returns false without consuming an unrelated table option.
-`parseTests` takes tokens after TEST and before semicolon. `implyTests` applies
-SAS's single-TABLES-statement implication only. Options travel with each TABLES
-request. TEST selection is procedure-wide. CL alone implies MEASURES; PLCORR
-also implies MEASURES. TABLES NOPRINT suppresses frequency tables, not statistics.
+## Ownership and contract
 
-`freq_tests_execute.zig`: `validateSecondarySources` enforces the procedure-wide
-single secondary dataset and DATA= exclusion. `resolveExpected` accepts the
-secondary Dataset looked up by the existing Library, in displayed level order.
-Accepted numeric columns: _TESTP_/TestPercent/Percent and
-_TESTF_/TestFrequency/Frequency. `execute` accepts Table {matrix, one_way,
-negative_weights}, options, TEST flags, resolved Expected, and PROC NOPRINT.
-It returns Report with optional GOF/CHISQ and WARN output indicator. Missing and
-negative WEIGHT policies must be established by the table layer before calling.
+D-029: new statistical code lives in src/stat. freq.zig owns public parsing and
+orchestration; freq_table.zig owns ordered typed levels, missing policy, sparse
+counts and scores. freq_tests.zig owns pure kernels; freq_tests_parse.zig owns
+statistical options; freq_tests_execute.zig adapts tables/secondary inputs and
+validates; freq_tests_render.zig owns statistical listings. proc.zig only delegates
+and updates its captured diagnostic regressions. main.zig changes only FREQ
+listing title/footnote glue.
 
-`freq_tests_render.zig` formats typed results and has no table/parser ownership.
-The parent supplies the existing table title and sample-size footer. One-way
-TESTP/TESTF also require Test Percent/Test Frequency columns in the frequency
-table; that hook is pending on the table layer. The renderer is not yet claimed
-as a byte-for-byte integrated corpus fixture.
+The adapter accepts row-major CountMatrix, supplied row/column scores and the
+numeric_table_scores_valid flag; no score recomputation occurs there. Negative
+weights never reach inference. Statistical analysis uses all eligible levels,
+independently of display truncation. Default DF0 is distinct from invalid DF0.
 
-## Evidence
+## Independent evidence and reproduction
 
-Manual: SAS/STAT FREQ pp. 113–127, 150–152, 159–176, extracted reference found at
-/Users/thomas/Desktop/mac-upgrade-backup/repos/opensas-private/docs/sas94-procedures-statistical.txt
-(the designated dev4 checkout lacks this ignored reference). Formulas are read
-locally; no confidential data are used.
-
-Reproduce each retained synthetic probe with:
+All data are synthetic. Manual: local read-only SAS 9.4 statistical procedures
+reference, FREQ pp.113–127, 150–176. Reproduce with:
 `/Users/thomas/sas/bin/sasrun /absolute/probe.sas -f text -o /absolute/probe.txt -l /absolute/probe.log`.
-ODS GRAPHICS OFF is necessary on this server to avoid its unwritable image
-output directory; the corrected oracle.sas run has zero errors/warnings.
+Use ODS GRAPHICS OFF for the server's graphics-directory restriction.
 
-- oracle.sas: 3x3 ordinal/nominal measures, seven TEST null SEs, joint polychoric
-  MLE, 2x2 automatic Fisher and signed Phi/V, implied OR/RR limits, GOF LR/TESTP.
-  The 3x3 polychoric result is 0.5906 (ASE 0.1049), LR 18.2978. Its Spearman
-  estimate/ASE/null SE are 0.4769/0.1063/0.1079, proving that ordinary Pearson
-  ASE applied to rank scores is not the correct FREQ Spearman ASE.
-- edges.sas: tied lambda modes and ASEs; fractional weights (Fisher omitted with
-  an explicit NOTE, NOT truncated); one-zero-cell ADJUST tetrachoric -0.9083;
-  MAXITER=1 emits missing estimates and a nonconvergence note; zero margins
-  suppress all statistics with the explicit zero-margin message.
-- options.sas: secondary TESTP/TestFrequency datasets, legacy top-level TESTP,
-  positive DF override, complete diagonal association and boundary tetrachoric.
-  Live SAS overrides the manual's DF wording: Pearson/LR/continuity use DF=3,
-  Mantel–Haenszel remains DF=1. Negative adjustment likewise leaves MH at 1.
-- boundary.sas: unadjusted single zero gives tetrachoric -0.9990, ASE 0, missing
-  Wald Z, LR 17.2930; complete independence gives tetrachoric 0, ASE 0.3512.
-  Its final intentionally invalid DF=-1 case reports ERROR for nonpositive DF;
-  this probe is expected to return an error, not a clean acceptance run.
+Retained SAS sources/results/logs:
 
-All numeric oracle assertions use the half-last-displayed-digit tolerance
-(0.00005 for four decimals). Exact Fisher's two-sided probability additionally
-has a full-precision hypergeometric regression. Additional tests exercise input
-validation, null-vs-estimate variances, ties, WARN routing and dataset aliases.
+- oracle: ordinal/nominal measures, seven null ASE tests, polychoric MLE, signed
+  2x2 tests and risks, GOF. edges: ties, fractional counts, ADJUST, MAXITER=1 and
+  zero margins. options/boundary: expected sources, DF and boundary estimates.
+- poly-precision: same association data with explicit CONVERGE=1e-8. SAS then
+  reports Wald Z=5.6278 and -8.0920, upper tetrachoric CL=-0.6713, exactly matching
+  OpenSAS. SAS default stopping gives 5.6279/-8.0927/-0.6714; this is convergence
+  tolerance, not a formula discrepancy. The corpus specifies the tight criterion
+  and the unit regression checks both Z values to half the last printed digit.
+  User CONVERGE/MAXITER semantics remain intact; no hidden forced refinement.
+- expected-semantics/expected-precedence: list accumulation, dataset precedence,
+  alias priority, absent datasets and deliberate invalid cases. test-semantics:
+  TEST implication/cardinality, intentional duplicate/mixed-source errors.
+- list-scores: LIST fallback, NOPRINT, explicit scores and SCOROUT. onelevel and
+  zero-total retain manager evidence; their -options/-df probes pin validation
+  precedence and intentional errors.
+- included-missing-scores: N160 manager oracle. CHISQ66.1627/LR61.5626, missing
+  TABLE MH/Pearson, RANK MH45.6487/Pearson.5358, Spearman Z8.0104/Gamma Z7.8220.
+- cli-expected, cli-by_strata, cli-boundaries, cli-test_requests: exact public
+  sources are tests/corpus/freq_tests_{expected,by_strata,boundaries,test_requests}.sas.
+- cli-noprint: source tests/corpus/freq_tests_noprint.sas, zero SAS errors/warnings;
+  suppressed PROC title/footnote, visible TABLES NOPRINT statistics, and ordinary
+  listing with dataset/variable named NOPRINT.
+- public-validation: exact negative corpus sources together with NOSYNTAXCHECK;
+  DF0, invalid TESTP sum, repeated TEST and same secondary DATA= deliberately
+  error. SAS supports AGREE/OUTPUT; OpenSAS deliberately retains those named gaps.
 
-## Still required for full acceptance
+## Regression and golden policy
 
-Manager release of table dependency; integrated TABLES and TEST parsing and
-execution; expected-value columns in one-way listings; integrated synthetic
-corpus fixtures and separate oracle-backed golden commit; EBNF update; final
-rebase onto feat/stat/batch-1 exactly once; all three final gates and landing
-report. Neither this checkpoint nor passing kernel tests closes the ticket.
+Fifteen public freq_tests_* fixtures cover the above paths. Goldens are committed
+separately from implementation and cite these SAS oracles. Decimal fields of all
+nine positive fixture groups were compared with retained SAS outputs; after
+using poly-precision for association all agree. Fisher observed-cell counts
+print as integers, as in SAS. Existing OpenSAS indentation,
+page-free layout and repeated-header conventions are retained, rather than SAS
+pagination. Errors/gaps have empty listing goldens and explicit rc assertions.
+No existing corpus golden required changing. The former CHISQ and TEST captured
+unit negatives now assert supported CHISQ and invalid unknown TEST respectively;
+AGREE/ALL/CMH/EXACT and typo guards remain fail-loud.
 
-## First manager review correction: one observed category
-
-The manager's freq-onelevel.sas/.txt/.log were copied verbatim as
-onelevel.sas/.txt/.log. Three observations with g=1 and TABLES g/CHISQ
-return SAS rc0 with CHISQ=0, default DF=0, missing p-value, and no warning.
-The GOF kernel now permits this default case and represents the undefined
-p-value as NaN in Test.p; rendering maps it to SAS missing (.). The execution
-regression verifies no error/warning in both printed and PROC NOPRINT paths.
-
-The independent onelevel-df.sas probe verifies LRCHI and TESTP=(100) also
-return default DF=0/missing p without warning. Explicit DF=2 gives statistic0,
-p=1, and a displayed sparse warning. Explicit DF=-1 reports nonpositive
-adjusted DF; explicit DF=0 reports that DF must be nonzero. The probe's two
-intentional invalid cases account for its sasrun exit2; neither is relaxed by
-the default-DF exception. DF=0 default suppresses the sparse flag; valid
-positive overrides retain the normal sparse computation.
-
-## Integration-readiness audit
-
-See integration-plan.md for the read-only dev2 API snapshot and exact parent
-hooks. test-semantics.sas pins TEST cardinality/implication/warnings;
-expected-semantics.sas and expected-precedence.sas pin TESTP/TESTF list versus
-dataset implication and precedence. Intentional errors/warnings are documented
-in that plan. These probes drove isolated parser fixes; no dev2 or procedure
-dispatch files were edited. The new TestStatement helper owns duplicate-TEST
-errors and empty/missing-TABLES warnings for the future parent integration.
-
-## LIST/score and zero-total acceptance follow-up
-
-list-scores.sas is a clean real-SAS probe covering LIST fallback to GRID, separate
-TABLES requests, NOPRINT, and actual TABLE/RANK/RIDIT/MODRIDIT score values and
-SCOROUT. The new usesList helper and score-display adapter are ready for parent
-integration, with numerical score-preservation regressions.
-
-zero-total.sas/.txt/.log retain the manager's oracle verbatim. The separate
-zero-total-options probe deliberately triggers three validation errors to pin
-precedence, while its valid zero-total cases emit only the no-positive-weights
-note. See integration-plan.md for the exact call/label requirements.
+Final acceptance requires a clean local rebase onto feat/stat/batch-1 and all
+three gates (unit, corpus, programs). Manager owns landing, pushes and Jira.

@@ -1,13 +1,13 @@
 //! Table-independent execution adapter. The existing FREQ table layer retains
 //! ownership of grouping, levels, formatting, missing policy and weight handling.
-//! No PROC dispatch integration until GAP-freq-table-complete is ready.
+//! Public PROC orchestration lives in freq.zig.
 const std = @import("std");
 const diag = @import("../diag.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const k = @import("freq_tests.zig");
 const p = @import("freq_tests_parse.zig");
 const render = @import("freq_tests_render.zig");
-pub const Table = struct { name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
+pub const Table = struct { numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
 pub const Report = struct { goodness_of_fit: ?k.GoodnessOfFit = null, chi_square: ?k.ChiSquare = null, warning: ?bool = null };
 fn canonicalName(name: []const u8) []const u8 {
     return if (name.len > 5 and std.ascii.eqlIgnoreCase(name[0..5], "work.")) name[5..] else name;
@@ -109,12 +109,14 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (!proc_noprint) try out.appendSlice(a, "\nRow or column sum zero. No statistics computed for this table.\n");
         return report;
     }
+    if (!table.numeric_table_scores_valid) try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
     if (!proc_noprint) if (table.score_display) |display| try render.scores(a, out, m, display, options.score_type);
     if (options.chisq) {
-        const chisq = k.contingency(a, m, options.df) catch |err| {
+        var chisq = k.contingency(a, m, options.df) catch |err| {
             if (err == error.OutOfMemory) return err;
             return d.fail(error.ExecError, 0, "PROC FREQ: invalid counts or chi-square degrees of freedom", .{});
         };
+        if (!table.numeric_table_scores_valid) chisq.mantel_haenszel = .{ .statistic = std.math.nan(f64), .df = 1, .p = std.math.nan(f64) };
         report.chi_square = chisq;
         if (options.warn.output) report.warning = chisq.sparse;
         try warn(d, chisq.sparse, options, proc_noprint);
@@ -122,15 +124,20 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (!proc_noprint) try render.contingency(a, out, chisq, options, m.counts[0]);
     }
     if (options.measures or options.plcorr) {
-        const ordinal = try k.association(a, m, options.alpha);
+        var ordinal = try k.association(a, m, options.alpha);
+        var applicable_tests = tests;
+        if (!table.numeric_table_scores_valid) {
+            ordinal.pearson = .{};
+            applicable_tests.pearson = false;
+        }
         const nominal = try k.nominal(a, m, options.alpha);
         const poly = if (options.plcorr) try k.polychoric(a, m, options.polychoric) else null;
         if (poly) |result| if (!result.converged) {
             try d.report(.note, 0, "Polychoric correlation computations did not converge.", .{});
         };
         if (!proc_noprint) {
-            try render.measures(a, out, ordinal, nominal, poly, m.rows == 2 and m.cols == 2, options, tests);
-            if (m.rows == 2 and m.cols == 2) try render.risks(a, out, try k.risks(m.counts, options.alpha), options.alpha);
+            try render.measures(a, out, ordinal, nominal, poly, m.rows == 2 and m.cols == 2, options, applicable_tests);
+            if (m.rows == 2 and m.cols == 2 and !options.measures_only_implied) try render.risks(a, out, try k.risks(m.counts, options.alpha), options.alpha);
         }
     }
     return report;
@@ -243,4 +250,36 @@ test "FEAT-freq-tests SAS zero-total table notes instead of errors with validati
     d.list.clearRetainingCapacity();
     try std.testing.expectError(error.ExecError, execute(a, &d, &out, table, .{ .chisq = true, .df = 0 }, .{}, .equal, true));
     try std.testing.expect(d.hasErrors());
+}
+
+test "FEAT-freq-tests numeric missing TABLE display scores never become inference scores" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    // SAS included-missing-scores: N=160, fallback 0/1/2 is display only.
+    const table = Table{ .numeric_table_scores_valid = false, .matrix = .{
+        .rows = 3,
+        .cols = 3,
+        .counts = &.{ 24, 10, 6, 8, 30, 12, 6, 16, 48 },
+        .row_scores = &.{ 0, 1, 2 },
+        .col_scores = &.{ 10, 20, 30 },
+    } };
+    for ([_]bool{ false, true }) |hidden| {
+        d.list.clearRetainingCapacity();
+        out.clearRetainingCapacity();
+        const report = try execute(a, &d, &out, table, .{ .chisq = true, .measures = true }, .{ .pearson = true, .spearman = true, .gamma = true }, .equal, hidden);
+        const chi = report.chi_square.?;
+        try std.testing.expectApproxEqAbs(@as(f64, 66.1627), chi.pearson.statistic, 0.00005);
+        try std.testing.expect(std.math.isNan(chi.mantel_haenszel.?.statistic));
+        try std.testing.expectEqual(@as(f64, 1), chi.mantel_haenszel.?.df);
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "no valid numeric table score") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "Test of H0: Pearson") == null);
+        if (hidden) try std.testing.expectEqual(@as(usize, 0), out.items.len) else {
+            try std.testing.expect(std.mem.indexOf(u8, out.items, "8.0104") != null);
+            try std.testing.expect(std.mem.indexOf(u8, out.items, "7.8220") != null);
+        }
+    }
 }

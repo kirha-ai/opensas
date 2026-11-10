@@ -1,6 +1,6 @@
 //! FREQ statistical options only. The table parser owns TABLES expansion and
 //! calls consumeTableOption at its current token; this module never dispatches
-//! a PROC or reads a dataset. Kept independent until GAP-freq-table-complete.
+//! a PROC or reads a dataset. Public orchestration lives in freq.zig.
 const std = @import("std");
 const lex = @import("../lexer.zig");
 const diag = @import("../diag.zig");
@@ -15,6 +15,7 @@ pub const Options = struct {
     chisq: bool = false,
     lrchi: bool = false,
     measures: bool = false,
+    measures_only_implied: bool = false,
     cl: bool = false,
     plcorr: bool = false,
     alpha: f64 = 0.05,
@@ -227,6 +228,7 @@ pub fn parseTests(tokens: []const lex.Token, d: *diag.Diagnostics) diag.Error!Te
 /// SAS only implies TABLES options when there is exactly one TABLES statement.
 pub fn implyTests(o: *Options, t: Tests, tables_statement_count: usize) void {
     if (tables_statement_count != 1) return;
+    o.measures_only_implied = !o.measures;
     if (t.gamma or t.tau_b or t.tau_c or t.somers_cr or t.somers_rc or t.pearson or t.spearman or t.polychoric) o.measures = true;
     if (t.polychoric) o.plcorr = true;
 }

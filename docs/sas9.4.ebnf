@@ -874,7 +874,7 @@ output_stat    = stat_keyword "=" var_list ;                      (* opensas *)
                  (* OUTPUT OUT= builds a summary dataset, one column per stat=
                    (fixtures means_output_id, means_output_names) *)
 
-(* 5.4 PROC FREQ — GAP-freq-table-complete; oracle evidence in docs/findings.
+(* 5.4 PROC FREQ — GAP-freq-table-complete / FEAT-freq-tests; oracle evidence in docs/findings.
    Missing TABLES defaults to one-way requests excluding BY/WEIGHT variables.
    Bare TABLES is invalid. BY supports DESCENDING and NOTSORTED. *)
 proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
@@ -883,7 +883,8 @@ proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
                  | "BY" var_list ";"
                  | "WEIGHT" var [ "/" "ZEROS" ] ";"
                  | "FORMAT" var_list format_ref ";"
-                 | "WHERE" expression ";" } step_boundary ;
+                 | "WHERE" expression ";"
+                 | "TEST" { freq_test } ";" } step_boundary ;
 freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
                  | "NOPRINT" | "NLEVELS"
                  | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
@@ -902,7 +903,8 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                | "CUMCOL" | "TOTPCT" | "PEARSONRES" | "STDRES" | "SCOROUT"
                | "SCORES" "=" name | "FORMAT" "=" format_ref
                | "MAXLEVELS" "=" number | "OUT" "=" dataset
-               | "OUTCUM" | "OUTEXPECT" | "OUTPCT" ;              (* opensas *)
+               | "OUTCUM" | "OUTEXPECT" | "OUTPCT"
+               | freq_stat_option ;              (* opensas *)
                  (* SCORE, PEARSONRESID and STDRESID aliases are accepted.
                     LIST is one whole n-way list; CROSSLIST is per-stratum with
                     margins. LINE numbers LIST rows. TABLE is the SAS legacy
@@ -915,11 +917,33 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                     are crosstab-only, FORMAT/CUMCOL grid-only; residual options
                     outside CROSSLIST warn, as SAS does. Scores are computed by
                     the typed matrix API; SCOROUT alone emits no scores without
-                    statistical requests, matching SAS. Inference integration is
-                    owned by FEAT-freq-tests, not claimed here. PAGE/COMPRESS
+                    statistical requests, matching SAS. LIST+statistics uses GRID
+                    after TEST implication. TABLES NOPRINT retains statistics;
+                    PROC NOPRINT computes/validates but suppresses the listing.
+                    PAGE/COMPRESS
                     pagination and ODS CONTENTS fail explicitly as destination
                     gaps; PAGE+COMPRESS is invalid SAS. Stray parentheses and
                     values attached to flag options are errors. *)
+
+freq_stat_option = "CHISQ" [ "(" { freq_chisq_option } ")" ]
+                 | freq_expected | "MEASURES" [ "(" "CL" ")" ]
+                 | "CL" | "ALPHA" "=" number | "NOWARN"
+                 | ( "PLCORR" | "POLYCHORIC" )
+                   [ "(" { "ADJUST" | "CONVERGE" "=" number
+                           | "MAXITER" "=" number } ")" ] ;    (* opensas *)
+freq_chisq_option = "LRCHI" | "DF" "=" [ "-" | "+" ] number
+                  | freq_expected | "WARN" "="
+                    ( freq_warn | "(" freq_warn { [ "," ] freq_warn } ")" ) ;
+freq_warn      = "NONE" | "NOPRINT" | "NOLOG" | "OUTPUT" ;
+freq_expected  = ( "TESTP" | "TESTF" ) "="
+                 ( dataset | "(" number { [ "," ] number } ")" ) ;
+freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
+               | "SMDCR" | "SMDRC" | "PCORR" | "SCORR" | "PLCORR" ; (* opensas *)
+                 (* TEST implies MEASURES/PLCORR only with one TABLES statement.
+                    CHISQ includes automatic 2x2 Fisher for integer counts.
+                    TESTP/TESTF lists imply CHISQ; dataset references alone do not.
+                    AGREE/ALL/CMH, standalone EXACT and OUTPUT statistics datasets
+                    remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
 
 (* 5.5 PROC TRANSPOSE *)
 proc_transpose = "PROC" "TRANSPOSE" [ "DATA" "=" dataset ]        (* opensas *)

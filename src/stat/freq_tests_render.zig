@@ -22,7 +22,7 @@ fn pad(a: A, out: *Out, s: []const u8, width: usize, right: bool) Error!void {
 }
 fn pair(a: A, out: *Out, label: []const u8, value: ?f64, p: bool) Error!void {
     try pad(a, out, label, 25, false);
-    const rendered = if (std.mem.eql(u8, label, "DF") and value != null) try std.fmt.allocPrint(a, "{d}", .{value.?}) else if (p) try probability(a, value) else try number(a, value);
+    const rendered = if ((std.mem.eql(u8, label, "DF") or std.mem.eql(u8, label, "Cell (1,1) Frequency (F)")) and value != null) try std.fmt.allocPrint(a, "{d}", .{value.?}) else if (p) try probability(a, value) else try number(a, value);
     try pad(a, out, rendered, 9, true);
     try text(a, out, "\n");
 }

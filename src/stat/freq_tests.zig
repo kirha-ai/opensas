@@ -780,13 +780,16 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
 test "FEAT-freq-tests SAS joint polychoric MLE not two-step approximation" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
-    const result = try polychoric(arena.allocator(), .{ .rows = 3, .cols = 3, .counts = &.{ 12, 5, 3, 4, 17, 6, 2, 8, 13 } }, .{});
+    const result = try polychoric(arena.allocator(), .{ .rows = 3, .cols = 3, .counts = &.{ 12, 5, 3, 4, 17, 6, 2, 8, 13 } }, .{ .converge = 1e-8 });
     try std.testing.expect(result.converged);
+    // Independent SAS poly-precision oracle uses the same tighter tolerance.
+    try std.testing.expectApproxEqAbs(@as(f64, 5.6278), result.coefficient.z.?, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.5906), result.coefficient.estimate.?, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.1049), result.coefficient.ase.?, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 18.2978), result.likelihood_ratio.?.statistic, 0.00005);
-    const two = try polychoric(arena.allocator(), .{ .rows = 2, .cols = 2, .counts = &.{ 1, 9, 11, 3 } }, .{});
+    const two = try polychoric(arena.allocator(), .{ .rows = 2, .cols = 2, .counts = &.{ 1, 9, 11, 3 } }, .{ .converge = 1e-8 });
     try std.testing.expect(two.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -8.0920), two.coefficient.z.?, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, -0.8859), two.coefficient.estimate.?, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.1095), two.coefficient.ase.?, 0.00005);
 }
