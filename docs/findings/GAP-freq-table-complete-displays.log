@@ -1,0 +1,318 @@
+The SAS System
+
+36         
+37         options nodate nonumber;
+38         data d; input g h r c w; datalines;
+
+NOTE: The data set WORK.D has 6 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              525.43k
+      OS Memory           11432.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+45         ;
+46         run;
+47         proc freq data=d; weight w; tables g*h*r*c / list; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 1.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3569.64k
+      OS Memory           14260.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        3  Switch Count  9
+      Page Faults                       0
+      Page Reclaims                     949
+      Page Swaps                        0
+      Voluntary Context Switches        39
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+48         proc freq data=d; weight w; tables g*h*r*c; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 2-3.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1181.06k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        4  Switch Count  4
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     247
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           536
+      
+
+49         proc freq data=d; weight w / zeros; tables r*c / list sparse; tables r*c / crosslist nosparse; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 4.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1142.43k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     193
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+50         proc freq data=d; weight w; tables g*r*c / expected deviation cellchi2 cumcol totpct missprint; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed pages 5-6.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1147.09k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        6  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     190
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+51         proc freq data=d; weight w; tables r*c / crosslist(pearsonres stdres) expected deviation cellchi2 missprint;
+51       ! run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 7.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              1109.14k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        7  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     203
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+52         proc freq data=d; weight w; tables r / maxlevels=1 missprint; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 8.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              791.20k
+      OS Memory           13740.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+53         proc freq data=d nlevels; weight w / zeros; tables r; run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 9.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              810.82k
+      OS Memory           13740.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+54         proc freq data=d formchar(1,2,7)='!=#'; weight w; tables r*c / format=6.1; run;
+
+The SAS System
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 10.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1112.43k
+      OS Memory           14000.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        10  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     185
+      Page Swaps                        0
+      Voluntary Context Switches        20
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+55         proc freq data=d;weight w;tables g*r*c / list line table;run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 11.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1690.37k
+      OS Memory           14776.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        11  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     319
+      Page Swaps                        0
+      Voluntary Context Switches        41
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+56         proc freq data=d;weight w;tables r*c / nofreq;tables r*c / nofreq nopercent norow nocol;run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 12.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1113.26k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        12  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     186
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           528
+      
+
+57         proc freq data=d;weight w;tables g*h*r*c / crosslist;run;
+
+NOTE: There were 6 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 13.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1164.06k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        13  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     184
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+58         data controlmiss;input g r c w;datalines;
+
+NOTE: The data set WORK.CONTROLMISS has 3 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              528.25k
+      OS Memory           13736.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        14  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     82
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+62         ;
+63         run;
+64         proc freq data=controlmiss;weight w;tables g*r*c / missprint totpct;run;
+
+NOTE: There were 3 observations read from the data set WORK.CONTROLMISS.
+NOTE: The PROCEDURE FREQ printed page 14.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1140.85k
+      OS Memory           14256.00k
+      Timestamp           11/10/2026 01:46:33 PM
+      Step Count                        15  Switch Count  4
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     181
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           528
+      
+
+65         
+66         
+67         
+68         
+The SAS System
+
+69         

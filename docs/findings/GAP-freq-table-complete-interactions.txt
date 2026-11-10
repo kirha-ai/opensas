@@ -1,0 +1,50 @@
+
+SIGNED CROSS NOSPARSE
+
+The FREQ Procedure
+
+      Table of r by c
+ 
+    r        c    Frequency
+---------------------------
+    1        1            3
+             2           -3
+---------------------------
+    2        1            2
+
+         Total            2
+---------------------------
+Total        1            5
+             2           -3
+
+         Total            2
+---------------------------
+
+SIGNED CROSS NOSPARSE
+
+Obs    r    c    COUNT    PERCENT
+
+ 1     1    1       3        .   
+ 2     1    2      -3        .   
+ 3     2    1       2        .   
+
+ONE NOSPARSE
+
+The FREQ Procedure
+
+                  Cumulative
+r    Frequency     Frequency
+----------------------------
+1           0             0 
+2           2             2 
+3           0             2 
+4           0             2 
+
+ONE NOSPARSE
+
+Obs    r    COUNT    PERCENT    CUM_FREQ    CUM_PCT
+
+ 1     1      0         .           0          .   
+ 2     2      2         .           2          .   
+ 3     3      0         .           2          .   
+ 4     4      0         .           2          .   

@@ -1,0 +1,204 @@
+
+METADATA
+
+b=1
+
+The FREQ Procedure
+
+                     Number of Variable Levels
+ 
+                                               Missing    Nonmissing
+Variable    Label                   Levels      Levels        Levels
+--------------------------------------------------------------------
+x           Numeric category             3           1             2
+c           Character category           3           0             3
+
+
+Table of x by c
+
+x(Numeric category)
+          c(Character category)
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |blue    |green   |red     |  Total
+---------+--------+--------+--------+
+Z        |      3 |      0 |      0 |      3
+         |  75.00 |   0.00 |   0.00 |  75.00
+         | 100.00 |   0.00 |   0.00 |
+         | 100.00 |      . |   0.00 |
+---------+--------+--------+--------+
+A        |      0 |      0 |      1 |      1
+         |   0.00 |   0.00 |  25.00 |  25.00
+         |   0.00 |   0.00 | 100.00 |
+         |   0.00 |      . | 100.00 |
+---------+--------+--------+--------+
+Total           3        0        1        4
+            75.00     0.00    25.00   100.00
+
+Frequency Missing = 2
+
+METADATA
+
+b=2
+
+The FREQ Procedure
+
+        Number of Variable Levels
+ 
+Variable    Label                   Levels
+------------------------------------------
+x           Numeric category             2
+c           Character category           2
+
+
+Table of x by c
+
+x(Numeric category)
+          c(Character category)
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |blue    |red     |  Total
+---------+--------+--------+
+Z        |      0 |      1 |      1
+         |   0.00 |  33.33 |  33.33
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+A        |      2 |      0 |      2
+         |  66.67 |   0.00 |  66.67
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           2        1        3
+            66.67    33.33   100.00
+
+METADATA
+
+Obs    NAME        TYPE    LENGTH    LABEL                                    FORMAT    INFORMAT
+
+ 1     COUNT         1        8      Frequency Count                                            
+ 2     EXPECTED      1        8      Expected Frequency Under Independence                      
+ 3     PCT_COL       1        8      Percent of Column Frequency                                
+ 4     PCT_ROW       1        8      Percent of Row Frequency                                   
+ 5     PERCENT       1        8      Percent of Total Frequency                                 
+ 6     b             1        8                                                                 
+ 7     c             2       12      Character category                                         
+ 8     x             1        8      Numeric category                          GRP              
+
+ALIAS
+
+The FREQ Procedure
+
+                                  Table of x by c
+ 
+                                    Std     Pearson                   Row     Column
+x        c        Frequency    Residual    Residual    Percent    Percent    Percent
+------------------------------------------------------------------------------------
+Z        blue             3      0.2415      0.0845      42.86      75.00      60.00
+         green            0           .           .       0.00       0.00        .  
+         red              1     -0.2415     -0.1336      14.29      25.00      50.00
+
+         Total            4                              57.14     100.00           
+------------------------------------------------------------------------------------
+A        blue             2     -0.2415     -0.0976      28.57      66.67      40.00
+         green            0           .           .       0.00       0.00        .  
+         red              1      0.2415      0.1543      14.29      33.33      50.00
+
+         Total            3                              42.86     100.00           
+------------------------------------------------------------------------------------
+Total    blue             5                              71.43                100.00
+         green            0                               0.00                   .  
+         red              2                              28.57                100.00
+
+         Total            7                             100.00                      
+------------------------------------------------------------------------------------
+                               Frequency Missing = 2
+
+TABLE
+
+The FREQ Procedure
+
+Table of x by c
+
+x(Numeric category)
+          c(Character category)
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |blue    |green   |red     |  Total
+---------+--------+--------+--------+
+Z        |      1 |      0 |      1 |      2
+         |  25.00 |   0.00 |  25.00 |  50.00
+         |  50.00 |   0.00 |  50.00 |
+         |  50.00 |      . |  50.00 |
+---------+--------+--------+--------+
+A        |      1 |      0 |      1 |      2
+         |  25.00 |   0.00 |  25.00 |  50.00
+         |  50.00 |   0.00 |  50.00 |
+         |  50.00 |      . |  50.00 |
+---------+--------+--------+--------+
+Total           2        0        2        4
+            50.00     0.00    50.00   100.00
+
+Frequency Missing = 1
+
+LINE
+
+The FREQ Procedure
+
+Table of x by c
+
+x(Numeric category)
+          c(Character category)
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |blue    |green   |red     |  Total
+---------+--------+--------+--------+
+Z        |      1 |      0 |      1 |      2
+         |  25.00 |   0.00 |  25.00 |  50.00
+         |  50.00 |   0.00 |  50.00 |
+         |  50.00 |      . |  50.00 |
+---------+--------+--------+--------+
+A        |      1 |      0 |      1 |      2
+         |  25.00 |   0.00 |  25.00 |  50.00
+         |  50.00 |   0.00 |  50.00 |
+         |  50.00 |      . |  50.00 |
+---------+--------+--------+--------+
+Total           2        0        2        4
+            50.00     0.00    50.00   100.00
+
+Frequency Missing = 1
+
+MAX MISSING
+
+The FREQ Procedure
+
+                   Numeric category
+ 
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+.           1       20.00             1        20.00  
+
+             The first level is displayed.
+
+LIST ONE
+
+The FREQ Procedure
+
+                   Numeric category
+ 
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+Z           2       50.00             2        50.00  
+A           2       50.00             4       100.00  
+
+                 Frequency Missing = 1

@@ -1,0 +1,4 @@
+ERROR 22-322: Syntax error, expecting one of the following: ;, AGREE, ALL, ALPHA, BDT, BIN, BINOMIAL, CELLCHI2, CHISQ,
+ERROR 200-322: The symbol is not recognized and will be ignored.
+ERROR 22-322: Syntax error, expecting one of the following: ALPHA, CONVERGE, MAXITER, MAXLEVELS.
+ERROR 76-322: Syntax error, statement will be ignored.

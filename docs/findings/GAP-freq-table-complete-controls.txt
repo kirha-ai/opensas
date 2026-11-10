@@ -1,0 +1,273 @@
+
+DEFAULT
+
+b=1
+
+The FREQ Procedure
+
+                               Cumulative    Cumulative
+x1    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 2           1      100.00             1       100.00  
+
+                 Frequency Missing = 2
+
+
+                               Cumulative    Cumulative
+x2    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 1           2       66.67             2        66.67  
+ 2           1       33.33             3       100.00  
+
+
+                               Cumulative    Cumulative
+x3    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 1           2       66.67             2        66.67  
+ 2           1       33.33             3       100.00  
+
+DEFAULT
+
+b=2
+
+The FREQ Procedure
+
+                               Cumulative    Cumulative
+x1    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 3           3      100.00             3       100.00  
+
+
+                               Cumulative    Cumulative
+x2    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 1           3      100.00             3       100.00  
+
+
+                               Cumulative    Cumulative
+x3    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 3           3      100.00             3       100.00  
+
+ONE NOFREQ
+
+The FREQ Procedure
+
+                               Cumulative    Cumulative
+x1    Frequency     Percent     Frequency      Percent
+-------------------------------------------------------
+ 2           1       50.00             1        50.00  
+ 3           1       50.00             2       100.00  
+
+                 Frequency Missing = 1
+
+RES ALONE
+
+The FREQ Procedure
+
+Table of x1 by x2
+
+x1        x2
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       2 |      0 |      1 |      1
+         |   0.00 |  50.00 |  50.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       3 |      1 |      0 |      1
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+Frequency Missing = 1
+
+SCORES ALONE
+
+The FREQ Procedure
+
+Table of x1 by x2
+
+x1        x2
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       2 |      0 |      1 |      1
+         |   0.00 |  50.00 |  50.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       3 |      1 |      0 |      1
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+Frequency Missing = 1
+
+MISSING TABLE SCORE
+
+The FREQ Procedure
+
+Table of x1 by x2
+
+x1        x2
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       . |      2 |      0 |      2
+         |  33.33 |   0.00 |  33.33
+         | 100.00 |   0.00 |
+         |  40.00 |   0.00 |
+---------+--------+--------+
+       2 |      0 |      1 |      1
+         |   0.00 |  16.67 |  16.67
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       3 |      3 |      0 |      3
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         |  60.00 |   0.00 |
+---------+--------+--------+
+Total           5        1        6
+            83.33    16.67   100.00
+
+
+Scores for Table of x1 by x2
+Score Type = TABLE
+
+  Row Scores
+ 
+x1       Score
+--------------
+ .           0
+ 2           1
+ 3           2
+
+
+ Column Scores
+ 
+x2       Score
+--------------
+ 1           1
+ 2           2
+
+MISSING TABLE SCORE
+
+The FREQ Procedure
+
+Statistics for Table of x1 by x2
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                     2      6.0000    0.0498
+Likelihood Ratio Chi-Square    2      5.4067    0.0670
+Mantel-Haenszel Chi-Square     1       .         .    
+Phi Coefficient                       1.0000          
+Contingency Coefficient               0.7071          
+Cramer's V                            1.0000          
+
+ WARNING: 100% of the cells have expected counts less
+          than 5. Chi-Square may not be a valid test.
+
+Sample Size = 6
+
+RANGE
+
+The FREQ Procedure
+
+Table of x1 by b
+
+x1        b
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       2 |      1 |      0 |      1
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+       3 |      0 |      1 |      1
+         |   0.00 |  50.00 |  50.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+Frequency Missing = 1
+
+
+Table of x2 by b
+
+x2        b
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      1 |      1 |      2
+         |  33.33 |  33.33 |  66.67
+         |  50.00 |  50.00 |
+         |  50.00 | 100.00 |
+---------+--------+--------+
+       2 |      1 |      0 |      1
+         |  33.33 |   0.00 |  33.33
+         | 100.00 |   0.00 |
+         |  50.00 |   0.00 |
+---------+--------+--------+
+Total           2        1        3
+            66.67    33.33   100.00
+
+
+
+RANGE
+
+The FREQ Procedure
+
+Table of x3 by b
+
+x3        b
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      1 |      0 |      1
+         |  33.33 |   0.00 |  33.33
+         | 100.00 |   0.00 |
+         |  50.00 |   0.00 |
+---------+--------+--------+
+       2 |      1 |      0 |      1
+         |  33.33 |   0.00 |  33.33
+         | 100.00 |   0.00 |
+         |  50.00 |   0.00 |
+---------+--------+--------+
+       3 |      0 |      1 |      1
+         |   0.00 |  33.33 |  33.33
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+Total           2        1        3
+            66.67    33.33   100.00
