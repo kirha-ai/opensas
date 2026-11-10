@@ -328,7 +328,13 @@ const Summary = struct {
     }
 };
 fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool) !Summary {
-    var z: Summary = .{ .s = h.computeStatsV(ds.rows.items, col, wc, vd), .pairs = try pairsFor(a, ds, col, wc), .nmiss = h.nmissCount(ds.rows.items, col), .nobs = ds.rows.items.len };
+    // SAS 9.4 pp.398,408: missing weights exclude observations from NMISS.
+    // Zero/negative weights still count unless EXCLNPWGT already removed them.
+    var nmiss: usize = 0;
+    for (ds.rows.items) |row| {
+        if (std.math.isNan(h.toNum(row[col])) and h.weightAt(row, wc) != null) nmiss += 1;
+    }
+    var z: Summary = .{ .s = h.computeStatsV(ds.rows.items, col, wc, vd), .pairs = try pairsFor(a, ds, col, wc), .nmiss = nmiss, .nobs = ds.rows.items.len };
     if (z.pairs.len == 1) z.s.mode = z.pairs[0].x;
     if (z.s.n > 0 and z.s.sumw == 0) z.s.css = 0;
     var logs: f64 = 0;
@@ -1400,4 +1406,88 @@ test "BUG-univnobsexcl preserves eligible formatted CLASS identity and filtered 
     try testRun(a, lib, "proc univariate data=d noprint exclnpwgt; var x; output out=o n=n nobs=no;run;");
     try std.testing.expectEqual(@as(f64, 5), testCell(lib.find("o").?, 0, "n"));
     try std.testing.expectEqual(@as(f64, 5), testCell(lib.find("o").?, 0, "no"));
+}
+
+test "BUG-univnmissweight OUTPUT and OUTTABLE exclude missing weights from NMISS only" {
+    // SAS 9.4 Statistical Procedures pp.398,408. Oracle repro.sas under
+    // /tmp/opensas-review-fixes/BUG-univnmissweight: N=2 NMISS=1 NOBS=5 M=2.5.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_][2]f64{ .{ 1, 1 }, .{ 2, nan }, .{ nan, nan }, .{ nan, 1 }, .{ 4, 1 } }) |r| {
+        try ds.appendRow(&.{ .{ .num = r[0] }, .{ .num = 10 }, .{ .num = r[1] }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    for ([_][]const u8{ "weight w;", "" }, [_]f64{ 2, 3 }, [_]f64{ 1, 2 }) |weight, n, nm| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint outtable=t; var x y; {s} output out=o n=n nmiss=nm nmy nobs=no mean=m;run;", .{weight}));
+        const o = lib.find("o").?;
+        const t = lib.find("t").?;
+        try std.testing.expectEqual(@as(usize, 1), o.rows.items.len);
+        try std.testing.expectEqual(@as(usize, 2), t.rows.items.len);
+        try std.testing.expectEqual(n, testCell(o, 0, "n"));
+        try std.testing.expectEqual(nm, testCell(o, 0, "nm"));
+        try std.testing.expectEqual(@as(f64, 0), testCell(o, 0, "nmy"));
+        try std.testing.expectEqual(@as(f64, 5), testCell(o, 0, "no"));
+        try std.testing.expectApproxEqAbs(if (weight.len > 0) @as(f64, 2.5) else 7.0 / 3.0, testCell(o, 0, "m"), 1e-12);
+        try std.testing.expectEqual(n, testCell(t, 0, "_NOBS_"));
+        try std.testing.expectEqual(nm, testCell(t, 0, "_NMISS_"));
+        try std.testing.expectEqual(@as(f64, 0), testCell(t, 1, "_NMISS_"));
+    }
+}
+
+test "BUG-univnmissweight NMISS respects FREQ EXCLNPWGT and BY CLASS groups" {
+    // Oracle matrix.sas/.txt/.log in /tmp/opensas-review-fixes/BUG-univnmissweight:
+    // 24 cases, no SAS errors/warnings. Each OUTPUT NMISS equals OUTTABLE _NMISS_.
+    // Missing x occurs with missing, positive, zero and negative w; the present
+    // x with missing w distinguishes counting missing cells from rows.len - N.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_][5]f64{
+        .{ 1, 1, 1, 2.9, 1 },   .{ 2, 1, nan, 3, 1 },   .{ nan, 1, nan, 4, 1 },
+        .{ nan, 1, 1, 2.8, 1 }, .{ 4, 1, 1, 1, 1 },     .{ nan, 2, 0, 3, 2 },
+        .{ nan, 2, -1, 2, 2 },  .{ 5, 2, 0, 1, 2 },     .{ 6, 2, -1, 1, 2 },
+        .{ nan, 2, 1, 0.9, 2 }, .{ nan, 2, 1, nan, 2 }, .{ nan, 2, 1, -1, 2 },
+        .{ 7, 2, 1, 1, 2 },
+    }) |r| {
+        var row: [5]Value = undefined;
+        for (r, 0..) |v, j| row[j] = .{ .num = v };
+        try ds.appendRow(&row);
+    }
+    const Case = struct { syntax: []const u8, excl: bool = false, n: [2]f64, nm: [2]f64, no: [2]f64 };
+    for ([_]Case{
+        .{ .syntax = "", .n = .{ 3, 3 }, .nm = .{ 2, 5 }, .no = .{ 5, 8 } },
+        .{ .syntax = "weight w;", .n = .{ 2, 3 }, .nm = .{ 1, 5 }, .no = .{ 5, 8 } },
+        .{ .syntax = "weight w;", .excl = true, .n = .{ 2, 1 }, .nm = .{ 1, 3 }, .no = .{ 5, 8 } },
+        .{ .syntax = "freq f; weight w;", .n = .{ 3, 3 }, .nm = .{ 2, 5 }, .no = .{ 12, 8 } },
+        .{ .syntax = "freq f; weight w;", .excl = true, .n = .{ 3, 1 }, .nm = .{ 2, 0 }, .no = .{ 12, 8 } },
+        .{ .syntax = "freq f;", .n = .{ 6, 3 }, .nm = .{ 6, 5 }, .no = .{ 12, 8 } },
+    }) |case| {
+        for ([_][]const u8{ "", "by g;", "class y;", "by g; class y;" }, 0..) |group, gi| {
+            try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint {s} outtable=t; {s} {s} var x; output out=o n=n nmiss=nm nobs=no;run;", .{ if (case.excl) "exclnpwgt" else "", case.syntax, group }));
+            const o = lib.find("o").?;
+            const t = lib.find("t").?;
+            const count: usize = if (gi == 0) 1 else 2;
+            try std.testing.expectEqual(count, o.rows.items.len);
+            try std.testing.expectEqual(count, t.rows.items.len);
+            for (0..count) |j| {
+                const n = if (gi == 0) case.n[0] + case.n[1] else case.n[j];
+                const nm = if (gi == 0) case.nm[0] + case.nm[1] else case.nm[j];
+                try std.testing.expectEqual(n, testCell(o, j, "n"));
+                try std.testing.expectEqual(nm, testCell(o, j, "nm"));
+                try std.testing.expectEqual(n, testCell(t, j, "_NOBS_"));
+                try std.testing.expectEqual(nm, testCell(t, j, "_NMISS_"));
+                // Preserve pooled/BY NOBS and the prior EXCLNPWGT CLASS rule.
+                if (gi < 2 or case.excl) {
+                    const no = if (gi == 0) case.no[0] + case.no[1] else if (gi == 1) case.no[j] else n + nm;
+                    try std.testing.expectEqual(no, testCell(o, j, "no"));
+                }
+            }
+        }
+    }
 }
