@@ -415,6 +415,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     };
     const input = try procInput(a, raw, toks, cx.diags);
     while (!parser.tag(.eof) and !parser.kw("run")) {
+        if (parser.tag(.semicolon)) {
+            parser.i += 1; // Null statement: no request or TEST implication.
+            continue;
+        }
         if (parser.kw("tables") or parser.kw("table")) {
             try parser.tables(input, &opts);
             continue;
@@ -1495,7 +1499,7 @@ test "table syntax rejects invalid SAS and keeps destination gaps explicit" {
     _ = try ds.addColumn("y", .num);
     try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 } });
     try lib.put("d", ds);
-    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", "by;tables x;" }) |statement| {
+    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", "by;tables x;", ";;tablse x;;", ";;tables;;", ";;weight;;" }) |statement| {
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         diag.resetGap();
@@ -1511,6 +1515,58 @@ test "table syntax rejects invalid SAS and keeps destination gaps explicit" {
         diag.resetGap();
         try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, src, &d)));
         try std.testing.expect(diag.gapHit());
+    }
+}
+
+test "BUG-freqnullstmt null statements preserve tables defaults weights BY and TEST implication" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "b", "x", "y", "w" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][4]f64{ .{ 1, 1, 1, 3 }, .{ 1, 1, 2, 1 }, .{ 1, 2, 1, 2 }, .{ 1, 2, 2, 4 }, .{ 2, 1, 1, 1 }, .{ 2, 2, 2, 3 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] }, .{ .num = row[3] } });
+    try lib.put("d", ds);
+
+    // Equivalent live SAS programs and output:
+    // /tmp/opensas-review-r2-fixes/BUG-freqnullstmt/{weighted_by,defaults,all_defaults,test_one,test_two,test_zero}.*
+    // Null statements must not affect the literal TABLES count used by TEST.
+    const Case = struct { body: []const u8, gamma: bool = false, warning: bool = false };
+    for ([_]Case{
+        .{ .body = "tables x;" },
+        .{ .body = "tables x;weight w;by b;" },
+        .{ .body = "weight w;by b;" },
+        .{ .body = "" },
+        .{ .body = "tables x*y;test gamma;weight w;", .gamma = true },
+        .{ .body = "tables x*y;tables x*y;test gamma;weight w;" },
+        .{ .body = "test gamma;weight w;by b;", .warning = true },
+    }) |case| {
+        var expected: std.ArrayList(u8) = .empty;
+        var expected_diags = diag.Diagnostics.init(a);
+        const clean = try std.fmt.allocPrint(a, "proc freq data=d;{s}run;", .{case.body});
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &expected_diags }, &expected, try @import("../lexer.zig").tokenize(a, clean, &expected_diags));
+        try std.testing.expect(expected.items.len > 0);
+        try std.testing.expectEqual(case.gamma, std.mem.indexOf(u8, expected.items, "Gamma") != null);
+        try std.testing.expectEqual(@as(usize, if (case.warning) 1 else 0), expected_diags.list.items.len);
+        if (case.warning) try std.testing.expectEqualStrings("When you specify a TEST statement, you must also specify a TABLES statement.", expected_diags.list.items[0].message);
+
+        // Insert multiple null statements before, between and after statements.
+        var padded: std.ArrayList(u8) = .empty;
+        for (clean) |ch| {
+            try padded.append(a, ch);
+            if (ch == ';') try padded.appendSlice(a, ";;");
+        }
+        var actual: std.ArrayList(u8) = .empty;
+        var actual_diags = diag.Diagnostics.init(a);
+        try runFreq(.{ .arena = a, .lib = &lib, .diags = &actual_diags }, &actual, try @import("../lexer.zig").tokenize(a, padded.items, &actual_diags));
+        try std.testing.expectEqualStrings(expected.items, actual.items);
+        try std.testing.expectEqual(expected_diags.list.items.len, actual_diags.list.items.len);
+        for (expected_diags.list.items, actual_diags.list.items) |want, got| {
+            try std.testing.expectEqual(want.severity, got.severity);
+            try std.testing.expectEqualStrings(want.message, got.message);
+        }
     }
 }
 
