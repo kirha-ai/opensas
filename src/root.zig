@@ -25,6 +25,8 @@ pub const sql = @import("sql.zig");
 test {
     _ = @import("stat/freq_exact_distribution.zig");
     _ = @import("stat/freq_exact.zig");
+    _ = @import("stat/freq_risk.zig");
+    _ = @import("stat/freq_risk_inference.zig");
     _ = @import("stat/freq_tests.zig");
     _ = @import("stat/freq_tests_parse.zig");
     _ = @import("stat/freq_tests_render.zig");
