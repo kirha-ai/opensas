@@ -4,6 +4,10 @@
 //! first unsupported feature the interpreter reported — a stderr line prefixed
 //! `UNSUPPORTED:` — else the first line where output diverged.
 //!
+//! Fixtures are independent processes, so the runner fans them out across a
+//! small worker pool (`min(cpu_count, 8)`) via `Io.Group.concurrent`. Failure
+//! lines may appear out of directory order; the P/Q total is what gates.
+//!
 //! Every fixture's exit code is checked. A fixture that exits non-zero must
 //! declare it with an `expect-rc: N` marker in its header comment; NO MARKER
 //! MEANS 0, so an undeclared non-zero exit fails. (It was opt-in until all 70
@@ -21,11 +25,25 @@ const Io = std.Io;
 const fixture_rc = @import("fixture_rc.zig");
 
 const max_file: Io.Limit = .limited(1 << 20);
+/// Cap workers so we don't fork-bomb a laptop / CI runner; corpus is
+/// process-spawn heavy, not CPU-bound inside one opensas.
+const max_workers: usize = 8;
 
 // ponytail: interpreter↔harness contract — a stage that hits something it can't
 // do prints one `UNSUPPORTED: <feature>` line to stderr and bails. The runner
 // only reads the first such line; that's what names the next backlog task.
 const unsupported_prefix = "UNSUPPORTED:";
+
+const Ctx = struct {
+    io: Io,
+    gpa: std.mem.Allocator,
+    bin: []const u8,
+    corpus_dir: []const u8,
+    names: []const []const u8,
+    next: std.atomic.Value(usize) = .init(0),
+    pass: std.atomic.Value(usize) = .init(0),
+    print_mu: Io.Mutex = .init,
+};
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
@@ -40,64 +58,140 @@ pub fn main(init: std.process.Init) !void {
     var dir = try Io.Dir.cwd().openDir(io, corpus_dir, .{ .iterate = true });
     defer dir.close(io);
 
-    var pass: usize = 0;
-    var total: usize = 0;
+    // Collect runnable fixtures on the main thread (SKIP stays ordered), then
+    // fan the rest across workers. Each name is owned until exit.
+    var names: std.ArrayList([]const u8) = .empty;
+    defer {
+        for (names.items) |n| gpa.free(n);
+        names.deinit(gpa);
+    }
+
     var it = dir.iterate();
     while (try it.next(io)) |entry| {
         if (entry.kind != .file) continue;
         if (!std.mem.endsWith(u8, entry.name, ".sas")) continue;
-        total += 1;
 
-        const sas_path = try std.fmt.allocPrint(gpa, "{s}/{s}", .{ corpus_dir, entry.name });
-        defer gpa.free(sas_path);
         const txt_name = try std.fmt.allocPrint(gpa, "{s}.txt", .{entry.name[0 .. entry.name.len - ".sas".len]});
         defer gpa.free(txt_name);
-
-        const expected = dir.readFileAlloc(io, txt_name, gpa, max_file) catch |e| {
+        dir.access(io, txt_name, .{}) catch |e| {
             std.debug.print("  {s}: SKIP — no expected {s} ({t})\n", .{ entry.name, txt_name, e });
-            total -= 1;
             continue;
         };
-        defer gpa.free(expected);
-
-        const res = std.process.run(gpa, io, .{ .argv = &.{ bin, sas_path } }) catch |e| {
-            std.debug.print("  {s}: FAIL — could not run interpreter ({t})\n", .{ entry.name, e });
-            continue;
-        };
-        defer gpa.free(res.stdout);
-        defer gpa.free(res.stderr);
-
-        // The rc pin is checked before the diff: a fixture whose stdout matches
-        // but whose exit code is wrong must FAIL (that combination is exactly
-        // what hid the D-009 inversions — see fixture_rc.zig).
-        const src = try dir.readFileAlloc(io, entry.name, gpa, max_file);
-        defer gpa.free(src);
-        if (try fixture_rc.mismatch(gpa, src, res.term)) |why| {
-            defer gpa.free(why);
-            std.debug.print("  {s}: FAIL — {s}\n", .{ entry.name, why });
-            continue;
-        }
-
-        const norm_exp = try normalize(gpa, expected);
-        defer gpa.free(norm_exp);
-        const norm_got = try normalize(gpa, res.stdout);
-        defer gpa.free(norm_got);
-
-        if (std.mem.eql(u8, norm_exp, norm_got)) {
-            pass += 1;
-            continue;
-        }
-
-        if (firstUnsupported(res.stderr)) |feat| {
-            std.debug.print("  {s}: FAIL — first unsupported: {s}\n", .{ entry.name, feat });
-        } else {
-            const d = firstDiffLine(norm_exp, norm_got);
-            std.debug.print("  {s}: FAIL — output differs (expected \"{s}\" | got \"{s}\")\n", .{ entry.name, d.expected, d.got });
-        }
+        try names.append(gpa, try gpa.dupe(u8, entry.name));
     }
 
+    const total = names.items.len;
+    var ctx: Ctx = .{
+        .io = io,
+        .gpa = gpa,
+        .bin = bin,
+        .corpus_dir = corpus_dir,
+        .names = names.items,
+    };
+
+    const cpu = std.Thread.getCpuCount() catch 4;
+    const want = @max(@as(usize, 1), @min(cpu, max_workers));
+
+    var group: Io.Group = .init;
+    var spawned: usize = 0;
+    while (spawned < want) : (spawned += 1) {
+        group.concurrent(io, worker, .{&ctx}) catch |err| switch (err) {
+            error.ConcurrencyUnavailable => break,
+            else => |e| return e,
+        };
+    }
+    if (spawned == 0) {
+        // Io backend cannot spawn threads — drain serially on this task.
+        try worker(&ctx);
+    } else {
+        try group.await(io);
+    }
+
+    const pass = ctx.pass.load(.monotonic);
     std.debug.print("corpus: {d}/{d} passing\n", .{ pass, total });
     if (pass != total) std.process.exit(1);
+}
+
+fn worker(ctx: *Ctx) Io.Cancelable!void {
+    const io = ctx.io;
+    // Group tasks may only return Cancelable — swallow harness errors as FAIL lines.
+    var dir = Io.Dir.cwd().openDir(io, ctx.corpus_dir, .{}) catch |e| {
+        std.process.fatal("corpus worker: openDir {s} failed ({t})", .{ ctx.corpus_dir, e });
+    };
+    defer dir.close(io);
+
+    while (true) {
+        const i = ctx.next.fetchAdd(1, .monotonic);
+        if (i >= ctx.names.len) return;
+        runOne(ctx, dir, ctx.names[i]);
+    }
+}
+
+fn runOne(ctx: *Ctx, dir: Io.Dir, name: []const u8) void {
+    runOneInner(ctx, dir, name) catch |e| {
+        ctx.print_mu.lockUncancelable(ctx.io);
+        defer ctx.print_mu.unlock(ctx.io);
+        std.debug.print("  {s}: FAIL — harness error ({t})\n", .{ name, e });
+    };
+}
+
+fn runOneInner(ctx: *Ctx, dir: Io.Dir, name: []const u8) !void {
+    const io = ctx.io;
+    const gpa = ctx.gpa;
+
+    const sas_path = try std.fmt.allocPrint(gpa, "{s}/{s}", .{ ctx.corpus_dir, name });
+    defer gpa.free(sas_path);
+    const txt_name = try std.fmt.allocPrint(gpa, "{s}.txt", .{name[0 .. name.len - ".sas".len]});
+    defer gpa.free(txt_name);
+
+    const expected = dir.readFileAlloc(io, txt_name, gpa, max_file) catch |e| {
+        ctx.print_mu.lockUncancelable(io);
+        defer ctx.print_mu.unlock(io);
+        std.debug.print("  {s}: FAIL — could not read expected {s} ({t})\n", .{ name, txt_name, e });
+        return;
+    };
+    defer gpa.free(expected);
+
+    const res = std.process.run(gpa, io, .{ .argv = &.{ ctx.bin, sas_path } }) catch |e| {
+        ctx.print_mu.lockUncancelable(io);
+        defer ctx.print_mu.unlock(io);
+        std.debug.print("  {s}: FAIL — could not run interpreter ({t})\n", .{ name, e });
+        return;
+    };
+    defer gpa.free(res.stdout);
+    defer gpa.free(res.stderr);
+
+    // The rc pin is checked before the diff: a fixture whose stdout matches
+    // but whose exit code is wrong must FAIL (that combination is exactly
+    // what hid the D-009 inversions — see fixture_rc.zig).
+    const src = try dir.readFileAlloc(io, name, gpa, max_file);
+    defer gpa.free(src);
+    if (try fixture_rc.mismatch(gpa, src, res.term)) |why| {
+        defer gpa.free(why);
+        ctx.print_mu.lockUncancelable(io);
+        defer ctx.print_mu.unlock(io);
+        std.debug.print("  {s}: FAIL — {s}\n", .{ name, why });
+        return;
+    }
+
+    const norm_exp = try normalize(gpa, expected);
+    defer gpa.free(norm_exp);
+    const norm_got = try normalize(gpa, res.stdout);
+    defer gpa.free(norm_got);
+
+    if (std.mem.eql(u8, norm_exp, norm_got)) {
+        _ = ctx.pass.fetchAdd(1, .monotonic);
+        return;
+    }
+
+    ctx.print_mu.lockUncancelable(io);
+    defer ctx.print_mu.unlock(io);
+    if (firstUnsupported(res.stderr)) |feat| {
+        std.debug.print("  {s}: FAIL — first unsupported: {s}\n", .{ name, feat });
+    } else {
+        const d = firstDiffLine(norm_exp, norm_got);
+        std.debug.print("  {s}: FAIL — output differs (expected \"{s}\" | got \"{s}\")\n", .{ name, d.expected, d.got });
+    }
 }
 
 // --- pure diff logic (unit-tested below; no IO) ---------------------------
