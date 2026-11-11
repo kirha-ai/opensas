@@ -1,0 +1,75 @@
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1160        0.5840
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.35; Method = Wald
+
+Proportion                        0.3500
+Z                                 0.2344
+Standard Error                    0.1067
+One-sided Pr > Z                  0.4073
+Two-sided Pr > |Z|                0.8147
+
+Continuity correction included.
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1160        0.5840
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.34; Method = Wald
+
+Proportion                        0.3500
+Z                                -0.1416
+Standard Error                    0.1059
+One-sided Pr < Z                  0.4437
+Two-sided Pr > |Z|                0.8874
+
+Continuity correction included.
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1160        0.5840
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.36; Method = Wald
+
+Proportion                        0.3500
+Z                                 0.1398
+Standard Error                    0.1073
+One-sided Pr > Z                  0.4444
+Two-sided Pr > |Z|                0.8889
+
+Continuity correction included.
+
+Sample Size = 20

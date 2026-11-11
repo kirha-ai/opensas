@@ -1,0 +1,44 @@
+                        The FREQ Procedure
+
+                        Table 1 of v10 by v11
+                        Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+
+Statistics for Table of v10 by v11
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+   10.0000         1        0.0016
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.0000             0.0000       0.0000       0.0000
+
+Sample Size = 17
+
+                        The FREQ Procedure
+
+                        Table 2 of v10 by v11
+                        Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+
+Statistics for Table of v10 by v11
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+   20.0000         1        <.0001
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.0000             0.0000       0.0000       0.0000
+
+Sample Size = 20
+
+Summary Statistics for v10 by v11
+Controlling for v0 v1 v2 v3 v4 v5 v6 v7 v8 v9
+
+Cochran's Q
+Chi-Square        DF    Pr > ChiSq
+   36.6667        11        0.0001
+
+Total Sample Size = 37

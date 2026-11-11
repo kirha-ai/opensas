@@ -1,0 +1,59 @@
+FRACTIONAL COMMON HIGH ALPHA
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      0.6867    0.4073
+        2    Row Mean Scores Differ    1      0.6867    0.4073
+        3    General Association       1      0.6867    0.4073
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    20% Confidence Limits
+Odds Ratio                Mantel-Haenszel      3.3132      2.3605      4.6502
+                          Logit                3.2941      2.3342      4.6489
+Relative Risk (Column 1)  Mantel-Haenszel      2.1636      1.7196      2.7222
+                          Logit                2.1059      1.6706      2.6546
+Relative Risk (Column 2)  Mantel-Haenszel      0.6420      0.5654      0.7290
+                          Logit                0.6613      0.5827      0.7506
+
+Breslow-Day Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    0.1493         1        0.6992
+
+Q Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    0.1481         1        0.7004
+
+I-Square Measure of Heterogeneity
+I-Square      DF    20% Uncertainty Limits
+0.00%       1    0.00%    0.00%
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    20% Confidence Limits
+Klingenberg             0.2738                  0.1996      0.3445
+Mantel-Haenszel         0.2738      0.2860      0.2013      0.3462
+Minimum Risk            0.2787      0.2812      0.1366      0.4208
+Newcombe                0.2738                  0.1998      0.3432
+Newcombe (MR)           0.2787                  0.2048      0.3481
+Summary Score           0.2752      0.3108      0.1965      0.3540
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      0.9572      0.3385
+Minimum Risk              0.2787      0.6971      0.4857
+Summary Score             0.2752      0.8854      0.3759
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight   MR Weight Score Midpoint Score Weight
+1               1                0.3926         5.2      0.4906      0.4905      0.5117         0.3871       0.5134
+2               2                0.1593         5.4      0.5094      0.5095      0.4883         0.1572       0.4866
+
+Total Sample Size = 10.6

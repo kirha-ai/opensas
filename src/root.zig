@@ -23,6 +23,27 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/freq_stratified_execute.zig");
+    _ = @import("stat/freq_stratified_render.zig");
+    _ = @import("stat/freq_stratified_parse.zig");
+    _ = @import("stat/freq_stratified_risk.zig");
+    _ = @import("stat/freq_exact_joint.zig");
+    _ = @import("stat/freq_exact_execute.zig");
+    _ = @import("stat/freq_exact_render.zig");
+    _ = @import("stat/freq_exact_parse.zig");
+    _ = @import("stat/freq_stratified.zig");
+    _ = @import("stat/freq_stratified_exact.zig");
+    _ = @import("stat/freq_exact_unconditional.zig");
+    _ = @import("stat/freq_exact_polynomial.zig");
+    _ = @import("stat/freq_exact_strata.zig");
+    _ = @import("stat/freq_exact_reference.zig");
+    _ = @import("stat/freq_exact_distribution.zig");
+    _ = @import("stat/freq_exact.zig");
+    _ = @import("stat/freq_risk.zig");
+    _ = @import("stat/freq_risk_parse.zig");
+    _ = @import("stat/freq_risk_execute.zig");
+    _ = @import("stat/freq_risk_render.zig");
+    _ = @import("stat/freq_risk_inference.zig");
     _ = @import("stat/freq_tests.zig");
     _ = @import("stat/freq_tests_parse.zig");
     _ = @import("stat/freq_tests_render.zig");

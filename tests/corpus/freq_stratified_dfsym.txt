@@ -1,0 +1,21 @@
+dfsym=0
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.8564         3        0.2774
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.5093             0.0776       0.3572       0.6614
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6015             0.0701       0.4641       0.7389
+
+Sample Size = 80

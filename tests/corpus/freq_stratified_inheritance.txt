@@ -1,0 +1,154 @@
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = -0.3926; Column 2 (c = 2)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                           -0.5894       -0.1262
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = -0.1593; Column 2 (c = 2)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                           -0.3832        0.0925
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel        -0.2738      0.0904     -0.4510     -0.0965
+Newcombe               -0.2738                 -0.4328     -0.0894
+Summary Score          -0.2611      0.0878     -0.4331     -0.0890
+
+Column 2 (c = 2)
+
+Total Sample Size = 106
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = 0.3926; Column 1 (c = 1)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                            0.1262        0.5894
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = 0.1593; Column 1 (c = 1)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                           -0.0925        0.3832
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Minimum Risk            0.2759      0.0890      0.0944      0.4573
+
+Column 1 (c = 1)
+
+Total Sample Size = 106
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.2738      0.0904      0.0965      0.4510
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Total Sample Size = 106
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = 0.3926; Column 1 (c = 1)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                            0.1262        0.5894
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = 0.1593; Column 1 (c = 1)
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Newcombe                           -0.0925        0.3832
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.2738      0.0904      0.0965      0.4510
+Newcombe                0.2738                  0.0894      0.4328
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight
+1               1                0.3926          52      0.4906      0.4905
+2               2                0.1593          54      0.5094      0.5095
+
+Total Sample Size = 106

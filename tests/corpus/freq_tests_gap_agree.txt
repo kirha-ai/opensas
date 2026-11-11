@@ -1,0 +1,36 @@
+                        The FREQ Procedure
+
+                        Table of g by h
+
+              g         h
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |      1 |      0 |      1
+                       |  50.00 |   0.00 |  50.00
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              2        |      0 |      1 |      1
+                       |   0.00 |  50.00 |  50.00
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Total           1        1        2
+                          50.00    50.00   100.00
+
+Statistics for Table of g by h
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+         .         .             .
+NOTE: There are no discordant pairs.
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+Sample Size = 2

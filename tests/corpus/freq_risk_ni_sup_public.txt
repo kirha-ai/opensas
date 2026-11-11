@@ -1,0 +1,336 @@
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Wald
+
+Risk Difference                   0.4333
+Z                                 4.9112
+Standard Error                    0.1290
+Pr > Z                            <.0001
+90% Lower Conf Limit              0.2212
+90% Upper Conf Limit              0.6454
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Risk Difference (Column 1)
+Limit = 0.2; Method = Wald
+
+Risk Difference                   0.4333
+Z                                 1.8094
+Standard Error                    0.1290
+Pr > Z                            0.0352
+90% Lower Conf Limit              0.2212
+90% Upper Conf Limit              0.6454
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Hauck-Anderson
+
+Risk Difference                   0.4333
+Z                                 4.6090
+Standard Error                    0.1320
+Pr > Z                            <.0001
+90% Lower Conf Limit              0.1912
+90% Upper Conf Limit              0.6754
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Risk Difference (Column 1)
+Limit = 0.2; Method = Hauck-Anderson
+
+Risk Difference                   0.4333
+Z                                 1.5784
+Standard Error                    0.1320
+Pr > Z                            0.0572
+90% Lower Conf Limit              0.1912
+90% Upper Conf Limit              0.6754
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Farrington-Manning
+
+Risk Difference                   0.4333
+Z                                 4.7347
+Standard Error                    0.1338
+Pr > Z                            <.0001
+90% Lower Conf Limit              0.2133
+90% Upper Conf Limit              0.6534
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Risk Difference (Column 1)
+Limit = 0.2; Method = Farrington-Manning
+
+Risk Difference                   0.4333
+Z                                 1.7156
+Standard Error                    0.1360
+Pr > Z                            0.0431
+90% Lower Conf Limit              0.2096
+90% Upper Conf Limit              0.6570
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Newcombe
+
+Risk Difference                   0.4333
+90% Lower Conf Limit              0.2052
+90% Upper Conf Limit              0.6115
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Risk Difference (Column 1)
+Limit = 0.2; Method = Newcombe
+
+Risk Difference                   0.4333
+90% Lower Conf Limit              0.2052
+90% Upper Conf Limit              0.6115
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Wald
+
+Risk Difference                   0.4333
+Z                                 4.5785
+Standard Error                    0.1292
+Pr > Z                            <.0001
+90% Lower Conf Limit              0.1791
+90% Upper Conf Limit              0.6876
+
+Continuity correction included.
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Risk Difference (Column 1)
+Equivalence Limits = -0.1, 0.6; Method = Wald
+
+Risk Difference                   0.4333
+Lower Margin Z                    3.6715
+Standard Error                    0.1339
+Upper Margin Z                   -1.0758
+Lower Margin Pr > Z               0.0001
+Upper Margin Pr < Z               0.1410
+Overall P-Value                   0.1410
+90% Lower Conf Limit              0.1714
+90% Upper Conf Limit              0.6953
+
+Continuity correction included.
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Relative Risk (Column 1)
+Limit = 0.8; Method = Wald
+
+Relative Risk                     3.6000
+Z                                 3.3632
+Pr > Z                            0.0004
+90% Lower Conf Limit              1.7252
+90% Upper Conf Limit              7.5122
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Relative Risk (Column 1)
+Limit = 1.25; Method = Wald
+
+Relative Risk                     3.6000
+Z                                 2.3653
+Pr > Z                            0.0090
+90% Lower Conf Limit              1.7252
+90% Upper Conf Limit              7.5122
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Relative Risk (Column 1)
+Limit = 0.8; Method = Wald Modified
+
+Relative Risk                     3.6000
+Modified Relative Risk            3.3814
+Z                                 3.3951
+Pr > Z                            0.0003
+90% Lower Conf Limit              1.6819
+90% Upper Conf Limit              6.7979
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Relative Risk (Column 1)
+Limit = 1.25; Method = Wald Modified
+
+Relative Risk                     3.6000
+Modified Relative Risk            3.3814
+Z                                 2.3439
+Pr > Z                            0.0095
+90% Lower Conf Limit              1.6819
+90% Upper Conf Limit              6.7979
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Relative Risk (Column 1)
+Limit = 0.8; Method = Farrington-Manning
+
+Relative Risk                     3.6000
+Z                                 3.8010
+ASE (F-M)                         0.1228
+Pr > Z                            <.0001
+90% Lower Conf Limit              1.7774
+90% Upper Conf Limit              7.6072
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Relative Risk (Column 1)
+Limit = 1.25; Method = Farrington-Manning
+
+Relative Risk                     3.6000
+Z                                 2.5661
+ASE (F-M)                         0.1526
+Pr > Z                            0.0051
+90% Lower Conf Limit              1.7774
+90% Upper Conf Limit              7.6072
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Noninferiority Analysis for the Relative Risk (Column 1)
+Limit = 0.8; Method = Likelihood Ratio
+
+Relative Risk                     3.6000
+Z                                 3.7260
+Pr > Z                            <.0001
+90% Lower Conf Limit              1.8283
+90% Upper Conf Limit              8.2652
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Superiority Analysis for the Relative Risk (Column 1)
+Limit = 1.25; Method = Likelihood Ratio
+
+Relative Risk                     3.6000
+Z                                 2.6243
+Pr > Z                            0.0043
+90% Lower Conf Limit              1.8283
+90% Upper Conf Limit              8.2652
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equality Test for the Relative Risk (Column 1)
+Null = 2; Method = Likelihood Ratio
+
+Relative Risk                     3.6000
+Chi-Square                        2.0027
+Pr > ChiSq                        0.1570
+
+Sample Size = 50

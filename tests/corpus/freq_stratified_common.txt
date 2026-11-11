@@ -1,0 +1,215 @@
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     16 |     11 |     27
+                       |  30.77 |  21.15 |  51.92
+                       |  59.26 |  40.74 |
+                       |  76.19 |  35.48 |
+              ---------+--------+--------+
+              2        |      5 |     20 |     25
+                       |   9.62 |  38.46 |  48.08
+                       |  20.00 |  80.00 |
+                       |  23.81 |  64.52 |
+              ---------+--------+--------+
+              Total          21       31       52
+                          40.38    59.62   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     12 |     16 |     28
+                       |  22.22 |  29.63 |  51.85
+                       |  42.86 |  57.14 |
+                       |  63.16 |  45.71 |
+              ---------+--------+--------+
+              2        |      7 |     19 |     26
+                       |  12.96 |  35.19 |  48.15
+                       |  26.92 |  73.08 |
+                       |  36.84 |  54.29 |
+              ---------+--------+--------+
+              Total          19       35       54
+                          35.19    64.81   100.00
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    90% Confidence Limits
+Klingenberg             0.2738                  0.1176      0.4155
+Mantel-Haenszel         0.2738      0.0904      0.1250      0.4225
+Minimum Risk            0.2759      0.0890      0.1225      0.4293
+Newcombe                0.2738                  0.1195      0.4098
+Newcombe (MR)           0.2759                  0.1216      0.4118
+Summary Score           0.2664      0.0884      0.1210      0.4118
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+Minimum Risk              0.2759      2.8549      0.0043
+Summary Score             0.2664      3.0139      0.0026
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight   MR Weight Score Midpoint Score Weight
+1               1                0.3926          52      0.4906      0.4905      0.4997         0.3738       0.5158
+2               2                0.1593          54      0.5094      0.5095      0.5003         0.1519       0.4842
+
+Total Sample Size = 106
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     16 |     11 |     27
+                       |  30.77 |  21.15 |  51.92
+                       |  59.26 |  40.74 |
+                       |  76.19 |  35.48 |
+              ---------+--------+--------+
+              2        |      5 |     20 |     25
+                       |   9.62 |  38.46 |  48.08
+                       |  20.00 |  80.00 |
+                       |  23.81 |  64.52 |
+              ---------+--------+--------+
+              Total          21       31       52
+                          40.38    59.62   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     12 |     16 |     28
+                       |  22.22 |  29.63 |  51.85
+                       |  42.86 |  57.14 |
+                       |  63.16 |  45.71 |
+              ---------+--------+--------+
+              2        |      7 |     19 |     26
+                       |  12.96 |  35.19 |  48.15
+                       |  26.92 |  73.08 |
+                       |  36.84 |  54.29 |
+              ---------+--------+--------+
+              Total          19       35       54
+                          35.19    64.81   100.00
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    90% Confidence Limits
+Minimum Risk           -0.2759      0.0890     -0.4222     -0.1296
+
+Column 2 (c = 2)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Minimum Risk             -0.2759     -3.1013      0.0019
+
+Column 2 (c = 2)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MR Weight
+1               1               -0.3926          52      0.4906      0.4997
+2               2               -0.1593          54      0.5094      0.5003
+
+Total Sample Size = 106
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     16 |     11 |     27
+                       |  30.77 |  21.15 |  51.92
+                       |  59.26 |  40.74 |
+                       |  76.19 |  35.48 |
+              ---------+--------+--------+
+              2        |      5 |     20 |     25
+                       |   9.62 |  38.46 |  48.08
+                       |  20.00 |  80.00 |
+                       |  23.81 |  64.52 |
+              ---------+--------+--------+
+              Total          21       31       52
+                          40.38    59.62   100.00
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     12 |     16 |     28
+                       |  22.22 |  29.63 |  51.85
+                       |  42.86 |  57.14 |
+                       |  63.16 |  45.71 |
+              ---------+--------+--------+
+              2        |      7 |     19 |     26
+                       |  12.96 |  35.19 |  48.15
+                       |  26.92 |  73.08 |
+                       |  36.84 |  54.29 |
+              ---------+--------+--------+
+              Total          19       35       54
+                          35.19    64.81   100.00
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    90% Confidence Limits
+Summary Score          -0.2664      0.0884     -0.4118     -0.1210
+
+Column 2 (c = 2)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Summary Score            -0.2664     -3.0139      0.0026
+
+Column 2 (c = 2)
+
+Total Sample Size = 106

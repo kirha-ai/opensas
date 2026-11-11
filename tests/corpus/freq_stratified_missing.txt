@@ -1,0 +1,113 @@
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              .        |      6 |     16 |     22
+                       |  21.43 |  57.14 |  78.57
+                       |  27.27 |  72.73 |
+                       |  75.00 |  80.00 |
+              ---------+--------+--------+
+              2        |      2 |      4 |      6
+                       |   7.14 |  14.29 |  21.43
+                       |  33.33 |  66.67 |
+                       |  25.00 |  20.00 |
+              ---------+--------+--------+
+              Total           8       20       28
+                          28.57    71.43   100.00
+
+Statistics for Table of r by c
+
+Jonckheere-Terpstra Test
+Statistic                     62.0000
+Z                             -0.2860
+One-sided Pr < Z               0.3874
+Two-sided Pr > |Z|             0.7748
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+   10.8889         1        0.0010
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -0.0328             0.1167      -0.2615       0.1960
+
+Sample Size = 28
+
+Summary Statistics for r by c
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      0.7500      0.1078      5.2161
+                          Logit                0.7500      0.1078      5.2161
+Relative Risk (Column 1)  Mantel-Haenszel      0.8182      0.2183      3.0671
+                          Logit                0.8182      0.2183      3.0671
+Relative Risk (Column 2)  Mantel-Haenszel      1.0909      0.5863      2.0299
+                          Logit                1.0909      0.5863      2.0299
+
+Total Sample Size = 28
+                        The FREQ Procedure
+
+                        Table of c by r
+
+              c         r
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |.       |2       |  Total
+              ---------+--------+--------+
+              1        |      6 |      2 |      8
+                       |  21.43 |   7.14 |  28.57
+                       |  75.00 |  25.00 |
+                       |  27.27 |  33.33 |
+              ---------+--------+--------+
+              2        |     16 |      4 |     20
+                       |  57.14 |  14.29 |  71.43
+                       |  80.00 |  20.00 |
+                       |  72.73 |  66.67 |
+              ---------+--------+--------+
+              Total          22        6       28
+                          78.57    21.43   100.00
+
+Statistics for Table of c by r
+
+Cochran-Armitage Trend Test
+Statistic (Z)                  0.2913
+One-sided Pr > Z               0.3854
+Two-sided Pr > |Z|             0.7708
+
+Jonckheere-Terpstra Test
+Statistic                     76.0000
+Z                             -0.2860
+One-sided Pr < Z               0.3874
+Two-sided Pr > |Z|             0.7748
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+   10.8889         1        0.0010
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -0.0328             0.1167      -0.2615       0.1960
+
+Sample Size = 28
+
+Summary Statistics for c by r
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      0.7500      0.1078      5.2161
+                          Logit                0.7500      0.1078      5.2161
+Relative Risk (Column 1)  Mantel-Haenszel      0.9375      0.5941      1.4794
+                          Logit                0.9375      0.5941      1.4794
+Relative Risk (Column 2)  Mantel-Haenszel      1.2500      0.2828      5.5254
+                          Logit                1.2500      0.2828      5.5254
+
+Total Sample Size = 28

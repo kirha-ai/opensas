@@ -1,0 +1,155 @@
+K
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Klingenberg             0.2738                  0.0859      0.4410
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight
+1               1                0.3926          52      0.4906      0.4905
+2               2                0.1593          54      0.5094      0.5095
+
+Total Sample Size = 106
+NC
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Newcombe                0.2738                  0.0894      0.4328
+Newcombe (MR)           0.2759                  0.0915      0.4348
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight   MR Weight
+1               1                0.3926          52      0.4906      0.4905      0.4997
+2               2                0.1593          54      0.5094      0.5095      0.5003
+
+Total Sample Size = 106
+NONE
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight
+1               1                0.3926          52      0.4906      0.4905
+2               2                0.1593          54      0.5094      0.5095
+
+Total Sample Size = 106
+CMH
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      8.3052    0.0040
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      3.3132      1.4456      7.5934
+                          Logit                3.2941      1.4182      7.6515
+Relative Risk (Column 1)  Mantel-Haenszel      2.1636      1.2336      3.7948
+                          Logit                2.1059      1.1951      3.7108
+Relative Risk (Column 2)  Mantel-Haenszel      0.6420      0.4705      0.8761
+                          Logit                0.6613      0.4852      0.9013
+
+Breslow-Day Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    1.4929         1        0.2218
+
+Total Sample Size = 106
+DF
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square                     2.2500
+DF                                  1
+Pr > ChiSq                     0.1336
+
+Simple Kappa Coefficient
+Kappa                          0.3891
+ASE                            0.1239
+95% Lower Conf Limit           0.1463
+95% Upper Conf Limit           0.6320
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square                     3.5217
+DF                                  1
+Pr > ChiSq                     0.0606
+
+Simple Kappa Coefficient
+Kappa                          0.1574
+ASE                            0.1265
+95% Lower Conf Limit          -0.0905
+95% Upper Conf Limit           0.4053
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for s
+
+Overall Kappa Coefficient
+Kappa                          0.2756
+ASE                            0.0885
+95% Lower Conf Limit           0.1022
+95% Upper Conf Limit           0.4491
+
+Test for Equal Kappas
+Chi-Square                     1.7129
+DF                                  1
+Pr > ChiSq                     0.1906
+
+Cochran's Q
+Chi-Square                     5.3239
+DF                                  2
+Pr > ChiSq                     0.0698
+
+Total Sample Size = 106
