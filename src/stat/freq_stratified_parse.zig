@@ -10,6 +10,7 @@ pub const Common = struct {
     enabled: bool = false,
     limits: ?Methods = null, // requested methods, before display suppression
     suppress_limits: bool = false,
+    risk_newcombe: bool = false,
     tests: ?Methods = null, // null means TEST not requested
     test_default: bool = false,
     print_weights: ?Methods = null,
@@ -18,7 +19,7 @@ pub const Common = struct {
     correct: bool = true,
     sample_variance: bool = false,
     pub fn selectedLimits(self: Common) Methods {
-        return if (self.suppress_limits) .{} else self.limits orelse .{ .mh = true, .score = true };
+        return if (self.suppress_limits) .{} else self.limits orelse .{ .mh = true, .score = true, .newcombe = self.risk_newcombe };
     }
     pub fn selectedTests(self: Common) Methods {
         if (self.tests) |t| return t;
@@ -181,8 +182,9 @@ pub fn consumeTableOption(tokens: []const lex.Token, index: *usize, opts: *Optio
             while (!r.at(.rparen)) {
                 const s = try r.name();
                 if (kw(s, "ac1")) ag.ac1 = true else if (kw(s, "pabak")) ag.pabak = true else if (kw(s, "details") or kw(s, "kappadetails")) {
+                    // Independent details_alias.sas: DETAILS/KAPPADETAILS
+                    // display simple details only; weighted details are explicit.
                     ag.details = true;
-                    ag.weighted_details = true;
                 } else if (kw(s, "wtkappadetails")) ag.weighted_details = true else if (kw(s, "printkwts")) ag.print_weights = true else if (kw(s, "wt")) {
                     try r.expect(.eq);
                     const weight = try r.name();
@@ -198,8 +200,8 @@ pub fn consumeTableOption(tokens: []const lex.Token, index: *usize, opts: *Optio
                         ag.df = .adjust;
                     } else {
                         const v = try r.number();
-                        if (v <= 0) return r.fail("DFSYM must be positive");
-                        ag.df = .{ .value = v };
+                        if (v < 0) return r.fail("DFSYM must be nonnegative");
+                        ag.df = if (v == 0) .default else .{ .value = v };
                     }
                 } else if (kw(s, "mnullratio")) {
                     try r.expect(.eq);
@@ -266,7 +268,7 @@ test "stratified malformed options report captured parse errors and preserve cur
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    for ([_][]const u8{ "agree(dfsym=0)", "agree(mnullratio=-1)", "agree(nullkappa=2)", "cmh(bogus)", "gs(column=3)", "commonriskdiff(test=mr(var=null))", "commonriskdiff(cl=())", "agree(details" }) |source| {
+    for ([_][]const u8{ "agree(dfsym=-1)", "agree(mnullratio=-1)", "agree(nullkappa=2)", "cmh(bogus)", "gs(column=3)", "commonriskdiff(test=mr(var=null))", "commonriskdiff(cl=())", "agree(details" }) |source| {
         var d = diag.Diagnostics.init(a);
         const tokens = try lex.tokenize(a, source, &d);
         var i: usize = 0;
@@ -346,4 +348,16 @@ test "stratified SAS defaults distinguish implicit limits from requested tests w
     var index: usize = 0;
     try std.testing.expect(!try consumeTableOption(unknown, &index, &opts, &d));
     try std.testing.expectEqual(@as(usize, 0), index);
+}
+
+test "stratified SAS DFSYM zero default and independent detail switches" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const defaults = try parseForTest(a, "agree(dfsym=0 kappadetails)", &d);
+    try std.testing.expect(defaults.agreement.df == .default);
+    try std.testing.expect(defaults.agreement.details and !defaults.agreement.weighted_details);
+    const weighted = try parseForTest(a, "agree(wtkappadetails)", &d);
+    try std.testing.expect(!weighted.agreement.details and weighted.agreement.weighted_details);
 }

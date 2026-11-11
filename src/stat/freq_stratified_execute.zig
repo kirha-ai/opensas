@@ -52,6 +52,7 @@ pub const Report = struct {
     common_rows: []const r.CommonRow = &.{},
     common_weights: []const r.WeightRow = &.{},
     common_weight_ids: []const usize = &.{},
+    control_names: []const []const u8 = &.{},
     pooled_simple: ?k.Pooled = null,
     pooled_weighted: ?k.Pooled = null,
     cochran: ?k.Chi = null,
@@ -97,6 +98,9 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
         try d.report(.note, 0, "PROC FREQ: stratified statistics require a two-way or multiway table", .{});
         return result;
     }
+    const control_names = try a.alloc([]const u8, n - 2);
+    for (control_names, table.dimensions[0 .. n - 2]) |*name, dim| name.* = dim.name;
+    result.control_names = control_names;
     const nr = table.dimensions[n - 2].levels.len;
     const nc = table.dimensions[n - 1].levels.len;
     const size = std.math.mul(usize, nr, nc) catch return error.OutOfMemory;
@@ -250,7 +254,9 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
             const count = samples[0].total + samples[1].total;
             if (samples[0].total == 0 or samples[1].total == 0) continue;
             try weight_ids.append(a, id);
-            var row: r.WeightRow = .{ .stratum = try std.fmt.allocPrint(a, "{d}", .{weight_rows.items.len + 1}), .difference = if (samples[0].total > 0 and samples[1].total > 0) samples[0].proportion() - samples[1].proportion() else null, .frequency = count, .fraction = count / total };
+            const control_labels = try a.alloc([]const u8, n - 2);
+            for (control_labels, 0..) |*name, j| name.* = try label(a, table.level(id * size, j).value);
+            var row: r.WeightRow = .{ .controls = control_labels, .stratum = try std.fmt.allocPrint(a, "{d}", .{weight_rows.items.len + 1}), .difference = if (samples[0].total > 0 and samples[1].total > 0) samples[0].proportion() - samples[1].proportion() else null, .frequency = count, .fraction = count / total };
             for (result.common_rows) |computed| if (computed.result) |v| switch (computed.method) {
                 .mantel_haenszel => row.mh = v.weights[i],
                 .minimum_risk => row.mr = v.weights[i],
@@ -340,7 +346,7 @@ pub fn renderSummary(a: A, out: *std.ArrayList(u8), report: Report, options: p.O
     if (options.gail_simon and report.gail_simon != null) try r.gailSimon(a, out, report.gail_simon);
     if (options.common.enabled) {
         try r.common(a, out, report.common_rows, options.common, scope.alpha, if ((options.common.column orelse scope.inherited_risk_column) == .first) "Column 1 (c = 1)" else "Column 2 (c = 2)");
-        try r.commonWeights(a, out, report.common_weights, options.common.selectedWeights());
+        try r.commonWeightsWithControls(a, out, report.common_weights, options.common.selectedWeights(), report.control_names);
     }
     inline for (.{ false, true }) |weighted| {
         const pooled = if (weighted) report.pooled_weighted else report.pooled_simple;

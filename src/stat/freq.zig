@@ -89,12 +89,15 @@ const stat_render = @import("freq_tests_render.zig");
 const risk_parse = @import("freq_risk_parse.zig");
 const risk_exec = @import("freq_risk_execute.zig");
 const risk_render = @import("freq_risk_render.zig");
+const strat_parse = @import("freq_stratified_parse.zig");
+const strat_exec = @import("freq_stratified_execute.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
 pub const Request = struct {
     statistics: stat_parse.Options = .{},
     risk: risk_parse.Options = .{},
+    stratified: strat_parse.Options = .{},
     resolved_expected: stat_kernel.Expected = .equal,
     vars: []const []const u8 = &.{},
     missing: bool = false,
@@ -131,6 +134,7 @@ pub const Request = struct {
 const Options = struct {
     tables_statement_count: usize = 0,
     tests: stat_parse.TestStatement = .{},
+    agreement_tests: strat_parse.Tests = .{},
     order: FreqOrder = .internal,
     noprint: bool = false,
     nlevels: bool = false,
@@ -286,6 +290,14 @@ const Parser = struct {
     }
     fn tableOptions(self: *Parser, req: *Request) diag.Error!void {
         while (!self.tag(.semicolon) and !self.tag(.eof)) {
+            if (try strat_parse.consumeTableOption(self.toks, &self.i, &req.stratified, self.diags)) continue;
+            if (self.kw("all")) {
+                self.i += 1;
+                req.statistics.chisq = true;
+                req.statistics.measures = true;
+                if (req.stratified.cmh == 0) req.stratified.cmh = 3;
+                continue;
+            }
             if (try risk_parse.consumeTableOption(self.a, self.toks, &self.i, &req.risk, self.diags)) continue;
             if (try stat_parse.consumeTableOption(self.a, self.toks, &self.i, &req.statistics, self.diags)) continue;
             if (!self.tag(.name)) return self.fail("unexpected token in TABLES options");
@@ -452,7 +464,12 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             parser.i += 1;
             const begin = parser.i;
             while (!parser.tag(.semicolon) and !parser.tag(.eof)) parser.i += 1;
-            try opts.tests.parse(toks[begin..parser.i], cx.diags);
+            if (opts.tests.present) return parser.fail("Only one TEST statement is allowed.");
+            var remaining: std.ArrayList(Token) = .empty;
+            for (toks[begin..parser.i]) |token| {
+                if (!strat_parse.consumeTest(token, &opts.agreement_tests)) try remaining.append(a, token);
+            }
+            if (remaining.items.len == 0 and begin != parser.i) opts.tests.present = true else try opts.tests.parse(remaining.items, cx.diags);
         } else if (parser.kw("exact") or parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
@@ -473,8 +490,15 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     const statistical_options = try a.alloc(stat_parse.Options, opts.requests.items.len);
     for (opts.requests.items, 0..) |*req, index| {
         stat_parse.implyTests(&req.statistics, opts.tests.requests, opts.tables_statement_count);
+        strat_parse.implyTests(&req.stratified, opts.agreement_tests, opts.tables_statement_count);
+        if (req.risk.difference) |rd| if (rd.common) {
+            req.stratified.common.enabled = true;
+            for (rd.cls) |cl| if (cl.method == .newcombe) {
+                req.stratified.common.risk_newcombe = true;
+            };
+        };
         req.list = stat_parse.usesList(req.list, req.statistics);
-        if (req.risk.any()) req.list = false;
+        if (req.risk.any() or hasStratified(req.stratified)) req.list = false;
         req.statistics.score_type = switch (req.scores) {
             .table => .table,
             .rank => .rank,
@@ -584,9 +608,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
-            if (hasStatistics(req.statistics) or req.risk.any()) {
+            if (hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified)) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
-                try analyzeTable(cx, out, &tab, req, opts);
+                const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
+                try analyzeTable(cx, out, &tab, req, opts, stratified);
                 if (!opts.noprint) rendered = true;
             } else if (!opts.noprint and !req.noprint) {
                 if (rendered) try out.append(a, '\n');
@@ -1727,7 +1752,24 @@ fn riskTable(a: std.mem.Allocator, tab: *Table, scored: table_model.ScoredMatrix
 }
 /// Statistics execution is independent of TABLES display suppression. Buffers
 /// keep each displayed table adjacent to its own stratum's statistical results.
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options) diag.Error!void {
+fn hasStratified(options: strat_parse.Options) bool {
+    return options.cmh > 0 or options.trend or options.jt or options.agreement.enabled or options.common.enabled or options.gail_simon;
+}
+fn stratScope(req: Request, opts: Options) strat_exec.Scope {
+    return .{ .alpha = req.statistics.alpha, .tests = opts.agreement_tests, .inherited_risk_column = if (req.risk.difference != null and req.risk.difference.?.column == 1 and !req.risk.difference.?.both_columns) .second else .first };
+}
+fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
+    const n = table.dimensions.len;
+    const size = table.dimensions[n - 2].levels.len * table.dimensions[n - 1].levels.len;
+    var ids: std.ArrayList(usize) = .empty;
+    for (try table.keys(a, false, true)) |key| {
+        const id = key / size;
+        if (ids.items.len == 0 or ids.items[ids.items.len - 1] != id) try ids.append(a, id);
+    }
+    return ids.toOwnedSlice(a);
+}
+
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report) diag.Error!void {
     const a = cx.arena;
     if (tab.negative) {
         if (!opts.noprint and !req.noprint) try renderTable(a, out, tab, req, opts);
@@ -1760,7 +1802,8 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
     const nc = tab.dimensions[n - 1].levels.len;
     if (nr == 0 or nc == 0) return;
     var number: usize = 0;
-    for (0..tab.cell_count / (nr * nc)) |stratum| {
+    const ids = try analysisStrata(a, tab);
+    for (ids) |stratum| {
         var missing_control = false;
         for (0..n - 2) |d| if (tab.level(stratum * nr * nc, d).missing) {
             missing_control = true;
@@ -1779,7 +1822,13 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, opts.tests.requests, .equal, opts.noprint);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
-                if (!opts.noprint) try risk_render.render(a, &body, risk_report);
+                if (!opts.noprint) {
+                    try risk_render.render(a, &body, risk_report);
+                    for (stratified.strata) |s| if (s.id == stratum) {
+                        try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));
+                        break;
+                    };
+                }
             }
         }
         if (opts.noprint) continue;
@@ -1793,6 +1842,20 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             try out.appendSlice(a, body.items);
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, sl.total)}));
             if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+        }
+    }
+    if (!opts.noprint and hasStratified(req.stratified)) {
+        var summary: std.ArrayList(u8) = .empty;
+        try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);
+        if (summary.items.len > 0) {
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSummary Statistics for {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
+            if (n > 2) {
+                try out.appendSlice(a, "Controlling for");
+                for (tab.dimensions[0 .. n - 2]) |dim| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{dim.name}));
+                try out.append(a, '\n');
+            }
+            try out.appendSlice(a, summary.items);
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nTotal Sample Size = {s}\n", .{try freqText(a, tab.total)}));
         }
     }
 }
@@ -1901,4 +1964,28 @@ fn renderOneExpected(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table,
     for (rows.items) |row| try expectedRow(a, out, row, widths, false);
     if (truncated) try out.appendSlice(a, try std.fmt.allocPrint(a, "\n      The first {d} nonmissing levels are displayed.\n", .{req.maxlevels.?}));
     if (!req.missing) try appendFreqMissing(a, out, tab.missing);
+}
+
+test "stratified public hook computes mixed TEST requests and keeps exact gaps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "strata");
+    _ = try ds.addColumn("s", .num);
+    _ = try ds.addColumn("r", .num);
+    _ = try ds.addColumn("c", .num);
+    _ = try ds.addColumn("n", .num);
+    for ([_]f64{ 16, 11, 5, 20, 12, 16, 7, 19 }, 0..) |count, i| try ds.appendRow(&.{ .{ .num = @floatFromInt(i / 4 + 1) }, .{ .num = @floatFromInt(i / 2 % 2 + 1) }, .{ .num = @floatFromInt(i % 2 + 1) }, .{ .num = count } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("strata", ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "proc freq data=strata; weight n; tables s*r*c / cmh(bdt mf i2) agree commonriskdiff(cl=(mh mr score) test printwts) noprint; test kappa pcorr; run;";
+    try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, source, &d));
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "8.3052", "1.4905", "19.2443", "Common Risk Difference", "Kappa Test", "Pearson Correlation" }) |value| try std.testing.expect(std.mem.indexOf(u8, out.items, value) != null);
+    out.clearRetainingCapacity();
+    const duplicate = "proc freq data=strata; tables r*c; test kappa; test pcorr;run;";
+    try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, duplicate, &d)));
 }

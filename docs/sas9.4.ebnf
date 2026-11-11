@@ -904,7 +904,7 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                | "SCORES" "=" name | "FORMAT" "=" format_ref
                | "MAXLEVELS" "=" number | "OUT" "=" dataset
                | "OUTCUM" | "OUTEXPECT" | "OUTPCT"
-               | freq_stat_option | freq_risk_option ;              (* opensas *)
+               | freq_stat_option | freq_risk_option | freq_stratified_option ;              (* opensas *)
                  (* SCORE, PEARSONRESID and STDRESID aliases are accepted.
                     LIST is one whole n-way list; CROSSLIST is per-stratum with
                     margins. LINE numbers LIST rows. TABLE is the SAS legacy
@@ -940,19 +940,44 @@ freq_warn      = "NONE" | "NOPRINT" | "NOLOG" | "OUTPUT" ;
 freq_expected  = ( "TESTP" | "TESTF" ) "="
                  ( dataset | "(" number { [ "," ] number } ")" ) ;
 freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
-               | "SMDCR" | "SMDRC" | "PCORR" | "SCORR" | "PLCORR" ; (* opensas *)
+               | "SMDCR" | "SMDRC" | "PCORR" | "SCORR" | "PLCORR"
+               | "AGREE" | "KAPPA" | "WTKAPPA" | "WTKAP" ; (* opensas *)
                  (* TEST implies MEASURES/PLCORR only with one TABLES statement.
                     CHISQ includes automatic 2x2 Fisher for integer counts.
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
-                    AGREE/ALL/CMH, standalone EXACT and OUTPUT statistics datasets
+                    Standalone EXACT and OUTPUT statistics datasets
                     remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
+
+(* FEAT-freq-stratified: numeric kernels, independent readers/renderers and
+   public execution. EXACT statement dispatch remains owned by FEAT-freq-exact. *)
+freq_stratified_option = "ALL" | "TREND" | "JT"
+  | ( "CMH" | "CMH1" | "CMH2" ) [ "(" { freq_cmh_suboption } ")" ]
+  | ( "GAILSIMON" | "GS" ) [ "(" "COLUMN" "=" ( "1" | "2" ) ")" ]
+  | "AGREE" [ "(" { freq_agree_suboption } ")" ]
+  | "COMMONRISKDIFF" [ "(" { freq_common_suboption } ")" ] ; (* opensas *)
+freq_cmh_suboption = "BDT" | "QOR" | "I2" | "MF" | "MANTELFLEISS"
+  | ( "GS" | "GAILSIMON" ) [ "(" "COLUMN" "=" ( "1" | "2" ) ")" ] ;
+freq_agree_suboption = "AC1" | "PABAK" | "DETAILS" | "KAPPADETAILS"
+  | "WTKAPPADETAILS" | "PRINTKWTS" | "WT" "=" ( "CA" | "FC" )
+  | "DFSYM" "=" ( "ADJUST" | number ) | "MNULLRATIO" "=" number
+  | ( "NULLKAPPA" | "NULLWTKAPPA" ) "=" freq_risk_number
+  | "TABLES" "=" "RESTORE" ;
+freq_common_suboption = "COLUMN" "=" ( "1" | "2" ) | "CORRECT" "=" "NO"
+  | "CL" "=" ( freq_common_cl | "(" freq_common_cl { freq_common_cl } ")" )
+  | "TEST" [ "=" ( freq_common_test | "(" freq_common_test { freq_common_test } ")" ) ]
+  | "PRINTWTS" [ "=" ( freq_common_weight | "(" freq_common_weight { freq_common_weight } ")" ) ] ;
+freq_common_cl = "MH" | "K" | "KLINGENBERG" | "MR" | "MINRISK" | "SCORE"
+  | "NEWCOMBE" | "NEWCOMBEMH" | "WILSON" | "NEWCOMBEMR" | "NEWCOMBEMINRISK"
+  | "NONE" | "NO" ;
+freq_common_test = "MH" | "SCORE" | ( "MR" | "MINRISK" ) [ "(" "VAR" "=" "SAMPLE" ")" ] ;
+freq_common_weight = "MH" | "MR" | "MINRISK" | "SCORE" ;
 
 (* FEAT-freq-risk public intermediate: parsing, numeric execution and typed
    listing are separate. Required exact/common families remain DOING. *)
 freq_risk_option = "SENSPEC"
                 | ( "BINOMIAL" | "BIN" | "RISKDIFF" | "RELRISK"
                     | "OR" | "ODDSRATIO" ) [ "(" { freq_risk_suboption } ")" ] ; (* opensas *)
-freq_risk_suboption = "CL" "=" ( freq_risk_cl
+freq_risk_suboption = "COMMON" (* RISKDIFF only; opensas *) | "CL" "=" ( freq_risk_cl
                    | "(" freq_risk_cl { [ "," ] freq_risk_cl } ")" )
                    | "LEVEL" "=" ( number | string )
                    | "COLUMN" "=" ( "1" | "2" | "BOTH" )

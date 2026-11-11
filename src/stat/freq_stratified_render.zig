@@ -30,7 +30,7 @@ fn prob(a: A, out: *Out, v: ?f64, width: usize) Error!void {
 }
 fn pair(a: A, out: *Out, label: []const u8, value: ?f64, p: bool) Error!void {
     try pad(a, out, label, 27, false);
-    if (p) try prob(a, out, value, 10) else try num(a, out, value, 10);
+    if (p) try prob(a, out, value, 10) else if (std.mem.eql(u8, label, "DF") and value != null) try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{value.?}), 10, true) else try num(a, out, value, 10);
     try text(a, out, "\n");
 }
 pub fn chiSquare(a: A, out: *Out, title: []const u8, result: ?k.Chi, restore: bool) Error!void {
@@ -140,18 +140,25 @@ pub fn common(a: A, out: *Out, rows: []const CommonRow, options: parse.Common, a
     };
     if (heading) try text(a, out, try std.fmt.allocPrint(a, "\n{s}\n", .{column_label}));
 }
-pub const WeightRow = struct { stratum: []const u8, difference: ?f64, frequency: f64, fraction: f64, mh: ?f64 = null, mr: ?f64 = null, score_midpoint: ?f64 = null, score: ?f64 = null };
+pub const WeightRow = struct { controls: []const []const u8 = &.{}, stratum: []const u8, difference: ?f64, frequency: f64, fraction: f64, mh: ?f64 = null, mr: ?f64 = null, score_midpoint: ?f64 = null, score: ?f64 = null };
 pub fn commonWeights(a: A, out: *Out, rows: []const WeightRow, selected_weights: parse.Methods) Error!void {
+    return commonWeightsWithControls(a, out, rows, selected_weights, &.{});
+}
+pub fn commonWeightsWithControls(a: A, out: *Out, rows: []const WeightRow, selected_weights: parse.Methods, names: []const []const u8) Error!void {
     if (!selected_weights.mh and !selected_weights.mr and !selected_weights.score) return;
-    try text(a, out, "\nStratum Risk Differences and Weights\nStratum          Difference   Frequency    Fraction");
+    try text(a, out, "\nStratum Risk Differences and Weights\n");
+    try pad(a, out, "Stratum", 16, false);
+    for (names) |name| try pad(a, out, name, 12, false);
+    try text(a, out, " Difference   Frequency    Fraction");
     if (selected_weights.mh) try text(a, out, "   MH Weight");
     if (selected_weights.mr) try text(a, out, "   MR Weight");
     if (selected_weights.score) try text(a, out, " Score Midpoint Score Weight");
     try text(a, out, "\n");
     for (rows) |r| {
         try pad(a, out, r.stratum, 16, false);
+        for (r.controls) |value| try pad(a, out, value, 12, false);
         try num(a, out, r.difference, 11);
-        try num(a, out, r.frequency, 12);
+        try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{r.frequency}), 12, true);
         try num(a, out, r.fraction, 12);
         if (selected_weights.mh) try num(a, out, r.mh, 12);
         if (selected_weights.mr) try num(a, out, r.mr, 12);
@@ -266,7 +273,12 @@ pub fn heterogeneity(a: A, out: *Out, value: ?k.Heterogeneity, df: ?f64, alpha: 
         try text(a, out, try std.fmt.allocPrint(a, "{d:.2}%", .{v.percent}));
         try pad(a, out, if (df) |d| try std.fmt.allocPrint(a, "{d}", .{d}) else ".", 8, true);
         try text(a, out, try std.fmt.allocPrint(a, "    {d:.2}%    {d:.2}%\n", .{ v.lower, v.upper }));
-    } else try text(a, out, "       .       .           .           .\n");
+    } else {
+        try text(a, out, "       .");
+        try pad(a, out, if (df) |d| try std.fmt.allocPrint(a, "{d}", .{d}) else ".", 8, true);
+        try text(a, out, "           .           .\n");
+        if (df != null and df.? > 0) try text(a, out, "I-square is not computed because Q is 0.\n");
+    }
 }
 pub fn mcnemar(a: A, out: *Out, result: ?k.Chi, null_ratio: f64, restore: bool) Error!void {
     if (null_ratio != 1) try pair(a, out, "Null Ratio", null_ratio, false);

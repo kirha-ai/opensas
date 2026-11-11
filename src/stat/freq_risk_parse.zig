@@ -15,6 +15,7 @@ pub const Request = struct {
     both_columns: bool = false,
     correct: bool = false,
     norisks: bool = false,
+    common: bool = false,
     printall: bool = false,
     p: f64 = 0.5,
     equal: bool = false,
@@ -141,7 +142,10 @@ const Reader = struct {
                 try self.confidence(req);
                 continue;
             }
-            if (kw(token, "common") and req.family == .difference) return gap(self.d, token.line, "common risk difference integration");
+            if (kw(token, "common") and req.family == .difference) {
+                req.common = true;
+                continue;
+            }
             if (kw(token, "outlevel") and req.family == .binomial) return gap(self.d, token.line, "BINOMIAL OUTLEVEL output datasets");
             if (kw(token, "correct") and (req.family == .binomial or req.family == .difference)) {
                 req.correct = true;
@@ -299,7 +303,7 @@ test "FEAT-freq-risk parser captures invalid requests versus pending dependencie
         try std.testing.expect(d.hasErrors());
         try std.testing.expect(!diag.gapHit());
     }
-    for ([_][]const u8{ "bin(cl=blaker)", "riskdiff(common)", "relrisk(cl=exact)", "bin(outlevel)" }) |source| {
+    for ([_][]const u8{ "bin(cl=blaker)", "relrisk(cl=exact)", "bin(outlevel)" }) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;
