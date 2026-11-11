@@ -237,3 +237,27 @@ test "stratified exact CMH empty stratum occupies its original slot" {
     };
     try std.testing.expectApproxEqAbs(@as(f64, 8.3052), try Adapters(Contract).cmhCorrelation(&contexts, &sampled), 0.00005);
 }
+
+test "stratified actual exact engine matches independent SAS tails" {
+    // exact.sas/exact.txt: SAS/STAT p230; fixed-margin enumeration uses
+    // distance from JT null mean, not doubled smaller tail for kappa.
+    const exact = @import("freq_exact_distribution.zig");
+    const api = Adapters(exact);
+    const a = std.testing.allocator;
+    const m = k.Matrix{ .rows = 3, .cols = 3, .counts = &.{ 3, 1, 0, 0, 2, 2, 1, 0, 3 } };
+    const sample = exact.Matrix{ .rows = 3, .cols = 3, .cells = &.{ 3, 1, 0, 0, 2, 2, 1, 0, 3 } };
+    const weights = try k.kappaWeights(a, m, .cicchetti_allison);
+    defer a.free(weights);
+    for ([_]Family{ .jonckheere, .kappa, .weighted_kappa, .mhchi }, [_]f64{ 0.0343, 0.0315, 0.0515, 0.0722 }) |family, expected| {
+        const context = try Context.init(m, family, weights, 1);
+        const result = try exact.enumerate(a, sample, api.statistic(&context), .{});
+        try std.testing.expect(result == .complete);
+        try std.testing.expectEqual(@as(u64, 105), result.complete.tables);
+        try std.testing.expectApproxEqAbs(expected, result.complete.two_sided, 0.00005);
+    }
+    const t = k.Matrix{ .rows = 3, .cols = 2, .counts = &.{ 4, 1, 2, 3, 1, 4 }, .row_scores = &.{ 1, 3, 8 } };
+    const context = try Context.init(t, .trend, null, 1);
+    const result = try exact.enumerate(a, .{ .rows = 3, .cols = 2, .cells = &.{ 4, 1, 2, 3, 1, 4 } }, api.statistic(&context), .{});
+    try std.testing.expect(result == .complete);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1150), result.complete.two_sided, 0.00005);
+}
