@@ -394,3 +394,37 @@ test "FEAT-freq-risk SAS zero cell OR RR intervals" {
     try std.testing.expectEqual(@as(?f64, 0), w.estimate);
     try std.testing.expect(w.limits.lower == null and w.limits.upper == null);
 }
+
+test "FEAT-freq-risk SAS infinite ratios fractional counts and rare events" {
+    // SAS/STAT pp184-189,199-205. Independent command:
+    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/boundaries-more.sas
+    // -f text -o sibling.txt -l sibling.log. Zero SAS errors/warnings.
+    const full_first = Table2x2{ .cells = .{ 10, 0, 5, 5 } };
+    const zero_second = Table2x2{ .cells = .{ 5, 5, 0, 10 } };
+    for ([_]Table2x2{ full_first, zero_second }) |table| {
+        for ([_]RatioMethod{ .score, .likelihood_ratio }, [_]f64{ 1.9093, 3.4448 }) |method, lower| {
+            const odds = try ratio(table, .first, .odds_ratio, 0.05, method, true);
+            try std.testing.expect(std.math.isInf(odds.estimate.?));
+            try std.testing.expectApproxEqAbs(lower, odds.limits.lower.?, 0.00005);
+            try std.testing.expect(std.math.isInf(odds.limits.upper.?));
+        }
+    }
+    for ([_]RatioMethod{ .score, .likelihood_ratio }, [_]f64{ 1.5596, 2.5320 }) |method, lower| {
+        const rr = try ratio(zero_second, .first, .relative_risk, 0.05, method, true);
+        try std.testing.expect(std.math.isInf(rr.estimate.?));
+        try std.testing.expectApproxEqAbs(lower, rr.limits.lower.?, 0.00005);
+        try std.testing.expect(std.math.isInf(rr.limits.upper.?));
+    }
+    try expectLimits((try ratio(full_first, .first, .relative_risk, 0.05, .score, true)).limits, 1.2449, 4.3159);
+    try expectLimits((try ratio(full_first, .first, .relative_risk, 0.05, .likelihood_ratio, true)).limits, 1.2706, 4.5953);
+    try expectLimits((try ratio(zero_second, .second, .relative_risk, 0.05, .likelihood_ratio, true)).limits, 0.2176, 0.7871);
+    const fractional = Table2x2{ .cells = .{ 12.4, 8.6, 5.2, 25.8 } };
+    try expectLimits(try differenceLimits(fractional, .first, 0.05, .miettinen_nurminen, false, true), 0.1588, 0.6403);
+    try expectLimits((try ratio(fractional, .first, .odds_ratio, 0.05, .likelihood_ratio, true)).limits, 2.0865, 27.9187);
+    try expectLimits((try ratio(fractional, .first, .relative_risk, 0.05, .wald_modified, true)).limits, 1.4615, 7.5225);
+    try expectLimits((try ratio(fractional, .second, .relative_risk, 0.05, .score, true)).limits, 0.2697, 0.7846);
+    const rare = Table2x2{ .cells = .{ 1, 999, 2, 998 } };
+    try expectLimits((try ratio(rare, .first, .relative_risk, 0.05, .score, true)).limits, 0.0655, 3.8118);
+    try expectLimits((try ratio(rare, .second, .relative_risk, 0.05, .score, true)).limits, 0.9962, 1.0064);
+    try expectLimits(try differenceLimits(rare, .first, 0.05, .miettinen_nurminen, false, true), -0.0064, 0.0038);
+}
