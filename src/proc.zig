@@ -15034,7 +15034,7 @@ test "FREQ-hardening: remaining unsupported inference requests fail loud (captur
     try lib.put("d", ds);
 
     // Each stat option must ParseError naming itself, never a table without the stat.
-    for ([_][]const u8{ "agree", "exact", "cmh", "all", "fisher", "relrisk", "trend" }) |opt| {
+    for ([_][]const u8{ "agree", "exact", "cmh", "all", "fisher", "trend" }) |opt| {
         var diags = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const src = try std.fmt.allocPrint(a, "proc freq data=d; tables g*h / {s}; run;", .{opt});

@@ -86,11 +86,15 @@ const stat_parse = @import("freq_tests_parse.zig");
 const stat_exec = @import("freq_tests_execute.zig");
 const stat_kernel = @import("freq_tests.zig");
 const stat_render = @import("freq_tests_render.zig");
+const risk_parse = @import("freq_risk_parse.zig");
+const risk_exec = @import("freq_risk_execute.zig");
+const risk_render = @import("freq_risk_render.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
 pub const Request = struct {
     statistics: stat_parse.Options = .{},
+    risk: risk_parse.Options = .{},
     resolved_expected: stat_kernel.Expected = .equal,
     vars: []const []const u8 = &.{},
     missing: bool = false,
@@ -282,6 +286,7 @@ const Parser = struct {
     }
     fn tableOptions(self: *Parser, req: *Request) diag.Error!void {
         while (!self.tag(.semicolon) and !self.tag(.eof)) {
+            if (try risk_parse.consumeTableOption(self.a, self.toks, &self.i, &req.risk, self.diags)) continue;
             if (try stat_parse.consumeTableOption(self.a, self.toks, &self.i, &req.statistics, self.diags)) continue;
             if (!self.tag(.name)) return self.fail("unexpected token in TABLES options");
             const raw_name = self.toks[self.i].text;
@@ -469,6 +474,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     for (opts.requests.items, 0..) |*req, index| {
         stat_parse.implyTests(&req.statistics, opts.tests.requests, opts.tables_statement_count);
         req.list = stat_parse.usesList(req.list, req.statistics);
+        if (req.risk.any()) req.list = false;
         req.statistics.score_type = switch (req.scores) {
             .table => .table,
             .rank => .rank,
@@ -578,7 +584,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
-            if (hasStatistics(req.statistics)) {
+            if (hasStatistics(req.statistics) or req.risk.any()) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 try analyzeTable(cx, out, &tab, req, opts);
                 if (!opts.noprint) rendered = true;
@@ -1712,6 +1718,13 @@ fn scoreDisplay(a: std.mem.Allocator, tab: *Table, scored: table_model.ScoredMat
     for (scored.col_levels, 0..) |l, i| cols[i] = try cellText(a, l.value);
     return .{ .row_name = tab.dimensions[tab.dimensions.len - 2].name, .col_name = tab.dimensions[tab.dimensions.len - 1].name, .row_labels = rows, .col_labels = cols };
 }
+fn riskTable(a: std.mem.Allocator, tab: *Table, scored: table_model.ScoredMatrix, one_way: bool, legacy_risks_printed: bool) !risk_exec.Table {
+    const rows = try a.alloc([]const u8, scored.row_levels.len);
+    const cols = try a.alloc([]const u8, scored.col_levels.len);
+    for (scored.row_levels, 0..) |l, i| rows[i] = try cellText(a, l.value);
+    for (scored.col_levels, 0..) |l, i| cols[i] = try cellText(a, l.value);
+    return .{ .name = tab.dimensions[if (one_way) 0 else tab.dimensions.len - 2].name, .column_name = if (one_way) "" else tab.dimensions[tab.dimensions.len - 1].name, .row_labels = rows, .col_labels = cols, .counts = scored.matrix.counts, .one_way = one_way, .legacy_risks_printed = legacy_risks_printed };
+}
 /// Statistics execution is independent of TABLES display suppression. Buffers
 /// keep each displayed table adjacent to its own stratum's statistical results.
 fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options) diag.Error!void {
@@ -1728,11 +1741,16 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
         var body: std.ArrayList(u8) = .empty;
         const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, opts.tests.requests, req.resolved_expected, opts.noprint);
+        // SAS skips risk analysis when PROC NOPRINT has no output request.
+        // Existing test-family NOPRINT execution remains independent above.
+        const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
+        try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
-        if (result.goodness_of_fit) |gof| {
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, gof.total)}));
+        const sample_size = if (result.goodness_of_fit) |gof| gof.total else risk_report.sample_size;
+        if (sample_size) |total| {
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, total)}));
             if (!req.missing) try appendFreqMissing(a, out, tab.missing);
         }
         return;
@@ -1760,6 +1778,8 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, opts.tests.requests, .equal, opts.noprint);
+                const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
+                if (!opts.noprint) try risk_render.render(a, &body, risk_report);
             }
         }
         if (opts.noprint) continue;

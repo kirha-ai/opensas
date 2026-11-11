@@ -904,7 +904,7 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                | "SCORES" "=" name | "FORMAT" "=" format_ref
                | "MAXLEVELS" "=" number | "OUT" "=" dataset
                | "OUTCUM" | "OUTEXPECT" | "OUTPCT"
-               | freq_stat_option ;              (* opensas *)
+               | freq_stat_option | freq_risk_option ;              (* opensas *)
                  (* SCORE, PEARSONRESID and STDRESID aliases are accepted.
                     LIST is one whole n-way list; CROSSLIST is per-stratum with
                     margins. LINE numbers LIST rows. TABLE is the SAS legacy
@@ -919,7 +919,9 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                     the typed matrix API; SCOROUT alone emits no scores without
                     statistical requests, matching SAS. LIST+statistics uses GRID
                     after TEST implication. TABLES NOPRINT retains statistics;
-                    PROC NOPRINT computes/validates but suppresses the listing.
+                    PROC NOPRINT computes/validates test-family statistics but
+                    suppresses the listing; risk analyses with no output request
+                    are skipped, matching SAS's no-valid-output behavior.
                     PAGE/COMPRESS
                     pagination and ODS CONTENTS fail explicitly as destination
                     gaps; PAGE+COMPRESS is invalid SAS. Stray parentheses and
@@ -944,6 +946,34 @@ freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
                     AGREE/ALL/CMH, standalone EXACT and OUTPUT statistics datasets
                     remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
+
+(* FEAT-freq-risk public intermediate: parsing, numeric execution and typed
+   listing are separate. Required exact/common families remain DOING. *)
+freq_risk_option = "SENSPEC"
+                | ( "BINOMIAL" | "BIN" | "RISKDIFF" | "RELRISK"
+                    | "OR" | "ODDSRATIO" ) [ "(" { freq_risk_suboption } ")" ] ; (* opensas *)
+freq_risk_suboption = "CL" "=" ( freq_risk_cl
+                   | "(" freq_risk_cl { [ "," ] freq_risk_cl } ")" )
+                   | "LEVEL" "=" ( number | string )
+                   | "COLUMN" "=" ( "1" | "2" | "BOTH" )
+                   | "P" "=" number | "CORRECT" | "NORISKS" | "PRINTALL"
+                   | "EQUAL" [ "(" "NULL" "=" freq_risk_number ")" ]
+                   | "NONINF" | "NONINFERIORITY" | "SUP" | "SUPERIORITY"
+                   | "EQUIV" | "EQUIVALENCE"
+                   | "MARGIN" "=" ( freq_risk_number
+                     | "(" freq_risk_number [ "," ] freq_risk_number ")" )
+                   | "VAR" "=" ( "NULL" | "SAMPLE" )
+                   | "METHOD" "=" name ;
+freq_risk_number = [ "-" | "+" ] number ;
+freq_risk_cl = name [ "(" "CORRECT" [ "=" ( "NO" | "MEE" ) ] ")" ] ;
+(* Family-specific validation applies: BIN has Wald, CP/EXACT, AC, Jeffreys,
+   LR, logit, mid-p, Wilson; RISKDIFF has Wald, AC, HA, MN, Newcombe;
+   OR has Wald, modified Wald, score, LR, mid-p; RELRISK has Wald, modified
+   Wald, score, LR. Documented long aliases are accepted. COLUMN=BOTH is
+   for RISKDIFF. Selected LEVEL uses formatted analysis-level order.
+   Blaker, CL=EXACT for RD/OR/RR, COMMON, OUTLEVEL, EXACT statement and
+   statistics OUTPUT remain explicit rc2 gaps at this checkpoint.
+   Risk cores import no exact module; the execution adapter owns mid-p calls. *)
 
 (* 5.5 PROC TRANSPOSE *)
 proc_transpose = "PROC" "TRANSPOSE" [ "DATA" "=" dataset ]        (* opensas *)
