@@ -26,7 +26,7 @@ page references below use printed page numbers.
 - [TODO] EPIC-base-stat-complete (doc-finder, qa, P1) — Inventory every statement, option, statistic, output and example in CORR pp. 3–64, FREQ pp. 65–286 and UNIVARIATE pp. 287–551. Map each to an implementation ticket and verification case, including already-supported behavior. Close only after this matrix and the tickets below are verified; explicitly record platform-specific dependencies and any agreed exclusions. Do not claim full manual coverage while graphics, ODS or other documented surfaces remain missing.
 
 
-- [DOING @dev1] FEAT-corr-advanced (doc-finder, P1; pp. 21–33) — Add Spearman, Kendall, Hoeffding, supported partial correlations, Fisher z tests/confidence limits, polychoric/polyserial estimation and Cronbach alpha with their documented options. Check ties, singular controls, convergence, boundary correlations and one-/two-sided inference against SAS.
+- [DOING @dev1] FEAT-corr-advanced (doc-finder, P1; pp. 21–33) — Add Spearman, Kendall, Hoeffding, supported partial correlations, Fisher z tests/confidence limits, polychoric/polyserial estimation and Cronbach alpha with their documented options. Check ties, singular controls, convergence, boundary correlations and one-/two-sided inference against SAS.  [support @dev4: shared polychoric default/boundary solver; dev1 owns Hoeffding and CORR integration]
 
 
 
