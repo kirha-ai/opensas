@@ -258,33 +258,71 @@ pub fn pool(estimates: []const Estimate, alpha: f64) Error!?Pooled {
 
 /// Binary Cartesian cells, last variable varies fastest; this is the original
 /// multiway table, NOT merely the last two dimensions' stratified margins.
+pub const CochranAccumulator = struct {
+    totals: []f64,
+    total_positive: f64 = 0,
+    discordance: f64 = 0,
+
+    pub fn init(a: std.mem.Allocator, variables: usize) Error!CochranAccumulator {
+        if (variables < 2) return error.ExecError;
+        const totals = try a.alloc(f64, variables);
+        @memset(totals, 0);
+        return .{ .totals = totals };
+    }
+    pub fn deinit(self: CochranAccumulator, a: std.mem.Allocator) void {
+        a.free(self.totals);
+    }
+    /// Feed each observed pattern once with its frequency. True means the
+    /// first level of that binary dimension. O(variables) storage, independent
+    /// of the Cartesian table size; supports more variables than machine bits.
+    /// Rejected patterns leave the accumulator unchanged.
+    pub fn add(self: *CochranAccumulator, first_levels: []const bool, frequency: f64) Error!void {
+        if (first_levels.len != self.totals.len or !std.math.isFinite(frequency) or frequency < 0) return error.ExecError;
+        var positive: f64 = 0;
+        for (first_levels, self.totals) |first, total| if (first) {
+            positive += 1;
+            if (!std.math.isFinite(total + frequency)) return error.ExecError;
+        };
+        const m: f64 = @floatFromInt(self.totals.len);
+        const total = self.total_positive + frequency * positive;
+        const discordance = self.discordance + frequency * positive * (m - positive);
+        if (!std.math.isFinite(total) or !std.math.isFinite(discordance)) return error.ExecError;
+        for (first_levels, self.totals) |first, *t| if (first) {
+            t.* += frequency;
+        };
+        self.total_positive = total;
+        self.discordance = discordance;
+    }
+    /// Adapter for existing sparse Table binary keys: last dimension varies
+    /// fastest; zero bit means first level. Wider patterns use add() directly.
+    pub fn addKey(self: *CochranAccumulator, key: usize, frequency: f64) Error!void {
+        const width = @bitSizeOf(usize);
+        if (self.totals.len > width) return error.ExecError;
+        if (self.totals.len < width and key >> @intCast(self.totals.len) != 0) return error.ExecError;
+        var first: [width]bool = undefined;
+        for (first[0..self.totals.len], 0..) |*v, j| v.* = key & (@as(usize, 1) << @intCast(self.totals.len - 1 - j)) == 0;
+        try self.add(first[0..self.totals.len], frequency);
+    }
+    pub fn finish(self: CochranAccumulator) Error!?Chi {
+        if (self.discordance == 0) return null;
+        const m: f64 = @floatFromInt(self.totals.len);
+        const mean = self.total_positive / m;
+        var ss: f64 = 0;
+        for (self.totals) |t| ss += sq(t - mean);
+        const q = (m - 1) * m * ss / self.discordance;
+        if (!std.math.isFinite(q)) return error.ExecError;
+        return chi(q, m - 1);
+    }
+};
+
 pub fn cochranQ(a: std.mem.Allocator, variables: usize, counts: []const f64) Error!?Chi {
     if (variables < 2 or variables >= @bitSizeOf(usize)) return error.ExecError;
     const size = @as(usize, 1) << @intCast(variables);
     if (counts.len != size) return error.ExecError;
-    const totals = try a.alloc(f64, variables);
-    defer a.free(totals);
-    @memset(totals, 0);
-    var total: f64 = 0;
-    var subject_squares: f64 = 0;
-    for (counts, 0..) |x, k| {
-        if (!std.math.isFinite(x) or x < 0) return error.ExecError;
-        var positive: f64 = 0;
-        for (0..variables) |j| if ((k & (@as(usize, 1) << @intCast(j))) == 0) {
-            totals[j] += x;
-            positive += 1;
-        };
-        total += x * positive;
-        subject_squares += x * positive * positive;
-    }
-    const m: f64 = @floatFromInt(variables);
-    const denominator = m * total - subject_squares;
-    if (denominator <= 0) return null;
-    var ss: f64 = 0;
-    for (totals) |t| {
-        ss += t * t;
-    }
-    return chi((m - 1) * (m * ss - total * total) / denominator, m - 1);
+    var accumulator = try CochranAccumulator.init(a, variables);
+    defer accumulator.deinit(a);
+    for (counts, 0..) |frequency, key| try accumulator.addKey(key, frequency);
+    return accumulator.finish();
 }
 
 // Same stable gamma tail as the existing FREQ kernel; consolidate when the
@@ -802,4 +840,34 @@ test "stratified sparse discordance and nonmonotone numeric scores SAS edges" {
     const nonmono: Matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 }, .col_scores = &.{ 1, 8, 3 } };
     try std.testing.expectError(error.ExecError, kappaWeights(a, nonmono, .cicchetti_allison));
     try std.testing.expectEqual(@as(f64, 1720.5), try jonckheereStatistic(nonmono));
+}
+
+test "stratified sparse Cochran patterns preserve all binary dimensions" {
+    const a = std.testing.allocator;
+    var published = try CochranAccumulator.init(a, 3);
+    defer published.deinit(a);
+    for ([_]f64{ 6, 16, 2, 4, 2, 4, 6, 6 }, 0..) |frequency, key| try published.addKey(key, frequency);
+    try std.testing.expectApproxEqAbs(@as(f64, 8.4706), (try published.finish()).?.statistic, 0.00005);
+    var many = try CochranAccumulator.init(a, 1000);
+    defer many.deinit(a);
+    var first: [1000]bool = @splat(true);
+    first[999] = false;
+    try many.add(&first, 10);
+    for (&first) |*x| x.* = !x.*;
+    try many.add(&first, 20);
+    @memset(&first, true);
+    try many.add(&first, 7); // unanimous patterns carry no discordance
+    const result = (try many.finish()).?;
+    try std.testing.expectApproxEqAbs(@as(f64, 3330), result.statistic, 1e-9);
+    try std.testing.expectEqual(@as(f64, 999), result.df);
+    try std.testing.expectError(error.ExecError, many.add(&.{true}, 1));
+    try std.testing.expectError(error.ExecError, many.add(&first, -1));
+    try std.testing.expectEqual(result.statistic, (try many.finish()).?.statistic);
+    // sparse_q.sas: 12 variables, three observed patterns, SAS Q=36.6667.
+    var twelve = try CochranAccumulator.init(a, 12);
+    defer twelve.deinit(a);
+    try twelve.addKey(1, 10);
+    try twelve.addKey(4094, 20);
+    try twelve.addKey(0, 7);
+    try std.testing.expectApproxEqAbs(@as(f64, 36.6667), (try twelve.finish()).?.statistic, 0.00005);
 }
