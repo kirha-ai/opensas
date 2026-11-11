@@ -633,3 +633,60 @@ test "RR boundary tail targets distinguish directional methods and SCORE2" {
         try t.expect(tail_at.lower > 0.475 + 0.0004 and tail_at.upper < 0.95 - 0.4);
     }
 }
+
+test "RR boundary regimes cannot be reproduced by one clipped nuisance endpoint" {
+    // nuisance-regime-0..5.sas: six opposing-zero-cell shapes, seven alpha
+    // levels, all three methods; all126 outputs returned without timeout.
+    // nuisance-repeat.sas independently repeats both discriminating cases3x.
+    // For these directional tails the sole table is(0,n2), so the polynomial
+    // is (1-r*p2)^n1*p2^n2. The maximum is atp2=1 for r<n2/(n1+n2).
+    const t = std.testing;
+    const Case = struct { cells: [4]f64, r: f64, alpha: f64 };
+    const cases = [_]Case{
+        .{ .cells = .{ 0, 2, 3, 0 }, .r = 0.499728775024, .alpha = 0.5 },
+        .{ .cells = .{ 0, 2, 3, 0 }, .r = 0.31043853759765, .alpha = 0.95 },
+        .{ .cells = .{ 0, 3, 2, 0 }, .r = 0.218744822911, .alpha = 0.95 },
+        .{ .cells = .{ 0, 2, 5, 0 }, .r = 0.31875, .alpha = 0.94 },
+    };
+    for (cases) |c| for ([_]Method{ .noscore, .score }) |method| {
+        const tail_at = (try riskTail(.{ .cells = c.cells }, .first, .relative_risk, method, c.r, .left, .{ .tolerance = 1e-13 })).complete;
+        const closed = std.math.pow(f64, 1 - c.r, c.cells[1]);
+        try t.expectApproxEqAbs(closed, tail_at.lower, 1e-12);
+        try t.expect(@abs(tail_at.lower - c.alpha / 2) > 0.0002);
+    };
+    // A fixed .9995 matches neither all regimes nor the observed stopping
+    // window. Atalpha.8 the true boundary matches the SAS endpoint, while
+    // .9995 undershoots the target by more than .0003.
+    const r: f64 = 0.36754455566406;
+    const at_boundary = (1 - r) * (1 - r);
+    const clipped = std.math.pow(f64, 1 - r * 0.9995, 2) * std.math.pow(f64, 0.9995, 3);
+    try t.expectApproxEqAbs(@as(f64, 0.4), at_boundary, 1e-6);
+    try t.expect(clipped < 0.4 - 0.0003);
+    // Conversely, at [0,2;5,0],alpha.94 even the true maximum is .4641015625
+    // < .47. No legal nuisance point can hit the target there, so an open-
+    // interval maximizer alone cannot explain the returned SAS endpoint.
+    const below = (try riskTail(.{ .cells = .{ 0, 2, 5, 0 } }, .first, .relative_risk, .noscore, 0.31875, .left, .{ .tolerance = 1e-13 })).complete;
+    try t.expectApproxEqAbs(@as(f64, 0.4641015625), below.upper, 1e-12);
+    try t.expect(below.upper < 0.47 - 0.005);
+}
+
+test "high-alpha SCORE2 boundary discrepancies retain the exact acceptance certificate" {
+    // nuisance-regime-2/3/4.sas atalpha.99: SAS bounds below1/(2*n1).
+    // With p2=1 and r<1/(2*n1), every possible row1 count has absolute score
+    // >= the observed zero-success score, so the two-sided tail is exactly1.
+    // These are genuine unresolved SCORE2 runtime differences, not alpha
+    // splitting or a permissible1e-6 endpoint tolerance. Keep them in scope.
+    const t = std.testing;
+    for ([_][4]f64{ .{ 0, 2, 5, 0 }, .{ 0, 3, 5, 0 }, .{ 0, 4, 3, 0 } }, [_]f64{ 0.249913109375, 0.1666030883789, 0.11966864267985 }) |cells, sas_upper| {
+        const table = risk.Table2x2{ .cells = cells };
+        const probability = (try riskTail(table, .first, .relative_risk, .score2, sas_upper, .two_sided, .{ .tolerance = 1e-13 })).complete;
+        try t.expectEqual(@as(f64, 1), probability.lower);
+        try t.expectEqual(@as(f64, 1), probability.upper);
+        const reference = (try riskLimits(table, .first, .relative_risk, .score2, 0.99, .{})).complete;
+        try t.expectApproxEqAbs(1 / (2 * cells[1]), reference.upper, 1e-9);
+        try t.expect(reference.upper > sas_upper + 0.00005);
+        const profile = (try riskLimitsSas(table, .first, .relative_risk, .score2, 0.99, .{})).complete;
+        try t.expectEqual(reference, profile); // no unverified SCORE2 emulation
+    }
+}
+
