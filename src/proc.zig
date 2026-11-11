@@ -4531,6 +4531,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var freq_var: ?[]const u8 = null; // `freq f;` — each obs counts trunc(f) times (F2)
     var fmt_specs: std.ArrayList(VarSpec) = .empty; // `format v spec;` — CLASS groups by formatted value (NOTE-freqtablesfmt)
     while (i < toks.len and toks[i].tag != .eof) {
+        if (toks[i].tag == .semicolon) {
+            i += 1;
+            continue;
+        }
         if (tkKw(toks[i], "run") or tkKw(toks[i], "quit")) break;
         if (tkKw(toks[i], "var")) {
             i += 1;
@@ -4605,6 +4609,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (atTag(toks, i, .semicolon)) i += 1;
     }
 
+    if (extra.inference.location.len > 1 and vars.items.len == 0)
+        return diags.fail(error.ParseError, 0, "UNIVARIATE: multiple MU0 values require a VAR statement", .{});
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
         // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
         // gap — the runSort (GH#8) absent-input arm: "File {s} does not
@@ -4696,6 +4702,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
+    try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
     if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
 
@@ -4753,7 +4760,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (!univ.hasUsableWeight(bd.rows.items, wcol, extra)) continue;
         if (ccols.items.len == 0) {
             const analysis = try univ.analysisView(arena, bd, acols.items, wcol, extra);
-            for (acols.items) |ix| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, mu0, extra, icols.items);
+            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
@@ -4778,7 +4785,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 for (g.rows) |r| try gd.rows.append(arena, r);
                 if (!univ.hasUsableWeight(gd.rows.items, wcol, extra)) continue;
                 const analysis = try univ.analysisView(arena, gd, acols.items, wcol, extra);
-                for (acols.items) |ix| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, mu0, extra, icols.items);
+                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
             }
         }
     }
@@ -4941,7 +4948,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     var tp = nan;
     if (vardef == .df and s.n >= 2 and s.std > 0 and s.sumw > 0) {
         tstat = (s.mean - mu0) / (s.std / @sqrt(s.sumw)); // F1: test against MU0=
-        tp = 2.0 * (1.0 - studentTcdf(@abs(tstat), nf - 1));
+        tp = @import("stat/univ_inference.zig").tProbability(tstat, nf - 1);
     }
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\n" ++ (" " ** 20) ++ "Tests for Location: Mu0={d}\n\n", .{mu0}));
     try out.appendSlice(arena, "Test           -Statistic-    -----p Value------\n\n");
@@ -4965,7 +4972,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         }
         // M = (n⁺−n⁻)/2 = n⁺−n*/2; p = 2·P(Bin(n*,½) ≥ max(n⁺,n⁻))
         //   = 2·I_½(max, n*−max+1) (binomial tail via incomplete beta), capped at 1.
-        const mstat = @as(f64, @floatFromInt(nplus)) - @as(f64, @floatFromInt(nstar)) / 2.0;
+        const mstat = if (nstar == 0) nan else @as(f64, @floatFromInt(nplus)) - @as(f64, @floatFromInt(nstar)) / 2.0;
         var mp = nan;
         if (nstar > 0) {
             const hc = @max(nplus, nstar - nplus);
@@ -5000,7 +5007,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
             dsum += d2;
             if (nz.items[j].pos) dpos += d2;
         }
-        const sstat = @as(f64, @floatFromInt(2 * dpos - dsum)) / 4.0;
+        const sstat = if (nstar == 0) nan else @as(f64, @floatFromInt(2 * dpos - dsum)) / 4.0;
         const sp = if (nstar == 0) nan else try signedRankP(arena, dranks, 2 * dpos - dsum, tiecorr);
         try testLine(arena, out, "Sign", "M", mstat, "Pr >= |M|", mp);
         try testLine(arena, out, "Signed Rank", "S", sstat, "Pr >= |S|", sp);
@@ -5018,6 +5025,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try quantLine(arena, out, "5%", p5);
     try quantLine(arena, out, "1%", p1);
     try quantLine(arena, out, "0% Min", s.min);
+    try univ.renderInference(arena, out, ds, col, wcol, vardef, pctldef, mu0, extra);
 
     try univ.renderExtras(arena, out, ds, col, wcol, pairs, extra, ids);
 }
@@ -5054,9 +5062,9 @@ fn pNum(arena: std.mem.Allocator, p: f64) ![]const u8 {
 /// `d` holds the doubled average ranks (2·rᵢ, always integral) of the nonzero
 /// observations, `tobs` = 4·Sobs = 2·Σd⁺ − Σd, `tiecorr` = Σ t(t−1)(2t+5) over
 /// tie runs. n ≤ 20 → exact enumeration of the 2ⁿ sign assignments (integer DP
-/// on subset sums); n > 20 → normal approximation with the tie-corrected
-/// variance and a 0.5 continuity correction (SAS 9.4, "Tests for Location").
-fn signedRankP(arena: std.mem.Allocator, d: []const i64, tobs: i64, tiecorr: f64) !f64 {
+/// on subset sums); n > 20 → Iman/Conover t approximation with midrank variance
+/// (SAS 9.4 Statistical Procedures p.417, "Tests for Location").
+fn signedRankP(arena: std.mem.Allocator, d: []const i64, tobs: i64, _: f64) !f64 {
     if (d.len <= 20) {
         var total: i64 = 0;
         for (d) |v| total += v;
@@ -5083,11 +5091,7 @@ fn signedRankP(arena: std.mem.Allocator, d: []const i64, tobs: i64, tiecorr: f64
         const combos = @as(f64, @floatFromInt(@as(u64, 1) << @intCast(d.len)));
         return @as(f64, @floatFromInt(cnt)) / combos;
     }
-    const nf: f64 = @floatFromInt(d.len);
-    const s = @as(f64, @floatFromInt(tobs)) / 4.0;
-    const var_s = (nf * (nf + 1) * (2 * nf + 1) - tiecorr / 2.0) / 24.0;
-    const z = (@abs(s) - 0.5) / @sqrt(var_s);
-    return 2.0 * (1.0 - normCdf(z));
+    return @import("stat/univ_inference.zig").signedRankAsymptotic(d, tobs);
 }
 
 /// Standard normal CDF — Abramowitz–Stegun 7.1.26 (|ε| ≤ 1.5e-7). Only the
@@ -15885,8 +15889,7 @@ test "BUG-univmu0freq: MU0= + FREQ + fail-loud unrecognized option/statement (ca
     // ROOT-CAUSE: an unrecognized option / unmodeled statement now fails loud.
     const Case = struct { src: []const u8, needle: []const u8 };
     const bad = [_]Case{
-        .{ .src = "proc univariate data=d normal; var x; run;", .needle = "normal" },
-        .{ .src = "proc univariate data=d cibasic; var x; run;", .needle = "cibasic" },
+        .{ .src = "proc univariate data=d plots; var x; run;", .needle = "plots" },
         .{ .src = "proc univariate data=d; inset x; var x; run;", .needle = "inset" },
     };
     for (bad) |c| {
@@ -16482,11 +16485,11 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         try t.expectEqual(@as(u8, 1), diag.exitCode(diag.gapHit(), d.hasErrors()));
         try t.expect(std.mem.indexOf(u8, try d.render(), "PROC FREQ: TABLES option chisqq is not supported") != null);
     }
-    { // UNIVARIATE header: NORMAL is documented (rc 2); `nromal` is a typo (rc 1)
+    { // UNIVARIATE header: PLOTS is documented (rc 2); `nromal` is a typo (rc 1)
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
-        const toks = try lex.tokenize(a, "proc univariate data=have normal; var age; run;", &d);
+        const toks = try lex.tokenize(a, "proc univariate data=have plots; var age; run;", &d);
         try t.expectError(error.ParseError, runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }

@@ -2,6 +2,9 @@
 //! SAS 9.4 Statistical Procedures pp.299–306, 342, 353–358, 408–414, 460–466.
 const std = @import("std");
 const proc = @import("../proc.zig");
+const inference = @import("univ_inference.zig");
+const inference_parse = @import("univ_inference_parse.zig");
+const inference_render = @import("univ_inference_render.zig");
 const normality = @import("normality.zig");
 const h = proc.UnivariateHelpers;
 const diag = @import("../diag.zig");
@@ -65,6 +68,7 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     return list.toOwnedSlice(a);
 }
 pub const Options = struct {
+    inference: inference_parse.Options = .{},
     source: ?*Dataset = null,
     nobs_source: ?*Dataset = null,
     source_rows: std.AutoHashMapUnmanaged(usize, []const Value) = .empty,
@@ -126,6 +130,7 @@ pub const Options = struct {
         if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed CLASS options", .{});
     }
     pub fn parse(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!bool {
+        if (try self.inference.parse(a, d, t, i)) return true;
         const key = t[i.*].text;
         inline for (.{ "freq", "modes", "idout", "exclnpwgt" }) |f| {
             if (eq(key, f)) {
@@ -187,8 +192,8 @@ pub fn datasetName(a: Allocator, t: []const Token, i: *usize) ![]const u8 {
     }
     return name;
 }
-const Request = struct { key: []const u8, name: []const u8, var_index: usize, pct: ?f64 = null };
-pub const Output = struct { tokens: []const Token = &.{}, name: ?[]const u8 = null, req: std.ArrayList(Request) = .empty, pts: []f64 = &.{}, pre: [][]const u8 = &.{}, suffix: [][]const u8 = &.{}, byvar: bool = false, ndec: ?u8 = null };
+const Request = struct { key: []const u8, name: []const u8, var_index: usize, pct: ?f64 = null, ci: ?inference_parse.OutputCI = null, upper: bool = false };
+pub const Output = struct { cis: std.ArrayList(inference_parse.OutputCI) = .empty, tokens: []const Token = &.{}, name: ?[]const u8 = null, req: std.ArrayList(Request) = .empty, pts: []f64 = &.{}, pre: [][]const u8 = &.{}, suffix: [][]const u8 = &.{}, byvar: bool = false, ndec: ?u8 = null };
 pub fn parseOutput(a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Output {
     var o: Output = .{};
     const start = i.*;
@@ -207,6 +212,8 @@ pub fn parseOutput(a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usi
                     if (t[i.*].tag == .rparen) depth -= 1;
                 }
             }
+        } else if (eq(key, "cipctldf") or eq(key, "ciquantdf") or eq(key, "cipctlnormal") or eq(key, "ciquantnormal")) {
+            try o.cis.append(a, try inference_parse.parseOutputCI(a, d, t, i, eq(key, "cipctldf") or eq(key, "ciquantdf")));
         } else if (eq(key, "pctlpts")) {
             o.pts = try numbers(a, d, t, i);
             for (o.pts) |p| if (p < 0 or p > 100) return d.fail(error.ParseError, 0, "UNIVARIATE: percentile must be between 0 and 100", .{});
@@ -239,7 +246,7 @@ pub fn parseOutput(a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usi
 }
 fn validStat(k: []const u8) bool {
     if (h.statFromKw(k) != null and !h.univariateRejectsStatKw(k)) return true;
-    inline for (.{ "nobs", "q2", "geomean", "harmean" }) |s| if (eq(k, s)) return true;
+    inline for (.{ "nobs", "q2", "geomean", "harmean", "gini", "mad", "sn", "qn", "std_gini", "std_mad", "std_sn", "std_qn", "std_qrange", "msign", "probm", "signrank", "probs", "normaltest", "probn" }) |s| if (eq(k, s)) return true;
     return false;
 }
 fn pctName(a: Allocator, pre: []const u8, suffix: ?[]const u8, p: f64, ndec: ?u8) ![]const u8 {
@@ -287,7 +294,7 @@ fn pairsFor(a: Allocator, ds: *Dataset, col: usize, wc: ?usize) ![]h.XW {
     }.less);
     return p.toOwnedSlice(a);
 }
-const Summary = struct {
+pub const Summary = struct {
     s: h.Stats,
     pairs: []h.XW,
     nmiss: usize,
@@ -306,7 +313,7 @@ const Summary = struct {
     qn: f64 = nan,
     std_sn: f64 = nan,
     std_qn: f64 = nan,
-    fn value(self: Summary, key: []const u8, def: u8, vd: h.VarDef, mu0: f64) f64 {
+    pub fn value(self: Summary, key: []const u8, def: u8, vd: h.VarDef, mu0: f64) f64 {
         if (percentile(key)) |p| return quantile(self.pairs, p, def);
         if (eq(key, "qrange")) return h.univPercentile(self.pairs, 75, def) - h.univPercentile(self.pairs, 25, def);
         if (eq(key, "nmiss")) return @floatFromInt(self.nmiss);
@@ -320,14 +327,14 @@ const Summary = struct {
         if (eq(key, "t") or eq(key, "probt")) {
             if (vd != .df or self.s.n < 2 or !(self.s.std > 0)) return nan;
             const tv = (self.s.mean - mu0) / (self.s.std / @sqrt(self.s.sumw));
-            return if (eq(key, "t")) tv else 2 * (1 - h.studentTcdf(@abs(tv), @as(f64, @floatFromInt(self.s.n)) - 1));
+            return if (eq(key, "t")) tv else inference.tProbability(tv, @as(f64, @floatFromInt(self.s.n)) - 1);
         }
         if ((eq(key, "stderr") or eq(key, "stdmean")) and vd != .df) return nan;
         if (h.statFromKw(key)) |k| return h.statValue(k, self.s);
         return nan;
     }
 };
-fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool) !Summary {
+fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool, inf: inference_parse.Options) !Summary {
     // SAS 9.4 pp.398,408: missing weights exclude observations from NMISS.
     // Zero/negative weights still count unless EXCLNPWGT already removed them.
     var nmiss: usize = 0;
@@ -373,7 +380,7 @@ fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, m
             if (p.x > mu0) pos += 1;
         };
         const n = nz.items.len;
-        z.msign = @as(f64, @floatFromInt(pos)) - @as(f64, @floatFromInt(n)) / 2;
+        z.msign = if (n == 0) nan else @as(f64, @floatFromInt(pos)) - @as(f64, @floatFromInt(n)) / 2;
         if (n > 0) {
             const high = @max(pos, n - pos);
             z.probm = @min(1, 2 * h.betai(@floatFromInt(high), @floatFromInt(n - high + 1), 0.5));
@@ -398,10 +405,10 @@ fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, m
         for (ranks, 0..) |r, j| {
             sum += if (nz.items[j].pos) r else -r;
         }
-        z.signrank = @as(f64, @floatFromInt(sum)) / 4;
+        z.signrank = if (n == 0) nan else @as(f64, @floatFromInt(sum)) / 4;
         if (n > 0) z.probs = try h.signedRankP(a, ranks, sum, tie);
         if (robust) {
-            try robustStats(a, &z);
+            try robustStats(a, &z, inf.forceqn, inf.forcesn);
             const sorted = try a.alloc(f64, z.pairs.len);
             for (z.pairs, 0..) |pair, j| sorted[j] = pair.x;
             if (try normality.compute(a, sorted)) |result| {
@@ -417,7 +424,7 @@ fn median(x: []f64) f64 {
     std.mem.sort(f64, x, {}, std.sort.asc(f64));
     return if (x.len % 2 == 1) x[x.len / 2] else (x[x.len / 2 - 1] + x[x.len / 2]) / 2;
 }
-fn robustStats(a: Allocator, z: *Summary) !void {
+fn robustStats(a: Allocator, z: *Summary, forceqn: bool, forcesn: bool) !void {
     const n = z.pairs.len;
     if (n == 0) return;
     const nf: f64 = @floatFromInt(n);
@@ -439,13 +446,13 @@ fn robustStats(a: Allocator, z: *Summary) !void {
     }
     z.gini = 2 * total / (nf * (nf - 1));
     // SAS default limits (printed p.301); FORCEQN/FORCESN are separate options.
-    if (n <= 1_000_000) {
+    if (forcesn or n <= 1_000_000) {
         const inner = try a.alloc(f64, n);
         for (0..n) |i| inner[i] = distanceMedian(z.pairs, i);
         std.mem.sort(f64, inner, {}, std.sort.asc(f64));
         z.sn = 1.1926 * inner[(n - 1) / 2];
     }
-    if (n <= 65_526) {
+    if (forceqn or n <= 65_526) {
         const half = n / 2 + 1;
         z.qn = 2.2219 * pairDistance(z.pairs, half * (half - 1) / 2);
     }
@@ -489,6 +496,8 @@ fn label(k: []const u8) []const u8 {
     if (eq(canonical(k), "p90")) return "the 90th percentile";
     if (eq(canonical(k), "p95")) return "the 95th percentile";
     if (eq(canonical(k), "p99")) return "the 99th percentile";
+    if (eq(canonical(k), "normaltest")) return "the normality test statistic";
+    if (eq(canonical(k), "probn")) return "p-value of normality test stat";
     if (eq(canonical(k), "probm")) return "p-value of the sign statistic";
     if (eq(canonical(k), "probs")) return "p-value of signed rank stat";
     if (eq(canonical(k), "probt")) return "p-value of the t statistic";
@@ -591,6 +600,25 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 const pi = if (spec.byvar) k else j;
                 try spec.req.append(a, .{ .key = "percentile", .name = try pctName(a, spec.pre[vi], if (pi < spec.suffix.len) spec.suffix[pi] else null, spec.pts[pi], spec.ndec), .var_index = vi, .pct = spec.pts[pi] });
             };
+            // SAS orders normal limits before distribution-free limits, each
+            // lower group before upper, independently of source option order.
+            if (wc != null and spec.cis.items.len > 0) try cx.diags.warn(0, "UNIVARIATE: confidence intervals for percentiles are not computed with WEIGHT", .{});
+            for ([_]bool{ false, true }) |dfci| for (spec.cis.items) |ci| {
+                if (wc != null) continue;
+                if (ci.df != dfci) continue;
+                for ([_]bool{ false, true }) |upper| {
+                    const pre = if (upper) ci.upperpre else ci.lowerpre;
+                    const suffix = if (upper) ci.uppername else ci.lowername;
+                    if (pre.len > acols.len) return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: too many confidence prefixes", .{});
+                    const outer_ci = if (spec.byvar) pre.len else spec.pts.len;
+                    const inner_ci = if (spec.byvar) spec.pts.len else pre.len;
+                    for (0..outer_ci) |j| for (0..inner_ci) |k| {
+                        const vi = if (spec.byvar) j else k;
+                        const pi = if (spec.byvar) k else j;
+                        try spec.req.append(a, .{ .key = "percentile", .name = try pctName(a, pre[vi], if (pi < suffix.len) suffix[pi] else null, spec.pts[pi], spec.ndec), .var_index = vi, .pct = spec.pts[pi], .ci = ci, .upper = upper });
+                    };
+                }
+            };
             var unique: std.ArrayList(Request) = .empty;
             for (spec.req.items) |r| {
                 var duplicate = od.indexOf(r.name) != null;
@@ -634,17 +662,17 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 const nobs = outputNobs(g.rows, bcols, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
-                for (spec.req.items) |r| if (eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
+                for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
                     robust = true;
                 };
                 for (acols, 0..) |ci, j| {
-                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, mu0, robust);
+                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt.inference);
                     // CLASS counts weight-eligible observations, including missing
                     // analysis values. Keep pooled/BY pre-exclusion totals separate.
                     summaries[j].nobs = if (ccols.len > 0) summaries[j].s.n + summaries[j].nmiss else nobs;
-                    if (table and wc == null and summaries[j].pairs.len > 65_526)
+                    if (table and !opt.inference.forceqn and wc == null and summaries[j].pairs.len > 65_526)
                         try cx.diags.warn(0, "UNIVARIATE: Qn is not computed by default above 65526 nonmissing observations for {s}", .{ds.columns.items[ci].name});
-                    if (table and wc == null and summaries[j].pairs.len > 1_000_000)
+                    if (table and !opt.inference.forcesn and wc == null and summaries[j].pairs.len > 1_000_000)
                         try cx.diags.warn(0, "UNIVARIATE: Sn is not computed by default above 1000000 nonmissing observations for {s}", .{ds.columns.items[ci].name});
                 }
                 const nrows = if (table) acols.len else 1;
@@ -669,10 +697,10 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                             row[at] = .{ .str = variable_label[0..@min(variable_label.len, 40)] };
                             at += 1;
                         }
-                        for (tableKeys, 0..) |k, j| row[at + j] = h.numV(summaries[vi].value(k, if (wc != null) 5 else def, vd, mu0));
+                        for (tableKeys, 0..) |k, j| row[at + j] = h.numV(summaries[vi].value(k, if (wc != null) 5 else def, vd, opt.inference.mu(vi, mu0)));
                     } else for (spec.req.items, 0..) |r, j| {
                         const z = summaries[r.var_index];
-                        row[at + j] = h.numV(if (r.pct) |p| quantile(z.pairs, p, if (wc != null) 5 else def) else z.value(r.key, if (wc != null) 5 else def, vd, mu0));
+                        row[at + j] = h.numV(if (r.pct) |p| if (r.ci) |ci| try confidenceValue(a, z, p, ci, r.upper, opt.inference.alpha, wc != null) else quantile(z.pairs, p, if (wc != null) 5 else def) else z.value(r.key, if (wc != null) 5 else def, vd, opt.inference.mu(r.var_index, mu0)));
                     }
                     try od.appendRow(row);
                 }
@@ -793,7 +821,7 @@ test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY g
     // copies must not consume extreme slots or renumber physical observations.
     const rows = [_][3]f64{
         .{ 1, nan, 1 }, .{ 1, 1, 3 }, .{ 1, 1, 2 }, .{ 1, 9, 2 }, .{ 1, 9, 3 },
-        .{ 2, 2, 2 }, .{ 2, 2, 3 }, .{ 2, 8, 3 }, .{ 2, 8, 2 },
+        .{ 2, 2, 2 },   .{ 2, 2, 3 }, .{ 2, 8, 3 }, .{ 2, 8, 2 },
     };
     for (rows, [_][]const u8{ "Missing", "A", "B", "C", "D", "E", "F", "G", "H" }) |row, id| {
         try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] }, .{ .str = id } });
@@ -1365,7 +1393,7 @@ test "UNIVARIATE OUTTABLE honors the SAS default Qn sample-size limit" {
     const pairs = try a.alloc(h.XW, 65527);
     for (pairs, 0..) |*p, i| p.* = .{ .x = @floatFromInt(i + 1), .w = 1 };
     var z: Summary = .{ .s = h.computeStatsV(&.{}, 0, null, .df), .pairs = pairs, .nmiss = 0, .nobs = pairs.len };
-    try robustStats(a, &z);
+    try robustStats(a, &z, false, false);
     try std.testing.expect(std.math.isNan(z.qn));
     try std.testing.expect(std.math.isNan(z.std_qn));
     try std.testing.expectApproxEqAbs(@as(f64, 19537.1732), z.sn, 1e-8);
@@ -1683,7 +1711,6 @@ test "BUG-univclassrepweight raw-key ordering and ROUND preserve original weight
     }
 }
 
-
 test "BUG-univclassorderweight DATA and FREQ use weight-eligible rows" {
     // SAS oracle: /tmp/opensas-review-r3-fixes/BUG-univclassorderweight/matrix.{sas,txt,log}.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -1693,9 +1720,9 @@ test "BUG-univclassorderweight DATA and FREQ use weight-eligible rows" {
     const ds = lib.find("d").?;
     const Case = struct { missing_weight: f64 = nan, excl: bool = false, freq: bool = false, by: bool = false, round: bool = false, weighted: bool = true };
     for ([_]Case{
-        .{}, .{ .missing_weight = 0 }, .{ .missing_weight = -1 },
-        .{ .missing_weight = 0, .excl = true }, .{ .freq = true },
-        .{ .by = true }, .{ .round = true }, .{ .weighted = false },
+        .{},                                    .{ .missing_weight = 0 }, .{ .missing_weight = -1 },
+        .{ .missing_weight = 0, .excl = true }, .{ .freq = true },        .{ .by = true },
+        .{ .round = true },                     .{ .weighted = false },
     }) |case| {
         ds.rows.clearRetainingCapacity();
         const ng: usize = if (case.by) 2 else 1;
@@ -1708,8 +1735,9 @@ test "BUG-univclassorderweight DATA and FREQ use weight-eligible rows" {
         for ([_][]const u8{ "data", "freq" }) |mode| {
             try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint {s} {s} outtable=t; {s} class y(order={s}); var {s}; {s} {s} output out=o n=n mean=m;run;", .{
                 if (case.excl) "exclnpwgt" else "", if (case.round) "round=10" else "",
-                if (case.by) "by g;" else "", mode, if (case.round) "w" else "x",
-                if (case.weighted) "weight w;" else "", if (case.freq) "freq f;" else "",
+                if (case.by) "by g;" else "",       mode,
+                if (case.round) "w" else "x",       if (case.weighted) "weight w;" else "",
+                if (case.freq) "freq f;" else "",
             }));
             const o = lib.find("o").?;
             const t = lib.find("t").?;
@@ -1733,4 +1761,19 @@ test "BUG-univclassorderweight DATA and FREQ use weight-eligible rows" {
             };
         }
     }
+}
+
+fn confidenceValue(a: Allocator, z: Summary, p: f64, ci: inference_parse.OutputCI, upper: bool, alpha: f64, weighted: bool) !f64 {
+    if (weighted) return nan;
+    const x = try a.alloc(f64, z.pairs.len);
+    defer a.free(x);
+    for (z.pairs, 0..) |v, j| x[j] = v.x;
+    const interval = if (ci.df) inference.distributionFree(x, p / 100, ci.ci, alpha) else inference.normalQuantileCI(z.s.mean, z.s.std, z.s.n, p / 100, ci.ci, alpha);
+    return if (upper) interval.upper else interval.lower;
+}
+pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options) !void {
+    const inf = opt.inference;
+    if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
+    const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
+    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference);
 }
