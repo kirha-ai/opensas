@@ -102,10 +102,14 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         if (c.event_index >= integers.cells.len) return error.ExecError;
         var n: u32 = 0;
         for (integers.cells) |v| n += v;
-        return .{ .binomial = try exact.binomial(integers.cells[c.event_index], n, c.binomial_p, c.alpha, c.midp_limits) };
+        const result = try exact.binomialControlled(integers.cells[c.event_index], n, c.binomial_p, c.alpha, c.midp_limits, .{ .context = c.budget.context, .expired = c.budget.expired });
+        return switch (result) {
+            .complete => |b| .{ .binomial = b },
+            .exhausted => .exhausted,
+        };
     }
     if (f == .oddsratio) {
-        const r = try exact.oddsRatio(integers.cells[0..4].*, c.alpha, c.midp_limits, c.budget.max_tables);
+        const r = try exact.oddsRatioControlled(integers.cells[0..4].*, c.alpha, c.midp_limits, c.budget.max_tables, .{ .context = c.budget.context, .expired = c.budget.expired });
         return switch (r) {
             .complete => |ci| .{ .interval = ci },
             .exhausted => .exhausted,

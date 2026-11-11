@@ -15,7 +15,17 @@ pub fn integerCount(value: f64) Error!u32 {
 }
 pub const Tails = struct { point: f64, left: f64, right: f64 };
 pub const Binomial = struct { tails: Tails, one_sided: f64, two_sided: f64, mid_p: f64, limits: Interval };
+pub const BinomialResult = union(enum) { complete: Binomial, exhausted };
 
+/// Clock ownership stays in the execution adapter; avoids platform-specific
+/// timing and dependency cycles in numerical primitives.
+pub const Control = struct {
+    context: ?*const anyopaque = null,
+    expired: ?*const fn (?*const anyopaque) bool = null,
+    pub fn stopped(self: Control) bool {
+        return if (self.expired) |f| f(self.context) else false;
+    }
+};
 fn validAlpha(alpha: f64) bool {
     return std.math.isFinite(alpha) and alpha > 0 and alpha < 1;
 }
@@ -43,18 +53,26 @@ pub fn binomialTails(k: u32, n: u32, p: f64) Error!Tails {
 /// unlike Fisher's probability ordering. The separately reported binomial
 /// mid-p adjusts the one-sided value; the ordinary p-values remain unchanged.
 pub fn binomial(k: u32, n: u32, p0: f64, alpha: f64, midp: bool) Error!Binomial {
+    return (try binomialControlled(k, n, p0, alpha, midp, .{})).complete;
+}
+pub fn binomialControlled(k: u32, n: u32, p0: f64, alpha: f64, midp: bool, control: Control) Error!BinomialResult {
     if (!validAlpha(alpha)) return error.ExecError;
+    if (control.stopped()) return .exhausted;
     const tails = try binomialTails(k, n, p0);
     const one = @min(tails.left, tails.right);
     var limits = Interval{ .lower = 0, .upper = 1 };
-    if (k > 0) limits.lower = try binomialLimit(k, n, alpha / 2, midp, true);
-    if (k < n) limits.upper = try binomialLimit(k, n, alpha / 2, midp, false);
-    return .{ .tails = tails, .one_sided = one, .two_sided = @min(1, 2 * one), .mid_p = @max(0, one - tails.point / 2), .limits = limits };
+    if (k > 0) limits.lower = (try binomialLimitControlled(k, n, alpha / 2, midp, true, control)) orelse return .exhausted;
+    if (k < n) limits.upper = (try binomialLimitControlled(k, n, alpha / 2, midp, false, control)) orelse return .exhausted;
+    return .{ .complete = .{ .tails = tails, .one_sided = one, .two_sided = @min(1, 2 * one), .mid_p = @max(0, one - tails.point / 2), .limits = limits } };
 }
 fn binomialLimit(k: u32, n: u32, target: f64, midp: bool, lower: bool) Error!f64 {
+    return (try binomialLimitControlled(k, n, target, midp, lower, .{})).?;
+}
+fn binomialLimitControlled(k: u32, n: u32, target: f64, midp: bool, lower: bool, control: Control) Error!?f64 {
     var lo: f64 = 0;
     var hi: f64 = 1;
     for (0..80) |_| {
+        if (control.stopped()) return null;
         const p = (lo + hi) / 2;
         const t = try binomialTails(k, n, p);
         const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
@@ -88,15 +106,22 @@ pub const OddsDistribution = struct {
         return choose(cf, xf) + choose(nf - cf, rf - xf) + @as(f64, @floatFromInt(x - self.lo)) * log_odds;
     }
     pub fn tails(self: OddsDistribution, log_odds: f64, max_support: u64) Error!Tails {
+        return (try self.tailsControlled(log_odds, max_support, .{})).?;
+    }
+    pub fn tailsControlled(self: OddsDistribution, log_odds: f64, max_support: u64, control: Control) Error!?Tails {
         if (!std.math.isFinite(log_odds) or @as(u64, self.hi) - self.lo + 1 > max_support) return error.ExecError;
         // Normalize with log-sum-exp, retaining precision at extreme odds.
         var peak: f64 = -std.math.inf(f64);
         var x: u64 = self.lo;
-        while (x <= self.hi) : (x += 1) peak = @max(peak, self.logWeight(@intCast(x), log_odds));
+        while (x <= self.hi) : (x += 1) {
+            if (control.stopped()) return null;
+            peak = @max(peak, self.logWeight(@intCast(x), log_odds));
+        }
         var total: f64 = 0;
         var out = Tails{ .point = 0, .left = 0, .right = 0 };
         x = self.lo;
         while (x <= self.hi) : (x += 1) {
+            if (control.stopped()) return null;
             const w = @exp(self.logWeight(@intCast(x), log_odds) - peak);
             total += w;
             if (x == self.observed) out.point = w;
@@ -113,23 +138,29 @@ pub const OddsDistribution = struct {
 /// SAS/STAT pp.201–202: at observed OR=0/infinity, the finite endpoint
 /// uses alpha, NOT alpha/2. Zero margins are undefined, not infinite odds.
 pub fn oddsRatio(cells: [4]u32, alpha: f64, midp: bool, max_support: u64) Error!OddsResult {
+    return oddsRatioControlled(cells, alpha, midp, max_support, .{});
+}
+pub fn oddsRatioControlled(cells: [4]u32, alpha: f64, midp: bool, max_support: u64, control: Control) Error!OddsResult {
     if (!validAlpha(alpha)) return error.ExecError;
     const d = try OddsDistribution.init(cells);
     if (@as(u64, d.hi) - d.lo + 1 > max_support) return .exhausted;
+    if (control.stopped()) return .exhausted;
     const boundary = d.observed == d.lo or d.observed == d.hi;
     const target = if (boundary) alpha else alpha / 2;
-    return .{ .complete = .{
-        .lower = if (d.observed == d.lo) 0 else try oddsLimit(d, target, midp, true, max_support),
-        .upper = if (d.observed == d.hi) std.math.inf(f64) else try oddsLimit(d, target, midp, false, max_support),
-    } };
+    var limits = Interval{ .lower = 0, .upper = std.math.inf(f64) };
+    if (d.observed != d.lo) limits.lower = (try oddsLimit(d, target, midp, true, max_support, control)) orelse return .exhausted;
+    if (d.observed != d.hi) limits.upper = (try oddsLimit(d, target, midp, false, max_support, control)) orelse return .exhausted;
+    return .{ .complete = limits };
 }
-fn oddsLimit(d: OddsDistribution, target: f64, midp: bool, lower: bool, budget: u64) Error!f64 {
+
+fn oddsLimit(d: OddsDistribution, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
     // u32 counts imply finite nonstructural roots well inside exp(±128).
     var lo: f64 = -128;
     var hi: f64 = 128;
     for (0..80) |_| {
+        if (control.stopped()) return null;
         const m = (lo + hi) / 2;
-        const t = try d.tails(m, budget);
+        const t = (try d.tailsControlled(m, budget, control)) orelse return null;
         const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
         if ((tail < target) == lower) lo = m else hi = m;
     }
@@ -228,15 +259,23 @@ pub fn binomialBlakerP(k: u32, n: u32, p: f64) Error!f64 {
 /// acceptability is 2*G(k)>=alpha. Upper endpoint follows binomial symmetry.
 pub fn binomialBlaker(k: u32, n: u32, alpha: f64) Error!Interval {
     if (n == 0 or k > n or !validAlpha(alpha)) return error.ExecError;
-    return .{ .lower = try blakerLower(k, n, alpha), .upper = 1 - try blakerLower(n - k, n, alpha) };
+    return (try binomialBlakerControlled(k, n, alpha, .{})).complete;
 }
-fn blakerLower(k: u32, n: u32, alpha: f64) Error!f64 {
+pub fn binomialBlakerControlled(k: u32, n: u32, alpha: f64, control: Control) Error!OddsResult {
+    if (n == 0 or k > n or !validAlpha(alpha)) return error.ExecError;
+    if (control.stopped()) return .exhausted;
+    const lower = (try blakerLower(k, n, alpha, control)) orelse return .exhausted;
+    const upper = 1 - ((try blakerLower(n - k, n, alpha, control)) orelse return .exhausted);
+    return .{ .complete = .{ .lower = lower, .upper = upper } };
+}
+fn blakerLower(k: u32, n: u32, alpha: f64, control: Control) Error!?f64 {
     if (k == 0) return 0;
-    const cp = try binomialLimit(k, n, alpha / 2, false, true);
+    const cp = (try binomialLimitControlled(k, n, alpha / 2, false, true, control)) orelse return null;
     const gamma = (try binomialTails(k, n, cp)).right;
     var first: u64 = 0;
     var end: u64 = k;
     while (first < end) {
+        if (control.stopped()) return null;
         const mid = (first + end) / 2;
         if ((try binomialTails(@intCast(mid), n, cp)).left <= gamma) first = mid + 1 else end = mid;
     }
@@ -245,6 +284,7 @@ fn blakerLower(k: u32, n: u32, alpha: f64) Error!f64 {
     var lo = cp;
     var hi: f64 = 1;
     for (0..80) |_| {
+        if (control.stopped()) return null;
         const mid = (lo + hi) / 2;
         if ((try binomialTails(next, n, mid)).left > (try binomialTails(k, n, mid)).right) lo = mid else hi = mid;
     }
@@ -254,6 +294,7 @@ fn blakerLower(k: u32, n: u32, alpha: f64) Error!f64 {
     lo = cp;
     hi = jump;
     for (0..80) |_| {
+        if (control.stopped()) return null;
         const mid = (lo + hi) / 2;
         const probability = (try binomialTails(k, n, mid)).right + (if (next == 0) @as(f64, 0) else (try binomialTails(next - 1, n, mid)).left);
         if (probability <= alpha) lo = mid else hi = mid;
@@ -284,4 +325,14 @@ test "Blaker inversion handles opposite-tail jumps and small-n coverage" {
             try t.expect(coverage >= 0.95 - 1e-12);
         }
     }
+}
+
+fn deadlineExpired(_: ?*const anyopaque) bool {
+    return true;
+}
+test "exact interval deadline returns status not numerical limits" {
+    const control = Control{ .expired = deadlineExpired };
+    try std.testing.expect((try oddsRatioControlled(.{ 1, 9, 11, 3 }, 0.05, false, 100, control)) == .exhausted);
+    try std.testing.expect((try binomialControlled(2, 10, 0.3, 0.05, false, control)) == .exhausted);
+    try std.testing.expect((try binomialBlakerControlled(2, 10, 0.05, control)) == .exhausted);
 }
