@@ -42,6 +42,11 @@ pub const Report = struct {
     matrices: []const k.Matrix = &.{},
     risk_tables: []const risk.Table2x2 = &.{},
     cmh: [3]?k.Chi = .{ null, null, null },
+    /// Mathematical score requirements, separate from SAS listing policy.
+    cmh_score_eligible: [3]bool = .{ true, true, true },
+    /// SAS omits the entire CMH ODS table on numeric missing TABLE scores in
+    /// cmh_axes_ods.sas, even where a score-independent statistic is defined.
+    /// This flag controls listing only, never per-kind computation eligibility.
     cmh_suppressed: bool = false,
     ratios: []const r.RatioRow = &.{},
     common_rows: []const r.CommonRow = &.{},
@@ -116,7 +121,8 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
     var risk_tables: std.ArrayList(risk.Table2x2) = .empty;
     var simple: std.ArrayList(?k.Estimate) = .empty;
     var weighted: std.ArrayList(?k.Estimate) = .empty;
-    var numeric_scores_valid = true;
+    var row_scores_valid = true;
+    var col_scores_valid = true;
     for (ids.items) |id| {
         const slice = try table.slice(a, id);
         const scored = (try slice.matrix(a, table.score_kind)).?;
@@ -127,12 +133,13 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
         // Keep observed zero strata in metadata, but do not feed NaN RIDIT
         // scores from empty margins into inference or exact reference sets.
         if (slice.total > 0 and m.rows > 0 and m.cols > 0) {
-            numeric_scores_valid = numeric_scores_valid and scored.numeric_table_scores_valid;
             try matrices.append(a, m);
             try active_ids.append(a, id);
             if (m.rows == 2 and m.cols == 2) try risk_tables.append(a, .{ .cells = .{ m.counts[0], m.counts[1], m.counts[2], m.counts[3] } });
             const row_valid = table.score_kind != .table or model.validNumericScores(scored.row_levels);
             const col_valid = table.score_kind != .table or model.validNumericScores(scored.col_levels);
+            row_scores_valid = row_scores_valid and row_valid;
+            col_scores_valid = col_scores_valid and col_valid;
             s.trend_eligible = if (m.cols == 2) row_valid else m.rows == 2 and col_valid;
             if (options.trend and s.trend_eligible) s.trend = try k.trend(m);
             if (options.jt) s.jt = try k.jonckheere(a, m);
@@ -160,14 +167,14 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
     result.matrices = try matrices.toOwnedSlice(a);
     result.stratum_ids = try active_ids.toOwnedSlice(a);
     result.risk_tables = try risk_tables.toOwnedSlice(a);
+    const numeric_scores_valid = row_scores_valid and col_scores_valid;
     if (!numeric_scores_valid) try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
+    result.cmh_score_eligible = .{ row_scores_valid and col_scores_valid, col_scores_valid, true };
     result.cmh_suppressed = !numeric_scores_valid;
-    if (options.cmh > 0 and result.matrices.len > 0) {
-        if (numeric_scores_valid) {
-            result.cmh[0] = try k.cmh(a, result.matrices, .correlation);
-            if (options.cmh > 1) result.cmh[1] = try k.cmh(a, result.matrices, .row_mean);
+    if (result.matrices.len > 0) {
+        for ([_]k.CmhKind{ .correlation, .row_mean, .general }, 0..) |kind, i| {
+            if (i < options.cmh and result.cmh_score_eligible[i]) result.cmh[i] = try k.cmh(a, result.matrices, kind);
         }
-        if (options.cmh > 2 and numeric_scores_valid) result.cmh[2] = try k.cmh(a, result.matrices, .general);
     }
     if (options.agreement.enabled and n > 2) {
         result.pooled_simple = try k.poolKappa(simple.items, scope.alpha);
@@ -471,8 +478,9 @@ test "stratified execution missing numeric scores retain unscored inference" {
     table.dimensions[0].levels[0].missing = true;
     for ([_]f64{ 6, 16, 2, 4 }, 0..) |v, i| try table.add(a, i, v);
     const report = try compute(a, &d, &table, .{ .cmh = 3, .trend = true, .jt = true, .agreement = .{ .enabled = true } }, .{});
-    try std.testing.expect(report.cmh[0] == null and report.cmh[1] == null);
-    try std.testing.expect(report.cmh[2] == null and report.cmh_suppressed);
+    try std.testing.expect(report.cmh[0] == null and report.cmh[1] != null);
+    try std.testing.expect(report.cmh[2] != null and report.cmh_suppressed);
+    try std.testing.expectEqualSlices(bool, &.{ false, true, true }, &report.cmh_score_eligible);
     try std.testing.expect(report.strata[0].trend == null and report.strata[0].jt != null);
     try std.testing.expect(report.strata[0].simple != null);
     try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
@@ -489,6 +497,8 @@ test "stratified execution missing numeric scores retain unscored inference" {
     const transpose_report = try compute(a, &d, &transposed, .{ .cmh = 3, .trend = true }, .{});
     try std.testing.expectApproxEqAbs(@as(f64, 0.2913), transpose_report.strata[0].trend.?.z, 0.00005);
     try std.testing.expect(transpose_report.cmh_suppressed);
+    try std.testing.expectEqualSlices(bool, &.{ false, false, true }, &transpose_report.cmh_score_eligible);
+    try std.testing.expect(transpose_report.cmh[0] == null and transpose_report.cmh[1] == null and transpose_report.cmh[2] != null);
     // Exact conversion refuses fractional counts; no truncation of weights.
     try table.add(a, 0, 0.5);
     const fractional = try compute(a, &d, &table, .{ .jt = true }, .{});
@@ -569,4 +579,56 @@ test "stratified common weight report excludes zero rows but preserves SAS fract
     try std.testing.expectEqualStrings("2", report.common_weights[1].stratum);
     try std.testing.expectApproxEqAbs(@as(f64, 0.4333), report.common_weights[0].fraction, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.4500), report.common_weights[1].fraction, 0.00005);
+}
+
+test "stratified CMH score eligibility is per axis independent of SAS ODS suppression" {
+    // cmh_axes.sas: row-only and column-only numeric missing under MISSING /
+    // SCORES=TABLE each suppress SAS's entire CMH ODS object. cmh_axes_ods.sas
+    // confirms ROW_CMH_EXISTS=0 and COLUMN_CMH_EXISTS=0 via FILE PRINT.
+    // Numeric recode controls independently give row-mean41.7662/general58.2955;
+    // those kinds do not depend on row scores/general scores, respectively.
+    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.log
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const counts = [_]f64{ 18, 3, 1, 7, 12, 4, 2, 9, 24, 6, 2, 3, 1, 8, 4, 3, 2, 11 };
+    for (0..4) |missing_axes| {
+        var table = try binaryTable(a, 3);
+        for (1..3) |axis| {
+            const levels = try a.alloc(model.Level, 3);
+            for (levels, 0..) |*v, i| {
+                const x: f64 = @floatFromInt(i + 1);
+                v.* = .{ .raw = .{ .num = x }, .value = .{ .num = x }, .missing = false, .frequency = 0 };
+            }
+            const is_missing = if (axis == 1) missing_axes == 1 or missing_axes == 3 else missing_axes == 2 or missing_axes == 3;
+            if (is_missing) levels[0] = .{ .raw = .{ .num = std.math.nan(f64) }, .value = .{ .num = std.math.nan(f64) }, .missing = true, .frequency = 0 };
+            table.dimensions[axis].levels = levels;
+        }
+        table = try model.Table.init(a, table.dimensions, true);
+        for (counts, 0..) |v, i| try table.add(a, i, v);
+        var d = diag.Diagnostics.init(a);
+        const report = try compute(a, &d, &table, .{ .cmh = 3 }, .{});
+        const row_valid = missing_axes == 0 or missing_axes == 2;
+        const col_valid = missing_axes == 0 or missing_axes == 1;
+        try std.testing.expectEqualSlices(bool, &.{ row_valid and col_valid, col_valid, true }, &report.cmh_score_eligible);
+        try std.testing.expectEqual(row_valid and col_valid, report.cmh[0] != null);
+        try std.testing.expectEqual(col_valid, report.cmh[1] != null);
+        try std.testing.expectApproxEqAbs(@as(f64, 58.2955), report.cmh[2].?.statistic, 0.00005);
+        if (col_valid) try std.testing.expectApproxEqAbs(@as(f64, 41.7662), report.cmh[1].?.statistic, 0.00005);
+        if (missing_axes == 0) try std.testing.expectApproxEqAbs(@as(f64, 41.7661), report.cmh[0].?.statistic, 0.00005);
+        var out: std.ArrayList(u8) = .empty;
+        try renderSummary(a, &out, report, .{ .cmh = 3 }, .{}, .table);
+        try std.testing.expectEqual(missing_axes != 0, report.cmh_suppressed);
+        try std.testing.expectEqual(missing_axes == 0, std.mem.indexOf(u8, out.items, "Cochran-Mantel-Haenszel") != null);
+        if (missing_axes == 1) {
+            const cmh2 = try compute(a, &d, &table, .{ .cmh = 2 }, .{});
+            try std.testing.expect(cmh2.cmh[0] == null and cmh2.cmh[1] != null and cmh2.cmh[2] == null);
+            const cmh1 = try compute(a, &d, &table, .{ .cmh = 1 }, .{});
+            try std.testing.expect(cmh1.cmh[0] == null and cmh1.cmh[1] == null and cmh1.cmh[2] == null);
+            table.score_kind = .rank;
+            const rank = try compute(a, &d, &table, .{ .cmh = 3 }, .{});
+            try std.testing.expectEqualSlices(bool, &.{ true, true, true }, &rank.cmh_score_eligible);
+            try std.testing.expect(!rank.cmh_suppressed);
+        }
+    }
 }

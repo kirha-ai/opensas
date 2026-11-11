@@ -413,7 +413,12 @@ pub fn cmh(a: std.mem.Allocator, strata: []const Matrix, kind: CmhKind) Error!?C
     const mc = try a.alloc(f64, nc);
     defer a.free(mc);
     for (strata) |m| {
-        const n = try validate(m);
+        // Validate only score axes used by this CMH kind. Row-mean contrasts
+        // are nominal on rows; general association is nominal on both axes.
+        var validated = m;
+        if (kind != .correlation) validated.row_scores = null;
+        if (kind == .general) validated.col_scores = null;
+        const n = try validate(validated);
         if (m.rows != rows or m.cols != cols) return error.ExecError;
         if (n <= 1) continue;
         const t = try margins(a, m);
@@ -979,4 +984,16 @@ test "stratified pooled weighted kappa and CMH score families SAS" {
         const reversed = [_]?Estimate{ kappas[1], kappas[0] };
         try std.testing.expectApproxEqAbs(pooled.coefficient.value, (try poolKappa(&reversed, 0.05)).?.coefficient.value, 1e-12);
     }
+}
+
+test "stratified CMH validates only score axes used by its kind" {
+    const a = std.testing.allocator;
+    const nan = std.math.nan(f64);
+    var m = Matrix{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 }, .row_scores = &.{ nan, 2, 3 }, .col_scores = &.{ 1, 2, 3 } };
+    // kernels.sas numeric control: row mean38.5557, general47.0823.
+    try std.testing.expectError(error.ExecError, cmh(a, &.{m}, .correlation));
+    try std.testing.expectApproxEqAbs(@as(f64, 38.5557), (try cmh(a, &.{m}, .row_mean)).?.statistic, 0.00005);
+    m.col_scores = &.{ nan, 2, 3 };
+    try std.testing.expectError(error.ExecError, cmh(a, &.{m}, .row_mean));
+    try std.testing.expectApproxEqAbs(@as(f64, 47.0823), (try cmh(a, &.{m}, .general)).?.statistic, 0.00005);
 }
