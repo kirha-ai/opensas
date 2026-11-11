@@ -364,3 +364,13 @@ test "exact binomial NI interval uses one-sided alpha" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.0368), r.lower, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.5069), r.upper, 0.00005);
 }
+
+// SAS interval-highalpha.sas (0 errors/warnings): exact NI/TOST confidence
+// is 1-2*alpha, but discreteness can leave overlapping limits at alpha>=.5.
+test "exact binomial high alpha one-sided limits match SAS" {
+    for ([_]f64{ 0.5, 0.6 }, [_]f64{ 0.1623, 0.1921 }, [_]f64{ 0.2586, 0.2255 }) |alpha, lo, hi| {
+        const result = (try binomialOneSidedLimits(2, 10, alpha, .{})).complete;
+        try std.testing.expectApproxEqAbs(lo, result.lower, 0.00005);
+        try std.testing.expectApproxEqAbs(hi, result.upper, 0.00005);
+    }
+}

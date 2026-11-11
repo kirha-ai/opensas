@@ -326,3 +326,47 @@ test "unconditional small-table interval coverage includes boundary outcomes" {
         };
     };
 }
+
+// Unequal row totals and high ALPHA stress different test-ordering breakpoints.
+// Probability weights below are independent explicit Bin(2,p1)*Bin(3,p2)
+// formulas, not the engine's Bernstein polynomial or score implementation.
+test "unconditional unequal-row coverage across confidence levels" {
+    const t = std.testing;
+    for ([_]f64{ 0.05, 0.2, 0.8 }) |alpha| for ([_]Family{ .difference, .relative_risk }) |family| for ([_]Method{ .noscore, .score, .score2 }) |method| {
+        var intervals: [12]exact.Interval = undefined;
+        for (0..3) |x| for (0..4) |y| {
+            const result = try riskLimits(.{ .cells = .{ @floatFromInt(x), @floatFromInt(2 - x), @floatFromInt(y), @floatFromInt(3 - y) } }, .first, family, method, alpha, .{});
+            try t.expect(result == .complete);
+            intervals[x * 4 + y] = result.complete;
+        };
+        for ([_]f64{ 0.1, 0.35, 0.65, 0.9 }) |p1| for ([_]f64{ 0.1, 0.35, 0.65, 0.9 }) |p2| {
+            const truth = if (family == .difference) p1 - p2 else p1 / p2;
+            const pmf1 = [_]f64{ (1 - p1) * (1 - p1), 2 * p1 * (1 - p1), p1 * p1 };
+            const pmf2 = [_]f64{ (1 - p2) * (1 - p2) * (1 - p2), 3 * p2 * (1 - p2) * (1 - p2), 3 * p2 * p2 * (1 - p2), p2 * p2 * p2 };
+            var coverage: f64 = 0;
+            for (0..3) |x| for (0..4) |y| {
+                const ci = intervals[x * 4 + y];
+                if (truth >= ci.lower - 1e-10 and truth <= ci.upper + 1e-10) coverage += pmf1[x] * pmf2[y];
+            };
+            try t.expect(coverage >= 1 - alpha - 1e-10);
+        };
+    };
+}
+
+// Independent rational polynomial/Sturm oracle:
+// python3 /tmp/opensas-stat-batch2/FEAT-freq-exact/rr-noscore-sturm.py
+// Root bracket width1.22e-20, all nuisance stationary points isolated to1e-25.
+// Isolated real SAS gives upper=.84 at alpha=.95 and .99 (zero errors/warnings),
+// so this is a documented unresolved behavioral difference, not a relaxed SAS
+// tolerance. At .84 the documented tail supremum is .5547206220161103>.475.
+test "RR NOSCORE high alpha follows independently inverted unconditional tail" {
+    const t = std.testing;
+    const table = risk.Table2x2{ .cells = .{ 1, 1, 2, 1 } };
+    const options = Options{ .tolerance = 1e-13, .inversion_tolerance = 1e-13 };
+    const ci = (try riskLimits(table, .first, .relative_risk, .noscore, 0.95, options)).complete;
+    try t.expectEqual(@as(f64, 0), ci.lower);
+    try t.expectApproxEqAbs(@as(f64, 0.9884657555036446), ci.upper, 1e-10);
+    const at_sas = (try riskTail(table, .first, .relative_risk, .noscore, 0.84, .left, options)).complete;
+    try t.expectApproxEqAbs(@as(f64, 0.5547206220161103), at_sas.lower, 1e-12);
+    try t.expect(at_sas.lower > 0.475);
+}
