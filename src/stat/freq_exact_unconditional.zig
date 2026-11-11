@@ -233,6 +233,91 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
     return .{ .complete = out };
 }
 
+/// SAS-compatible OUTER search profile for RR NOSCORE. The certified
+/// mathematical inversion above remains the independent reference and default.
+/// Other families/methods retain that implementation unchanged.
+///
+/// Verified with transition-b0..b3.sas under /tmp/opensas-stat-batch2/EXACT-RR-support:
+/// start at modified RR, seed with UNMODIFIED Wald upper, double its distance
+/// from the modified point, then stop at the first rejected-tail bisection point
+/// within 1e-6 in probability. A crossed Wald bracket returns the modified point.
+/// Lower limits use the reciprocal, row-reversed search. No fitted endpoints.
+///
+/// This reproduces observed outer-search behavior, NOT all undocumented SAS
+/// boundary behavior: certified nuisance maximization is still used. In
+/// particular structural limits remain exactly 0/infinity, and sparse boundary
+/// cases can differ from SAS beyond listing precision (documented in tests).
+/// The crossed-bracket fallback does not retain the certified interval's
+/// nominal-coverage guarantee (see the complete sample-space counterexample).
+/// Do not claim full NOSCORE SAS parity from this profile alone.
+pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
+    if (family != .relative_risk or method != .noscore) return riskLimits(table, column, family, method, alpha, options);
+    if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or
+        !std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1 or
+        !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
+    const c = try canonical(table, column);
+    var work = Work{ .options = options };
+    if (!work.tick()) return .exhausted;
+    // SAS suppresses the exact output object for a constant response column.
+    // Keep the mathematical reference interval for finite-n coverage callers;
+    // public table eligibility remains the public adapter's responsibility.
+    if ((c[0] == 0 and c[2] == 0) or (c[1] == 0 and c[3] == 0)) return riskLimits(table, column, family, method, alpha, options);
+    // A SAS stopping rule in p must not be satisfied merely because a loose
+    // nuisance bound straddles it. Refinement never loosens the caller's bound.
+    work.options.tolerance = @min(options.tolerance, 1e-12);
+    const upper = try sasNoscoreUpper(c, alpha, &work);
+    if (upper == null) return .exhausted;
+    const reciprocal = try sasNoscoreUpper(.{ c[2], c[3], c[0], c[1] }, alpha, &work);
+    if (reciprocal == null) return .exhausted;
+    return .{ .complete = .{ .lower = 1 / reciprocal.?, .upper = upper.? } };
+}
+
+/// Null is a numerical/resource stop, never an approximate partial result.
+fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
+    if (!work.tick()) return null;
+    const n1: f64 = @floatFromInt(@as(u64, c[0]) + c[1]);
+    const n2: f64 = @floatFromInt(@as(u64, c[2]) + c[3]);
+    if (n1 + n2 > max_n) return null;
+    if (c[2] == 0) return std.math.inf(f64);
+    const point = try statistic(c, .relative_risk, .noscore, 1);
+    var initial = 2 * point; // zero numerator: ordinary Wald bound is undefined
+    if (c[0] > 0) {
+        const x: f64 = @floatFromInt(c[0]);
+        const y: f64 = @floatFromInt(c[2]);
+        const raw = (x / n1) / (y / n2);
+        const variance = 1 / x + 1 / y - 1 / n1 - 1 / n2;
+        const z = -math.distQuantile(.normal, alpha / 2, &.{}).?;
+        initial = raw * @exp(z * @sqrt(@max(0, variance)));
+    }
+    // The order matters: SAS's crossed-bracket fallback can occur even when
+    // the documented zero-event tail proves an unbounded side.
+    if (initial <= point) return point;
+    const zero = try statistic(.{ 0, @intFromFloat(n1), 0, @intFromFloat(n2) }, .relative_risk, .noscore, 1);
+    if (selected(zero, point, .left)) return std.math.inf(f64);
+    var lo = point;
+    var hi = initial;
+    const target = alpha / 2;
+    while (true) {
+        if (!std.math.isFinite(hi)) return null;
+        const bound = try tail(c, .relative_risk, .noscore, hi, .left, work);
+        if (bound == .exhausted) return null;
+        if (bound.complete.upper <= target) break;
+        const next = point + 2 * (hi - point);
+        if (next <= hi) return null;
+        hi = next;
+    }
+    for (0..256) |_| {
+        const mid = lo + (hi - lo) / 2;
+        if (mid == lo or mid == hi) return null;
+        const value = try tail(c, .relative_risk, .noscore, mid, .left, work);
+        if (value == .exhausted) return null;
+        // One-sided residual: an equally close accepted point is not returned.
+        if (value.complete.upper <= target and target - value.complete.lower <= 1e-6) return mid;
+        if (value.complete.upper > target) lo = mid else hi = mid;
+    }
+    return null;
+}
+
 // SAS generators.sas [0,3;2,1], Barnard two=.2188/one=.1094 vs
 // Fisher=.4000. Exact tail polynomial is u^2(6-10u), u=p(1-p), maximized
 // at p=.5: 7/32. This checks the generator AND nuisance supremum.
@@ -369,4 +454,139 @@ test "RR NOSCORE high alpha follows independently inverted unconditional tail" {
     const at_sas = (try riskTail(table, .first, .relative_risk, .noscore, 0.84, .left, options)).complete;
     try t.expectApproxEqAbs(@as(f64, 0.5547206220161103), at_sas.lower, 1e-12);
     try t.expect(at_sas.lower > 0.475);
+}
+
+// Support evidence lives only in /tmp/opensas-stat-batch2/EXACT-RR-support/.
+// Command: /Users/thomas/sas/bin/sasrun .../transition-b0.sas -f text
+// -o .../transition-b0.txt -l .../transition-b0.log (likewise b1..b3).
+// ODS nValue1 BEST32 and the plain listing independently identify column1.
+// Near-crossing runtime stops are excluded, never treated as numerical endpoints.
+test "SAS RR NOSCORE outer profile predicts transitions and held-out reversals" {
+    const t = std.testing;
+    const Case = struct { cells: [4]f64, alpha: f64, upper: f64 };
+    const cases = [_]Case{
+        .{ .cells = .{ 1, 3, 3, 1 }, .alpha = 0.05, .upper = 12.8094895576158 },
+        .{ .cells = .{ 1, 1, 2, 1 }, .alpha = 0.05, .upper = 17.7808683506476 },
+        .{ .cells = .{ 1, 1, 2, 1 }, .alpha = 0.8, .upper = 1.1675528861718 },
+        .{ .cells = .{ 1, 1, 2, 1 }, .alpha = 0.8796092006578684, .upper = 1.06625389901566 },
+        .{ .cells = .{ 1, 1, 2, 1 }, .alpha = 0.8906092006578684, .upper = 0.84 },
+        .{ .cells = .{ 1, 1, 2, 1 }, .alpha = 0.95, .upper = 0.84 },
+        .{ .cells = .{ 1, 2, 3, 2 }, .alpha = 0.05, .upper = 20.5983265675433 },
+        .{ .cells = .{ 1, 2, 3, 2 }, .alpha = 0.8196173209341815, .upper = 0.86181651050978 },
+        .{ .cells = .{ 1, 2, 3, 2 }, .alpha = 0.8306173209341815, .upper = 0.673469387755102 },
+        .{ .cells = .{ 2, 2, 4, 1 }, .alpha = 0.05, .upper = 15.9881522579346 },
+        .{ .cells = .{ 2, 2, 4, 1 }, .alpha = 0.8697142456361451, .upper = 0.7520951445411 },
+        .{ .cells = .{ 2, 2, 4, 1 }, .alpha = 0.8807142456361451, .upper = 0.6790123456790124 },
+        // Held out when the initialization/stopping hypothesis was specified:
+        .{ .cells = .{ 2, 3, 3, 1 }, .alpha = 0.05, .upper = 10.7188445173933 },
+        .{ .cells = .{ 2, 3, 3, 1 }, .alpha = 0.8, .upper = 0.74112782324656 },
+        .{ .cells = .{ 2, 3, 3, 1 }, .alpha = 0.8725554785429677, .upper = 0.69031739711824 },
+        .{ .cells = .{ 2, 3, 3, 1 }, .alpha = 0.8835554785429677, .upper = 0.5844155844155844 },
+    };
+    for (cases) |c| {
+        const result = try riskLimitsSas(.{ .cells = c.cells }, .first, .relative_risk, .noscore, c.alpha, .{});
+        try t.expect(result == .complete);
+        try t.expectApproxEqAbs(c.upper, result.complete.upper, 1e-10);
+        const reversed = [4]f64{ c.cells[2], c.cells[3], c.cells[0], c.cells[1] };
+        const reverse = (try riskLimitsSas(.{ .cells = reversed }, .first, .relative_risk, .noscore, c.alpha, .{})).complete;
+        try t.expectApproxEqAbs(1 / c.upper, reverse.lower, 1e-10);
+        const columns = [4]f64{ c.cells[1], c.cells[0], c.cells[3], c.cells[2] };
+        const column2 = (try riskLimitsSas(.{ .cells = columns }, .second, .relative_risk, .noscore, c.alpha, .{})).complete;
+        try t.expectEqual(result.complete.upper, column2.upper);
+    }
+    // The certified root proof must remain a different result, not be replaced
+    // or weakened to accommodate a SAS runtime initialization rule.
+    const certified = (try riskLimits(.{ .cells = .{ 1, 1, 2, 1 } }, .first, .relative_risk, .noscore, 0.95, .{})).complete;
+    try t.expectApproxEqAbs(@as(f64, 0.9884657555036446), certified.upper, 1e-9);
+}
+
+test "SAS outer profile preserves budgets and default methods" {
+    const t = std.testing;
+    const table = risk.Table2x2{ .cells = .{ 1, 1, 2, 1 } };
+    try t.expect((try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.95, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
+    try t.expect((try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.05, .{ .budget = .{ .max_tables = 10 } })) == .exhausted);
+    const Stop = struct {
+        fn expired(_: ?*const anyopaque) bool {
+            return true;
+        }
+    };
+    try t.expect((try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.95, .{ .budget = .{ .expired = Stop.expired } })) == .exhausted);
+    try t.expect((try riskLimitsSas(.{ .cells = .{ 0, 2, 0, 3 } }, .first, .relative_risk, .noscore, 0.95, .{ .budget = .{ .expired = Stop.expired } })) == .exhausted);
+    try t.expectError(error.ExecError, riskLimitsSas(table, .first, .relative_risk, .noscore, 0, .{}));
+    try t.expectError(error.ExecError, riskLimitsSas(table, .first, .relative_risk, .noscore, 0.05, .{ .tolerance = 0 }));
+    const reference = (try riskLimits(table, .first, .relative_risk, .score, 0.05, .{})).complete;
+    const profile = (try riskLimitsSas(table, .first, .relative_risk, .score, 0.05, .{})).complete;
+    try t.expectEqual(reference, profile);
+}
+
+test "SAS outer profile coverage is distinguished from the certified guarantee" {
+    const t = std.testing;
+    var saw_counterexample = false;
+    for ([_]f64{ 0.05, 0.2, 0.8, 0.95 }) |alpha| {
+        var intervals: [12]exact.Interval = undefined;
+        var certified: [12]exact.Interval = undefined;
+        for (0..3) |x| for (0..4) |y| {
+            const table = risk.Table2x2{ .cells = .{ @floatFromInt(x), @floatFromInt(2 - x), @floatFromInt(y), @floatFromInt(3 - y) } };
+            const result = try riskLimitsSas(table, .first, .relative_risk, .noscore, alpha, .{});
+            try t.expect(result == .complete);
+            intervals[x * 4 + y] = result.complete;
+            certified[x * 4 + y] = (try riskLimits(table, .first, .relative_risk, .noscore, alpha, .{})).complete;
+        };
+        for ([_]f64{ 0.01, 0.1, 0.35, 0.65, 0.9, 0.99 }) |p1| for ([_]f64{ 0.01, 0.1, 0.35, 0.65, 0.9, 0.99 }) |p2| {
+            const truth = p1 / p2;
+            // Independent Bin(2,p1)*Bin(3,p2), not Bernstein engine weights.
+            const p = [_]f64{ (1 - p1) * (1 - p1), 2 * p1 * (1 - p1), p1 * p1 };
+            const q = [_]f64{ (1 - p2) * (1 - p2) * (1 - p2), 3 * p2 * (1 - p2) * (1 - p2), 3 * p2 * p2 * (1 - p2), p2 * p2 * p2 };
+            var coverage: f64 = 0;
+            var mathematical_coverage: f64 = 0;
+            for (0..3) |x| for (0..4) |y| {
+                const ci = intervals[x * 4 + y];
+                if (truth >= ci.lower - 1e-10 and truth <= ci.upper + 1e-10) coverage += p[x] * q[y];
+                const reference = certified[x * 4 + y];
+                if (truth >= reference.lower - 1e-10 and truth <= reference.upper + 1e-10) mathematical_coverage += p[x] * q[y];
+            };
+            // Never relax the exact mathematical coverage test to fit SAS.
+            try t.expect(mathematical_coverage >= 1 - alpha - 1e-10);
+            if (alpha <= 0.8) try t.expect(coverage >= 1 - alpha - 1e-10);
+            if (alpha == 0.95 and p1 == 0.9 and p2 == 0.65) {
+                saw_counterexample = true;
+                try t.expectApproxEqAbs(@as(f64, 0.00042875), coverage, 1e-12);
+                try t.expectApproxEqAbs(@as(f64, 0.4027625), mathematical_coverage, 1e-12);
+                try t.expect(coverage < 1 - alpha);
+            }
+        };
+    }
+    try t.expect(saw_counterexample);
+}
+
+test "SAS NOSCORE sparse-boundary residual is not hidden by outer-profile tolerance" {
+    const t = std.testing;
+    const table = risk.Table2x2{ .cells = .{ 0, 2, 3, 0 } };
+    // small-b2.sas / boundary-columns.sas: SAS .31043853759765 at alpha.95.
+    // Only (x=0,y=3) belongs to this left tail. For r<.6 its maximum is at
+    // p2=1, so the exact tail is (1-r)^2 and root is 1-sqrt(.475).
+    const sas_upper: f64 = 0.31043853759765;
+    const at_sas = (try riskTail(table, .first, .relative_risk, .noscore, sas_upper, .left, .{ .tolerance = 1e-13 })).complete;
+    try t.expectApproxEqAbs((1 - sas_upper) * (1 - sas_upper), at_sas.lower, 1e-12);
+    try t.expect(at_sas.lower > 0.475 + 0.0004);
+    const certified = (try riskLimits(table, .first, .relative_risk, .noscore, 0.95, .{})).complete;
+    try t.expectApproxEqAbs(1 - @sqrt(@as(f64, 0.475)), certified.upper, 1e-9);
+    const profile = (try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.95, .{})).complete;
+    try t.expect(@abs(profile.upper - sas_upper) > 0.0003);
+    try t.expect((try riskTail(table, .first, .relative_risk, .noscore, profile.upper, .left, .{})).complete.upper <= 0.475);
+}
+
+test "SAS outer profile zero-event initialization ordinary-alpha oracle" {
+    // small-b0.sas: all12 row-fixed outcomes, separate uniquely named ODS
+    // datasets; constant-response suppression is not recycled stale evidence.
+    const t = std.testing;
+    for ([_][4]f64{ .{ 0, 2, 1, 2 }, .{ 0, 2, 2, 1 }, .{ 0, 2, 3, 0 } }, [_]f64{ 17.4425781249999, 2.557529296875, 1.1139892578125 }) |cells, upper| {
+        const result = (try riskLimitsSas(.{ .cells = cells }, .first, .relative_risk, .noscore, 0.05, .{})).complete;
+        try t.expectEqual(@as(f64, 0), result.lower);
+        try t.expectApproxEqAbs(upper, result.upper, 1e-10);
+    }
+    // boundary-columns.sas: explicit COLUMN=2 maps [1,1;2,1] to[1,1;1,2].
+    const column2 = (try riskLimitsSas(.{ .cells = .{ 1, 1, 2, 1 } }, .second, .relative_risk, .noscore, 0.95, .{})).complete;
+    try t.expectApproxEqAbs(@as(f64, 1.4), column2.lower, 1e-12);
+    try t.expect(std.math.isInf(column2.upper));
 }
