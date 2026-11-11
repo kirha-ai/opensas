@@ -34,6 +34,7 @@ test {
     _ = @import("stat/freq_stratified.zig");
     _ = @import("stat/freq_stratified_exact.zig");
     _ = @import("stat/freq_exact_unconditional.zig");
+    _ = @import("stat/freq_exact_polynomial.zig");
     _ = @import("stat/freq_exact_strata.zig");
     _ = @import("stat/freq_exact_reference.zig");
     _ = @import("stat/freq_exact_distribution.zig");
