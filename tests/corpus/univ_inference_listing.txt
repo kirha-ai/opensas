@@ -1,0 +1,107 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+                           Moments
+
+N                              8  Sum Weights                    8
+Mean                         4.5  Sum Observations              36
+Std Deviation         2.44948974  Variance                       6
+Skewness                       0  Kurtosis                    -1.2
+Uncorrected SS               204  Corrected SS                  42
+Coeff Variation       54.4331054  Std Error Mean         0.8660254
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                         4.5  Std Deviation         2.44948974
+Median                       4.5  Variance                       6
+Mode                           .  Range                          7
+                                  Interquartile Range            4
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 5.19615242    Pr > |t|  0.0013
+Sign           M         4    Pr >= |M| 0.0078
+Signed Rank    S        18    Pr >= |S| 0.0078
+
+                    Quantiles (Definition 5)
+
+              100% Max               8
+              99%                    8
+              95%                    8
+              90%                    8
+              75% Q3               6.5
+              50% Median           4.5
+              25% Q1               2.5
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+Basic Confidence Limits Assuming Normality
+95% Confidence Limits
+Parameter  Estimate  Lower  Upper
+Mean  4.500000  2.452175  6.547825
+Std Deviation  2.449490  1.619539  4.985378
+Variance  6.000000  2.622908  24.853995
+
+Location Counts: Mu0=0
+Num Obs > Mu0  8.000000
+Num Obs ^= Mu0  8.000000
+Num Obs < Mu0  0.000000
+
+Tests for Normality
+Test  Statistic  p Value
+Shapiro-Wilk  W  0.974858   0.9332
+Kolmogorov-Smirnov  D  0.104854  >0.1500
+Cramer-von Mises  W-Sq  0.017355  >0.2500
+Anderson-Darling  A-Sq  0.134000  >0.2500
+
+Trimmed Means
+95% Confidence Limits
+Percent in Tail  Number in Tail  Mean  Std Error  Lower  Upper  DF  t  Pr > |t|
+  12.500000  1.000000  4.500000  1.000000  1.929418  7.070582  5.000000  4.500000  0.006400
+  25.000000  2.000000  4.500000  1.080123  1.062565  7.937435  3.000000  4.166190  0.025164
+
+Winsorized Means
+95% Confidence Limits
+Percent in Tail  Number in Tail  Mean  Std Error  Lower  Upper  DF  t  Pr > |t|
+  25.000000  2.000000  4.500000  1.166667  0.787146  8.212854  3.000000  3.857143  0.030792
+
+Robust Measures of Scale
+Measure  Value  Estimate of Sigma
+Interquartile Range  4.000000  2.965203
+Gini's Mean Difference  3.000000  2.658681
+MAD  2.000000  2.965200
+Sn  2.385200  2.397126
+Qn  4.443800  2.972902
+
+Quantile Confidence Limits Assuming Normality
+95% Confidence Limits
+Percentile  Lower  Upper
+  99.000000  7.841183  16.635604
+  95.000000  6.575863  13.417240
+  90.000000  5.846378  11.751623
+  75.000000  4.452960  9.111353
+  50.000000  2.452175  6.547825
+  25.000000  -0.111353  4.547040
+  10.000000  -2.751623  3.153622
+  5.000000  -4.417240  2.424137
+  1.000000  -7.635604  1.158817
+
+Quantile Confidence Limits Distribution Free
+95% Confidence Limits
+Percentile  Lower  Upper  LCL Rank  UCL Rank  Coverage
+  99.000000  .  .  .  .  .
+  95.000000  .  .  .  .  .
+  90.000000  6.000000  8.000000  6.000000  8.000000  53.144100
+  75.000000  4.000000  8.000000  4.000000  8.000000  87.258911
+  50.000000  2.000000  8.000000  2.000000  8.000000  96.093750
+  25.000000  1.000000  5.000000  1.000000  5.000000  87.258911
+  10.000000  1.000000  3.000000  1.000000  3.000000  53.144100
+  5.000000  .  .  .  .  .
+  1.000000  .  .  .  .  .

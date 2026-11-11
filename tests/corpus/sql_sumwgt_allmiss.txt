@@ -37,8 +37,8 @@ Mode                           .  Range                          .
 Test           -Statistic-    -----p Value------
 
 Student's t    t         .    Pr > |t|       .
-Sign           M         0    Pr >= |M|      .
-Signed Rank    S         0    Pr >= |S|      .
+Sign           M         .    Pr >= |M|      .
+Signed Rank    S         .    Pr >= |S|      .
 
                     Quantiles (Definition 5)
 
