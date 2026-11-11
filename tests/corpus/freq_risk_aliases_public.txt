@@ -1,0 +1,169 @@
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 2
+
+Statistic / Method              Estimate         ASE
+Proportion                        0.6500      0.1067
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Agresti-Coull                       0.4316        0.8201
+Clopper-Pearson (Exact)             0.4078        0.8461
+Likelihood Ratio                    0.4321        0.8317
+Wilson (Corrected)                  0.4095        0.8369
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.6500
+Z                                 1.3416
+Standard Error                    0.1118
+One-sided Pr > Z                  0.0899
+Two-sided Pr > |Z|                0.1797
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1410        0.5590
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.3500
+Z                                -1.4064
+Standard Error                    0.1067
+One-sided Pr < Z                  0.0798
+Two-sided Pr > |Z|                0.1596
+
+Equivalence Analysis for the Binomial Proportion
+Equivalence Limits = 0.2, 0.6; Method = Wald
+
+Proportion                        0.3500
+Lower Margin Z                    1.4064
+Standard Error                    0.1067
+Upper Margin Z                   -2.3440
+Lower Margin Pr > Z               0.0798
+Upper Margin Pr < Z               0.0095
+Overall P-Value                   0.0798
+90% Lower Conf Limit              0.1746
+90% Upper Conf Limit              0.5254
+
+Sample Size = 20
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Risk Estimates
+
+Odds Ratio                        7.5000
+
+Confidence Limits for the Odds Ratio
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Score (Uncorrected)                 2.0737       27.0442
+Likelihood Ratio                    2.1287       30.3010
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Confidence Limits for the Risk Difference
+Risk Difference = 0.4333; Column 1 (c = 1)
+
+Statistic / Method                  95% Lower CL  95% Upper CL
+Agresti-Caffo                             0.1574        0.6494
+Miettinen-Nurminen (Uncorrected)          0.1660        0.6512
+
+Equality Test for the Risk Difference (Column 1)
+Null = -0.01; Method = Farrington-Manning
+
+Risk Difference                   0.4333
+Z                                 3.2433
+Standard Error                    0.1367
+One-sided Pr > Z                  0.0006
+Two-sided Pr > |Z|                0.0012
+
+Confidence Limits for the Risk Difference
+Risk Difference = -0.4333; Column 2 (c = 2)
+
+Statistic / Method                  95% Lower CL  95% Upper CL
+Agresti-Caffo                            -0.6494       -0.1574
+Miettinen-Nurminen (Uncorrected)         -0.6512       -0.1660
+
+Equality Test for the Risk Difference (Column 2)
+Null = -0.01; Method = Farrington-Manning
+
+Risk Difference                  -0.4333
+Z                                -3.0947
+Standard Error                    0.1368
+One-sided Pr < Z                  0.0010
+Two-sided Pr > |Z|                0.0020
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 1.25; Method = Farrington-Manning
+
+Relative Risk                     3.6000
+Lower Margin Z                    3.8010
+Lower Margin ASE (F-M)            0.1228
+Upper Margin ASE (F-M)            0.1526
+Upper Margin Z                    2.5661
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.9949
+Overall P-Value                   0.9949
+90% Lower Conf Limit              1.7774
+90% Upper Conf Limit              7.6072
+
+Sample Size = 50
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE
+Proportion                        1.0000      0.0000
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Wald                                1.0000        1.0000
+Clopper-Pearson (Exact)             0.6915        1.0000
+Logit                                    .        1.0000
+Likelihood Ratio                    0.8252        1.0000
+Wilson                              0.7225        1.0000
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        1.0000
+Z                                      .
+Standard Error                    0.0000
+One-sided Pr < Z                       .
+Two-sided Pr > |Z|                     .
+
+Sample Size = 10
