@@ -80,7 +80,7 @@ pub const OddsDistribution = struct {
         if (row == 0 or col == 0 or row == total or col == total or @min(row, col) > std.math.maxInt(u32)) return error.ExecError;
         return .{ .lo = @intCast((row + col) -| total), .hi = @intCast(@min(row, col)), .observed = cells[0], .row = row, .col = col, .total = total };
     }
-    fn logWeight(self: OddsDistribution, x: u32, log_odds: f64) f64 {
+    pub fn logWeight(self: OddsDistribution, x: u32, log_odds: f64) f64 {
         const xf: f64 = @floatFromInt(x);
         const rf: f64 = @floatFromInt(self.row);
         const cf: f64 = @floatFromInt(self.col);
@@ -193,5 +193,95 @@ test "exact public count conversion never truncates or overflows" {
     try t.expectEqual(std.math.maxInt(u32), try integerCount(4294967295));
     for ([_]f64{ -1, 0.5, 1.0000000000000002, 4294967296, std.math.inf(f64), std.math.nan(f64) }) |value| {
         try t.expectError(error.ExecError, integerCount(value));
+    }
+}
+
+/// Blaker acceptability: P(min(F(X),G(X)) <= min(F(k),G(k))).
+/// Unlike probability-ordered Fisher and twice-the-smaller-tail binomial tests,
+/// the opposite tail is included only as far as its cumulative mass permits.
+pub fn binomialBlakerP(k: u32, n: u32, p: f64) Error!f64 {
+    const observed = try binomialTails(k, n, p);
+    const gamma = @min(observed.left, observed.right);
+    var left: f64 = 0;
+    var right: f64 = 0;
+    var lo: u64 = 0;
+    var hi: u64 = @as(u64, n) + 1;
+    while (lo < hi) {
+        const mid = (lo + hi) / 2;
+        if ((try binomialTails(@intCast(mid), n, p)).left <= gamma) lo = mid + 1 else hi = mid;
+    }
+    if (lo > 0) left = (try binomialTails(@intCast(lo - 1), n, p)).left;
+    lo = 0;
+    hi = @as(u64, n) + 1;
+    while (lo < hi) {
+        const mid = (lo + hi) / 2;
+        if ((try binomialTails(@intCast(mid), n, p)).right <= gamma) hi = mid else lo = mid + 1;
+    }
+    if (lo <= n) right = (try binomialTails(@intCast(lo), n, p)).right;
+    return @min(1, left + right);
+}
+
+/// Invert Blaker's discontinuous acceptability without assuming globally
+/// monotone p-values. Starting at the CP lower bound, identify the next
+/// opposite-tail inclusion jump F(j;p)=G(k;p). Before this jump, G(k)+F(j-1)
+/// has at most one minimum, so an upward crossing is bracketable. At the jump
+/// acceptability is 2*G(k)>=alpha. Upper endpoint follows binomial symmetry.
+pub fn binomialBlaker(k: u32, n: u32, alpha: f64) Error!Interval {
+    if (n == 0 or k > n or !validAlpha(alpha)) return error.ExecError;
+    return .{ .lower = try blakerLower(k, n, alpha), .upper = 1 - try blakerLower(n - k, n, alpha) };
+}
+fn blakerLower(k: u32, n: u32, alpha: f64) Error!f64 {
+    if (k == 0) return 0;
+    const cp = try binomialLimit(k, n, alpha / 2, false, true);
+    const gamma = (try binomialTails(k, n, cp)).right;
+    var first: u64 = 0;
+    var end: u64 = k;
+    while (first < end) {
+        const mid = (first + end) / 2;
+        if ((try binomialTails(@intCast(mid), n, cp)).left <= gamma) first = mid + 1 else end = mid;
+    }
+    // first is the next left-tail count to enter the acceptability sum.
+    const next: u32 = @intCast(first);
+    var lo = cp;
+    var hi: f64 = 1;
+    for (0..80) |_| {
+        const mid = (lo + hi) / 2;
+        if ((try binomialTails(next, n, mid)).left > (try binomialTails(k, n, mid)).right) lo = mid else hi = mid;
+    }
+    const jump = (lo + hi) / 2;
+    const before = (try binomialTails(k, n, jump)).right + (if (next == 0) @as(f64, 0) else (try binomialTails(next - 1, n, jump)).left);
+    if (before <= alpha) return jump;
+    lo = cp;
+    hi = jump;
+    for (0..80) |_| {
+        const mid = (lo + hi) / 2;
+        const probability = (try binomialTails(k, n, mid)).right + (if (next == 0) @as(f64, 0) else (try binomialTails(next - 1, n, mid)).left);
+        if (probability <= alpha) lo = mid else hi = mid;
+    }
+    return (lo + hi) / 2;
+}
+
+// SAS risk-blaker.sas ODS BinomialCLs (BEST32), FREQ p.177:
+// k=2,n=10: [.03677145593142,.55555286230792]. SAS's numerical
+// endpoint search is compared at 1e-6 absolute; coverage is independently checked.
+test "Blaker inversion handles opposite-tail jumps and small-n coverage" {
+    const t = std.testing;
+    const ci = try binomialBlaker(2, 10, 0.05);
+    try t.expectApproxEqAbs(@as(f64, 0.03677145593142), ci.lower, 1e-6);
+    try t.expectApproxEqAbs(@as(f64, 0.55555286230792), ci.upper, 1e-6);
+    const boundary = try binomialBlaker(0, 10, 0.05);
+    try t.expectEqual(@as(f64, 0), boundary.lower);
+    for (1..16) |nn| {
+        const n: u32 = @intCast(nn);
+        var intervals: [16]Interval = undefined;
+        for (0..nn + 1) |kk| intervals[kk] = try binomialBlaker(@intCast(kk), n, 0.05);
+        for (1..100) |pp| {
+            const p = @as(f64, @floatFromInt(pp)) / 100;
+            var coverage: f64 = 0;
+            for (intervals[0 .. nn + 1], 0..) |interval, kk| {
+                if (p >= interval.lower and p <= interval.upper) coverage += (try binomialTails(@intCast(kk), n, p)).point;
+            }
+            try t.expect(coverage >= 0.95 - 1e-12);
+        }
     }
 }

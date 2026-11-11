@@ -40,7 +40,7 @@ pub const Budget = struct {
     /// Checked at every search node, not just at complete tables.
     context: ?*const anyopaque = null,
     expired: ?*const fn (?*const anyopaque) bool = null,
-    fn stopped(self: Budget) bool {
+    pub fn stopped(self: Budget) bool {
         return if (self.expired) |f| f(self.context) else false;
     }
 };
@@ -101,6 +101,36 @@ fn events(value: f64, observed: f64, s: Statistic) Events {
     };
 }
 
+/// Shared tail summation; reference-set generators own their probability law.
+pub const Accumulator = struct {
+    statistic: Statistic,
+    observed: f64,
+    peak: f64 = -std.math.inf(f64),
+    sums: [5]f64 = @splat(0),
+    pub fn add(self: *Accumulator, log_weight: f64, value: f64) Error!void {
+        if (!std.math.isFinite(value) or !std.math.isFinite(self.observed) or !std.math.isFinite(self.statistic.expected)) return error.ExecError;
+        if (log_weight == -std.math.inf(f64)) return;
+        if (!std.math.isFinite(log_weight)) return error.ExecError;
+        if (log_weight > self.peak) {
+            const scale = @exp(self.peak - log_weight);
+            for (&self.sums) |*v| v.* *= scale;
+            self.peak = log_weight;
+        }
+        const w = @exp(log_weight - self.peak);
+        const e = events(value, self.observed, self.statistic);
+        self.sums[0] += w;
+        if (e.point) self.sums[1] += w;
+        if (e.left) self.sums[2] += w;
+        if (e.right) self.sums[3] += w;
+        if (e.two) self.sums[4] += w;
+    }
+    pub fn result(self: Accumulator, count: u64) Error!Probabilities {
+        const s = self.sums;
+        if (s[0] <= 0) return error.ExecError;
+        return .{ .point = s[1] / s[0], .left = s[2] / s[0], .right = s[3] / s[0], .two_sided = s[4] / s[0], .one_sided = (if (self.statistic.directional and self.observed <= self.statistic.expected) s[2] else s[3]) / s[0], .tables = count };
+    }
+};
+
 const Search = struct {
     m: Matrix,
     cells: []u32,
@@ -111,8 +141,7 @@ const Search = struct {
     budget: Budget,
     count: u64 = 0,
     stopped: bool = false,
-    peak: f64 = -std.math.inf(f64),
-    sums: [5]f64 = @splat(0), // total, point, left, right, two-sided
+    accumulator: Accumulator,
     fn visit(self: *Search, k: usize) Error!void {
         if (self.stopped) return;
         if (self.budget.stopped()) {
@@ -129,18 +158,7 @@ const Search = struct {
             if (!std.math.isFinite(value)) return error.ExecError;
             var log_weight: f64 = 0;
             for (self.cells) |v| log_weight -= math.lgammaOf(@as(f64, @floatFromInt(v)) + 1);
-            if (log_weight > self.peak) {
-                const scale = @exp(self.peak - log_weight);
-                for (&self.sums) |*v| v.* *= scale;
-                self.peak = log_weight;
-            }
-            const weight = @exp(log_weight - self.peak);
-            const e = events(value, self.observed, self.s);
-            self.sums[0] += weight;
-            if (e.point) self.sums[1] += weight;
-            if (e.left) self.sums[2] += weight;
-            if (e.right) self.sums[3] += weight;
-            if (e.two) self.sums[4] += weight;
+            try self.accumulator.add(log_weight, value);
             return;
         }
         const i = k / self.m.cols;
@@ -174,19 +192,10 @@ pub fn enumerate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, budget: 
     if (!std.math.isFinite(observed)) return error.ExecError;
     const cells = try a.alloc(u32, m.cells.len);
     defer a.free(cells);
-    var search = Search{ .m = m, .cells = cells, .r = shape.rows, .c = shape.cols, .s = statistic, .observed = observed, .budget = budget };
+    var search = Search{ .m = m, .cells = cells, .r = shape.rows, .c = shape.cols, .s = statistic, .observed = observed, .budget = budget, .accumulator = .{ .statistic = statistic, .observed = observed } };
     try search.visit(0);
     if (search.stopped) return .exhausted;
-    const sums = search.sums;
-    if (sums[0] == 0) return error.ExecError;
-    return .{ .complete = .{
-        .point = sums[1] / sums[0],
-        .left = sums[2] / sums[0],
-        .right = sums[3] / sums[0],
-        .two_sided = sums[4] / sums[0],
-        .one_sided = (if (statistic.directional and observed <= statistic.expected) sums[2] else sums[3]) / sums[0],
-        .tables = search.count,
-    } };
+    return .{ .complete = try search.accumulator.result(search.count) };
 }
 
 /// Higher negative log probability is more extreme: fixed margins make the
