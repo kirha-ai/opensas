@@ -32,9 +32,8 @@ page references below use printed page numbers.
 
 - [DOING @dev2] FEAT-freq-risk (doc-finder, qa, P1; pp. 176–209) — Implement binomial proportions, sensitivity/specificity, risk differences, odds ratios and relative risks, including documented confidence-limit and noninferiority/equivalence options. Check event/column orientation, confidence levels, zero cells and boundary proportions. Exact variants use FEAT-freq-exact.
 
-- [DOING @dev5] FEAT-freq-stratified (doc-finder, qa, P1; pp. 195–230) — Implement CMH/pooled stratified estimates, homogeneity tests, trend/Jonckheere-Terpstra, agreement/kappa/McNemar/Bowker/Cochran Q and Gail-Simon as documented. Check stratum ordering, empty strata, score choices and degenerate tables; compare official examples 3.7–3.10 and additional asymmetric cases with SAS.  [deps: FEAT-freq-risk]  [parallel contract: independent typed stratum kernels first; public integration and closure wait for risk/exact interfaces and required dependencies]
 
-- [DOING @dev3] FEAT-freq-exact (doc-finder, qa, oracle, P1; pp. 81–89, 230–234) — Implement FISHER and the documented EXACT test/interval families, then Monte Carlo estimation and its controls. Check one-/two-sided definitions, tied probabilities, sparse tables, confidence bounds and resource limits. Exact results need small-table enumeration/oracle checks; Monte Carlo needs seed reproducibility and statistical tolerances.
+- [DOING @dev3] FEAT-freq-exact (doc-finder, qa, oracle, P1; pp. 81–89, 230–234) — Implement FISHER and the documented EXACT test/interval families, then Monte Carlo estimation and its controls. Check one-/two-sided definitions, tied probabilities, sparse tables, confidence bounds and resource limits. Exact results need small-table enumeration/oracle checks; Monte Carlo needs seed reproducibility and statistical tolerances.  [support @dev5: RR NOSCORE numerical compatibility; dev3 owns public EXACT integration]
 
 
 
