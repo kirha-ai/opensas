@@ -66,7 +66,7 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Erro
     var observed: u64 = 0;
     var work: u64 = 0;
     for (strata) |cells| {
-        const d = try exact.OddsDistribution.init(cells);
+        const d = try exact.OddsDistribution.initStratum(cells);
         const width = @as(u64, d.hi) - d.lo + 1;
         if (width > budget.max_tables or logs.len > budget.max_tables - width + 1 or budget.stopped()) {
             a.free(logs);
@@ -195,7 +195,7 @@ pub fn zelen(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error
     var observed: u64 = 0;
     var weight: f64 = 0;
     for (strata, ds) |cells, *d| {
-        d.* = try exact.OddsDistribution.init(cells);
+        d.* = try exact.OddsDistribution.initStratum(cells);
         observed += d.observed;
         weight += d.logWeight(d.observed, 0);
     }
@@ -239,4 +239,27 @@ test "Zelen conditions on sum of diagonal counts" {
     try t.expectApproxEqAbs(@as(f64, 1.0 / 28.0), z.point, 1e-12);
     try t.expectApproxEqAbs(@as(f64, 1.0 / 28.0), z.p, 1e-12);
     try t.expect((try zelen(t.allocator, &.{ .{ 0, 2, 2, 0 }, .{ 2, 0, 0, 3 } }, .{ .max_tables = 2 })) == .exhausted);
+}
+
+// SAS strata-boundaries.sas/.txt/.log, zero errors/warnings, under
+// /tmp/opensas-stat-batch2/FEAT-freq-exact. Empty and zero-row middle strata
+// leave COMOR point=.5, one=.75, limits[.0434,23.0483], EQOR p=.1111.
+test "COMOR and Zelen preserve degenerate stratum factors" {
+    const t = std.testing;
+    const base = [_][4]u32{ .{ 2, 0, 0, 2 }, .{ 0, 2, 2, 0 } };
+    const reference = (try commonOdds(t.allocator, &base, 0.05, .{})).complete;
+    const reference_z = (try zelen(t.allocator, &base, .{})).complete;
+    for ([_][4]u32{ .{ 0, 0, 0, 0 }, .{ 0, 0, 1, 1 }, .{ 3, 2, 0, 0 } }) |middle| {
+        const all = [_][4]u32{ base[0], middle, base[1] };
+        const result = (try commonOdds(t.allocator, &all, 0.05, .{})).complete;
+        const z = (try zelen(t.allocator, &all, .{})).complete;
+        try t.expectApproxEqAbs(reference.point, result.point, 1e-12);
+        try t.expectApproxEqAbs(reference.one_sided, result.one_sided, 1e-12);
+        try t.expectApproxEqRel(reference.limits.lower, result.limits.lower, 1e-12);
+        try t.expectApproxEqRel(reference.limits.upper, result.limits.upper, 1e-12);
+        try t.expectEqual(reference.observed + middle[0], result.observed);
+        try t.expectApproxEqAbs(reference_z.p, z.p, 1e-12);
+        try t.expectApproxEqAbs(reference_z.point, z.point, 1e-12);
+    }
+    try t.expectError(error.ExecError, exact.OddsDistribution.init(.{ 0, 0, 1, 1 }));
 }

@@ -104,10 +104,18 @@ pub const OddsDistribution = struct {
     total: u64,
 
     pub fn init(cells: [4]u32) Error!OddsDistribution {
+        const d = try initStratum(cells);
+        if (d.row == 0 or d.col == 0 or d.row == d.total or d.col == d.total) return error.ExecError;
+        return d;
+    }
+    /// A degenerate stratum contributes a single conditional outcome of mass
+    /// one. Keep its fixed count/slot in pooled inference; the standalone odds
+    /// interval API above still rejects undefined zero-margin odds ratios.
+    pub fn initStratum(cells: [4]u32) Error!OddsDistribution {
         const row = @as(u64, cells[0]) + cells[1];
         const col = @as(u64, cells[0]) + cells[2];
         const total = row + cells[2] + cells[3];
-        if (row == 0 or col == 0 or row == total or col == total or @min(row, col) > std.math.maxInt(u32)) return error.ExecError;
+        if (@min(row, col) > std.math.maxInt(u32)) return error.ExecError;
         return .{ .lo = @intCast((row + col) -| total), .hi = @intCast(@min(row, col)), .observed = cells[0], .row = row, .col = col, .total = total };
     }
     pub fn logWeight(self: OddsDistribution, x: u32, log_odds: f64) f64 {
