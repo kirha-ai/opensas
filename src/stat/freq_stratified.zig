@@ -256,6 +256,43 @@ pub fn pool(estimates: []const Estimate, alpha: f64) Error!?Pooled {
     return .{ .coefficient = estimate(value, 1 / precision, alpha), .homogeneity = if (estimates.len > 1) chi(q, @floatFromInt(estimates.len - 1)) else null, .strata = estimates.len };
 }
 
+/// SAS agreement pooling excludes undefined and exactly zero-variance kappas.
+/// Keep original slots nullable; this is deliberately separate from generic
+/// pool(), whose risk/logit callers must not silently discard invalid estimates.
+/// All-excluded => no overall table. One retained stratum => Q=0, DF=0, p missing.
+pub fn poolKappa(estimates: []const ?Estimate, alpha: f64) Error!?Pooled {
+    if (!(alpha > 0 and alpha < 1)) return error.ExecError;
+    var minimum_variance = std.math.inf(f64);
+    var used: usize = 0;
+    for (estimates) |maybe| if (maybe) |e| {
+        if (!std.math.isFinite(e.value) or !std.math.isFinite(e.variance) or e.variance < 0) return error.ExecError;
+        if (e.variance == 0) continue;
+        minimum_variance = @min(minimum_variance, e.variance);
+        used += 1;
+    };
+    if (used == 0) return null;
+    // Scale precisions to avoid overflowing 1/variance for near-perfect tables;
+    // positive variances are never discarded using an arbitrary epsilon.
+    var numerator: f64 = 0;
+    var precision: f64 = 0;
+    for (estimates) |maybe| if (maybe) |e| {
+        if (e.variance == 0) continue;
+        const w = minimum_variance / e.variance;
+        numerator += w * e.value;
+        precision += w;
+    };
+    const value = numerator / precision;
+    var q: f64 = 0;
+    for (estimates) |maybe| if (maybe) |e| {
+        if (e.variance > 0) q += sq(e.value - value) / e.variance;
+    };
+    return .{
+        .coefficient = estimate(value, minimum_variance / precision, alpha),
+        .homogeneity = if (used == 1) .{ .statistic = 0, .df = 0, .p = std.math.nan(f64) } else chi(q, @floatFromInt(used - 1)),
+        .strata = used,
+    };
+}
+
 /// Binary Cartesian cells, last variable varies fastest; this is the original
 /// multiway table, NOT merely the last two dimensions' stratified margins.
 pub const CochranAccumulator = struct {
@@ -870,4 +907,76 @@ test "stratified sparse Cochran patterns preserve all binary dimensions" {
     try twelve.addKey(4094, 20);
     try twelve.addKey(0, 7);
     try std.testing.expectApproxEqAbs(@as(f64, 36.6667), (try twelve.finish()).?.statistic, 0.00005);
+}
+
+test "stratified pooled kappa excludes zero variance according to SAS" {
+    // pooled_edges.sas and kappa_zero.sas, SAS/STAT pp218–219. Independent:
+    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.log
+    const a = std.testing.allocator;
+    const perfect = (try kappa(a, .{ .rows = 2, .cols = 2, .counts = &.{ 9, 0, 0, 6 } }, .simple, 0.05, 0)).?.coefficient;
+    const other = (try kappa(a, .{ .rows = 2, .cols = 2, .counts = &.{ 6, 16, 2, 4 } }, .simple, 0.05, 0)).?.coefficient;
+    try std.testing.expectEqual(@as(f64, 0), perfect.variance);
+    const result = (try poolKappa(&.{ perfect, null, other }, 0.05)).?;
+    try std.testing.expectApproxEqAbs(@as(f64, -0.0328), result.coefficient.value, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1167), @sqrt(result.coefficient.variance), 0.00005);
+    try std.testing.expectEqual(@as(usize, 1), result.strata);
+    try std.testing.expectEqual(@as(f64, 0), result.homogeneity.?.statistic);
+    try std.testing.expectEqual(@as(f64, 0), result.homogeneity.?.df);
+    try std.testing.expect(std.math.isNan(result.homogeneity.?.p));
+    try std.testing.expectEqual(@as(?Pooled, null), try poolKappa(&.{ perfect, null, perfect }, 0.05));
+    // Generic risk pooling remains strict.
+    try std.testing.expectEqual(@as(?Pooled, null), try pool(&.{ perfect, other }, 0.05));
+    const m: Matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 } };
+    const diagonal: Matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 8, 0, 0, 0, 7, 0, 0, 0, 9 } };
+    for ([_]KappaWeight{ .simple, .fleiss_cohen }, [_]f64{ 0.5093, 0.6885 }, [_]f64{ 0.0776, 0.0692 }) |weight, value, se| {
+        const zero = (try kappa(a, diagonal, weight, 0.05, 0)).?.coefficient;
+        const nonzero = (try kappa(a, m, weight, 0.05, 0)).?.coefficient;
+        const pooled = (try poolKappa(&.{ zero, nonzero }, 0.05)).?;
+        try std.testing.expectApproxEqAbs(value, pooled.coefficient.value, 0.00005);
+        try std.testing.expectApproxEqAbs(se, @sqrt(pooled.coefficient.variance), 0.00005);
+        try std.testing.expectEqual(@as(usize, 1), pooled.strata);
+    }
+    const tiny = Estimate{ .value = 0.5, .variance = 1e-310, .lower = 0, .upper = 1 };
+    const retained = (try poolKappa(&.{ tiny, tiny }, 0.05)).?;
+    try std.testing.expectEqual(@as(usize, 2), retained.strata);
+    try std.testing.expectEqual(@as(f64, 0.5), retained.coefficient.value);
+    try std.testing.expect(retained.coefficient.variance > 0);
+    try std.testing.expectError(error.ExecError, poolKappa(&.{.{ .value = 0, .variance = -1, .lower = 0, .upper = 0 }}, 0.05));
+}
+
+test "stratified pooled weighted kappa and CMH score families SAS" {
+    // pooled_edges.sas: asymmetric strata distinguish RANK from RIDIT and
+    // MODRIDIT scaling in CMH; weighted kappa is invariant to affine scores.
+    const a = std.testing.allocator;
+    const model = @import("freq_table.zig");
+    const cells = [_][9]f64{ .{ 18, 3, 1, 7, 12, 4, 2, 9, 24 }, .{ 6, 4, 2, 1, 9, 5, 3, 2, 7 } };
+    var levels: [3]model.Level = undefined;
+    for (&levels, 0..) |*level, i| {
+        const v: f64 = @floatFromInt(i + 1);
+        level.* = .{ .value = .{ .num = v }, .raw = .{ .num = v }, .missing = false, .frequency = 0 };
+    }
+    for ([_]model.Score{ .rank, .ridit, .modridit }, [_]f64{ 41.7738, 39.4053, 39.6824 }, [_]f64{ 42.7748, 40.0260, 40.1487 }) |score_kind, correlation, row_mean| {
+        var arena = std.heap.ArenaAllocator.init(a);
+        defer arena.deinit();
+        const allocator = arena.allocator();
+        var matrices: [2]Matrix = undefined;
+        var kappas: [2]?Estimate = undefined;
+        for (&cells, 0..) |*counts, i| {
+            matrices[i] = .{ .rows = 3, .cols = 3, .counts = counts };
+            const t = try margins(allocator, matrices[i]);
+            matrices[i].row_scores = try model.scores(allocator, &levels, t.rows, score_kind);
+            matrices[i].col_scores = try model.scores(allocator, &levels, t.cols, score_kind);
+            kappas[i] = (try kappa(allocator, matrices[i], .fleiss_cohen, 0.05, 0)).?.coefficient;
+        }
+        try std.testing.expectApproxEqAbs(correlation, (try cmh(allocator, &matrices, .correlation)).?.statistic, 0.00005);
+        try std.testing.expectApproxEqAbs(row_mean, (try cmh(allocator, &matrices, .row_mean)).?.statistic, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 53.1239), (try cmh(allocator, &matrices, .general)).?.statistic, 0.00005);
+        const pooled = (try poolKappa(&kappas, 0.05)).?;
+        try std.testing.expectApproxEqAbs(@as(f64, 0.6326), pooled.coefficient.value, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.0636), @sqrt(pooled.coefficient.variance), 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 4.1285), pooled.homogeneity.?.statistic, 0.00005);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.0422), pooled.homogeneity.?.p, 0.00005);
+        const reversed = [_]?Estimate{ kappas[1], kappas[0] };
+        try std.testing.expectApproxEqAbs(pooled.coefficient.value, (try poolKappa(&reversed, 0.05)).?.coefficient.value, 1e-12);
+    }
 }
