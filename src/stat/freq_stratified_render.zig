@@ -4,6 +4,7 @@ const std = @import("std");
 const k = @import("freq_stratified.zig");
 const risk = @import("freq_stratified_risk.zig");
 const parse = @import("freq_stratified_parse.zig");
+const format = @import("../format.zig");
 const Error = @import("../diag.zig").Error;
 const A = std.mem.Allocator;
 const Out = std.ArrayList(u8);
@@ -70,7 +71,7 @@ pub fn cmh(a: A, out: *Out, results: [3]?k.Chi, limit: u2, score_label: []const 
 }
 pub const RatioRow = struct { label: []const u8, mh: ?k.Ratio, logit: ?k.Ratio, corrected: bool = false };
 pub fn ratios(a: A, out: *Out, rows: []const RatioRow, alpha: f64) Error!void {
-    try text(a, out, try std.fmt.allocPrint(a, "\nCommon Odds Ratio and Relative Risks\nStatistic                 Method               Value    {d}% Confidence Limits\n", .{100 * (1 - alpha)}));
+    try text(a, out, try std.fmt.allocPrint(a, "\nCommon Odds Ratio and Relative Risks\nStatistic                 Method               Value    {s}% Confidence Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
     var corrected = false;
     for (rows) |row| {
         inline for (.{ false, true }) |logit| {
@@ -115,7 +116,7 @@ pub fn common(a: A, out: *Out, rows: []const CommonRow, options: parse.Common, a
         // SAS omits undefined Newcombe rows, rather than substituting Wald.
         if ((row.method == .newcombe or row.method == .newcombe_mr) and (row.result == null or row.result.?.limits.lower == null)) continue;
         if (!heading) {
-            try text(a, out, try std.fmt.allocPrint(a, "\nConfidence Limits for the Common Risk Difference\nMethod                 Value       Error    {d}% Confidence Limits\n", .{100 * (1 - alpha)}));
+            try text(a, out, try std.fmt.allocPrint(a, "\nConfidence Limits for the Common Risk Difference\nMethod                 Value       Error    {s}% Confidence Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
             heading = true;
         }
         try pad(a, out, methodName(row.method), 20, false);
@@ -158,7 +159,7 @@ pub fn commonWeightsWithControls(a: A, out: *Out, rows: []const WeightRow, selec
         try pad(a, out, r.stratum, 16, false);
         for (r.controls) |value| try pad(a, out, value, 12, false);
         try num(a, out, r.difference, 11);
-        try pad(a, out, try std.fmt.allocPrint(a, "{d}", .{r.frequency}), 12, true);
+        try pad(a, out, try format.bestNumW(a, r.frequency, 12), 12, true);
         try num(a, out, r.fraction, 12);
         if (selected_weights.mh) try num(a, out, r.mh, 12);
         if (selected_weights.mr) try num(a, out, r.mr, 12);
@@ -186,10 +187,10 @@ pub fn kappa(a: A, out: *Out, title: []const u8, value: ?k.Estimate, alpha: f64,
     if (restore) {
         try pair(a, out, "Kappa", if (value) |v| v.value else null, false);
         try pair(a, out, "ASE", if (value) |v| @sqrt(v.variance) else null, false);
-        try pair(a, out, try std.fmt.allocPrint(a, "{d}% Lower Conf Limit", .{100 * (1 - alpha)}), if (value) |v| v.lower else null, false);
-        try pair(a, out, try std.fmt.allocPrint(a, "{d}% Upper Conf Limit", .{100 * (1 - alpha)}), if (value) |v| v.upper else null, false);
+        try pair(a, out, try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}), if (value) |v| v.lower else null, false);
+        try pair(a, out, try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}), if (value) |v| v.upper else null, false);
     } else {
-        try text(a, out, try std.fmt.allocPrint(a, "Estimate       Standard Error    {d}% Confidence Limits\n", .{100 * (1 - alpha)}));
+        try text(a, out, try std.fmt.allocPrint(a, "Estimate       Standard Error    {s}% Confidence Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
         try num(a, out, if (value) |v| v.value else null, 10);
         try num(a, out, if (value) |v| @sqrt(v.variance) else null, 19);
         try num(a, out, if (value) |v| v.lower else null, 13);
@@ -218,7 +219,7 @@ pub fn agreementDetails(a: A, out: *Out, details: k.AgreementDetails, weighted: 
         }
         try pair(a, out, "B_N Measure", details.bn, false);
     }
-    if (include_weighted) {
+    if (include_weighted and weighted != null) {
         try text(a, out, "\nWeighted Kappa Details\n");
         try pair(a, out, "Observed Agreement", if (weighted) |w| w.observed else null, false);
         try pair(a, out, "Chance-Expected Agreement", if (weighted) |w| w.expected else null, false);
@@ -268,7 +269,7 @@ pub fn mantelFleiss(a: A, out: *Out, value: ?f64) Error!void {
     if (value != null and value.? < 5) try text(a, out, "WARNING: The Mantel-Fleiss criterion is less than 5.\n");
 }
 pub fn heterogeneity(a: A, out: *Out, value: ?k.Heterogeneity, df: ?f64, alpha: f64) Error!void {
-    try text(a, out, try std.fmt.allocPrint(a, "\nI-Square Measure of Heterogeneity\nI-Square      DF    {d}% Uncertainty Limits\n", .{100 * (1 - alpha)}));
+    try text(a, out, try std.fmt.allocPrint(a, "\nI-Square Measure of Heterogeneity\nI-Square      DF    {s}% Uncertainty Limits\n", .{try format.bestNumW(a, 100 * (1 - alpha), 12)}));
     if (value) |v| {
         try text(a, out, try std.fmt.allocPrint(a, "{d:.2}%", .{v.percent}));
         try pad(a, out, if (df) |d| try std.fmt.allocPrint(a, "{d}", .{d}) else ".", 8, true);
@@ -320,4 +321,24 @@ test "stratified renderer exercises typed summaries weights and agreement detail
     try std.testing.expect(std.mem.indexOf(u8, out.items, "76.77%") != null);
     try mcnemar(a, &out, null, 2, true);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "no discordant pairs") != null);
+}
+
+test "stratified fractional weights and confidence labels reuse bounded numeric format" {
+    // completion_edges.sas: alpha.8 displays20%,frequency5.4; estimates/limits
+    // are unchanged. Shared BEST12 preserves meaningful fractional digits.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: Out = .empty;
+    const tables = [_]risk.Table{ .{ .cells = .{ 1.6, 1.1, 0.5, 2 } }, .{ .cells = .{ 1.2, 1.6, 0.7, 1.9 } } };
+    const result = (try risk.commonDifference(a, &tables, .mantel_haenszel, .{ .alpha = 0.8 })).?;
+    try common(a, &out, &.{.{ .method = .mantel_haenszel, .result = result }}, .{ .limits = .{ .mh = true } }, 0.8, "Column1");
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "20% Confidence Limits") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.2013") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.3462") != null);
+    try commonWeights(a, &out, &.{.{ .stratum = "2", .difference = 0.1593, .frequency = 1.2 + 1.6 + 0.7 + 1.9, .fraction = 0.5094, .mh = 0.5095 }}, .{ .mh = true });
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "         5.4") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "999999") == null);
+    try kappa(a, &out, "Kappa", null, 0.8, true);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "20% Lower Conf Limit") != null);
 }

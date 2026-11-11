@@ -170,27 +170,37 @@ fn estimate(value: f64, variance: f64, alpha: f64) Estimate {
     return .{ .value = value, .variance = @max(0, variance), .lower = value - d, .upper = value + d };
 }
 pub const KappaWeight = enum { simple, cicchetti_allison, fleiss_cohen };
-pub fn kappaWeights(a: std.mem.Allocator, m: Matrix, kind: KappaWeight) Error![]f64 {
+pub const AgreementWeights = struct { values: []f64, valid: bool };
+/// Preserve the computed matrix for PRINTKWTS even when SAS rejects its range.
+pub fn agreementWeights(a: std.mem.Allocator, m: Matrix, kind: KappaWeight) Error!AgreementWeights {
     _ = try validate(m);
     if (m.rows != m.cols or m.rows < 2) return error.ExecError;
     const span = score(m.col_scores, m.cols - 1) - score(m.col_scores, 0);
     if (kind != .simple and span == 0) return error.ExecError;
     const w = try a.alloc(f64, m.counts.len);
-    for (w, 0..) |*v, k| {
-        const i = k / m.cols;
-        const j = k % m.cols;
-        const delta = if (kind == .simple) 0 else (score(m.col_scores, i) - score(m.col_scores, j)) / span;
+    var valid = true;
+    for (w, 0..) |*v, index| {
+        const i = index / m.cols;
+        const j = index % m.cols;
+        const difference = score(m.col_scores, i) - score(m.col_scores, j);
         v.* = switch (kind) {
             .simple => if (i == j) 1 else 0,
-            .cicchetti_allison => 1 - @abs(delta),
-            .fleiss_cohen => 1 - sq(delta),
+            // CA has a signed endpoint span. Descending scores therefore
+            // produce weights >1 and a SAS error; FC squares the span.
+            .cicchetti_allison => 1 - @abs(difference) / span,
+            .fleiss_cohen => 1 - sq(difference / span),
         };
-        if (v.* < 0 or v.* > 1) {
-            a.free(w);
-            return error.ExecError;
-        }
+        valid = valid and std.math.isFinite(v.*) and v.* >= 0 and v.* <= 1;
     }
-    return w;
+    return .{ .values = w, .valid = valid };
+}
+pub fn kappaWeights(a: std.mem.Allocator, m: Matrix, kind: KappaWeight) Error![]f64 {
+    const weights = try agreementWeights(a, m, kind);
+    if (!weights.valid) {
+        a.free(weights.values);
+        return error.ExecError;
+    }
+    return weights.values;
 }
 pub const Kappa = struct { coefficient: Estimate, null_variance: f64, test_result: ?Normal, observed: f64, expected: f64 };
 /// Same numeric entry point serves exact coefficient callbacks with fixed margins.
@@ -996,4 +1006,22 @@ test "stratified CMH validates only score axes used by its kind" {
     m.col_scores = &.{ nan, 2, 3 };
     try std.testing.expectError(error.ExecError, cmh(a, &.{m}, .row_mean));
     try std.testing.expectApproxEqAbs(@as(f64, 47.0823), (try cmh(a, &.{m}, .general)).?.statistic, 0.00005);
+}
+
+test "stratified descending CA keeps signed span and FC remains valid" {
+    // completion_edges.sas: SAS CA weights1.5/2.0 are printed then rejected;
+    // descending FC weights.75/0 produce kappa.6885. No tolerance change.
+    const a = std.testing.allocator;
+    const m = Matrix{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 }, .row_scores = &.{ 3, 2, 1 }, .col_scores = &.{ 3, 2, 1 } };
+    const ca = try agreementWeights(a, m, .cicchetti_allison);
+    defer a.free(ca.values);
+    try std.testing.expect(!ca.valid);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 1.5, 2, 1.5, 1, 1.5, 2, 1.5, 1 }, ca.values);
+    try std.testing.expectError(error.ExecError, kappaWeights(a, m, .cicchetti_allison));
+    try std.testing.expectError(error.ExecError, kappa(a, m, .cicchetti_allison, 0.05, 0));
+    const fc = try agreementWeights(a, m, .fleiss_cohen);
+    defer a.free(fc.values);
+    try std.testing.expect(fc.valid);
+    try std.testing.expectEqualSlices(f64, &.{ 1, 0.75, 0, 0.75, 1, 0.75, 0, 0.75, 1 }, fc.values);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.6885), (try kappa(a, m, .fleiss_cohen, 0.05, 0)).?.coefficient.value, 0.00005);
 }

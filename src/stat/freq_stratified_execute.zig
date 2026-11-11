@@ -125,6 +125,8 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
     var risk_tables: std.ArrayList(risk.Table2x2) = .empty;
     var simple: std.ArrayList(?k.Estimate) = .empty;
     var weighted: std.ArrayList(?k.Estimate) = .empty;
+    var trend_scores_invalid = false;
+    var weighted_scores_invalid = false;
     var row_scores_valid = true;
     var col_scores_valid = true;
     for (ids.items) |id| {
@@ -145,21 +147,23 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
             row_scores_valid = row_scores_valid and row_valid;
             col_scores_valid = col_scores_valid and col_valid;
             s.trend_eligible = if (m.cols == 2) row_valid else m.rows == 2 and col_valid;
+            if (options.trend and (m.rows == 2 or m.cols == 2) and !s.trend_eligible) trend_scores_invalid = true;
             if (options.trend and s.trend_eligible) s.trend = try k.trend(m);
             if (options.jt) s.jt = try k.jonckheere(a, m);
             if (options.agreement.enabled and m.rows == m.cols and m.rows > 1) {
                 s.symmetry = if (m.rows == 2) try k.mcnemar(m, options.agreement.null_ratio) else try k.bowker(m, options.agreement.df);
                 s.simple = try k.kappa(a, m, .simple, scope.alpha, options.agreement.null_kappa orelse 0);
                 s.details = try k.agreementDetails(a, m, scope.alpha);
+                if (m.rows > 2 and !col_valid) weighted_scores_invalid = true;
                 if (m.rows > 2 and col_valid) {
-                    // Invalid nonmonotone kappa weights are a true SAS error;
-                    // retain simple agreement and JT, emit a captured diagnostic.
-                    s.weights = k.kappaWeights(a, m, options.agreement.weight) catch |err| blk: {
+                    const weights = k.agreementWeights(a, m, options.agreement.weight) catch |err| blk: {
                         if (err == error.OutOfMemory) return err;
-                        try d.report(.err, 0, "To compute the weighted kappa coefficient, weights must be between 0 and 1.", .{});
-                        break :blk null;
+                        break :blk k.AgreementWeights{ .values = &.{}, .valid = false };
                     };
-                    if (s.weights != null) s.weighted = try k.kappa(a, m, options.agreement.weight, scope.alpha, options.agreement.null_weighted orelse 0);
+                    if (weights.values.len > 0) s.weights = weights.values;
+                    if (weights.valid) {
+                        s.weighted = try k.kappa(a, m, options.agreement.weight, scope.alpha, options.agreement.null_weighted orelse 0);
+                    } else try d.report(.err, 0, "To compute the weighted kappa coefficient, weights must be between 0 and 1.", .{});
                 }
                 try simple.append(a, if (s.simple) |v| v.coefficient else null);
                 try weighted.append(a, if (s.weighted) |v| v.coefficient else null);
@@ -172,7 +176,11 @@ pub fn compute(a: A, d: *diag.Diagnostics, table: *const model.Table, options: p
     result.stratum_ids = try active_ids.toOwnedSlice(a);
     result.risk_tables = try risk_tables.toOwnedSlice(a);
     const numeric_scores_valid = row_scores_valid and col_scores_valid;
-    if (!numeric_scores_valid) try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
+    if ((options.cmh > 0 and !numeric_scores_valid) or trend_scores_invalid) {
+        try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
+    } else if (weighted_scores_invalid) {
+        try d.report(.warning, 0, "The weighted kappa coefficient is not computed because there is no valid numeric table score for the missing values.", .{});
+    }
     result.cmh_score_eligible = .{ row_scores_valid and col_scores_valid, col_scores_valid, true };
     result.cmh_suppressed = !numeric_scores_valid;
     if (result.matrices.len > 0) {
@@ -637,4 +645,63 @@ test "stratified CMH score eligibility is per axis independent of SAS ODS suppre
             try std.testing.expect(!rank.cmh_suppressed);
         }
     }
+}
+
+test "stratified agreement warning and details follow weighted column score eligibility" {
+    // completion_edges.sas: row-only missing permits weighted kappa without
+    // warning; column-only missing emits one weighted-kappa warning, no details.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var table = try binaryTable(a, 2);
+    for (table.dimensions) |*dim| {
+        const levels = try a.alloc(model.Level, 3);
+        for (levels, 0..) |*level, i| {
+            const v: f64 = @floatFromInt(i + 1);
+            level.* = .{ .value = .{ .num = v }, .raw = .{ .num = v }, .missing = false, .frequency = 0 };
+        }
+        dim.levels = levels;
+    }
+    table = try model.Table.init(a, table.dimensions, true);
+    for ([_]f64{ 18, 3, 1, 7, 12, 4, 2, 9, 24 }, 0..) |v, i| try table.add(a, i, v);
+    const options = p.Options{ .agreement = .{ .enabled = true, .weighted_details = true } };
+    table.dimensions[0].levels[0].raw = .{ .num = std.math.nan(f64) };
+    table.dimensions[0].levels[0].missing = true;
+    var row_diag = diag.Diagnostics.init(a);
+    const row = try compute(a, &row_diag, &table, options, .{});
+    try std.testing.expectEqual(@as(usize, 0), row_diag.list.items.len);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.6015), row.strata[0].weighted.?.coefficient.value, 0.00005);
+    var out: std.ArrayList(u8) = .empty;
+    try renderStratum(a, &out, row.strata[0], options, .{});
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Details") != null);
+    table.dimensions[0].levels[0].raw = .{ .num = 1 };
+    table.dimensions[0].levels[0].missing = false;
+    table.dimensions[1].levels[0].raw = .{ .num = std.math.nan(f64) };
+    table.dimensions[1].levels[0].missing = true;
+    var col_diag = diag.Diagnostics.init(a);
+    const col = try compute(a, &col_diag, &table, options, .{});
+    try std.testing.expectEqual(@as(usize, 1), col_diag.list.items.len);
+    try std.testing.expectEqual(diag.Severity.warning, col_diag.list.items[0].severity);
+    try std.testing.expect(std.mem.indexOf(u8, col_diag.list.items[0].message, "weighted kappa coefficient") != null);
+    try std.testing.expect(col.strata[0].weighted == null and col.strata[0].simple != null);
+    out.clearRetainingCapacity();
+    try renderStratum(a, &out, col.strata[0], options, .{});
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Details") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Coefficient") != null);
+    // Captured CA error preserves the raw PRINTKWTS matrix and simple result.
+    for (table.dimensions) |*dim| for (dim.levels, 0..) |*level, i| {
+        const v: f64 = @floatFromInt(3 - i);
+        level.raw = .{ .num = v };
+        level.value = .{ .num = v };
+        level.missing = false;
+    };
+    var invalid_diag = diag.Diagnostics.init(a);
+    const bad = try compute(a, &invalid_diag, &table, .{ .agreement = .{ .enabled = true, .print_weights = true, .weighted_details = true } }, .{});
+    try std.testing.expect(invalid_diag.hasErrors());
+    try std.testing.expect(bad.strata[0].weighted == null and bad.strata[0].simple != null);
+    try std.testing.expectEqual(@as(f64, 2), bad.strata[0].weights.?[2]);
+    out.clearRetainingCapacity();
+    try renderStratum(a, &out, bad.strata[0], .{ .agreement = .{ .enabled = true, .details = true, .print_weights = true, .weighted_details = true } }, .{});
+    for ([_][]const u8{ "Symmetry Test", "Simple Kappa Coefficient", "Weighted Kappa Coefficient", "Kappa Details", "1.5000", "2.0000" }) |text_value| try std.testing.expect(std.mem.indexOf(u8, out.items, text_value) != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weighted Kappa Details") == null);
 }
