@@ -26,6 +26,8 @@ test {
     _ = @import("stat/freq_stratified_render.zig");
     _ = @import("stat/freq_stratified_parse.zig");
     _ = @import("stat/freq_stratified_risk.zig");
+    _ = @import("stat/freq_exact_joint.zig");
+    _ = @import("stat/freq_exact_execute.zig");
     _ = @import("stat/freq_exact_render.zig");
     _ = @import("stat/freq_exact_parse.zig");
     _ = @import("stat/freq_stratified.zig");

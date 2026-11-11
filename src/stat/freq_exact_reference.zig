@@ -182,3 +182,89 @@ test "discordant pair laws discriminate from conditional independence" {
     try t.expectApproxEqAbs(@as(f64, 229.0 / 13860.0), wrong.two_sided, 1e-12);
     try t.expect((try symmetry(t.allocator, square, 1, callback, .{ .max_tables = 23 })) == .exhausted);
 }
+
+const MultinomialSampler = struct {
+    n: u32,
+    probabilities: []const f64,
+    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+        const self: *MultinomialSampler = @ptrCast(@alignCast(raw.?));
+        @memset(cells, 0);
+        for (0..self.n) |i| {
+            if (i % 1024 == 0 and budget.stopped()) return false;
+            const u = random.float(f64);
+            var cumulative: f64 = 0;
+            for (self.probabilities, 0..) |p, j| {
+                cumulative += p;
+                if (u < cumulative or j + 1 == cells.len) {
+                    cells[j] += 1;
+                    break;
+                }
+            }
+        }
+        return true;
+    }
+};
+pub fn multinomialMonteCarlo(a: std.mem.Allocator, observed: []const u32, probabilities: []const f64, statistic: Statistic, options: dist.Simulation, budget: Budget) Error!dist.MonteCarlo {
+    if (observed.len == 0 or observed.len != probabilities.len) return error.ExecError;
+    var n: u64 = 0;
+    var p: f64 = 0;
+    for (observed, probabilities) |v, q| {
+        n += v;
+        if (!std.math.isFinite(q) or q <= 0 or q > 1) return error.ExecError;
+        p += q;
+    }
+    if (n == 0 or @abs(p - 1) > 1e-12) return error.ExecError;
+    if (n > options.max_observations) return .exhausted;
+    var context = MultinomialSampler{ .n = @intCast(n), .probabilities = probabilities };
+    return dist.simulate(a, .{ .rows = 1, .cols = observed.len, .cells = observed }, statistic, options, budget, .{ .context = &context, .draw = MultinomialSampler.draw });
+}
+const SymmetrySampler = struct {
+    observed: Matrix,
+    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+        const self: *SymmetrySampler = @ptrCast(@alignCast(raw.?));
+        @memcpy(cells, self.observed.cells);
+        const n = self.observed.rows;
+        for (0..n) |i| for (i + 1..n) |j| {
+            const up = i * n + j;
+            const down = j * n + i;
+            const total = cells[up] + cells[down];
+            var successes: u32 = 0;
+            for (0..total) |trial| {
+                if (trial % 1024 == 0 and budget.stopped()) return false;
+                if (random.boolean()) successes += 1;
+            }
+            cells[up] = successes;
+            cells[down] = total - successes;
+        };
+        return true;
+    }
+};
+/// MC is documented for SYMMETRY (R>2), not MCNEM. Same independent
+/// complementary-pair Binomial(D_ij,.5) law as exact symmetry enumeration.
+pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Statistic, options: dist.Simulation, budget: Budget) Error!dist.MonteCarlo {
+    if (observed.rows != observed.cols or observed.rows < 3) return error.ExecError;
+    const size = std.math.mul(usize, observed.rows, observed.cols) catch return error.ExecError;
+    if (observed.cells.len != size) return error.ExecError;
+    var total: u64 = 0;
+    for (observed.cells) |v| {
+        total += v;
+        if (total > options.max_observations) return .exhausted;
+    }
+    var context = SymmetrySampler{ .observed = observed };
+    return dist.simulate(a, observed, statistic, options, budget, .{ .context = &context, .draw = SymmetrySampler.draw });
+}
+
+test "MC multinomial and symmetry retain their distinct reference laws" {
+    const t = std.testing;
+    const options = dist.Simulation{ .samples = 20000, .seed = 12345 };
+    const one = (try multinomialMonteCarlo(t.allocator, &.{ 0, 1, 3 }, &.{ 0.2, 0.3, 0.5 }, .{ .evaluate = testPearson }, options, .{})).complete;
+    try t.expect(@abs(one.two_sided.p - 0.712) < 6 * @sqrt(@as(f64, 0.712 * 0.288 / 20000.0)));
+    const square = Matrix{ .rows = 3, .cols = 3, .cells = &.{ 2, 3, 0, 0, 2, 2, 1, 0, 2 } };
+    const context = try adapters.Context.init(.{ .rows = 3, .cols = 3, .counts = &.{ 2, 3, 0, 0, 2, 2, 1, 0, 2 } }, .symmetry, null, 1);
+    const callback = adapters.Adapters(dist).statistic(&context);
+    const sym = (try symmetryMonteCarlo(t.allocator, square, callback, options, .{})).complete;
+    const again = (try symmetryMonteCarlo(t.allocator, square, callback, options, .{})).complete;
+    try t.expectEqualDeep(sym, again);
+    try t.expect(@abs(sym.two_sided.p - 0.125) < 6 * @sqrt(@as(f64, 0.125 * 0.875 / 20000.0)));
+    try t.expect((try symmetryMonteCarlo(t.allocator, square, callback, options, .{ .max_tables = 1 })) == .exhausted);
+}

@@ -105,3 +105,9 @@ test "Fisher rendering distinguishes observed mass from tied POINT and missing r
     try std.testing.expectEqualStrings("<.0001", try probability(a, 0.000001, .default));
     try std.testing.expectEqualStrings("0.123456", try probability(a, 0.123456, .{ .named = "8.6" }));
 }
+
+pub fn zelen(a: A, out: *Out, r: strata.Zelen, options: parse.Options) Error!void {
+    try out.appendSlice(a, "\nZelen's Exact Test for Equal Odds Ratios\n\n");
+    try pLine(a, out, "Zelen's Exact Test (P)", r.point, options);
+    try pLine(a, out, "Exact Pr <= P", r.p, options);
+}

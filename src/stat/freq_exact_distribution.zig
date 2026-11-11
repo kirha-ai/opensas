@@ -131,6 +131,8 @@ pub const Accumulator = struct {
     }
 };
 
+pub const Visitor = struct { context: ?*anyopaque, visit: *const fn (?*anyopaque, Matrix, f64) Error!void };
+
 const Search = struct {
     m: Matrix,
     cells: []u32,
@@ -142,6 +144,7 @@ const Search = struct {
     count: u64 = 0,
     stopped: bool = false,
     accumulator: Accumulator,
+    visitor: ?Visitor = null,
     fn visit(self: *Search, k: usize) Error!void {
         if (self.stopped) return;
         if (self.budget.stopped()) {
@@ -154,10 +157,14 @@ const Search = struct {
                 return;
             }
             self.count += 1;
-            const value = try self.s.evaluate(self.s.context, .{ .rows = self.m.rows, .cols = self.m.cols, .cells = self.cells });
-            if (!std.math.isFinite(value)) return error.ExecError;
+            const sampled = Matrix{ .rows = self.m.rows, .cols = self.m.cols, .cells = self.cells };
             var log_weight: f64 = 0;
             for (self.cells) |v| log_weight -= math.lgammaOf(@as(f64, @floatFromInt(v)) + 1);
+            if (self.visitor) |v| {
+                try v.visit(v.context, sampled, log_weight);
+                return;
+            }
+            const value = try self.s.evaluate(self.s.context, sampled);
             try self.accumulator.add(log_weight, value);
             return;
         }
@@ -182,6 +189,30 @@ const Search = struct {
         }
     }
 };
+
+/// Streams each conditional table to a joint-stratum consumer. Borrowed cells
+/// are valid only during visit. False reports resource exhaustion.
+pub fn visitFixed(a: std.mem.Allocator, m: Matrix, budget: Budget, visitor: Visitor) Error!bool {
+    if (m.rows > 256 or m.cols > 256 or (m.rows > 0 and m.cols > 256 / m.rows)) return false;
+    var empty = true;
+    for (m.cells) |v| {
+        if (v != 0) empty = false;
+    }
+    if (empty) {
+        if (m.rows == 0 or m.cols == 0 or m.cells.len != m.rows * m.cols) return error.ExecError;
+        if (budget.max_tables == 0 or budget.stopped()) return false;
+        try visitor.visit(visitor.context, m, 0);
+        return true;
+    }
+    const shape = try Shape.init(a, m);
+    defer shape.deinit(a);
+    const cells = try a.alloc(u32, m.cells.len);
+    defer a.free(cells);
+    const stat = Statistic{ .evaluate = fisherStatistic };
+    var search = Search{ .m = m, .cells = cells, .r = shape.rows, .c = shape.cols, .s = stat, .observed = 0, .budget = budget, .accumulator = .{ .statistic = stat, .observed = 0 }, .visitor = visitor };
+    try search.visit(0);
+    return !search.stopped;
+}
 
 pub fn enumerate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, budget: Budget) Error!Enumeration {
     if (m.rows > 256 or m.cols > 256 or (m.rows > 0 and m.cols > 256 / m.rows)) return .exhausted;
@@ -210,10 +241,10 @@ pub const Estimate = struct { p: f64, standard_error: f64, lower: f64, upper: f6
 /// SAS/STAT p.234: variance denominator N-1, boundary confidence bounds
 /// alpha^(1/N), not Clopper-Pearson and not a zero-width Wald interval.
 pub fn estimate(hits: u64, n: u64, alpha: f64) Error!Estimate {
-    if (n < 2 or hits > n or !std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1) return error.ExecError;
+    if (n == 0 or hits > n or !std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1) return error.ExecError;
     const nf: f64 = @floatFromInt(n);
     const p = @as(f64, @floatFromInt(hits)) / nf;
-    const se = @sqrt(p * (1 - p) / (nf - 1));
+    const se = if (n == 1) @as(f64, 0) else @sqrt(p * (1 - p) / (nf - 1));
     const z = -(math.distQuantile(.normal, alpha / 2, &.{}) orelse return error.ExecError);
     return .{
         .p = p,
@@ -230,7 +261,7 @@ pub const Simulation = struct { samples: u64 = 10_000, seed: u64, alpha: f64 = 0
 /// SAS's RNG stream is not claimed to match. Caller resolves nonpositive SAS
 /// seeds from its clock and records the effective positive seed.
 pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: Simulation, budget: Budget) Error!MonteCarlo {
-    if (options.samples < 2 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    if (options.samples == 0 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
     _ = try estimate(0, options.samples, options.alpha);
     if (m.rows > 256 or m.cols > 256 or (m.rows > 0 and m.cols > 256 / m.rows)) return .exhausted;
     const shape = try Shape.init(a, m);
@@ -245,6 +276,38 @@ pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options
         @memset(labels[pos..][0..v], @intCast(j));
         pos += v;
     }
+    var context = FixedSampler{ .labels = labels, .rows = shape.rows, .cols = m.cols };
+    return simulate(a, m, statistic, options, budget, .{ .context = &context, .draw = FixedSampler.draw });
+}
+pub const FixedSampler = struct {
+    labels: []u8,
+    rows: []const u32,
+    cols: usize,
+    pub fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+        const self: *FixedSampler = @ptrCast(@alignCast(raw.?));
+        var remaining = self.labels.len;
+        while (remaining > 1) {
+            if (remaining % 1024 == 0 and budget.stopped()) return false;
+            const j = random.uintLessThan(usize, remaining);
+            remaining -= 1;
+            std.mem.swap(u8, &self.labels[remaining], &self.labels[j]);
+        }
+        @memset(cells, 0);
+        var pos: usize = 0;
+        for (self.rows, 0..) |v, i| {
+            for (self.labels[pos..][0..v]) |j| cells[i * self.cols + j] += 1;
+            pos += v;
+        }
+        return true;
+    }
+};
+/// Generator owns its law. False is an interrupted draw, never a usable table.
+pub const Sampler = struct { context: ?*anyopaque, draw: *const fn (?*anyopaque, std.Random, []u32, Budget) Error!bool };
+pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: Simulation, budget: Budget, sampler: Sampler) Error!MonteCarlo {
+    if (options.samples == 0 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    _ = try estimate(0, options.samples, options.alpha);
+    const observed = try statistic.evaluate(statistic.context, m);
+    if (!std.math.isFinite(observed)) return error.ExecError;
     const cells = try a.alloc(u32, m.cells.len);
     defer a.free(cells);
     var prng = std.Random.DefaultPrng.init(options.seed);
@@ -253,20 +316,7 @@ pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options
     var sample: u64 = 0;
     while (sample < options.samples) : (sample += 1) {
         if (sample == budget.max_tables or budget.stopped()) return .exhausted;
-        // Explicit shuffle permits deadline checks even for large N.
-        var remaining = labels.len;
-        while (remaining > 1) {
-            if (remaining % 1024 == 0 and budget.stopped()) return .exhausted;
-            const j = random.uintLessThan(usize, remaining);
-            remaining -= 1;
-            std.mem.swap(u8, &labels[remaining], &labels[j]);
-        }
-        @memset(cells, 0);
-        pos = 0;
-        for (shape.rows, 0..) |v, i| {
-            for (labels[pos..][0..v]) |j| cells[i * m.cols + j] += 1;
-            pos += v;
-        }
+        if (!try sampler.draw(sampler.context, random, cells, budget)) return .exhausted;
         const value = try statistic.evaluate(statistic.context, .{ .rows = m.rows, .cols = m.cols, .cells = cells });
         if (!std.math.isFinite(value)) return error.ExecError;
         const e = events(value, observed, statistic);
@@ -347,4 +397,33 @@ test "public matrix conversion checks fractional counts and aggregate overflow" 
     try t.expectError(error.ExecError, Matrix.fromCounts(t.allocator, 2, 2, &.{ 0, 2.5, 3, 4 }));
     try t.expectError(error.ExecError, Matrix.fromCounts(t.allocator, 1, 2, &.{ 4294967295, 1 }));
     try t.expectError(error.ExecError, Matrix.fromCounts(t.allocator, 2, 2, &.{ 1, 2 }));
+}
+
+// SAS generators-mc.sas: SYMMETRY N=1 gives p=0 and 99% CI [0,.99].
+test "single Monte Carlo draw uses boundary confidence formula" {
+    const zero = try estimate(0, 1, 0.01);
+    const one = try estimate(1, 1, 0.01);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99), zero.upper, 1e-15);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.01), one.lower, 1e-15);
+}
+
+/// Probability of THIS table, distinct from the mass of all tables tied in
+/// Fisher's ordering (Probabilities.point). Marginal factorials are required.
+pub fn tableProbability(m: Matrix) Error!f64 {
+    if (m.rows == 0 or m.cols == 0 or m.rows > 256 or m.cols > 256 / m.rows or m.cells.len != m.rows * m.cols) return error.ExecError;
+    var rows: [256]u64 = @splat(0);
+    var cols: [256]u64 = @splat(0);
+    var total: u64 = 0;
+    var log_p: f64 = 0;
+    for (m.cells, 0..) |v, i| {
+        rows[i / m.cols] += v;
+        cols[i % m.cols] += v;
+        total += v;
+        log_p -= math.lgammaOf(@as(f64, @floatFromInt(v)) + 1);
+    }
+    if (total == 0 or total > std.math.maxInt(u32)) return error.ExecError;
+    for (rows[0..m.rows]) |v| log_p += math.lgammaOf(@as(f64, @floatFromInt(v)) + 1);
+    for (cols[0..m.cols]) |v| log_p += math.lgammaOf(@as(f64, @floatFromInt(v)) + 1);
+    log_p -= math.lgammaOf(@as(f64, @floatFromInt(total)) + 1);
+    return @min(1, @exp(log_p));
 }

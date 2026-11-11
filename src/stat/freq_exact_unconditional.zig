@@ -223,6 +223,13 @@ test "risk interval method oracle and column orientation" {
     try t.expectApproxEqAbs(@as(f64, -0.9363), ci.lower, 0.00005);
     try t.expectApproxEqAbs(@as(f64, 0.3017), ci.upper, 0.00005);
     const methods = [_]Method{ .noscore, .score, .score2 };
+    const rd_lower = [_]f64{ -0.9363, -0.9363, -0.9072 };
+    const rd_upper = [_]f64{ 0.3017, 0.3017, 0.2500 };
+    for (methods, rd_lower, rd_upper) |method, lower, upper| {
+        const rd = (try riskLimits(table, .first, .difference, method, 0.05, .{})).complete;
+        try t.expectApproxEqAbs(lower, rd.lower, 0.00005);
+        try t.expectApproxEqAbs(upper, rd.upper, 0.00005);
+    }
     const rr_lower = [_]f64{ 0, 0.0118, 0.0238 };
     // Independently maximize the explicit 25-table polynomial. SAS prints
     // 12.8095; its tail at that rounded value is .02499938057535682.
