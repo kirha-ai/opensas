@@ -8,6 +8,7 @@ const math = @import("../functions.zig");
 const risk = @import("freq_risk.zig");
 const exact = @import("freq_exact.zig");
 const dist = @import("freq_exact_distribution.zig");
+const polynomial = @import("freq_exact_polynomial.zig");
 pub const Error = exact.Error;
 pub const Family = enum { difference, relative_risk };
 pub const Method = enum { noscore, score, score2 };
@@ -16,6 +17,10 @@ pub const Bounds = struct { lower: f64, upper: f64 };
 pub const TailResult = union(enum) { complete: Bounds, exhausted };
 pub const LimitsResult = union(enum) { complete: exact.Interval, exhausted };
 pub const Options = struct {
+    /// Caller workspace for allocation-backed large tails. Small tails keep
+    /// the original stack path. A missing allocator returns exhausted when
+    /// dynamic workspace is required; no implicit global allocator is used.
+    allocator: ?std.mem.Allocator = null,
     budget: dist.Budget = .{},
     /// Absolute bound width for the nuisance supremum (floating roundoff aside).
     tolerance: f64 = 1e-10,
@@ -24,7 +29,8 @@ pub const Options = struct {
     /// certified inversion; riskLimitsSas uses the documented profile p-stop.
     inversion_tolerance: f64 = 1e-11,
 };
-const max_n = 128;
+// Storage threshold only, never an upper limit on a supplied-workspace domain.
+const stack_degree = 128;
 const Work = struct {
     options: Options,
     used: u64 = 0,
@@ -83,7 +89,7 @@ fn selected(value: f64, observed: f64, side: Side) bool {
     return if (side == .left) x < y + eps else x > y - eps;
 }
 /// Multiply a degree-d Bernstein polynomial by affine p(t) with endpoints l,h.
-fn multiply(coeff: *[max_n + 1]f64, d: usize, l: f64, h: f64) void {
+fn multiply(coeff: *[stack_degree + 1]f64, d: usize, l: f64, h: f64) void {
     var j = d + 2;
     while (j > 0) {
         j -= 1;
@@ -103,9 +109,9 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
         work.stopped = true;
         return 1;
     }
-    var temp: [max_n + 1]f64 = undefined;
-    var left: [max_n + 1]f64 = undefined;
-    var right: [max_n + 1]f64 = undefined;
+    var temp: [stack_degree + 1]f64 = undefined;
+    var left: [stack_degree + 1]f64 = undefined;
+    var right: [stack_degree + 1]f64 = undefined;
     @memcpy(temp[0..coeff.len], coeff);
     left[0] = temp[0];
     right[coeff.len - 1] = temp[coeff.len - 1];
@@ -124,10 +130,9 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
 fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, work: *Work) Error!TailResult {
     const n1wide = @as(u64, c[0]) + c[1];
     const n2wide = @as(u64, c[2]) + c[3];
-    if (n1wide + n2wide > max_n) return .exhausted;
+    if (n1wide > std.math.maxInt(u32) or n2wide > std.math.maxInt(u32)) return .exhausted;
     const n1: u32 = @intCast(n1wide);
     const n2: u32 = @intCast(n2wide);
-    const n = n1 + n2;
     if (n1 == 0 or n2 == 0) return error.ExecError;
     if (!std.math.isFinite(null_value) or (family == .difference and @abs(null_value) > 1) or (family == .relative_risk and null_value <= 0)) return error.ExecError;
     if (!std.math.isFinite(work.options.tolerance) or work.options.tolerance <= 0 or work.options.tolerance >= 1) return error.ExecError;
@@ -136,14 +141,16 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     const p1lo = if (family == .difference) p2lo + null_value else p2lo * null_value;
     const p1hi = if (family == .difference) p2hi + null_value else p2hi * null_value;
     const observed = try statistic(c, family, method, null_value);
-    var sum: [max_n + 1]f64 = @splat(0);
+    if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, work);
+    const n = n1 + n2;
+    var sum: [stack_degree + 1]f64 = @splat(0);
     for (0..n1 + 1) |xx| for (0..n2 + 1) |yy| {
         if (!work.tick()) return .exhausted;
         const x: u32 = @intCast(xx);
         const y: u32 = @intCast(yy);
         const s = try statistic(.{ x, n1 - x, y, n2 - y }, family, method, null_value);
         if (!selected(s, observed, side)) continue;
-        var coeff: [max_n + 1]f64 = @splat(0);
+        var coeff: [stack_degree + 1]f64 = @splat(0);
         coeff[0] = choose(n1, x) * choose(n2, y);
         var d: usize = 0;
         for (0..n1) |i| {
@@ -161,6 +168,39 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     if (work.stopped) return .exhausted;
     return .{ .complete = .{ .lower = @min(1, best), .upper = @min(1, upper) } };
 }
+fn polynomialTick(context: ?*anyopaque) bool {
+    const work: *Work = @ptrCast(@alignCast(context.?));
+    return work.tick();
+}
+fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f64, side: Side, observed: f64, p1: polynomial.Range, p2: polynomial.Range, work: *Work) Error!TailResult {
+    const rows = std.math.add(usize, n1, 1) catch return .exhausted;
+    const cols = std.math.add(usize, n2, 1) catch return .exhausted;
+    const count = std.math.mul(usize, rows, cols) catch return .exhausted;
+    _ = std.math.add(usize, n1, n2) catch return .exhausted;
+    // Enumeration itself costs at least one tick per table. Refuse hopeless
+    // work before allocation, while retaining the shared deadline everywhere.
+    if (count > work.options.budget.max_tables - work.used or !work.tick()) return .exhausted;
+    const a = work.options.allocator orelse return .exhausted;
+    const events = try a.alloc(bool, count);
+    defer a.free(events);
+    for (0..rows) |xx| for (0..cols) |yy| {
+        if (!work.tick()) return .exhausted;
+        const x: u32 = @intCast(xx);
+        const y: u32 = @intCast(yy);
+        const value = try statistic(.{ x, n1 - x, y, n2 - y }, family, method, null_value);
+        events[xx * cols + yy] = selected(value, observed, side);
+    };
+    const control = polynomial.Control{ .context = work, .consume = polynomialTick };
+    const built = try polynomial.build(a, n1, n2, events, p1, p2, control);
+    if (built == .exhausted) return .exhausted;
+    defer built.complete.deinit(a);
+    const maximum = try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
+    return switch (maximum) {
+        .exhausted => .exhausted,
+        .complete => |bounds| .{ .complete = .{ .lower = bounds.lower, .upper = bounds.upper } },
+    };
+}
+
 pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, null_value: f64, side: Side, options: Options) Error!TailResult {
     var work = Work{ .options = options };
     return tail(try canonical(table, column), family, method, null_value, side, &work);
@@ -171,6 +211,7 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
     const c = try canonical(table, column);
+    if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
     const s = tableOf(c).samples(.first);
     const estimate = if (family == .difference) s[0].proportion() - s[1].proportion() else if (c[2] == 0) std.math.inf(f64) else s[0].proportion() / s[1].proportion();
     const target = if (method == .score2) alpha else alpha / 2;
@@ -257,6 +298,7 @@ pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, 
         !std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1 or
         !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
     const c = try canonical(table, column);
+    if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
     var work = Work{ .options = options };
     if (!work.tick()) return .exhausted;
     // SAS suppresses the exact output object for a constant response column.
@@ -282,7 +324,6 @@ fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     if (!work.tick()) return null;
     const n1: f64 = @floatFromInt(@as(u64, c[0]) + c[1]);
     const n2: f64 = @floatFromInt(@as(u64, c[2]) + c[3]);
-    if (n1 + n2 > max_n) return null;
     if (c[2] == 0) return std.math.inf(f64);
     const point = try statistic(c, .relative_risk, .noscore, 1);
     const ordinary = try risk.ratio(tableOf(c), .first, .relative_risk, alpha, .wald, false);
@@ -690,3 +731,66 @@ test "high-alpha SCORE2 boundary discrepancies retain the exact acceptance certi
     }
 }
 
+test "allocator-backed unconditional path admits n1=1 n2=129" {
+    const t = std.testing;
+    const table = risk.Table2x2{ .cells = .{ 0, 1, 129, 0 } };
+    const options = Options{ .allocator = t.allocator };
+    const value = try riskTail(table, .first, .relative_risk, .noscore, 1, .left, options);
+    try t.expect(value == .complete);
+    const closed = (1.0 / 130.0) * std.math.pow(f64, 129.0 / 130.0, 129);
+    try t.expect(value.complete.lower <= closed + 1e-14 and value.complete.upper >= closed - 1e-14);
+    try t.expect(value.complete.upper - value.complete.lower <= options.tolerance);
+    const rr = (try riskLimits(table, .first, .relative_risk, .noscore, 0.05, options)).complete;
+    try t.expectEqual(@as(f64, 0), rr.lower);
+    try t.expectApproxEqAbs(@as(f64, 0.975), rr.upper, 1e-9);
+    const rd = (try riskLimits(table, .first, .difference, .noscore, 0.05, options)).complete;
+    try t.expectEqual(@as(f64, -1), rd.lower);
+    try t.expectApproxEqAbs(@as(f64, -0.025), rd.upper, 1e-9);
+    const profile = (try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.05, options)).complete;
+    try t.expectApproxEqAbs(@as(f64, 0.975), profile.upper, 2e-6);
+    try t.expect((try riskTail(table, .first, .relative_risk, .noscore, 1, .left, .{ .allocator = t.allocator, .budget = .{ .max_tables = 100 } })) == .exhausted);
+    const Stop = struct {
+        fn expired(_: ?*const anyopaque) bool {
+            return true;
+        }
+    };
+    try t.expect((try riskTail(table, .first, .relative_risk, .noscore, 1, .left, .{ .allocator = t.allocator, .budget = .{ .expired = Stop.expired } })) == .exhausted);
+}
+test "allocator-backed unconditional coefficients avoid combinatorial overflow" {
+    const result = (try riskTail(.{ .cells = .{ 0, 600, 0, 600 } }, .first, .relative_risk, .noscore, 1, .right, .{ .allocator = std.testing.allocator })).complete;
+    try std.testing.expectEqual(@as(f64, 1), result.lower);
+    try std.testing.expectEqual(@as(f64, 1), result.upper);
+}
+
+test "allocator-backed unconditional construction and search share cancellation" {
+    const t = std.testing;
+    const Stop = struct {
+        polls: usize = 0,
+        after: usize,
+        fn expired(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.polls += 1;
+            return self.polls > self.after;
+        }
+    };
+    const table = risk.Table2x2{ .cells = .{ 0, 1, 129, 0 } };
+    //260 event decisions precede helper construction; the later stop occurs
+    // during subdivision. Each returns only exhausted, never partial bounds.
+    for ([_]usize{ 270, 800 }) |limit| {
+        var stop = Stop{ .after = limit };
+        const result = try riskTail(table, .first, .relative_risk, .noscore, 1, .left, .{ .allocator = t.allocator, .budget = .{ .context = &stop, .expired = Stop.expired } });
+        try t.expect(result == .exhausted);
+        try t.expectEqual(limit + 1, stop.polls);
+    }
+    try t.expect((try riskTail(table, .first, .relative_risk, .noscore, 1, .left, .{})) == .exhausted);
+    // Even a complete individual tail must not reset work in an inversion.
+    try t.expect((try riskLimits(table, .first, .relative_risk, .noscore, 0.05, .{ .allocator = t.allocator, .budget = .{ .max_tables = 2500 } })) == .exhausted);
+    try t.expect((try riskTail(.{ .cells = .{ 4294967295, 0, 4294967295, 0 } }, .first, .relative_risk, .noscore, 1, .left, .{ .allocator = t.allocator })) == .exhausted);
+}
+fn unconditionalAllocationProbe(a: std.mem.Allocator) !void {
+    const result = try riskTail(.{ .cells = .{ 0, 1, 129, 0 } }, .first, .relative_risk, .noscore, 1, .left, .{ .allocator = a, .tolerance = 1e-8 });
+    if (result != .complete) return error.ExecError;
+}
+test "allocator-backed unconditional failure paths release caller workspace" {
+    try std.testing.checkAllAllocationFailures(std.testing.allocator, unconditionalAllocationProbe, .{});
+}
