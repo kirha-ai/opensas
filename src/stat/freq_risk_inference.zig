@@ -57,7 +57,14 @@ pub fn binomial(s: risk.Binomial, h: Hypothesis, variance: Variance, alpha: f64,
         const p = if (variance == .sample) s.proportion() else v;
         t.* = wald(s.proportion() - v, @sqrt(p * (1 - p) / s.total), c);
     }
-    return assemble(h, tests, try testLimits(s.proportion(), tests, alpha, c, 0, 1));
+    // Equality accompanies the ordinary 1-alpha proportion interval, whose
+    // variance is sample-based even when the equality test uses VAR=NULL.
+    // Do not construct the NI/TOST interval (or apply its alpha restriction).
+    const limits = if (h == .equality)
+        (try risk.proportion(s, alpha, correct)).limits
+    else
+        try testLimits(s.proportion(), tests, alpha, c, 0, 1);
+    return assemble(h, tests, limits);
 }
 pub const DifferenceMethod = enum { wald, hauck_anderson, farrington_manning, newcombe };
 pub fn difference(table: risk.Table2x2, column: risk.Column, h: Hypothesis, method: DifferenceMethod, variance: Variance, alpha: f64, correct: bool) Error!Analysis {
@@ -88,14 +95,18 @@ pub fn difference(table: risk.Table2x2, column: risk.Column, h: Hypothesis, meth
         const var_est = p1 * (1 - p1) / (s[0].total - adjust) + p2 * (1 - p2) / (s[1].total - adjust);
         t.* = wald(d - v, @sqrt(var_est), c);
     }
-    return assemble(h, tests, try testLimits(d, tests, alpha, c, -1, 1));
+    const limits = if (h == .equality)
+        (try risk.difference(table, column, alpha, correct)).limits
+    else
+        try testLimits(d, tests, alpha, c, -1, 1);
+    return assemble(h, tests, limits);
 }
 pub fn relativeRisk(table: risk.Table2x2, column: risk.Column, h: Hypothesis, method: risk.RatioMethod, alpha: f64) Error!Analysis {
     const values = try nulls(h);
-    if (!(alpha > 0 and alpha < 0.5)) return error.ExecError;
+    if (!(alpha > 0 and alpha < (if (h == .equality) @as(f64, 1) else 0.5))) return error.ExecError;
     // SAS uses bias-corrected score confidence limits even though the FM
     // test itself uses the uncorrected variance (tests.sas: 1.7774,7.6072).
-    const estimate = try risk.ratio(table, column, .relative_risk, 2 * alpha, method, true);
+    const estimate = try risk.ratio(table, column, .relative_risk, if (h == .equality) alpha else 2 * alpha, method, true);
     var tests: [2]Test = undefined;
     for (values, &tests) |v, *t| {
         if (v <= 0) return error.ExecError;
@@ -180,5 +191,45 @@ test "FEAT-freq-risk SAS relative risk TOST four methods" {
         try near(e[2], r.p);
         try near(e[3], r.limits.lower);
         try near(e[4], r.limits.upper);
+    }
+}
+
+test "FEAT-freq-risk SAS equality alpha and sample CI independent of null variance" {
+    // SAS/STAT pp176,179-180,185-186,190,203,206. Independent command:
+    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.sas
+    // -f text -o /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.txt
+    // -l /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.log
+    // Zero errors/warnings: ALPHA=.6 is valid for equality (40% CI).
+    // P=.2 distinguishes test SE=.0894 from sample CI SE=.1067.
+    const sample = risk.Binomial{ .success = 7, .total = 20 };
+    const wide = try binomial(sample, .{ .equality = 0.2 }, .null_value, 0.05, false);
+    const narrow = try binomial(sample, .{ .equality = 0.2 }, .null_value, 0.6, false);
+    try near(0.1410, wide.limits.lower);
+    try near(0.5590, wide.limits.upper);
+    try near(0.2941, narrow.limits.lower);
+    try near(0.4059, narrow.limits.upper);
+    try near(0.0894, narrow.lower.se);
+    try near(1.6771, narrow.lower.z);
+    try near(0.0935, narrow.p);
+    try std.testing.expectEqual(wide.p, narrow.p);
+    // All otherwise-valid table alphas remain legal, including .5 itself.
+    _ = try binomial(sample, .{ .equality = 0.2 }, .null_value, 0.5, false);
+    _ = try binomial(sample, .{ .equality = 0.2 }, .null_value, 0.99, false);
+    const table = risk.Table2x2{ .cells = .{ 12, 8, 5, 25 } };
+    const rd = try difference(table, .first, .{ .equality = 0.1 }, .wald, .null_value, 0.6, false);
+    try near(0.3657, rd.limits.lower);
+    try near(0.5010, rd.limits.upper);
+    try near(0.1378, rd.lower.se);
+    try near(2.4183, rd.lower.z);
+    try near(0.0156, rd.p);
+    const rr = try relativeRisk(table, .first, .{ .equality = 2 }, .wald, 0.6);
+    try near(2.8474, rr.limits.lower);
+    try near(4.5515, rr.limits.upper);
+    try near(1.3143, rr.lower.z);
+    try near(0.1887, rr.p);
+    for ([_]f64{ 0, 1, std.math.nan(f64) }) |alpha| {
+        try std.testing.expectError(error.ExecError, binomial(sample, .{ .equality = 0.2 }, .null_value, alpha, false));
+        try std.testing.expectError(error.ExecError, difference(table, .first, .{ .equality = 0.1 }, .wald, .null_value, alpha, false));
+        try std.testing.expectError(error.ExecError, relativeRisk(table, .first, .{ .equality = 2 }, .wald, alpha));
     }
 }
