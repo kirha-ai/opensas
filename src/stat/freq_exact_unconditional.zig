@@ -19,6 +19,9 @@ pub const Options = struct {
     budget: dist.Budget = .{},
     /// Absolute bound width for the nuisance supremum (floating roundoff aside).
     tolerance: f64 = 1e-10,
+    /// Endpoint bracket width: absolute RD, log(RR) (approximately relative RR).
+    /// This is separate from the nuisance p-value bound above.
+    inversion_tolerance: f64 = 1e-11,
 };
 const max_n = 128;
 const Work = struct {
@@ -165,7 +168,7 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
 /// Equal-tailed NOSCORE/SCORE inversion or absolute-score SCORE2 inversion.
 /// Returns bracketed numerical endpoints; no fixed-margin shortcut is valid.
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
-    if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1) return error.ExecError;
+    if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
     const c = try canonical(table, column);
     const s = tableOf(c).samples(.first);
     const estimate = if (family == .difference) s[0].proportion() - s[1].proportion() else if (c[2] == 0) std.math.inf(f64) else s[0].proportion() / s[1].proportion();
@@ -177,13 +180,43 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
         // modified-statistic inversion and are not silently declared [0,inf].
         if (family == .relative_risk and ((lower and c[0] == 0) or (!lower and c[2] == 0))) continue;
         if (family == .difference and ((lower and estimate == -1) or (!lower and estimate == 1))) continue;
-        var lo: f64 = if (family == .difference) (if (lower) -1 else estimate) else (if (lower) -64 else @log(@max(estimate, 1e-20)));
-        var hi: f64 = if (family == .difference) (if (lower) estimate else 1) else (if (lower) @log(@min(estimate, 1e20)) else 64);
-        const boundary = if (lower) lo else hi;
-        const boundary_result = try tail(c, family, method, if (family == .difference) boundary else @exp(boundary), if (method == .score2) .two_sided else if (lower) .right else .left, &work);
-        if (boundary_result == .exhausted) return .exhausted;
-        if (boundary_result.complete.upper > target) continue;
-        for (0..60) |_| {
+        var center: f64 = if (family == .difference) estimate else if (estimate == 0) -2 else if (std.math.isInf(estimate)) 2 else @log(estimate);
+        if (family == .relative_risk and (estimate == 0 or std.math.isInf(estimate))) {
+            // Establish an accepted finite inner bracket near a structural MLE.
+            // log(floatMin) is not a useful center and can exhaust the bracket
+            // before testing any finite upper bound for an observed zero risk.
+            while (true) {
+                const inner = try tail(c, family, method, @exp(center), if (method == .score2) .two_sided else if (lower) .right else .left, &work);
+                if (inner == .exhausted) return .exhausted;
+                if (inner.complete.lower > target) break;
+                center *= 2;
+                if (@abs(center) > 700) return .exhausted;
+            }
+        }
+        var width: f64 = 2;
+        var lo: f64 = if (lower) (if (family == .difference) -1 else center - width) else center;
+        var hi: f64 = if (lower) center else if (family == .difference) 1 else center + width;
+        if (family == .relative_risk and method == .noscore) {
+            // The nuisance endpoint p2=0 makes both successes zero. If that
+            // table is in the ordered tail, its probability is 1 for EVERY RR:
+            // this proves the structural 0/infinity endpoint, without treating
+            // an arbitrary finite log-RR cutoff as infinity.
+            const zero_score = try statistic(.{ 0, @intFromFloat(s[0].total), 0, @intFromFloat(s[1].total) }, family, method, 1);
+            const observed_score = try statistic(c, family, method, 1);
+            if (selected(zero_score, observed_score, if (lower) .right else .left)) continue;
+        }
+        while (true) {
+            const boundary = if (lower) lo else hi;
+            if (family == .relative_risk and @abs(boundary) > 700) return .exhausted;
+            const boundary_result = try tail(c, family, method, if (family == .difference) boundary else @exp(boundary), if (method == .score2) .two_sided else if (lower) .right else .left, &work);
+            if (boundary_result == .exhausted) return .exhausted;
+            if (boundary_result.complete.upper <= target) break;
+            if (family == .difference) break;
+            width *= 2;
+            if (lower) lo = center - width else hi = center + width;
+        }
+        for (0..100) |_| {
+            if (hi - lo <= options.inversion_tolerance) break;
             const mid = (lo + hi) / 2;
             const null_value = if (family == .difference) mid else @exp(mid);
             const result = try tail(c, family, method, null_value, if (method == .score2) .two_sided else if (lower) .right else .left, &work);
@@ -193,6 +226,7 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
             const accepted = result.complete.upper > target;
             if (accepted == lower) hi = mid else lo = mid;
         }
+        if (hi - lo > options.inversion_tolerance) return .exhausted;
         const endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
         if (lower) out.lower = endpoint else out.upper = endpoint;
     }
@@ -241,4 +275,54 @@ test "risk interval method oracle and column orientation" {
         try t.expectApproxEqAbs(lower, rr.lower, 0.00005);
         try t.expectApproxEqAbs(upper, rr.upper, if (method == .noscore) @as(f64, 5e-8) else 0.00005);
     }
+}
+
+// This tests numerical inversion accuracy, not agreement with SAS's coarser
+// internal search. Independent direct 25-table polynomial root below; the SAS
+// BEST32 oracle remains 12.8094895576158 and is tracked separately.
+test "RR NOSCORE inversion accuracy separates endpoint and nuisance tolerances" {
+    const t = std.testing;
+    const table = risk.Table2x2{ .cells = .{ 1, 3, 3, 1 } };
+    const precise = (try riskLimits(table, .first, .relative_risk, .noscore, 0.05, .{ .tolerance = 1e-13, .inversion_tolerance = 1e-13, .budget = .{ .max_tables = 5000000 } })).complete;
+    try t.expectApproxEqAbs(@as(f64, 12.809175283792893), precise.upper, 1e-9);
+    try t.expectEqual(@as(f64, 0), precise.lower);
+    const inside = (try riskTail(table, .first, .relative_risk, .noscore, precise.upper * (1 - 1e-7), .left, .{ .tolerance = 1e-13 })).complete;
+    const outside = (try riskTail(table, .first, .relative_risk, .noscore, precise.upper * (1 + 1e-7), .left, .{ .tolerance = 1e-13 })).complete;
+    try t.expect(inside.lower > 0.025 and outside.upper < 0.025);
+    const reverse = (try riskLimits(.{ .cells = .{ 3, 1, 1, 3 } }, .first, .relative_risk, .noscore, 0.05, .{ .tolerance = 1e-13, .inversion_tolerance = 1e-13 })).complete;
+    try t.expectApproxEqRel(1 / precise.upper, reverse.lower, 1e-9);
+    try t.expect(std.math.isInf(reverse.upper));
+}
+
+test "unconditional zero and infinite observed risks retain finite opposite bounds" {
+    const t = std.testing;
+    for ([_]Method{ .noscore, .score, .score2 }) |method| {
+        const zero = (try riskLimits(.{ .cells = .{ 0, 4, 2, 2 } }, .first, .relative_risk, method, 0.05, .{})).complete;
+        const infinite = (try riskLimits(.{ .cells = .{ 2, 2, 0, 4 } }, .first, .relative_risk, method, 0.05, .{})).complete;
+        try t.expectEqual(@as(f64, 0), zero.lower);
+        try t.expect(std.math.isFinite(zero.upper) and zero.upper > 0);
+        try t.expect(std.math.isInf(infinite.upper));
+        try t.expectApproxEqRel(1 / zero.upper, infinite.lower, 1e-7);
+    }
+}
+
+test "unconditional small-table interval coverage includes boundary outcomes" {
+    const t = std.testing;
+    for ([_]Family{ .difference, .relative_risk }) |family| for ([_]Method{ .noscore, .score, .score2 }) |method| {
+        var intervals: [9]exact.Interval = undefined;
+        for (0..3) |x| for (0..3) |y| {
+            intervals[x * 3 + y] = (try riskLimits(.{ .cells = .{ @floatFromInt(x), @floatFromInt(2 - x), @floatFromInt(y), @floatFromInt(2 - y) } }, .first, family, method, 0.05, .{})).complete;
+        };
+        for ([_]f64{ 0.05, 0.2, 0.5, 0.8, 0.95 }) |p1| for ([_]f64{ 0.05, 0.2, 0.5, 0.8, 0.95 }) |p2| {
+            const truth = if (family == .difference) p1 - p2 else p1 / p2;
+            const pmf1 = [_]f64{ (1 - p1) * (1 - p1), 2 * p1 * (1 - p1), p1 * p1 };
+            const pmf2 = [_]f64{ (1 - p2) * (1 - p2), 2 * p2 * (1 - p2), p2 * p2 };
+            var coverage: f64 = 0;
+            for (0..3) |x| for (0..3) |y| {
+                const ci = intervals[x * 3 + y];
+                if (truth >= ci.lower - 1e-10 and truth <= ci.upper + 1e-10) coverage += pmf1[x] * pmf2[y];
+            };
+            try t.expect(coverage >= 0.95 - 1e-10);
+        };
+    };
 }

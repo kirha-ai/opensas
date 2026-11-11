@@ -11,6 +11,7 @@ const stratified = @import("freq_stratified.zig");
 const adapters = @import("freq_stratified_exact.zig");
 pub const Error = dist.Error;
 pub const Config = struct {
+    numeric_table_scores_valid: bool = true,
     options: parse.Options = .{},
     budget: dist.Budget = .{},
     /// Resolved once per PROC by caller; <=0 SEED uses caller's clock.
@@ -93,8 +94,10 @@ fn applicable(f: parse.Family, m: tests.CountMatrix) bool {
 /// Group options must be expanded by Options.expanded before calling this.
 pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Config) Error!Result {
     if (f == .comor or f == .eqor) return .requires_strata;
+    if (!c.numeric_table_scores_valid and (f == .pcorr or f == .mhchi)) return .not_applicable;
     if (f == .agree or f == .chisq or f == .measures) return error.ExecError;
     if (!applicable(f, m)) return .not_applicable;
+    if (f == .mcnem and m.counts.len == 4 and m.counts[1] + m.counts[2] == 0) return .not_applicable;
     if (m.counts.len > 256) return .exhausted;
     const integers = try dist.Matrix.fromCounts(a, m.rows, m.cols, m.counts);
     defer a.free(integers.cells);
@@ -274,4 +277,19 @@ test "public strata adapter keeps COMOR and Zelen distinct" {
     const zelen = (try runStrata(t.allocator, &strata, .eqor, .{})).zelen;
     try t.expectApproxEqAbs(@as(f64, 0.5), common.point, 1e-12);
     try t.expectApproxEqAbs(@as(f64, 1.0 / 9.0), zelen.p, 1e-12);
+}
+
+// SAS public/missing-scores.sas: TABLE fallback scores are for display only;
+// SCORR/KENTB remain valid, PCORR/MHCHI are suppressed before any sampling.
+test "exact adapter retains numeric score validity and undefined discordant tests" {
+    const t = std.testing;
+    const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 2, 1, 1, 3, 2, 2 }, .row_scores = &.{ 1, 2, 3 }, .col_scores = &.{ 1, 2 } };
+    const config = Config{ .numeric_table_scores_valid = false };
+    try t.expect((try run(t.allocator, m, .pcorr, config)) == .not_applicable);
+    try t.expect((try run(t.allocator, m, .mhchi, config)) == .not_applicable);
+    const rank = (try run(t.allocator, m, .scorr, config)).exact_test;
+    try t.expectApproxEqAbs(@as(f64, 0.5087), rank.one_sided, 0.00005);
+    try t.expectApproxEqAbs(@as(f64, 1), rank.two_sided, 1e-12);
+    // SAS degenerate-agreement.sas: missing McNemar, not p=1 or rc2.
+    try t.expect((try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 5, 0, 0, 5 } }, .mcnem, .{})) == .not_applicable);
 }

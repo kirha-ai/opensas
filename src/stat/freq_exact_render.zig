@@ -32,9 +32,15 @@ fn nLine(a: A, out: *Out, label: []const u8, value: f64) Error!void {
 }
 
 pub const Test = struct { statistic: ?f64 = null, probabilities: dist.Probabilities, directional: bool = false, right_sided: bool = false };
-pub const Result = union(enum) { complete: Test, exhausted };
+pub const Result = union(enum) { complete: Test, exhausted, not_defined };
 pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: parse.Options) Error!void {
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n\n", .{title}));
+    if (result == .not_defined) {
+        try pLine(a, out, "Exact Pr >= Statistic", null, options);
+        if (options.point) try pLine(a, out, "Point Pr = Statistic", null, options);
+        if (options.midp) try pLine(a, out, "Mid p-Value", null, options);
+        return;
+    }
     if (result == .exhausted) {
         try pLine(a, out, "Exact Pr >= Statistic", null, options);
         try out.appendSlice(a, "NOTE: Exact computation did not complete within the resource limit.\n");

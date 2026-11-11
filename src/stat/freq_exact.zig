@@ -65,6 +65,18 @@ pub fn binomialControlled(k: u32, n: u32, p0: f64, alpha: f64, midp: bool, contr
     if (k < n) limits.upper = (try binomialLimitControlled(k, n, alpha / 2, midp, false, control)) orelse return .exhausted;
     return .{ .complete = .{ .tails = tails, .one_sided = one, .two_sided = @min(1, 2 * one), .mid_p = @max(0, one - tails.point / 2), .limits = limits } };
 }
+/// Exact NI/TOST limits invert each one-sided test at alpha, hence nominal
+/// confidence 1-2*alpha. Keep the full 0<alpha<1 SAS option range; discreteness
+/// can leave overlapping limits even when nominal confidence is nonpositive.
+pub fn binomialOneSidedLimits(k: u32, n: u32, alpha: f64, control: Control) Error!OddsResult {
+    if (n == 0 or k > n or !validAlpha(alpha)) return error.ExecError;
+    if (control.stopped()) return .exhausted;
+    var limits = Interval{ .lower = 0, .upper = 1 };
+    if (k > 0) limits.lower = (try binomialLimitControlled(k, n, alpha, false, true, control)) orelse return .exhausted;
+    if (k < n) limits.upper = (try binomialLimitControlled(k, n, alpha, false, false, control)) orelse return .exhausted;
+    return .{ .complete = limits };
+}
+
 fn binomialLimit(k: u32, n: u32, target: f64, midp: bool, lower: bool) Error!f64 {
     return (try binomialLimitControlled(k, n, target, midp, lower, .{})).?;
 }
@@ -335,4 +347,12 @@ test "exact interval deadline returns status not numerical limits" {
     try std.testing.expect((try oddsRatioControlled(.{ 1, 9, 11, 3 }, 0.05, false, 100, control)) == .exhausted);
     try std.testing.expect((try binomialControlled(2, 10, 0.3, 0.05, false, control)) == .exhausted);
     try std.testing.expect((try binomialBlakerControlled(2, 10, 0.05, control)) == .exhausted);
+}
+
+// SAS public/freq_exact_controls.sas: NI/TOST use 90% CP limits at alpha=.05,
+// distinct from the estimate's default 95% limits [.0252,.5561].
+test "exact binomial NI interval uses one-sided alpha" {
+    const r = (try binomialOneSidedLimits(2, 10, 0.05, .{})).complete;
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0368), r.lower, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5069), r.upper, 0.00005);
 }
