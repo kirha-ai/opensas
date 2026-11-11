@@ -1,0 +1,121 @@
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Proportion                        0.3500      0.1067        0.2941        0.4059
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Clopper-Pearson (Exact)             0.2753        0.4341
+
+Equality Test for the Binomial Proportion
+Null = 0.2; Method = Wald
+
+Proportion                        0.3500
+Z                                 1.6771
+Standard Error                    0.0894
+One-sided Pr > Z                  0.0468
+Two-sided Pr > |Z|                0.0935
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1410        0.5590
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.2; Method = Wald
+
+Proportion                        0.3500
+Z                                 1.6771
+Standard Error                    0.0894
+One-sided Pr > Z                  0.0468
+Two-sided Pr > |Z|                0.0935
+
+Sample Size = 20
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Column 1 Risk Estimates
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Row 1                             0.6000      0.1095        0.5426        0.6574
+Row 2                             0.1667      0.0680        0.1310        0.2023
+Total                             0.3400      0.0670        0.3049        0.3751
+Difference                        0.4333      0.1290        0.3657        0.5010
+
+Difference is (Row 1 - Row 2)
+
+Column 1 Exact Risk Confidence Limits
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Row 1                               0.5160        0.6777
+Row 2                               0.1219        0.2257
+Total                               0.2971        0.3867
+
+Column 2 Risk Estimates
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Row 1                             0.4000      0.1095        0.3426        0.4574
+Row 2                             0.8333      0.0680        0.7977        0.8690
+Total                             0.6600      0.0670        0.6249        0.6951
+Difference                       -0.4333      0.1290       -0.5010       -0.3657
+
+Difference is (Row 1 - Row 2)
+
+Column 2 Exact Risk Confidence Limits
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Row 1                               0.3223        0.4840
+Row 2                               0.7743        0.8781
+Total                               0.6133        0.7029
+
+Equality Test for the Risk Difference (Column 1)
+Null = 0.1; Method = Wald
+
+Risk Difference                   0.4333
+Z                                 2.4183
+Standard Error                    0.1378
+One-sided Pr > Z                  0.0078
+Two-sided Pr > |Z|                0.0156
+
+Equality Test for the Risk Difference (Column 2)
+Null = 0.1; Method = Wald
+
+Risk Difference                  -0.4333
+Z                                -3.9826
+Standard Error                    0.1339
+One-sided Pr < Z                  <.0001
+Two-sided Pr > |Z|                <.0001
+
+Odds Ratio and Relative Risks
+
+Statistic / Method                 Value  40% Lower CL  40% Upper CL
+Odds Ratio                        7.5000        5.2792       10.6550
+Relative Risk (Column 1)          3.6000        2.8474        4.5515
+Relative Risk (Column 2)          0.4800        0.4132        0.5576
+
+Equality Test for the Relative Risk (Column 1)
+Null = 2; Method = Wald
+
+Relative Risk                     3.6000
+Z                                 1.3143
+One-sided Pr > Z                  0.0944
+Two-sided Pr > |Z|                0.1887
+
+Sample Size = 50

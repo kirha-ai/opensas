@@ -1,0 +1,267 @@
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1160        0.5840
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.3500
+Z                                -1.1180
+Standard Error                    0.1118
+One-sided Pr < Z                  0.1318
+Two-sided Pr > |Z|                0.2636
+
+Continuity correction included.
+
+Equivalence Analysis for the Binomial Proportion
+Equivalence Limits = 0.2, 0.6; Method = Wald
+
+Proportion                        0.3500
+Lower Margin Z                    1.3975
+Standard Error                    0.1095
+Upper Margin Z                   -2.0540
+Lower Margin Pr > Z               0.0811
+Upper Margin Pr < Z               0.0200
+Overall P-Value                   0.0811
+90% Lower Conf Limit              0.1448
+90% Upper Conf Limit              0.5552
+
+Continuity correction included.
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1410        0.5590
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.3500
+Z                                -1.3416
+Standard Error                    0.1118
+One-sided Pr < Z                  0.0899
+Two-sided Pr > |Z|                0.1797
+
+Noninferiority Analysis for the Binomial Proportion
+Limit = 0.3; Method = Wald
+
+Proportion                        0.3500
+Z                                 0.4688
+Standard Error                    0.1067
+Pr > Z                            0.3196
+90% Lower Conf Limit              0.1746
+90% Upper Conf Limit              0.5254
+
+Sample Size = 20
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Proportion                        0.3500      0.1067        0.1410        0.5590
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+
+Equality Test for the Binomial Proportion
+Null = 0.2; Method = Wald
+
+Proportion                        0.3500
+Z                                 1.6771
+Standard Error                    0.0894
+One-sided Pr > Z                  0.0468
+Two-sided Pr > |Z|                0.0935
+
+Superiority Analysis for the Binomial Proportion
+Limit = 0.30000000000000004; Method = Wald
+
+Proportion                        0.3500
+Z                                 0.4880
+Standard Error                    0.1025
+Pr > Z                            0.3128
+90% Lower Conf Limit              0.1815
+90% Upper Conf Limit              0.5185
+
+Sample Size = 20
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Risk Difference (Column 1)
+Equivalence Limits = -0.1, 0.6; Method = Wald
+
+Risk Difference                   0.4333
+Lower Margin Z                    4.1358
+Standard Error                    0.1290
+Upper Margin Z                   -1.2924
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.0981
+Overall P-Value                   0.0981
+90% Lower Conf Limit              0.2212
+90% Upper Conf Limit              0.6454
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Risk Difference (Column 1)
+Equivalence Limits = -0.1, 0.6; Method = Hauck-Anderson
+
+Risk Difference                   0.4333
+Lower Margin Z                    3.8514
+Standard Error                    0.1320
+Upper Margin Z                   -1.0733
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.1416
+Overall P-Value                   0.1416
+90% Lower Conf Limit              0.1912
+90% Upper Conf Limit              0.6754
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Risk Difference (Column 1)
+Equivalence Limits = -0.1, 0.6; Method = Farrington-Manning
+
+Risk Difference                   0.4333
+Lower Margin Z                    3.9279
+Standard Error                    0.1358
+Upper Margin Z                   -1.4287
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.0765
+Overall P-Value                   0.0765
+90% Lower Conf Limit              0.2100
+90% Upper Conf Limit              0.6567
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Risk Difference (Column 1)
+Equivalence Limits = -0.1, 0.6; Method = Newcombe
+
+Risk Difference                   0.4333
+90% Lower Conf Limit              0.2052
+90% Upper Conf Limit              0.6115
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 5; Method = Wald
+
+Relative Risk                     3.6000
+Lower Margin Z                    3.3632
+Upper Margin Z                   -0.7346
+Lower Margin Pr > Z               0.0004
+Upper Margin Pr < Z               0.2313
+Overall P-Value                   0.2313
+90% Lower Conf Limit              1.7252
+90% Upper Conf Limit              7.5122
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 5; Method = Wald Modified
+
+Relative Risk                     3.6000
+Modified Relative Risk            3.3814
+Lower Margin Z                    3.3951
+Upper Margin Z                   -0.9213
+Lower Margin Pr > Z               0.0003
+Upper Margin Pr < Z               0.1784
+Overall P-Value                   0.1784
+90% Lower Conf Limit              1.6819
+90% Upper Conf Limit              6.7979
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 5; Method = Farrington-Manning
+
+Relative Risk                     3.6000
+Lower Margin Z                    3.8010
+Lower Margin ASE (F-M)            0.1228
+Upper Margin ASE (F-M)            0.3210
+Upper Margin Z                   -0.7269
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.2336
+Overall P-Value                   0.2336
+90% Lower Conf Limit              1.7774
+90% Upper Conf Limit              7.6072
+
+Sample Size = 50
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 5; Method = Likelihood Ratio
+
+Relative Risk                     3.6000
+Lower Margin Z                    3.7260
+Upper Margin Z                   -0.7000
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.2420
+Overall P-Value                   0.2420
+90% Lower Conf Limit              1.8283
+90% Upper Conf Limit              8.2652
+
+Sample Size = 50

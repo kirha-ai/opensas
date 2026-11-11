@@ -1,0 +1,54 @@
+
+                                       g=1
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = Event
+
+Statistic / Method              Estimate         ASE
+Proportion                        0.3500      0.1067
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.1539        0.5922
+Logit                               0.1768        0.5744
+Wilson                              0.1812        0.5671
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.3500
+Z                                -1.3416
+Standard Error                    0.1118
+One-sided Pr < Z                  0.0899
+Two-sided Pr > |Z|                0.1797
+
+Sample Size = 20
+
+                                       g=2
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = Event
+
+Statistic / Method              Estimate         ASE
+Proportion                        0.0000      0.0000
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Clopper-Pearson (Exact)             0.0000        0.3085
+Logit                               0.0000             .
+Wilson                              0.0000        0.2775
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.0000
+Z                                -3.1623
+Standard Error                    0.1581
+One-sided Pr < Z                  0.0008
+Two-sided Pr > |Z|                0.0016
+
+Sample Size = 10
