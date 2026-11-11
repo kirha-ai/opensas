@@ -108,15 +108,20 @@ const Reader = struct {
             var cl = CL{ .method = try self.methodName(req.family, false) };
             if (self.at(.lparen)) {
                 self.i += 1;
-                if (!self.is("correct")) return self.fail("expected CORRECT in confidence method");
-                self.i += 1;
-                if ((req.family == .odds_ratio or req.family == .relative_risk) and cl.method != .mn) return self.fail("CORRECT suboption is only valid for score limits");
-                if (cl.method == .mn) {
-                    try self.expect(.eq);
-                    if (!self.is("no") and !(req.family == .difference and self.is("mee"))) return self.fail("score correction must be NO or MEE");
+                if (req.family == .difference and cl.method == .mn and self.is("mee")) {
                     self.i += 1;
                     cl.bias = false;
-                } else if (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe) cl.correct = true else return self.fail("CORRECT is not valid for this method");
+                } else {
+                    if (!self.is("correct")) return self.fail("expected CORRECT or risk-difference MEE in confidence method");
+                    self.i += 1;
+                    if ((req.family == .odds_ratio or req.family == .relative_risk) and cl.method != .mn) return self.fail("CORRECT suboption is only valid for score limits");
+                    if (cl.method == .mn) {
+                        try self.expect(.eq);
+                        if (!self.is("no")) return self.fail("score CORRECT must be NO; MEE is a separate suboption");
+                        self.i += 1;
+                        cl.bias = false;
+                    } else if (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe) cl.correct = true else return self.fail("CORRECT is not valid for this method");
+                }
                 try self.expect(.rparen);
             }
             try cls.append(self.a, cl);
@@ -264,7 +269,7 @@ test "FEAT-freq-risk parser aliases percent nulls and method controls" {
     defer arena.deinit();
     const a = arena.allocator();
     var d = diag.Diagnostics.init(a);
-    const tokens = try lex.tokenize(a, "bin(level='Event' p=1 equiv margin=(-20,30) var=null cl=(ac score(correct) exact)) riskdiff(column=2 equal(null=10) method=score cl=(mn(correct=mee) newcombe(correct))) relrisk(sup margin=1.25 method=lr printall) oddsratio(cl=(score(correct=no) midp)) senspec;", &d);
+    const tokens = try lex.tokenize(a, "bin(level='Event' p=1 equiv margin=(-20,30) var=null cl=(ac score(correct) exact)) riskdiff(column=2 equal(null=10) method=score cl=(mn(mee) newcombe(correct))) relrisk(sup margin=1.25 method=lr printall) oddsratio(cl=(score(correct=no) midp)) senspec;", &d);
     var i: usize = 0;
     var opts = Options{};
     while (tokens[i].tag != .semicolon) try std.testing.expect(try consumeTableOption(a, tokens, &i, &opts, &d));
@@ -283,7 +288,7 @@ test "FEAT-freq-risk parser captures invalid requests versus pending dependencie
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    for ([_][]const u8{ "bin(level=0)", "bin(p=0)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))" }) |source| {
+    for ([_][]const u8{ "bin(level=0)", "bin(p=0)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))", "riskdiff(cl=mn(correct=mee))", "relrisk(cl=score(mee))" }) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;

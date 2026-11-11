@@ -45,11 +45,11 @@ const Builder = struct {
                 const upper_se = if (result.upper) |upper| upper.se orelse se else se;
                 try rows.append(self.a, .{ .label = "Standard Error", .values = .{ @max(se, upper_se), null, null, null, null } });
             } else if (req.method == .fm) {
-                try rows.append(self.a, .{ .label = "Lower Margin ASE (F-M)", .values = .{ se, null, null, null, null } });
+                try rows.append(self.a, .{ .label = if (hypothesis == .equivalence) "Lower Margin ASE (F-M)" else "ASE (F-M)", .values = .{ se, null, null, null, null } });
                 if (result.upper) |upper| try rows.append(self.a, .{ .label = "Upper Margin ASE (F-M)", .values = .{ upper.se, null, null, null, null } });
             }
         }
-        if (hypothesis == .equality and result.lower.z != null and result.lower.chi_square == null) try rows.append(self.a, .{ .label = if (result.lower.z.? > 0) "One-sided Pr > Z" else "One-sided Pr < Z", .values = .{ if (result.lower.z.? > 0) result.lower.right else result.lower.left, null, null, null, null }, .probability = .{ true, false, false, false, false } });
+        if (hypothesis == .equality and result.lower.chi_square == null) try rows.append(self.a, .{ .label = if ((result.lower.z orelse 0) > 0) "One-sided Pr > Z" else "One-sided Pr < Z", .values = .{ if ((result.lower.z orelse 0) > 0) result.lower.right else result.lower.left, null, null, null, null }, .probability = .{ true, false, false, false, false } });
         if (result.upper) |upper| {
             try rows.append(self.a, .{ .label = "Upper Margin Z", .values = .{ upper.z, null, null, null, null } });
             try rows.append(self.a, .{ .label = "Lower Margin Pr > Z", .values = .{ result.lower.right, null, null, null, null }, .probability = .{ true, false, false, false, false } });
@@ -348,4 +348,70 @@ test "FEAT-freq-risk public adapter selects formatted levels and columns" {
         found = true;
     };
     try std.testing.expect(found);
+}
+
+test "FEAT-freq-risk SAS remaining NI SUP methods and LR equality reporting" {
+    // SAS/STAT pp190-194,206-209. Independent command:
+    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.sas
+    // -f text -o /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.txt
+    // -l /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.log
+    // SAS prints four decimals; half-last-digit tolerance remains .00005.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const table = Table{ .name = "r", .column_name = "c", .row_labels = &.{ "1", "2" }, .col_labels = &.{ "1", "2" }, .counts = &.{ 12, 8, 5, 25 } };
+    const methods = [_]p.Method{ .wald, .ha, .fm, .newcombe };
+    const z_sup = [_]?f64{ 1.8094, 1.5784, 1.7156, null };
+    const lo_sup = [_]f64{ 0.2212, 0.1912, 0.2096, 0.2052 };
+    for (methods, z_sup, lo_sup) |method, z, lo| {
+        const report = try execute(a, &d, table, .{ .difference = .{ .family = .difference, .sup = true, .norisks = true, .method = method, .margin = .{ 0.2, 0.2 } } }, 0.05);
+        try std.testing.expectEqual(@as(usize, 1), report.sections.len);
+        var seen_z = false;
+        var seen_lo = false;
+        for (report.sections[0].rows) |row| {
+            if (std.mem.eql(u8, row.label, "Z")) {
+                try std.testing.expect(z != null);
+                try std.testing.expectApproxEqAbs(z.?, row.values[0].?, 0.00005);
+                seen_z = true;
+            }
+            if (std.mem.eql(u8, row.label, "90% Lower Conf Limit")) {
+                try std.testing.expectApproxEqAbs(lo, row.values[0].?, 0.00005);
+                seen_lo = true;
+            }
+        }
+        try std.testing.expectEqual(z != null, seen_z);
+        try std.testing.expect(seen_lo);
+    }
+    const lr = try execute(a, &d, table, .{ .relative_risk = .{ .family = .relative_risk, .equal = true, .null_value = 2, .method = .lr } }, 0.05);
+    var seen_chi = false;
+    var seen_p = false;
+    for (lr.sections[0].rows) |row| {
+        try std.testing.expect(!std.mem.eql(u8, row.label, "Z"));
+        try std.testing.expect(!std.mem.eql(u8, row.label, "Two-sided Pr > |Z|"));
+        if (std.mem.eql(u8, row.label, "Chi-Square")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 2.0027), row.values[0].?, 0.00005);
+            seen_chi = true;
+        }
+        if (std.mem.eql(u8, row.label, "Pr > ChiSq")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 0.1570), row.values[0].?, 0.00005);
+            seen_p = true;
+        }
+    }
+    try std.testing.expect(seen_chi and seen_p);
+}
+
+test "FEAT-freq-risk high alpha pending path remains an explicit captured gap" {
+    // SAS acceptance/alpha-nonsymmetric.sas accepts .5 and .6. At .6,
+    // binomial NI Wald limits are [.3770,.3230]; RR score intervals are
+    // missing but its TOST p=.9949 remains computed. Until the numerical
+    // inference contract is extended, do not misclassify valid SAS as rc1.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    diag.resetGap();
+    defer diag.resetGap();
+    try std.testing.expectError(error.ExecError, execute(arena.allocator(), &d, .{ .name = "x", .row_labels = &.{ "1", "2" }, .counts = &.{ 7, 13 }, .one_way = true }, .{ .binomial = .{ .family = .binomial, .noninf = true } }, 0.6));
+    try std.testing.expect(d.hasErrors() and diag.gapHit());
+    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
 }
