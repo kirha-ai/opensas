@@ -41,10 +41,10 @@ if [ ! -s "$CHARTER" ]; then
 You are a pi/Kimi DEV in an ISOLATED git worktree — alone, no collision risk, but you own
 ONLY the src file(s) named in the task. Do the task; ship a runnable check (in-file `test`
 or a tests/corpus/*.sas + expected .txt, output verified against the built binary). zig is
-at ~/.local/bin/zig. Before reporting, run `zig build test && zig build corpus && zig build
-programs` and get all three green. Commit LOCALLY by explicit pathspec
+at ~/.local/bin/zig. Before reporting, run `zig build gate` (test+corpus+programs in one
+shared compile graph) and get it green. Commit LOCALLY by explicit pathspec
 (git commit <your files> -m "<dev>: DONE <ID> — one line") — NEVER git add -A, NEVER push.
-Report the commit sha + the three suite counts, then stop.
+Report the commit sha + the suite counts from the gate summary, then stop.
 CH
 fi
 

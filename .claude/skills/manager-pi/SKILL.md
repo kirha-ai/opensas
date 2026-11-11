@@ -92,8 +92,9 @@ report — you re-gate.
 
 ## Gate & merge (manager §1 step 6 + cherry-pick)
 
-1. On run exit, `cd` the worktree, run the authoritative gate: `zig build test &&
-   corpus && programs`. Red from its own work → REVIEW bounce.
+1. On run exit, `cd` the worktree, run the authoritative gate: `zig build gate`
+   (one shared graph — prefer over chained `test && corpus && programs`). Red
+   from its own work → REVIEW bounce.
 2. Scrutinize any golden/expected-output edit — SAS-correct, not a pass-hack.
 3. Green → `git cherry-pick <sha>` onto the same non-protected working branch
    captured when the manager started, then re-gate that quiescent branch. Never

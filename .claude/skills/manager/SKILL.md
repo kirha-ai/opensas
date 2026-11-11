@@ -9,7 +9,7 @@ description: >-
   "grow the backlog from the corpus", "run an optimization loop", "perf audit",
   or when picking up mid-loop after a dev reports. The manager does NOT write
   feature code; it drives dev/QA/perf subagents (the Agent tool), runs the
-  merge-gate (zig build test/corpus/programs), removes gated DONE tasks from
+  merge-gate (`zig build gate`), removes gated DONE tasks from
   jira.md, and is the ONLY agent that pushes the current human-created working
   branch. It never pushes or merges a protected branch. For GitHub-issue
   intake specifically, use the companion `issue-manager` skill (invoked from
@@ -140,12 +140,13 @@ gate it, dispatch the next. Each iteration:
      runs a plain `git merge` — a merge commit is an impossible state under
      this protocol; stop and investigate it, don't fix it.
    - **Consolidated gate, once per tick (trust but verify):** after all of
-     the tick's landings,
-     run the three suites on the working-branch tip, one command per suite,
-     unpiped — `zig build test; echo "TEST=$?"`, then `zig build corpus; echo
-     "CORPUS=$?"`, then `zig build programs; echo "PROGRAMS=$?"` (piping swaps
-     `$?` for the pipe's last exit code — a red suite reads as success) — and
-     read the P/Q counts, not just the exit codes.
+     the tick's landings, run one shared graph on the working-branch tip,
+     unpiped — `zig build gate; echo "GATE=$?"` (piping swaps `$?` for the
+     pipe's last exit code — a red suite reads as success). Prefer `gate`
+     over chained `test && corpus && programs`: one graph compiles the CLI
+     `opensas` once and overlaps it with unit-test compiles. Read the P/Q
+     counts from the summary, not just the exit code. On red, re-run the
+     failing suite alone (`test` / `corpus` / `programs`) for attribution.
    - **Red consolidated gate:** don't push. The tip equals the last-landed
      dev's tested tree, so red is NOT an interaction — it means a dev
      reported green it never had (suites skipped or misread). Bounce that
@@ -417,11 +418,12 @@ task):
    a conflict whose other side is beyond your task's scope →
    `git rebase --abort`, REPORT the conflict to the manager — never guess.
    Never end your turn mid-rebase.
-3. Run the three suites (`zig build test && zig build corpus && zig build
-   programs`). Red → attribute first: `git rebase --abort` (lossless), re-run
-   on your base — red there = your bug (fix it, then redo the rebase); green
-   there = bad resolution or an interaction with landed work (fix forward;
-   beyond your scope → the escape hatch above). Green → report
+3. Run the hermetic gate (`zig build gate` — preferred over chained
+   `test && corpus && programs`; one shared compile graph). Red → attribute
+   first: `git rebase --abort` (lossless), re-run on your base — red there =
+   your bug (fix it, then redo the rebase); green there = bad resolution or
+   an interaction with landed work (fix forward; beyond your scope → the
+   escape hatch above). Green → report
    `(branch, base-sha, sha, counts)` from `git rev-parse <work> HEAD`.
 
 Manager side, on the working branch: **`git merge --ff-only devN`** — it

@@ -16,9 +16,8 @@ jobs:
       - uses: mlugg/setup-zig@v2
         with:
           version: 0.16.0
-      - name: unit tests
-        run: zig build test
-      - name: conformance corpus
-        run: zig build corpus
-      - name: program fixtures
-        run: zig build programs
+      # One build graph: shares the opensas CLI compile across corpus/programs
+      # and overlaps it with unit-test compiles (chained `test && corpus &&
+      # programs` re-compiles opensas after test — different artifact).
+      - name: hermetic gate (test + corpus + programs)
+        run: zig build gate

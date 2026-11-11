@@ -4482,8 +4482,8 @@ test "BUG-wasmignoresabortrc / D-009: ABORT overrides normal error classificatio
     //
     // COVERAGE, stated plainly: the CLI end of this is pinned end-to-end by
     // tests/corpus/abort_rc.sas (`expect-rc: 3`) and by the cases here. wasm.run's
-    // one-line CALL has NO automated protection — `zig build test` only COMPILES
-    // the wasm target (build.zig:238), nothing executes it, and no fixture runner
+    // one-line CALL has NO automated protection — `zig build wasm` only COMPILES
+    // the wasm target (nothing executes it), and no fixture runner
     // can. Deduplicating was the point: the untested line is now a call, not a
     // re-implementation, so it can no longer drift on its own.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

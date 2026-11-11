@@ -22,10 +22,9 @@ jobs:
         with:
           version: 0.16.0
       - name: gate (hermetic suites)
-        run: |
-          zig build test
-          zig build corpus
-          zig build programs
+        # One graph — see build.zig `gate` step. Avoids the post-test opensas
+        # recompile that chained `test && corpus && programs` pays.
+        run: zig build gate
 
   # One parallel job per target (same names as the Makefile). fail-fast cancels
   # the siblings if any target fails, so a partial release is never published.

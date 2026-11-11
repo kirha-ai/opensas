@@ -165,9 +165,15 @@ pub fn build(b: *std.Build) void {
     // A run step that will run the second test executable.
     const run_exe_tests = b.addRunArtifact(exe_tests);
 
-    // A top level step for running all tests. dependOn can be called multiple
-    // times and since the two run steps do not depend on one another, this will
-    // make the two of them run in parallel.
+    // A top level step for running all tests. Each `dependOn` attaches an
+    // independent compile+run chain; zig build schedules those compiles
+    // concurrently (do NOT serialise them into one ladder — that kills the
+    // parallel compile win on a cold/dirty tree).
+    //
+    // Deliberately does NOT compile the CLI `opensas` exe: that artifact is
+    // only needed by corpus/programs. Hanging it on `test` alone slowed solo
+    // `zig build test` via CPU/RAM contention with the test compiles. Use
+    // `zig build gate` (below) when you want one shared graph.
     const test_step = b.step("test", "Run tests");
     test_step.dependOn(&run_mod_tests.step);
     test_step.dependOn(&run_exe_tests.step);
@@ -219,6 +225,15 @@ pub fn build(b: *std.Build) void {
     const run_programs_tests = b.addRunArtifact(programs_tests);
     test_step.dependOn(&run_programs_tests.step);
 
+    // Hermetic merge gate as ONE build graph. `zig build test && corpus &&
+    // programs` pays an extra opensas compile after test (test binaries ≠
+    // CLI exe). One step shares the exe across corpus/programs and overlaps
+    // its compile with the unit-test compiles (~55s dirty vs ~75s chained).
+    const gate_step = b.step("gate", "Run test + corpus + programs (shared compile graph)");
+    gate_step.dependOn(test_step);
+    gate_step.dependOn(corpus_step);
+    gate_step.dependOn(programs_step);
+
     // Web demo: `zig build wasm` compiles the interpreter to wasm32-wasi (a
     // reactor — no main; wasm.zig exports alloc/run/outPtr/…) and drops
     // web/opensas.wasm next to web/index.html. Serve `web/` statically to demo.
@@ -248,10 +263,9 @@ pub fn build(b: *std.Build) void {
     wasm.rdynamic = true; // keep the `export fn`s visible
     const wasm_step = b.step("wasm", "Build web/opensas.wasm for the web demo");
     wasm_step.dependOn(&b.addInstallFile(wasm.getEmittedBin(), "../web/opensas.wasm").step);
-    // Merge gate: `zig build test` also COMPILES the wasm target (no install),
-    // so a native-only-valid change (u6-shift on usize, threaded allocator)
-    // can't land green and break the web demo.
-    test_step.dependOn(&wasm.step);
+    // wasm is NOT on `zig build test`. Compiling ReleaseSmall wasm32-wasi was
+    // ~26s on a dirty tree and dominated the unit-test gate; the web demo is
+    // exercised explicitly via `zig build wasm` / `make wasm` when needed.
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //
