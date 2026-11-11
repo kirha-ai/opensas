@@ -1,0 +1,307 @@
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.8564         3        0.2774
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.5093             0.0776       0.3572       0.6614
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6879             0.0692       0.5523       0.8235
+
+Kappa Details
+Observed Agreement             0.6750
+Chance-Expected Agreement      0.3377
+Maximum Kappa                  0.8868
+B_N Measure                    0.4831
+
+Sample Size = 80
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.2857         3        0.3496
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3423             0.1192       0.1086       0.5760
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3304             0.1618       0.0133       0.6474
+
+Kappa Details
+Observed Agreement             0.5641
+Chance-Expected Agreement      0.3373
+Maximum Kappa                  0.9226
+B_N Measure                    0.3236
+
+Sample Size = 39
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Rank Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1     41.7738    <.0001
+        2    Row Mean Scores Differ    2     42.7748    <.0001
+        3    General Association       4     53.1239    <.0001
+
+Overall Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.4596             0.0650       0.3321       0.5871
+
+Test for Equal Kappas
+Chi-Square        DF    Pr > ChiSq
+    1.3788         1        0.2403
+
+Overall Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6326             0.0636       0.5079       0.7573
+
+Test for Equal Weighted Kappas
+Chi-Square        DF    Pr > ChiSq
+    4.1285         1        0.0422
+
+Total Sample Size = 119
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.8564         3        0.2774
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.5093             0.0776       0.3572       0.6614
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6879             0.0692       0.5523       0.8235
+
+Sample Size = 80
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.2857         3        0.3496
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3423             0.1192       0.1086       0.5760
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3304             0.1618       0.0133       0.6474
+
+Sample Size = 39
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Ridit Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1     39.4053    <.0001
+        2    Row Mean Scores Differ    2     40.0260    <.0001
+        3    General Association       4     53.1239    <.0001
+
+Overall Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.4596             0.0650       0.3321       0.5871
+
+Test for Equal Kappas
+Chi-Square        DF    Pr > ChiSq
+    1.3788         1        0.2403
+
+Overall Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6326             0.0636       0.5079       0.7573
+
+Test for Equal Weighted Kappas
+Chi-Square        DF    Pr > ChiSq
+    4.1285         1        0.0422
+
+Total Sample Size = 119
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.8564         3        0.2774
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.5093             0.0776       0.3572       0.6614
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6879             0.0692       0.5523       0.8235
+
+Sample Size = 80
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    3.2857         3        0.3496
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3423             0.1192       0.1086       0.5760
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3304             0.1618       0.0133       0.6474
+
+Sample Size = 39
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Modified Ridit Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1     39.6824    <.0001
+        2    Row Mean Scores Differ    2     40.1487    <.0001
+        3    General Association       4     53.1239    <.0001
+
+Overall Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.4596             0.0650       0.3321       0.5871
+
+Test for Equal Kappas
+Chi-Square        DF    Pr > ChiSq
+    1.3788         1        0.2403
+
+Overall Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6326             0.0636       0.5079       0.7573
+
+Test for Equal Weighted Kappas
+Chi-Square        DF    Pr > ChiSq
+    4.1285         1        0.0422
+
+Total Sample Size = 119
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+         .         .             .
+NOTE: There are no discordant pairs.
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+Sample Size = 15
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+   10.8889         1        0.0010
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -0.0328             0.1167      -0.2615       0.1960
+
+Sample Size = 28
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      5.7108    0.0169
+        2    Row Mean Scores Differ    1      5.7108    0.0169
+        3    General Association       1      5.7108    0.0169
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      3.9000      1.0121     15.0286
+                          Logit **             2.2165      0.3856     12.7400
+Relative Risk (Column 1)  Mantel-Haenszel      3.1091      0.8988     10.7553
+                          Logit **             1.4139      0.4324      4.6232
+Relative Risk (Column 2)  Mantel-Haenszel      0.5085      0.2662      0.9714
+                          Logit **             0.9388      0.5125      1.7197
+** These logit estimators use a correction of 0.5 in every cell of affected tables.
+
+Breslow-Day Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+   10.7270         1        0.0011
+
+Q Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    6.4155         1        0.0113
+
+I-Square Measure of Heterogeneity
+I-Square      DF    95% Uncertainty Limits
+84.41%       1    36.10%    96.20%
+
+Overall Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -0.0328             0.1167      -0.2615       0.1960
+
+Test for Equal Kappas
+Chi-Square        DF    Pr > ChiSq
+    0.0000         0             .
+
+Cochran's Q
+Chi-Square        DF    Pr > ChiSq
+   15.2000         2        0.0005
+
+Total Sample Size = 43

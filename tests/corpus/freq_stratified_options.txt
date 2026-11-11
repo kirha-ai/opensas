@@ -1,0 +1,123 @@
+test printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.2738      0.0904      0.0965      0.4510
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight
+1               1                0.3926          52      0.4906      0.4905
+2               2                0.1593          54      0.5094      0.5095
+
+Total Sample Size = 106
+cl=score printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction Score Midpoint Score Weight
+1               1                0.3926          52      0.4906         0.3663       0.5159
+2               2                0.1593          54      0.5094         0.1489       0.4841
+
+Total Sample Size = 106
+cl=mh cl=score printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.2738      0.0904      0.0965      0.4510
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight Score Midpoint Score Weight
+1               1                0.3926          52      0.4906      0.4905         0.3663       0.5159
+2               2                0.1593          54      0.5094      0.5095         0.1489       0.4841
+
+Total Sample Size = 106
+cl=none cl=score test printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction Score Midpoint Score Weight
+1               1                0.3926          52      0.4906         0.3663       0.5159
+2               2                0.1593          54      0.5094         0.1489       0.4841
+
+Total Sample Size = 106
+cl=score cl=none test printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction Score Midpoint Score Weight
+1               1                0.3926          52      0.4906         0.3663       0.5159
+2               2                0.1593          54      0.5094         0.1489       0.4841
+
+Total Sample Size = 106
+cl=(k score) test printwts
+
+
+Summary Statistics for r by c
+Controlling for s
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Klingenberg             0.2738                  0.0859      0.4410
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Summary Score             0.2611      2.9738      0.0029
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         s            Difference   Frequency    Fraction   MH Weight Score Midpoint Score Weight
+1               1                0.3926          52      0.4906      0.4905         0.3663       0.5159
+2               2                0.1593          54      0.5094      0.5095         0.1489       0.4841
+
+Total Sample Size = 106

@@ -1,0 +1,126 @@
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for s=1
+
+
+Statistics for Table of r by c
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       1      8.3102    0.0039
+Likelihood Ratio Chi-Square      1      8.6334    0.0033
+Continuity Adj. Chi-Square       1      6.7595    0.0093
+Mantel-Haenszel Chi-Square       1      8.1504    0.0043
+Phi Coefficient                         0.3998
+Contingency Coefficient                 0.3712
+Cramer's V                              0.3998
+
+Fisher's Exact Test
+----------------------------------
+Cell (1,1) Frequency (F)        16
+Left-sided Pr <= F          0.9994
+Right-sided Pr >= F         0.0042
+Table Probability (P)       0.0036
+Two-sided Pr <= P           0.0052
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.7067    0.1590
+Kendall's Tau-b                         0.3998    0.1247
+Stuart's Tau-c                          0.3920    0.1237
+Somers' D C|R                           0.3926    0.1239
+Somers' D R|C                           0.4071    0.1266
+Pearson Correlation                     0.3998    0.1247
+Spearman Correlation                    0.3998    0.1247
+Lambda Asymmetric C|R                   0.2381    0.2160
+Lambda Asymmetric R|C                   0.3600    0.1782
+Lambda Symmetric                        0.3043    0.1729
+Uncertainty Coefficient C|R             0.1231    0.0793
+Uncertainty Coefficient R|C             0.1199    0.0775
+Uncertainty Coefficient Symmetric       0.1215    0.0783
+
+Odds Ratio and Relative Risks
+
+Statistic                        Value       95% Confidence Limits
+------------------------------------------------------------------
+Odds Ratio                      5.8182        1.6755       20.2034
+Relative Risk (Column 1)        2.9630        1.2740        6.8913
+Relative Risk (Column 2)        0.5093        0.3103        0.8357
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for s=2
+
+
+Statistics for Table of r by c
+
+Statistic                     DF       Value      Prob
+------------------------------------------------------
+Chi-Square                       1      1.5009    0.2205
+Likelihood Ratio Chi-Square      1      1.5148    0.2184
+Continuity Adj. Chi-Square       1      0.8835    0.3472
+Mantel-Haenszel Chi-Square       1      1.4731    0.2249
+Phi Coefficient                         0.1667
+Contingency Coefficient                 0.1644
+Cramer's V                              0.1667
+
+Fisher's Exact Test
+----------------------------------
+Cell (1,1) Frequency (F)        12
+Left-sided Pr <= F          0.9352
+Right-sided Pr >= F         0.1738
+Table Probability (P)       0.1090
+Two-sided Pr <= P           0.2635
+
+Statistic                              Value       ASE
+----------------------------------------------------------------------------
+Gamma                                   0.3412    0.2581
+Kendall's Tau-b                         0.1667    0.1331
+Stuart's Tau-c                          0.1591    0.1276
+Somers' D C|R                           0.1593    0.1277
+Somers' D R|C                           0.1744    0.1391
+Pearson Correlation                     0.1667    0.1331
+Spearman Correlation                    0.1667    0.1331
+Lambda Asymmetric C|R                   0.0000    0.0000
+Lambda Asymmetric R|C                   0.1154    0.2140
+Lambda Symmetric                        0.0667    0.1271
+Uncertainty Coefficient C|R             0.0216    0.0348
+Uncertainty Coefficient R|C             0.0203    0.0326
+Uncertainty Coefficient Symmetric       0.0209    0.0336
+
+Odds Ratio and Relative Risks
+
+Statistic                        Value       95% Confidence Limits
+------------------------------------------------------------------
+Odds Ratio                      2.0357        0.6478        6.3975
+Relative Risk (Column 1)        1.5918        0.7413        3.4180
+Relative Risk (Column 2)        0.7820        0.5259        1.1626
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for s
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      8.3052    0.0040
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      3.3132      1.4456      7.5934
+                          Logit                3.2941      1.4182      7.6515
+Relative Risk (Column 1)  Mantel-Haenszel      2.1636      1.2336      3.7948
+                          Logit                2.1059      1.1951      3.7108
+Relative Risk (Column 2)  Mantel-Haenszel      0.6420      0.4705      0.8761
+                          Logit                0.6613      0.4852      0.9013
+
+Breslow-Day Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    1.4929         1        0.2218
+
+Total Sample Size = 106

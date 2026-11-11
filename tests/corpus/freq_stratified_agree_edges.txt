@@ -1,0 +1,208 @@
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |      9 |      0 |      9
+                       |  60.00 |   0.00 |  60.00
+                       | 100.00 |   0.00 |
+                       | 100.00 |   0.00 |
+              ---------+--------+--------+
+              2        |      0 |      6 |      6
+                       |   0.00 |  40.00 |  40.00
+                       |   0.00 | 100.00 |
+                       |   0.00 | 100.00 |
+              ---------+--------+--------+
+              Total           9        6       15
+                          60.00    40.00   100.00
+
+Statistics for Table of r by c
+
+Cochran-Armitage Trend Test
+Statistic (Z)                 -3.8730
+One-sided Pr < Z               <.0001
+Two-sided Pr > |Z|             0.0001
+
+Jonckheere-Terpstra Test
+Statistic                     54.0000
+Z                              3.7417
+One-sided Pr > Z               <.0001
+Two-sided Pr > |Z|             0.0002
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+         .         .             .
+NOTE: There are no discordant pairs.
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+P-B Adjusted Kappa
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+Chance-Corrected AC1
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+Kappa Details
+Observed Agreement             1.0000
+Chance-Expected Agreement      0.5200
+Maximum Kappa                  1.0000
+Prevalence Index               0.2000
+Bias Index                     0.0000
+B_N Measure                    1.0000
+
+Sample Size = 15
+
+Summary Statistics for r by c
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1     14.0000    0.0002
+        2    Row Mean Scores Differ    1     14.0000    0.0002
+        3    General Association       1     14.0000    0.0002
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel           .           .           .
+                          Logit **           247.0000      4.3253  14105.0123
+Relative Risk (Column 1)  Mantel-Haenszel           .           .           .
+                          Logit **            13.3000      0.9167    192.9685
+Relative Risk (Column 2)  Mantel-Haenszel      0.0000           .           .
+                          Logit **             0.0538      0.0036      0.8088
+** These logit estimators use a correction of 0.5 in every cell of affected tables.
+
+Total Sample Size = 15
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |      6 |     16 |     22
+                       |  21.43 |  57.14 |  78.57
+                       |  27.27 |  72.73 |
+                       |  75.00 |  80.00 |
+              ---------+--------+--------+
+              2        |      2 |      4 |      6
+                       |   7.14 |  14.29 |  21.43
+                       |  33.33 |  66.67 |
+                       |  25.00 |  20.00 |
+              ---------+--------+--------+
+              Total           8       20       28
+                          28.57    71.43   100.00
+
+Statistics for Table of r by c
+Null Ratio                     2.0000
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+    4.0000         1        0.0455
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -0.0328             0.1167      -0.2615       0.1960
+
+Sample Size = 28
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |3       |  Total
+              ---------+--------+--------+--------+
+              1        |      5 |      0 |      2 |      7
+                       |  25.00 |   0.00 |  10.00 |  35.00
+                       |  71.43 |   0.00 |  28.57 |
+                       |  62.50 |   0.00 |  25.00 |
+              ---------+--------+--------+--------+
+              2        |      0 |      4 |      0 |      4
+                       |   0.00 |  20.00 |   0.00 |  20.00
+                       |   0.00 | 100.00 |   0.00 |
+                       |   0.00 | 100.00 |   0.00 |
+              ---------+--------+--------+--------+
+              3        |      3 |      0 |      6 |      9
+                       |  15.00 |   0.00 |  30.00 |  45.00
+                       |  33.33 |   0.00 |  66.67 |
+                       |  37.50 |   0.00 |  75.00 |
+              ---------+--------+--------+--------+
+              Total           8        4        8       20
+                          40.00    20.00    40.00   100.00
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    0.2000         1        0.6547
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6094             0.1583       0.2990       0.9197
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.4792             0.1959       0.0953       0.8630
+
+Sample Size = 20
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |3       |  Total
+              ---------+--------+--------+--------+
+              1        |      5 |      0 |      2 |      7
+                       |  25.00 |   0.00 |  10.00 |  35.00
+                       |  71.43 |   0.00 |  28.57 |
+                       |  62.50 |   0.00 |  25.00 |
+              ---------+--------+--------+--------+
+              2        |      0 |      4 |      0 |      4
+                       |   0.00 |  20.00 |   0.00 |  20.00
+                       |   0.00 | 100.00 |   0.00 |
+                       |   0.00 | 100.00 |   0.00 |
+              ---------+--------+--------+--------+
+              3        |      3 |      0 |      6 |      9
+                       |  15.00 |   0.00 |  30.00 |  45.00
+                       |  33.33 |   0.00 |  66.67 |
+                       |  37.50 |   0.00 |  75.00 |
+              ---------+--------+--------+--------+
+              Total           8        4        8       20
+                          40.00    20.00    40.00   100.00
+
+Statistics for Table of r by c
+
+Symmetry Test
+Chi-Square        DF    Pr > ChiSq
+    0.2000       2.5        0.9530
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.6094             0.1583       0.2990       0.9197
+
+Weighted Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.4792             0.1959       0.0953       0.8630
+
+Sample Size = 20

@@ -1,0 +1,183 @@
+
+                                     site=A
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for stratum=1
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+         .         .             .
+NOTE: There are no discordant pairs.
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    1.0000             0.0000       1.0000       1.0000
+
+Sample Size = 4
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for stratum=2
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+    0.0000         1        1.0000
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+   -1.0000             0.0000      -1.0000      -1.0000
+
+Sample Size = 4
+
+Summary Statistics for r by c
+Controlling for stratum
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      0.0000    1.0000
+        2    Row Mean Scores Differ    1      0.0000    1.0000
+        3    General Association       1      0.0000    1.0000
+Mantel-Fleiss Criterion        2.0000
+WARNING: The Mantel-Fleiss criterion is less than 5.
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      1.0000      0.1409      7.0991
+                          Logit **             1.0000      0.0480     20.8294
+Relative Risk (Column 1)  Mantel-Haenszel      1.0000      0.1409      7.0991
+                          Logit **             1.0000      0.1613      6.2005
+Relative Risk (Column 2)  Mantel-Haenszel      1.0000      0.1409      7.0991
+                          Logit **             1.0000      0.1613      6.2005
+** These logit estimators use a correction of 0.5 in every cell of affected tables.
+
+Breslow-Day-Tarone Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    8.0000         1        0.0047
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.0000      0.5000     -0.9800      0.9800
+Summary Score           0.0000      0.2026     -0.3970      0.3970
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.0000      0.0000           .
+Summary Score             0.0000      0.0000           .
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         stratum      Difference   Frequency    Fraction   MH Weight Score Midpoint Score Weight
+1               1                1.0000           4      0.5000      0.5000         0.4385       0.5000
+2               2               -1.0000           4      0.5000      0.5000        -0.4385       0.5000
+
+Cochran's Q
+Chi-Square        DF    Pr > ChiSq
+    0.0000         2        1.0000
+
+Total Sample Size = 8
+
+                                     site=B
+                        The FREQ Procedure
+
+                        Table 1 of r by c
+                        Controlling for stratum=1
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+    2.2500         1        0.1336
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.3891             0.1239       0.1463       0.6320
+
+Sample Size = 52
+
+                        The FREQ Procedure
+
+                        Table 2 of r by c
+                        Controlling for stratum=2
+
+
+Statistics for Table of r by c
+
+McNemar's Test
+Chi-Square        DF    Pr > ChiSq
+    3.5217         1        0.0606
+
+Simple Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.1574             0.1265      -0.0905       0.4053
+
+Sample Size = 54
+
+Summary Statistics for r by c
+Controlling for stratum
+
+Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+Statistic    Alternative Hypothesis    DF       Value      Prob
+---------------------------------------------------------------
+        1    Nonzero Correlation       1      8.3052    0.0040
+        2    Row Mean Scores Differ    1      8.3052    0.0040
+        3    General Association       1      8.3052    0.0040
+Mantel-Fleiss Criterion       19.2443
+
+Common Odds Ratio and Relative Risks
+Statistic                 Method               Value    95% Confidence Limits
+Odds Ratio                Mantel-Haenszel      3.3132      1.4456      7.5934
+                          Logit                3.2941      1.4182      7.6515
+Relative Risk (Column 1)  Mantel-Haenszel      2.1636      1.2336      3.7948
+                          Logit                2.1059      1.1951      3.7108
+Relative Risk (Column 2)  Mantel-Haenszel      0.6420      0.4705      0.8761
+                          Logit                0.6613      0.4852      0.9013
+
+Breslow-Day-Tarone Test for Homogeneity of Odds Ratios
+Chi-Square        DF    Pr > ChiSq
+    1.4905         1        0.2221
+
+Confidence Limits for the Common Risk Difference
+Method                 Value       Error    95% Confidence Limits
+Mantel-Haenszel         0.2738      0.0904      0.0965      0.4510
+Summary Score           0.2611      0.0878      0.0890      0.4331
+
+Column 1 (c = 1)
+
+Common Risk Difference Tests
+Method           Risk Difference           Z    Pr > |Z|
+Mantel-Haenszel           0.2738      3.0270      0.0025
+Summary Score             0.2611      2.9738      0.0029
+
+Column 1 (c = 1)
+
+Stratum Risk Differences and Weights
+Stratum         stratum      Difference   Frequency    Fraction   MH Weight Score Midpoint Score Weight
+1               1                0.3926          52      0.4906      0.4905         0.3663       0.5159
+2               2                0.1593          54      0.5094      0.5095         0.1489       0.4841
+
+Overall Kappa Coefficient
+Estimate       Standard Error    95% Confidence Limits
+    0.2756             0.0885       0.1022       0.4491
+
+Test for Equal Kappas
+Chi-Square        DF    Pr > ChiSq
+    1.7129         1        0.1906
+
+Cochran's Q
+Chi-Square        DF    Pr > ChiSq
+    5.3239         2        0.0698
+
+Total Sample Size = 106
