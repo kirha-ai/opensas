@@ -4,9 +4,11 @@
 //! first unsupported feature the interpreter reported — a stderr line prefixed
 //! `UNSUPPORTED:` — else the first line where output diverged.
 //!
-//! Fixtures are independent processes, so the runner fans them out across a
-//! small worker pool (`min(cpu_count, 8)`) via `Io.Group.concurrent`. Failure
-//! lines may appear out of directory order; the P/Q total is what gates.
+//! Most fixtures are independent processes and fan out across a small worker
+//! pool (`min(cpu_count, 8)`) via `Io.Group.concurrent`. Fixtures that touch
+//! shared on-disk paths under `tests/corpus/includes/` run **serially after**
+//! the parallel wave — otherwise concurrent readers/writers race and flake CI.
+//! Failure lines may appear out of directory order; the P/Q total is what gates.
 //!
 //! Every fixture's exit code is checked. A fixture that exits non-zero must
 //! declare it with an `expect-rc: N` marker in its header comment; NO MARKER
@@ -58,12 +60,18 @@ pub fn main(init: std.process.Init) !void {
     var dir = try Io.Dir.cwd().openDir(io, corpus_dir, .{ .iterate = true });
     defer dir.close(io);
 
-    // Collect runnable fixtures on the main thread (SKIP stays ordered), then
-    // fan the rest across workers. Each name is owned until exit.
-    var names: std.ArrayList([]const u8) = .empty;
+    // Collect runnable fixtures on the main thread (SKIP stays ordered). Split
+    // shared-FS ("dirty") fixtures from the rest so only the clean set fans out.
+    // Each name is owned until exit.
+    var clean: std.ArrayList([]const u8) = .empty;
     defer {
-        for (names.items) |n| gpa.free(n);
-        names.deinit(gpa);
+        for (clean.items) |n| gpa.free(n);
+        clean.deinit(gpa);
+    }
+    var dirty: std.ArrayList([]const u8) = .empty;
+    defer {
+        for (dirty.items) |n| gpa.free(n);
+        dirty.deinit(gpa);
     }
 
     var it = dir.iterate();
@@ -77,39 +85,75 @@ pub fn main(init: std.process.Init) !void {
             std.debug.print("  {s}: SKIP — no expected {s} ({t})\n", .{ entry.name, txt_name, e });
             continue;
         };
-        try names.append(gpa, try gpa.dupe(u8, entry.name));
+
+        const src = dir.readFileAlloc(io, entry.name, gpa, max_file) catch |e| {
+            std.debug.print("  {s}: SKIP — could not read source ({t})\n", .{ entry.name, e });
+            continue;
+        };
+        defer gpa.free(src);
+
+        const name = try gpa.dupe(u8, entry.name);
+        if (touchesSharedCorpusFs(src)) {
+            try dirty.append(gpa, name);
+        } else {
+            try clean.append(gpa, name);
+        }
     }
 
-    const total = names.items.len;
+    const total = clean.items.len + dirty.items.len;
     var ctx: Ctx = .{
         .io = io,
         .gpa = gpa,
         .bin = bin,
         .corpus_dir = corpus_dir,
-        .names = names.items,
+        .names = clean.items,
     };
 
+    try runParallel(&ctx);
+
+    // Shared-includes fixtures: one at a time on this task (after the parallel
+    // wave so they do not race clean workers either — clean fixtures must not
+    // touch includes/, dirty ones only touch among themselves here).
+    ctx.names = dirty.items;
+    ctx.next = .init(0);
+    var serial_dir = try Io.Dir.cwd().openDir(io, corpus_dir, .{});
+    defer serial_dir.close(io);
+    for (dirty.items) |name| runOne(&ctx, serial_dir, name);
+
+    const pass = ctx.pass.load(.monotonic);
+    std.debug.print("corpus: {d}/{d} passing\n", .{ pass, total });
+    if (pass != total) std.process.exit(1);
+}
+
+/// True when the fixture references the shared on-disk corpus tree that other
+/// fixtures also read/write. Those must not run concurrently with each other.
+fn touchesSharedCorpusFs(src: []const u8) bool {
+    // Case-sensitive: fixtures spell the path this way. Broaden only if a new
+    // spelling shows up in the corpus.
+    return std.mem.indexOf(u8, src, "tests/corpus/includes/") != null;
+}
+
+fn runParallel(ctx: *Ctx) !void {
+    if (ctx.names.len == 0) return;
+
+    const io = ctx.io;
     const cpu = std.Thread.getCpuCount() catch 4;
     const want = @max(@as(usize, 1), @min(cpu, max_workers));
 
     var group: Io.Group = .init;
     var spawned: usize = 0;
     while (spawned < want) : (spawned += 1) {
-        group.concurrent(io, worker, .{&ctx}) catch |err| switch (err) {
+        group.concurrent(io, worker, .{ctx}) catch |err| switch (err) {
             error.ConcurrencyUnavailable => break,
             else => |e| return e,
         };
     }
     if (spawned == 0) {
         // Io backend cannot spawn threads — drain serially on this task.
-        try worker(&ctx);
+        try worker(ctx);
     } else {
         try group.await(io);
     }
-
-    const pass = ctx.pass.load(.monotonic);
-    std.debug.print("corpus: {d}/{d} passing\n", .{ pass, total });
-    if (pass != total) std.process.exit(1);
 }
 
 fn worker(ctx: *Ctx) Io.Cancelable!void {
@@ -260,6 +304,18 @@ test "firstDiffLine finds the first divergence" {
     const d2 = firstDiffLine("x=1", "x=1\nextra");
     try std.testing.expectEqualStrings("<eof>", d2.expected);
     try std.testing.expectEqualStrings("extra", d2.got);
+}
+
+test "touchesSharedCorpusFs flags includes paths only" {
+    try std.testing.expect(touchesSharedCorpusFs(
+        "libname o \"tests/corpus/includes/dslabel\";\n",
+    ));
+    try std.testing.expect(touchesSharedCorpusFs(
+        "proc export outfile=\"tests/corpus/includes/x.csv\";\n",
+    ));
+    try std.testing.expect(!touchesSharedCorpusFs(
+        "data a; x=1; run;\nproc print; run;\n",
+    ));
 }
 
 test {
