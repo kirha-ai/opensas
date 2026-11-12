@@ -33,7 +33,7 @@ tagged with your role).
 
 ## Definition of done
 
-`zig build test` AND `zig build corpus` AND `zig build programs` all green,
+`zig build gate` green (or equivalently `test` + `corpus` + `programs`),
 fixture included, tracker updated if the task names one (docs/sas-functions.md
 `[x]`, EBNF `(* opensas *)`), committed locally by pathspec. Then STAY RUNNING
 and wait for the next task — do not exit.

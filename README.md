@@ -153,7 +153,8 @@ ignored.
 
 ```sh
 zig build                    # debug binary
-zig build test               # unit tests
+zig build gate               # test + corpus + programs (shared compile graph)
+zig build test               # unit tests only
 zig build corpus             # conformance corpus
 zig build programs           # end-to-end programs
 make arm amd windows macos   # cross-compile release binaries into dist/

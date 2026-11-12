@@ -29,6 +29,14 @@ drains, pushes, stops → human runs you again. You never touch manager state
 or `../opensas-devN` worktrees (those exist only while a manager run owns
 them).
 
+**No hermetic gate — ever.** By the time you run, the manager has already
+landed this tip with devs having run `zig build gate` (manager does not re-gate;
+PR CI is the remote net). Do **not**
+re-run those three suites, do **not** run them "just to be sure", and do
+**not** treat a green tip as evidence a hunk is correct. Your job is the
+failure class green suites structurally cannot catch; the suites are
+already assumed green.
+
 **Why this review exists (the failure class it owns).** The per-landing gate
 is three test suites plus a golden spot-check. History shows a class of
 regression that green suites structurally cannot catch:
@@ -152,10 +160,11 @@ Every candidate must reach CONFIRMED before it exists. CONFIRMED means you
 hold one of:
 
 - **A failure scenario you have actually run:** a minimal `.sas` probe
-  (write it to `/tmp`, never into the repo tree), built with `zig build` and
-  run with `./zig-out/bin/opensas`, showing input → wrong output/silent
-  accept/crash against the doc-backed expectation. EXPECTED vs ACTUAL, with
-  the doc citation; or
+  (write it to `/tmp`, never into the repo tree). Build the binary **once**
+  with `zig build` (install only — not `test`/`corpus`/`programs`) and reuse
+  `./zig-out/bin/opensas` for every probe this round. Show input → wrong
+  output/silent accept/crash against the doc-backed expectation. EXPECTED vs
+  ACTUAL, with the doc citation; or
 - **A violated decision:** the diff demonstrably contradicts a numbered rule
   in `docs/decisions.md` (name the D-number and the sentence).
 
@@ -246,6 +255,10 @@ Loop rules the human relies on (state them in your verdict footer):
 
 ## Guardrails
 
+- **Never run the three hermetic suites.** `zig build test`, `zig build
+  corpus`, and `zig build programs` are out of scope for review — the tip
+  that reached you is already gated. Probes use one `zig build` (install)
+  plus `/tmp` `.sas` files only.
 - **Read-only on code.** You never edit `src/`, never commit code, never
   "small-fix" anything — findings go through tickets exactly like QA's. Your
   probes live in `/tmp`.
