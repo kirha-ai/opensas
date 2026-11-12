@@ -1,5 +1,7 @@
 # AGT-ci — independent gate: the manager must not self-attest green.
-# Runs the three hermetic suites on every push/PR to main.
+# Runs the three hermetic suites on every push/PR to main. wasm compiles in a
+# sibling job so native-only-valid breaks cannot merge while keeping `gate` off
+# the ReleaseSmall wasm32-wasi critical path.
 name: ci
 on:
   push:
@@ -21,3 +23,17 @@ jobs:
       # programs` re-compiles opensas after test — different artifact).
       - name: hermetic gate (test + corpus + programs)
         run: zig build gate
+
+  # Parallel with `test`: compile-only check for the web demo. Kept off
+  # `zig build gate` / `test` so dirty-tree wasm (~26s) does not dominate the
+  # native suites, but still blocks merge before release.
+  wasm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: mlugg/setup-zig@v2
+        with:
+          version: 0.16.0
+      - name: compile wasm32-wasi
+        run: zig build wasm

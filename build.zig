@@ -263,9 +263,10 @@ pub fn build(b: *std.Build) void {
     wasm.rdynamic = true; // keep the `export fn`s visible
     const wasm_step = b.step("wasm", "Build web/opensas.wasm for the web demo");
     wasm_step.dependOn(&b.addInstallFile(wasm.getEmittedBin(), "../web/opensas.wasm").step);
-    // wasm is NOT on `zig build test`. Compiling ReleaseSmall wasm32-wasi was
-    // ~26s on a dirty tree and dominated the unit-test gate; the web demo is
-    // exercised explicitly via `zig build wasm` / `make wasm` when needed.
+    // wasm is NOT on `zig build test` / `gate`. Compiling ReleaseSmall
+    // wasm32-wasi was ~26s on a dirty tree and dominated the native suites.
+    // Coverage lives in a parallel CI job (`zig build wasm`) and release's
+    // wasm job; locally use `zig build wasm` / `make wasm` when needed.
 
     // Just like flags, top level steps are also listed in the `--help` menu.
     //
