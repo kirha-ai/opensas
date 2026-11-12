@@ -6,9 +6,10 @@
 //!
 //! Most fixtures are independent processes and fan out across a small worker
 //! pool (`min(cpu_count, 8)`) via `Io.Group.concurrent`. Fixtures that touch
-//! shared on-disk paths under `tests/corpus/includes/` run **serially after**
-//! the parallel wave — otherwise concurrent readers/writers race and flake CI.
-//! Failure lines may appear out of directory order; the P/Q total is what gates.
+//! shared on-disk paths (`tests/corpus/includes/` or `.zig-cache`) run
+//! **serially after** the parallel wave — otherwise concurrent readers/writers
+//! race and flake CI. Failure lines may appear out of directory order; the P/Q
+//! total is what gates.
 //!
 //! Every fixture's exit code is checked. A fixture that exits non-zero must
 //! declare it with an `expect-rc: N` marker in its header comment; NO MARKER
@@ -125,12 +126,16 @@ pub fn main(init: std.process.Init) !void {
     if (pass != total) std.process.exit(1);
 }
 
-/// True when the fixture references the shared on-disk corpus tree that other
-/// fixtures also read/write. Those must not run concurrently with each other.
+/// True when the fixture references a shared on-disk tree that other fixtures
+/// also read/write. Those must not run concurrently with each other.
 fn touchesSharedCorpusFs(src: []const u8) bool {
-    // Case-sensitive: fixtures spell the path this way. Broaden only if a new
+    // Case-sensitive: fixtures spell paths this way. Broaden only if a new
     // spelling shows up in the corpus.
-    return std.mem.indexOf(u8, src, "tests/corpus/includes/") != null;
+    if (std.mem.indexOf(u8, src, "tests/corpus/includes/") != null) return true;
+    // Scratch libname/FILE targets under the build cache (LIBNAME scan + DELETE
+    // can race with sibling writers if these stay in the parallel wave).
+    if (std.mem.indexOf(u8, src, ".zig-cache") != null) return true;
+    return false;
 }
 
 fn runParallel(ctx: *Ctx) !void {
@@ -306,12 +311,18 @@ test "firstDiffLine finds the first divergence" {
     try std.testing.expectEqualStrings("extra", d2.got);
 }
 
-test "touchesSharedCorpusFs flags includes paths only" {
+test "touchesSharedCorpusFs flags includes and zig-cache paths" {
     try std.testing.expect(touchesSharedCorpusFs(
         "libname o \"tests/corpus/includes/dslabel\";\n",
     ));
     try std.testing.expect(touchesSharedCorpusFs(
         "proc export outfile=\"tests/corpus/includes/x.csv\";\n",
+    ));
+    try std.testing.expect(touchesSharedCorpusFs(
+        "libname L \".zig-cache\";\n",
+    ));
+    try std.testing.expect(touchesSharedCorpusFs(
+        "file \".zig-cache/out.csv\";\n",
     ));
     try std.testing.expect(!touchesSharedCorpusFs(
         "data a; x=1; run;\nproc print; run;\n",
