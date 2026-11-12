@@ -131,7 +131,9 @@ pub fn main(init: std.process.Init) !void {
 fn touchesSharedCorpusFs(src: []const u8) bool {
     // Case-sensitive: fixtures spell paths this way. Broaden only if a new
     // spelling shows up in the corpus.
-    if (std.mem.indexOf(u8, src, "tests/corpus/includes/") != null) return true;
+    // No trailing slash: fixtures may LIBNAME the directory itself
+    // (`"tests/corpus/includes"`) as well as members under it.
+    if (std.mem.indexOf(u8, src, "tests/corpus/includes") != null) return true;
     // Scratch libname/FILE targets under the build cache (LIBNAME scan + DELETE
     // can race with sibling writers if these stay in the parallel wave).
     if (std.mem.indexOf(u8, src, ".zig-cache") != null) return true;
@@ -314,6 +316,9 @@ test "firstDiffLine finds the first divergence" {
 test "touchesSharedCorpusFs flags includes and zig-cache paths" {
     try std.testing.expect(touchesSharedCorpusFs(
         "libname o \"tests/corpus/includes/dslabel\";\n",
+    ));
+    try std.testing.expect(touchesSharedCorpusFs(
+        "libname o \"tests/corpus/includes\";\n",
     ));
     try std.testing.expect(touchesSharedCorpusFs(
         "proc export outfile=\"tests/corpus/includes/x.csv\";\n",
