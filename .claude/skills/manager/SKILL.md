@@ -8,14 +8,15 @@ description: >-
   tasks", "dispatch the backlog", "gate the dev work", "merge what's green",
   "grow the backlog from the corpus", "run an optimization loop", "perf audit",
   or when picking up mid-loop after a dev reports. The manager does NOT write
-  feature code; it drives dev/QA/perf subagents (the Agent tool), runs the
-  merge-gate (`zig build gate`), removes gated DONE tasks from
-  jira.md, and is the ONLY agent that pushes the current human-created working
-  branch. It never pushes or merges a protected branch. For GitHub-issue
-  intake specifically, use the companion `issue-manager` skill (invoked from
-  step 5b of this loop). One pressure-gated audit slot rotates QA (§8), perf
-  (§8b), and doc-finder (§8c) — one live at a time; a source is skipped while
-  it has more than 5 dispatchable tickets on the board (loop step 5c).
+  feature code; it drives dev/QA/perf subagents (the Agent tool), lands dev
+  work and pushes without re-running hermetic suites (dev's pre-report gate +
+  PR CI are the net), removes DONE tasks from jira.md, and is the ONLY agent that
+  pushes the current human-created working branch. It never pushes or merges a
+  protected branch. For GitHub-issue intake specifically, use the companion
+  `issue-manager` skill (invoked from step 5b of this loop). One pressure-gated
+  audit slot rotates QA (§8), perf (§8b), and doc-finder (§8c) — one live at a
+  time; a source is skipped while it has more than 5 dispatchable tickets on the
+  board (loop step 5c).
 ---
 
 # Manager — operating manual
@@ -30,7 +31,7 @@ and hunts bugs with lldb. The devs and QA are **subagents** you drive with the
 `§N` (§1–§8, incl. §8b/§8c) always means a top-level SECTION of this manual.
 The per-tick checklist inside §1 is written `step N` (0–9, with sub-steps
 2b/2c/5b/5c) and cited from outside as `§1 step N`. So "(§4)" = the section
-*Assignment rules*; "(§1 step 6)" = the loop's merge-gate step. **A bare `§N`
+*Assignment rules*; "(§1 step 6)" = the loop's land step. **A bare `§N`
 is never a loop step.**
 
 **North star:** run every program valid under **SAS 9.4** (DATA step first, then
@@ -47,7 +48,16 @@ with a fixture AND its tracker entry, per CLAUDE.md's Definition of Done.
 
 You run the loop in a **single persistent session**, driven by **background-task
 completion notifications** (§7 Driving devs): dispatch work, wait for a subagent to report,
-gate it, dispatch the next. Each iteration:
+land and push it, dispatch the next. Each iteration:
+
+**Gate skip (same SHA).** Before any `zig build gate` (dev pre-report, crash
+recovery, human-stop, or any other invocation), run:
+`tip=$(git rev-parse HEAD); gf="$(git rev-parse --git-common-dir)/opensas-last-green"`.
+If `$gf` exists and its contents equal `$tip`, **skip** the suites and treat the
+tip as green. After a real green `zig build gate`, write `$tip` into `$gf`
+(`printf '%s\n' "$tip" > "$gf"`). `git rev-parse` is milliseconds; skipping
+avoids re-running ~2k corpus fixtures on an unchanged tip. The file lives under
+`.git/` (not committed).
 
 0. **Baseline (first loop only).** Confirm `git branch --show-current` names a
    human-created working branch and is NOT `main` or `master`. If HEAD is detached
@@ -65,13 +75,17 @@ gate it, dispatch the next. Each iteration:
    2. Delete every dev worktree and branch: `git worktree remove --force
       ../opensas-devN` + `git branch -D devN`. (`wip/*` refs are ticket
       forensics — leave them.)
-   3. If the working branch is ahead of its upstream: run the consolidated
-      gate on the tip; green → push (step 7). Landed work survives a crash;
-      only its push can be missing.
+   3. If the working branch is ahead of its upstream: apply **Gate skip**;
+      if still needed, run `zig build gate` on the tip, record green, then
+      push (step 7). Landed work survives a crash; only its push can be missing.
    Then start the loop normally.
-1. **Sense.** Read `jira.md`. Run `git log --oneline -20` and `zig build test`.
-   Note what merged since last loop, what's green/red, what each dev is on. For
-   liveness, use the subagent task list / completion notifications (§7 Driving devs).
+1. **Sense.** Read `jira.md` and `git log --oneline -20`. Note what merged
+   since last loop and what each dev is on. Do **not** run `zig build test`
+   (or `gate`) here — Sense is situational awareness only; the authoritative
+   local suite is the dev's pre-report `zig build gate` (with Gate skip).
+   Manager does not re-gate after land — PR CI is the remote backstop. For
+   liveness, use the subagent task list / completion notifications (§7 Driving
+   devs).
 2. **Reconcile.** Update every task's state (§3 Task states) to match
    reality. A `DOING` task whose dev died is **stalled** → discard the
    attempt and re-dispatch (§7 Death).
@@ -87,8 +101,8 @@ gate it, dispatch the next. Each iteration:
    board commit, cherry-pick, or push. It must still be the same non-protected
    working branch captured at step 0. Never switch to, commit on, push to, merge
    into, or force-update `main`/`master`. Pull-request CI runs later, after the
-   human stops the manager and opens the PR; local suite gates are authoritative
-   during the manager loop.
+   human stops the manager and opens the PR; the dev's pre-report gate is the
+   local net during the loop, PR CI after the human opens the PR.
 3. **Unblock.** Deps clear mechanically as their tasks land (step 2b) — scan
    TODO tasks for stale `[deps: …]` ids that have left the board and clear
    the fields. If a dep is wrong/missing, file it as a new task.
@@ -131,42 +145,37 @@ gate it, dispatch the next. Each iteration:
    each pass FRESH and point it at a surface its predecessors haven't
    covered. Their findings become dev tasks (step 5b ordering: bugs ahead of
    features ahead of perf).
-6. **Land & gate.** For each dev report this tick: land it, then gate the tick.
+6. **Land (no manager re-gate).** For each dev report this tick: land it, then
+   push (step 7). Do **not** run `zig build gate` on the working branch after
+   land — the dev already gated the tip (same commit graph after `--ff-only`),
+   and PR CI is the remote backstop.
    - **Landing = `git merge --ff-only devN`** on the working branch (§7 The
      landing protocol). It lands atomically or refuses ("Not possible to
      fast-forward") — a refusal means the tip moved while this dev reported:
      bounce it with the new tip sha; it rebases (once, incremental), re-runs
-     the suites, re-reports. The manager NEVER resolves a conflict and never
-     runs a plain `git merge` — a merge commit is an impossible state under
-     this protocol; stop and investigate it, don't fix it.
-   - **Consolidated gate, once per tick (trust but verify):** after all of
-     the tick's landings, run one shared graph on the working-branch tip,
-     unpiped — `zig build gate; echo "GATE=$?"` (piping swaps `$?` for the
-     pipe's last exit code — a red suite reads as success). Prefer `gate`
-     over chained `test && corpus && programs`: one graph compiles the CLI
-     `opensas` once and overlaps it with unit-test compiles. Read the P/Q
-     counts from the summary, not just the exit code. On red, re-run the
-     failing suite alone (`test` / `corpus` / `programs`) for attribution.
-   - **Red consolidated gate:** don't push. The tip equals the last-landed
-     dev's tested tree, so red is NOT an interaction — it means a dev
-     reported green it never had (suites skipped or misread). Bounce that
-     dev — bisect the tick's landings if the culprit isn't obvious — with
-     the failing output; fix forward, re-land, re-gate.
+     the suites (with Gate skip), re-reports. The manager NEVER resolves a
+     conflict and never runs a plain `git merge` — a merge commit is an
+     impossible state under this protocol; stop and investigate it, don't fix it.
+   - **Record trust:** after a successful `--ff-only`, optionally write the new
+     tip SHA to `$(git rev-parse --git-common-dir)/opensas-last-green` so later
+     crash-recovery / human-stop Gate skip can no-op if HEAD is unchanged.
    - **Goldens:** a landing that edits an expected-output file must carry the
      evidence in its own commit (§7); spot-check the diff — SAS-correct, not a
      pass-hack.
    - **Board:** removal happens after the push (step 8). For a `GH#` task,
      close its issue only once the fix is on the remote working branch, per
      the `issue-manager` skill.
-7. **Push the tick — pushed is done.** After the consolidated gate (step 6)
-   is green, push to the CURRENT WORKING BRANCH. NEVER push `main`/`master`.
+7. **Push the tick — pushed is done.** After the tick's landings (step 6), push
+   to the CURRENT WORKING BRANCH. NEVER push `main`/`master`. No consolidated
+   manager gate — push on the dev's reported-green landing.
    - Capture the branch with `branch=$(git branch --show-current)` and refuse
      to continue if it is empty, `main`, or `master`.
    - If an upstream exists, require it to be exactly `origin/$branch`; a
      mismatched upstream is a stop-and-report condition, never a reason to
      guess a push target.
    - `git push -u origin HEAD` on the first push, `git push origin HEAD`
-     thereafter. A red tip is never pushed.
+     thereafter. Do not push a tip the dev reported red, or a landing that
+     refused `--ff-only`.
    - A known-but-unfixed defect whose existing suites remain green is a
      reporting duty, not a push blocker; name it and its in-flight fix in
      the tick summary.
@@ -182,7 +191,7 @@ gate it, dispatch the next. Each iteration:
    both the issue and the task open.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
    run the next iteration. Until the human explicitly stops the manager, each dev
-   report is the trigger for the next tick (gate → refill that dev → sense →
+   report is the trigger for the next tick (land+push → refill that dev → sense →
    assign). The session stays alive with agents running in the background; it
    does not declare itself "finished".
    **Safety-net ticker:** at manager start, arm an explicit recurring re-entry with
@@ -194,7 +203,7 @@ gate it, dispatch the next. Each iteration:
    is ready. When explicitly asked to stop:
    1. Stop dispatching — no new tasks, no refills, the audit lane too.
    2. Message every live dev: *"human stop — wrap up NOW: commit everything,
-      `git rebase <work>`, re-run the three suites, report. Hard deadline:
+      `git rebase <work>`, Gate-skip or re-run `zig build gate`, report. Hard deadline:
       10 minutes."*
    3. As reports arrive, land them normally (`--ff-only`) and update the
       board. **Done means pushed** (step 5) — nothing else counts.
@@ -205,8 +214,9 @@ gate it, dispatch the next. Each iteration:
       Remove every dev worktree and branch (`git worktree remove --force` +
       `git branch -D`; force is right — you just decided to discard). Never
       stand with your shell's cwd inside a worktree you are removing.
-   5. Run the three suites on the working branch; if green, push; report the
-      branch name, tip SHA, suite counts, and which tasks were discarded.
+   5. Apply **Gate skip**; if still needed, run `zig build gate` on the
+      working branch, record green, then push; report the branch name, tip
+      SHA, suite counts (or skipped-same-SHA), and which tasks were discarded.
    Do NOT open or merge a PR, create a release, or touch `main`/`master` —
    the landings above are your last merges. The human
    then opens the PR, reviews it, waits for PR CI, and merges manually.
@@ -216,7 +226,7 @@ do not exit while there is work the team could do.
 If the board looks empty, you have not looked hard enough: grow it (§5 corpus,
 step 5b issues, step 5c audit). The only idle state is *waiting on a completion
 notification while devs run in the background* — that is the loop working, not the
-loop ending. When a notification arrives, gate it and immediately refill that dev
+loop ending. When a notification arrives, land+push it and immediately refill that dev
 (§4 Assignment rules). There must always be agents in the background; a tick that leaves zero live
 devs with assignable work remaining is a bug in your loop, not a finish line.
 
@@ -227,9 +237,9 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 - Write interpreter/feature code — and that includes resolving merge
   conflicts; the landing protocol routes all of that to devs (§7). You may
   write *test fixtures* (`.sas` corpus programs) and edit `jira.md`.
-- Merge red or push a red tip. The per-tick consolidated gate (step 6) is the
-  push authority; red on the tip means two landings interact — bounce, fix
-  forward, re-gate.
+- Land a tip the dev reported red, or push when `--ff-only` refused. There
+  is no manager consolidated gate — bounce bad reports; trust green reports
+  + PR CI.
 - `git add -A` / `add .` / `commit -a` — even alone in your own tree it sweeps
   scratch and half-done edits into the commit. Explicit pathspec, always
   (`git commit jira.md -m …`).
@@ -255,9 +265,9 @@ the board the same tick they are pushed (step 2b, after step 7), no archive
 file.
 
 A dev that reports done has NOT changed state: the task stays `DOING` until
-the tick's push (steps 6–8) — `--ff-only` integrates it locally, the
-consolidated gate verifies the tip, the push makes it real. **Pushed to the
-remote working branch is the definition of done.** A bounce keeps it `DOING`.
+the tick's push (steps 6–8) — `--ff-only` integrates it locally, the push
+makes it real (no manager re-gate). **Pushed to the remote working branch is
+the definition of done.** A bounce keeps it `DOING`.
 
 Line format: `- [STATE] ID — one-line title  [deps: A1]  @dev2`. A file named
 in the title is a starting hint for the charter, not a constraint — the dev
@@ -418,12 +428,13 @@ task):
    a conflict whose other side is beyond your task's scope →
    `git rebase --abort`, REPORT the conflict to the manager — never guess.
    Never end your turn mid-rebase.
-3. Run the hermetic gate (`zig build gate` — preferred over chained
-   `test && corpus && programs`; one shared compile graph). Red → attribute
-   first: `git rebase --abort` (lossless), re-run on your base — red there =
-   your bug (fix it, then redo the rebase); green there = bad resolution or
-   an interaction with landed work (fix forward; beyond your scope → the
-   escape hatch above). Green → report
+3. Apply **Gate skip** (same SHA); if still needed, run the hermetic gate
+   (`zig build gate` — preferred over chained `test && corpus && programs`;
+   one shared compile graph), then record the tip SHA on green. Red →
+   attribute first: `git rebase --abort` (lossless), re-run on your base —
+   red there = your bug (fix it, then redo the rebase); green there = bad
+   resolution or an interaction with landed work (fix forward; beyond your
+   scope → the escape hatch above). Green → report
    `(branch, base-sha, sha, counts)` from `git rev-parse <work> HEAD`.
 
 Manager side, on the working branch: **`git merge --ff-only devN`** — it

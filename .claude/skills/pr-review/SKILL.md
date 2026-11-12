@@ -30,7 +30,8 @@ or `../opensas-devN` worktrees (those exist only while a manager run owns
 them).
 
 **No hermetic gate — ever.** By the time you run, the manager has already
-landed this tip through `zig build test` / `corpus` / `programs`. Do **not**
+landed this tip with devs having run `zig build gate` (manager does not re-gate;
+PR CI is the remote net). Do **not**
 re-run those three suites, do **not** run them "just to be sure", and do
 **not** treat a green tip as evidence a hunk is correct. Your job is the
 failure class green suites structurally cannot catch; the suites are

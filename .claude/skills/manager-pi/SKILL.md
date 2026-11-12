@@ -9,15 +9,16 @@ description: >-
   the `manager` skill in every respect EXCEPT one: the dev-dispatch primitive
   (manager §7 Spawn) runs `pi -p` + Kimi-K3 in a git worktree per dev. QA, perf,
   doc-finder, and the manager itself stay Claude. The manager still owns the
-  gate, the cherry-pick, and pushes to the current human-created working branch.
+  land/cherry-pick and pushes (no manager re-gate; dev gate + PR CI),
+  to the current human-created working branch.
   It never pushes or merges a protected branch.
 ---
 
 # manager-pi — the manager loop, dev work on pi/Kimi-K3
 
 **Follow the `manager` skill in full** (sense → reconcile → remove completed
-tasks → assign → GitHub intake → audit lane → gate → push → loop; deps-only
-scheduling, quiescent gate, don't-spin, never-self-stop-until-human-handoff — all
+tasks → assign → GitHub intake → audit lane → land → push → loop; deps-only
+scheduling, Gate skip, don't-spin, never-self-stop-until-human-handoff — all
 inherited).
 This skill changes
 **one thing**: devs
@@ -25,7 +26,7 @@ are dispatched as `pi`/Kimi-K3 runs in a worktree, not Agents. One-run-per-dev,
 completion = git+green (never the agent's say-so), REVIEW bounces, recovery still
 apply.
 
-**Stays Claude:** you (manager — gate/cherry-pick/working-branch push) and
+**Stays Claude:** you (manager — land/cherry-pick/working-branch push) and
 QA/perf/doc-finder. Only feature/bug-fix devs move to pi.
 
 ## Audit lane — all three live, concurrent
@@ -48,14 +49,13 @@ a dev fixes it.
 - **File-only while pi devs are live** — never edit a `src/*.zig` a live pi dev owns.
 - **Fuzz/probe via the exe → clean-rebuild first** (`rm -rf .zig-cache zig-cache &&
   zig build`); a stale `zig-out` under concurrent worktree builds fakes bugs
-  (tick-128). State it in every fuzz-agent charter. (The manager's `zig build` gate
-  rebuilds — safe; a bare `./zig-out/bin/opensas` is not.)
+  (tick-128). State it in every fuzz-agent charter. (A fresh `zig build` rebuilds — safe; a bare `./zig-out/bin/opensas` is not.)
 - **Event-driven once exhausted** — an agent clean ≈3+ runs whose only work left is
   "verify a fix when it lands" stops relaunching every tick; re-arm on its trigger.
   perf (relaunch on a PERF-* landing); doc-finder (tick139); and **QA too as of
   tick148** — surface heavily hardened (corpus ~1208, ~160 fixes), QA self-reported
   low hit rate. All three are now event-driven; the manager's per-landing gate
-  (`zig build test/corpus/programs`) is the primary regression net. **Re-arm QA for a
+  (`zig build gate` on devs, plus PR CI) is the primary regression net. **Re-arm QA for a
   one-off regression+fuzz sweep every ~4-5 dev landings, on a crash-prone/risky
   change, or when the backlog drains <20** — not every tick. Re-arm perf on a PERF-*
   landing, doc-finder on a new subsystem or <20 backlog.
@@ -87,18 +87,19 @@ commit by pathspec, NEVER `git add -A`/push, report sha+counts; override via
 k3 …` launch (waited on, so you still get a completion notification), and a **wedge
 watchdog** that kills the run if no session `.jsonl` appears in 120s. Fan out ≥3
 devs with staggered delays (0/25/50/75/100) to dodge the concurrent-init
-black-hole. pi auto-reads `CLAUDE.md` (house rules free); you never trust its
-report — you re-gate.
+black-hole. pi auto-reads `CLAUDE.md` (house rules free). Honour manager **Gate
+skip** and **no manager re-gate after land** (manager §1).
 
 ## Gate & merge (manager §1 step 6 + cherry-pick)
 
-1. On run exit, `cd` the worktree, run the authoritative gate: `zig build gate`
-   (one shared graph — prefer over chained `test && corpus && programs`). Red
-   from its own work → REVIEW bounce.
+1. On run exit, `cd` the worktree, apply Gate skip; if needed, run
+   `zig build gate` (record green SHA). Red from its own work → REVIEW bounce.
 2. Scrutinize any golden/expected-output edit — SAS-correct, not a pass-hack.
 3. Green → `git cherry-pick <sha>` onto the same non-protected working branch
-   captured when the manager started, then re-gate that quiescent branch. Never
-   cherry-pick onto `main`/`master`.
+   captured when the manager started. Do **not** re-gate the manager branch —
+   push on the dev-reported green tip (PR CI is the remote backstop). Never
+   cherry-pick onto `main`/`master`. Optionally write the new tip to
+   `opensas-last-green` (manager §1 Gate skip).
 4. `git worktree remove` (--force only if nothing ungated). **CONFIRM THE RUN HAS
    EXITED FIRST — "all its commits are on the manager's working branch" is NOT
    the same as "the run is done"** (tick342: I removed a worktree whose pi process
@@ -116,10 +117,10 @@ report — you re-gate.
    to be recovered from the dangling object; tick329: the persistent shell wedged
    entirely — even `true` returned 1 — because its cwd no longer existed, and only
    absolute-path commands worked after that). **Do NOT push from a pi worktree.**
-   After every green cherry-pick and manager-branch re-gate, push from the manager
-   worktree per manager §1 step 8, always to its current non-protected working
-   branch. Pull-request CI runs only after the human stops the manager and opens
-   the PR; the per-landing local gate remains the regression net during the loop.
+   After every green cherry-pick, push from the manager worktree per manager §1
+   step 7–8, always to its current non-protected working branch. Pull-request CI
+   runs only after the human stops the manager and opens the PR; the dev's
+   pre-report gate is the local net during the loop.
 
 ## Recovery
 
