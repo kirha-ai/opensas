@@ -1,0 +1,17 @@
+ods graphics off;ods exclude all;
+%macro probe(id,opts);
+data state;do n=5,8,12,20,30,50,100,200,500,1000;do target=.25,.5;do t=1 to 3;lo=0;hi=8;g=4;output;end;end;end;run;
+%do iter=1 %to 44;
+data d;set state;g=(lo+hi)/2;do i=1 to n;u=((i-.41)/(n+.18))**(1+g);x=-log1px(-u);output;end;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by n target t;histogram x / noplot &opts;run;
+data selected;set gof;if (t=1 and TestLab='D') or (t=2 and TestLab='W-Sq') or (t=3 and TestLab='A-Sq');keep n target t Stat pValue pSign;run;
+data state;merge state selected;by n target t;g=(lo+hi)/2;if pValue>=target and pSign='>' then lo=g;else hi=g;run;
+%end;
+ods exclude none;
+data _null_;set state;file print;put "&id|" n best8. '|' target best8. '|' t best8. '|' Stat best32. '|' lo best32. '|' hi best32.;run;
+ods exclude all;
+%mend;
+%probe(exp,exponential(theta=0));
+%probe(expboth,exponential(theta=est));
+%probe(exptheta,exponential(theta=est sigma=1));

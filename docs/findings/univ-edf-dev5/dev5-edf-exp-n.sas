@@ -1,0 +1,12 @@
+ods graphics off; ods exclude all;
+%macro probe(id,opts);
+data d;do n=5,8,12,30,50,200,1000;do g=0 to 1200;do i=1 to n;u=((i-.41)/(n+.18))**(1+g*.004);x=-log1px(-u);output;end;end;end;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by n g;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%probe(exp,exponential(theta=0));
+%probe(expboth,exponential(theta=est));
+%probe(exptheta,exponential(theta=est sigma=1));
