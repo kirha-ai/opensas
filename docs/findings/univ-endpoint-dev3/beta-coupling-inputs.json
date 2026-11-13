@@ -1,0 +1,191 @@
+[
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_000"
+  },
+  {
+    "scale": 0.01,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_001"
+  },
+  {
+    "scale": 0.01,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_002"
+  },
+  {
+    "scale": 0.01,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_003"
+  },
+  {
+    "scale": 0.01,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_004"
+  },
+  {
+    "scale": 0.01,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_005"
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_006"
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_007"
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_008"
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_009"
+  },
+  {
+    "scale": 0.1,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_010"
+  },
+  {
+    "scale": 0.1,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_011"
+  },
+  {
+    "scale": 0.1,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_012"
+  },
+  {
+    "scale": 0.1,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_013"
+  },
+  {
+    "scale": 0.1,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_014"
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_015"
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_016"
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_017"
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_018"
+  },
+  {
+    "scale": 1,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_019"
+  },
+  {
+    "scale": 1,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_020"
+  },
+  {
+    "scale": 1,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_021"
+  },
+  {
+    "scale": 1,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_022"
+  },
+  {
+    "scale": 1,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_023"
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_024"
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_025"
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_026"
+  }
+]

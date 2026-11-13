@@ -180,3 +180,14 @@ nonstationary_candidate reasons, preserving the optional best-curve payload.
 Prospective and old oracle cases give 84 matches and one explicit unresolved
 initialization case; green tests are not a claim that all 85 match SAS. The
 joint-theta, beta and Pareto gaps remain open.
+
+## Prospective fallback-start rejection and beta coupling control
+
+[fallback-start-discriminator.md](fallback-start-discriminator.md) records all
+85 old rows, 36 prospective mixtures/tie-weight requests, 27 conditional/joint
+beta requests, and six fixed-width power controls. The clipped two-moment-start
+hypothesis matches the old 85 outcomes but fails 11/36 new cases; no generic
+production change was adopted. All 24 conditional beta fits and all six power
+shape controls succeed, while the smallest-unit joint beta fit still fails.
+The old 84/85 compiled count is not full fallback acceptance: the existing guard
+also suppresses 19 new SAS-returned free-alpha curves. Parent scope remains open.

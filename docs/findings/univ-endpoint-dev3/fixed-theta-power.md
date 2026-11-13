@@ -157,3 +157,12 @@ not represented as a passing integration test. It is deliberately not enabled
 in the green helper build until the owner applies the dispatch change. No
 dev4-owned module was edited, even temporarily. This additional integration
 requirement is distinct from the numerical oracle gap recorded above.
+
+## Subsequent prospective fallback check
+
+The later [fallback-start-discriminator.md](fallback-start-discriminator.md)
+expands the evidence, not the accepted implementation. The original 84/85 count
+still describes that frozen fixture only. Nineteen additional SAS-returned
+curves in the inadmissible-four-moment/free-alpha class are blocked by the
+current guard. Candidate start rules were tested prospectively and rejected;
+no case-specific exception or widened acceptance tolerance was introduced.
