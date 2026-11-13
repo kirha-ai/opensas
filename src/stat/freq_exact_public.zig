@@ -63,8 +63,11 @@ pub fn resolve(req: anytype, statement: ?parse.Options, statements: usize) void 
                 req.statistics.chisq = true;
                 if (f == .lrchi) req.statistics.lrchi = true;
             },
-            .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc, .oddsratio => {
+            .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc => {
                 req.statistics.measures = true;
+            },
+            .oddsratio => {
+                if (req.risk.odds_ratio == null) req.risk.odds_ratio = .{ .family = .odds_ratio };
             },
             .binomial => {
                 if (req.risk.binomial == null) req.risk.binomial = .{ .family = .binomial };
@@ -90,6 +93,35 @@ pub fn resolve(req: anytype, statement: ?parse.Options, statements: usize) void 
             else => {},
         };
     }
+}
+
+pub fn asymptoticTests(req: anytype, requested: @import("freq_tests_parse.zig").Tests) @import("freq_tests_parse.zig").Tests {
+    var out = requested;
+    const f = req.exact.families;
+    out.pearson = out.pearson or f.contains(.pcorr);
+    out.spearman = out.spearman or f.contains(.scorr);
+    out.tau_b = out.tau_b or f.contains(.kentb);
+    out.tau_c = out.tau_c or f.contains(.stutc);
+    out.somers_cr = out.somers_cr or f.contains(.smdcr);
+    out.somers_rc = out.somers_rc or f.contains(.smdrc);
+    return out;
+}
+
+pub fn validateClRequests(req: anytype, d: *diag.Diagnostics) diag.Error!void {
+    const risks = [_]?@import("freq_risk_parse.zig").Request{ req.risk.difference, req.risk.relative_risk, req.risk.odds_ratio };
+    for (risks, [_]parse.Family{ .riskdiff, .relrisk, .oddsratio }) |maybe, family| if (maybe) |r| {
+        var wants_exact = false;
+        for (r.cls) |cl| if (cl.method == .exact) {
+            wants_exact = true;
+        };
+        if (!wants_exact) continue;
+        if (!req.exact.families.contains(family)) {
+            try d.report(.warning, 0, "To display exact confidence limits for {s}, specify the corresponding option in the EXACT statement.", .{@tagName(family)});
+            continue;
+        }
+        const column: parse.Column = if (family == .riskdiff) req.exact.riskdiff.column orelse (if (r.norisks) parse.Column.first else .both) else req.exact.relrisk.column orelse .first;
+        if (family != .oddsratio and column != .both and ((r.column == 1) != (column == .second))) try d.report(.warning, 0, "To display exact confidence limits for column {d} {s}, request that column in the EXACT statement.", .{ r.column + 1, @tagName(family) });
+    };
 }
 
 fn matrix(scored: model.ScoredMatrix, one: bool) tests.CountMatrix {
@@ -168,9 +200,11 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
     if (total == 0) return;
     const m = matrix(scored, one);
     var it = req.exact.families.iterator();
-    while (it.next()) |f| {
+    while (it.next()) |requested_family| {
+        const binary = m.rows == 2 and m.cols == 2;
+        const f: parse.Family = if (requested_family == .wtkappa and binary) .kappa else requested_family;
         if (f == .comor or f == .eqor) continue;
-        if (f == .wtkappa and m.rows == 2 and m.cols == 2 and req.exact.families.contains(.kappa)) continue;
+        if (requested_family == .wtkappa and binary and req.exact.families.contains(.kappa)) continue;
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
         var c = config(req, seed, &deadline);
         c.numeric_table_scores_valid = scored.numeric_table_scores_valid;
@@ -189,10 +223,6 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         }
         if (req.risk.difference) |rd| {
             c.norisks = rd.norisks;
-            if (c.options.riskdiff.column == null and !rd.both_columns) c.options.riskdiff.column = if (rd.column == 1) .second else .first;
-        }
-        if (req.risk.relative_risk) |rr| {
-            if (c.options.relrisk.column == null) c.options.relrisk.column = if (rr.column == 1) .second else .first;
         }
         const result = exec.run(a, m, f, c) catch |err| {
             if (err == error.OutOfMemory) return err;
@@ -254,7 +284,9 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
         if (missing and !req.missing) continue;
         const scored = (try tab.matrix(a, id)) orelse continue;
         const m = matrix(scored, false);
-        if (m.rows != 2 or m.cols != 2) return d.fail(error.ExecError, 0, "PROC FREQ EXACT COMOR/EQOR requires 2 by 2 strata", .{});
+        // SAS inapplicable.sas suppresses COMOR/EQOR outside h-by-2-by-2;
+        // the implied CMH output remains valid for these larger tables.
+        if (m.rows != 2 or m.cols != 2) return;
         try strata.append(a, m);
     }
     if (strata.items.len == 0) return;
@@ -374,6 +406,9 @@ test "public EXACT zero margins retain agreement and fractional counts fail with
     try std.testing.expect(!d.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out, "Fisher's Exact Test") == null);
     try std.testing.expect(std.mem.indexOf(u8, out, "McNemar's Test") != null);
+    const weighted = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact wtkappa; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, weighted, "Simple Kappa Coefficient") != null);
+    try std.testing.expect(std.mem.indexOf(u8, weighted, "Weighted Kappa Coefficient") == null);
     var fractional = try Harness.init(a, &.{ 1, 2.5, 3, 4 }, 2);
     var errors = diag.Diagnostics.init(a);
     try std.testing.expectError(error.ExecError, fractional.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher; run;", &errors));
@@ -396,4 +431,63 @@ test "public EXACT stratified COMOR and EQOR retain conditioning and missing con
     const out = try h.run("proc freq data=d; weight w / zeros; tables g*r*c / noprint; exact comor eqor / point midp; run;", &d);
     for ([_][]const u8{ "Common Odds Ratio", "Zelen's Exact Test", "0.5000", "0.7500", "0.1111" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
     try std.testing.expect(!d.hasErrors());
+    try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 3 }, .{ .num = 3 }, .{ .num = 1 } });
+    const larger = try h.run("proc freq data=d; weight w / zeros; tables g*r*c / noprint; exact comor eqor; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, larger, "Exact Confidence Limits") == null);
+}
+
+test "public EXACT interval families and Barnard retain columns methods and probability formats" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 3, 3, 1 }, 2);
+    var d = diag.Diagnostics.init(a);
+    // SAS intervals.sas, 0 errors/warnings: all four families are requested
+    // together so inherited table options cannot overwrite either exact method.
+    const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact oddsratio riskdiff(column=both method=score2) relrisk(column=both method=score2) barnard / pformat=8.6; run;", &d);
+    for ([_][]const u8{ "0.0016", "4.7229", "-0.9072", "-0.2500", "0.9072", "0.0238", "1.6859", "0.5932", "0.144531", "0.289063" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+    try std.testing.expect(!d.hasErrors());
+    const fisher = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher / point midp pformat=8.6; run;", &d);
+    for ([_][]const u8{ "0.242857", "0.985714", "0.228571", "0.485714", "0.457143", "0.257143" }) |value| try std.testing.expect(std.mem.indexOf(u8, fisher, value) != null);
+    const noscore = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(method=noscore); run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, noscore, "12.8095") != null);
+}
+
+test "public RR SCORE2 preserves the quantified unresolved SAS endpoint discrepancy" {
+    // This is a known-difference certificate, NOT an acceptance test claiming
+    // SAS parity. The manager explicitly retains the same-ticket RR blocker.
+    // rr-score2-precision.sas: SAS upper 42.0396959567221, not the mathematical
+    // reciprocal endpoint printed as 42.0395. No tolerance has been widened.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 3, 3, 1 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(column=both method=score2); run;", &d);
+    const r = (try exec.run(a, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 3, 3, 1 } }, .relrisk, .{ .options = .{ .relrisk = .{ .column = .both, .method = .score2 } } })).risk_intervals;
+    try std.testing.expectApproxEqRel(1 / r.first.?.lower, r.second.?.upper, 1e-8);
+    try std.testing.expect(@abs(r.second.?.upper - 42.0396959567221) > 0.00005);
+    const displayed = try std.fmt.allocPrint(a, "{d:.4}", .{r.second.?.upper});
+    try std.testing.expect(std.mem.indexOf(u8, out, displayed) != null);
+    try std.testing.expect(std.mem.indexOf(u8, out, "42.0397") == null);
+}
+
+test "public CL EXACT requires the statement and does not override its column defaults" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 3, 3, 1 }, 2);
+    var warnings = diag.Diagnostics.init(a);
+    const alone = try h.run("proc freq data=d; weight w; tables r*c / riskdiff(cl=exact) oddsratio(cl=exact) relrisk(cl=exact) noprint; run;", &warnings);
+    try std.testing.expect(!warnings.hasErrors());
+    try std.testing.expectEqual(@as(usize, 3), warnings.list.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, alone, "4.7229") == null);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / riskdiff(column=2 cl=exact) relrisk(column=2 cl=exact) oddsratio(cl=exact) noprint; exact riskdiff relrisk oddsratio; run;", &d);
+    for ([_][]const u8{ "Risk Difference (Column 1)", "Risk Difference (Column 2)", "Relative Risk (Column 1)", "-0.9363", "-0.3017", "0.0118", "1.7874", "4.7229" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "column 2 relrisk") != null);
+    const norisks = try h.run("proc freq data=d; weight w; tables r*c / riskdiff(norisks cl=exact) noprint; exact riskdiff; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, norisks, "Risk Difference (Column 1)") != null);
+    try std.testing.expect(std.mem.indexOf(u8, norisks, "Risk Difference (Column 2)") == null);
 }

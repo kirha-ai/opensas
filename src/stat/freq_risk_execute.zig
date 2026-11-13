@@ -239,6 +239,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 if (req.both_columns) current.column = col_index;
                 var rows: std.ArrayList(r.Row) = .empty;
                 for (current.cls) |cl| {
+                    if (cl.method == .exact) continue; // public EXACT adapter owns unconditional limits
                     const method: k.DifferenceMethod = switch (cl.method) {
                         .wald => .wald,
                         .ac => .agresti_caffo,
@@ -273,6 +274,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
         for ([_]?p.Request{ options.odds_ratio, options.relative_risk }) |maybe| if (maybe) |req| {
             var rows: std.ArrayList(r.Row) = .empty;
             for (req.cls) |cl| {
+                if (cl.method == .exact) continue; // public EXACT adapter owns these limits
                 const ci: k.Interval = if (cl.method == .midp) blk: {
                     var cells: [4]u32 = undefined;
                     for (c, 0..) |v, i| {

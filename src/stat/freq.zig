@@ -510,6 +510,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     const statistical_options = try a.alloc(stat_parse.Options, opts.requests.items.len);
     for (opts.requests.items, 0..) |*req, index| {
         exact_public.resolve(req, opts.exact, opts.tables_statement_count);
+        try exact_public.validateClRequests(req.*, cx.diags);
         stat_parse.implyTests(&req.statistics, opts.tests.requests, opts.tables_statement_count);
         strat_parse.implyTests(&req.stratified, opts.agreement_tests, opts.tables_statement_count);
         if (req.risk.difference) |rd| if (rd.common) {
@@ -1779,7 +1780,10 @@ fn hasStratified(options: strat_parse.Options) bool {
     return options.cmh > 0 or options.trend or options.jt or options.agreement.enabled or options.common.enabled or options.gail_simon;
 }
 fn stratScope(req: Request, opts: Options) strat_exec.Scope {
-    return .{ .alpha = req.statistics.alpha, .tests = opts.agreement_tests, .inherited_risk_column = if (req.risk.difference != null and req.risk.difference.?.column == 1 and !req.risk.difference.?.both_columns) .second else .first };
+    var tests = opts.agreement_tests;
+    tests.kappa = tests.kappa or req.exact.families.contains(.kappa);
+    tests.weighted_kappa = tests.weighted_kappa or req.exact.families.contains(.wtkappa);
+    return .{ .alpha = req.statistics.alpha, .tests = tests, .inherited_risk_column = if (req.risk.difference != null and req.risk.difference.?.column == 1 and !req.risk.difference.?.both_columns) .second else .first };
 }
 fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     const n = table.dimensions.len;
@@ -1794,6 +1798,7 @@ fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
 
 fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report) diag.Error!void {
     const a = cx.arena;
+    const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
         if (!opts.noprint and !req.noprint) try renderTable(a, out, tab, req, opts);
         return; // The existing BY/table path already reported the negative-weight note.
@@ -1805,7 +1810,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             return;
         }
         var body: std.ArrayList(u8) = .empty;
-        const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, opts.tests.requests, req.resolved_expected, opts.noprint);
+        const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
@@ -1845,7 +1850,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
-                }, req.statistics, opts.tests.requests, .equal, opts.noprint);
+                }, req.statistics, requested_tests, .equal, opts.noprint);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
                     try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
