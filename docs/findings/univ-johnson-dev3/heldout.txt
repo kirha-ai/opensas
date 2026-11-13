@@ -1,0 +1,735 @@
+
+SB MOM heldout
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean               1.31325698    Sum Observations    101.120787
+Std Deviation      1.11661779    Variance            1.24683529
+Skewness           -0.6224838    Kurtosis            -0.5065705
+Uncorrected SS     227.557061    Corrected SS        94.7594818
+Coeff Variation    85.0266024    Std Error Mean      0.12725041
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     1.313257     Std Deviation            1.11662
+Median   1.528925     Variance                 1.24684
+Mode      .           Range                    4.36834
+                      Interquartile Range      1.66950
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  10.32026    Pr > |t|    <.0001
+Sign           M      26.5    Pr >= |M|   <.0001
+Signed Rank    S    1315.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level          Quantile
+
+100% Max       2.898934
+99%            2.898934
+95%            2.755834
+90%            2.615845
+75% Q3         2.229153
+50% Median     1.528925
+25% Q1         0.559655
+10%           -0.380826
+5%            -0.859684
+1%            -1.469401
+0% Min        -1.469401
+
+
+            Extreme Observations
+ 
+------Lowest------        -----Highest-----
+ 
+    Value      Obs           Value      Obs
+
+-1.469401        1         2.71869       73
+-1.205222        2         2.75583       74
+-1.016130        3         2.79584       75
+
+SB MOM heldout
+
+The UNIVARIATE Procedure
+Variable:  b
+
+            Extreme Observations
+ 
+------Lowest------        -----Highest-----
+ 
+    Value      Obs           Value      Obs
+
+-0.859684        4         2.84101       76
+-0.722820        5         2.89893       77
+
+SB MOM heldout
+
+The UNIVARIATE Procedure
+Fitted SB Distribution for b
+
+Parameters for Johnson SB Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -2.00445
+Scale       Sigma    5.010861
+Shape       Delta    0.803561
+Shape       Gamma    -0.70178
+Mean                 1.313257
+Std Dev              1.116622
+Skewness             -0.62248
+Kurtosis             -0.50657
+Mode                 2.448528
+
+
+ Quantiles for SB Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -1.46940    -1.41847
+    5.0   -0.85968    -0.82087
+   10.0   -0.38083    -0.36558
+   25.0    0.55965     0.54352
+   50.0    1.52893     1.53041
+   75.0    2.22915     2.24069
+   90.0    2.61584     2.61497
+   95.0    2.75583     2.75006
+   99.0    2.89893     2.89333
+
+SB MLE heldout
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean               1.31325698    Sum Observations    101.120787
+Std Deviation      1.11661779    Variance            1.24683529
+Skewness           -0.6224838    Kurtosis            -0.5065705
+Uncorrected SS     227.557061    Corrected SS        94.7594818
+Coeff Variation    85.0266024    Std Error Mean      0.12725041
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     1.313257     Std Deviation            1.11662
+Median   1.528925     Variance                 1.24684
+Mode      .           Range                    4.36834
+                      Interquartile Range      1.66950
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  10.32026    Pr > |t|    <.0001
+Sign           M      26.5    Pr >= |M|   <.0001
+Signed Rank    S    1315.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level          Quantile
+
+100% Max       2.898934
+99%            2.898934
+95%            2.755834
+90%            2.615845
+75% Q3         2.229153
+50% Median     1.528925
+25% Q1         0.559655
+10%           -0.380826
+5%            -0.859684
+1%            -1.469401
+0% Min        -1.469401
+
+
+            Extreme Observations
+ 
+------Lowest------        -----Highest-----
+ 
+    Value      Obs           Value      Obs
+
+-1.469401        1         2.71869       73
+-1.205222        2         2.75583       74
+-1.016130        3         2.79584       75
+
+SB MLE heldout
+
+The UNIVARIATE Procedure
+Variable:  b
+
+            Extreme Observations
+ 
+------Lowest------        -----Highest-----
+ 
+    Value      Obs           Value      Obs
+
+-0.859684        4         2.84101       76
+-0.722820        5         2.89893       77
+
+SB MLE heldout
+
+The UNIVARIATE Procedure
+Fitted SB Distribution for b
+
+Parameters for Johnson SB Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta          -2
+Scale       Sigma           5
+Shape       Delta    0.816062
+Shape       Gamma    -0.71405
+Mean                 1.316482
+Std Dev              1.101359
+Skewness             -0.62526
+Kurtosis             -0.48743
+Mode                  2.41804
+
+
+ Quantiles for SB Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -1.46940    -1.39111
+    5.0   -0.85968    -0.78895
+   10.0   -0.38083    -0.33585
+   25.0    0.55965     0.56059
+   50.0    1.52893     1.52893
+   75.0    2.22915     2.22866
+   90.0    2.61584     2.60113
+   95.0    2.75583     2.73690
+   99.0    2.89893     2.88235
+
+SU MOM heldout
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean                -1.898242    Sum Observations    -146.16463
+Std Deviation      3.97723862    Variance            15.8184271
+Skewness           2.42084738    Kurtosis             9.0954693
+Uncorrected SS      1479.6563    Corrected SS        1202.20046
+Coeff Variation    -209.52221    Std Error Mean      0.45324841
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     -1.89824     Std Deviation            3.97724
+Median   -2.82000     Variance                15.81843
+Mode       .          Range                   27.48211
+                      Interquartile Range      3.06672
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  -4.18808    Pr > |t|    <.0001
+Sign           M     -24.5    Pr >= |M|   <.0001
+Signed Rank    S    -977.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       18.318480
+99%            18.318480
+95%             5.878963
+90%             2.380077
+75% Q3         -0.952967
+50% Median     -2.820001
+25% Q1         -4.019690
+10%            -5.156682
+5%             -6.103557
+1%             -9.163627
+0% Min         -9.163627
+
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-9.16363        1          4.63492       73
+-7.32473        2          5.87896       74
+-6.56491        3          7.68749       75
+
+SU MOM heldout
+
+The UNIVARIATE Procedure
+Variable:  u
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-6.10356        4         10.74118       76
+-5.77791        5         18.31848       77
+
+SU MLE heldout
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean                -1.898242    Sum Observations    -146.16463
+Std Deviation      3.97723862    Variance            15.8184271
+Skewness           2.42084738    Kurtosis             9.0954693
+Uncorrected SS      1479.6563    Corrected SS        1202.20046
+Coeff Variation    -209.52221    Std Error Mean      0.45324841
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     -1.89824     Std Deviation            3.97724
+Median   -2.82000     Variance                15.81843
+Mode       .          Range                   27.48211
+                      Interquartile Range      3.06672
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  -4.18808    Pr > |t|    <.0001
+Sign           M     -24.5    Pr >= |M|   <.0001
+Signed Rank    S    -977.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       18.318480
+99%            18.318480
+95%             5.878963
+90%             2.380077
+75% Q3         -0.952967
+50% Median     -2.820001
+25% Q1         -4.019690
+10%            -5.156682
+5%             -6.103557
+1%             -9.163627
+0% Min         -9.163627
+
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-9.16363        1          4.63492       73
+-7.32473        2          5.87896       74
+-6.56491        3          7.68749       75
+
+SU MLE heldout
+
+The UNIVARIATE Procedure
+Variable:  u
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-6.10356        4         10.74118       76
+-5.77791        5         18.31848       77
+
+SU MLE heldout
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta    -4.11589
+Scale       Sigma    1.625806
+Shape       Delta    0.969355
+Shape       Gamma    -0.71541
+Mean                 -1.88249
+Std Dev              4.387803
+Skewness             5.200087
+Kurtosis             97.31805
+Mode                 -3.50835
+
+
+ Quantiles for SU Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0    -9.16363    -8.24493
+    5.0    -6.10356    -5.92485
+   10.0    -5.15668    -5.12034
+   25.0    -4.01969    -4.04724
+   50.0    -2.82000    -2.80408
+   75.0    -0.95297    -0.89975
+   90.0     2.38008     2.15909
+   95.0     5.87896     5.09170
+   99.0    18.31848    14.59096
+
+SU MLE fixed location
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean                -1.898242    Sum Observations    -146.16463
+Std Deviation      3.97723862    Variance            15.8184271
+Skewness           2.42084738    Kurtosis             9.0954693
+Uncorrected SS      1479.6563    Corrected SS        1202.20046
+Coeff Variation    -209.52221    Std Error Mean      0.45324841
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     -1.89824     Std Deviation            3.97724
+Median   -2.82000     Variance                15.81843
+Mode       .          Range                   27.48211
+                      Interquartile Range      3.06672
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  -4.18808    Pr > |t|    <.0001
+Sign           M     -24.5    Pr >= |M|   <.0001
+Signed Rank    S    -977.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       18.318480
+99%            18.318480
+95%             5.878963
+90%             2.380077
+75% Q3         -0.952967
+50% Median     -2.820001
+25% Q1         -4.019690
+10%            -5.156682
+5%             -6.103557
+1%             -9.163627
+0% Min         -9.163627
+
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-9.16363        1          4.63492       73
+-7.32473        2          5.87896       74
+-6.56491        3          7.68749       75
+
+SU MLE fixed location
+
+The UNIVARIATE Procedure
+Variable:  u
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-6.10356        4         10.74118       76
+-5.77791        5         18.31848       77
+
+SU MLE fixed location
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta          -4
+Scale       Sigma    1.592326
+Shape       Delta    0.946429
+Shape       Gamma    -0.66147
+Mean                 -1.89294
+Std Dev              4.435539
+Skewness             5.468478
+Kurtosis              114.099
+Mode                 -3.45376
+
+
+ Quantiles for SU Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0    -9.16363    -8.48647
+    5.0    -6.10356    -5.96870
+   10.0    -5.15668    -5.11952
+   25.0    -4.01969    -4.02191
+   50.0    -2.82000    -2.79427
+   75.0    -0.95297    -0.92788
+   90.0     2.38008     2.10091
+   95.0     5.87896     5.03622
+   99.0    18.31848    14.67472
+
+SU MLE fixed scale
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean                -1.898242    Sum Observations    -146.16463
+Std Deviation      3.97723862    Variance            15.8184271
+Skewness           2.42084738    Kurtosis             9.0954693
+Uncorrected SS      1479.6563    Corrected SS        1202.20046
+Coeff Variation    -209.52221    Std Error Mean      0.45324841
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     -1.89824     Std Deviation            3.97724
+Median   -2.82000     Variance                15.81843
+Mode       .          Range                   27.48211
+                      Interquartile Range      3.06672
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  -4.18808    Pr > |t|    <.0001
+Sign           M     -24.5    Pr >= |M|   <.0001
+Signed Rank    S    -977.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       18.318480
+99%            18.318480
+95%             5.878963
+90%             2.380077
+75% Q3         -0.952967
+50% Median     -2.820001
+25% Q1         -4.019690
+10%            -5.156682
+5%             -6.103557
+1%             -9.163627
+0% Min         -9.163627
+
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-9.16363        1          4.63492       73
+-7.32473        2          5.87896       74
+-6.56491        3          7.68749       75
+
+SU MLE fixed scale
+
+The UNIVARIATE Procedure
+Variable:  u
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-6.10356        4         10.74118       76
+-5.77791        5         18.31848       77
+
+SU MLE fixed scale
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta    -4.07354
+Scale       Sigma         1.5
+Shape       Delta    0.926071
+Shape       Gamma    -0.69808
+Mean                 -1.85058
+Std Dev              4.623723
+Skewness             6.107125
+Kurtosis             142.9223
+Mode                 -3.52867
+
+
+ Quantiles for SU Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0    -9.16363    -8.29600
+    5.0    -6.10356    -5.88853
+   10.0    -5.15668    -5.08240
+   25.0    -4.01969    -4.03533
+   50.0    -2.82000    -2.83266
+   75.0    -0.95297    -0.94212
+   90.0     2.38008     2.19775
+   95.0     5.87896     5.28161
+   99.0    18.31848    15.55009
+
+SU MLE fixed gamma
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          77    Sum Weights                 77
+Mean                -1.898242    Sum Observations    -146.16463
+Std Deviation      3.97723862    Variance            15.8184271
+Skewness           2.42084738    Kurtosis             9.0954693
+Uncorrected SS      1479.6563    Corrected SS        1202.20046
+Coeff Variation    -209.52221    Std Error Mean      0.45324841
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     -1.89824     Std Deviation            3.97724
+Median   -2.82000     Variance                15.81843
+Mode       .          Range                   27.48211
+                      Interquartile Range      3.06672
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  -4.18808    Pr > |t|    <.0001
+Sign           M     -24.5    Pr >= |M|   <.0001
+Signed Rank    S    -977.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       18.318480
+99%            18.318480
+95%             5.878963
+90%             2.380077
+75% Q3         -0.952967
+50% Median     -2.820001
+25% Q1         -4.019690
+10%            -5.156682
+5%             -6.103557
+1%             -9.163627
+0% Min         -9.163627
+
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-9.16363        1          4.63492       73
+-7.32473        2          5.87896       74
+-6.56491        3          7.68749       75
+
+SU MLE fixed gamma
+
+The UNIVARIATE Procedure
+Variable:  u
+
+            Extreme Observations
+ 
+------Lowest-----        ------Highest-----
+ 
+   Value      Obs            Value      Obs
+
+-6.10356        4         10.74118       76
+-5.77791        5         18.31848       77
+
+SU MLE fixed gamma
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta          -4
+Scale       Sigma         1.5
+Shape       Delta    0.914818
+Shape       Gamma       -0.65
+Mean                 -1.89581
+Std Dev              4.620371
+Skewness             6.193553
+Kurtosis             153.6616
+Mode                 -3.49602
+
+
+ Quantiles for SU Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0    -9.16363    -8.56681
+    5.0    -6.10356    -5.97231
+   10.0    -5.15668    -5.11977
+   25.0    -4.01969    -4.04016
+   50.0    -2.82000    -2.84225
+   75.0    -0.95297    -0.98595
+   90.0     2.38008     2.10407
+   95.0     5.87896     5.15414
+   99.0    18.31848    15.38130

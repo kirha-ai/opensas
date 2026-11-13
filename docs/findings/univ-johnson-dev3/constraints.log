@@ -1,0 +1,202 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data j; do i=1 to 101; z=probit((i-.375)/101.25); b=1/(1+exp((.4-z)/1.2)); u=3+2*sinh((z-.4)/1.2); output;
+38       ! end; run;
+
+NOTE: The data set WORK.J has 101 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              530.04k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 09:42:36 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     133
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         %macro fit(v,f,opts,label);
+40         title "&label"; proc univariate data=j; var &v; histogram &v / &f(fitmethod=&opts) noplot; run;
+41         %mend;
+42         %fit(b,sb,mle theta=est sigma=est,SB MLE estimated);
+
+NOTE: Beginning SB fit using maximum likelihood.
+WARNING: Maximum likelihood estimation is not available for 4-parameter SB fits.
+NOTE: The SB curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              2662.01k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:42:36 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     672
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+43         %fit(u,su,moments theta=3 sigma=2,SU moments fixed);
+
+WARNING: Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all 
+         parameters are estimated.
+NOTE: The SU curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 3-4.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              642.15k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:42:36 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     59
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         %fit(b,sb,mle delta=2,SB MLE fixed delta);
+
+NOTE: Since a threshold parameter (THETA) was not specified for the SB fit for b, a zero threshold is assumed.
+NOTE: Since a scale parameter (SIGMA) was not specified for the SB fit for b, the value is assumed to be one.
+WARNING: Estimation for this parameter combination is not supported.
+NOTE: The SB curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 5-6.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              639.85k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:42:36 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     62
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         %fit(b,sb,mle gamma=.8,SB MLE fixed gamma);
+
+NOTE: Since a threshold parameter (THETA) was not specified for the SB fit for b, a zero threshold is assumed.
+NOTE: Since a scale parameter (SIGMA) was not specified for the SB fit for b, the value is assumed to be one.
+WARNING: Estimation for this parameter combination is not supported.
+NOTE: The SB curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 7-8.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              639.85k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:42:36 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     54
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         %fit(u,su,mle theta=3 sigma=2 delta=2,SU MLE fixed delta);
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 9-11.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.52 seconds
+      user cpu time       0.13 seconds
+      system cpu time     0.05 seconds
+      memory              10157.60k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:42:38 AM
+      Step Count                        7  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     2954
+      Page Swaps                        0
+      Voluntary Context Switches        2069
+      Involuntary Context Switches      24
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         %fit(u,su,moments theta=3,SU moments fixed theta);
+
+WARNING: Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all 
+         parameters are estimated.
+NOTE: The SU curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 12-13.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              640.50k
+      OS Memory           15272.00k
+      Timestamp           11/13/2026 09:42:38 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+48         %fit(u,su,mle optmaxiter=1 optmaxstarts=1 optseed=123,SU iteration limit);
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 14-16.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.51 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.03 seconds
+The SAS System
+
+      memory              10059.34k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:42:39 AM
+      Step Count                        9  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     2475
+      Page Swaps                        0
+      Voluntary Context Switches        1910
+      Involuntary Context Switches      47
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+49         
+50         
+51         
+52         
+The SAS System
+
+53         

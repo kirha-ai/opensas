@@ -1,0 +1,196 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data j; do i=1 to 77; z=probit((i-.375)/77.25); b=-2+5/(1+exp((-.7-z)/.8)); u=-4+1.5*sinh((z+.65)/.9); output
+38       ! ; end; run;
+
+NOTE: The data set WORK.J has 77 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              533.32k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 09:47:59 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     133
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         %macro fit(v,f,opts,label);
+40         title "&label"; proc univariate data=j; var &v; histogram &v / &f(fitmethod=&opts) noplot; run;
+41         %mend;
+42         %fit(b,sb,moments theta=est sigma=est,SB MOM heldout);
+
+NOTE: Beginning SB fit using method of moments.
+NOTE: None of the EDF goodness-of-fit statistics for the SB distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-3.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              2698.60k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:47:59 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     683
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+43         %fit(b,sb,mle theta=-2 sigma=5,SB MLE heldout);
+
+NOTE: Beginning SB fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SB distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 4-6.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              681.84k
+The SAS System
+
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:47:59 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     70
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         %fit(u,su,moments,SU MOM heldout);
+
+NOTE: Beginning SU fit using method of moments.
+WARNING: Unable to solve moments equations.
+NOTE: The SU curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 7-8.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              640.14k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 09:47:59 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     55
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         %fit(u,su,mle optseed=321 optmaxstarts=10,SU MLE heldout);
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 9-11.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.52 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.05 seconds
+      memory              10043.37k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:48:00 AM
+      Step Count                        6  Switch Count  1
+      Page Faults                       11
+      Page Reclaims                     2994
+      Page Swaps                        0
+      Voluntary Context Switches        1982
+      Involuntary Context Switches      6
+      Block Input Operations            4920
+      Block Output Operations           0
+      
+
+46         %fit(u,su,mle theta=-4 optseed=321 optmaxstarts=10,SU MLE fixed location);
+The SAS System
+
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 12-14.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.51 seconds
+      user cpu time       0.04 seconds
+      system cpu time     0.06 seconds
+      memory              10155.45k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:48:02 AM
+      Step Count                        7  Switch Count  1
+      Page Faults                       1
+      Page Reclaims                     2588
+      Page Swaps                        0
+      Voluntary Context Switches        1942
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         %fit(u,su,mle sigma=1.5 optseed=321 optmaxstarts=10,SU MLE fixed scale);
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 15-17.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.51 seconds
+      user cpu time       1.50 seconds
+      system cpu time     0.16 seconds
+      memory              10154.75k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:48:03 AM
+      Step Count                        8  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     2537
+      Page Swaps                        0
+      Voluntary Context Switches        1983
+      Involuntary Context Switches      13
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+48         %fit(u,su,mle theta=-4 sigma=1.5 gamma=-.65,SU MLE fixed gamma);
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 18-20.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.64 seconds
+      user cpu time       1.43 seconds
+      system cpu time     0.58 seconds
+      memory              10156.45k
+      OS Memory           26536.00k
+      Timestamp           11/13/2026 09:48:05 AM
+      Step Count                        9  Switch Count  1
+      Page Faults                       1
+      Page Reclaims                     2551
+The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        1902
+      Involuntary Context Switches      156
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+49         
+50         
+51         
+52         
+The SAS System
+
+53         
