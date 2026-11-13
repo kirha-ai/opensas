@@ -1,0 +1,91 @@
+The SAS System
+
+36         
+37         ods graphics off;goptions nodisplay;
+38         data d;input b c x f;datalines;
+
+NOTE: The data set WORK.D has 9 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              524.46k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 01:17:17 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+48         ;
+49         proc univariate data=d noprint;by b;class c;freq f;var x;
+50         cdfplot x / normal(mu=0 sigma=2);
+51         ppplot x / normal(mu=0 sigma=2);
+52         qqplot x / normal(mu=est sigma=est);
+53         probplot x / weibull2(theta=0 sigma=2 c=3) rankadj=-.5 nadj=0;
+54         run;
+
+WARNING: The distribution line does not appear in the plotting area.
+WARNING: The distribution line does not appear in the plotting area.
+NOTE: The above message was for the following BY group:
+      b=2
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.32 seconds
+      user cpu time       0.29 seconds
+      system cpu time     0.02 seconds
+      memory              6409.31k
+      OS Memory           17064.00k
+      Timestamp           11/13/2026 01:17:17 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     1878
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+55         /* Manual pp.307,365,450,457: independent numerical coordinate formulas. */
+56         data _null_;array obs[3] _temporary_ (1 1 2);file print;
+57         do i=1 to 3;
+58         x=obs[i];emp=ifn(i<3,2/3,1);pp=i/3;fitted=cdf('normal',x,0,2);
+59         qprob=(i-.375)/3.25;q=quantile('normal',qprob);
+60         wprob=(i-.5)/3;wq=log(-log1px(-wprob));wy=log(x);
+61         put i= x= emp=best20.12 pp=best20.12 fitted=best20.12 qprob=best20.12 q=best20.12 wprob=best20.12
+The SAS System
+
+61       ! wq=best20.12 wy=best20.12;
+62         end;run;
+
+NOTE: 6 lines were written to file PRINT.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              436.96k
+      OS Memory           15268.00k
+      Timestamp           11/13/2026 01:17:17 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     87
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+63         
+64         
+65         
+66         
+The SAS System
+
+67
