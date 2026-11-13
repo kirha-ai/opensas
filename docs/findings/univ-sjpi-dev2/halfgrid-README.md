@@ -87,11 +87,42 @@ accumulation, padding, recursive/progressive grid generation, IEEE rounding
 modes and squared-distance formulations did not establish a passing rule.
 They are rejected hypotheses, not adjustable constants in the implementation.
 
+## Native-arithmetic and preconditioning controls
+
+`arithmetic_check.py` checks all 1120 native SAS intermediate bit patterns from
+112 inputs, rather than comparing their decimal renderings. All match ordinary
+binary64 evaluation exactly. Interval-search variants, including different
+integer midpoint choices and gap handling, did not establish a passing rule.
+
+The official UNIVARIATE ROUND= description specifies even-midpoint rounding:
+https://support.sas.com/documentation/cdl/en/procstat/66703/HTML/default/procstat_univariate_details02.htm
+`dev2-sjpi-halfgrid-procround` directly exercises this public option on the same
+inputs, including centered and one-bin-shifted values. None reproduces SJPI's
+decisions, so that documented rounding option cannot be substituted for the
+unknown internal operation.
+
+`dev2-sjpi-halfgrid-stathex` retains exact mean/variance/SD/IQR/range bits for
+all 136 samples; `scalehex` additionally retains native SAS evaluations of
+three equivalent Q*n^(-1/5) expressions. `scale_discriminator.py` holds the SJ
+formula fixed and tests coordinate preconditioning with these documented
+scales, centering choices and arithmetic orders. The best still matches only
+108/136, including counterexamples among fresh heldouts and background
+controls. No candidate from this script is used in production code.
+
+`dev2-sjpi-kde-expose3` is a rejected attempt to expose the default KDE bins
+by using a tiny bandwidth multiplier. Its default and TRUNCATE estimates both
+return h=2.44270986038167, unlike UNIVARIATE's h=2.37513558941864 on the n9
+sample. The tiny-multiplier call raises a real SAS domain error/FPE and produces
+no valid bandwidth result. Its datasets have unique names, so no preceding
+result is mistakenly reused as evidence for that failed call.
+
 ## Run and interpret
 
 ```
 python3 docs/findings/univ-sjpi-dev2/halfgrid.py
 python3 docs/findings/univ-sjpi-dev2/halfgrid.py --require-parity
+python3 docs/findings/univ-sjpi-dev2/arithmetic_check.py
+python3 docs/findings/univ-sjpi-dev2/scale_discriminator.py --require-parity
 /Users/thomas/.local/bin/zig test src/root.zig --test-filter 'UNIV SJPI'
 ```
 
@@ -99,7 +130,9 @@ The default Python exit 0 means all forced-assignment comparisons are uniquely
 resolved, not that SJPI is accepted. `--require-parity` exits 1 while every raw
 arithmetic candidate has counterexamples. The Zig tests validate `fromBins`,
 not the missing raw-observation selector. No existing expected-output golden
-is changed. Raw SAS logs retain their original whitespace.
+is changed. The scale discriminator likewise exits 1 with --require-parity;
+it is a retained counterexample check, not an accepted selector. Raw SAS logs
+retain their original whitespace.
 
 The unresolved mechanism is the exact mapping from IEEE64 input and domain
 limits to UNIVARIATE's internal bin index. Never encode the observed decisions

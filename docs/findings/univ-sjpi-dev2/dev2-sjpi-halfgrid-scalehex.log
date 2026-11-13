@@ -1,0 +1,77 @@
+The SAS System
+
+36         
+37         data all;input id x :hex16.;datalines;
+
+NOTE: The data set WORK.ALL has 1092 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              524.68k
+      OS Memory           11944.00k
+      Timestamp           11/13/2026 01:37:15 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     132
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+1130       ;
+1131       proc univariate data=all noprint;by id;var x;output out=s n=n mean=m std=sd var=v qrange=q range=r;run;
+
+NOTE: The data set WORK.S has 136 observations and 7 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2712.12k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 01:37:15 PM
+      Step Count                        3  Switch Count  3
+      Page Faults                       0
+      Page Reclaims                     659
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+1132       data _null_;set s;file print;s1=q*n**(-.2);s2=q/n**.2;s3=q*exp(-log(n)/5);
+1133       put id= n= m=hex16. sd=hex16. v=hex16. q=hex16. r=hex16.;
+1134       put id= s1=hex16. s2=hex16. s3=hex16.;run;
+
+NOTE: 272 lines were written to file PRINT.
+NOTE: There were 136 observations read from the data set WORK.S.
+NOTE: The DATA step printed pages 1-5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              724.12k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 01:37:15 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     157
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+1135       
+1136       
+1137       
+1138       
+The SAS System
+
+1139       

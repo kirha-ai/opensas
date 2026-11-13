@@ -1,0 +1,24 @@
+
+BW default x=2.44270986038167
+
+BIN default _N_=49 value=C01FFAE147AE1461 count=1
+BIN default _N_=81 value=C00899999999997B count=1
+BIN default _N_=88 value=BFFFFAE147AE143C count=1
+BIN default _N_=94 value=BFF13851EB851E78 count=1
+BIN default _N_=101 value=3D10400000000000 count=1
+BIN default _N_=108 value=3FF13851EB851EFA count=1
+BIN default _N_=114 value=3FFFFAE147AE14BE count=1
+BIN default _N_=121 value=40089999999999BC count=1
+BIN default _N_=153 value=401FFAE147AE1481 count=1
+
+BW truncate x=2.44270986038167
+
+BIN truncate _N_=1 value=C020000000000000 count=1
+BIN truncate _N_=63 value=C00851EB851EB848 count=1
+BIN truncate _N_=76 value=BFFFFFFFFFFFFFE8 count=1
+BIN truncate _N_=88 value=BFF0A3D70A3D7088 count=1
+BIN truncate _N_=101 value=3CFB200000000000 count=1
+BIN truncate _N_=113 value=3FEEB851EB851EED count=1
+BIN truncate _N_=126 value=400000000000000F count=1
+BIN truncate _N_=139 value=400851EB851EB863 count=1
+BIN truncate _N_=201 value=4020000000000006 count=1
