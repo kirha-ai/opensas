@@ -1,6 +1,11 @@
 # FEAT-corr-advanced — dev1 acceptance tracker
 
-Status: **INCOMPLETE; do not mark DONE.** Assigned worktree/branch: opensas-dev1 / dev1.
+Status: **INCOMPLETE; do not mark DONE.**
+
+Sparse-boundary update: default/loose inference now passes SAS original, mirrored,
+transposed, relabeled and held-out cases. See [sparse-boundary.md](sparse-boundary.md).
+Only unresolved tight-tolerance boundary information remains explicitly rejected.
+The older failure numbers below are retained as historical evidence. Assigned worktree/branch: opensas-dev1 / dev1.
 Claim baseline a8de7cccf038af0dea74906838afb341f79f5d7c. Final rebased SHA and gate
 counts are in the developer handoff, not asserted by this document.
 
@@ -29,11 +34,11 @@ counts are in the developer handoff, not asserted by this document.
   iterations, observed information including mean/scale nuisance parameters,
   Wald and LR inference; ORDINAL=VAR/WITH, NGROUPS=ALL/n, MAXITER, CONVERGE.
   Fully separated ordinal groups return boundary rho with missing SE/inference.
-- Interior polychoric joint threshold/rho MLE through a CORR-owned specialization
-  of the existing FREQ numerical kernel, with absolute parameter-change stopping. Tested balanced and strongly associated 3x3 tables and 2x2
+- Polychoric joint threshold/rho MLE with positive rectangle integration, analytic
+  cell derivatives, Pearson initialization and Fisher scoring with absolute stopping. Tested balanced and strongly associated 3x3 tables and 2x2
   one-zero-cell boundary. Perfect ordered category bijection returns +/-1, SE=0,
   missing tests. NGROUPS and iteration failure return missing estimates with a
-  visible warning. Sparse monotone boundary tables fail explicitly (see below).
+  visible warning. Unresolved tight-tolerance boundary information fails explicitly (see below).
 - Hoeffding D coefficients including both kinds of ties, constants and FREQ.
   **Only HOEFFDING NOPROB is available.** A probability request fails explicitly.
 - Separate typed Pearson/rank/ordinal results; NOPRINT/NOPROB/NOSIMPLE honored.
@@ -54,10 +59,13 @@ No shared FREQ file, jira.md, dispatch, or ODS infrastructure was modified.
    probability is silently exposed. `hoeffding-spectral-experiment.py` retains the
    standalone calculation, not an accepted implementation. Needed: reproduce and
    independently validate SAS's probability approximation across the distribution.
-2. **Sparse monotone polychoric boundaries are unsupported.** For counts
+2. **Tight-tolerance polychoric boundary information remains unresolved.**
+   The original blanket sparse failure below is now fixed for default/loose settings;
+   [sparse-boundary.md](sparse-boundary.md) records accepted cases and the narrower gap. For counts
    `[10,4,0;0,8,2;0,0,7]`, SAS gives rho=.99903, SE=.11695, Wald=72.9659,
    LR=40.9081. Reusing FREQ's kernel gave rho=.99930, SE=680551.59593 and p=1.
-   CORR now rejects this identified shape through captured diagnostics. Needed:
+   The first WIP rejected this shape. The current solver handles it at default/loose
+   tolerances and rejects only unresolved information at tighter settings. Needed:
    stable boundary likelihood/information treatment with SAS evidence. This is
    not marked outside scope. Manager should coordinate any shared FREQ repair.
 The polychoric CONVERGE gap identified at the interim checkpoint is now closed:
@@ -71,8 +79,8 @@ regression checks these cases (5e-6 coefficient/SE, 5e-5 LR). Source and stdout:
 Increasing quadrature resolution improved the sparse-boundary experiment to
 rho=.99924814, SE=.38878795, but still did not match SAS .99903/.11695.
 An analytic-derivative/Fisher-scoring experiment also failed that comparison;
-it was not retained. The sparse-boundary guard remains, and the algorithm is
-not claimed fully accepted.
+it was not retained. Those were intermediate experiments. The later scoring/initialization fix is in
+[sparse-boundary.md](sparse-boundary.md); full tight-boundary acceptance remains open.
 
 Consequently no claim of full polychoric or Hoeffding inference completion is made.
 
@@ -105,7 +113,8 @@ Runnable regression in src/stat/corr.zig checks:
 | 2x2 one-zero-cell polychoric | rho=-.999, SE=0, LR=17.2930 | 1e-10; LR 5e-5 |
 
 The numerically differentiated Wald statistics are checked to 1e-3 absolute:
-for the balanced table, current polychoric Wald=31.67254 versus SAS 31.6730,
+for the balanced table, the old polychoric Wald was 31.67254 versus SAS 31.6730; the current scoring
+solver gives 31.67302,
 and polyserial Wald=28.57034 versus SAS 28.5704. These are known last-digit
 differences, not claims of four-decimal equality. Coefficients, SE and LR retain
 the tighter tolerances in the table.
@@ -144,7 +153,6 @@ The ODS producer must honor `spec.options.pearson` before publishing PearsonCorr
 for rank/ordinal-only requests. Preserve dev5's capture hook when rebasing. No
 advanced ODS publishing is claimed by this change.
 
-Manager-owned grammar tracker needs a corresponding proc_corr update after
-scope acceptance: SPEARMAN/KENDALL, PARTIAL, FISHER suboptions, ALPHA, SINGULAR,
+The authorized CORR grammar section now annotates: SPEARMAN/KENDALL, PARTIAL, FISHER suboptions, ALPHA, SINGULAR,
 POLYCHORIC/POLYSERIAL suboptions, and the explicit incomplete Hoeffding status.
-This developer did not edit the shared EBNF or jira.md outside the owned slice.
+No other EBNF sections or jira.md were edited.

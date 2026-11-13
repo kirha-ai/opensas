@@ -1,0 +1,120 @@
+
+converge=.001 maxiter=200
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                  0.99729481288087                  0.01781882037824
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   3132.48658981113                                   0                    40.9066591867159
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5967612641979E-10
+
+converge=.0001 maxiter=200
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                   0.9990304484694                   0.1169549768335
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                    72.965915384262                 1.3190831196899E-17                    40.9081053981301
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955800849272E-10
+
+converge=.00001 maxiter=200
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                  0.99985326007584                                 0
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                                  .                                   .                    40.9081058800832
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955796914427E-10
+
+converge=.000001 maxiter=200
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                  0.99985326007584                                 0
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                                  .                                   .                    40.9081058800832
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955796914427E-10
+
+converge=.0001 maxiter=5
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                                 .                                 .
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                                  .                                   .                                   .
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                                  .
+
+converge=.0001 maxiter=10
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                                 .                                 .
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                                  .                                   .                                   .
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                                  .
+
+converge=.0001 maxiter=15
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                   0.9990304484694                   0.1169549768335
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                    72.965915384262                 1.3190831196899E-17                    40.9081053981301
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955800849272E-10
+sasrun: /private/tmp/dev1-corr-sparse-sensitivity.sas: 0 error(s), 2 warning(s) in 3.853s -> /dev/null

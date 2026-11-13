@@ -1,0 +1,111 @@
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 31       1.77419       0.80456       2.00000       1.00000       3.00000
+y                 31       1.96774       0.79515       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 31        0.99903       0.11695       72.9659    <.0001       40.9081    <.0001
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 31       1.77419       0.80456       2.00000       1.00000       3.00000
+y                 31       1.96774       0.79515       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 31        0.99729       0.01782     3132.4866    <.0001       40.9067    <.0001
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 31     303.54839     382.34451     101.00000     100.00000          1000
+y                 31       1.96774       0.79515       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 31        0.99916       0.21384       21.8329    <.0001       40.9081    <.0001
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 31     303.54839     382.34451     101.00000     100.00000          1000
+y                 31       1.96774       0.79515       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 31        0.99900       0.12853       60.4103    <.0001       40.9013    <.0001
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 35       2.00000       0.84017       2.00000       1.00000       3.00000
+y                 35       2.28571       0.71007       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 35        0.99894       0.21988       20.6408    <.0001       41.1054    <.0001
+sasrun: /private/tmp/dev1-corr-boundary-fixture.sas: 0 error(s), 0 warning(s) in 3.093s -> /dev/null

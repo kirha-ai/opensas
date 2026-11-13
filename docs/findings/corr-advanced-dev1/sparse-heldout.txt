@@ -1,0 +1,69 @@
+
+negative
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                 -0.99903044846942                  0.11695497683919
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   72.9659153771674                 1.3190831244314E-17                    40.9081053981301
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955800849271E-10
+
+labels
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                  0.99915910281921                  0.21383503532071
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   21.8329074257272                  2.9745455186057E-6                    40.9081057989009
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955797577229E-10
+
+transposed
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  31                  0.99903044846893                  0.11695497655443
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   72.9659157324023                 1.3190828870112E-17                    40.9081053981301
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.5955800849272E-10
+
+heldout
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  35                  0.99894222793371                  0.21987585371233
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   20.6407591947141                  5.5403947282833E-6                    41.1053770058603
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                1.4423897921394E-10
+sasrun: /private/tmp/dev1-corr-sparse-heldout.sas: 0 error(s), 0 warning(s) in 3.217s -> /dev/null
