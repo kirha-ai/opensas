@@ -1,0 +1,10 @@
+Cited manual full-text scope check
+Path: /Users/thomas/kirha/opensas/docs/sas94-procedures-statistical.txt
+SHA256: 12bdd9aae26169f1c2c4e934367230b3ecdd3a6efc816515f3203a92ac31278f
+Lines: 22474
+Equivalent rg command: rg -ni '\bEPM\b|elemental.percentile|empirical.probability.method' /Users/thomas/kirha/opensas/docs/sas94-procedures-statistical.txt
+\bEPM\b: 0 matches
+elemental.percentile: 0 matches
+empirical.probability.method: 0 matches
+rg exit code: 1 (no matches)
+EPM is outside the cited Sixth Edition contract; retain unsupported_method, do not expand ticket.

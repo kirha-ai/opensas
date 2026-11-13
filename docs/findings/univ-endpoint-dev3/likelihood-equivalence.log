@@ -1,0 +1,1711 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         %macro show; %if %sysfunc(exist(p)) %then %do;
+39         proc print data=p noobs; format _numeric_ best32.; run;
+40         proc datasets lib=work nolist; delete p; quit;
+41         %end; %mend;
+42         data d0; do i=1 to 41; x=0+1*((i-.375)/(41+.25))**(1/0.5); output; end; run;
+
+NOTE: The data set WORK.D0 has 41 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              536.82k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+43         title "case 0 power scale"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+43       ! power(theta=0 sigma=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 1.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1167.64k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     370
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              531.43k
+      OS Memory           13480.00k
+The SAS System
+
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              363.35k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     62
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+44         title "case 0 power both"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+44       ! power(theta=est sigma=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 3.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              897.93k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     126
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              516.64k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+45         title "case 0 power theta"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+45       ! power(theta=est sigma=1 alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 5.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              897.10k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     123
+      Page Swaps                        0
+      Voluntary Context Switches        13
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+The SAS System
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 6.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.18k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        11  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+46         title "case 0 beta scale"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+46       ! beta(theta=0 sigma=est beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 7.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              897.01k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        12  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        13
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 8.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              509.64k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        13  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        14  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+47         title "case 0 beta both"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+47       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 9.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              897.10k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        15  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        13
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 10.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              509.34k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        17  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+48         title "case 0 beta theta"; ods output ParameterEstimates=p; proc univariate data=d0 noprint; histogram x /
+48       ! beta(theta=est sigma=1 alpha=0.5 beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 11.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              899.67k
+      OS Memory           13740.00k
+The SAS System
+
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        18  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     127
+      Page Swaps                        0
+      Voluntary Context Switches        14
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 12.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              509.42k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        20  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+49         data d1; do i=1 to 41; x=5+10*((i-.375)/(41+.25))**(1/0.5); output; end; run;
+
+NOTE: The data set WORK.D1 has 41 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              517.03k
+The SAS System
+
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        21  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     99
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+50         title "case 1 power scale"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+50       ! power(theta=5 sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.65k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        22  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     55
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+51         title "case 1 power both"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+51       ! power(theta=est sigma=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 13.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              904.81k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        23  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 14.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              518.45k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        24  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        25  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+52         title "case 1 power theta"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+52       ! power(theta=est sigma=10 alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 15.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              899.67k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        26  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 16.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              516.46k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        27  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        28  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+53         title "case 1 beta scale"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+53       ! beta(theta=5 sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              490.65k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        29  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+54         title "case 1 beta both"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+54       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 17.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              897.12k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        30  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     127
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 18.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              510.18k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        31  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+The SAS System
+
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        32  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+55         title "case 1 beta theta"; ods output ParameterEstimates=p; proc univariate data=d1 noprint; histogram x /
+55       ! beta(theta=est sigma=10 alpha=0.5 beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 19.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              899.82k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        33  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 20.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              509.39k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        34  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        35  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+56         data d2; do i=1 to 41; x=-3+0.1*((i-.375)/(41+.25))**(1/0.5); output; end; run;
+
+NOTE: The data set WORK.D2 has 41 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.82k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        36  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     79
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+57         title "case 2 power scale"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+57       ! power(theta=-3 sigma=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 21.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.89k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        37  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 22.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              516.34k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        38  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.25k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        39  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+58         title "case 2 power both"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+58       ! power(theta=est sigma=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 23.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              897.32k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        40  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 24.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              516.34k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        41  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        42  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+59         title "case 2 power theta"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+59       ! power(theta=est sigma=0.1 alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 25.
+The SAS System
+
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              897.32k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        43  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 26.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              516.34k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        44  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        45  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+60         title "case 2 beta scale"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+60       ! beta(theta=-3 sigma=est beta=1) noplot; run; %show;
+The SAS System
+
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 27.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              897.32k
+      OS Memory           14252.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        46  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 28.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              517.07k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        47  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        48  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+The SAS System
+
+      
+
+61         title "case 2 beta both"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+61       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 29.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              899.85k
+      OS Memory           14252.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        49  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     125
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 30.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.07k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        50  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        51  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+62         title "case 2 beta theta"; ods output ParameterEstimates=p; proc univariate data=d2 noprint; histogram x /
+62       ! beta(theta=est sigma=0.1 alpha=0.5 beta=1) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 31.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              899.85k
+      OS Memory           14252.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        52  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     117
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: The PROCEDURE PRINT printed page 32.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              517.07k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        53  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+The SAS System
+
+      Step Count                        54  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+63         data d3; do i=1 to 101; x=0+1*((i-.375)/(101+.25))**(1/2); output; end; run;
+
+NOTE: The data set WORK.D3 has 101 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.17k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        55  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+64         title "case 3 power scale"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+64       ! power(theta=0 sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        56  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+65         title "case 3 power both"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+The SAS System
+
+65       ! power(theta=est sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        57  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+66         title "case 3 power theta"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+66       ! power(theta=est sigma=1 alpha=2) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        58  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+67         title "case 3 beta scale"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+67       ! beta(theta=0 sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+The SAS System
+
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        59  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+68         title "case 3 beta both"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+68       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        60  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+69         title "case 3 beta theta"; ods output ParameterEstimates=p; proc univariate data=d3 noprint; histogram x /
+69       ! beta(theta=est sigma=1 alpha=2 beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        61  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+70         data d4; do i=1 to 101; x=5+10*((i-.375)/(101+.25))**(1/2); output; end; run;
+
+NOTE: The data set WORK.D4 has 101 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              519.12k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        62  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+71         title "case 4 power scale"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+71       ! power(theta=5 sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        63  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           0
+      
+
+72         title "case 4 power both"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+72       ! power(theta=est sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        64  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+73         title "case 4 power theta"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+73       ! power(theta=est sigma=10 alpha=2) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        65  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+74         title "case 4 beta scale"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+74       ! beta(theta=5 sigma=est beta=1) noplot; run; %show;
+
+The SAS System
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        66  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+75         title "case 4 beta both"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+75       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        67  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+76         title "case 4 beta theta"; ods output ParameterEstimates=p; proc univariate data=d4 noprint; histogram x /
+76       ! beta(theta=est sigma=10 alpha=2 beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+The SAS System
+
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        68  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+77         data d5; do i=1 to 101; x=-3+0.1*((i-.375)/(101+.25))**(1/2); output; end; run;
+
+NOTE: The data set WORK.D5 has 101 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              517.17k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        69  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+78         title "case 5 power scale"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+78       ! power(theta=-3 sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        70  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+79         title "case 5 power both"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+79       ! power(theta=est sigma=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        71  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+80         title "case 5 power theta"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+80       ! power(theta=est sigma=0.1 alpha=2) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        72  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+The SAS System
+
+
+81         title "case 5 beta scale"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+81       ! beta(theta=-3 sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        73  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+82         title "case 5 beta both"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+82       ! beta(theta=est sigma=est beta=1) noplot; run; %show;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        74  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+83         title "case 5 beta theta"; ods output ParameterEstimates=p; proc univariate data=d5 noprint; histogram x /
+83       ! beta(theta=est sigma=0.1 alpha=2 beta=1) noplot; run; %show;
+
+The SAS System
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.56k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 10:56:37 AM
+      Step Count                        75  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+84         
+85         
+86         
+87         
+The SAS System
+
+88         

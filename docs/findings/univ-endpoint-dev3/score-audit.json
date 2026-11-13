@@ -1,0 +1,561 @@
+[
+  {
+    "case": "power_base_scale_1",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "log_likelihood": 12.42040091411566,
+    "scores": {
+      "theta": 2774.346364970134,
+      "sigma": -21.82138019989433,
+      "alpha": 4.771610026432782e-06
+    },
+    "upper_gap": 0.0017704315886134525,
+    "lower_gap": 0.00022956841138659323,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "boundary_likelihood_gain": 0.03868674710939857
+  },
+  {
+    "case": "power_base_both_1",
+    "curve_returned": true,
+    "parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    },
+    "log_likelihood": 11.598595072451928,
+    "scores": {
+      "theta": 1238.7288573205535,
+      "sigma": -22.305965008667084,
+      "alpha": 0.0001046778293736228
+    },
+    "upper_gap": 0.0012994349616572975,
+    "lower_gap": 0.0007005650383427636,
+    "normalized_parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    }
+  },
+  {
+    "case": "power_base_theta_1",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": 12.170175559929419,
+    "scores": {
+      "theta": 4611.387654974119,
+      "sigma": -20.5,
+      "alpha": 0.8215800742256505
+    },
+    "upper_gap": 0.030174471992653884,
+    "lower_gap": 0.00012855831037649103,
+    "normalized_parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_base_scale_2",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "log_likelihood": 12.42040091411566,
+    "scores": {
+      "theta": 2774.346364970134,
+      "sigma": -21.82138019989433,
+      "alpha": 4.771610026432782e-06
+    },
+    "upper_gap": 0.0017704315886134525,
+    "lower_gap": 0.00022956841138659323,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "boundary_likelihood_gain": 0.03868674710939857
+  },
+  {
+    "case": "power_base_both_2",
+    "curve_returned": true,
+    "parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    },
+    "log_likelihood": 11.598595072451928,
+    "scores": {
+      "theta": 1238.7288573205535,
+      "sigma": -22.305965008667084,
+      "alpha": 0.0001046778293736228
+    },
+    "upper_gap": 0.0012994349616572975,
+    "lower_gap": 0.0007005650383427636,
+    "normalized_parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    }
+  },
+  {
+    "case": "power_base_theta_2",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": 12.170175559929419,
+    "scores": {
+      "theta": 4611.387654974119,
+      "sigma": -20.5,
+      "alpha": 0.8215800742256505
+    },
+    "upper_gap": 0.030174471992653884,
+    "lower_gap": 0.00012855831037649103,
+    "normalized_parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_base_scale_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "log_likelihood": 12.42040091411566,
+    "scores": {
+      "theta": 2774.346364970134,
+      "sigma": -21.82138019989433,
+      "alpha": 4.771610026432782e-06
+    },
+    "upper_gap": 0.0017704315886134525,
+    "lower_gap": 0.00022956841138659323,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "boundary_likelihood_gain": 0.03868674710939857
+  },
+  {
+    "case": "power_base_both_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    },
+    "log_likelihood": 11.598595072451928,
+    "scores": {
+      "theta": 1238.7288573205535,
+      "sigma": -22.305965008667084,
+      "alpha": 0.0001046778293736228
+    },
+    "upper_gap": 0.0012994349616572975,
+    "lower_gap": 0.0007005650383427636,
+    "normalized_parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    }
+  },
+  {
+    "case": "power_base_theta_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": 12.170175559929419,
+    "scores": {
+      "theta": 4611.387654974119,
+      "sigma": -20.5,
+      "alpha": 0.8215800742256505
+    },
+    "upper_gap": 0.030174471992653884,
+    "lower_gap": 0.00012855831037649103,
+    "normalized_parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_base_scale_1000",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "log_likelihood": 12.42040091411566,
+    "scores": {
+      "theta": 2774.346364970134,
+      "sigma": -21.82138019989433,
+      "alpha": 4.771610026432782e-06
+    },
+    "upper_gap": 0.0017704315886134525,
+    "lower_gap": 0.00022956841138659323,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229946
+    },
+    "boundary_likelihood_gain": 0.03868674710939857
+  },
+  {
+    "case": "power_base_both_1000",
+    "curve_returned": true,
+    "parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    },
+    "log_likelihood": 11.598595072451928,
+    "scores": {
+      "theta": 1238.7288573205535,
+      "sigma": -22.305965008667084,
+      "alpha": 0.0001046778293736228
+    },
+    "upper_gap": 0.0012994349616572975,
+    "lower_gap": 0.0007005650383427636,
+    "normalized_parameters": {
+      "theta": -0.0004709966269561704,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.528649722075328
+    }
+  },
+  {
+    "case": "power_base_theta_1000",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": 12.170175559929419,
+    "scores": {
+      "theta": 4611.387654974119,
+      "sigma": -20.5,
+      "alpha": 0.8215800742256505
+    },
+    "upper_gap": 0.030174471992653884,
+    "lower_gap": 0.00012855831037649103,
+    "normalized_parameters": {
+      "theta": 0.00010101010101010222,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_scaled_scale_20",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "power_scaled_both_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0012956841138659406,
+      "sigma": 9.698969696969698,
+      "alpha": 0.5110736844328775
+    },
+    "log_likelihood": -81.4530513988422,
+    "scores": {
+      "theta": 560.347102316591,
+      "sigma": -2.1604378316899737,
+      "alpha": 0.005336893022203526
+    },
+    "upper_gap": 0.0010000000000012221,
+    "lower_gap": 0.0009999999999999918,
+    "normalized_parameters": {
+      "theta": 0.00012956841138659405,
+      "sigma": 0.9698969696969698,
+      "alpha": 0.5110736844328775
+    }
+  },
+  {
+    "case": "power_scaled_theta_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0012956841138659335,
+      "sigma": 10.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": -82.08946747759258,
+    "scores": {
+      "theta": 573.0383950254563,
+      "sigma": -2.05,
+      "alpha": 0.5288885237578995
+    },
+    "upper_gap": 0.3020303030303033,
+    "lower_gap": 0.000999999999999999,
+    "normalized_parameters": {
+      "theta": 0.00012956841138659335,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_small_scale_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.097421574461495,
+      "alpha": 0.5164733466858707
+    },
+    "log_likelihood": 106.77153440445699,
+    "scores": {
+      "theta": 27783.21134652115,
+      "sigma": -217.35849919455046,
+      "alpha": 4.793603355324194e-05
+    },
+    "upper_gap": 0.0004289206506593729,
+    "lower_gap": 2.2956841138659323e-05,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.97421574461495,
+      "alpha": 0.5164733466858707
+    },
+    "boundary_likelihood_gain": 0.09354206952396282
+  },
+  {
+    "case": "power_small_both_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": -4.7099662695618295e-05,
+      "sigma": 0.097421574461495,
+      "alpha": 0.5279248380089974
+    },
+    "log_likelihood": 105.94851115684233,
+    "scores": {
+      "theta": 12406.338839074107,
+      "sigma": -222.17787464442847,
+      "alpha": 0.0004552828007433618
+    },
+    "upper_gap": 0.0003818209879637574,
+    "lower_gap": 7.005650383427761e-05,
+    "normalized_parameters": {
+      "theta": -0.00047099662695618293,
+      "sigma": 0.97421574461495,
+      "alpha": 0.5279248380089974
+    }
+  },
+  {
+    "case": "power_small_theta_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 1.0101010101010093e-05,
+      "sigma": 0.1,
+      "alpha": 0.5
+    },
+    "log_likelihood": 106.57616437268528,
+    "scores": {
+      "theta": 46113.8765497408,
+      "sigma": -205.0,
+      "alpha": 0.8215800742256505
+    },
+    "upper_gap": 0.0030174471992653884,
+    "lower_gap": 1.285583103764923e-05,
+    "normalized_parameters": {
+      "theta": 0.00010101010101010093,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "power_translated_scale_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 5.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229909
+    },
+    "log_likelihood": 12.420400914115916,
+    "scores": {
+      "theta": 2774.346364971514,
+      "sigma": -21.82138019989418,
+      "alpha": 4.771610040643637e-06
+    },
+    "upper_gap": 0.0017704315886133415,
+    "lower_gap": 0.00022956841138643824,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5171650979229909
+    },
+    "boundary_likelihood_gain": 0.03868674710940567
+  },
+  {
+    "case": "power_translated_both_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 4.999529003373045,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5286497220753089
+    },
+    "log_likelihood": 11.59859507245324,
+    "scores": {
+      "theta": 1238.7288573218468,
+      "sigma": -22.30596500866628,
+      "alpha": 0.0001046778293736228
+    },
+    "upper_gap": 0.0012994349616581857,
+    "lower_gap": 0.000700565038341594,
+    "normalized_parameters": {
+      "theta": -0.00047099662695515576,
+      "sigma": 0.9716969696969697,
+      "alpha": 0.5286497220753089
+    }
+  },
+  {
+    "case": "power_translated_theta_20",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 5.00010101010101,
+      "sigma": 1.0,
+      "alpha": 0.5
+    },
+    "log_likelihood": 12.170175559928154,
+    "scores": {
+      "theta": 4611.387654966852,
+      "sigma": -20.5,
+      "alpha": 0.82158007422818
+    },
+    "upper_gap": 0.03017447199265355,
+    "lower_gap": 0.00012855831037672516,
+    "normalized_parameters": {
+      "theta": 0.00010101010100971308,
+      "sigma": 1.0,
+      "alpha": 0.5
+    }
+  },
+  {
+    "case": "pareto_shift1_base",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift1_scaled",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift1_translated",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift1_small",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift2_base",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 17.793117455502788,
+      "alpha": 1.0451945031410557
+    },
+    "log_likelihood": -22.57388691258135,
+    "scores": {
+      "alpha": 39.54945335068008,
+      "sigma": -2.204994194747281
+    },
+    "upper_gap": 0.02373807174672038,
+    "feasible_scale_decrease_gain": 0.0057026661072647755,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 17.793117455502788,
+      "alpha": 1.0451945031410557
+    }
+  },
+  {
+    "case": "pareto_shift2_scaled",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 177.90904241386662,
+      "alpha": 1.0450715370148955
+    },
+    "log_likelihood": -40.99455087130335,
+    "scores": {
+      "alpha": 39.62540221448003,
+      "sigma": -0.22091273149582621
+    },
+    "upper_gap": 0.23623370514860653,
+    "feasible_scale_decrease_gain": 0.005685190568982534,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 17.790904241386663,
+      "alpha": 1.0450715370148955
+    }
+  },
+  {
+    "case": "pareto_shift2_translated",
+    "curve_returned": true,
+    "parameters": {
+      "theta": 5.0,
+      "sigma": 17.793117455502788,
+      "alpha": 1.0451945031410557
+    },
+    "log_likelihood": -22.57388691258135,
+    "scores": {
+      "alpha": 39.54945335068008,
+      "sigma": -2.204994194747281
+    },
+    "upper_gap": 0.02373807174672038,
+    "feasible_scale_decrease_gain": 0.0057026661072647755,
+    "normalized_parameters": {
+      "theta": 0.0,
+      "sigma": 17.793117455502788,
+      "alpha": 1.0451945031410557
+    }
+  },
+  {
+    "case": "pareto_shift2_small",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift3_base",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift3_scaled",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift3_translated",
+    "curve_returned": false,
+    "parameters": {}
+  },
+  {
+    "case": "pareto_shift3_small",
+    "curve_returned": false,
+    "parameters": {}
+  }
+]

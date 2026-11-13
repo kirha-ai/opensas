@@ -1,0 +1,688 @@
+
+case 0 power scale
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.971697
+Shape       Alpha    0.517165
+Mean                 0.331228
+Std Dev              0.290306
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023     0.00013
+    5.0    0.00405     0.00296
+   10.0    0.01257     0.01132
+   25.0    0.06635     0.06659
+   50.0    0.25000     0.25436
+   75.0    0.55119     0.55712
+   90.0    0.78833     0.79260
+   95.0    0.87678     0.87995
+   99.0    0.96993     0.95300
+
+case 0 power scale
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                                    0
+ x                                     1    PowerFunction    Scale        Sigma                     0.97169696969696
+ x                                     1    PowerFunction    Shape        Alpha                     0.51716509792299
+ x                                     1    PowerFunction    Mean                                   0.33122813013084
+ x                                     1    PowerFunction    Std Dev                                0.29030649896929
+
+case 0 power both
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -0.00047
+Scale       Sigma    0.971697
+Shape       Alpha     0.52865
+Mean                 0.335569
+Std Dev              0.290645
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023    -0.00031
+    5.0    0.00405     0.00289
+   10.0    0.01257     0.01200
+   25.0    0.06635     0.07011
+   50.0    0.25000     0.26141
+   75.0    0.55119     0.56342
+   90.0    0.78833     0.79564
+   95.0    0.87678     0.88137
+   99.0    0.96993     0.95293
+
+case 0 power both
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                    -0.00047099662695
+ x                                     1    PowerFunction    Scale        Sigma                     0.97169696969696
+ x                                     1    PowerFunction    Shape        Alpha                     0.52864972207532
+ x                                     1    PowerFunction    Mean                                   0.33556892511152
+ x                                     1    PowerFunction    Std Dev                                0.29064478445794
+
+case 0 power theta
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.000101
+Scale       Sigma           1
+Shape       Alpha         0.5
+Mean                 0.333434
+Std Dev              0.298142
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023     0.00020
+    5.0    0.00405     0.00260
+   10.0    0.01257     0.01010
+   25.0    0.06635     0.06260
+   50.0    0.25000     0.25010
+   75.0    0.55119     0.56260
+   90.0    0.78833     0.81010
+   95.0    0.87678     0.90260
+   99.0    0.96993     0.98020
+
+case 0 power theta
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                     0.00010101010101
+ x                                     1    PowerFunction    Scale        Sigma                                    1
+ x                                     1    PowerFunction    Shape        Alpha                                  0.5
+ x                                     1    PowerFunction    Mean                                   0.33343434343434
+ x                                     1    PowerFunction    Std Dev                                0.29814239699997
+
+case 0 beta scale
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.971697
+Shape       Alpha    0.517165
+Shape       Beta            1
+Mean                 0.331228
+Std Dev              0.290306
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023     0.00013
+    5.0    0.00405     0.00296
+   10.0    0.01257     0.01132
+   25.0    0.06635     0.06659
+   50.0    0.25000     0.25436
+   75.0    0.55119     0.55712
+   90.0    0.78833     0.79260
+   95.0    0.87678     0.87995
+   99.0    0.96993     0.95300
+
+case 0 beta scale
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                                    0
+ x                                     1        Beta        Scale        Sigma                     0.97169696969696
+ x                                     1        Beta        Shape        Alpha                     0.51716509792299
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                   0.33122813013084
+ x                                     1        Beta        Std Dev                                0.29030649896929
+
+case 0 beta both
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -0.00047
+Scale       Sigma    0.971697
+Shape       Alpha     0.52865
+Shape       Beta            1
+Mean                 0.335569
+Std Dev              0.290645
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023    -0.00031
+    5.0    0.00405     0.00289
+   10.0    0.01257     0.01200
+   25.0    0.06635     0.07011
+   50.0    0.25000     0.26141
+   75.0    0.55119     0.56342
+   90.0    0.78833     0.79564
+   95.0    0.87678     0.88137
+   99.0    0.96993     0.95293
+
+case 0 beta both
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                    -0.00047099662695
+ x                                     1        Beta        Scale        Sigma                     0.97169696969696
+ x                                     1        Beta        Shape        Alpha                     0.52864972207532
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                   0.33556892511152
+ x                                     1        Beta        Std Dev                                0.29064478445794
+
+case 0 beta theta
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.000101
+Scale       Sigma           1
+Shape       Alpha         0.5
+Shape       Beta            1
+Mean                 0.333434
+Std Dev              0.298142
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00023     0.00020
+    5.0    0.00405     0.00260
+   10.0    0.01257     0.01010
+   25.0    0.06635     0.06260
+   50.0    0.25000     0.25010
+   75.0    0.55119     0.56260
+   90.0    0.78833     0.81010
+   95.0    0.87678     0.90260
+   99.0    0.96993     0.98020
+
+case 0 beta theta
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                     0.00010101010101
+ x                                     1        Beta        Scale        Sigma                                    1
+ x                                     1        Beta        Shape        Alpha                                  0.5
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                   0.33343434343434
+ x                                     1        Beta        Std Dev                                0.29814239699997
+
+case 1 power both
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    5.001296
+Scale       Sigma     9.69897
+Shape       Alpha    0.511074
+Mean                 8.281671
+Std Dev               2.89569
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     5.00230     5.00248
+    5.0     5.04050     5.02890
+   10.0     5.12571     5.10846
+   25.0     5.66345     5.64501
+   50.0     7.50000     7.49998
+   75.0    10.51194    10.52541
+   90.0    12.88329    12.89341
+   95.0    13.76777    13.77409
+   99.0    14.69927    14.51140
+
+case 1 power both
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                     5.00129568411386
+ x                                     1    PowerFunction    Scale        Sigma                     9.69896969696969
+ x                                     1    PowerFunction    Shape        Alpha                     0.51107368443287
+ x                                     1    PowerFunction    Mean                                   8.28167057866675
+ x                                     1    PowerFunction    Std Dev                                  2.895689500507
+
+case 1 power theta
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    5.001296
+Scale       Sigma          10
+Shape       Alpha         0.5
+Mean                 8.334629
+Std Dev              2.981424
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     5.00230     5.00230
+    5.0     5.04050     5.02630
+   10.0     5.12571     5.10130
+   25.0     5.66345     5.62630
+   50.0     7.50000     7.50130
+   75.0    10.51194    10.62630
+   90.0    12.88329    13.10130
+   95.0    13.76777    14.02630
+   99.0    14.69927    14.80230
+
+case 1 power theta
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                     5.00129568411386
+ x                                     1    PowerFunction    Scale        Sigma                                   10
+ x                                     1    PowerFunction    Shape        Alpha                                  0.5
+ x                                     1    PowerFunction    Mean                                    8.3346290174472
+ x                                     1    PowerFunction    Std Dev                                2.98142396999972
+
+case 1 beta both
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    5.001296
+Scale       Sigma     9.69897
+Shape       Alpha    0.511074
+Shape       Beta            1
+Mean                 8.281671
+Std Dev               2.89569
+
+
+Quantiles for Beta Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     5.00230     5.00248
+    5.0     5.04050     5.02890
+   10.0     5.12571     5.10846
+   25.0     5.66345     5.64501
+   50.0     7.50000     7.49998
+   75.0    10.51194    10.52541
+   90.0    12.88329    12.89341
+   95.0    13.76777    13.77409
+   99.0    14.69927    14.51140
+
+case 1 beta both
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                     5.00129568411386
+ x                                     1        Beta        Scale        Sigma                     9.69896969696969
+ x                                     1        Beta        Shape        Alpha                     0.51107368443287
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                   8.28167057866675
+ x                                     1        Beta        Std Dev                                  2.895689500507
+
+case 1 beta theta
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    5.001296
+Scale       Sigma          10
+Shape       Alpha         0.5
+Shape       Beta            1
+Mean                 8.334629
+Std Dev              2.981424
+
+
+Quantiles for Beta Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     5.00230     5.00230
+    5.0     5.04050     5.02630
+   10.0     5.12571     5.10130
+   25.0     5.66345     5.62630
+   50.0     7.50000     7.50130
+   75.0    10.51194    10.62630
+   90.0    12.88329    13.10130
+   95.0    13.76777    14.02630
+   99.0    14.69927    14.80230
+
+case 1 beta theta
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                     5.00129568411386
+ x                                     1        Beta        Scale        Sigma                                   10
+ x                                     1        Beta        Shape        Alpha                                  0.5
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                    8.3346290174472
+ x                                     1        Beta        Std Dev                                2.98142396999972
+
+case 2 power scale
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta          -3
+Scale       Sigma    0.097422
+Shape       Alpha    0.516473
+Mean                 -2.96682
+Std Dev              0.029104
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -2.99999
+    5.0   -2.99960    -2.99971
+   10.0   -2.99874    -2.99887
+   25.0   -2.99337    -2.99335
+   50.0   -2.97500    -2.97454
+   75.0   -2.94488    -2.94419
+   90.0   -2.92117    -2.92056
+   95.0   -2.91232    -2.91179
+   99.0   -2.90301    -2.90446
+
+case 2 power scale
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                                   -3
+ x                                     1    PowerFunction    Scale        Sigma                     0.09742157446149
+ x                                     1    PowerFunction    Shape        Alpha                     0.51647334668588
+ x                                     1    PowerFunction    Mean                                  -2.96682061922717
+ x                                     1    PowerFunction    Std Dev                                0.02910369644689
+
+case 2 power both
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -3.00005
+Scale       Sigma    0.097422
+Shape       Alpha    0.527925
+Mean                 -2.96639
+Std Dev              0.029138
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -3.00003
+    5.0   -2.99960    -2.99971
+   10.0   -2.99874    -2.99880
+   25.0   -2.99337    -2.99300
+   50.0   -2.97500    -2.97384
+   75.0   -2.94488    -2.94355
+   90.0   -2.92117    -2.92025
+   95.0   -2.91232    -2.91165
+   99.0   -2.90301    -2.90446
+
+case 2 power both
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                    -3.00004709966269
+ x                                     1    PowerFunction    Scale        Sigma                     0.09742157446149
+ x                                     1    PowerFunction    Shape        Alpha                     0.52792483800903
+ x                                     1    PowerFunction    Mean                                  -2.96638623648621
+ x                                     1    PowerFunction    Std Dev                                0.02913782444397
+
+case 2 power theta
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -2.99999
+Scale       Sigma         0.1
+Shape       Alpha         0.5
+Mean                 -2.96666
+Std Dev              0.029814
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -2.99998
+    5.0   -2.99960    -2.99974
+   10.0   -2.99874    -2.99899
+   25.0   -2.99337    -2.99374
+   50.0   -2.97500    -2.97499
+   75.0   -2.94488    -2.94374
+   90.0   -2.92117    -2.91899
+   95.0   -2.91232    -2.90974
+   99.0   -2.90301    -2.90198
+
+case 2 power theta
+
+Var
+Name                           Histogram    Distribution     Parameter    Symbol                            Estimate
+
+ x                                     1    PowerFunction    Threshold    Theta                    -2.99998989898989
+ x                                     1    PowerFunction    Scale        Sigma                                  0.1
+ x                                     1    PowerFunction    Shape        Alpha                                  0.5
+ x                                     1    PowerFunction    Mean                                  -2.96665656565656
+ x                                     1    PowerFunction    Std Dev                                0.02981423969999
+
+case 2 beta scale
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta          -3
+Scale       Sigma    0.097422
+Shape       Alpha    0.516473
+Shape       Beta            1
+Mean                 -2.96682
+Std Dev              0.029104
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -2.99999
+    5.0   -2.99960    -2.99971
+   10.0   -2.99874    -2.99887
+   25.0   -2.99337    -2.99335
+   50.0   -2.97500    -2.97454
+   75.0   -2.94488    -2.94419
+   90.0   -2.92117    -2.92056
+   95.0   -2.91232    -2.91179
+   99.0   -2.90301    -2.90446
+
+case 2 beta scale
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                                   -3
+ x                                     1        Beta        Scale        Sigma                     0.09742157446149
+ x                                     1        Beta        Shape        Alpha                     0.51647334668588
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                  -2.96682061922717
+ x                                     1        Beta        Std Dev                                0.02910369644689
+
+case 2 beta both
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -3.00005
+Scale       Sigma    0.097422
+Shape       Alpha    0.527925
+Shape       Beta            1
+Mean                 -2.96639
+Std Dev              0.029138
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -3.00003
+    5.0   -2.99960    -2.99971
+   10.0   -2.99874    -2.99880
+   25.0   -2.99337    -2.99300
+   50.0   -2.97500    -2.97384
+   75.0   -2.94488    -2.94355
+   90.0   -2.92117    -2.92025
+   95.0   -2.91232    -2.91165
+   99.0   -2.90301    -2.90446
+
+case 2 beta both
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                    -3.00004709966269
+ x                                     1        Beta        Scale        Sigma                     0.09742157446149
+ x                                     1        Beta        Shape        Alpha                     0.52792483800903
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                  -2.96638623648621
+ x                                     1        Beta        Std Dev                                0.02913782444397
+
+case 2 beta theta
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -2.99999
+Scale       Sigma         0.1
+Shape       Alpha         0.5
+Shape       Beta            1
+Mean                 -2.96666
+Std Dev              0.029814
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -2.99998    -2.99998
+    5.0   -2.99960    -2.99974
+   10.0   -2.99874    -2.99899
+   25.0   -2.99337    -2.99374
+   50.0   -2.97500    -2.97499
+   75.0   -2.94488    -2.94374
+   90.0   -2.92117    -2.91899
+   95.0   -2.91232    -2.90974
+   99.0   -2.90301    -2.90198
+
+case 2 beta theta
+
+Var
+Name                           Histogram    Distribution    Parameter    Symbol                            Estimate
+
+ x                                     1        Beta        Threshold    Theta                    -2.99998989898989
+ x                                     1        Beta        Scale        Sigma                                  0.1
+ x                                     1        Beta        Shape        Alpha                                  0.5
+ x                                     1        Beta        Shape        Beta                                     1
+ x                                     1        Beta        Mean                                  -2.96665656565656
+ x                                     1        Beta        Std Dev                                0.02981423969999
