@@ -137,6 +137,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
             if (eq(key, "maxiter") and (kind == .gamma or kind == .weibull)) {
                 const value = try numeric(d, t, i);
                 if (value < 1 or value > 1000000 or value != @floor(value)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid MAXITER", .{});
+                if (kind == .weibull and (value < 5 or value > 100)) return d.fail(error.ParseError, 0, "UNIVARIATE: Weibull MAXITER must be between 5 and 100", .{});
                 common.maxiter = @intFromFloat(value);
                 continue;
             }

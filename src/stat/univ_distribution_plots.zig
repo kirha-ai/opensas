@@ -248,7 +248,26 @@ test "UNIVARIATE QQ fixed shapes avoid unwanted location-scale fits and map SLOP
     try std.testing.expectEqual(@as(f64, 2), plot.points[1].x);
 }
 
-pub fn execute(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
+test "UNIVARIATE public QQ Weibull ITPRINT reaches listing and consumer" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var library = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try library.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    var collector: Collector = .{ .a = a };
+    var out: std.ArrayList(u8) = .empty;
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint;qqplot x / weibull(c=est theta=0 sigma=est itprint);run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &library, .diags = &d, .univariate_plot_sink = .{ .context = &collector, .emit = Collector.emit } }, &out, t);
+    try std.testing.expectEqual(@as(usize, 1), collector.plots.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weibull Optimization History") != null);
+    try std.testing.expectApproxEqAbs(@as(f64, 6.752248), collector.plots.items[0].reference.?.slope, 5e-7);
+}
+
+pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
     for (statements) |statement| {
         if (wc != null) return cx.diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
@@ -285,7 +304,19 @@ pub fn execute(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []co
                     }
                     if (x.items.len == 0) continue;
                     std.mem.sort(f64, x.items, {}, std.sort.asc(f64));
-                    for (statement.curves.requests) |request| try sink.emit(sink.context, try calculate(a, cx.diags, x.items, statement, request, source.columns.items[ci], keys));
+                    for (statement.curves.requests) |request| {
+                        var actual_request = request;
+                        var report: fitting.Report = .{};
+                        var trace: fitting.Trace = .{ .allocator = a };
+                        actual_request.report = &report;
+                        if (request.itprint) actual_request.trace = &trace;
+                        const plot = calculate(a, cx.diags, x.items, statement, actual_request, source.columns.items[ci], keys) catch |err| {
+                            if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
+                            return err;
+                        };
+                        if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
+                        try sink.emit(sink.context, plot);
+                    }
                 }
             }
         }

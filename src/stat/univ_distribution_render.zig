@@ -15,6 +15,15 @@ const h = proc.UnivariateHelpers;
 const Parameter = struct { name: []const u8, symbol: []const u8, value: f64 };
 
 pub fn renderTrace(a: std.mem.Allocator, out: *std.ArrayList(u8), trace: fitting.Trace, report: fitting.Report) !void {
+    if (trace.weibull.items.len > 0) {
+        try out.appendSlice(a, "\nWeibull Optimization History\nPhase Iteration Theta Sigma C LogLikelihood\n");
+        for (trace.weibull.items) |iteration| {
+            const p = iteration.parameters;
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d} {d:.8} {d:.8} {d:.8} {d:.8}\n", .{ @tagName(iteration.phase), iteration.iteration, p.theta, p.sigma, p.c, iteration.log_likelihood }));
+        }
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "Optimization status: {s}{s}{s}\n", .{ if (report.converged) "converged" else "nonconverged", if (report.reason != null) " — " else "", report.reason orelse "" }));
+        return;
+    }
     try out.appendSlice(a, "\nOptimization Iteration History\nStart Iteration Theta Sigma Delta Gamma LogLikelihood\n");
     for (trace.iterations.items) |iteration| {
         const p = iteration.parameters;
