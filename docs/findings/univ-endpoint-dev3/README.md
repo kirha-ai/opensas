@@ -154,3 +154,13 @@ tests cover identical likelihoods, reflected Pareto equivalence/score, and
 feasible improvements at SAS's returned finite curves. Those curves are not
 stationary fits, and generic warning tags do not cure mismatched public output.
 The two in-scope fallback/stopping mismatches above remain unresolved.
+
+## Narrowed width hypothesis (bounded follow-up)
+
+[scale-hypothesis.md](scale-hypothesis.md) records 73 prespecified scale/shape/
+replication probes and a moment-derived candidate width that predicts all 53
+power outcomes and all 29 returned power widths to roundoff. Fresh non-beta1
+beta cases support a candidate-floor interpretation, but a small-unit beta
+feasibility-repair failure remains. Official SAS optimizer documentation does
+not identify UNIVARIATE's internal algorithm. No production fitting rule was
+changed and no case-specific exception was introduced. The parent is not done.

@@ -1,0 +1,222 @@
+[
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 0.1,
+    "fitbeta": null,
+    "copies": 3,
+    "id": "controlled_000"
+  },
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 1,
+    "fitbeta": null,
+    "copies": 3,
+    "id": "controlled_001"
+  },
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 9,
+    "fitbeta": null,
+    "copies": 3,
+    "id": "controlled_002"
+  },
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 0.1,
+    "fitbeta": null,
+    "copies": 10,
+    "id": "controlled_003"
+  },
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 1,
+    "fitbeta": null,
+    "copies": 10,
+    "id": "controlled_004"
+  },
+  {
+    "group": "replication",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 9,
+    "fitbeta": null,
+    "copies": 10,
+    "id": "controlled_005"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 0.1,
+    "fitbeta": 0.9,
+    "copies": 1,
+    "id": "controlled_006"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 1,
+    "fitbeta": 0.9,
+    "copies": 1,
+    "id": "controlled_007"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 0.1,
+    "fitbeta": 0.99,
+    "copies": 1,
+    "id": "controlled_008"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 1,
+    "fitbeta": 0.99,
+    "copies": 1,
+    "id": "controlled_009"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 0.1,
+    "fitbeta": 1.01,
+    "copies": 1,
+    "id": "controlled_010"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 1,
+    "fitbeta": 1.01,
+    "copies": 1,
+    "id": "controlled_011"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 0.1,
+    "fitbeta": 1.1,
+    "copies": 1,
+    "id": "controlled_012"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 1,
+    "fitbeta": 1.1,
+    "copies": 1,
+    "id": "controlled_013"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 0.1,
+    "fitbeta": 1.5,
+    "copies": 1,
+    "id": "controlled_014"
+  },
+  {
+    "group": "near-one",
+    "n": 41,
+    "a": 0.5,
+    "b": 1,
+    "family": "beta",
+    "scale": 1,
+    "fitbeta": 1.5,
+    "copies": 1,
+    "id": "controlled_015"
+  },
+  {
+    "group": "small-heldout",
+    "n": 23,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 0.01,
+    "fitbeta": null,
+    "copies": 1,
+    "id": "controlled_016"
+  },
+  {
+    "group": "small-heldout",
+    "n": 23,
+    "a": 0.5,
+    "b": 1,
+    "family": "power",
+    "scale": 0.1,
+    "fitbeta": null,
+    "copies": 1,
+    "id": "controlled_017"
+  },
+  {
+    "group": "small-heldout",
+    "n": 67,
+    "a": 0.8,
+    "b": 1,
+    "family": "power",
+    "scale": 0.01,
+    "fitbeta": null,
+    "copies": 1,
+    "id": "controlled_018"
+  },
+  {
+    "group": "small-heldout",
+    "n": 67,
+    "a": 0.8,
+    "b": 1,
+    "family": "power",
+    "scale": 0.1,
+    "fitbeta": null,
+    "copies": 1,
+    "id": "controlled_019"
+  }
+]
