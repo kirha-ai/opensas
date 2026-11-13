@@ -103,8 +103,12 @@ these caused real regressions (see D-001).
   these stop reading as debt forever). Two separate rulings, one entry:
   (a) **INERTNESS, SETTLED, NOT DEBT.** `X 'command';` parses and does NOT run
   the OS command, and an `ODS <destination>` statement is accepted as a listing
-  no-op (opensas renders ONE output stream; ODS OUTPUT/SELECT/EXCLUDE/TRACE stay
-  LOUD by name). Neither is an unimplemented gap waiting for a dev — both are
+  no-op (opensas renders ONE output stream; ODS SELECT/EXCLUDE/TRACE stay LOUD
+  by name). FEAT-odsoutput implements only typed OUTPUT capture for the named
+  PearsonCorr, SimpleStats, OneWayFreqs, CrossTabFreqs, Moments, Quantiles and
+  BasicMeasures tables; other OUTPUT names remain loud. This does not change
+  destination rendering or claim FEAT-base-stat-results. Neither inert form
+  is an unimplemented gap waiting for a dev — both are
   deliberate, and `docs/sas9.4.ebnf` deliberately withholds `(* opensas *)` from
   `x_stmt`/`ods_stmt` to say so. Do not "finish" them.
   (b) **BUT INERT MUST NOT MEAN SILENT.** `isInertGlobalKw`'s doc-comment
