@@ -195,7 +195,7 @@ pub fn polychoric(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     defer a.free(counts);
     @memset(counts, 0);
     for (data) |d| counts[std.mem.indexOfScalar(f64, xs, d.x).? * ys.len + std.mem.indexOfScalar(f64, ys, d.y).?] += d.f;
-    const estimate = try @import("freq_tests.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts }, .{ .converge = opt.converge, .maxiter = opt.maxiter });
+    const estimate = try @import("corr_polychoric.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts }, .{ .converge = opt.converge, .maxiter = opt.maxiter });
     result.converged = estimate.converged;
     if (!result.converged) return result;
     result.r = estimate.coefficient.estimate orelse nan;

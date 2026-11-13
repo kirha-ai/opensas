@@ -1316,3 +1316,20 @@ test "CORR sparse polychoric boundary fails through captured diagnostics instead
     try std.testing.expectError(error.ParseError, compute(cx, s));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "sparse monotone boundary tables is not implemented") != null);
 }
+
+test "CORR absolute convergence and iteration exhaustion match asymmetric SAS table" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 900 }, &.{ 1, 2, 20 }, &.{ 1, 3, 5 }, &.{ 2, 1, 3 }, &.{ 2, 2, 50 }, &.{ 2, 3, 3 }, &.{ 3, 1, 2 }, &.{ 3, 2, 4 }, &.{ 3, 3, 13 } });
+    for ([_]usize{ 3, 4 }) |limit| {
+        const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge=.01 maxiter={d}); var x y; freq f; run;", .{limit});
+        const result = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(!result.converged and std.math.isNan(result.r));
+    }
+    const result = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-8); var x y; freq f; run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(result.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.94595), result.r, 0.000005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.01381), result.se, 0.000005);
+    try std.testing.expectApproxEqAbs(@as(f64, 353.3860), result.lr, 0.00005);
+}

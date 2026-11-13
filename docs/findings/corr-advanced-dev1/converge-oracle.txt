@@ -1,0 +1,67 @@
+sasrun: /private/tmp/dev1-corr-converge-oracle.sas: 0 error(s), 2 warning(s) in 3.337s -> /dev/null
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x               1000       1.09400       0.35112       1.00000       1.00000       3.00000
+y               1000       1.11600       0.38038       1.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y               1000              .             .         .         .             .         .    
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x               1000       1.09400       0.35112       1.00000       1.00000       3.00000
+y               1000       1.11600       0.38038       1.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y               1000              .             .         .         .             .         .    
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x               1000       1.09400       0.35112       1.00000       1.00000       3.00000
+y               1000       1.11600       0.38038       1.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y               1000        0.94595       0.01381     4690.2460    <.0001      353.3860    <.0001

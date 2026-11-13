@@ -29,8 +29,8 @@ counts are in the developer handoff, not asserted by this document.
   iterations, observed information including mean/scale nuisance parameters,
   Wald and LR inference; ORDINAL=VAR/WITH, NGROUPS=ALL/n, MAXITER, CONVERGE.
   Fully separated ordinal groups return boundary rho with missing SE/inference.
-- Interior polychoric joint threshold/rho MLE through the existing public FREQ
-  numerical kernel. Tested balanced and strongly associated 3x3 tables and 2x2
+- Interior polychoric joint threshold/rho MLE through a CORR-owned specialization
+  of the existing FREQ numerical kernel, with absolute parameter-change stopping. Tested balanced and strongly associated 3x3 tables and 2x2
   one-zero-cell boundary. Perfect ordered category bijection returns +/-1, SE=0,
   missing tests. NGROUPS and iteration failure return missing estimates with a
   visible warning. Sparse monotone boundary tables fail explicitly (see below).
@@ -60,11 +60,19 @@ No shared FREQ file, jira.md, dispatch, or ODS infrastructure was modified.
    CORR now rejects this identified shape through captured diagnostics. Needed:
    stable boundary likelihood/information treatment with SAS evidence. This is
    not marked outside scope. Manager should coordinate any shared FREQ repair.
-3. **Polychoric CONVERGE stopping semantics remain inherited from FREQ:** the
-   shared solver compares relative changes (except near zero), whereas CORR's
-   documented criterion is absolute parameter change. Interior oracle estimates
-   match the tolerances below, but that does not certify all stopping/MAXITER
-   interactions. Polyserial uses the documented absolute-change criterion.
+The polychoric CONVERGE gap identified at the interim checkpoint is now closed:
+`corr_polychoric.zig` specializes the existing Newton solver for absolute parameter
+changes, without modifying FREQ. Bivariate-normal quadrature uses 1024 segments.
+The asymmetric 3x3 N=1000 oracle exhausts MAXITER=3 and 4 at CONVERGE=.01;
+with CONVERGE=1e-8 it gives rho=.94595, SE=.01381, LR=353.3860. Runnable
+regression checks these cases (5e-6 coefficient/SE, 5e-5 LR). Source and stdout:
+`converge-oracle.sas` / `converge-oracle.txt`.
+
+Increasing quadrature resolution improved the sparse-boundary experiment to
+rho=.99924814, SE=.38878795, but still did not match SAS .99903/.11695.
+An analytic-derivative/Fisher-scoring experiment also failed that comparison;
+it was not retained. The sparse-boundary guard remains, and the algorithm is
+not claimed fully accepted.
 
 Consequently no claim of full polychoric or Hoeffding inference completion is made.
 
