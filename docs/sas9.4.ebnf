@@ -890,7 +890,8 @@ proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
                  | "WEIGHT" var [ "/" "ZEROS" ] ";"
                  | "FORMAT" var_list format_ref ";"
                  | "WHERE" expression ";"
-                 | "TEST" { freq_test } ";" } step_boundary ;
+                 | "TEST" { freq_test } ";"
+                 | freq_exact_statement } step_boundary ;
 freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
                  | "NOPRINT" | "NLEVELS"
                  | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
@@ -933,7 +934,7 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                     gaps; PAGE+COMPRESS is invalid SAS. Stray parentheses and
                     values attached to flag options are errors. *)
 
-freq_stat_option = "CHISQ" [ "(" { freq_chisq_option } ")" ]
+freq_stat_option = "FISHER" | "CHISQ" [ "(" { freq_chisq_option } ")" ]
                  | freq_expected | "MEASURES" [ "(" "CL" ")" ]
                  | "CL" | "ALPHA" "=" number | "NOWARN"
                  | ( "PLCORR" | "POLYCHORIC" )
@@ -951,8 +952,28 @@ freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
                  (* TEST implies MEASURES/PLCORR only with one TABLES statement.
                     CHISQ includes automatic 2x2 Fisher for integer counts.
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
-                    Standalone EXACT and OUTPUT statistics datasets
-                    remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
+                    OUTPUT statistics datasets remain explicit gaps;
+                    WARN=OUTPUT does not create a dataset. *)
+
+freq_exact_statement = "EXACT" { freq_exact_stat }
+                       [ "/" { freq_exact_control } ] ";" ; (* opensas *)
+freq_exact_stat = "AGREE" | "BARNARD" | "BINOMIAL" | "BIN" | "CHISQ"
+                | "COMOR" | "EQOR" | "ZELEN" | "FISHER" | "JT" | "KAPPA"
+                | "KENTB" | "TAUB" | "LRCHI" | "MCNEM" | "MEASURES"
+                | "MHCHI" | "OR" | "ODDSRATIO" | "PCHI" | "PCORR"
+                | "SCORR" | "SMDCR" | "SMDRC" | "STUTC" | "TAUC"
+                | "SYMMETRY" | "BOWKER" | "TREND" | "WTKAPPA" | "WTKAP"
+                | ( "RELRISK" | "RISKDIFF" ) [ "(" { freq_exact_risk_option } ")" ] ;
+freq_exact_risk_option = "COLUMN" "=" ( "1" | "2" | "BOTH" )
+                      | "METHOD" "=" ( "SCORE" | "SCORE2" | "NOSCORE" ) ;
+freq_exact_control = "MC" | "POINT" | "MIDP"
+                   | ( "ALPHA" | "MAXTIME" | "N" | "SEED" ) "=" freq_risk_number
+                   | "PFORMAT" "=" ( format_ref | "EXACT" ) ;
+(* Public EXACT dispatch is implemented; full FEAT-freq-exact numerical
+   acceptance remains pending (notably retained unconditional RR boundaries).
+   EXACT requires TABLES; with multiple TABLES it selects only requested
+   families. MC is incompatible with POINT/MIDP. N/SEED/ALPHA invoke MC.
+   Resource exhaustion reports missing results, never partial enumeration. *)
 
 (* FEAT-freq-stratified: numeric kernels, independent readers/renderers and
    public execution. EXACT statement dispatch remains owned by FEAT-freq-exact. *)
@@ -1002,7 +1023,7 @@ freq_risk_cl = name [ "(" "CORRECT" [ "=" ( "NO" | "MEE" ) ] ")" ] ;
    OR has Wald, modified Wald, score, LR, mid-p; RELRISK has Wald, modified
    Wald, score, LR. Documented long aliases are accepted. COLUMN=BOTH is
    for RISKDIFF. Selected LEVEL uses formatted analysis-level order.
-   Blaker, CL=EXACT for RD/OR/RR, COMMON, OUTLEVEL, EXACT statement and
+   Blaker, CL=EXACT for RD/OR/RR, COMMON, OUTLEVEL and
    statistics OUTPUT remain explicit rc2 gaps at this checkpoint.
    Risk cores import no exact module; the execution adapter owns mid-p calls. *)
 

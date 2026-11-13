@@ -15040,7 +15040,7 @@ test "FREQ-hardening: remaining unsupported inference requests fail loud (captur
     try lib.put("d", ds);
 
     // Each stat option must ParseError naming itself, never a table without the stat.
-    for ([_][]const u8{ "exact", "fisher" }) |opt| {
+    for ([_][]const u8{"exact"}) |opt| {
         var diags = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const src = try std.fmt.allocPrint(a, "proc freq data=d; tables g*h / {s}; run;", .{opt});
@@ -16369,7 +16369,7 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
-        const toks = try lex.tokenize(a, "proc freq data=have; exact age; run;", &d);
+        const toks = try lex.tokenize(a, "proc freq data=have; output out=statistics; run;", &d);
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }

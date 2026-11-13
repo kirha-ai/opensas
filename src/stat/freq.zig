@@ -91,10 +91,14 @@ const risk_exec = @import("freq_risk_execute.zig");
 const risk_render = @import("freq_risk_render.zig");
 const strat_parse = @import("freq_stratified_parse.zig");
 const strat_exec = @import("freq_stratified_execute.zig");
+const exact_public = @import("freq_exact_public.zig");
+const exact_parse = @import("freq_exact_parse.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
 pub const Request = struct {
+    exact: exact_parse.Options = .{},
+    fisher: bool = false,
     statistics: stat_parse.Options = .{},
     risk: risk_parse.Options = .{},
     stratified: strat_parse.Options = .{},
@@ -132,6 +136,8 @@ pub const Request = struct {
     scorout: bool = false,
 };
 const Options = struct {
+    exact: ?exact_parse.Options = null,
+    exact_seed: u64 = 1,
     tables_statement_count: usize = 0,
     tests: stat_parse.TestStatement = .{},
     agreement_tests: strat_parse.Tests = .{},
@@ -291,6 +297,11 @@ const Parser = struct {
     fn tableOptions(self: *Parser, req: *Request) diag.Error!void {
         while (!self.tag(.semicolon) and !self.tag(.eof)) {
             if (try strat_parse.consumeTableOption(self.toks, &self.i, &req.stratified, self.diags)) continue;
+            if (self.kw("fisher")) {
+                req.fisher = true;
+                self.i += 1;
+                continue;
+            }
             if (self.kw("all")) {
                 self.i += 1;
                 req.statistics.chisq = true;
@@ -470,10 +481,19 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 if (!strat_parse.consumeTest(token, &opts.agreement_tests)) try remaining.append(a, token);
             }
             if (remaining.items.len == 0 and begin != parser.i) opts.tests.present = true else try opts.tests.parse(remaining.items, cx.diags);
-        } else if (parser.kw("exact") or parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
+        } else if (parser.kw("exact")) {
+            if (opts.exact != null) return parser.fail("Only one EXACT statement is allowed.");
+            parser.i += 1;
+            opts.exact = try exact_parse.statement(a, toks, &parser.i, cx.diags);
+            continue;
+        } else if (parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
     try opts.tests.finish(opts.tables_statement_count, cx.diags);
+    if (opts.exact) |e| {
+        if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
+        opts.exact_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
+    }
     if (opts.requests.items.len == 0) for (input.columns.items) |col| {
         if (opts.weight) |w| if (eqi(w, col.name)) continue;
         const bylist = try decodeProcBy(a, opts.bys.items);
@@ -489,6 +509,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     };
     const statistical_options = try a.alloc(stat_parse.Options, opts.requests.items.len);
     for (opts.requests.items, 0..) |*req, index| {
+        exact_public.resolve(req, opts.exact, opts.tables_statement_count);
         stat_parse.implyTests(&req.statistics, opts.tests.requests, opts.tables_statement_count);
         strat_parse.implyTests(&req.stratified, opts.agreement_tests, opts.tables_statement_count);
         if (req.risk.difference) |rd| if (rd.common) {
@@ -498,7 +519,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             };
         };
         req.list = stat_parse.usesList(req.list, req.statistics);
-        if (req.risk.any() or hasStratified(req.stratified)) req.list = false;
+        if (req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) req.list = false;
         req.statistics.score_type = switch (req.scores) {
             .table => .table,
             .rank => .rank,
@@ -513,7 +534,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             cx.lib.find(name) orelse return cx.diags.fail(error.ExecError, 0, "PROC FREQ: TESTP/TESTF dataset {s} does not exist", .{name})
         else
             null;
-        if (req.statistics.chisq and req.vars.len == 1) req.resolved_expected = try stat_exec.resolveExpected(a, req.statistics.expected, secondary, cx.diags);
+        if ((req.statistics.chisq or req.exact.families.contains(.pchi) or req.exact.families.contains(.lrchi)) and req.vars.len == 1) req.resolved_expected = try stat_exec.resolveExpected(a, req.statistics.expected, secondary, cx.diags);
         // Literal probabilities are syntax-level constraints even on two-way requests.
         if (req.statistics.expected == .proportions) {
             const values = req.statistics.expected.proportions;
@@ -610,7 +631,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
-            if (hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified)) {
+            if (hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
                 try analyzeTable(cx, out, &tab, req, opts, stratified);
@@ -1789,6 +1810,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
+        try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
         try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
@@ -1819,12 +1841,14 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             const scored = (try tab.matrix(a, stratum)).?;
             if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
                 _ = try stat_exec.execute(a, cx.diags, &body, .{
+                    .suppress_fisher = req.exact.families.contains(.fisher),
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, opts.tests.requests, .equal, opts.noprint);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
+                    try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {
                         try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));
@@ -1846,6 +1870,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             if (!req.missing) try appendFreqMissing(a, out, sl.missing);
         }
     }
+    if (!opts.noprint) try exact_public.renderStrata(a, cx.diags, out, tab, req, opts.exact_seed);
     if (!opts.noprint and hasStratified(req.stratified)) {
         var summary: std.ArrayList(u8) = .empty;
         try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);
