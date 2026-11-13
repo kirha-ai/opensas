@@ -217,6 +217,10 @@ Precise remaining tags (none waived by a green checkpoint):
 
 ## Public plot numerical consumer milestone
 
+Embedding callers can name the public types through `sas.proc.univariate_plot`
+and install a `Sink` in `ProcCtx.univariate_plot_sink`. The callback receives
+the `Plot` value; allocations remain owned by the caller-supplied PROC arena.
+
 `univ_plot_data.zig` defines a typed consumer contract: variable metadata, raw
 and formatted BY/CLASS keys, fitted parameters, coordinates, empirical/model
 probabilities, theoretical quantiles and optional reference-line coefficients.

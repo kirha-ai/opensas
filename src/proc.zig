@@ -46,7 +46,8 @@ const freq_stat = @import("stat/freq.zig");
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
 pub const ods = @import("ods.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?@import("stat/univ_plot_data.zig").Sink = null };
+pub const univariate_plot = @import("stat/univ_plot_data.zig");
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
