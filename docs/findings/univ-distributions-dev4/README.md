@@ -76,8 +76,10 @@ preserving diagnostics for unsupported graphics requests.
   output datasets. Constant/comparative bins and broader metadata remain open.
 - SAS M9 rejects WEIGHT with all five plot statements. The public guard is a
   compatibility error (not a feature-gap exemption), before output publication.
-- Singer owns new standalone SJPI support. Dev4 retains its adapter, all existing
-  modules, statement behavior, numerical rendering and final acceptance.
+- Singer owns new standalone SJPI support. Dev3 now owns `univ_histogram_bins.zig`
+  and `univ_kernel_output.zig` plus additive numerical helpers for constant/
+  comparative bins and automatic grids. Dev4 retains their adapters, statements,
+  numerical rendering, public plot consumers and final integration acceptance.
 
 ### Oracle findings
 
