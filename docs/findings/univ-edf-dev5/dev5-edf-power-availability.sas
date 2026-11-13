@@ -1,0 +1,15 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(id,shape,opts);
+data d;do n=30,80;do i=1 to n;x=((i-.5)/n)**(1/&shape);output;end;end;run;
+data gof;length n Stat pValue 8 TestLab $4 pSign $1;stop;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;if 0 then set gof nobs=nr;file print;put "&id|&shape|rows|" nr;stop;run;
+data _null_;set pars;where Symbol='Alpha';file print;put "&id|&shape|alpha|" n best8. '|' Estimate best32.;run;
+ods exclude all;
+%mend;
+%p(default,.2,power(theta=0 sigma=1));%p(explicit,.2,power(theta=0 sigma=1 alpha=est));%p(fixed,.2,power(theta=0 sigma=1 alpha=.2));
+%p(default,1,power(theta=0 sigma=1));%p(explicit,1,power(theta=0 sigma=1 alpha=est));%p(fixed,1,power(theta=0 sigma=1 alpha=1));
+%p(default,4.9,power(theta=0 sigma=1));%p(explicit,4.9,power(theta=0 sigma=1 alpha=est));%p(fixed,4.9,power(theta=0 sigma=1 alpha=4.9));
+%p(beta_control,1,beta(theta=0 sigma=1 alpha=est beta=1));
