@@ -75,7 +75,14 @@ fn statistic(c: [4]u32, family: Family, method: Method, null_value: f64) Error!f
     }
     const value = switch (family) {
         .difference => try risk.differenceScore(table, .first, null_value, false),
-        .relative_risk => try risk.relativeRiskScore(table, .first, null_value, false),
+        // z_r(x,y) = -z_(1/r)(y,x). Evaluate with r <= 1 so
+        // the shared variance does not form r*r above floatMax. Overflow
+        // previously turned finite ordered scores into zero (or NaN), making
+        // a rare tail contain every table. Keep the shared constrained fit.
+        .relative_risk => if (null_value > 1)
+            -(try risk.relativeRiskScore(tableOf(.{ c[2], c[3], c[0], c[1] }), .first, 1 / null_value, false))
+        else
+            try risk.relativeRiskScore(table, .first, null_value, false),
     };
     if (std.math.isNan(value)) return error.ExecError;
     return value; // Infinite scores are valid at degenerate candidate tables.
@@ -793,4 +800,29 @@ fn unconditionalAllocationProbe(a: std.mem.Allocator) !void {
 }
 test "allocator-backed unconditional failure paths release caller workspace" {
     try std.testing.checkAllAllocationFailures(std.testing.allocator, unconditionalAllocationProbe, .{});
+}
+
+test "dev2 exact boundary reciprocal score preserves rare tails beyond squared RR range" {
+    const t = std.testing;
+    const cells = [4]u32{ 1, 1, 1, 1 };
+    // Same score definition, independently evaluated in the safe orientation.
+    // This is an algebraic/overflow regression, not a fitted SAS endpoint.
+    for ([_]f64{ 2, 1e100, 1e160, 1e200, 1e300 }) |r| {
+        const score = try statistic(cells, .relative_risk, .score, r);
+        const reverse = try risk.relativeRiskScore(tableOf(cells), .first, 1 / r, false);
+        try t.expect(std.math.isFinite(score));
+        try t.expect(score < 0);
+        try t.expectApproxEqRel(-reverse, score, 2e-15);
+    }
+    for ([_]Method{ .score, .score2 }) |method| {
+        const side: Side = if (method == .score2) .two_sided else .left;
+        const value = (try riskTail(tableOf(cells), .first, .relative_risk, method, 1e200, side, .{ .tolerance = 1e-213 })).complete;
+        // Any selected table has at least one row-2 success; its probability
+        // is at most P(Y>=1)<=2/r, uniformly over p2 in [0,1/r].
+        try t.expect(value.lower > 0);
+        try t.expect(value.upper <= 2.000000000001e-200);
+        const reverse = (try riskTail(tableOf(cells), .first, .relative_risk, method, 1e-200, if (method == .score2) .two_sided else .right, .{ .tolerance = 1e-213 })).complete;
+        try t.expectApproxEqRel(reverse.lower, value.lower, 1e-13);
+        try t.expectApproxEqRel(reverse.upper, value.upper, 1e-13);
+    }
 }
