@@ -1,0 +1,29 @@
+Validation: 1120/1120 SAS binary64 intermediates; exact rounding self-tests passed.
+Oracle assignments: 136 known, 27 fresh resolved, 0 fresh unresolved.
+Fresh forced-bin bandwidth comparison: max absolute error 7.10543e-15, tolerance 1e-10.
+Frozen candidates: 90; no fitted tolerances, per-index table or post-freeze additions.
+order / storage / conversion: known, fresh
+center_normalize / binary64 / spill_half_then_trunc: 91/136, 25/27
+center_normalize / binary64 / trunc_after_half: 91/136, 25/27
+center_normalize / extended64_each_store / spill_half_then_trunc: 91/136, 25/27
+center_normalize / extended64_each_store / trunc_after_half: 91/136, 25/27
+center_inverse / binary64 / spill_half_then_trunc: 91/136, 23/27
+center_inverse / binary64 / trunc_after_half: 91/136, 23/27
+center_inverse / extended64_each_store / spill_half_then_trunc: 91/136, 23/27
+center_inverse / extended64_each_store / trunc_after_half: 91/136, 23/27
+center_inverse / extended64_input_store / spill_half_then_trunc: 91/136, 23/27
+center_normalize / extended64_input_store / spill_half_then_trunc: 91/136, 23/27
+center_div / binary64 / spill_half_then_trunc: 89/136, 23/27
+center_div / binary64 / trunc_after_half: 89/136, 23/27
+Exact centered-operand collision groups: 5
+COLLISION k=87, x-low=31525197391593471/4503599627370496, span=16, q=788129934789836775/9007199254740992
+  left: dev2-sjpi-halfgrid:12; low=C020000000000000 high=4020000000000000 x=BFF0000000000001; bin=87
+  right: dev2-sjpi-halfgrid-heldout:15; low=C01FF5C28F5C28F6 high=4020051EB851EB85 x=BFEFAE147AE147B2; bin=88
+COLLISION k=87, x-low=7, span=16, q=175/2
+  left: dev2-sjpi-halfgrid:13; low=C020000000000000 high=4020000000000000 x=BFF0000000000000; bin=87
+  right: dev2-sjpi-halfgrid:16; low=C01FF5C28F5C28F6 high=4020051EB851EB85 x=BFEFAE147AE147B0; bin=88
+COLLISION k=87, x-low=63050394783186945/9007199254740992, span=16, q=1576259869579673625/18014398509481984
+  left: dev2-sjpi-halfgrid:14; low=C020000000000000 high=4020000000000000 x=BFEFFFFFFFFFFFFF; bin=87
+  right: dev2-sjpi-halfgrid:17; low=C01FF5C28F5C28F6 high=4020051EB851EB85 x=BFEFAE147AE147AF; bin=88
+Candidates passing all known: 0/90; accepted after fresh validation: 0/90.
+Raw selector NOT ACCEPTED. This rejects the frozen family, not all possible internal C/x87 arithmetic.

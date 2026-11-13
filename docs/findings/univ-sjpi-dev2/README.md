@@ -8,6 +8,13 @@ Do not remove dev4's unsupported guard: no tested raw-sample binning candidate
 yet passes all half-grid examples. Excluding those samples would not satisfy
 the assigned acceptance. See [the follow-up](halfgrid-README.md).
 
+The subsequent [normalized-coordinate / extended-precision pass](extended-precision/README.md)
+is complete with a conclusive negative result for its preregistered family:
+0/90 models pass all 136 known or all 27 fresh cases. Exact centered-operand
+collisions establish that a rule using only normalized q and bin index is
+insufficient. This does not rule out all internal C/x87 paths. The landed
+binned core and public SJPI guard are unchanged.
+
 Baseline acquired by clean `git merge --ff-only feat/stat/batch-3`: `6aa9b33`.
 Read CLAUDE.md, lexer.zig, D-029, dev4's retained README and kernel API, and the
 manager checkout's ignored statistical manual, printed pp.448–449.

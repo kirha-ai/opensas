@@ -1,0 +1,231 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data _null_;file print;put "SAS_VERSION=&sysvlong4";run;
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2068.43k
+      OS Memory           12964.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        2  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     461
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+39         data all;input id point x :hex16.;datalines;
+
+NOTE: The data set WORK.ALL has 216 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              523.32k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     137
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+256        ;
+257        data _null_;set all;file print;put 'INPUT ' id= point= x=hex16.;run;
+
+NOTE: 216 lines were written to file PRINT.
+NOTE: There were 216 observations read from the data set WORK.ALL.
+NOTE: The DATA step printed pages 2-5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              592.31k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     61
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+258        proc univariate data=all noprint;by id;var x;
+259        output out=stats n=n qrange=q std=sd;
+260        histogram x / noplot kernel(c=sjpi) outkernel=kernel;run;
+
+NOTE: The normal kernel estimate for c=0.4214 has a bandwidth of 2.1312 and an AMISE of 0.0167.
+NOTE: The above message was for the following BY group:
+      id=0
+NOTE: The normal kernel estimate for c=0.4214 has a bandwidth of 2.1312 and an AMISE of 0.0167.
+NOTE: The above message was for the following BY group:
+      id=1
+NOTE: The normal kernel estimate for c=0.4214 has a bandwidth of 2.1312 and an AMISE of 0.0167.
+NOTE: The above message was for the following BY group:
+      id=2
+NOTE: The normal kernel estimate for c=0.4214 has a bandwidth of 7.103 and an AMISE of 0.005.
+NOTE: The above message was for the following BY group:
+      id=3
+NOTE: The normal kernel estimate for c=0.4214 has a bandwidth of 7.103 and an AMISE of 0.005.
+NOTE: The above message was for the following BY group:
+      id=4
+NOTE: The normal kernel estimate for c=0.4216 has a bandwidth of 7.1068 and an AMISE of 0.005.
+NOTE: The above message was for the following BY group:
+      id=5
+NOTE: The normal kernel estimate for c=0.4211 has a bandwidth of 0.5253 and an AMISE of 0.0679.
+NOTE: The above message was for the following BY group:
+      id=6
+NOTE: The normal kernel estimate for c=0.422 has a bandwidth of 0.5264 and an AMISE of 0.0677.
+NOTE: The above message was for the following BY group:
+      id=7
+NOTE: The normal kernel estimate for c=0.422 has a bandwidth of 0.5264 and an AMISE of 0.0677.
+NOTE: The above message was for the following BY group:
+      id=8
+NOTE: The normal kernel estimate for c=0.6706 has a bandwidth of 3.1589 and an AMISE of 0.0124.
+NOTE: The above message was for the following BY group:
+      id=9
+NOTE: The normal kernel estimate for c=0.6706 has a bandwidth of 3.1589 and an AMISE of 0.0124.
+NOTE: The above message was for the following BY group:
+      id=10
+NOTE: The normal kernel estimate for c=0.6706 has a bandwidth of 3.1589 and an AMISE of 0.0124.
+NOTE: The above message was for the following BY group:
+      id=11
+NOTE: The normal kernel estimate for c=0.665 has a bandwidth of 10.442 and an AMISE of 0.0037.
+NOTE: The above message was for the following BY group:
+      id=12
+NOTE: The normal kernel estimate for c=0.665 has a bandwidth of 10.442 and an AMISE of 0.0037.
+NOTE: The above message was for the following BY group:
+      id=13
+NOTE: The normal kernel estimate for c=0.6706 has a bandwidth of 10.53 and an AMISE of 0.0037.
+NOTE: The above message was for the following BY group:
+      id=14
+NOTE: The normal kernel estimate for c=0.6643 has a bandwidth of 0.7719 and an AMISE of 0.0506.
+The SAS System
+
+NOTE: The above message was for the following BY group:
+      id=15
+NOTE: The normal kernel estimate for c=0.6701 has a bandwidth of 0.7786 and an AMISE of 0.0504.
+NOTE: The above message was for the following BY group:
+      id=16
+NOTE: The normal kernel estimate for c=0.6701 has a bandwidth of 0.7786 and an AMISE of 0.0504.
+NOTE: The above message was for the following BY group:
+      id=17
+NOTE: The normal kernel estimate for c=0.4399 has a bandwidth of 2.5122 and an AMISE of 0.0142.
+NOTE: The above message was for the following BY group:
+      id=18
+NOTE: The normal kernel estimate for c=0.4399 has a bandwidth of 2.5122 and an AMISE of 0.0142.
+NOTE: The above message was for the following BY group:
+      id=19
+NOTE: The normal kernel estimate for c=0.4399 has a bandwidth of 2.5122 and an AMISE of 0.0142.
+NOTE: The above message was for the following BY group:
+      id=20
+NOTE: The normal kernel estimate for c=0.4432 has a bandwidth of 8.4351 and an AMISE of 0.0042.
+NOTE: The above message was for the following BY group:
+      id=21
+NOTE: The normal kernel estimate for c=0.4399 has a bandwidth of 8.3723 and an AMISE of 0.0043.
+NOTE: The above message was for the following BY group:
+      id=22
+NOTE: The normal kernel estimate for c=0.4399 has a bandwidth of 8.3723 and an AMISE of 0.0043.
+NOTE: The above message was for the following BY group:
+      id=23
+NOTE: The normal kernel estimate for c=0.4431 has a bandwidth of 0.6242 and an AMISE of 0.0573.
+NOTE: The above message was for the following BY group:
+      id=24
+NOTE: The normal kernel estimate for c=0.4431 has a bandwidth of 0.6242 and an AMISE of 0.0573.
+NOTE: The above message was for the following BY group:
+      id=25
+NOTE: The normal kernel estimate for c=0.4403 has a bandwidth of 0.6202 and an AMISE of 0.0576.
+NOTE: The above message was for the following BY group:
+      id=26
+NOTE: The data set WORK.STATS has 27 observations and 4 variables.
+NOTE: The data set WORK.KERNEL has 9138 observations and 7 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1971.81k
+      OS Memory           15024.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     462
+      Page Swaps                        0
+      Voluntary Context Switches        17
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1560
+      
+
+261        data one;set kernel;by id;if first.id;keep id _c_;run;
+
+NOTE: There were 9138 observations read from the data set WORK.KERNEL.
+NOTE: The data set WORK.ONE has 27 observations and 2 variables.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1399.73k
+      OS Memory           15148.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     218
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+262        data _null_;merge one stats;by id;file print;
+263        c=_c_;h=c*q*n**(-.2);
+264        put 'RESULT ' id= n= q=hex16. sd=hex16. c=hex16. h=hex16.;run;
+
+NOTE: 27 lines were written to file PRINT.
+NOTE: There were 27 observations read from the data set WORK.ONE.
+NOTE: There were 27 observations read from the data set WORK.STATS.
+NOTE: The DATA step printed page 6.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              995.21k
+      OS Memory           14764.00k
+      Timestamp           11/13/2026 02:32:02 PM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     98
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+265        
+266        
+267        
+268        
+The SAS System
+
+269        
