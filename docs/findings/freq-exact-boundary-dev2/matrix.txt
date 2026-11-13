@@ -1,0 +1,566 @@
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  40.00 |  40.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  60.00 |   0.00 |  60.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        2        5
+            60.00    40.00   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+5% Lower Conf Limit               .
+5% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+5% Lower Conf Limit          0.0000
+5% Upper Conf Limit          0.3104
+
+Exact confidence limits are based on a score statistic.
+
+Sample Size = 5
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     5% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     5% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    5% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    5% Upper Conf Limit       0.3104                    0.31043853759765
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  40.00 |  40.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  60.00 |   0.00 |  60.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        2        5
+            60.00    40.00   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+5% Lower Conf Limit               .
+5% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+5% Lower Conf Limit          0.0000
+5% Upper Conf Limit          0.3104
+
+Sample Size = 5
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     5% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     5% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    5% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    5% Upper Conf Limit       0.3104                    0.31043853759765
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  28.57 |  28.57
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      5 |      0 |      5
+         |  71.43 |   0.00 |  71.43
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           5        2        7
+            71.43    28.57   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+6% Lower Conf Limit               .
+6% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+6% Lower Conf Limit          0.0000
+6% Upper Conf Limit          0.3188
+
+Exact confidence limits are based on a score statistic.
+
+Sample Size = 7
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     6% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     6% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    6% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    6% Upper Conf Limit       0.3188                             0.31875
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  28.57 |  28.57
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      5 |      0 |      5
+         |  71.43 |   0.00 |  71.43
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           5        2        7
+            71.43    28.57   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+6% Lower Conf Limit               .
+6% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+6% Lower Conf Limit          0.0000
+6% Upper Conf Limit          0.3188
+
+Sample Size = 7
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     6% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     6% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    6% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    6% Upper Conf Limit       0.3188                             0.31875
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  28.57 |  28.57
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      5 |      0 |      5
+         |  71.43 |   0.00 |  71.43
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           5        2        7
+            71.43    28.57   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+1% Lower Conf Limit               .
+1% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+1% Lower Conf Limit          0.0000
+1% Upper Conf Limit          0.2499
+
+Exact confidence limits are based on a two-sided score test.
+
+Sample Size = 7
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     1% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     1% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    1% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    1% Upper Conf Limit       0.2499                      0.249913109375
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      3 |      3
+         |   0.00 |  37.50 |  37.50
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      5 |      0 |      5
+         |  62.50 |   0.00 |  62.50
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           5        3        8
+            62.50    37.50   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+1% Lower Conf Limit               .
+1% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+1% Lower Conf Limit          0.0000
+1% Upper Conf Limit          0.1666
+
+Exact confidence limits are based on a two-sided score test.
+
+Sample Size = 8
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     1% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     1% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    1% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    1% Upper Conf Limit       0.1666                     0.1666030883789
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      4 |      4
+         |   0.00 |  57.14 |  57.14
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  42.86 |   0.00 |  42.86
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        4        7
+            42.86    57.14   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+1% Lower Conf Limit               .
+1% Upper Conf Limit               .
+                                   
+Exact Conf Limits                  
+1% Lower Conf Limit          0.0000
+1% Upper Conf Limit          0.1197
+
+Exact confidence limits are based on a two-sided score test.
+
+Sample Size = 7
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     1% Lower Conf Limit        .                                       .
+ 5     Table r * c    U_RRC1     1% Upper Conf Limit        .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    1% Lower Conf Limit       0.0000                                   0
+ 9     Table r * c    XU_RRC1    1% Upper Conf Limit       0.1197                    0.11966864267985
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  40.00 |  40.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  60.00 |   0.00 |  60.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        2        5
+            60.00    40.00   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+95% Lower Conf Limit              .
+95% Upper Conf Limit              .
+                                   
+Exact Conf Limits                  
+95% Lower Conf Limit         0.0000
+95% Upper Conf Limit         1.1140
+
+Exact confidence limits are based on a score statistic.
+
+Sample Size = 5
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     95% Lower Conf Limit       .                                       .
+ 5     Table r * c    U_RRC1     95% Upper Conf Limit       .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    95% Lower Conf Limit      0.0000                                   0
+ 9     Table r * c    XU_RRC1    95% Upper Conf Limit      1.1140                     1.1139892578125
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  40.00 |  40.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  60.00 |   0.00 |  60.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        2        5
+            60.00    40.00   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+95% Lower Conf Limit              .
+95% Upper Conf Limit              .
+                                   
+Exact Conf Limits                  
+95% Lower Conf Limit         0.0000
+95% Upper Conf Limit         1.0000
+
+Exact confidence limits are based on a two-sided score test.
+
+Sample Size = 5
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     95% Lower Conf Limit       .                                       .
+ 5     Table r * c    U_RRC1     95% Upper Conf Limit       .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    95% Lower Conf Limit      0.0000                                   0
+ 9     Table r * c    XU_RRC1    95% Upper Conf Limit      1.0000                    1.00000038146972
+
+The FREQ Procedure
+
+Table of r by c
+
+r         c
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      0 |      2 |      2
+         |   0.00 |  40.00 |  40.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+       2 |      3 |      0 |      3
+         |  60.00 |   0.00 |  60.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+Total           3        2        5
+            60.00    40.00   100.00
+
+
+Statistics for Table of r by c
+
+
+     Relative Risk (Column 1)
+-----------------------------------
+Relative Risk                0.0000
+                                   
+Asymptotic Conf Limits             
+20% Lower Conf Limit              .
+20% Upper Conf Limit              .
+                                   
+Exact Conf Limits                  
+20% Lower Conf Limit         0.0000
+20% Upper Conf Limit         0.3675
+
+Exact confidence limits are based on a score statistic.
+
+Sample Size = 5
+
+                                                             c
+Obs       Table        Name1     Label1                    Value1                             nValue1
+
+ 1     Table r * c    _RRC1_     Relative Risk             0.0000                                   0
+ 2     Table r * c                                                                                  .
+ 3     Table r * c               Asymptotic Conf Limits                                             .
+ 4     Table r * c    L_RRC1     20% Lower Conf Limit       .                                       .
+ 5     Table r * c    U_RRC1     20% Upper Conf Limit       .                                       .
+ 6     Table r * c                                                                                  .
+ 7     Table r * c               Exact Conf Limits                                                  .
+ 8     Table r * c    XL_RRC1    20% Lower Conf Limit      0.0000                                   0
+ 9     Table r * c    XU_RRC1    20% Upper Conf Limit      0.3675                    0.36754455566406
