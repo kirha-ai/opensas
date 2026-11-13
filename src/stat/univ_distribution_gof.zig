@@ -3,9 +3,10 @@ const std = @import("std");
 const dist = @import("univ_distributions.zig");
 const fitting = @import("univ_distribution_fit.zig");
 const diag = @import("../diag.zig");
-pub const Sign = enum { exact, less, greater };
-pub const Probability = struct { value: f64, sign: Sign };
-pub const Result = struct { statistics: dist.Edf, d: Probability, w2: Probability, a2: Probability };
+const inference = @import("univ_edf_inference.zig");
+pub const Sign = inference.Sign;
+pub const Probability = inference.Probability;
+pub const Result = struct { statistics: dist.Edf, d: ?Probability, w2: ?Probability, a2: ?Probability, simulation: ?inference.SimulationResult = null };
 
 fn interpolate(value: f64, critical: []const f64, probabilities: []const f64) Probability {
     if (value < critical[0]) return .{ .value = probabilities[0], .sign = .greater };
@@ -31,20 +32,56 @@ pub fn known(statistics: dist.Edf, n: usize) Result {
 pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
     if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
-    if (request.family == .normal and request.mu == null and request.sigma == null) return normalEstimated(dist.edf(distribution, x).?, x.len);
-    const all_known = switch (request.family) {
-        .normal => request.mu != null and request.sigma != null,
-        .lognormal => request.theta != null and request.zeta != null and request.sigma != null,
-        .exponential => request.theta != null and request.sigma != null,
-        .gamma, .power => request.theta != null and request.sigma != null and request.alpha != null,
-        .weibull => request.theta != null and request.sigma != null and request.c != null,
-        .beta => request.theta != null and request.sigma != null and request.alpha != null and request.beta != null,
-        .gumbel, .igauss, .pareto, .rayleigh => return d.fail(error.ParseError, 0, "UNIVARIATE: simulated EDF probabilities are not implemented", .{}),
-        .sb, .su => return d.fail(error.ParseError, 0, "UNIVARIATE: EDF probabilities are unavailable for Johnson distributions", .{}),
+    const raw = dist.edf(distribution, x).?;
+    const stats: inference.Statistics = .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
+    const r: inference.Request = .{
+        .family = std.meta.stringToEnum(inference.Family, @tagName(request.family)).?,
+        .estimated = .{ .theta = request.theta == null, .sigma = request.sigma == null, .mu = request.mu == null, .zeta = request.zeta == null, .alpha = request.alpha == null, .beta = request.beta == null, .c = request.c == null, .lambda = request.lambda == null },
+        .alpha = distribution.p.alpha,
+        .beta = distribution.p.beta,
+        .sigma = distribution.p.sigma,
+        .c = distribution.p.c,
     };
-    if (!all_known) return d.fail(error.ParseError, 0, "UNIVARIATE: estimated-parameter EDF probabilities are not implemented", .{});
-    return known(dist.edf(distribution, x).?, x.len);
+    switch (request.family) {
+        .gumbel, .igauss, .pareto, .rayleigh => {
+            const sample = try d.arena.alloc(f64, x.len);
+            defer d.arena.free(sample);
+            var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request };
+            const result = try inference.simulate(d, r, stats, x.len, .{ .seed = try fitting.resolveSeed(d, request.edfseed), .samples = request.edfnsamples }, .{ .context = &bootstrap, .draw = Bootstrap.draw });
+            return .{ .statistics = raw, .d = result.probabilities.d, .w2 = result.probabilities.w2, .a2 = result.probabilities.a2, .simulation = result };
+        },
+        else => {},
+    }
+    const result = try inference.tabulated(d, r, stats, x.len);
+    return .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 };
 }
+
+const Bootstrap = struct {
+    sample: []f64,
+    distribution: dist.Distribution,
+    request: fitting.Request,
+    fn draw(context: ?*anyopaque, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!inference.Statistics {
+        const self: *Bootstrap = @ptrCast(@alignCast(context.?));
+        std.debug.assert(self.sample.len == n);
+        for (self.sample) |*value| {
+            // Open (0,1), with exactly representable half-unit endpoints.
+            const u = (@as(f64, @floatFromInt(random.int(u64) >> 12)) + 0.5) / 4503599627370496.0;
+            value.* = self.distribution.quantile(u);
+            if (!std.math.isFinite(value.*)) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF generation failed; no replication was discarded", .{});
+        }
+        std.mem.sort(f64, self.sample, {}, std.sort.asc(f64));
+        var request = self.request;
+        var report: fitting.Report = .{};
+        request.report = &report;
+        request.trace = null;
+        request.itprint = false;
+        request.optprint = false;
+        const fitted = fitting.fit(d, self.sample, request) catch return d.fail(error.ParseError, 0, "UNIVARIATE: EDF refit failed; no replication was discarded", .{});
+        if (!report.converged) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF refit did not converge; no replication was discarded", .{});
+        const raw = dist.edf(fitted, self.sample).?;
+        return .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
+    }
+};
 
 pub fn normalEstimated(statistics: dist.Edf, n: usize) Result {
     std.debug.assert(n > 0);
@@ -61,41 +98,85 @@ pub fn normalEstimated(statistics: dist.Edf, n: usize) Result {
 test "UNIVARIATE complete-parameter EDF probabilities SAS M9 stored values and signs" {
     // dev4-univ-edf-known-20261113: g=16, n=100, x=Phi^-1(p^1.4).
     const result = known(.{ .d = 0.12819364691435, .w2 = 0.82642690884982, .a2 = 4.94656789806195 }, 100);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.07211573250396), result.d.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.00651937389133), result.w2.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.00380915227183), result.a2.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.07211573250396), result.d.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00651937389133), result.w2.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00380915227183), result.a2.?.value, 1e-12);
     const high = known(.{ .d = 0.005, .w2 = 0.000833333333333, .a2 = 0.0115 }, 100);
-    try std.testing.expectEqual(Sign.greater, high.d.sign);
-    try std.testing.expectEqual(@as(f64, 0.25), high.w2.value);
+    try std.testing.expectEqual(Sign.greater, high.d.?.sign);
+    try std.testing.expectEqual(@as(f64, 0.25), high.w2.?.value);
     const low = known(.{ .d = 0.5, .w2 = 3, .a2 = 10 }, 100);
-    try std.testing.expectEqual(Sign.less, low.a2.sign);
-    try std.testing.expectEqual(@as(f64, 0.001), low.a2.value);
+    try std.testing.expectEqual(Sign.less, low.a2.?.sign);
+    try std.testing.expectEqual(@as(f64, 0.001), low.a2.?.value);
     // Independent family: fully specified beta(2,3), n=12, retained beta probe.
     const beta = known(.{ .d = 0.28255208, .w2 = 0.28816861, .a2 = 5.36529733 }, 12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.248), beta.d.value, 0.0005);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.155), beta.w2.value, 0.0005);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.003), beta.a2.value, 0.0005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.248), beta.d.?.value, 0.0005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.155), beta.w2.?.value, 0.0005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.003), beta.a2.?.value, 0.0005);
     const small = known(.{ .d = 0.05, .w2 = 0.24226917403858, .a2 = 1.50521137435919 }, 20);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.21538982301264), small.w2.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.17894713415491), small.a2.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.21538982301264), small.w2.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.17894713415491), small.a2.?.value, 1e-12);
     const large = known(.{ .d = 0.05237359333768, .w2 = 0.72166739439574, .a2 = 4.07471388745455 }, 500);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.12694672993993), large.d.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.01191559870513), large.w2.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.00842972671407), large.a2.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.12694672993993), large.d.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.01191559870513), large.w2.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00842972671407), large.a2.?.value, 1e-12);
 }
 
 test "UNIVARIATE estimated-parameter requests cannot reuse known-parameter probabilities" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     var d = diag.Diagnostics.init(arena.allocator());
-    try std.testing.expectError(error.ParseError, compute(&d, &.{ 1, 2, 3 }, .{ .family = .normal, .p = .{} }, .{ .family = .normal, .mu = 0 }));
+    const partial = try compute(&d, &.{ 1, 2, 3 }, .{ .family = .normal, .p = .{} }, .{ .family = .normal, .mu = 0 });
+    try std.testing.expect(partial.d == null and partial.w2 != null and partial.a2 != null);
 }
 
 test "UNIVARIATE fitted-normal histogram EDF lower-tail knots match SAS M9" {
     const r = normalEstimated(.{ .d = 0.06316825604689, .w2 = 0.13635603505674, .a2 = 0.8901915619608 }, 100);
-    try std.testing.expectEqual(Sign.greater, r.d.sign);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.03745702814542), r.w2.value, 1e-12);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.02277145446509), r.a2.value, 1e-12);
+    try std.testing.expectEqual(Sign.greater, r.d.?.sign);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.03745702814542), r.w2.?.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.02277145446509), r.a2.?.value, 1e-12);
     const tail = normalEstimated(.{ .d = 0.1, .w2 = 0.1872120512639994 / 1.005, .a2 = 1 }, 100);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.00799738016), tail.w2.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00799738016), tail.w2.?.value, 1e-12);
+}
+
+test "UNIVARIATE EDF adapter generates and refits actual family samples with a fixed seed" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var x: [40]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const u = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 40, 1.5);
+        v.* = @sqrt(-2 * std.math.log1p(-u));
+    }
+    // SAS M9, dev5-edf-mc.sas: independent 10,000-replicate reference.
+    const cases = [_]struct { request: fitting.Request, probabilities: [3]f64 }{
+        .{ .request = .{ .family = .rayleigh, .sigma = 1 }, .probabilities = .{ 0.2269, 0.0462, 0.0305 } },
+        .{ .request = .{ .family = .rayleigh }, .probabilities = .{ 0.6012, 0.2315, 0.1294 } },
+        .{ .request = .{ .family = .gumbel, .mu = 0, .sigma = 1 }, .probabilities = .{ 0, 0.0001, 0.0001 } },
+        .{ .request = .{ .family = .igauss, .mu = 1, .lambda = 1 }, .probabilities = .{ 0.188, 0.077, 0.095 } },
+        .{ .request = .{ .family = .pareto, .sigma = 1, .alpha = -0.5 }, .probabilities = .{ 0.1288, 0.0704, 0.0454 } },
+    };
+    for (cases) |case| {
+        var request = case.request;
+        request.edfseed = 86531;
+        request.edfnsamples = 2000;
+        const curve = try fitting.fit(&d, &x, request);
+        const result = try compute(&d, &x, curve, request);
+        try std.testing.expectEqual(@as(usize, 2000), result.simulation.?.samples);
+        try std.testing.expectEqual(@as(u64, 86531), result.simulation.?.seed);
+        for ([_]f64{ result.d.?.value, result.w2.?.value, result.a2.?.value }, case.probabilities) |actual, reference| {
+            const pooled = @max((actual + reference) / 2, 1.0 / 2000.0);
+            const tolerance = 5 * @sqrt(pooled * (1 - pooled) * (1.0 / 2000.0 + 1.0 / 10000.0)) + 1.0 / 2000.0;
+            try std.testing.expectApproxEqAbs(reference, actual, tolerance);
+        }
+    }
+    const request: fitting.Request = .{ .family = .rayleigh, .edfseed = 91, .edfnsamples = 30 };
+    const curve = try fitting.fit(&d, &x, request);
+    const first = try compute(&d, &x, curve, request);
+    const again = try compute(&d, &x, curve, request);
+    try std.testing.expectEqualDeep(first, again);
+    var invalid = request;
+    invalid.maxiter = 0;
+    try std.testing.expectError(error.ParseError, compute(&d, &x, curve, invalid));
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "no replication was discarded") != null);
 }

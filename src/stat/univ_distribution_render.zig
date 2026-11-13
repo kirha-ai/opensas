@@ -14,6 +14,15 @@ const b = @import("ods_table.zig");
 const h = proc.UnivariateHelpers;
 const Parameter = struct { name: []const u8, symbol: []const u8, value: f64 };
 
+pub fn renderTrace(a: std.mem.Allocator, out: *std.ArrayList(u8), trace: fitting.Trace, report: fitting.Report) !void {
+    try out.appendSlice(a, "\nOptimization Iteration History\nStart Iteration Theta Sigma Delta Gamma LogLikelihood\n");
+    for (trace.iterations.items) |iteration| {
+        const p = iteration.parameters;
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d} {d:.8} {d:.8} {d:.8} {d:.8} {d:.8}\n", .{ iteration.start, iteration.iteration, p.theta, p.lambda, p.delta, p.gamma, iteration.log_likelihood }));
+    }
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "Optimization status: {s}{s}{s}\n", .{ if (report.converged) "converged" else "nonconverged", if (report.reason != null) " — " else "", report.reason orelse "" }));
+}
+
 pub fn familyName(family: dist.Family) []const u8 {
     return switch (family) {
         .normal => "Normal",
@@ -134,8 +143,9 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         table.ds.setLabel("pType", "p-value Label");
         table.ds.setLabel("pSign", "Sign of p-value");
         table.ds.setLabel("pValue", "p-value");
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nGoodness-of-Fit Tests for {s} Distribution\nTest Statistic p Value\n", .{name}));
-        for ([_][]const u8{ "Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling" }, [_][]const u8{ "D", "W-Sq", "A-Sq" }, [_][]const u8{ "Pr > D", "Pr > W-Sq", "Pr > A-Sq" }, [_]f64{ tests.statistics.d, tests.statistics.w2, tests.statistics.a2 }, [_]gof.Probability{ tests.d, tests.w2, tests.a2 }) |test_name, lab, ptype, statistic, probability| {
+        if (tests.d != null or tests.w2 != null or tests.a2 != null) try out.appendSlice(a, try std.fmt.allocPrint(a, "\nGoodness-of-Fit Tests for {s} Distribution\nTest Statistic p Value\n", .{name}));
+        for ([_][]const u8{ "Kolmogorov-Smirnov", "Cramer-von Mises", "Anderson-Darling" }, [_][]const u8{ "D", "W-Sq", "A-Sq" }, [_][]const u8{ "Pr > D", "Pr > W-Sq", "Pr > A-Sq" }, [_]f64{ tests.statistics.d, tests.statistics.w2, tests.statistics.a2 }, [_]?gof.Probability{ tests.d, tests.w2, tests.a2 }) |test_name, lab, ptype, statistic, maybe_probability| {
+            const probability = maybe_probability orelse continue;
             const sign = switch (probability.sign) {
                 .exact => "",
                 .less => "<",
@@ -144,7 +154,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
             try context.row(&table, &.{ b.s(test_name), b.s(lab), b.n(statistic), b.s(ptype), b.s(sign), b.n(probability.value) });
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.8} {s} {s}{d:.3}\n", .{ test_name, lab, statistic, ptype, sign, probability.value }));
         }
-        try context.publish("GoodnessOfFit", &table);
+        if (table.ds.rows.items.len > 0) try context.publish("GoodnessOfFit", &table);
     }
     var quantiles = try context.createTable();
     quantiles.ds.label = "Quantiles";

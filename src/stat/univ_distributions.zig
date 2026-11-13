@@ -23,6 +23,7 @@ pub const Parameters = struct {
 pub const Distribution = struct {
     family: Family,
     p: Parameters,
+    closed_upper: bool = false,
 
     pub fn validate(self: Distribution, d: *diag.Diagnostics) diag.Error!void {
         inline for (std.meta.fields(Parameters)) |field| {
@@ -103,9 +104,9 @@ pub const Distribution = struct {
             },
             .weibull => @log(p.c / p.sigma) + (p.c - 1) * @log(y) - std.math.pow(f64, y, p.c),
             .rayleigh => @log(y / p.sigma) - y * y / 2,
-            .beta => if (y >= 1) -inf else (p.alpha - 1) * @log(y) + (p.beta - 1) * std.math.log1p(-y) - @log(p.sigma) - f.lgammaOf(p.alpha) - f.lgammaOf(p.beta) + f.lgammaOf(p.alpha + p.beta),
-            .power => if (y >= 1) -inf else @log(p.alpha / p.sigma) + (p.alpha - 1) * @log(y),
-            .pareto => if (p.alpha == 0) -@log(p.sigma) - y else if (p.alpha > 0 and y >= 1 / p.alpha) -inf else -@log(p.sigma) + (1 / p.alpha - 1) * std.math.log1p(-p.alpha * y),
+            .beta => if (y == 1 and self.closed_upper and p.beta == 1) @log(p.alpha / p.sigma) else if (y >= 1) -inf else (p.alpha - 1) * @log(y) + (p.beta - 1) * std.math.log1p(-y) - @log(p.sigma) - f.lgammaOf(p.alpha) - f.lgammaOf(p.beta) + f.lgammaOf(p.alpha + p.beta),
+            .power => if (y > 1 or (y == 1 and !self.closed_upper)) -inf else @log(p.alpha / p.sigma) + (p.alpha - 1) * @log(y),
+            .pareto => if (p.alpha == 1 and y <= 1) -@log(p.sigma) else if (p.alpha == 0) -@log(p.sigma) - y else if (p.alpha > 0 and y >= 1 / p.alpha) -inf else -@log(p.sigma) + (1 / p.alpha - 1) * std.math.log1p(-p.alpha * y),
             .sb => blk: {
                 if (y >= 1) break :blk -inf;
                 const z = p.gamma + p.delta * @log(y / (1 - y));

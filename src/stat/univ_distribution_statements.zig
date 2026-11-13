@@ -221,7 +221,20 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     if (statement.curves.len == 0) {
                         try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, null);
                     } else for (statement.curves) |curves| for (curves.requests) |request| {
-                        const curve = try fitting.fit(cx.diags, x.items, request);
+                        var report: fitting.Report = .{};
+                        var trace: fitting.Trace = .{ .allocator = a };
+                        var actual_request = request;
+                        actual_request.report = &report;
+                        if (request.optprint) actual_request.trace = &trace;
+                        const curve = fitting.fit(cx.diags, x.items, actual_request) catch |err| {
+                            if (report.no_fit) {
+                                if (request.optprint) try rendering.renderTrace(a, out, trace, report);
+                                try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, null);
+                                continue;
+                            }
+                            return err;
+                        };
+                        if (request.optprint) try rendering.renderTrace(a, out, trace, report);
                         try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, curve);
                         if (!curves.noprint) {
                             const bins = try values.histogram(a, cx.diags, x.items, local_statement.endpoints, statement.right, curve);
@@ -247,6 +260,7 @@ fn rows(cx: proc.ProcCtx, output: *Dataset, source: *Dataset, keys: []const usiz
     const bins = try values.histogram(cx.arena, cx.diags, x, statement.endpoints, statement.right, curve);
     for (bins) |bin| {
         const row = try cx.arena.alloc(Value, output.columns.items.len);
+        @memset(row, Value.missing);
         for (keys, 0..) |key, i| row[i] = representative[key];
         const at = keys.len;
         row[at] = .{ .str = source.columns.items[ci].name };
@@ -256,7 +270,7 @@ fn rows(cx: proc.ProcCtx, output: *Dataset, source: *Dataset, keys: []const usiz
         if (curve) |c| {
             row[at + 4] = .{ .str = curveName(c.family) };
             row[at + 5] = .{ .num = bin.expected_percent.? };
-        }
+        } else if (statement.curves.len > 0) row[at + 4] = .{ .str = "" };
         try output.appendRow(row);
     }
 }
@@ -396,4 +410,45 @@ test "UNIVARIATE WEIGHT with HISTOGRAM is a SAS error before output publication"
     try std.testing.expect(!diag.gapHit());
     try std.testing.expect(lib.find("h") == null and lib.find("s") == null);
     try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "WEIGHT variable cannot") != null);
+}
+
+test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reach ODS" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("b", .num);
+    _ = try ds.addColumn("u", .num);
+    for (1..102) |i| {
+        const z = @import("../functions.zig").distQuantile(.normal, (@as(f64, @floatFromInt(i)) - 0.375) / 101.25, &.{}).?;
+        try ds.appendRow(&.{ .{ .num = 1 / (1 + @exp((0.4 - z) / 1.2)) }, .{ .num = 3 + 2 * std.math.sinh((z - 0.4) / 1.2) } });
+    }
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output ParameterEstimates=pe;", &d));
+    const t = try lex.tokenize(a, "proc univariate data=d noprint;var b u;" ++
+        "histogram b / noplot sb(fitmethod=moments) endpoints=0 to 1 by .25;" ++
+        "histogram u / noplot su(fitmethod=mle theta=3 sigma=2 optseed=123) endpoints=-20 to 20 by 5;" ++
+        "histogram u / noplot su(fitmethod=mle optmaxiter=1 optmaxstarts=1 optseed=17 optprint) endpoints=-20 to 20 by 5;" ++
+        "histogram b / noplot beta(theta=est sigma=1 alpha=2 beta=3) endpoints=0 to 1 by .25;run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, t);
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const pe = lib.find("pe").?;
+    try std.testing.expectEqual(@as(usize, 33), pe.rows.items.len);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.177443), pe.rows.items[2][5].num, 7e-7);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.219036), pe.rows.items[11][5].num, 6e-7);
+    try std.testing.expectEqual(@as(f64, 1), pe.rows.items[28][5].num);
+    try std.testing.expectEqual(@as(f64, 2), pe.rows.items[29][5].num);
+    try std.testing.expectEqual(@as(f64, 3), pe.rows.items[30][5].num);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Optimization status: nonconverged") != null);
+    var warned = false;
+    for (d.list.items) |message| if (message.severity == .warning and std.mem.indexOf(u8, message.message, "fallback") != null) {
+        warned = true;
+    };
+    try std.testing.expect(warned);
 }
