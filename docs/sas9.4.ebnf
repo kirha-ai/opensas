@@ -851,16 +851,29 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
                  [ "OUT" "=" dataset ] [ "NODUPKEY" | "NODUP" ] ";"
                  "BY" { [ "DESCENDING" ] var } ";" step_boundary ;
 
-(* PROC CORR core — FEAT-corr-core, Statistical Procedures pp.8–23,34–36.
-   Typed Pearson results retain pair-specific N/p, weights and centered moments.
-   OUTP=/other correlation measures and modeling options remain fail-loud. *)
+(* PROC CORR — Statistical Procedures pp.8–36.
+   Typed Pearson/rank/partial/Fisher/reliability and ordinal estimates are implemented.
+   HOEFFDING currently requires NOPROB; probability support is a separate module.
+   Polychoric boundary information below numerical resolution fails explicitly.
+   OUTP=/other output data sets and plots remain fail-loud. *)
 proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
+                 | "SPEARMAN" | "KENDALL" | "HOEFFDING" | "ALPHA"
+                 | "SINGULAR" "=" number
+                 | "FISHER" [ "(" { corr_fisher_option } ")" ]
+                 | "POLYCHORIC" [ "(" { corr_poly_option } ")" ]
+                 | "POLYSERIAL" [ "(" { corr_poly_option | "ORDINAL" "=" ( "VAR" | "WITH" ) } ")" ]
                  | "EXCLNPWGT" | "EXCLNPWGTS" | "NOPRINT" | "NOSIMPLE"
-                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP" | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
-                 { "VAR" var_list ";" | "WITH" var_list ";"
+                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP"
+                 | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
+                 { "VAR" var_list ";" | "WITH" var_list ";" | "PARTIAL" var_list ";"
                  | "BY" { [ "DESCENDING" ] var } [ "NOTSORTED" ] ";"
                  | "FREQ" var ";" | "WEIGHT" var ";"
                  | "WHERE" expression ";" } step_boundary ; (* opensas *)
+corr_fisher_option = "ALPHA" "=" number | "RHO0" "=" [ "+" | "-" ] number
+                 | "BIASADJ" "=" ( "YES" | "NO" )
+                 | "TYPE" "=" ( "LOWER" | "UPPER" | "TWOSIDED" ) ; (* opensas *)
+corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
+                 | "NGROUPS" "=" ( "ALL" | integer ) ; (* opensas *)
 
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
