@@ -46,7 +46,7 @@ const freq_stat = @import("stat/freq.zig");
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
 pub const ods = @import("ods.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null };
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?@import("stat/univ_plot_data.zig").Sink = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4459,6 +4459,7 @@ fn isUnivOutGapOption(kw: []const u8) bool {
 
 const univ = @import("stat/univariate.zig");
 const univ_distributions = @import("stat/univ_distribution_statements.zig");
+const univ_plots = @import("stat/univ_distribution_plots.zig");
 
 pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.Error!void {
     const arena = cx.arena;
@@ -4472,6 +4473,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var extra: univ.Options = .{};
     var outputs: std.ArrayList(univ.Output) = .empty;
     var histograms: std.ArrayList(univ_distributions.Statement) = .empty;
+    var distribution_plots: std.ArrayList(univ_plots.Statement) = .empty;
     var ids: std.ArrayList([]const u8) = .empty;
     var i: usize = 2; // past `proc univariate`
     while (i < toks.len and toks[i].tag != .semicolon) {
@@ -4582,11 +4584,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         } else if (tkKw(toks[i], "histogram")) {
             try histograms.append(arena, try univ_distributions.parseStatement(arena, diags, toks, &i));
         } else if (tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
-            // Plot statements produce graphics we never render; swallowing them
-            // silently no-op'd a requested plot (BUG-univplotnoop). Fail loud, as
-            // ID/OUTPUT-pctlpts beside them already do. Five named, valid SAS 9.4
-            // statements → gap (rc 2); the catch-all below keeps the typos at rc 1.
-            return failGap(diags, toks[i].line, "PROC UNIVARIATE: {s} statement is not supported yet", .{toks[i].text});
+            try distribution_plots.append(arena, try univ_plots.parse(arena, diags, toks, &i));
         } else if (tkKw(toks[i], "inset")) {
             // INSET is a valid SAS 9.4 PROC UNIVARIATE statement (the Syntax
             // block's own list, Statistical Procedures printed p. 298,
@@ -4707,7 +4705,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
-    if (wcol != null and histograms.items.len > 0) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
+    if (wcol != null and (histograms.items.len > 0 or distribution_plots.items.len > 0)) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
     try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
     if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
@@ -4746,6 +4744,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         }
     }
 
+    try univ_plots.execute(cx, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
     if (noprint) {

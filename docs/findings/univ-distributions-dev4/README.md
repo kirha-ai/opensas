@@ -188,8 +188,11 @@ and warnings. All 18 numerical rows are unchanged; the separator disappears.
 
 Precise remaining tags (none waived by a green checkpoint):
 
-- **PUBLIC-PLOTS:** CDFPLOT/PPPLOT/QQPLOT/PROBPLOT public dispatch remains guarded;
-  numerical point/quantile helpers exist, but public execution is unfinished.
+- **PUBLIC-PLOTS:** CDFPLOT/PPPLOT/QQPLOT/PROBPLOT now parse and execute numerical
+  paths through `runUnivariate` with an explicit `ProcCtx.univariate_plot_sink`.
+  Without a consumer, execution still raises the existing graphics gap rather
+  than silently dropping a graph. Graphics rendering remains outside scope.
+  Broad statement-option/edge-case acceptance is not yet complete.
 - **BINS-OUTPUT:** constant/comparative bins, KEY/UNIFORM/count controls, automatic
   kernel grid extent, range/list completeness and full BY/CLASS metadata/output
   option ordering need completion. Selected explicit and automatic cases pass.
@@ -210,3 +213,30 @@ Precise remaining tags (none waived by a green checkpoint):
 - **FINAL-ACCEPTANCE:** full public heldouts, remaining option/schema behavior,
   and full ticket validation are not complete. No jira.md change or completion
   claim is made by this checkpoint.
+
+## Public plot numerical consumer milestone
+
+`univ_plot_data.zig` defines a typed consumer contract: variable metadata, raw
+and formatted BY/CLASS keys, fitted parameters, coordinates, empirical/model
+probabilities, theoretical quantiles and optional reference-line coefficients.
+`univ_distribution_plots.zig` is the public statement parser/executor, not a
+replacement renderer. A consumer is required; CLI graphics requests keep rc=2.
+No SAS output dataset or ODS table is invented for these graph-only statements.
+
+The parser implements default normal distributions, mandatory QQ/PROBPLOT shape
+parameters, EST/list fitting, NOLINE for PP, RANKADJ/NADJ, CDF VSCALE, Weibull2,
+SLOPE and rotation. Fixed QQ shapes do not spuriously estimate location/scale
+or reject raw observations outside a standardized distribution's support.
+CDF ties use the right-continuous empirical CDF; PP uses ordered rank i/n.
+QQ/PROBPLOT use adjusted probabilities, with Weibull2's log transform. Consumer
+failure propagates, and absent consumers retain the explicit graphics error.
+
+Three public regression blocks exercise all four statements through actual
+PROC dispatch, BY/CLASS/FREQ/missing processing, required-shape diagnostics,
+reference lines and shape lists. The retained `dev4-public-plots-20261113`
+source runs the same statement options in SAS M9 with GOPTIONS NODISPLAY and
+independently computes manual pp.307/365/450/457 coordinate formulas. It has
+zero SAS errors and two reference-line visibility warnings for BY b=2; those
+are graph viewport diagnostics, not missing numerical values. Coordinate checks
+are explicit to 1e-11/1e-12. No graph extraction or rendered-image parity is
+claimed. Final milestone gate counts are reported after dependency integration.
