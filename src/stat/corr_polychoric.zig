@@ -93,7 +93,7 @@ fn erfccheb(z: f64) f64 {
 }
 
 // Positive conditional-normal integration avoids subtracting four nearly equal
-// bivariate CDFs. Split at every conditional transition before adaptive Simpson.
+// bivariate CDFs. Split at every conditional transition before adaptive quadrature.
 const Rectangle = struct {
     yl: f64,
     yu: f64,
@@ -108,14 +108,66 @@ fn normalInterval(lo: f64, hi: f64) f64 {
     if (hi < 0) return (erfccheb(-hi / @sqrt(2.0)) - erfccheb(-lo / @sqrt(2.0))) / 2;
     return 1 - (erfccheb(-lo / @sqrt(2.0)) + erfccheb(hi / @sqrt(2.0))) / 2;
 }
-fn integrateRectangle(f: Rectangle, a: f64, b: f64, fa: f64, fb: f64, fc: f64, whole: f64, tolerance: f64, depth: usize) f64 {
-    const c = (a + b) / 2;
-    const fl = f.value((a + c) / 2);
-    const fr = f.value((c + b) / 2);
-    const left = (c - a) * (fa + 4 * fl + fc) / 6;
-    const right = (b - c) * (fc + 4 * fr + fb) / 6;
-    if (depth == 0 or @abs(left + right - whole) <= 15 * tolerance) return left + right + (left + right - whole) / 15;
-    return integrateRectangle(f, a, c, fa, fc, fl, left, tolerance / 2, depth - 1) + integrateRectangle(f, c, b, fc, fb, fr, right, tolerance / 2, depth - 1);
+const QuadraturePanel = struct { lo: f64, hi: f64, value: f64, err: f64 };
+
+/// Embedded Gauss 7 / Kronrod 15 rule. Nodes/weights are mathematical constants
+/// from QUADPACK DQK15; variation and roundoff protect the error estimate against
+/// an accidentally small difference between the two rules.
+fn rectanglePanel(f: Rectangle, a: f64, b: f64) QuadraturePanel {
+    const nodes = [_]f64{ 0.9914553711208126392, 0.9491079123427585245, 0.8648644233597690728, 0.7415311855993944399, 0.5860872354676911303, 0.4058451513773971669, 0.2077849550078984676 };
+    const kronrod_weights = [_]f64{ 0.022935322010529225, 0.063092092629978553, 0.104790010322250184, 0.140653259715525919, 0.169004726639267903, 0.190350578064785410, 0.204432940075298892, 0.209482141084727828 };
+    const gauss_weights = [_]f64{ 0.129484966168869693, 0.279705391489276668, 0.381830050505118945, 0.417959183673469388 };
+    const middle = (a + b) / 2;
+    const half = (b - a) / 2;
+    const fc = f.value(middle);
+    var kronrod = kronrod_weights[7] * fc;
+    var gauss = gauss_weights[3] * fc;
+    var absolute = kronrod_weights[7] * @abs(fc);
+    var low: [7]f64 = undefined;
+    var high: [7]f64 = undefined;
+    for (nodes, 0..) |node, i| {
+        low[i] = f.value(middle - half * node);
+        high[i] = f.value(middle + half * node);
+        kronrod += kronrod_weights[i] * (low[i] + high[i]);
+        absolute += kronrod_weights[i] * (@abs(low[i]) + @abs(high[i]));
+        if (i % 2 == 1) gauss += gauss_weights[i / 2] * (low[i] + high[i]);
+    }
+    const mean = kronrod / 2;
+    var variation = kronrod_weights[7] * @abs(fc - mean);
+    for (low, high, 0..) |l, h, i| variation += kronrod_weights[i] * (@abs(l - mean) + @abs(h - mean));
+    variation *= @abs(half);
+    absolute *= @abs(half);
+    var err = @abs((kronrod - gauss) * half);
+    if (variation > 0 and err > 0) err = variation * @min(1, std.math.pow(f64, 200 * err / variation, 1.5));
+    err = @max(err, 50 * std.math.floatEps(f64) * absolute);
+    return .{ .lo = a, .hi = b, .value = kronrod * half, .err = err };
+}
+
+fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
+    var panels: [4096]QuadraturePanel = undefined;
+    panels[0] = rectanglePanel(f, a, b);
+    var len: usize = 1;
+    while (true) {
+        var value: f64 = 0;
+        var err: f64 = 0;
+        var worst: usize = 0;
+        for (panels[0..len], 0..) |p, i| {
+            if (!std.math.isFinite(p.value) or !std.math.isFinite(p.err)) return std.math.nan(f64);
+            value += p.value;
+            err += p.err;
+            if (p.err > panels[worst].err) worst = i;
+        }
+        // Recompute the relative budget from the current estimate, rather than
+        // permanently dividing a potentially underestimated first-panel budget.
+        if (err <= @max(@abs(value) * 1e-10, 1e-300)) return value;
+        if (len == panels.len) return std.math.nan(f64);
+        const previous = panels[worst];
+        const middle = (previous.lo + previous.hi) / 2;
+        if (middle == previous.lo or middle == previous.hi) return std.math.nan(f64);
+        panels[worst] = rectanglePanel(f, previous.lo, middle);
+        panels[len] = rectanglePanel(f, middle, previous.hi);
+        len += 1;
+    }
 }
 pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     if (rho == 0) return normalInterval(xl, xu) * normalInterval(yl, yu);
@@ -141,11 +193,9 @@ pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     var total: f64 = 0;
     for (cuts[0 .. len - 1], cuts[1..len]) |a, b| {
         if (a == b) continue;
-        const fa = f.value(a);
-        const fb = f.value(b);
-        const fc = f.value((a + b) / 2);
-        const whole = (b - a) * (fa + 4 * fc + fb) / 6;
-        total += integrateRectangle(f, a, b, fa, fb, fc, whole, @max(@abs(whole) * 1e-10, 1e-300), 18);
+        const probability = integrateRectangle(f, a, b);
+        if (!std.math.isFinite(probability)) return probability;
+        total += probability;
     }
     return @max(0, total);
 }
@@ -182,7 +232,7 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     for (m.counts, 0..) |n, k| {
         if (n == 0) continue;
         const p = cellProbability(m, params, k / m.cols, k % m.cols);
-        if (p <= 0) return std.math.inf(f64);
+        if (!std.math.isFinite(p) or p <= 0) return std.math.inf(f64);
         result -= n * @log(p);
     }
     return result;
@@ -323,6 +373,8 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             const i = cell / m.cols;
             const j = cell % m.cols;
             const probability = cellProbability(m, params, i, j);
+            if (!std.math.isFinite(probability) or (probability <= 0 and n > 0))
+                return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
             if (!(probability > 0)) continue;
             cellGradient(m, params, i, j, derivatives);
             for (0..dim) |r| {

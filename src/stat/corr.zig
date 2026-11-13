@@ -1431,3 +1431,34 @@ test "CORR public Hoeffding preserves ODS advanced capture rejection" {
     try std.testing.expect(diagnostics.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ODS OUTPUT") != null);
 }
+
+test "CORR rectangle quadrature preserves partition mass and likelihood descent" {
+    const kernel = @import("corr_polychoric.zig");
+    const states = [_][4]f64{
+        .{ -0.4956306291470207, 0.8088444041132948, 0.2855878655411077, 0.9947335197981 },
+        .{ -0.495630632452179, 0.8088444028834387, 0.2855878638305473, 0.9950991078001906 },
+    };
+    const counts = [_]f64{ 280, 0, 273, 161, 0, 189 };
+    var likelihood: [2]f64 = undefined;
+    for (states, 0..) |state, k| {
+        const x = [_]f64{ -40, state[0], state[1], 40 };
+        const y = [_]f64{ -40, state[2], 40 };
+        var total: f64 = 0;
+        var nll: f64 = 0;
+        for (0..3) |i| for (0..2) |j| {
+            const p = kernel.rectangleProbability(x[i], x[i + 1], y[j], y[j + 1], state[3]);
+            const transposed = kernel.rectangleProbability(y[j], y[j + 1], x[i], x[i + 1], state[3]);
+            try std.testing.expect(std.math.isFinite(p) and p >= 0);
+            try std.testing.expectApproxEqAbs(p, transposed, 3e-13);
+            total += p;
+            if (counts[i * 2 + j] > 0) nll -= counts[i * 2 + j] * @log(p);
+        };
+        try std.testing.expectApproxEqAbs(@as(f64, 1), total, 3e-13);
+        likelihood[k] = nll;
+    }
+    // SAS PROBBNRM independently verifies these fixed iteration states.
+    try std.testing.expectApproxEqAbs(@as(f64, 1227.6442891538863), likelihood[0], 5e-9);
+    try std.testing.expectApproxEqAbs(@as(f64, 1227.6442884965318), likelihood[1], 5e-9);
+    try std.testing.expect(likelihood[1] < likelihood[0] - 5e-7);
+}
+
