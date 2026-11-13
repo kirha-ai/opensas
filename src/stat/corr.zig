@@ -1137,7 +1137,7 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
         const estimate = if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
-            return cx.diags.fail(error.ParseError, 0, "PROC CORR: SAS-compatible polychoric inference for sparse monotone boundary tables is not implemented.", .{});
+            return cx.diags.fail(error.ParseError, 0, "PROC CORR: polychoric boundary information is unresolved at the requested tolerance.", .{});
         }
         if (!estimate.converged) try cx.diags.warn(0, "PROC CORR: {s} correlation for {s} and {s} unavailable (insufficient levels, NGROUPS limit, or failure to converge).", .{ if (serial) @as([]const u8, "polyserial") else "polychoric", s.ds.columns.items[c].name, s.ds.columns.items[r].name });
         try results.append(cx.arena, .{ .row = r, .column = c, .estimate = estimate });
@@ -1312,9 +1312,9 @@ test "CORR sparse polychoric boundary fails through captured diagnostics instead
     try lib.put("d", ds);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric; var x y; freq f; run;", &d));
+    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-5); var x y; freq f; run;", &d));
     try std.testing.expectError(error.ParseError, compute(cx, s));
-    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "sparse monotone boundary tables is not implemented") != null);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
 }
 
 test "CORR absolute convergence and iteration exhaustion match asymmetric SAS table" {
@@ -1332,4 +1332,57 @@ test "CORR absolute convergence and iteration exhaustion match asymmetric SAS ta
     try std.testing.expectApproxEqAbs(@as(f64, 0.94595), result.r, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.01381), result.se, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 353.3860), result.lr, 0.00005);
+}
+
+test "CORR sparse polychoric SAS scoring initialization covariance and iteration limits" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 10 }, &.{ 1, 2, 4 }, &.{ 2, 2, 8 }, &.{ 2, 3, 2 }, &.{ 3, 3, 7 } });
+    const result = (try Testing.analyze(a, ds, "proc corr polychoric;var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(result.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9990304484694), result.r, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.1169549768335), result.se, 5e-7);
+    try std.testing.expectApproxEqAbs(@as(f64, 72.965915384262), result.wald, 0.001);
+    try std.testing.expectApproxEqRel(@as(f64, 1.3190831196899e-17), result.p, 0.001);
+    try std.testing.expectApproxEqAbs(@as(f64, 40.9081053981301), result.lr, 1e-7);
+    const loose = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.001);var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99729481288087), loose.r, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.01781882037824), loose.se, 5e-7);
+    for ([_]usize{ 5, 10 }) |limit| {
+        const source = try std.fmt.allocPrint(a, "proc corr polychoric(maxiter={d});var x y;freq f;run;", .{limit});
+        try std.testing.expect(!(try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate.converged);
+    }
+    const mirrored = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+    const transposed = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+    for (ds.rows.items) |row| {
+        try mirrored.appendRow(&.{ row[0], .{ .num = -row[1].num }, row[2] });
+        try transposed.appendRow(&.{ row[1], row[0], row[2] });
+    }
+    for ([_]*Dataset{ mirrored, transposed }, [_]f64{ -1, 1 }) |input, sign| {
+        const check = (try Testing.analyze(a, input, "proc corr polychoric;var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+        try std.testing.expectApproxEqAbs(sign * 0.9990304484694, check.r, 5e-8);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.1169549768335), check.se, 5e-7);
+    }
+    const labels = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 100, 1, 10 }, &.{ 100, 2, 4 }, &.{ 101, 2, 8 }, &.{ 101, 3, 2 }, &.{ 1000, 3, 7 } });
+    const first = (try Testing.analyze(a, labels, "proc corr polychoric(converge=.99 maxiter=1);var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try Testing.near(0.999, first.r);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.12853158043271), first.se, 5e-8);
+    const changed = (try Testing.analyze(a, labels, "proc corr polychoric;var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99915910281921), changed.r, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.21383503532071), changed.se, 5e-6);
+    const heldout = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 5 }, &.{ 1, 2, 7 }, &.{ 2, 2, 8 }, &.{ 2, 3, 3 }, &.{ 3, 3, 12 } });
+    const checked = (try Testing.analyze(a, heldout, "proc corr polychoric;var x y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99894222793371), checked.r, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.21987585371233), checked.se, 5e-6);
+}
+
+test "CORR positive rectangle integration resolves near-boundary quadrants" {
+    const kernel = @import("corr_polychoric.zig");
+    for ([_]f64{ -0.999999, -0.99, -0.4, 0, 0.4, 0.99, 0.999999 }) |rho| {
+        const expected = 0.25 + std.math.asin(rho) / (2 * std.math.pi);
+        try std.testing.expectApproxEqAbs(expected, kernel.rectangleProbability(-40, 0, -40, 0, rho), 5e-11);
+    }
+    const rare = kernel.rectangleProbability(-0.4, -0.3, 0.3, 0.4, 0.99);
+    try std.testing.expect(rare > 0 and rare < 1e-5);
 }

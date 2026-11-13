@@ -7,9 +7,7 @@ pub const Method = enum { pearson, spearman, kendall, hoeffding };
 pub const Observation = struct { x: f64, y: f64, f: f64 = 1 };
 pub const Estimate = struct { r: f64 = nan, p: f64 = nan, n: f64 = 0 };
 pub fn normal(x: f64) f64 {
-    if (x >= 9) return 1;
-    if (x <= -9) return 0;
-    return fns.distCdf(.normal, x, &.{}).?;
+    return @import("corr_polychoric.zig").normalTail(-x);
 }
 pub fn probability(r: f64, df: f64) f64 {
     if (!(df > 0) or !std.math.isFinite(r)) return nan;
@@ -175,28 +173,13 @@ pub fn polychoric(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
             return result;
         }
     }
-    // A sparse monotone staircase has its likelihood supremum at |rho|=1.
-    // The shared FREQ solver can return a huge spurious SE there; CORR must
-    // reject the unresolved boundary instead of publishing an invalid Wald test.
-    if (xs.len > 2 or ys.len > 2) {
-        var concordant = false;
-        var discordant = false;
-        for (data) |d| for (data) |e| {
-            const sign = (d.x - e.x) * (d.y - e.y);
-            concordant = concordant or sign > 0;
-            discordant = discordant or sign < 0;
-        };
-        if (!concordant or !discordant) {
-            result.unsupported_boundary = true;
-            return result;
-        }
-    }
     const counts = try a.alloc(f64, xs.len * ys.len);
     defer a.free(counts);
     @memset(counts, 0);
     for (data) |d| counts[std.mem.indexOfScalar(f64, xs, d.x).? * ys.len + std.mem.indexOfScalar(f64, ys, d.y).?] += d.f;
-    const estimate = try @import("corr_polychoric.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts }, .{ .converge = opt.converge, .maxiter = opt.maxiter });
+    const estimate = try @import("corr_polychoric.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts, .row_scores = xs, .col_scores = ys }, .{ .converge = opt.converge, .maxiter = opt.maxiter });
     result.converged = estimate.converged;
+    result.unsupported_boundary = estimate.information_unresolved;
     if (!result.converged) return result;
     result.r = estimate.coefficient.estimate orelse nan;
     result.se = estimate.coefficient.ase orelse nan;
