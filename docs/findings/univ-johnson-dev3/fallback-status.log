@@ -1,0 +1,111 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data j; do i=1 to 51; z=probit((i-.375)/51.25); u=2*sinh(z/1.1); output; end; run;
+
+NOTE: The data set WORK.J has 51 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.53k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 10:03:13 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     127
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         title 'SU one-iteration fallback with fixed gamma';
+40         proc univariate data=j; var u;
+41         histogram u / su(fitmethod=mle gamma=0 optseed=42 optmaxstarts=1 optmaxiter=1 optprint) noplot;
+42         run;
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: The NLP solver is called.
+NOTE: The Active Set algorithm is used.
+NOTE: The MULTISTART option is enabled.
+NOTE: The deterministic parallel mode is enabled.
+NOTE: The Multistart algorithm is executing in single-machine mode.
+NOTE: The Multistart algorithm is using up to 16 threads.
+NOTE: Random number seed 42 is used.
+                    Best       Local  Optimality    Infeasi-  Local  Local
+      Start    Objective   Objective       Error      bility  Iters  Status
+          1 * 1.38710569  1.38710569  0.04162387           0      1  IterLimit
+NOTE: The Multistart algorithm generated 1280 sample points.
+NOTE: 0 distinct local optima were found.
+NOTE: The best objective value found by local solver = 1.3871056936.
+NOTE: A solution with objective = 1.3871056936 was found from sample points and returned.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-3.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.53 seconds
+      user cpu time       0.04 seconds
+      system cpu time     0.03 seconds
+      memory              12057.57k
+      OS Memory           26024.00k
+      Timestamp           11/13/2026 10:03:15 AM
+      Step Count                        3  Switch Count  1
+      Page Faults                       3
+      Page Reclaims                     3497
+      Page Swaps                        0
+      Voluntary Context Switches        1849
+      Involuntary Context Switches      0
+      Block Input Operations            312
+The SAS System
+
+      Block Output Operations           8
+      
+
+43         title 'SU one-iteration fallback with fixed location';
+44         proc univariate data=j; var u;
+45         histogram u / su(fitmethod=mle theta=0 optseed=42 optmaxstarts=1 optmaxiter=1 optprint) noplot;
+46         run;
+
+NOTE: Beginning SU fit using maximum likelihood.
+NOTE: The NLP solver is called.
+NOTE: The Active Set algorithm is used.
+NOTE: The MULTISTART option is enabled.
+NOTE: The deterministic parallel mode is enabled.
+NOTE: The Multistart algorithm is executing in single-machine mode.
+NOTE: The Multistart algorithm is using up to 16 threads.
+NOTE: Random number seed 42 is used.
+                    Best       Local  Optimality    Infeasi-  Local  Local
+      Start    Objective   Objective       Error      bility  Iters  Status
+          1 * 1.38710569  1.38710569  0.04162387           0      1  IterLimit
+NOTE: The Multistart algorithm generated 1280 sample points.
+NOTE: 0 distinct local optima were found.
+NOTE: The best objective value found by local solver = 1.3871056936.
+NOTE: A solution with objective = 1.3871056936 was found from sample points and returned.
+NOTE: None of the EDF goodness-of-fit statistics for the SU distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 4-6.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           1.51 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.04 seconds
+      memory              10061.04k
+      OS Memory           26280.00k
+      Timestamp           11/13/2026 10:03:16 AM
+      Step Count                        4  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     2484
+      Page Swaps                        0
+      Voluntary Context Switches        1913
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         
+48         
+49         
+50         
+The SAS System
+
+51         

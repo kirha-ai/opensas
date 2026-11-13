@@ -1,0 +1,220 @@
+
+SU one-iteration fallback with fixed gamma
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          51    Sum Weights                 51
+Mean                        0    Sum Observations             0
+Std Deviation       2.5500889    Variance            6.50295339
+Skewness                    0    Kurtosis            1.94266599
+Uncorrected SS     325.147669    Corrected SS        325.147669
+Coeff Variation             .    Std Error Mean      0.35708387
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean            0     Std Deviation            2.55009
+Median          0     Variance                 6.50295
+Mode            .     Range                   15.21994
+                      Interquartile Range      2.65963
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t         0    Pr > |t|    1.0000
+Sign           M         0    Pr >= |M|   1.0000
+Signed Rank    S         0    Pr >= |S|   1.0000
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max       7.60997
+99%            7.60997
+95%            4.18695
+90%            2.72573
+75% Q3         1.32981
+50% Median     0.00000
+25% Q1        -1.32981
+10%           -2.72573
+5%            -4.18695
+1%            -7.60997
+0% Min        -7.60997
+
+
+           Extreme Observations
+ 
+------Lowest-----        -----Highest-----
+ 
+   Value      Obs           Value      Obs
+
+-7.60997        1         3.08278       47
+-5.22109        2         3.54373       48
+-4.18695        3         4.18695       49
+
+SU one-iteration fallback with fixed gamma
+
+The UNIVARIATE Procedure
+Variable:  u
+
+           Extreme Observations
+ 
+------Lowest-----        -----Highest-----
+ 
+   Value      Obs           Value      Obs
+
+-3.54373        4         5.22109       50
+-3.08278        5         7.60997       51
+
+SU one-iteration fallback with fixed gamma
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta    1.31E-15
+Scale       Sigma    1.653148
+Shape       Delta     0.94738
+Shape       Gamma           0
+Mean                 1.31E-15
+Std Dev              3.364564
+Skewness                    0
+Kurtosis             50.88506
+Mode                 1.34E-15
+
+
+ Quantiles for SU Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -7.60997   -9.561101
+    5.0   -4.18695   -4.545848
+   10.0   -2.72573   -2.983477
+   25.0   -1.32981   -1.278943
+   50.0    0.00000    0.000000
+   75.0    1.32981    1.278943
+   90.0    2.72573    2.983477
+   95.0    4.18695    4.545848
+   99.0    7.60997    9.561101
+
+SU one-iteration fallback with fixed location
+
+The UNIVARIATE Procedure
+Variable:  u
+
+                            Moments
+
+N                          51    Sum Weights                 51
+Mean                        0    Sum Observations             0
+Std Deviation       2.5500889    Variance            6.50295339
+Skewness                    0    Kurtosis            1.94266599
+Uncorrected SS     325.147669    Corrected SS        325.147669
+Coeff Variation             .    Std Error Mean      0.35708387
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean            0     Std Deviation            2.55009
+Median          0     Variance                 6.50295
+Mode            .     Range                   15.21994
+                      Interquartile Range      2.65963
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t         0    Pr > |t|    1.0000
+Sign           M         0    Pr >= |M|   1.0000
+Signed Rank    S         0    Pr >= |S|   1.0000
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max       7.60997
+99%            7.60997
+95%            4.18695
+90%            2.72573
+75% Q3         1.32981
+50% Median     0.00000
+25% Q1        -1.32981
+10%           -2.72573
+5%            -4.18695
+1%            -7.60997
+0% Min        -7.60997
+
+
+           Extreme Observations
+ 
+------Lowest-----        -----Highest-----
+ 
+   Value      Obs           Value      Obs
+
+-7.60997        1         3.08278       47
+-5.22109        2         3.54373       48
+-4.18695        3         4.18695       49
+
+SU one-iteration fallback with fixed location
+
+The UNIVARIATE Procedure
+Variable:  u
+
+           Extreme Observations
+ 
+------Lowest-----        -----Highest-----
+ 
+   Value      Obs           Value      Obs
+
+-3.54373        4         5.22109       50
+-3.08278        5         7.60997       51
+
+SU one-iteration fallback with fixed location
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta           0
+Scale       Sigma    1.653148
+Shape       Delta     0.94738
+Shape       Gamma    6.31E-16
+Mean                 -192E-17
+Std Dev              3.364564
+Skewness              -71E-16
+Kurtosis             50.88506
+Mode                 -496E-18
+
+
+ Quantiles for SU Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -7.60997   -9.561101
+    5.0   -4.18695   -4.545848
+   10.0   -2.72573   -2.983477
+   25.0   -1.32981   -1.278943
+   50.0    0.00000   -0.000000
+   75.0    1.32981    1.278943
+   90.0    2.72573    2.983477
+   95.0    4.18695    4.545848
+   99.0    7.60997    9.561101
