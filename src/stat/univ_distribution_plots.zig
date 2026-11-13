@@ -145,6 +145,9 @@ const Collector = struct {
 };
 
 test "UNIVARIATE public CDF PP QQ and probability paths deliver BY CLASS FREQ numerics" {
+    // Direct PROC tests own the per-program globals normally reset by interpret.
+    @import("../format.zig").resetPerRun();
+    defer @import("../format.zig").resetPerRun();
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
