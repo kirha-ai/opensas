@@ -1462,3 +1462,24 @@ test "CORR rectangle quadrature preserves partition mass and likelihood descent"
     try std.testing.expect(likelihood[1] < likelihood[0] - 5e-7);
 }
 
+test "CORR case2 public convergence is not defeated by quadrature error" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 280 }, &.{ 2, 0, 273 }, &.{ 2, 20, 161 }, &.{ 12, 20, 189 } });
+    const cases = .{
+        .{ ".00045", 14, @as(f64, 0.99473351980195), @as(f64, 0.24731650570926), @as(f64, 633.376921745778), @as(f64, 0.00005767977253) },
+        .{ ".00038", 15, @as(f64, 0.99509910781704), @as(f64, 0.36558803940963), @as(f64, 633.376923060487), @as(f64, 0.00649050816535) },
+    };
+    inline for (cases) |c| {
+        const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s} maxiter={d});var x;with y;freq f;run;", .{ c[0], c[1] });
+        const result = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(result.converged);
+        try Testing.near(903, result.n);
+        try std.testing.expectApproxEqAbs(c[2], result.r, 5e-8);
+        try std.testing.expectApproxEqAbs(c[3], result.se, 5e-7);
+        try std.testing.expectApproxEqAbs(c[4], result.lr, 1e-7);
+        try std.testing.expectApproxEqAbs(c[5], result.p, 5e-8);
+    }
+}
+
