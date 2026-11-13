@@ -1,0 +1,6 @@
+ERROR 22-322: Syntax error, expecting one of the following: EPM, MLE.
+ERROR 76-322: Syntax error, statement will be ignored.
+ERROR 22-322: Syntax error, expecting one of the following: ALPHA, BETA, COLOR, CONTENTS, FILL, L, MAXITER,
+ERROR 202-322: The option or parameter is not recognized and will be ignored.
+ERROR 22-322: Syntax error, expecting one of the following: ALPHA, COLOR, CONTENTS, FILL, L, MAXITER, MIDPERCENTS,
+ERROR 202-322: The option or parameter is not recognized and will be ignored.

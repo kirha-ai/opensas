@@ -1,0 +1,2861 @@
+
+beta mask 0
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 0
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 0
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha           2
+Shape       Beta            3
+Mean                      0.4
+Std Dev                   0.2
+
+
+         Goodness-of-Fit Tests for Beta Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00617284   Pr > D       >0.250
+Cramer-von Mises      W-Sq    0.00087639   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.01270551   Pr > A-Sq    >0.250
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04200
+    5.0    0.10331     0.09761
+   10.0    0.14645     0.14256
+   25.0    0.24487     0.24302
+   50.0    0.38573     0.38573
+   75.0    0.54141     0.54368
+   90.0    0.67372     0.67954
+   95.0    0.74174     0.75140
+   99.0    0.83389     0.85913
+
+beta mask 1
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 1
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 1
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.003474
+Scale       Sigma           1
+Shape       Alpha           2
+Shape       Beta            3
+Mean                 0.403474
+Std Dev                   0.2
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04547
+    5.0    0.10331     0.10109
+   10.0    0.14645     0.14603
+   25.0    0.24487     0.24650
+   50.0    0.38573     0.38920
+   75.0    0.54141     0.54715
+   90.0    0.67372     0.68301
+   95.0    0.74174     0.75487
+   99.0    0.83389     0.86261
+
+beta mask 2
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 2
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 2
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.990724
+Shape       Alpha           2
+Shape       Beta            3
+Mean                  0.39629
+Std Dev              0.198145
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04161
+    5.0    0.10331     0.09671
+   10.0    0.14645     0.14124
+   25.0    0.24487     0.24077
+   50.0    0.38573     0.38215
+   75.0    0.54141     0.53864
+   90.0    0.67372     0.67324
+   95.0    0.74174     0.74443
+   99.0    0.83389     0.85116
+
+beta mask 3
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 3
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 3
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.008588
+Scale       Sigma    0.977054
+Shape       Alpha           2
+Shape       Beta            3
+Mean                 0.399409
+Std Dev              0.195411
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04962
+    5.0    0.10331     0.10396
+   10.0    0.14645     0.14788
+   25.0    0.24487     0.24603
+   50.0    0.38573     0.38546
+   75.0    0.54141     0.53979
+   90.0    0.67372     0.67253
+   95.0    0.74174     0.74274
+   99.0    0.83389     0.84801
+
+beta mask 4
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 4
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 4
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha    2.009625
+Shape       Beta            3
+Mean                 0.401153
+Std Dev              0.199935
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04254
+    5.0    0.10331     0.09850
+   10.0    0.14645     0.14363
+   25.0    0.24487     0.24431
+   50.0    0.38573     0.38707
+   75.0    0.54141     0.54487
+   90.0    0.67372     0.68047
+   95.0    0.74174     0.75215
+   99.0    0.83389     0.85959
+
+beta mask 5
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 5
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 5
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.011914
+Scale       Sigma           1
+Shape       Alpha     1.90133
+Shape       Beta            3
+Mean                 0.399835
+Std Dev              0.200586
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04849
+    5.0    0.10331     0.10042
+   10.0    0.14645     0.14345
+   25.0    0.24487     0.24150
+   50.0    0.38573     0.38351
+   75.0    0.54141     0.54302
+   90.0    0.67372     0.68158
+   95.0    0.74174     0.75527
+   99.0    0.83389     0.86619
+
+beta mask 6
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 6
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 6
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma     0.98363
+Shape       Alpha    2.049554
+Shape       Beta            3
+Mean                 0.399244
+Std Dev              0.196385
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04408
+    5.0    0.10331     0.10053
+   10.0    0.14645     0.14564
+   25.0    0.24487     0.24554
+   50.0    0.38573     0.38616
+   75.0    0.54141     0.54073
+   90.0    0.67372     0.67307
+   95.0    0.74174     0.74288
+   99.0    0.83389     0.84735
+
+beta mask 7
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 7
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 7
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.012588
+Scale       Sigma    0.979395
+Shape       Alpha    1.940936
+Shape       Beta            3
+Mean                 0.397321
+Std Dev               0.19624
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.05052
+    5.0    0.10331     0.10284
+   10.0    0.14645     0.14575
+   25.0    0.24487     0.24277
+   50.0    0.38573     0.38216
+   75.0    0.54141     0.53778
+   90.0    0.67372     0.67241
+   95.0    0.74174     0.74385
+   99.0    0.83389     0.85121
+
+beta mask 8
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 8
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 8
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha           2
+Shape       Beta     3.016591
+Mean                 0.398677
+Std Dev              0.199613
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04180
+    5.0    0.10331     0.09716
+   10.0    0.14645     0.14192
+   25.0    0.24487     0.24200
+   50.0    0.38573     0.38427
+   75.0    0.54141     0.54192
+   90.0    0.67372     0.67773
+   95.0    0.74174     0.74967
+   99.0    0.83389     0.85774
+
+beta mask 9
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 9
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 9
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.008123
+Scale       Sigma           1
+Shape       Alpha           2
+Shape       Beta     3.111371
+Mean                 0.399407
+Std Dev              0.197417
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04883
+    5.0    0.10331     0.10281
+   10.0    0.14645     0.14651
+   25.0    0.24487     0.24444
+   50.0    0.38573     0.38426
+   75.0    0.54141     0.54020
+   90.0    0.67372     0.67568
+   95.0    0.74174     0.74804
+   99.0    0.83389     0.85791
+
+beta mask 10
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 10
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 10
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma     0.96286
+Shape       Alpha           2
+Shape       Beta     2.803269
+Mean                 0.400918
+Std Dev              0.197032
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04285
+    5.0    0.10331     0.09942
+   10.0    0.14645     0.14499
+   25.0    0.24487     0.24634
+   50.0    0.38573     0.38892
+   75.0    0.54141     0.54439
+   90.0    0.67372     0.67554
+   95.0    0.74174     0.74360
+   99.0    0.83389     0.84317
+
+beta mask 11
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 11
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 11
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.007139
+Scale       Sigma    0.964088
+Shape       Alpha           2
+Shape       Beta     2.891322
+Mean                 0.401342
+Std Dev              0.195275
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04893
+    5.0    0.10331     0.10417
+   10.0    0.14645     0.14875
+   25.0    0.24487     0.24810
+   50.0    0.38573     0.38850
+   75.0    0.54141     0.54266
+   90.0    0.67372     0.67388
+   95.0    0.74174     0.74258
+   99.0    0.83389     0.84424
+
+beta mask 12
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 12
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 12
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha     2.05622
+Shape       Beta     3.088703
+Mean                  0.39966
+Std Dev              0.197599
+
+
+         Goodness-of-Fit Tests for Beta Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00793803   Pr > D       >0.500
+Cramer-von Mises      W-Sq    0.00127235   Pr > W-Sq    >0.500
+Anderson-Darling      A-Sq    0.01485731   Pr > A-Sq    >0.500
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04408
+    5.0    0.10331     0.10038
+   10.0    0.14645     0.14535
+   25.0    0.24487     0.24504
+   50.0    0.38573     0.38577
+   75.0    0.54141     0.54127
+   90.0    0.67372     0.67539
+   95.0    0.74174     0.74668
+   99.0    0.83389     0.85440
+
+beta mask 13
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 13
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 13
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.011111
+Scale       Sigma           1
+Shape       Alpha    1.944047
+Shape       Beta     3.071715
+Mean                 0.398699
+Std Dev              0.198638
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04922
+    5.0    0.10331     0.10173
+   10.0    0.14645     0.14480
+   25.0    0.24487     0.24229
+   50.0    0.38573     0.38272
+   75.0    0.54141     0.54021
+   90.0    0.67372     0.67732
+   95.0    0.74174     0.75052
+   99.0    0.83389     0.86143
+
+beta mask 14
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 14
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 14
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.957832
+Shape       Alpha    1.970388
+Shape       Beta     2.739213
+Mean                 0.400735
+Std Dev              0.197738
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04177
+    5.0    0.10331     0.09801
+   10.0    0.14645     0.14359
+   25.0    0.24487     0.24535
+   50.0    0.38573     0.38883
+   75.0    0.54141     0.54515
+   90.0    0.67372     0.67648
+   95.0    0.74174     0.74428
+   99.0    0.83389     0.84273
+
+beta mask 15
+
+The UNIVARIATE Procedure
+Variable:  b
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.39977061    Sum Observations    40.3768314
+Std Deviation      0.19966343    Variance            0.03986549
+Skewness           0.27889896    Kurtosis            -0.6563683
+Uncorrected SS      20.128019    Corrected SS         3.9865486
+Coeff Variation    49.9445002    Std Error Mean      0.01986725
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.399771     Std Deviation            0.19966
+Median   0.385728     Variance                 0.03987
+Mode      .           Range                    0.84798
+                      Interquartile Range      0.29655
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  20.12209    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.8807746
+99%            0.8338906
+95%            0.7417407
+90%            0.6737231
+75% Q3         0.5414129
+50% Median     0.3857276
+25% Q1         0.2448666
+10%            0.1464505
+5%             0.1033071
+1%             0.0536326
+0% Min         0.0327908
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0327908        1         0.759361       97
+ 0.0536326        2         0.779475       98
+ 0.0688884        3         0.803367       99
+
+beta mask 15
+
+The UNIVARIATE Procedure
+Variable:  b
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0816784        4         0.833891      100
+ 0.0929950        5         0.880775      101
+
+beta mask 15
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for b
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.021695
+Scale       Sigma    0.910261
+Shape       Alpha    1.669283
+Shape       Beta     2.349019
+Mean                 0.399836
+Std Dev              0.200241
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.05363     0.04991
+    5.0    0.10331     0.09776
+   10.0    0.14645     0.13982
+   25.0    0.24487     0.23927
+   50.0    0.38573     0.38596
+   75.0    0.54141     0.54807
+   90.0    0.67372     0.68214
+   95.0    0.74174     0.74926
+   99.0    0.83389     0.84195
+
+power mask 0
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 0
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 0
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for p
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha           2
+Mean                 0.666667
+Std Dev              0.235702
+
+
+    Goodness-of-Fit Tests for Power Function Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00617284   Pr > D       >0.250
+Cramer-von Mises      W-Sq    0.00087639   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.01270551   Pr > A-Sq    >0.250
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.12669     0.10000
+    5.0    0.23570     0.22361
+   10.0    0.32394     0.31623
+   25.0    0.50308     0.50000
+   50.0    0.70711     0.70711
+   75.0    0.86424     0.86603
+   90.0    0.94608     0.94868
+   95.0    0.97183     0.97468
+   99.0    0.99194     0.99499
+
+power mask 1
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 1
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 2
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 2
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 3
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 3
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 4
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 4
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 4
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for p
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha    2.017679
+Mean                  0.66862
+Std Dev              0.234836
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.12669     0.10204
+    5.0    0.23570     0.22656
+   10.0    0.32394     0.31943
+   25.0    0.50308     0.50305
+   50.0    0.70711     0.70926
+   75.0    0.86424     0.86712
+   90.0    0.94608     0.94912
+   95.0    0.97183     0.97490
+   99.0    0.99194     0.99503
+
+power mask 5
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 5
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 6
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 6
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+power mask 7
+
+The UNIVARIATE Procedure
+Variable:  p
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               0.66709174    Sum Observations    67.3762659
+Std Deviation      0.23566607    Variance            0.05553849
+Skewness           -0.5639136    Kurtosis            -0.5994541
+Uncorrected SS           50.5    Corrected SS        5.55384948
+Coeff Variation    35.3273848    Std Error Mean      0.02344965
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     0.667092     Std Deviation            0.23567
+Median   0.707107     Variance                 0.05554
+Mode      .           Range                    0.91834
+                      Interquartile Range      0.36116
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  28.44783    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level           Quantile
+
+100% Max       0.9969088
+99%            0.9919428
+95%            0.9718253
+90%            0.9460770
+75% Q3         0.8642416
+50% Median     0.7071068
+25% Q1         0.5030770
+10%            0.3239418
+5%             0.2357023
+1%             0.1266862
+0% Min         0.0785674
+
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.0785674        1         0.976894       97
+ 0.1266862        2         0.981936       98
+ 0.1610153        3         0.986952       99
+
+power mask 7
+
+The UNIVARIATE Procedure
+Variable:  p
+
+             Extreme Observations
+ 
+-------Lowest------        ------Highest-----
+ 
+     Value      Obs            Value      Obs
+
+ 0.1892154        4         0.991943      100
+ 0.2137265        5         0.996909      101
+
+pareto mask 0
+
+The UNIVARIATE Procedure
+Variable:  g
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               2.76431862    Sum Observations     279.19618
+Std Deviation      3.64510475    Variance            13.2867886
+Skewness           3.09751798    Kurtosis            12.8215331
+Uncorrected SS     2100.46606    Corrected SS        1328.67886
+Coeff Variation    131.862685    Std Error Mean      0.36270148
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.764319     Std Deviation            3.64510
+Median   1.540963     Variance                13.28679
+Mode      .           Range                   23.99443
+                      Interquartile Range      2.79106
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t   7.62147    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level            Quantile
+
+100% Max       24.0068271
+99%            16.3621298
+95%             9.2001752
+90%             6.4441145
+75% Q3          3.4009829
+50% Median      1.5409628
+25% Q1          0.6099188
+10%             0.2254536
+5%              0.1153026
+1%              0.0324378
+0% Min          0.0123954
+
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0123954        1         10.1598       97
+ 0.0324378        2         11.4357       98
+ 0.0527434        3         13.2762       99
+
+pareto mask 0
+
+The UNIVARIATE Procedure
+Variable:  g
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0733184        4         16.3621      100
+ 0.0941693        5         24.0068      101
+
+pareto mask 0
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for g
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           2
+Shape       Alpha        -0.3
+Mean                 2.857143
+Std Dev               4.51754
+
+
+        Goodness-of-Fit Tests for Pareto Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00617284   Pr > D        1.000
+Cramer-von Mises      W-Sq    0.00087639   Pr > W-Sq     1.000
+Anderson-Darling      A-Sq    0.01270551   Pr > A-Sq     1.000
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     0.03244     0.02013
+    5.0     0.11530     0.10338
+   10.0     0.22545     0.21409
+   25.0     0.60992     0.60092
+   50.0     1.54096     1.54096
+   75.0     3.40098     3.43811
+   90.0     6.44411     6.63508
+   95.0     9.20018     9.70971
+   99.0    16.36213    19.87381
+
+pareto mask 2
+
+The UNIVARIATE Procedure
+Variable:  g
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               2.76431862    Sum Observations     279.19618
+Std Deviation      3.64510475    Variance            13.2867886
+Skewness           3.09751798    Kurtosis            12.8215331
+Uncorrected SS     2100.46606    Corrected SS        1328.67886
+Coeff Variation    131.862685    Std Error Mean      0.36270148
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.764319     Std Deviation            3.64510
+Median   1.540963     Variance                13.28679
+Mode      .           Range                   23.99443
+                      Interquartile Range      2.79106
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t   7.62147    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level            Quantile
+
+100% Max       24.0068271
+99%            16.3621298
+95%             9.2001752
+90%             6.4441145
+75% Q3          3.4009829
+50% Median      1.5409628
+25% Q1          0.6099188
+10%             0.2254536
+5%              0.1153026
+1%              0.0324378
+0% Min          0.0123954
+
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0123954        1         10.1598       97
+ 0.0324378        2         11.4357       98
+ 0.0527434        3         13.2762       99
+
+pareto mask 2
+
+The UNIVARIATE Procedure
+Variable:  g
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0733184        4         16.3621      100
+ 0.0941693        5         24.0068      101
+
+pareto mask 2
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for g
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    1.991393
+Shape       Alpha        -0.3
+Mean                 2.844847
+Std Dev              4.498098
+
+
+        Goodness-of-Fit Tests for Pareto Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00646821   Pr > D        1.000
+Cramer-von Mises      W-Sq    0.00096559   Pr > W-Sq     1.000
+Anderson-Darling      A-Sq    0.01306497   Pr > A-Sq     1.000
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     0.03244     0.02004
+    5.0     0.11530     0.10294
+   10.0     0.22545     0.21317
+   25.0     0.60992     0.59834
+   50.0     1.54096     1.53433
+   75.0     3.40098     3.42331
+   90.0     6.44411     6.60653
+   95.0     9.20018     9.66792
+   99.0    16.36213    19.78828
+
+pareto mask 4
+
+The UNIVARIATE Procedure
+Variable:  g
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               2.76431862    Sum Observations     279.19618
+Std Deviation      3.64510475    Variance            13.2867886
+Skewness           3.09751798    Kurtosis            12.8215331
+Uncorrected SS     2100.46606    Corrected SS        1328.67886
+Coeff Variation    131.862685    Std Error Mean      0.36270148
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.764319     Std Deviation            3.64510
+Median   1.540963     Variance                13.28679
+Mode      .           Range                   23.99443
+                      Interquartile Range      2.79106
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t   7.62147    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level            Quantile
+
+100% Max       24.0068271
+99%            16.3621298
+95%             9.2001752
+90%             6.4441145
+75% Q3          3.4009829
+50% Median      1.5409628
+25% Q1          0.6099188
+10%             0.2254536
+5%              0.1153026
+1%              0.0324378
+0% Min          0.0123954
+
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0123954        1         10.1598       97
+ 0.0324378        2         11.4357       98
+ 0.0527434        3         13.2762       99
+
+pareto mask 4
+
+The UNIVARIATE Procedure
+Variable:  g
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0733184        4         16.3621      100
+ 0.0941693        5         24.0068      101
+
+pareto mask 4
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for g
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           2
+Shape       Alpha    -0.27802
+Mean                 2.770149
+Std Dev              4.157462
+
+
+        Goodness-of-Fit Tests for Pareto Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00912981   Pr > D        1.000
+Cramer-von Mises      W-Sq    0.00154482   Pr > W-Sq     1.000
+Anderson-Darling      A-Sq    0.01683984   Pr > A-Sq     1.000
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     0.03244     0.02013
+    5.0     0.11530     0.10332
+   10.0     0.22545     0.21384
+   25.0     0.60992     0.59900
+   50.0     1.54096     1.52888
+   75.0     3.40098     3.38269
+   90.0     6.44411     6.45126
+   95.0     9.20018     9.35121
+   99.0    16.36213    18.68789
+
+pareto mask 6
+
+The UNIVARIATE Procedure
+Variable:  g
+
+                            Moments
+
+N                         101    Sum Weights                101
+Mean               2.76431862    Sum Observations     279.19618
+Std Deviation      3.64510475    Variance            13.2867886
+Skewness           3.09751798    Kurtosis            12.8215331
+Uncorrected SS     2100.46606    Corrected SS        1328.67886
+Coeff Variation    131.862685    Std Error Mean      0.36270148
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.764319     Std Deviation            3.64510
+Median   1.540963     Variance                13.28679
+Mode      .           Range                   23.99443
+                      Interquartile Range      2.79106
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t   7.62147    Pr > |t|    <.0001
+Sign           M      50.5    Pr >= |M|   <.0001
+Signed Rank    S    2575.5    Pr >= |S|   <.0001
+
+
+Quantiles (Definition 5)
+ 
+Level            Quantile
+
+100% Max       24.0068271
+99%            16.3621298
+95%             9.2001752
+90%             6.4441145
+75% Q3          3.4009829
+50% Median      1.5409628
+25% Q1          0.6099188
+10%             0.2254536
+5%              0.1153026
+1%              0.0324378
+0% Min          0.0123954
+
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0123954        1         10.1598       97
+ 0.0324378        2         11.4357       98
+ 0.0527434        3         13.2762       99
+
+pareto mask 6
+
+The UNIVARIATE Procedure
+Variable:  g
+
+            Extreme Observations
+ 
+-------Lowest------        -----Highest-----
+ 
+     Value      Obs           Value      Obs
+
+ 0.0733184        4         16.3621      100
+ 0.0941693        5         24.0068      101
+
+pareto mask 6
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for g
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    2.043369
+Shape       Alpha    -0.26684
+Mean                  2.78708
+Std Dev              4.081405
+
+
+        Goodness-of-Fit Tests for Pareto Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.00835906   Pr > D        1.000
+Cramer-von Mises      W-Sq    0.00133758   Pr > W-Sq     1.000
+Anderson-Darling      A-Sq    0.01499072   Pr > A-Sq     1.000
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     0.03244     0.02056
+    5.0     0.11530     0.10553
+   10.0     0.22545     0.21835
+   25.0     0.60992     0.61099
+   50.0     1.54096     1.55580
+   75.0     3.40098     3.42770
+   90.0     6.44411     6.49821
+   95.0     9.20018     9.37427
+   99.0    16.36213    18.51079

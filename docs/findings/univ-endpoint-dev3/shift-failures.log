@@ -1,0 +1,166 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data d; do shift=0 to 4; do i=1 to 8; x=input(scan("1 2 3 4 6 8 10 15",i),best.)+shift; output; end; end; run
+38       ! ;
+
+NOTE: The data set WORK.D has 40 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.46k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     128
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         proc univariate data=d noprint; by shift; histogram x / pareto(edfnsamples=1) noplot; run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Pareto distribution are available.
+NOTE: The above message was for the following BY group:
+      shift=0
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      shift=1
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Pareto distribution are available.
+NOTE: The above message was for the following BY group:
+      shift=2
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      shift=3
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      shift=4
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              3238.60k
+      OS Memory           14060.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     787
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+40         data b; do i=1 to 41; q=(i-.375)/41.25; x=q**2; output; end; run;
+
+NOTE: The data set WORK.B has 41 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              518.23k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     100
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+41         title "power alternate sigma=est"; proc univariate data=b; histogram x / power(sigma=est) noplot; run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the power function fit for x, a zero threshold is 
+      assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 3-9.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.87k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     135
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+42         title "power alternate theta=est sigma=est"; proc univariate data=b; histogram x / power(theta=est sigma=est)
+42       !  noplot; run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 10-16.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              715.12k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     59
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+43         title "power alternate theta=est sigma=1 alpha=.5"; proc univariate data=b; histogram x / power(theta=est
+43       ! sigma=1 alpha=.5) noplot; run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 17-23.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              706.15k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:29:30 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     61
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         
+45         
+46         
+47         
+The SAS System
+
+48         

@@ -1,0 +1,428 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data j; do i=1 to 77; q=(i-.375)/77.25; b=-3+7*quantile("beta",q,3,4); g=5+3*(1-(1-q)**.2)/.2; p=q**(1/5);
+38       ! output; end; run;
+
+NOTE: The data set WORK.J has 77 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              526.76k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 10:25:35 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     130
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         title "heldout beta theta=est sigma=est"; proc univariate data=j; histogram b / beta(theta=est sigma=est)
+39       ! noplot; run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-11.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              2732.96k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 10:25:35 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     692
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+40         title "heldout beta theta=-3 sigma=est"; proc univariate data=j; histogram b / beta(theta=-3 sigma=est)
+40       ! noplot; run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 12-22.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              742.48k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 10:25:35 AM
+      Step Count                        4  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     83
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+41         title "heldout beta theta=est sigma=7 alpha=3"; proc univariate data=j; histogram b / beta(theta=est sigma=7
+41       ! alpha=3) noplot; run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 23-33.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              737.93k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:25:35 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+42         title "heldout pareto theta=5"; proc univariate data=j; histogram g / pareto(theta=5 edfnsamples=1) noplot;
+42       ! run;
+
+NOTE: The PROCEDURE UNIVARIATE printed pages 34-44.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1407.54k
+      OS Memory           14316.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     168
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+43         title "heldout pareto theta=5 alpha=.2"; proc univariate data=j; histogram g / pareto(theta=5 alpha=.2
+43       ! edfnsamples=1) noplot; run;
+
+NOTE: The PROCEDURE UNIVARIATE printed pages 45-55.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1410.29k
+      OS Memory           14316.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         title "heldout pareto theta=5 sigma=3"; proc univariate data=j; histogram g / pareto(theta=5 sigma=3
+44       ! edfnsamples=1) noplot; run;
+
+NOTE: The PROCEDURE UNIVARIATE printed pages 56-66.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1409.45k
+      OS Memory           14316.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     113
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         title "heldout power sigma=est alpha=5"; proc univariate data=j; histogram p / power(sigma=est alpha=5)
+45       ! noplot; run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the power function fit for p, a zero threshold is 
+      assumed.
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 67-76.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              706.09k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     54
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           0
+      
+
+46         title "heldout power theta=est sigma=est alpha=5"; proc univariate data=j; histogram p / power(theta=est
+46       ! sigma=est alpha=5) noplot; run;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 77-86.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              695.39k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         title "heldout power theta=0 sigma=1"; proc univariate data=j; histogram p / power(theta=0 sigma=1) noplot;
+47       ! run;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 87-97.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              737.25k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     61
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+48         data e; input x @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.E has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.73k
+      OS Memory           14248.00k
+The SAS System
+
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        12  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     92
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+50         ;
+51         title "edge beta theta=est sigma=est"; proc univariate data=e; histogram x / beta(theta=est sigma=est) noplot
+51       ! ; run;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 98-99.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              658.21k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        13  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+52         title "edge beta theta=est sigma=est alpha=1 beta=1"; proc univariate data=e; histogram x / beta(theta=est
+52       ! sigma=est alpha=1 beta=1) noplot; run;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 100-101.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              657.45k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+The SAS System
+
+53         title "edge beta theta=0 sigma=est alpha=.5 beta=.5"; proc univariate data=e; histogram x / beta(theta=0
+53       ! sigma=est alpha=.5 beta=.5) noplot; run;
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 102-103.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              647.60k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        15  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+54         title "edge power theta=est sigma=est"; proc univariate data=e; histogram x / power(theta=est sigma=est)
+54       ! noplot; run;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 104-105.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              658.20k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+55         title "edge pareto "; proc univariate data=e; histogram x / pareto( edfnsamples=1) noplot; run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Pareto distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 106-108.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1346.28k
+The SAS System
+
+      OS Memory           14828.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        17  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+56         title "edge pareto alpha=1"; proc univariate data=e; histogram x / pareto(alpha=1 edfnsamples=1) noplot; run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: The PROCEDURE UNIVARIATE printed pages 109-111.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1362.26k
+      OS Memory           14828.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        18  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+57         title "edge pareto alpha=1.2"; proc univariate data=e; histogram x / pareto(alpha=1.2 edfnsamples=1) noplot;
+57       ! run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The PROCEDURE UNIVARIATE printed pages 112-113.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1271.50k
+      OS Memory           14828.00k
+      Timestamp           11/13/2026 10:25:36 AM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     99
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+58         
+The SAS System
+
+59         
+60         
+61         
+The SAS System
+
+62         
