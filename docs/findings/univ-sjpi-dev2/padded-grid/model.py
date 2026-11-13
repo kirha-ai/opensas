@@ -15,9 +15,12 @@ from binary_model import Arithmetic, nearest_integer
 
 ORIGINS = ('fingerprint', 'direct_half_range')
 SPACINGS = ('original_range', 'padded_endpoints')
+CENTER_REPRESENTATIONS = ('relative', 'absolute', 'absolute_fma', 'relative_fraction',
+                          'bary', 'bary_fma_low', 'bary_fma_high',
+                          'integer', 'integer_fma_low', 'integer_fma_high')
 DECISIONS = ('q_div_up', 'q_div_even', 'q_inverse_up', 'q_inverse_even',
              'ratio_one_even_binary64', 'ratio_one_even_extended64') + tuple(
-    center+'_'+decision for center in ('relative', 'absolute', 'absolute_fma', 'relative_fraction')
+    center+'_'+decision for center in CENTER_REPRESENTATIONS
     for decision in ('distance_left', 'distance_right', 'midpoint_left', 'midpoint_right'))
 
 
@@ -45,9 +48,29 @@ def grid(low, high, origin_method, spacing_method, representation):
         values = tuple(j*d for j in range(401))
     elif representation == 'absolute':
         values = tuple((o+j*d)-o for j in range(401))
-    else:
-        assert representation == 'absolute_fma'
+    elif representation == 'absolute_fma':
         values = tuple(fma(j, d, o)-o for j in range(401))
+    else:
+        upper = p['upper']
+        values = []
+        for j in range(401):
+            t = j/400
+            if representation == 'bary':
+                center = (1-t)*o+t*upper
+            elif representation == 'bary_fma_low':
+                center = fma(1-t, o, t*upper)
+            elif representation == 'bary_fma_high':
+                center = fma(t, upper, (1-t)*o)
+            elif representation == 'integer':
+                center = ((400-j)*o+j*upper)/400
+            elif representation == 'integer_fma_low':
+                center = fma(400-j, o, j*upper)/400
+            elif representation == 'integer_fma_high':
+                center = fma(j, upper, (400-j)*o)/400
+            else:
+                raise AssertionError(representation)
+            values.append(center-o)
+        values = tuple(values)
     assert all(math.isfinite(v) for v in values)
     assert all(a < b for a, b in zip(values, values[1:]))
     return values
@@ -68,14 +91,12 @@ def padded_index(x, low, high, origin_method, spacing_method, decision):
     if decision.startswith('q_'):
         q = z/d if decision.startswith('q_div') else z*(1/d)
         return int(q+.5) if decision.endswith('_up') else round(q)
-    if decision.startswith('relative_fraction_'):
-        representation, rule = 'relative_fraction', decision[len('relative_fraction_'):]
-    elif decision.startswith('absolute_fma_'):
-        representation, rule = 'absolute_fma', decision[len('absolute_fma_'):]
-    elif decision.startswith('absolute_'):
-        representation, rule = 'absolute', decision[len('absolute_'):]
+    for representation in sorted(CENTER_REPRESENTATIONS, key=len, reverse=True):
+        if decision.startswith(representation+'_'):
+            rule = decision[len(representation)+1:]
+            break
     else:
-        representation, rule = 'relative', decision[len('relative_'):]
+        raise AssertionError(decision)
     values = grid(low, high, origin_method, spacing_method, representation)
     if rule.startswith('distance'):
         # Full 401-center search; the target's observed k is not available.

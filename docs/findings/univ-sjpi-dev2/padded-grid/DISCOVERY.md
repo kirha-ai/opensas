@@ -73,3 +73,22 @@ There are eight added configurations across the existing origin/spacing
 controls, total 88. Prior 64- and 80-configuration outcomes are retained.
 No fresh oracle has been run; any successful identity must still be frozen
 before the independent heldouts.
+
+## Final recorded discovery amendment: stored padded barycentric centers
+
+The retained one-based conversion reaches 147/163 and reproduces all six
+thresholds, but still fails sixteen old cases. No candidate is yet viable.
+
+The previously tested absolute-center modes used o+j*d, including FMA, rather
+than a weighted interpolation of the PADDED endpoints. Add exactly the six
+standard endpoint expressions already named in the earlier absolute-grid
+study, now evaluated on o/u with N=400, each stored before subtracting o:
+(1-t)*o+t*u; the two one-product-FMA orders; ((400-j)*o+j*u)/400;
+and the two integer-product-FMA orders. Keep the same four decisions and
+origin/spacing controls. This adds 96 configurations, total 184.
+
+This closes the explicit padded-endpoint center-generation gap without an
+index table or fitted tolerance. The 64/80/88 configuration results remain
+retained. No fresh oracle has run. This is the LAST discovery extension in
+this pass: if none passes every prerequisite, report failure without a raw
+adapter; otherwise freeze the first passing identity before fresh validation.
