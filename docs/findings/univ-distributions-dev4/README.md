@@ -199,10 +199,11 @@ Precise remaining tags (none waived by a green checkpoint):
 - **EDF-TABLES:** exponential/gamma/beta/power and estimated-threshold tables
   remain under support work; available but missing tables still fail loudly.
 - **SJPI:** Singer's standalone algorithm is not yet available for integration.
-- **ENDPOINT-FALLBACK:** power estimation and nonregular Pareto/beta stopping and
-  finite fallback parity remain unresolved by the support helper. Power's
-  unsupported endpoint-estimation guard remains; no warning is treated as proof
-  that a mismatched SAS curve is accepted.
+- **ENDPOINT-FALLBACK:** the landed fixed-theta/estimated-sigma power path is now
+  routed to the helper, preserving its nonstationary candidate warning and
+  initialization-failed no-fit status. Joint power endpoints, nonregular
+  Pareto/beta stopping and the documented inadmissible-pilot power exception
+  remain unresolved; a warning is not proof of SAS curve agreement.
 - **PARETO-PRESENCE:** the retained 51-point gamma-score sample yields a finite
   profile fit (theta=0, sigma about12.1890493, alpha about.6524813) while M9's
   `dev4-univ-thresholds` probe suppresses the Pareto curve. The old guard-based
@@ -240,3 +241,11 @@ zero SAS errors and two reference-line visibility warnings for BY b=2; those
 are graph viewport diagnostics, not missing numerical values. Coordinate checks
 are explicit to 1e-11/1e-12. No graph extraction or rendered-image parity is
 claimed. Final milestone gate counts are reported after dependency integration.
+
+Power dependency 499f875 was acquired at the milestone rebase. Its supplied
+one-line adapter route and prepared regression are integrated in the adapter's
+own file. The regression preserves `nonstationary_candidate` plus its finite
+curve and `initialization_failed` plus no curve, with exactly one warning in
+each case. The full targeted UNIVARIATE run passes 62 tests, including this
+handed-off regression; the earlier narrow filter selected only root and is not
+counted as regression verification.
