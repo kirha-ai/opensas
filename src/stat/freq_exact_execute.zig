@@ -57,10 +57,24 @@ const Context = struct {
         }
         const matrix = tests.CountMatrix{ .rows = m.rows, .cols = m.cols, .counts = counts, .row_scores = self.row_scores, .col_scores = self.col_scores };
         if (self.family == .pchi or self.family == .lrchi) {
-            // Existing contingency also computes automatic Fisher on 2x2;
-            // asymptotic statistics are reused rather than reimplemented.
-            const r = try tests.contingency(self.allocator, matrix, null);
-            return if (self.family == .pchi) r.pearson.statistic else r.likelihood_ratio.statistic;
+            // Only the sampled statistic is needed. contingency() additionally
+            // enumerates automatic 2x2 Fisher, which would perform an unbounded
+            // support scan inside every Monte Carlo draw without MAXTIME checks.
+            var rows = [_]f64{0} ** 256;
+            var cols = [_]f64{0} ** 256;
+            var total: f64 = 0;
+            for (counts, 0..) |v, i| {
+                rows[i / m.cols] += v;
+                cols[i % m.cols] += v;
+                total += v;
+            }
+            var statistic: f64 = 0;
+            for (counts, 0..) |v, i| {
+                const expected = rows[i / m.cols] * cols[i % m.cols] / total;
+                if (expected == 0) continue;
+                if (self.family == .pchi) statistic += (v - expected) * (v - expected) / expected else if (v > 0) statistic += 2 * v * @log(v / expected);
+            }
+            return statistic;
         }
         const r = try tests.association(self.allocator, matrix, 0.05);
         return switch (self.family) {
