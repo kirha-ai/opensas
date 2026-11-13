@@ -26,13 +26,13 @@ page references below use printed page numbers.
 - [TODO] EPIC-base-stat-complete (doc-finder, qa, P1) — Inventory every statement, option, statistic, output and example in CORR pp. 3–64, FREQ pp. 65–286 and UNIVARIATE pp. 287–551. Map each to an implementation ticket and verification case, including already-supported behavior. Close only after this matrix and the tickets below are verified; explicitly record platform-specific dependencies and any agreed exclusions. Do not claim full manual coverage while graphics, ODS or other documented surfaces remain missing.
 
 
-- [DOING @dev1] FEAT-corr-advanced (doc-finder, P1; pp. 21–33) — Add Spearman, Kendall, Hoeffding, supported partial correlations, Fisher z tests/confidence limits, polychoric/polyserial estimation and Cronbach alpha with their documented options. Check ties, singular controls, convergence, boundary correlations and one-/two-sided inference against SAS. Acceptance targets actual SAS 9.4 M9.
+- [DOING @dev1] FEAT-corr-advanced (doc-finder, P1; pp. 21–33) — Add Spearman, Kendall, Hoeffding, supported partial correlations, Fisher z tests/confidence limits, polychoric/polyserial estimation and Cronbach alpha with their documented options. Check ties, singular controls, convergence, boundary correlations and one-/two-sided inference against SAS. Acceptance targets actual SAS 9.4 M9. [support @dev5: Hoeffding probability approximation; dev1 owns CORR integration and sparse polychoric inference]
 
 
 
 
 
-- [DOING @dev3] FEAT-freq-exact (doc-finder, qa, oracle, P1; pp. 81–89, 230–234) — Implement FISHER and the documented EXACT test/interval families, then Monte Carlo estimation and its controls. Check one-/two-sided definitions, tied probabilities, sparse tables, confidence bounds and resource limits. Exact results need small-table enumeration/oracle checks; Monte Carlo needs seed reproducibility and statistical tolerances. Acceptance targets actual SAS 9.4 M9. [support @dev2: unconditional SCORE/SCORE2 boundary numerics; dev3 owns public EXACT integration]
+- [DOING @dev3] FEAT-freq-exact (doc-finder, qa, oracle, P1; pp. 81–89, 230–234) — Implement FISHER and the documented EXACT test/interval families, then Monte Carlo estimation and its controls. Check one-/two-sided definitions, tied probabilities, sparse tables, confidence bounds and resource limits. Exact results need small-table enumeration/oracle checks; Monte Carlo needs seed reproducibility and statistical tolerances. Acceptance targets actual SAS 9.4 M9. [high-alpha RR search discrepancy retained in docs/findings/freq-exact-boundary-dev2/search-discriminator; bounded numerical investigation complete, compatibility unresolved]
 
 
 
