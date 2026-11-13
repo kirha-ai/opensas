@@ -1,0 +1,17 @@
+Completed 6 transitions: 72/72 groups, 54 distinct inputs; max h error 1.77636e-15.
+domain=0 k=86: L=3, R=4; qULP=[67/128, 23/32]
+domain=0 k=87: L=8, R=9; qULP=[25/32, 225/256]
+domain=0 k=88: L=-7, R=-6; qULP=[-23/32, -159/256]
+domain=1 k=86: L=-5, R=-4; qULP=[-133/128, -27/32]
+domain=1 k=87: L=-8, R=-7; qULP=[-25/32, -175/256]
+domain=1 k=88: L=-23, R=-22; qULP=[-73/32, -559/256]
+{'generator': 'barycentric', 'decision': 'sum_mid_down', 'old_passed': 101, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'barycentric', 'decision': 'gap_mid_down', 'old_passed': 101, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'barycentric', 'decision': 'distance_down', 'old_passed': 105, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'bary_fma_low', 'decision': 'sum_mid_down', 'old_passed': 104, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'bary_fma_low', 'decision': 'gap_mid_down', 'old_passed': 104, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'bary_fma_low', 'decision': 'distance_down', 'old_passed': 108, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'bary_fma_high', 'decision': 'sum_mid_down', 'old_passed': 103, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+{'generator': 'bary_fma_high', 'decision': 'gap_mid_down', 'old_passed': 103, 'exact_thresholds': 0, 'queried_groups_passed': 44}
+Recurrence: [{'domain': 0, 'from_k': 86, 'to_k': 87, 'exact_increment_error': '41/225179981368524800', 'stored_add_rank_error': 2}, {'domain': 0, 'from_k': 87, 'to_k': 88, 'exact_increment_error': '-3/1759218604441600', 'stored_add_rank_error': -15}, {'domain': 1, 'from_k': 86, 'to_k': 87, 'exact_increment_error': '41/225179981368524800', 'stored_add_rank_error': 2}, {'domain': 1, 'from_k': 87, 'to_k': 88, 'exact_increment_error': '-3/1759218604441600', 'stored_add_rank_error': -15}]
+Translation: [{'k': 86, 'exact_domain_shift': '5629499534213/562949953421312', 'exact_threshold_shift_residual': '-1/562949953421312', 'stored_translate_rank_error': -8}, {'k': 87, 'exact_domain_shift': '5629499534213/562949953421312', 'exact_threshold_shift_residual': '-1/562949953421312', 'stored_translate_rank_error': -16}, {'k': 88, 'exact_domain_shift': '5629499534213/562949953421312', 'exact_threshold_shift_residual': '-1/562949953421312', 'stored_translate_rank_error': -16}]

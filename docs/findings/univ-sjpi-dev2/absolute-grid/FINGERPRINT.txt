@@ -1,0 +1,7 @@
+domain=0 k=86: origin=C030000000000000 z(L-1,L,R,R+1)=['402DD70A3D70A3D7', '402DD70A3D70A3D7', '402DD70A3D70A3D8', '402DD70A3D70A3D8']; adjacent=True, two_plateaus=True
+domain=0 k=87: origin=C030000000000000 z(L-1,L,R,R+1)=['402E000000000000', '402E000000000000', '402E000000000001', '402E000000000001']; adjacent=True, two_plateaus=True
+domain=0 k=88: origin=C030000000000000 z(L-1,L,R,R+1)=['402E28F5C28F5C28', '402E28F5C28F5C28', '402E28F5C28F5C29', '402E28F5C28F5C29']; adjacent=True, two_plateaus=True
+domain=1 k=86: origin=C02FFAE147AE147C z(L-1,L,R,R+1)=['402DD70A3D70A3D7', '402DD70A3D70A3D7', '402DD70A3D70A3D8', '402DD70A3D70A3D8']; adjacent=True, two_plateaus=True
+domain=1 k=87: origin=C02FFAE147AE147C z(L-1,L,R,R+1)=['402E000000000000', '402E000000000000', '402E000000000001', '402E000000000001']; adjacent=True, two_plateaus=True
+domain=1 k=88: origin=C02FFAE147AE147C z(L-1,L,R,R+1)=['402E28F5C28F5C28', '402E28F5C28F5C28', '402E28F5C28F5C29', '402E28F5C28F5C29']; adjacent=True, two_plateaus=True
+These six local coincidences do not establish a generic bin rule. No runtime mapping is produced.

@@ -1,0 +1,15 @@
+Retained assignments: 163/163; frozen absolute-grid configurations: 72.
+barycentric: 105/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+bary_fma_low: 108/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+bary_fma_high: 107/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+integer_weighted: 104/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+integer_fma_low: 107/163 (distance_up); first failure dev2-sjpi-halfgrid:0
+integer_fma_high: 104/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+two_ended_product: 109/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+two_ended_fma: 107/163 (distance_up); first failure dev2-sjpi-halfgrid:0
+two_ended_accumulate: 80/163 (distance_down); first failure dev2-sjpi-halfgrid:0
+midpoint_product: 106/163 (distance_up); first failure dev2-sjpi-halfgrid:0
+midpoint_fma: 105/163 (distance_up); first failure dev2-sjpi-halfgrid:0
+reflected_left: 108/163 (distance_up); first failure dev2-sjpi-halfgrid:0
+Viable configurations: 0/72.
+Next branch: six prespecified bounded ULP threshold searches

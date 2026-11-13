@@ -15,6 +15,14 @@ collisions establish that a rule using only normalized q and bin index is
 insufficient. This does not rule out all internal C/x87 paths. The landed
 binned core and public SJPI guard are unchanged.
 
+The next [absolute-grid center pass](absolute-grid/README.md) is also complete:
+0/72 frozen configurations pass the old 163 assignments; six bounded searches
+reconstruct adjacent-value thresholds using 72 SAS groups. None of the frozen
+models exactly reproduces any measured threshold. Identical recurrence errors
+and a common -2^-49 translation residual narrow the open mechanism to an
+additional absolute-coordinate rounding path. A post-measurement origin/
+subtraction fingerprint is retained as an unvalidated clue, not a bin selector.
+
 Baseline acquired by clean `git merge --ff-only feat/stat/batch-3`: `6aa9b33`.
 Read CLAUDE.md, lexer.zig, D-029, dev4's retained README and kernel API, and the
 manager checkout's ignored statistical manual, printed pp.448–449.

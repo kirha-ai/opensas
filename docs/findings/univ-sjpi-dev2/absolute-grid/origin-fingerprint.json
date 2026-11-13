@@ -1,0 +1,108 @@
+{
+  "status": "Post-measurement diagnostic only; not an accepted selector or frozen candidate.",
+  "expression": "padded=RN53(low-RN53(high-low)); origin=RN53(RN53(padded+low)/2); z=RN53(x-origin)",
+  "rows": [
+    {
+      "target_id": 0,
+      "domain": 0,
+      "k": 86,
+      "padded_low_hex": "C038000000000000",
+      "origin_hex": "C030000000000000",
+      "last_left_hex": "BFF147AE147AE145",
+      "first_right_hex": "BFF147AE147AE144",
+      "shifted_four_hex": [
+        "402DD70A3D70A3D7",
+        "402DD70A3D70A3D7",
+        "402DD70A3D70A3D8",
+        "402DD70A3D70A3D8"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    },
+    {
+      "target_id": 1,
+      "domain": 0,
+      "k": 87,
+      "padded_low_hex": "C038000000000000",
+      "origin_hex": "C030000000000000",
+      "last_left_hex": "BFEFFFFFFFFFFFF8",
+      "first_right_hex": "BFEFFFFFFFFFFFF7",
+      "shifted_four_hex": [
+        "402E000000000000",
+        "402E000000000000",
+        "402E000000000001",
+        "402E000000000001"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    },
+    {
+      "target_id": 2,
+      "domain": 0,
+      "k": 88,
+      "padded_low_hex": "C038000000000000",
+      "origin_hex": "C030000000000000",
+      "last_left_hex": "BFED70A3D70A3D78",
+      "first_right_hex": "BFED70A3D70A3D77",
+      "shifted_four_hex": [
+        "402E28F5C28F5C28",
+        "402E28F5C28F5C28",
+        "402E28F5C28F5C29",
+        "402E28F5C28F5C29"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    },
+    {
+      "target_id": 3,
+      "domain": 1,
+      "k": 86,
+      "padded_low_hex": "C037FD70A3D70A3E",
+      "origin_hex": "C02FFAE147AE147C",
+      "last_left_hex": "BFF11EB851EB8525",
+      "first_right_hex": "BFF11EB851EB8524",
+      "shifted_four_hex": [
+        "402DD70A3D70A3D7",
+        "402DD70A3D70A3D7",
+        "402DD70A3D70A3D8",
+        "402DD70A3D70A3D8"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    },
+    {
+      "target_id": 4,
+      "domain": 1,
+      "k": 87,
+      "padded_low_hex": "C037FD70A3D70A3E",
+      "origin_hex": "C02FFAE147AE147C",
+      "last_left_hex": "BFEFAE147AE147B8",
+      "first_right_hex": "BFEFAE147AE147B7",
+      "shifted_four_hex": [
+        "402E000000000000",
+        "402E000000000000",
+        "402E000000000001",
+        "402E000000000001"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    },
+    {
+      "target_id": 5,
+      "domain": 1,
+      "k": 88,
+      "padded_low_hex": "C037FD70A3D70A3E",
+      "origin_hex": "C02FFAE147AE147C",
+      "last_left_hex": "BFED1EB851EB8538",
+      "first_right_hex": "BFED1EB851EB8537",
+      "shifted_four_hex": [
+        "402E28F5C28F5C28",
+        "402E28F5C28F5C28",
+        "402E28F5C28F5C29",
+        "402E28F5C28F5C29"
+      ],
+      "adjacent_shifted_values": true,
+      "two_plateaus": true
+    }
+  ]
+}

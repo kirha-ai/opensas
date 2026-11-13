@@ -1,0 +1,194 @@
+[
+  {
+    "round": 0,
+    "qid": 0,
+    "target_id": 0,
+    "rank": "4615829330084568727",
+    "offset": -32,
+    "x_hex": "BFF147AE147AE168",
+    "k": 86,
+    "selected_bin": 86,
+    "oracle_h": 4.133931803318727,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 1,
+    "target_id": 0,
+    "rank": "4615829330084568791",
+    "offset": 32,
+    "x_hex": "BFF147AE147AE128",
+    "k": 86,
+    "selected_bin": 87,
+    "oracle_h": 4.157480184759298,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 1.7763568394002505e-15
+  },
+  {
+    "round": 0,
+    "qid": 2,
+    "target_id": 1,
+    "rank": "4616189618054758367",
+    "offset": -32,
+    "x_hex": "BFF0000000000020",
+    "k": 87,
+    "selected_bin": 87,
+    "oracle_h": 4.156991074825298,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956057
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 3,
+    "target_id": 1,
+    "rank": "4616189618054758431",
+    "offset": 32,
+    "x_hex": "BFEFFFFFFFFFFFE0",
+    "k": 87,
+    "selected_bin": 88,
+    "oracle_h": 4.179304094956059,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956057
+    ],
+    "bandwidth_error": 1.7763568394002505e-15
+  },
+  {
+    "round": 0,
+    "qid": 4,
+    "target_id": 2,
+    "rank": "4616910193995137646",
+    "offset": -32,
+    "x_hex": "BFED70A3D70A3D91",
+    "k": 88,
+    "selected_bin": 88,
+    "oracle_h": 4.180165992000642,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 5,
+    "target_id": 2,
+    "rank": "4616910193995137710",
+    "offset": 32,
+    "x_hex": "BFED70A3D70A3D51",
+    "k": 88,
+    "selected_bin": 89,
+    "oracle_h": 4.201243745866597,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 6,
+    "target_id": 3,
+    "rank": "4615874366080842431",
+    "offset": -32,
+    "x_hex": "BFF11EB851EB8540",
+    "k": 86,
+    "selected_bin": 86,
+    "oracle_h": 4.133931803318727,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 7,
+    "target_id": 3,
+    "rank": "4615874366080842495",
+    "offset": 32,
+    "x_hex": "BFF11EB851EB8500",
+    "k": 86,
+    "selected_bin": 87,
+    "oracle_h": 4.157480184759296,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 8,
+    "target_id": 4,
+    "rank": "4616279690047305775",
+    "offset": -32,
+    "x_hex": "BFEFAE147AE147D0",
+    "k": 87,
+    "selected_bin": 87,
+    "oracle_h": 4.156991074825298,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956057
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 9,
+    "target_id": 4,
+    "rank": "4616279690047305839",
+    "offset": 32,
+    "x_hex": "BFEFAE147AE14790",
+    "k": 87,
+    "selected_bin": 88,
+    "oracle_h": 4.179304094956059,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956057
+    ],
+    "bandwidth_error": 1.7763568394002505e-15
+  },
+  {
+    "round": 0,
+    "qid": 10,
+    "target_id": 5,
+    "rank": "4617000265987685054",
+    "offset": -32,
+    "x_hex": "BFED1EB851EB8541",
+    "k": 88,
+    "selected_bin": 88,
+    "oracle_h": 4.180165992000642,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 0,
+    "qid": 11,
+    "target_id": 5,
+    "rank": "4617000265987685118",
+    "offset": 32,
+    "x_hex": "BFED1EB851EB8501",
+    "k": 88,
+    "selected_bin": 89,
+    "oracle_h": 4.201243745866597,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  }
+]

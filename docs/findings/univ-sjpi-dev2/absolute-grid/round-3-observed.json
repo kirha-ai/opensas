@@ -1,0 +1,98 @@
+[
+  {
+    "round": 3,
+    "qid": 0,
+    "target_id": 0,
+    "rank": "4615829330084568767",
+    "offset": 8,
+    "x_hex": "BFF147AE147AE140",
+    "k": 86,
+    "selected_bin": 87,
+    "oracle_h": 4.157480184759298,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 1.7763568394002505e-15
+  },
+  {
+    "round": 3,
+    "qid": 1,
+    "target_id": 1,
+    "rank": "4616189618054758407",
+    "offset": 8,
+    "x_hex": "BFEFFFFFFFFFFFF8",
+    "k": 87,
+    "selected_bin": 87,
+    "oracle_h": 4.156991074825298,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956059
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 3,
+    "qid": 2,
+    "target_id": 2,
+    "rank": "4616910193995137670",
+    "offset": -8,
+    "x_hex": "BFED70A3D70A3D79",
+    "k": 88,
+    "selected_bin": 88,
+    "oracle_h": 4.180165992000642,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 3,
+    "qid": 3,
+    "target_id": 3,
+    "rank": "4615874366080842455",
+    "offset": -8,
+    "x_hex": "BFF11EB851EB8528",
+    "k": 86,
+    "selected_bin": 86,
+    "oracle_h": 4.1339318033187284,
+    "candidate_h": [
+      4.133931803318727,
+      4.157480184759296
+    ],
+    "bandwidth_error": 1.7763568394002505e-15
+  },
+  {
+    "round": 3,
+    "qid": 4,
+    "target_id": 4,
+    "rank": "4616279690047305799",
+    "offset": -8,
+    "x_hex": "BFEFAE147AE147B8",
+    "k": 87,
+    "selected_bin": 87,
+    "oracle_h": 4.156991074825298,
+    "candidate_h": [
+      4.156991074825298,
+      4.179304094956059
+    ],
+    "bandwidth_error": 0.0
+  },
+  {
+    "round": 3,
+    "qid": 5,
+    "target_id": 5,
+    "rank": "4617000265987685062",
+    "offset": -24,
+    "x_hex": "BFED1EB851EB8539",
+    "k": 88,
+    "selected_bin": 88,
+    "oracle_h": 4.180165992000642,
+    "candidate_h": [
+      4.180165992000642,
+      4.201243745866597
+    ],
+    "bandwidth_error": 0.0
+  }
+]

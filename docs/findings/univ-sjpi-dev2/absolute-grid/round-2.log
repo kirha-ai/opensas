@@ -1,0 +1,166 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data _null_;file print;put "SAS_VERSION=&sysvlong4";run;
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              2066.65k
+      OS Memory           12708.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        2  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     427
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+39         data all;input qid point x :hex16.;datalines;
+
+NOTE: The data set WORK.ALL has 48 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              515.89k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     135
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+88         ;
+89         data _null_;set all;file print;put 'INPUT ' qid= point= x=hex16.;run;
+
+NOTE: 48 lines were written to file PRINT.
+NOTE: There were 48 observations read from the data set WORK.ALL.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              592.21k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     58
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+90         proc univariate data=all noprint;by qid;var x;
+91         output out=stats n=n qrange=q std=sd;
+92         histogram x / noplot kernel(c=sjpi) outkernel=kernel;run;
+
+NOTE: The normal kernel estimate for c=0.7466 has a bandwidth of 4.1575 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=0
+NOTE: The normal kernel estimate for c=0.7505 has a bandwidth of 4.1793 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=1
+NOTE: The normal kernel estimate for c=0.7507 has a bandwidth of 4.1802 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=2
+NOTE: The normal kernel estimate for c=0.7424 has a bandwidth of 4.1339 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=3
+NOTE: The normal kernel estimate for c=0.7465 has a bandwidth of 4.157 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=4
+NOTE: The normal kernel estimate for c=0.7545 has a bandwidth of 4.2012 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      qid=5
+NOTE: The data set WORK.STATS has 6 observations and 4 variables.
+NOTE: The data set WORK.KERNEL has 2415 observations and 7 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              1530.21k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        5  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     346
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           784
+      
+
+93         data one;set kernel;by qid;if first.qid;keep qid _c_;run;
+
+NOTE: There were 2415 observations read from the data set WORK.KERNEL.
+NOTE: The data set WORK.ONE has 6 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1015.98k
+The SAS System
+
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+94         data _null_;merge one stats;by qid;file print;
+95         c=_c_;h=c*q*n**(-.2);
+96         put 'RESULT ' qid= n= q=hex16. sd=hex16. c=hex16. h=hex16.;run;
+
+NOTE: 6 lines were written to file PRINT.
+NOTE: There were 6 observations read from the data set WORK.ONE.
+NOTE: There were 6 observations read from the data set WORK.STATS.
+NOTE: The DATA step printed page 3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              995.73k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 03:32:47 PM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     108
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+97         
+98         
+99         
+100        
+The SAS System
+
+101        
