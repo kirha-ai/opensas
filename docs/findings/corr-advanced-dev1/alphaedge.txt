@@ -1,0 +1,267 @@
+
+The CORR Procedure
+
+   3  Variables:    x        y        z        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  5       3.00000       1.58114      15.00000       1.00000       5.00000
+y                  4       5.25000       2.50000      21.00000       2.00000       8.00000
+z                  5       1.00000             0       5.00000       1.00000       1.00000
+
+
+ Cronbach Coefficient Alpha
+ 
+Variables              Alpha
+----------------------------
+Raw                 0.746411
+Standardized         .      
+
+
+            Cronbach Coefficient Alpha with Deleted Variable
+ 
+                    Raw Variables              Standardized Variables
+ 
+Deleted      Correlation                     Correlation
+Variable      with Total           Alpha      with Total           Alpha
+------------------------------------------------------------------------
+x               1.096256        0.000000         .               .      
+y               1.096256        0.000000         .               .      
+z                .              0.995215         .              0.974036
+
+
+     Pearson Correlation Coefficients 
+        Prob > |r| under H0: Rho=0 
+          Number of Observations
+ 
+              x             y             z
+
+x       1.00000       0.94939        .     
+                       0.0506         .    
+              5             4             5
+
+y       0.94939       1.00000        .     
+         0.0506                       .    
+              4             4             4
+
+z        .             .             .     
+          .             .             .    
+              5             4             5
+
+The CORR Procedure
+
+   2        Variables:    x        y        
+     Weight Variable:     w                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  5       3.11111       1.92931      28.00000       1.00000       5.00000
+y                  4       5.66667       2.90593      34.00000       2.00000       8.00000
+
+
+ Cronbach Coefficient Alpha
+ 
+Variables              Alpha
+----------------------------
+Raw                 1.002278
+Standardized        0.972118
+
+
+            Cronbach Coefficient Alpha with Deleted Variable
+ 
+                    Raw Variables              Standardized Variables
+ 
+Deleted      Correlation                     Correlation
+Variable      with Total           Alpha      with Total           Alpha
+------------------------------------------------------------------------
+x               1.090018         .              0.945749         .      
+y               1.090018         .              0.945749         .      
+
+
+Pearson Correlation Coefficients 
+   Prob > |r| under H0: Rho=0 
+     Number of Observations
+ 
+              x             y
+
+x       1.00000       0.94575
+                       0.0543
+              5             4
+
+y       0.94575       1.00000
+         0.0543              
+              4             4
+
+The CORR Procedure
+
+   3  Variables:    x        y        z        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  4       3.00000       1.82574      12.00000       1.00000       5.00000
+y                  4       5.25000       2.50000      21.00000       2.00000       8.00000
+z                  4       1.00000             0       4.00000       1.00000       1.00000
+
+
+ Cronbach Coefficient Alpha
+ 
+Variables              Alpha
+----------------------------
+Raw                 0.712329
+Standardized         .      
+
+
+            Cronbach Coefficient Alpha with Deleted Variable
+ 
+                    Raw Variables              Standardized Variables
+ 
+Deleted      Correlation                     Correlation
+Variable      with Total           Alpha      with Total           Alpha
+------------------------------------------------------------------------
+x               0.949386        0.000000         .               .      
+y               0.949386        0.000000         .               .      
+z                .              0.949772         .              0.974036
+
+
+ Pearson Correlation Coefficients, N = 4 
+        Prob > |r| under H0: Rho=0
+ 
+              x             y             z
+
+x       1.00000       0.94939        .     
+                       0.0506         .    
+
+y       0.94939       1.00000        .     
+         0.0506                       .    
+
+z        .             .             .     
+          .             .             .    
+
+The CORR Procedure
+
+   1 Partial Variables:    z                 
+   2         Variables:    x        y        
+
+
+                                                  Simple Statistics
+ 
+                                                                                                 Partial       Partial
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum      Variance       Std Dev
+
+z                  4       1.00000             0       4.00000       1.00000       1.00000                            
+x                  4       3.00000       1.82574      12.00000       1.00000       5.00000       3.33333       1.82574
+y                  4       5.25000       2.50000      21.00000       2.00000       8.00000       6.25000       2.50000
+
+
+ Cronbach Coefficient Alpha
+ 
+Variables              Alpha
+----------------------------
+Raw                 0.949772
+Standardized        0.974036
+
+
+            Cronbach Coefficient Alpha with Deleted Variable
+ 
+                    Raw Variables              Standardized Variables
+ 
+Deleted      Correlation                     Correlation
+Variable      with Total           Alpha      with Total           Alpha
+------------------------------------------------------------------------
+x               0.949386         .              0.949386         .      
+y               0.949386         .              0.949386         .      
+
+
+Pearson Partial Correlation Coefficients, N = 4 
+       Prob > |r| under H0: Partial Rho=0
+ 
+              x             y
+
+x       1.00000       0.94939
+                       0.0506
+
+y       0.94939       1.00000
+         0.0506              
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  5       3.00000       1.41421      15.00000       1.00000       5.00000
+y                  4       5.25000       2.16506      21.00000       2.00000       8.00000
+
+
+ Cronbach Coefficient Alpha
+ 
+Variables              Alpha
+----------------------------
+Raw                 0.985782
+Standardized        0.974036
+
+
+            Cronbach Coefficient Alpha with Deleted Variable
+ 
+                    Raw Variables              Standardized Variables
+ 
+Deleted      Correlation                     Correlation
+Variable      with Total           Alpha      with Total           Alpha
+------------------------------------------------------------------------
+x               1.061446         .              0.949386         .      
+y               1.061446         .              0.949386         .      
+
+
+Pearson Correlation Coefficients 
+   Prob > |r| under H0: Rho=0 
+     Number of Observations
+ 
+              x             y
+
+x       1.00000       0.94939
+                       0.0506
+              5             4
+
+y       0.94939       1.00000
+         0.0506              
+              4             4
+
+The CORR Procedure
+
+   1 Partial Variables:    z                 
+   2         Variables:    x        y        
+
+
+                                                  Simple Statistics
+ 
+                                                                                                 Partial       Partial
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum      Variance       Std Dev
+
+z                  4       1.00000             0       4.00000       1.00000       1.00000                            
+x                  4       3.00000       1.82574      12.00000       1.00000       5.00000       3.33333       1.82574
+y                  4       5.25000       2.50000      21.00000       2.00000       8.00000       6.25000       2.50000
+
+
+Pearson Partial Correlation Coefficients, N = 4 
+       Prob > |r| under H0: Partial Rho=0
+ 
+              x             y
+
+x       1.00000       0.94939
+                       0.0506
+
+y       0.94939       1.00000
+         0.0506              
+sasrun: /private/tmp/dev1-corr-alphaedge-oracle.sas: 1 error(s), 5 warning(s) in 3.542s -> /dev/null

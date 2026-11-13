@@ -1,0 +1,45 @@
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 23       1.60870       0.49901       2.00000       1.00000       2.00000
+y                 23       1.52174       0.51075       2.00000       1.00000       2.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 23       -0.99900             0         .         .           17.2930    <.0001
+
+The CORR Procedure
+
+   2      Variables:    x        y        
+     Freq Variable:     f                 
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+x                 31       1.77419       0.80456       2.00000       1.00000       3.00000
+y                 31       1.96774       0.79515       2.00000       1.00000       3.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 31        0.99903       0.11695       72.9659    <.0001       40.9081    <.0001
+sasrun: /private/tmp/dev1-corr-boundpoly-oracle.sas: 0 error(s), 0 warning(s) in 4.849s -> /dev/null

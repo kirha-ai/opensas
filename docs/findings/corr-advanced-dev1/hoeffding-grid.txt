@@ -1,0 +1,415 @@
+
+g=1
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+x                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+
+
+Hoeffding Dependence Coefficients, N = 8 
+         Prob > D under H0: D=0
+ 
+              x
+
+y       0.01786
+         0.2704
+
+g=2
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+x                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+
+
+Hoeffding Dependence Coefficients, N = 8 
+         Prob > D under H0: D=0
+ 
+              x
+
+y       0.32143
+         0.0042
+
+g=3
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 20      10.50000       5.91608      10.50000       1.00000      20.00000
+x                 20      10.50000       5.91608      10.50000       1.00000      20.00000
+
+
+Hoeffding Dependence Coefficients, N = 20 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       1.00000
+         <.0001
+
+g=4
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  9       2.00000       0.86603       2.00000       1.00000       3.00000
+x                  9       2.22222       1.20185       2.00000       1.00000       4.00000
+
+
+Hoeffding Dependence Coefficients, N = 9 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -0.14286
+         1.0000
+
+g=5
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  6       1.00000             0       1.00000       1.00000       1.00000
+x                  6       3.50000       1.87083       3.50000       1.00000       6.00000
+
+
+Hoeffding Dependence Coefficients, N = 6 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -0.62500
+         1.0000
+
+g=6
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  6       1.00000             0       1.00000       1.00000       1.00000
+x                  6       1.00000             0       1.00000       1.00000       1.00000
+
+
+Hoeffding Dependence Coefficients, N = 6 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -1.17188
+         1.0000
+
+g=7
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+x                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+
+
+Hoeffding Dependence Coefficients, N = 12 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       0.02525
+         0.1903
+
+g=8
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+x                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+
+
+Hoeffding Dependence Coefficients, N = 12 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       1.00000
+         <.0001
+
+Obs                                  g   Variable                                  x                                 Px
+
+ 1                                   1      y                       0.01785714285714                   0.27035003097535
+ 2                                   2      y                       0.32142857142857                   0.00421936667347
+ 3                                   3      y                                      1                                  0
+ 4                                   4      y                      -0.14285714285714                                  1
+ 5                                   5      y                                 -0.625                                  1
+ 6                                   6      y                              -1.171875                                  1
+ 7                                   7      y                       0.02525252525252                   0.19028121558348
+ 8                                   8      y                                      1                                  0
+
+g=1
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+x                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+
+
+Hoeffding Dependence Coefficients, N = 8 
+         Prob > D under H0: D=0
+ 
+              x
+
+y       0.01786
+         0.2704
+
+g=2
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+x                  8       4.50000       2.44949       4.50000       1.00000       8.00000
+
+
+Hoeffding Dependence Coefficients, N = 8 
+         Prob > D under H0: D=0
+ 
+              x
+
+y       0.32143
+         0.0042
+
+g=3
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 20      10.50000       5.91608      10.50000       1.00000      20.00000
+x                 20      10.50000       5.91608      10.50000       1.00000      20.00000
+
+
+Hoeffding Dependence Coefficients, N = 20 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       1.00000
+         <.0001
+
+g=4
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  9       2.00000       0.86603       2.00000       1.00000       3.00000
+x                  9       2.22222       1.20185       2.00000       1.00000       4.00000
+
+
+Hoeffding Dependence Coefficients, N = 9 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -0.14286
+         1.0000
+
+g=5
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  6       1.00000             0       1.00000       1.00000       1.00000
+x                  6       3.50000       1.87083       3.50000       1.00000       6.00000
+
+
+Hoeffding Dependence Coefficients, N = 6 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -0.62500
+         1.0000
+
+g=6
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                  6       1.00000             0       1.00000       1.00000       1.00000
+x                  6       1.00000             0       1.00000       1.00000       1.00000
+
+
+Hoeffding Dependence Coefficients, N = 6 
+         Prob > D under H0: D=0
+ 
+              x
+
+y      -1.17188
+         1.0000
+
+g=7
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+x                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+
+
+Hoeffding Dependence Coefficients, N = 12 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       0.02525
+         0.1903
+
+g=8
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+x                 12       6.50000       3.60555       6.50000       1.00000      12.00000
+
+
+Hoeffding Dependence Coefficients, N = 12 
+          Prob > D under H0: D=0
+ 
+              x
+
+y       1.00000
+         <.0001
+
+Obs                                  g   Variable                                  x                                 Px
+
+ 1                                   1      y                       0.01785714285714                   0.27035003097535
+ 2                                   2      y                       0.32142857142857                   0.00421936667347
+ 3                                   3      y                                      1                                  0
+ 4                                   4      y                      -0.14285714285714                                  1
+ 5                                   5      y                                 -0.625                                  1
+ 6                                   6      y                              -1.171875                                  1
+ 7                                   7      y                       0.02525252525252                   0.19028121558348
+ 8                                   8      y                                      1                                  0
+sasrun: /private/tmp/dev1-corr-hoeffding-grid.sas: 0 error(s), 0 warning(s) in 4.385s -> /dev/null
