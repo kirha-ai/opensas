@@ -50,9 +50,13 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   separate >.500/>.250 bounds and effective n-1 when only theta is estimated.
   See EVIDENCE-EXPONENTIAL.md for independent validation and integration details.
 
+- Fixed-threshold gamma now covers all three estimation masks with fitted-shape
+  response surfaces. M9 requires alpha>1 and n>=10 for estimated gamma; see
+  EVIDENCE-GAMMA-FIXED.md for direct availability and independent holdouts.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated gamma/beta/power probabilities; estimated-threshold lognormal and
+- Estimated-threshold gamma and estimated beta/power probabilities; estimated-threshold lognormal and
   Weibull probabilities; family/shape-dependent critical tables/interpolation.
   Availability is implemented, probability computation fails loudly where
   these documented-available combinations lack tables.

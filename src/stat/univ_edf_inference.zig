@@ -40,7 +40,7 @@ pub fn availability(r: Request) Available {
         .normal => if (e.mu != e.sigma) quadratic else all,
         .lognormal => if (e.theta) (if (r.sigma < 3) all else .{}) else if (e.zeta != e.sigma) quadratic else all,
         .exponential, .gumbel, .igauss, .pareto, .rayleigh => all,
-        .gamma => if (e.theta or (e.sigma and e.alpha)) (if (r.alpha > 1) all else .{}) else all,
+        .gamma => if (e.theta or e.sigma or e.alpha) (if (r.alpha > 1) all else .{}) else all,
         .weibull => if (e.theta) (if (r.c > 2) all else .{}) else if (e.sigma or e.c) quadratic else all,
         .beta => if (e.theta or e.sigma) .{} else if (!e.alpha and !e.beta) all else if (e.alpha and e.beta and r.alpha < 5 and r.beta < 5) all else .{},
         .power => if (e.theta or e.sigma) .{} else if (!e.alpha or r.alpha < 5) all else .{},
@@ -95,6 +95,7 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
         };
     }
     if (r.family == .exponential) return exponentialEstimated(s, n, e);
+    if (r.family == .gamma and !e.theta) return gammaFixedThreshold(s, n, e, r.alpha);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
         if (location and e.sigma) {
@@ -297,6 +298,158 @@ fn exponentialEstimated(s: Statistics, n: usize, e: Estimated) Result {
     return .{ .d = exponentialProbability(s.d, &d), .w2 = exponentialProbability(s.w2, &w), .a2 = exponentialProbability(s.a2, &a) };
 }
 
+// Fixed-threshold gamma log-critical response surfaces. SAS M9 requires
+// alpha>1 whenever any parameter is estimated, and n>=10. This is stricter
+// than Table 4.31's rows for one estimated parameter; see retained M9 probes.
+// Rows are D/W2/A2, then probability levels as in exponential_levels.
+// D basis: 1,n^-1/2,n^-1,alpha^-1,(n*alpha)^-1,alpha^-2,(n*alpha^2)^-1.
+// W2/A2 basis: 1,n^-1,n^-2,alpha^-1,(n*alpha)^-1,0,0.
+const gscale_surface = [3][11][7]f64{
+    .{
+        .{ -0.41806574, -0.25558052, -0.02935096, 0.09792528, 0.39725016, -0.02695806, -0.35937054 },
+        .{ -0.25885287, -0.21025327, -0.12744954, 0.1318541, 0.39725016, -0.0422842, -0.35937054 },
+        .{ -0.21977984, -0.20126905, -0.15448613, 0.14439614, 0.39725016, -0.05273168, -0.35937054 },
+        .{ -0.175025, -0.18747205, -0.19293132, 0.15776797, 0.39725016, -0.06142538, -0.35937054 },
+        .{ -0.11951437, -0.16774307, -0.25132321, 0.17333165, 0.39725016, -0.06856306, -0.35937054 },
+        .{ -0.03868108, -0.14928126, -0.32457796, 0.20351088, 0.39725016, -0.09106016, -0.35937054 },
+        .{ 0.03025134, -0.14493949, -0.37072055, 0.23117563, 0.39725016, -0.11627067, -0.35937054 },
+        .{ 0.1046898, -0.11630817, -0.48523375, 0.27563625, 0.39725016, -0.16738301, -0.35937054 },
+        .{ 0.15410558, -0.09574718, -0.57276223, 0.29521635, 0.39725016, -0.18302255, -0.35937054 },
+        .{ 0.20129523, -0.07860098, -0.65859822, 0.29043533, 0.39725016, -0.16104759, -0.35937054 },
+        .{ 0.25511228, -0.04511254, -0.79708847, 0.31515902, 0.39725016, -0.19717926, -0.35937054 },
+    },
+    .{
+        .{ -2.768275, 0.21572783, 0.06193114, 0.19410876, -0.20421511, 0, 0 },
+        .{ -2.3651537, 0.10126179, 0.00467011, 0.24408579, -0.20421511, 0, 0 },
+        .{ -2.2655394, 0.0888004, -0.09295156, 0.25814757, -0.20421511, 0, 0 },
+        .{ -2.1494069, 0.04952774, -0.05432884, 0.27313641, -0.20421511, 0, 0 },
+        .{ -2.0051869, -0.0117441, 0.02892244, 0.29283895, -0.20421511, 0, 0 },
+        .{ -1.7981286, -0.07730201, -0.14512687, 0.32766376, -0.20421511, 0, 0 },
+        .{ -1.6260447, -0.15304478, -0.31845866, 0.36313161, -0.20421511, 0, 0 },
+        .{ -1.4335153, -0.24841281, -0.48812655, 0.39535862, -0.20421511, 0, 0 },
+        .{ -1.3092456, -0.29547346, -0.73528453, 0.415166, -0.20421511, 0, 0 },
+        .{ -1.1941367, -0.40022102, -0.89173773, 0.4306441, -0.20421511, 0, 0 },
+        .{ -1.0640466, 0.41628284, -1.5819102, 0.44921383, -0.20421511, 0, 0 },
+    },
+    .{
+        .{ -0.80505361, -0.27342138, 0.01288268, 0.11974688, 0.0, 0, 0 },
+        .{ -0.44278365, -0.27943846, -0.14846148, 0.14947942, 0.0, 0, 0 },
+        .{ -0.35120361, -0.28304674, -0.13601252, 0.1570875, 0.0, 0, 0 },
+        .{ -0.24431231, -0.28731901, -0.14272555, 0.16788358, -0.0, 0, 0 },
+        .{ -0.11074541, -0.28161655, -0.24415972, 0.18336498, -0.0, 0, 0 },
+        .{ 0.08599266, -0.27215571, -0.34638547, 0.20522587, -0.0, 0, 0 },
+        .{ 0.25378057, -0.26721711, -0.21232372, 0.222501, 0.0, 0, 0 },
+        .{ 0.4411769, -0.1693966, -0.11762032, 0.24636185, 0.0, 0, 0 },
+        .{ 0.56312381, -0.0590569, 0.15081989, 0.27523914, -0.0, 0, 0 },
+        .{ 0.67363494, 0.19029051, -0.10210693, 0.2859269, 0.0, 0, 0 },
+        .{ 0.80094459, 0.65632249, -1.3789016, 0.31779391, 0.0, 0, 0 },
+    },
+};
+const gshape_surface = [3][11][7]f64{
+    .{
+        .{ -0.41900596, -0.25789663, -0.0145315, 0.0381218, 0.10853573, 0, 0 },
+        .{ -0.25939334, -0.21289797, -0.11765792, 0.04824401, 0.10853573, 0, 0 },
+        .{ -0.22024028, -0.20296944, -0.14720563, 0.05104662, 0.10853573, 0, 0 },
+        .{ -0.1752691, -0.18794812, -0.19013894, 0.05422283, 0.10853573, 0, 0 },
+        .{ -0.11940792, -0.17246234, -0.24476001, 0.05916906, 0.10853573, 0, 0 },
+        .{ -0.0391391, -0.14603795, -0.33836735, 0.06776371, 0.10853573, 0, 0 },
+        .{ 0.02942676, -0.13431939, -0.40323075, 0.07439481, 0.10853573, 0, 0 },
+        .{ 0.10611188, -0.11499872, -0.50589068, 0.08374191, 0.10853573, 0, 0 },
+        .{ 0.15757368, -0.11374341, -0.5619276, 0.08953413, 0.10853573, 0, 0 },
+        .{ 0.20305841, -0.09893703, -0.65005944, 0.09742546, 0.10853573, 0, 0 },
+        .{ 0.25845561, -0.09459385, -0.72899296, 0.10337094, 0.10853573, 0, 0 },
+    },
+    .{
+        .{ -2.7690406, 0.18447905, 0.05665255, 0.08339567, -0.0, 0, 0 },
+        .{ -2.3651244, 0.06966296, 0.06265214, 0.09681226, -0.0, 0, 0 },
+        .{ -2.2651169, 0.04956761, 0.00226343, 0.10113406, -0.0, 0, 0 },
+        .{ -2.1497304, 0.01748451, -0.00860014, 0.10631375, 0.0, 0, 0 },
+        .{ -2.005559, -0.04512578, 0.08889375, 0.110332, 0.0, 0, 0 },
+        .{ -1.7997689, -0.08286507, -0.18214949, 0.12088634, -0.0, 0, 0 },
+        .{ -1.6275728, -0.16194708, -0.32947411, 0.13203464, -0.0, 0, 0 },
+        .{ -1.4355316, -0.25645687, -0.58998271, 0.13898769, -0.0, 0, 0 },
+        .{ -1.309466, -0.38326488, -0.46664686, 0.14486614, 0.0, 0, 0 },
+        .{ -1.1984314, -0.44991708, -0.65582382, 0.14907985, -0.0, 0, 0 },
+        .{ -1.0681269, -0.56988401, -0.93135329, 0.16020614, -0.0, 0, 0 },
+    },
+    .{
+        .{ -0.80719616, -0.25320482, -0.09059234, 0.05448675, -0.11544682, 0, 0 },
+        .{ -0.44492391, -0.25503362, -0.21366238, 0.06466653, -0.11544682, 0, 0 },
+        .{ -0.35364127, -0.25736032, -0.19718816, 0.06601163, -0.11544682, 0, 0 },
+        .{ -0.24673535, -0.27638059, -0.10397087, 0.06890039, -0.11544682, 0, 0 },
+        .{ -0.11304634, -0.27734506, -0.09515638, 0.07390672, -0.11544682, 0, 0 },
+        .{ 0.08202942, -0.25352807, -0.19979744, 0.08309512, -0.11544682, 0, 0 },
+        .{ 0.24923779, -0.24515511, -0.0764443, 0.08502343, -0.11544682, 0, 0 },
+        .{ 0.43758404, -0.17596952, 0.07605047, 0.09097594, -0.11544682, 0, 0 },
+        .{ 0.56183994, -0.12237287, 0.5912348, 0.09354629, -0.11544682, 0, 0 },
+        .{ 0.67534211, -0.06534017, 1.14268417, 0.1016653, -0.11544682, 0, 0 },
+        .{ 0.80836522, 0.21186622, 0.75187746, 0.10748242, -0.11544682, 0, 0 },
+    },
+};
+const gboth_surface = [3][11][7]f64{
+    .{
+        .{ -0.48106181, -0.26482598, 0.04590848, 0.02128007, -0.04047523, 0, 0 },
+        .{ -0.32384107, -0.20315362, -0.11379026, 0.0265602, -0.04047523, 0, 0 },
+        .{ -0.28293809, -0.21602491, -0.07429426, 0.02711929, -0.04047523, 0, 0 },
+        .{ -0.23585869, -0.22014227, -0.07069849, 0.02881089, -0.04047523, 0, 0 },
+        .{ -0.17895269, -0.20084127, -0.13694199, 0.03048643, -0.04047523, 0, 0 },
+        .{ -0.09758354, -0.14819414, -0.31322962, 0.03348917, -0.04047523, 0, 0 },
+        .{ -0.02973419, -0.09248657, -0.49096845, 0.03669027, -0.04047523, 0, 0 },
+        .{ 0.05215498, -0.11017626, -0.48405276, 0.04246472, -0.04047523, 0, 0 },
+        .{ 0.10484144, -0.0970201, -0.5524165, 0.04285903, -0.04047523, 0, 0 },
+        .{ 0.15096632, -0.05939652, -0.70495629, 0.04244515, -0.04047523, 0, 0 },
+        .{ 0.20509498, 0.01010174, -0.96945025, 0.04487058, -0.04047523, 0, 0 },
+    },
+    .{
+        .{ -2.9790245, 0.33056138, -0.26991348, 0.05364978, -0.21988415, 0, 0 },
+        .{ -2.6057451, 0.14353195, -0.28714404, 0.06255916, -0.21988415, 0, 0 },
+        .{ -2.5126046, 0.09428078, -0.28129041, 0.06526373, -0.21988415, 0, 0 },
+        .{ -2.403744, 0.03502364, -0.3314299, 0.06779929, -0.21988415, 0, 0 },
+        .{ -2.2681564, -0.034768, -0.56183287, 0.07132154, -0.21988415, 0, 0 },
+        .{ -2.0727623, -0.10476579, -1.1854955, 0.07841807, -0.21988415, 0, 0 },
+        .{ -1.9080225, -0.19002607, -1.5336761, 0.08908393, -0.21988415, 0, 0 },
+        .{ -1.7232027, -0.3480029, -1.1542061, 0.09797826, -0.21988415, 0, 0 },
+        .{ -1.6007444, -0.48003655, -0.98002611, 0.10062886, -0.21988415, 0, 0 },
+        .{ -1.4924231, -0.47122441, -1.6828265, 0.09999803, -0.21988415, 0, 0 },
+        .{ -1.3637859, -0.43996235, -3.1104455, 0.10684229, -0.21988415, 0, 0 },
+    },
+    .{
+        .{ -1.0776703, 0.09157167, -0.06760912, 0.02690504, -0.1328685, 0, 0 },
+        .{ -0.75626027, -0.05204429, -0.4096316, 0.03344328, -0.1328685, 0, 0 },
+        .{ -0.67504987, -0.09198125, -0.46141622, 0.03579301, -0.1328685, 0, 0 },
+        .{ -0.58008627, -0.14442724, -0.52185598, 0.03739042, -0.1328685, 0, 0 },
+        .{ -0.46092461, -0.19397346, -0.72029496, 0.0391661, -0.1328685, 0, 0 },
+        .{ -0.28659085, -0.23686371, -1.3293136, 0.04456556, -0.1328685, 0, 0 },
+        .{ -0.1381183, -0.29726543, -1.7300038, 0.05027529, -0.1328685, 0, 0 },
+        .{ 0.0316945, -0.37843917, -2.1456895, 0.05538609, -0.1328685, 0, 0 },
+        .{ 0.14467348, -0.42739248, -2.4920157, 0.05468226, -0.1328685, 0, 0 },
+        .{ 0.24531701, -0.44714936, -3.1608039, 0.06148775, -0.1328685, 0, 0 },
+        .{ 0.36702609, -0.44257409, -4.4750451, 0.06374178, -0.1328685, 0, 0 },
+    },
+};
+
+fn gammaFixedThreshold(s: Statistics, n: usize, e: Estimated, alpha: f64) Result {
+    if (n < 10) return .{};
+    const table = if (e.alpha and e.sigma) &gboth_surface else if (e.alpha) &gshape_surface else &gscale_surface;
+    const inv = 1 / @as(f64, @floatFromInt(n));
+    const root_inv = @sqrt(inv);
+    const ia = 1 / alpha;
+    const db = [_]f64{ 1, root_inv, inv, ia, ia * inv, ia * ia, ia * ia * inv };
+    const qb = [_]f64{ 1, inv, inv * inv, ia, ia * inv, 0, 0 };
+    var probabilities: [3]Probability = undefined;
+    const stats = [_]f64{ s.d, s.w2, s.a2 };
+    for (0..3) |t| {
+        var criticals: [11]f64 = undefined;
+        for (table[t], 0..) |row, i| {
+            var log_critical: f64 = 0;
+            for (row, if (t == 0) db else qb) |coefficient, term| log_critical += coefficient * term;
+            criticals[i] = @exp(log_critical) * (if (t == 0) root_inv else 1);
+        }
+        probabilities[t] = exponentialProbability(stats[t], &criticals);
+    }
+    return .{ .d = probabilities[0], .w2 = probabilities[1], .a2 = probabilities[2] };
+}
+
 pub const SimulationOptions = struct {
     /// Caller resolves omitted/time-of-day seed once, and can retain it in ODS.
     seed: u64,
@@ -354,7 +507,7 @@ test "dev5 EDF Table 4.31 estimation masks and strict shape boundaries" {
     try std.testing.expect(!availability(.{ .family = .lognormal, .estimated = .{ .theta = true }, .sigma = 3 }).a2);
     try std.testing.expect(availability(.{ .family = .lognormal, .estimated = .{ .theta = true }, .sigma = 2.99 }).d);
     try std.testing.expect(!availability(.{ .family = .gamma, .estimated = .{ .alpha = true, .sigma = true } }).a2);
-    try std.testing.expect(availability(.{ .family = .gamma, .estimated = .{ .alpha = true } }).a2);
+    try std.testing.expect(!availability(.{ .family = .gamma, .estimated = .{ .alpha = true } }).a2);
     try std.testing.expect(!availability(.{ .family = .weibull, .estimated = .{ .theta = true }, .c = 2 }).a2);
     try std.testing.expect(availability(.{ .family = .weibull, .estimated = .{ .theta = true }, .c = 2.01 }).d);
     try std.testing.expect(!availability(.{ .family = .weibull, .estimated = .{ .c = true } }).d);
@@ -534,4 +687,40 @@ test "dev5 EDF exponential all estimation masks independent M9 holdouts" {
         try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .exponential, .estimated = .{ .sigma = true, .theta = true } }, s, n));
     }
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .exponential, .estimated = .{ .theta = true } }, s, 5));
+}
+
+test "dev5 EDF fixed-threshold gamma three estimation masks independent M9 holdouts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var lines = std.mem.splitScalar(u8, @embedFile("testdata/univ_edf_dev5_gamma.txt"), '\n');
+    var count: usize = 0;
+    while (lines.next()) |line| {
+        if (line.len == 0) continue;
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const id = fields.next().?;
+        const n = try std.fmt.parseInt(usize, fields.next().?, 10);
+        _ = fields.next().?;
+        const statistic = fields.next().?;
+        const value = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected = try std.fmt.parseFloat(f64, fields.next().?);
+        const sign = fields.next().?;
+        const alpha = try std.fmt.parseFloat(f64, fields.next().?);
+        const e: Estimated = if (std.mem.startsWith(u8, id, "gscale")) .{ .sigma = true } else if (std.mem.startsWith(u8, id, "gshape")) .{ .alpha = true } else .{ .alpha = true, .sigma = true };
+        var s: Statistics = .{ .d = 0, .w2 = 0, .a2 = 0 };
+        const test_d = std.mem.eql(u8, statistic, "D");
+        const test_w = std.mem.eql(u8, statistic, "W-Sq");
+        if (test_d) s.d = value else if (test_w) s.w2 = value else s.a2 = value;
+        const result = try tabulated(&d, .{ .family = .gamma, .estimated = e, .alpha = alpha }, s, n);
+        const p = if (test_d) result.d.? else if (test_w) result.w2.? else result.a2.?;
+        try std.testing.expectApproxEqAbs(expected, p.value, 1e-10);
+        const expected_sign: Sign = if (std.mem.eql(u8, sign, ">")) .greater else if (std.mem.eql(u8, sign, "<")) .less else .exact;
+        try std.testing.expectEqual(expected_sign, p.sign);
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 23184), count);
+    const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 2 }, s, 9));
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 1 }, s, 20));
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .alpha = true }, .alpha = 0.99 }, s, 20));
 }
