@@ -1,0 +1,14 @@
+options nonumber nodate;
+data j; do i=1 to 101; q=(i-.375)/101.25; b=quantile("beta",q,2,3); output; end; run;
+title "beta theta=est sigma=est maxiter 1"; proc univariate data=j; histogram b / beta(theta=est sigma=est maxiter=1) noplot; run;
+title "beta theta=est sigma=est beta=3 maxiter 1"; proc univariate data=j; histogram b / beta(theta=est sigma=est beta=3 maxiter=1) noplot; run;
+title "beta theta=0 sigma=est maxiter 1"; proc univariate data=j; histogram b / beta(theta=0 sigma=est maxiter=1) noplot; run;
+title "beta theta=est sigma=est maxiter 20"; proc univariate data=j; histogram b / beta(theta=est sigma=est maxiter=20) noplot; run;
+title "beta theta=est sigma=est beta=3 maxiter 20"; proc univariate data=j; histogram b / beta(theta=est sigma=est beta=3 maxiter=20) noplot; run;
+title "beta theta=0 sigma=est maxiter 20"; proc univariate data=j; histogram b / beta(theta=0 sigma=est maxiter=20) noplot; run;
+title "beta theta=est sigma=est maxiter 100"; proc univariate data=j; histogram b / beta(theta=est sigma=est maxiter=100) noplot; run;
+title "beta theta=est sigma=est beta=3 maxiter 100"; proc univariate data=j; histogram b / beta(theta=est sigma=est beta=3 maxiter=100) noplot; run;
+title "beta theta=0 sigma=est maxiter 100"; proc univariate data=j; histogram b / beta(theta=0 sigma=est maxiter=100) noplot; run;
+title "beta theta=est sigma=est maxiter 1000"; proc univariate data=j; histogram b / beta(theta=est sigma=est maxiter=1000) noplot; run;
+title "beta theta=est sigma=est beta=3 maxiter 1000"; proc univariate data=j; histogram b / beta(theta=est sigma=est beta=3 maxiter=1000) noplot; run;
+title "beta theta=0 sigma=est maxiter 1000"; proc univariate data=j; histogram b / beta(theta=0 sigma=est maxiter=1000) noplot; run;

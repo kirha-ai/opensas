@@ -1,0 +1,21 @@
+options nonumber nodate;
+data j; do i=1 to 77; q=(i-.375)/77.25; b=-3+7*quantile("beta",q,3,4); g=5+3*(1-(1-q)**.2)/.2; p=q**(1/5); output; end; run;
+title "heldout beta theta=est sigma=est"; proc univariate data=j; histogram b / beta(theta=est sigma=est) noplot; run;
+title "heldout beta theta=-3 sigma=est"; proc univariate data=j; histogram b / beta(theta=-3 sigma=est) noplot; run;
+title "heldout beta theta=est sigma=7 alpha=3"; proc univariate data=j; histogram b / beta(theta=est sigma=7 alpha=3) noplot; run;
+title "heldout pareto theta=5"; proc univariate data=j; histogram g / pareto(theta=5 edfnsamples=1) noplot; run;
+title "heldout pareto theta=5 alpha=.2"; proc univariate data=j; histogram g / pareto(theta=5 alpha=.2 edfnsamples=1) noplot; run;
+title "heldout pareto theta=5 sigma=3"; proc univariate data=j; histogram g / pareto(theta=5 sigma=3 edfnsamples=1) noplot; run;
+title "heldout power sigma=est alpha=5"; proc univariate data=j; histogram p / power(sigma=est alpha=5) noplot; run;
+title "heldout power theta=est sigma=est alpha=5"; proc univariate data=j; histogram p / power(theta=est sigma=est alpha=5) noplot; run;
+title "heldout power theta=0 sigma=1"; proc univariate data=j; histogram p / power(theta=0 sigma=1) noplot; run;
+data e; input x @@; datalines;
+1 2 3 4 6 8 10 15
+;
+title "edge beta theta=est sigma=est"; proc univariate data=e; histogram x / beta(theta=est sigma=est) noplot; run;
+title "edge beta theta=est sigma=est alpha=1 beta=1"; proc univariate data=e; histogram x / beta(theta=est sigma=est alpha=1 beta=1) noplot; run;
+title "edge beta theta=0 sigma=est alpha=.5 beta=.5"; proc univariate data=e; histogram x / beta(theta=0 sigma=est alpha=.5 beta=.5) noplot; run;
+title "edge power theta=est sigma=est"; proc univariate data=e; histogram x / power(theta=est sigma=est) noplot; run;
+title "edge pareto "; proc univariate data=e; histogram x / pareto( edfnsamples=1) noplot; run;
+title "edge pareto alpha=1"; proc univariate data=e; histogram x / pareto(alpha=1 edfnsamples=1) noplot; run;
+title "edge pareto alpha=1.2"; proc univariate data=e; histogram x / pareto(alpha=1.2 edfnsamples=1) noplot; run;

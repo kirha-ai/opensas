@@ -1,0 +1,18 @@
+options nonumber nodate;
+data j; do i=1 to 101; q=(i-.375)/101.25; g=2*((1-q)**(-.3)-1)/.3; output; end; run;
+title "mle "; proc univariate data=j; histogram g / pareto(fitmethod=mle  edfnsamples=1) noplot; run;
+title "mle alpha=-.3"; proc univariate data=j; histogram g / pareto(fitmethod=mle alpha=-.3 edfnsamples=1) noplot; run;
+title "mle sigma=2"; proc univariate data=j; histogram g / pareto(fitmethod=mle sigma=2 edfnsamples=1) noplot; run;
+title "mle alpha=0"; proc univariate data=j; histogram g / pareto(fitmethod=mle alpha=0 edfnsamples=1) noplot; run;
+title "mle alpha=1"; proc univariate data=j; histogram g / pareto(fitmethod=mle alpha=1 edfnsamples=1) noplot; run;
+title "mle alpha=1.2"; proc univariate data=j; histogram g / pareto(fitmethod=mle alpha=1.2 edfnsamples=1) noplot; run;
+title "epm "; proc univariate data=j; histogram g / pareto(fitmethod=epm  edfnsamples=1) noplot; run;
+title "epm alpha=-.3"; proc univariate data=j; histogram g / pareto(fitmethod=epm alpha=-.3 edfnsamples=1) noplot; run;
+title "epm sigma=2"; proc univariate data=j; histogram g / pareto(fitmethod=epm sigma=2 edfnsamples=1) noplot; run;
+title "epm alpha=0"; proc univariate data=j; histogram g / pareto(fitmethod=epm alpha=0 edfnsamples=1) noplot; run;
+title "epm alpha=1"; proc univariate data=j; histogram g / pareto(fitmethod=epm alpha=1 edfnsamples=1) noplot; run;
+title "epm alpha=1.2"; proc univariate data=j; histogram g / pareto(fitmethod=epm alpha=1.2 edfnsamples=1) noplot; run;
+data j; do i=1 to 51; x=((i-.375)/51.25)**.5; output; end; run;
+title "power theta=est"; proc univariate data=j; histogram x / power(theta=est maxiter=1000) noplot; run;
+title "power sigma=est"; proc univariate data=j; histogram x / power(sigma=est maxiter=1000) noplot; run;
+title "power theta=est sigma=est"; proc univariate data=j; histogram x / power(theta=est sigma=est maxiter=1000) noplot; run;
