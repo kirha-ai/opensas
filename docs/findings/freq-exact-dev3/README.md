@@ -49,6 +49,9 @@ Numbers below are transcribed from actual SAS stdout, not opensas goldens.
   BEST32, `[1,3;3,1]`, column 2, SCORE2, alpha .05:
   lower .59316071031463, upper 42.0396959567221. The public discrepancy
   is not an inference from a rounded listing.
+* `high-alpha.sas`: 0 errors/warnings. k=2,n=10,p0=.3, NI margin .1,
+  TABLES ALPHA=.6: exact p .6242, exact nominal -20% limits [.1921,.2255].
+  Public regression retains the risk ticket's landed high-alpha behavior.
 
 Retained counterexample tests and evidence comments in
 `freq_exact_unconditional.zig` were inspected before changes. Original
@@ -82,5 +85,8 @@ public tests. No expected listing fixture changes are included.
   retaining the same-ticket numerical blocker, this case is a known-difference
   certificate, not a falsely passing SAS assertion. No tolerance was widened,
   and it remains part of the incomplete acceptance inventory.
-* Final rebase and post-rebase gate/counts must be recorded before landing.
+* The single final rebase onto local `feat/stat/batch-3` at
+  `0f2d151e755c382d1fbc4330344808b3be2508bf` completed without conflicts;
+  the ODS capture hook and landed risk changes were preserved. Final gate
+  counts and green SHA are reported in the manager handoff.
   Parser acceptance or a green gate alone does not complete this ticket.

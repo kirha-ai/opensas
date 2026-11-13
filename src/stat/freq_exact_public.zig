@@ -394,6 +394,11 @@ test "public EXACT one-way binomial and multinomial use distinct tails" {
     for ([_][]const u8{ "0.7332", "0.4336", "0.5164", "0.5331", "0.4163" }) |value| try std.testing.expect(std.mem.indexOf(u8, gof, value) != null);
     const hypotheses = try h.run("proc freq data=d; weight w; tables r / binomial(p=.3 noninf sup equiv margin=.1) noprint; exact binomial / point midp; run;", &d);
     for ([_][]const u8{ "0.6242", "0.1673", "0.9536", "0.0368", "0.5069", "90% Lower Conf Limit" }) |value| try std.testing.expect(std.mem.indexOf(u8, hypotheses, value) != null);
+    // SAS high-alpha.sas also verifies compatibility with the landed risk
+    // behavior: exact NI limits remain ordered even at negative nominal CL.
+    const high = try h.run("proc freq data=d; weight w; tables r / binomial(p=.3 noninf margin=.1) alpha=.6 noprint; exact binomial; run;", &d);
+    for ([_][]const u8{ "0.1921", "0.2255", "-20% Lower Conf Limit", "0.6242" }) |value| try std.testing.expect(std.mem.indexOf(u8, high, value) != null);
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "public EXACT zero margins retain agreement and fractional counts fail with diagnostics" {
