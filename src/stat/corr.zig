@@ -1522,3 +1522,27 @@ test "CORR convergence scaling and near-zero fallback match SAS stopping steps" 
     try std.testing.expectApproxEqAbs(@as(f64, 0.67528568038814), fourth.r, 5e-8);
     try std.testing.expectApproxEqAbs(@as(f64, 0.09426981785414), fourth.se, 5e-7);
 }
+
+test "CORR absolute information pivots reproduce the native frequency discriminator" {
+    const kernel = @import("corr_polychoric.zig");
+    // Native SAS information at case 22's reported rho. The fourth Schur
+    // pivot is 8.662041195e-10 per unit frequency scale. SAS stops at scale
+    // 11 and 11.5, and continues at 12, under all tested SINGULAR settings.
+    const native = [_]f64{
+        73.6937388608656,     -16.0494708087452,    -19.0587465853628,    -5.5682364317907e-10,
+        -16.0494708087452,    36.7011896917651,     -2.6765361015066e-12, 1.2524460613515e-10,
+        -19.0587465853628,    -2.6765361015066e-12, 38.1348299140736,     6.0614628392537e-10,
+        -5.5682364317907e-10, 1.2524460613515e-10,  6.0614628392537e-10,  8.6620411951505e-10,
+    };
+    for ([_]f64{ 11, 11.5, 12 }, [_]usize{ 3, 3, 4 }) |scale, expected_rank| {
+        var matrix = native;
+        for (&matrix) |*v| v.* *= scale;
+        var rhs = [_]f64{ 0, 0, 0, 1 };
+        try std.testing.expectEqual(expected_rank, kernel.solveInformation(&matrix, &rhs).?);
+        if (expected_rank == 3) try Testing.near(0, rhs[3]) else try std.testing.expectApproxEqRel(@as(f64, 1154462299.91641 / 12.0), rhs[3], 1e-10);
+    }
+    var invalid = native;
+    invalid[0] = nan;
+    var rhs = [_]f64{ 0, 0, 0, 1 };
+    try std.testing.expect(kernel.solveInformation(&invalid, &rhs) == null);
+}

@@ -237,15 +237,32 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     }
     return result;
 }
-/// Pivoted solve; callers retain the original matrix when they need its inverse.
-fn linearSolve(matrix: []f64, rhs: []f64) bool {
+/// Rank-aware information solve. The absolute 1e-8 pivot decision is pinned
+/// by native CORR frequency transitions; SINGULAR= governs PARTIAL instead.
+/// Dropped coordinates have zero solution/variance, as a generalized sweep.
+/// Nonfinite or malformed input is unavailable, never a zero-variance result.
+pub fn solveInformation(matrix: []f64, rhs: []f64) ?usize {
     const n = rhs.len;
+    if (n != 0 and n > std.math.maxInt(usize) / n) return null;
+    if (matrix.len != n * n) return null;
+    for (matrix) |value| if (!std.math.isFinite(value)) return null;
+    for (rhs) |value| if (!std.math.isFinite(value)) return null;
+    var rank: usize = 0;
     for (0..n) |i| {
         var pivot = i;
         for (i + 1..n) |j| if (@abs(matrix[j * n + i]) > @abs(matrix[pivot * n + i])) {
             pivot = j;
         };
-        if (@abs(matrix[pivot * n + i]) < 1e-12) return false;
+        if (@abs(matrix[pivot * n + i]) < 1e-8) {
+            for (0..n) |j| {
+                matrix[j * n + i] = 0;
+                matrix[i * n + j] = 0;
+            }
+            matrix[i * n + i] = 1;
+            rhs[i] = 0;
+            continue;
+        }
+        rank += 1;
         for (0..n) |k| std.mem.swap(f64, &matrix[i * n + k], &matrix[pivot * n + k]);
         std.mem.swap(f64, &rhs[i], &rhs[pivot]);
         const scale = matrix[i * n + i];
@@ -258,7 +275,9 @@ fn linearSolve(matrix: []f64, rhs: []f64) bool {
             rhs[j] -= factor * rhs[i];
         }
     }
-    return true;
+    for (matrix) |value| if (!std.math.isFinite(value)) return null;
+    for (rhs) |value| if (!std.math.isFinite(value)) return null;
+    return rank;
 }
 pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOptions) Error!Polychoric {
     if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge <= 0 or opts.maxiter == 0) return error.ExecError;
@@ -387,7 +406,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             }
         }
         @memcpy(saved_information, hessian);
-        if (!linearSolve(hessian, gradient)) break;
+        if (solveInformation(hessian, gradient) == null) break;
         var scale: f64 = 1;
         var accepted = false;
         for (0..30) |_| {
@@ -408,8 +427,9 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(p) < 0.01) 1 else @abs(p)));
         @memcpy(params, candidate);
         if (boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
-            // The likelihood gap is below the rectangle quadrature's relative
-            // error budget. A finite Wald SE is not numerically certified here.
+            // The likelihood gap is below the quadrature error budget. A
+            // validated rank decision alone does not establish the remaining
+            // SAS boundary-step convention, so preserve this public guard.
             return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
         }
         if (change < opts.converge) {
@@ -423,7 +443,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     @memcpy(hessian, saved_information);
     @memset(gradient, 0);
     gradient[dim - 1] = 1;
-    const variance = if (linearSolve(hessian, gradient)) gradient[dim - 1] else std.math.nan(f64);
+    const variance = if (solveInformation(hessian, gradient) != null) gradient[dim - 1] else std.math.nan(f64);
     return .{ .coefficient = measure(params[dim - 1], variance, variance, opts.alpha), .likelihood_ratio = chi(2 * (null_ll - negativeLogLikelihood(m, params)), 1), .converged = converged, .iterations = iterations };
 }
 
