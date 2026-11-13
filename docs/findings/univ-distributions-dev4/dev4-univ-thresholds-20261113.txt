@@ -1,0 +1,105 @@
+
+The UNIVARIATE Procedure
+Fitted Lognormal Distribution for x
+
+Parameters for Lognormal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.896031
+Scale       Zeta     1.845943
+Shape       Sigma    0.481258
+Mean                 8.007779
+Std Dev              3.630668
+
+
+       Goodness-of-Fit Tests for Lognormal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.02688636   Pr > D       >0.500
+Cramer-von Mises      W-Sq    0.00718238   Pr > W-Sq    >0.500
+Anderson-Darling      A-Sq    0.05687333   Pr > A-Sq    >0.500
+
+
+Quantiles for Lognormal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     2.93942     2.96359
+    5.0     3.65181     3.76612
+   10.0     4.29906     4.31448
+   25.0     5.42698     5.47438
+   50.0     7.34812     7.23010
+   75.0     9.88910     9.65911
+   90.0    12.37411    12.63250
+   95.0    14.52560    14.87485
+   99.0    18.30753    20.30078
+
+The UNIVARIATE Procedure
+Fitted Weibull Distribution for x
+
+Parameters for Weibull Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta     2.76106
+Scale       Sigma    5.796717
+Shape       C        1.592397
+Mean                 7.960552
+Std Dev              3.341717
+
+
+Quantiles for Weibull Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     2.93942     3.08360
+    5.0     3.65181     3.65874
+   10.0     4.29906     4.17177
+   25.0     5.42698     5.41193
+   50.0     7.34812     7.36599
+   75.0     9.88910     9.87754
+   90.0    12.37411    12.54802
+   95.0    14.52560    14.30671
+   99.0    18.30753    17.88587
+
+The UNIVARIATE Procedure
+Fitted Gamma Distribution for x
+
+Parameters for Gamma Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta     2.37173
+Scale       Sigma    2.103588
+Shape       Alpha    2.659039
+Mean                 7.965252
+Std Dev              3.430228
+
+
+         Goodness-of-Fit Tests for Gamma Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.01818943   Pr > D       >0.500
+Cramer-von Mises      W-Sq    0.00318302   Pr > W-Sq    >0.500
+Anderson-Darling      A-Sq    0.03158639   Pr > A-Sq    >0.500
+
+
+Quantiles for Gamma Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     2.93942     3.05478
+    5.0     3.65181     3.73492
+   10.0     4.29906     4.25945
+   25.0     5.42698     5.44310
+   50.0     7.34812     7.28185
+   75.0     9.88910     9.74959
+   90.0    12.37411    12.56239
+   95.0    14.52560    14.53055
+   99.0    18.30753    18.82495

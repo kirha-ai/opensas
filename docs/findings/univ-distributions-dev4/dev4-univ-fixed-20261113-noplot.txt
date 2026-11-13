@@ -1,0 +1,393 @@
+
+The UNIVARIATE Procedure
+Fitted Normal Distribution for x
+
+Parameters for Normal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Mean        Mu              5
+Std Dev     Sigma    4.541476
+
+
+        Goodness-of-Fit Tests for Normal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.04091812   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.38811470   Pr > A-Sq    >0.250
+
+
+Quantiles for Normal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000    -5.56505
+    5.0     1.00000    -2.47006
+   10.0     1.00000    -0.82014
+   25.0     2.50000     1.93682
+   50.0     5.00000     5.00000
+   75.0     9.00000     8.06318
+   90.0    15.00000    10.82014
+   95.0    15.00000    12.47006
+   99.0    15.00000    15.56505
+
+The UNIVARIATE Procedure
+Fitted Normal Distribution for x
+
+Parameters for Normal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Mean        Mu          6.125
+Std Dev     Sigma           2
+
+
+        Goodness-of-Fit Tests for Normal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.24888854   Pr > W-Sq     0.008
+Anderson-Darling      A-Sq    3.59786720   Pr > A-Sq    <0.003
+
+
+Quantiles for Normal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.47230
+    5.0     1.00000     2.83529
+   10.0     1.00000     3.56190
+   25.0     2.50000     4.77602
+   50.0     5.00000     6.12500
+   75.0     9.00000     7.47398
+   90.0    15.00000     8.68810
+   95.0    15.00000     9.41471
+   99.0    15.00000    10.77770
+
+The UNIVARIATE Procedure
+Fitted Lognormal Distribution for x
+
+Parameters for Lognormal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Zeta            1
+Shape       Sigma    1.046037
+Mean                 4.697809
+Std Dev              6.621694
+
+
+       Goodness-of-Fit Tests for Lognormal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.23214126   Pr > W-Sq     0.192
+Anderson-Darling      A-Sq    1.20528110   Pr > A-Sq     0.213
+
+
+Quantiles for Lognormal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.23849
+    5.0     1.00000     0.48647
+   10.0     1.00000     0.71138
+   25.0     2.50000     1.34240
+   50.0     5.00000     2.71828
+   75.0     9.00000     5.50436
+   90.0    15.00000    10.38695
+   95.0    15.00000    15.18908
+   99.0    15.00000    30.98319
+
+The UNIVARIATE Procedure
+Fitted Lognormal Distribution for x
+
+Parameters for Lognormal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Zeta     1.507486
+Shape       Sigma           1
+Mean                  7.44458
+Std Dev              9.758598
+
+
+       Goodness-of-Fit Tests for Lognormal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.01855860   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.14840768   Pr > A-Sq    >0.250
+
+
+Quantiles for Lognormal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.44093
+    5.0     1.00000     0.87165
+   10.0     1.00000     1.25349
+   25.0     2.50000     2.30020
+   50.0     5.00000     4.51537
+   75.0     9.00000     8.86380
+   90.0    15.00000    16.26536
+   95.0    15.00000    23.39073
+   99.0    15.00000    46.23949
+
+The UNIVARIATE Procedure
+Fitted Exponential Distribution for x
+
+Parameters for Exponential Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           1
+Scale       Sigma           2
+Mean                        3
+Std Dev                     2
+
+
+      Goodness-of-Fit Tests for Exponential Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.49115555   Pr > D        0.044
+Cramer-von Mises      W-Sq    0.79417139   Pr > W-Sq     0.005
+Anderson-Darling      A-Sq    6.01163576   Pr > A-Sq     0.001
+
+
+Quantiles for Exponential Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.02010
+    5.0     1.00000     1.10259
+   10.0     1.00000     1.21072
+   25.0     2.50000     1.57536
+   50.0     5.00000     2.38629
+   75.0     9.00000     3.77259
+   90.0    15.00000     5.60517
+   95.0    15.00000     6.99146
+   99.0    15.00000    10.21034
+
+The UNIVARIATE Procedure
+Fitted Exponential Distribution for x
+
+Parameters for Exponential Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma       6.125
+Mean                    6.125
+Std Dev                 6.125
+
+
+      Goodness-of-Fit Tests for Exponential Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.15357771   Pr > D       >0.500
+Cramer-von Mises      W-Sq    0.04004952   Pr > W-Sq    >0.500
+Anderson-Darling      A-Sq    0.27525175   Pr > A-Sq    >0.500
+
+
+Quantiles for Exponential Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.06156
+    5.0     1.00000     0.31417
+   10.0     1.00000     0.64533
+   25.0     2.50000     1.76205
+   50.0     5.00000     4.24553
+   75.0     9.00000     8.49105
+   90.0    15.00000    14.10333
+   95.0    15.00000    18.34886
+   99.0    15.00000    28.20667
+
+The UNIVARIATE Procedure
+Fitted Weibull Distribution for x
+
+Parameters for Weibull Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    7.541552
+Shape       C               2
+Mean                 6.683526
+Std Dev              3.493634
+
+
+        Goodness-of-Fit Tests for Weibull Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.10232739   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.77307291   Pr > A-Sq     0.220
+
+
+Quantiles for Weibull Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.75605
+    5.0     1.00000     1.70801
+   10.0     1.00000     2.44793
+   25.0     2.50000     4.04499
+   50.0     5.00000     6.27875
+   75.0     9.00000     8.87950
+   90.0    15.00000    11.44375
+   95.0    15.00000    13.05306
+   99.0    15.00000    16.18391
+
+The UNIVARIATE Procedure
+Fitted Gamma Distribution for x
+
+Parameters for Gamma Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma      3.0625
+Shape       Alpha           2
+Mean                    6.125
+Std Dev              4.331029
+
+
+Quantiles for Gamma Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.45495
+    5.0     1.00000     1.08829
+   10.0     1.00000     1.62867
+   25.0     2.50000     2.94392
+   50.0     5.00000     5.13994
+   75.0     9.00000     8.24619
+   90.0    15.00000    11.91227
+   95.0    15.00000    14.52809
+   99.0    15.00000    20.32995
+
+The UNIVARIATE Procedure
+Fitted Rayleigh Distribution for x
+
+Parameters for Rayleigh Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    5.332682
+Mean                 6.683526
+Std Dev              3.493634
+
+
+       Goodness-of-Fit Tests for Rayleigh Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.25478776   Pr > D        0.354
+Cramer-von Mises      W-Sq    0.10232739   Pr > W-Sq     0.326
+Anderson-Darling      A-Sq    0.77307291   Pr > A-Sq     0.224
+
+
+Quantiles for Rayleigh Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.75605
+    5.0     1.00000     1.70801
+   10.0     1.00000     2.44793
+   25.0     2.50000     4.04499
+   50.0     5.00000     6.27875
+   75.0     9.00000     8.87950
+   90.0    15.00000    11.44375
+   95.0    15.00000    13.05306
+   99.0    15.00000    16.18391
+
+The UNIVARIATE Procedure
+Fitted Gumbel Distribution for x
+
+Parameters for Gumbel Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Mu              5
+Scale       Sigma    3.608504
+Mean                 7.082901
+Std Dev              4.628086
+
+
+        Goodness-of-Fit Tests for Gumbel Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.23268534   Pr > D        0.642
+Cramer-von Mises      W-Sq    0.07752714   Pr > W-Sq     0.642
+Anderson-Darling      A-Sq    0.45766553   Pr > A-Sq     0.724
+
+
+Quantiles for Gumbel Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000    -0.51083
+    5.0     1.00000     1.04079
+   10.0     1.00000     1.99039
+   25.0     2.50000     3.82134
+   50.0     5.00000     6.32256
+   75.0     9.00000     9.49583
+   90.0    15.00000    13.12046
+   95.0    15.00000    15.71796
+   99.0    15.00000    21.59966
+
+The UNIVARIATE Procedure
+Fitted Inverse Gaussian Distribution for x
+
+Parameters for Inverse Gaussian Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Mu              5
+Shape       Lambda   6.145967
+Mean                        5
+Std Dev              4.509827
+
+
+   Goodness-of-Fit Tests for Inverse Gaussian Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.23197063   Pr > D        0.614
+Cramer-von Mises      W-Sq    0.09251206   Pr > W-Sq     0.510
+Anderson-Darling      A-Sq    0.53535713   Pr > A-Sq     0.564
+
+
+Quantiles for Inverse Gaussian Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.70482
+    5.0     1.00000     1.06371
+   10.0     1.00000     1.35529
+   25.0     2.50000     2.10531
+   50.0     5.00000     3.59206
+   75.0     9.00000     6.28476
+   90.0    15.00000    10.33458
+   95.0    15.00000    13.73798
+   99.0    15.00000    22.52243

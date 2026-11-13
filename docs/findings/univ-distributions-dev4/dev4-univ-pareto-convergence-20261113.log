@@ -1,0 +1,108 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data d;do g=0 to 10;do i=1 to 8;x=scan('1 2 3 4 6 8 10 15',i)+g;output;end;end;run;
+
+NOTE: Character values have been converted to numeric values at the places given by: (Line):(Column).
+      38:35   
+NOTE: The data set WORK.D has 88 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              518.81k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 05:41:19 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     129
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         proc univariate data=d noprint;by g;histogram x / noplot pareto(edfnsamples=1 edfseed=17);run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Pareto distribution are available.
+NOTE: The above message was for the following BY group:
+      g=0
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=1
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: None of the EDF goodness-of-fit statistics for the Pareto distribution are available.
+NOTE: The above message was for the following BY group:
+      g=2
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=3
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=4
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=5
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+The SAS System
+
+      g=6
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=7
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=8
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=9
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+WARNING: Unable to obtain maximum likelihood estimates.
+NOTE: The Pareto curve was not drawn because estimates could not be computed for all parameters.
+NOTE: The above message was for the following BY group:
+      g=10
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              3169.01k
+      OS Memory           13804.00k
+      Timestamp           11/13/2026 05:41:19 AM
+      Step Count                        3  Switch Count  1
+      Page Faults                       0
+      Page Reclaims                     763
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+40         
+41         
+42         
+43         
+The SAS System
+
+44

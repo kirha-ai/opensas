@@ -1,0 +1,113 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data d; input x @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              522.82k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+40         ;
+41         proc univariate data=d noprint;
+42         histogram x / noplot normal(mu=5) exponential(theta=est) gamma lognormal weibull rayleigh gumbel igauss
+42       ! pareto kernel(k=n q t c=0.5 lower=0) endpoints=0 to 20 by 5 outhistogram=oh outkernel=ok;
+43         run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the lognormal fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the Weibull fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the gamma fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the Rayleigh fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the Pareto fit for x, a zero threshold is assumed.
+NOTE: The bounded normal kernel estimate for c=0.5 has a bandwidth of 2.1442.
+NOTE: The bounded quadratic kernel estimate for c=0.5 has a bandwidth of 2.1442.
+NOTE: The bounded triangular kernel estimate for c=0.5 has a bandwidth of 2.1442.
+WARNING: A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Gamma 
+         distribution is not fully specified.
+NOTE: None of the EDF goodness-of-fit statistics for the Gamma distribution are available.
+NOTE: The data set WORK.OH has 36 observations and 6 variables.
+NOTE: The data set WORK.OK has 555 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-9.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.05 seconds
+      user cpu time       0.05 seconds
+      system cpu time     0.01 seconds
+      memory              4164.78k
+      OS Memory           14836.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        3  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     985
+      Page Swaps                        0
+      Voluntary Context Switches        19
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           536
+The SAS System
+
+      
+
+44         proc print data=oh;run;
+
+NOTE: There were 36 observations read from the data set WORK.OH.
+NOTE: The PROCEDURE PRINT printed page 10.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.50k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     75
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         proc print data=ok(obs=5);run;
+
+NOTE: There were 5 observations read from the data set WORK.OK.
+NOTE: The PROCEDURE PRINT printed page 11.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              519.20k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         
+47         
+48         
+49         
+The SAS System
+
+50         

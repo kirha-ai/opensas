@@ -1777,3 +1777,12 @@ pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col:
     const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
     try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference);
 }
+
+// Numerical distribution tests stay independent of rendering/ODS integration.
+test {
+    _ = @import("univ_distributions.zig");
+    _ = @import("univ_distribution_fit.zig");
+    _ = @import("univ_kernel.zig");
+    _ = @import("univ_distribution_parse.zig");
+    _ = @import("univ_distribution_values.zig");
+}

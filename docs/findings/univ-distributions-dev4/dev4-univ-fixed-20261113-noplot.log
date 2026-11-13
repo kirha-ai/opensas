@@ -1,0 +1,66 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data d; input x @@; datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.78k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+40         ;
+41         proc univariate data=d noprint;
+42         histogram x / noplot normal(mu=5 est sigma=est 2) lognormal(zeta=1 est sigma=est 1) exponential(theta=est 0
+42       ! sigma=2 est) weibull(c=2) gamma(alpha=2) gumbel(mu=5) igauss(mu=5) rayleigh;
+43         run;
+
+NOTE: Since a threshold parameter (THETA) was not specified for the lognormal fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the lognormal fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the Weibull fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the gamma fit for x, a zero threshold is assumed.
+NOTE: Since a threshold parameter (THETA) was not specified for the Rayleigh fit for x, a zero threshold is assumed.
+WARNING: A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Gamma 
+         distribution is not fully specified.
+NOTE: None of the EDF goodness-of-fit statistics for the Gamma distribution are available.
+NOTE: The PROCEDURE UNIVARIATE printed pages 1-11.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.03 seconds
+      user cpu time       0.03 seconds
+      system cpu time     0.00 seconds
+      memory              3319.32k
+      OS Memory           14060.00k
+      Timestamp           11/13/2026 05:15:29 AM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     720
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+44         
+45         
+46         
+The SAS System
+
+47         
+The SAS System
+
+48         

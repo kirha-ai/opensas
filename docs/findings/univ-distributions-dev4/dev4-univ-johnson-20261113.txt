@@ -1,0 +1,99 @@
+
+The UNIVARIATE Procedure
+Fitted SU Distribution for u
+
+Parameters for Johnson SU Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Theta    2.921422
+Scale       Sigma    1.837628
+Shape       Delta    1.118261
+Shape       Gamma    0.357627
+Mean                 2.029824
+Std Dev              2.764539
+Skewness             -1.87997
+Kurtosis             21.78856
+Mode                 2.591597
+
+
+ Quantiles for SU Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0   -5.20532    -7.12481
+    5.0   -2.07471    -2.43237
+   10.0   -0.71595    -0.84593
+   25.0    0.98309     0.97409
+   50.0    2.32092     2.32367
+   75.0    3.44494     3.44912
+   90.0    4.54636     4.61843
+   95.0    5.33300     5.53579
+   99.0    7.04047     8.10675
+
+The UNIVARIATE Procedure
+Fitted SB Distribution for b
+
+Parameters for Johnson SB Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Delta     1.35412
+Shape       Gamma    0.502458
+Mean                 0.418029
+Std Dev              0.161322
+Skewness             0.253151
+Kurtosis             -0.52327
+Mode                  0.37608
+
+
+ Quantiles for SB Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.10723     0.11017
+    5.0    0.15963     0.16998
+   10.0    0.20129     0.21124
+   25.0    0.29166     0.29543
+   50.0    0.41743     0.40829
+   75.0    0.55495     0.53172
+   90.0    0.67075     0.64000
+   95.0    0.72995     0.69923
+   99.0    0.81041     0.79363
+
+The UNIVARIATE Procedure
+Fitted SB Distribution for b
+
+Parameters for Johnson SB Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    -0.03906
+Scale       Sigma    1.118077
+Shape       Delta     1.35412
+Shape       Gamma    0.502458
+Mean                 0.428324
+Std Dev              0.180371
+Skewness             0.253151
+Kurtosis             -0.52327
+Mode                 0.381421
+
+
+ Quantiles for SB Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.10723     0.08411
+    5.0    0.15963     0.15099
+   10.0    0.20129     0.19712
+   25.0    0.29166     0.29125
+   50.0    0.41743     0.41743
+   75.0    0.55495     0.55544
+   90.0    0.67075     0.67650
+   95.0    0.72995     0.74273
+   99.0    0.81041     0.84827

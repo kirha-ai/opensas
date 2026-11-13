@@ -1,0 +1,62 @@
+
+g=0
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for x
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    10.99992
+Shape       Alpha      0.6815
+Mean                 6.541726
+Std Dev              4.255596
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.11018
+    5.0     1.00000     0.55447
+   10.0     1.00000     1.11833
+   25.0     2.50000     2.87359
+   50.0     5.00000     6.07672
+   75.0     9.00000     9.86565
+   90.0    15.00000    12.78009
+   95.0    15.00000    14.04531
+   99.0    15.00000    15.44101
+
+g=2
+
+The UNIVARIATE Procedure
+Fitted Pareto Distribution for x
+
+Parameters for Pareto Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    17.79312
+Shape       Alpha    1.045195
+Mean                 8.699963
+Std Dev              4.948925
+
+
+Quantiles for Pareto Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     3.00000     0.17789
+    5.0     3.00000     0.88863
+   10.0     3.00000     1.77516
+   25.0     4.50000     4.42086
+   50.0     7.00000     8.77438
+   75.0    11.00000    13.02627
+   90.0    17.00000    15.48961
+   95.0    17.00000    16.28033
+   99.0    17.00000    16.88549

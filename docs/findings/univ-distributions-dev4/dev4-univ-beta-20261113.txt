@@ -1,0 +1,181 @@
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha    0.603334
+Shape       Beta      0.65165
+Mean                  0.48075
+Std Dev              0.332718
+
+
+         Goodness-of-Fit Tests for Beta Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.13109813   Pr > D       >0.500
+Cramer-von Mises      W-Sq    0.03444413   Pr > W-Sq    >0.500
+Anderson-Darling      A-Sq    0.21435770   Pr > A-Sq    >0.500
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.02000     0.00081
+    5.0    0.02000     0.01164
+   10.0    0.05000     0.03652
+   25.0    0.12500     0.16196
+   50.0    0.37500     0.46831
+   75.0    0.82500     0.79523
+   90.0    0.95000     0.94774
+   95.0    0.99000     0.98181
+   99.0    0.99000     0.99845
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha           2
+Shape       Beta            3
+Mean                      0.4
+Std Dev                   0.2
+
+
+         Goodness-of-Fit Tests for Beta Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.28255208   Pr > D        0.248
+Cramer-von Mises      W-Sq    0.28816861   Pr > W-Sq     0.155
+Anderson-Darling      A-Sq    5.36529733   Pr > A-Sq     0.003
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.02000     0.04200
+    5.0    0.02000     0.09761
+   10.0    0.05000     0.14256
+   25.0    0.12500     0.24302
+   50.0    0.37500     0.38573
+   75.0    0.82500     0.54368
+   90.0    0.95000     0.67954
+   95.0    0.99000     0.75140
+   99.0    0.99000     0.85913
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma           1
+Shape       Alpha    0.765082
+Mean                 0.433454
+Std Dev              0.298013
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.02000     0.00243
+    5.0    0.02000     0.01993
+   10.0    0.05000     0.04931
+   25.0    0.12500     0.16333
+   50.0    0.37500     0.40415
+   75.0    0.82500     0.68659
+   90.0    0.95000     0.87135
+   95.0    0.99000     0.93516
+   99.0    0.99000     0.98695
+
+The UNIVARIATE Procedure
+Fitted Gumbel Distribution for x
+
+Parameters for Gumbel Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Mu       4.113469
+Scale       Sigma    3.278538
+Mean                 6.005906
+Std Dev              4.204888
+
+
+        Goodness-of-Fit Tests for Gumbel Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.14485012   Pr > D        0.926
+Cramer-von Mises      W-Sq    0.02774356   Pr > W-Sq     0.912
+Anderson-Darling      A-Sq    0.19480738   Pr > A-Sq     0.930
+
+
+Quantiles for Gumbel Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000    -0.89345
+    5.0     1.00000     0.51629
+   10.0     1.00000     1.37906
+   25.0     2.50000     3.04259
+   50.0     5.00000     5.31510
+   75.0     9.00000     8.19820
+   90.0    15.00000    11.49138
+   95.0    15.00000    13.85137
+   99.0    15.00000    19.19523
+
+The UNIVARIATE Procedure
+Fitted Gumbel Distribution for x
+
+Parameters for Gumbel Distribution
+ 
+Parameter   Symbol   Estimate
+
+Location    Mu              5
+Scale       Sigma    3.608504
+Mean                 7.082901
+Std Dev              4.628086
+
+
+        Goodness-of-Fit Tests for Gumbel Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.23268534   Pr > D        0.642
+Cramer-von Mises      W-Sq    0.07752714   Pr > W-Sq     0.642
+Anderson-Darling      A-Sq    0.45766553   Pr > A-Sq     0.724
+
+
+Quantiles for Gumbel Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000    -0.51083
+    5.0     1.00000     1.04079
+   10.0     1.00000     1.99039
+   25.0     2.50000     3.82134
+   50.0     5.00000     6.32256
+   75.0     9.00000     9.49583
+   90.0    15.00000    13.12046
+   95.0    15.00000    15.71796
+   99.0    15.00000    21.59966
