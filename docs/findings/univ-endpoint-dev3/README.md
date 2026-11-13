@@ -100,10 +100,13 @@ heldouts within 1e-4; n=8 alpha=.6815 fit within 2e-4. Affine scaling tests also
 check the exact log-likelihood shift of -n*log(scale).
 
 Power with fixed endpoints uses the closed-form shape MLE. With fixed theta and
-estimated sigma, the mathematical boundary solution is sigma=max(x)-theta and
-conditional shape MLE (or the supplied fixed alpha). This remains explicitly a
-boundary-warning result. With estimated theta, the generic support-preserving
-optimizer retains a finite candidate only under a nonconverged boundary tag.
+estimated sigma, the prospectively verified moment-derived M9 width is now
+implemented; supplied alpha is preserved, or its conditional optimum computed.
+This finite curve has explicit nonstationary_candidate status. Failed pilot or
+support initialization carries initialization_failed with no curve. See
+[fixed-theta-power.md](fixed-theta-power.md) for the 84/85 matching oracle cases
+and the one unresolved inadmissible-pilot/free-alpha exception. With estimated
+theta, the generic optimizer remains unchanged and not fully SAS-compatible.
 
 Six helper tests cover the parameter matrix, independent heldouts, fixed values,
 transforms, support/constant/unsorted/nonfinite inputs, iteration-budget status,
@@ -123,15 +126,19 @@ full gate counts are reported separately at landing time.
    no sample-specific switch or invented blanket rejection. Reproducing the
    shift-two finite fallback remains unresolved. Some fixed-alpha>1 probes
    also differ between SAS suppression and numerical boundary candidates.
-2. **Power stopping/failure behavior:** n=41 alpha=.5, fixed theta=0: SAS prints
-   sigma=.971697, alpha=.517165; exact boundary MLE gives .9699265381,
-   .5176533456, differences .001770462 and .000488346. This is tested with an
-   explicit boundary warning. Joint endpoints differ more: SAS theta=-.00047,
-   sigma=.971697, alpha=.52865; the unbounded-likelihood numerical candidate is
-   near theta=.0002295684, sigma=.9696969697, alpha=.3528312565. That shape
-   difference (~.176) is NOT accepted as numerical equivalence. SAS also omits
-   curves for alpha=2/5 samples where the helper can return a warned mathematical
-   boundary candidate. Public failure/fallback parity is not complete.
+2. **Joint power stopping/failure behavior:** the fixed-theta sigma path now
+   matches the recorded admissible candidates rather than substituting max(x).
+   Joint endpoints still differ: SAS theta=-.00047, sigma=.971697, alpha=.52865
+   versus the existing generic solver's near-boundary theta=.0002295684,
+   sigma=.9696969697, alpha=.3528312565 on the old n=41 probe. The new free-theta
+   tests also disprove applying the analogous moment-location candidate blindly.
+3. **Inadmissible pilot with free alpha:** one symmetric heavy-tail sample
+   returns sigma=8.002/alpha=.5574860401 in SAS but remains initialization_failed
+   here. It stays in the regression fixture as an explicit mismatch.
+4. **Beta coupled failure:** separate feasible fixed endpoints or a fixed shape
+   permit fitting the small-unit counterexample, but a feasible starting-like
+   location alone does not repair its joint shape/scale failure.
+
 EPM is **outside the cited contract**, not a third acceptance gap. A full-text
 search of all 22,444 lines of the supplied Sixth Edition manual found zero EPM
 or expanded-name matches; see `manual-scope.txt` for exact command and SHA256.
@@ -164,3 +171,12 @@ beta cases support a candidate-floor interpretation, but a small-unit beta
 feasibility-repair failure remains. Official SAS optimizer documentation does
 not identify UNIVARIATE's internal algorithm. No production fitting rule was
 changed and no case-specific exception was introduced. The parent is not done.
+
+## Implemented fixed-theta power scale path
+
+[fixed-theta-power.md](fixed-theta-power.md) supersedes the earlier diagnosis-only
+status for this defined path. The API adds initialization_failed and
+nonstationary_candidate reasons, preserving the optional best-curve payload.
+Prospective and old oracle cases give 84 matches and one explicit unresolved
+initialization case; green tests are not a claim that all 85 match SAS. The
+joint-theta, beta and Pareto gaps remain open.

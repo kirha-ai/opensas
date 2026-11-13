@@ -1,0 +1,160 @@
+[
+  {
+    "id": "initial_edge_00",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null
+  },
+  {
+    "id": "initial_edge_01",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5
+  },
+  {
+    "id": "initial_edge_02",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      20,
+      20,
+      20,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null
+  },
+  {
+    "id": "initial_edge_03",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      20,
+      20,
+      20,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5
+  },
+  {
+    "id": "initial_edge_04",
+    "group": "initial-edge",
+    "values": [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      9
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null
+  },
+  {
+    "id": "initial_edge_05",
+    "group": "initial-edge",
+    "values": [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      9
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5
+  },
+  {
+    "id": "initial_edge_06",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1.01,
+      1.02,
+      1.03,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null
+  },
+  {
+    "id": "initial_edge_07",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1.01,
+      1.02,
+      1.03,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5
+  },
+  {
+    "id": "initial_edge_08",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      2
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null
+  },
+  {
+    "id": "initial_edge_09",
+    "group": "initial-edge",
+    "values": [
+      1,
+      1,
+      1,
+      2
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5
+  }
+]

@@ -1,0 +1,426 @@
+[
+  {
+    "group": "fixed-theta",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": -4,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_000"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": -4,
+    "sigma": null,
+    "alpha": 0.4,
+    "id": "prospective_001"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": -4,
+    "sigma": null,
+    "alpha": 2,
+    "id": "prospective_002"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 7,
+    "scale": 2,
+    "theta": 7,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_003"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 7,
+    "scale": 2,
+    "theta": 7,
+    "sigma": null,
+    "alpha": 0.4,
+    "id": "prospective_004"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 7,
+    "scale": 2,
+    "theta": 7,
+    "sigma": null,
+    "alpha": 2,
+    "id": "prospective_005"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 83,
+    "a": 1.4,
+    "b": 1,
+    "offset": 0,
+    "scale": 0.01,
+    "theta": 0,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_006"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 83,
+    "a": 1.4,
+    "b": 1,
+    "offset": 0,
+    "scale": 0.01,
+    "theta": 0,
+    "sigma": null,
+    "alpha": 0.4,
+    "id": "prospective_007"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 83,
+    "a": 1.4,
+    "b": 1,
+    "offset": 0,
+    "scale": 0.01,
+    "theta": 0,
+    "sigma": null,
+    "alpha": 2,
+    "id": "prospective_008"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 19,
+    "a": 2,
+    "b": 5,
+    "offset": 0,
+    "scale": 0.1,
+    "theta": 0,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_009"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 19,
+    "a": 2,
+    "b": 5,
+    "offset": 0,
+    "scale": 0.1,
+    "theta": 0,
+    "sigma": null,
+    "alpha": 0.4,
+    "id": "prospective_010"
+  },
+  {
+    "group": "fixed-theta",
+    "n": 19,
+    "a": 2,
+    "b": 5,
+    "offset": 0,
+    "scale": 0.1,
+    "theta": 0,
+    "sigma": null,
+    "alpha": 2,
+    "id": "prospective_011"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      10,
+      10,
+      10,
+      10,
+      10,
+      19
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_012"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      10,
+      10,
+      10,
+      10,
+      10,
+      19
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5,
+    "id": "prospective_013"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      2,
+      3
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_014"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      2,
+      3
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5,
+    "id": "prospective_015"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_016"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5,
+    "id": "prospective_017"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_018"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5,
+    "id": "prospective_019"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_020"
+  },
+  {
+    "group": "moment-edge",
+    "values": [
+      1,
+      1,
+      1,
+      1,
+      20
+    ],
+    "theta": 0.9999,
+    "sigma": null,
+    "alpha": 0.5,
+    "id": "prospective_021"
+  },
+  {
+    "group": "location",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": null,
+    "sigma": 0.1,
+    "alpha": 0.6,
+    "id": "prospective_022"
+  },
+  {
+    "group": "joint",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_023"
+  },
+  {
+    "group": "location",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": 0,
+    "scale": 1,
+    "theta": null,
+    "sigma": 1,
+    "alpha": 0.6,
+    "id": "prospective_024"
+  },
+  {
+    "group": "joint",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": 0,
+    "scale": 1,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_025"
+  },
+  {
+    "group": "location",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": 5,
+    "scale": 10,
+    "theta": null,
+    "sigma": 10,
+    "alpha": 0.6,
+    "id": "prospective_026"
+  },
+  {
+    "group": "joint",
+    "n": 29,
+    "a": 0.6,
+    "b": 1.4,
+    "offset": 5,
+    "scale": 10,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_027"
+  },
+  {
+    "group": "location",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": null,
+    "sigma": 0.1,
+    "alpha": 0.35,
+    "id": "prospective_028"
+  },
+  {
+    "group": "joint",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": -4,
+    "scale": 0.1,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_029"
+  },
+  {
+    "group": "location",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 0,
+    "scale": 1,
+    "theta": null,
+    "sigma": 1,
+    "alpha": 0.35,
+    "id": "prospective_030"
+  },
+  {
+    "group": "joint",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 0,
+    "scale": 1,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_031"
+  },
+  {
+    "group": "location",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 5,
+    "scale": 10,
+    "theta": null,
+    "sigma": 10,
+    "alpha": 0.35,
+    "id": "prospective_032"
+  },
+  {
+    "group": "joint",
+    "n": 59,
+    "a": 0.35,
+    "b": 1,
+    "offset": 5,
+    "scale": 10,
+    "theta": null,
+    "sigma": null,
+    "alpha": null,
+    "id": "prospective_033"
+  }
+]
