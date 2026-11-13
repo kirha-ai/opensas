@@ -79,7 +79,10 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
             if (t[i.*].tag != .name) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: expected distribution option or closing parenthesis", .{});
             const key = t[i.*].text;
             i.* += 1;
-            if (plot and eq(key, "noline")) { noline = true; continue; }
+            if (plot and eq(key, "noline")) {
+                noline = true;
+                continue;
+            }
             if (plot and (eq(key, "noprint") or eq(key, "midpercents") or eq(key, "percents"))) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} is a HISTOGRAM distribution option", .{key});
             if (eq(key, "noprint")) {
                 noprint = true;
@@ -89,8 +92,14 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                 midpercents = true;
                 continue;
             }
-            if (eq(key, "optprint") and kind == .su) { common.optprint = true; continue; }
-            if (eq(key, "itprint") and kind == .weibull) { common.itprint = true; continue; }
+            if (eq(key, "optprint") and kind == .su) {
+                common.optprint = true;
+                continue;
+            }
+            if (eq(key, "itprint") and kind == .weibull) {
+                common.itprint = true;
+                continue;
+            }
             if (t[i.*].tag != .eq) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: distribution option requires =", .{});
             i.* += 1;
             if ((kind == .sb or kind == .su) and eq(key, "fitmethod")) {

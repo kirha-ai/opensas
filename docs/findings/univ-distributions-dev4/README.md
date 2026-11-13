@@ -146,3 +146,63 @@ not inferred from unit tests. No jira.md edit, fetch, pull or push.
 The earlier green foundation report rebased once at report-time onto 0f2d151 and
 recorded HEAD 0196bb1: 1237 tests, 2050 corpus, 11 programs. The current integration
 work is newer and does not inherit that gate result.
+
+## Dependency integration checkpoint
+
+Manager explicitly authorized acquiring the landed support before full ticket
+completion. Current public WIP and its separate SAS golden were committed, then
+rebased onto 5297a4b without conflicts or discarded work. The final checkpoint
+rebase/gate is recorded in the manager report and opensas-last-green.
+
+Adapters now call `univ_johnson_fit`, `univ_endpoint_fit`, and
+`univ_edf_inference`. Johnson MOMENTS/MLE options and real OPTPRINT trace data
+reach public HISTOGRAM execution. A finite nonconverged Johnson fallback keeps
+its warning and status; no-fit results produce blank fitted-curve output rather
+than being relabelled converged. Beta estimated endpoints and regular Pareto
+fits use the landed helper's private numerical controls, not PROC MAXITER.
+Uniform Pareto's upper endpoint has finite density; the power/beta(alpha,1)
+closed-upper-boundary representation is available for eventual accepted fits.
+
+EDF results carry nullable probabilities. SAS-unavailable tests do not create
+rows or an empty ODS object. The wrapper handles supported partial normal,
+lognormal and Weibull cases. Four simulation families use inverse-CDF sample
+generation and actual constrained refitting, with one resolved seed and the
+requested replication count. Failed or nonconverged refits propagate without
+retry, discard, or renormalization. Independent Monte Carlo checks use the
+retained dev5 M9 evidence: four fixed families and estimated-scale Rayleigh,
+2000 new replications versus 10000 SAS replications, with pooled binomial
+uncertainty. Estimated Gumbel/IGAUSS/Pareto callbacks still need broader M9
+acceptance. Seed repetition and failure propagation are directly tested.
+
+Targeted integration run before the final gate: 58/58 UNIVARIATE tests. Public
+checks cover Johnson methods, fixed constraints, a warned one-iteration fallback,
+OPTPRINT, typed ODS parameters, beta endpoint adaptation, histogram BY/FREQ,
+OUTKERNEL grid values/descriptors and no unrequested output dataset publication.
+The `univ_dist_hist_dev4` golden comes from the actual source/output/log triplet
+at `/private/tmp/dev4-univ-hist-integration-20261113.*`; its `.sas` source is
+also committed as the runnable corpus fixture. The golden is a separate commit.
+
+Precise remaining tags (none waived by a green checkpoint):
+
+- **PUBLIC-PLOTS:** CDFPLOT/PPPLOT/QQPLOT/PROBPLOT public dispatch remains guarded;
+  numerical point/quantile helpers exist, but public execution is unfinished.
+- **BINS-OUTPUT:** constant/comparative bins, KEY/UNIFORM/count controls, automatic
+  kernel grid extent, range/list completeness and full BY/CLASS metadata/output
+  option ordering need completion. Selected explicit and automatic cases pass.
+- **EDF-TABLES:** exponential/gamma/beta/power and estimated-threshold tables
+  remain under support work; available but missing tables still fail loudly.
+- **SJPI:** Singer's standalone algorithm is not yet available for integration.
+- **ENDPOINT-FALLBACK:** power estimation and nonregular Pareto/beta stopping and
+  finite fallback parity remain unresolved by the support helper. Power's
+  unsupported endpoint-estimation guard remains; no warning is treated as proof
+  that a mismatched SAS curve is accepted.
+- **PARETO-PRESENCE:** the retained 51-point gamma-score sample yields a finite
+  profile fit (theta=0, sigma about12.1890493, alpha about.6524813) while M9's
+  `dev4-univ-thresholds` probe suppresses the Pareto curve. The old guard-based
+  expect-error assertion is not used to falsely reject the now-implemented
+  regular solver. This concrete curve-presence discrepancy remains unaccepted.
+- **TRACE/PARITY:** Weibull ITPRINT remains explicit; Johnson real traces/status
+  are delivered, but proprietary SAS optimizer trajectories are not replicated.
+- **FINAL-ACCEPTANCE:** full public heldouts, remaining option/schema behavior,
+  and full ticket validation are not complete. No jira.md change or completion
+  claim is made by this checkpoint.
