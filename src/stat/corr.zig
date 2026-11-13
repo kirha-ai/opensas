@@ -23,6 +23,7 @@ pub const Options = struct {
     polyserial: ?advanced.PolyOptions = null,
     fisher: ?advanced.FisherOptions = null,
     singular: f64 = 1e-8,
+    singular_specified: bool = false,
     nomiss: bool = false,
     exclnpwgt: bool = false,
     vardef: VarDef = .df,
@@ -237,6 +238,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         } else if (kw(toks, i, "singular") and at(toks, i + 1, .eq)) {
             i += 2;
             opts.singular = try numericOption(cx, toks, &i);
+            opts.singular_specified = true;
             if (!(opts.singular >= 0 and opts.singular <= 1)) return fail(cx, toks[i - 1]);
         } else if (kw(toks, i, "vardef") and at(toks, i + 1, .eq) and at(toks, i + 2, .name)) {
             const v = toks[i + 2].text;
@@ -304,6 +306,8 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null or opts.hoeffding)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
     if (opts.polyserial != null and with.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: POLYSERIAL requires WITH.", .{});
     if (opts.alpha and with.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ALPHA is invalid with WITH.", .{});
+    if (opts.singular_specified and partial.len == 0)
+        try cx.diags.warn(0, "SINGULAR= option is allowed only when a PARTIAL statement is also specified.", .{});
     if (opts.alpha or opts.cov or opts.csscp or opts.sscp or (!opts.spearman and !opts.kendall and !opts.hoeffding and opts.polychoric == null and opts.polyserial == null)) opts.pearson = true;
     return .{ .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
 }
@@ -1545,4 +1549,25 @@ test "CORR absolute information pivots reproduce the native frequency discrimina
     invalid[0] = nan;
     var rhs = [_]f64{ 0, 0, 0, 1 };
     try std.testing.expect(kernel.solveInformation(&invalid, &rhs) == null);
+}
+
+test "CORR SINGULAR without PARTIAL warns rather than implying an information-rank control" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{ &.{ 1, 2, 1 }, &.{ 2, 4, 3 }, &.{ 3, 5, 2 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    for ([_][]const u8{ ".5", "1e-8" }) |value| {
+        var diagnostics = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+        const source = try std.fmt.allocPrint(a, "proc corr singular={s};var x y;run;", .{value});
+        _ = try parse(cx, try lex.tokenize(a, source, &diagnostics));
+        try std.testing.expect(!diagnostics.hasErrors());
+        try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "SINGULAR= option is allowed only when a PARTIAL statement") != null);
+    }
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
+    _ = try parse(cx, try lex.tokenize(a, "proc corr singular=.5;var x y;partial z;run;", &diagnostics));
+    try std.testing.expectEqual(@as(usize, 0), diagnostics.count());
 }
