@@ -1,0 +1,160 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data all;input id point x :hex16.;datalines;
+
+NOTE: The data set WORK.ALL has 98 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              526.64k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:08:41 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+137        ;
+138        data _null_;set all;file print;put 'INPUT ' id= point= x=hex16.;run;
+
+NOTE: 98 lines were written to file PRINT.
+NOTE: There were 98 observations read from the data set WORK.ALL.
+NOTE: The DATA step printed pages 1-2.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              2396.25k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 12:08:41 PM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     475
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+139        proc univariate data=all noprint;by id;var x;output out=stats n=n qrange=q std=sd;
+140        histogram x / noplot kernel(c=sjpi) outkernel=k;run;
+
+NOTE: The normal kernel estimate for c=0.7465 has a bandwidth of 4.157 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      id=0
+NOTE: The normal kernel estimate for c=0.7474 has a bandwidth of 4.1578 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      id=1
+NOTE: The normal kernel estimate for c=0.7474 has a bandwidth of 4.1577 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      id=2
+NOTE: The normal kernel estimate for c=0.7361 has a bandwidth of 3.5291 and an AMISE of 0.0105.
+The SAS System
+
+NOTE: The above message was for the following BY group:
+      id=3
+NOTE: The normal kernel estimate for c=0.6889 has a bandwidth of 4.3086 and an AMISE of 0.0092.
+NOTE: The above message was for the following BY group:
+      id=4
+NOTE: The normal kernel estimate for c=0.7465 has a bandwidth of 4.157 and an AMISE of 0.0101.
+NOTE: The above message was for the following BY group:
+      id=5
+NOTE: The normal kernel estimate for c=0.4292 has a bandwidth of 2.7015 and an AMISE of 0.0132.
+NOTE: The above message was for the following BY group:
+      id=6
+NOTE: The normal kernel estimate for c=0.4294 has a bandwidth of 2.7007 and an AMISE of 0.0132.
+NOTE: The above message was for the following BY group:
+      id=7
+NOTE: The normal kernel estimate for c=0.4294 has a bandwidth of 2.7004 and an AMISE of 0.0132.
+NOTE: The above message was for the following BY group:
+      id=8
+NOTE: The normal kernel estimate for c=0.4413 has a bandwidth of 2.2634 and an AMISE of 0.014.
+NOTE: The above message was for the following BY group:
+      id=9
+NOTE: The normal kernel estimate for c=0.408 has a bandwidth of 2.8046 and an AMISE of 0.0127.
+NOTE: The above message was for the following BY group:
+      id=10
+NOTE: The normal kernel estimate for c=0.4292 has a bandwidth of 2.7015 and an AMISE of 0.0132.
+NOTE: The above message was for the following BY group:
+      id=11
+NOTE: The data set WORK.STATS has 12 observations and 4 variables.
+NOTE: The data set WORK.K has 4206 observations and 7 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1696.04k
+      OS Memory           14256.00k
+      Timestamp           11/13/2026 12:08:41 PM
+      Step Count                        4  Switch Count  4
+      Page Faults                       0
+      Page Reclaims                     408
+      Page Swaps                        0
+      Voluntary Context Switches        16
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1048
+      
+
+141        data _null_;set stats;file print;put 'STATS ' id= n=best32. q=best32. sd=best32.;run;
+
+NOTE: 12 lines were written to file PRINT.
+NOTE: There were 12 observations read from the data set WORK.STATS.
+NOTE: The DATA step printed page 3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              588.31k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 12:08:41 PM
+      Step Count                        5  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+142        data _null_;set k;by id;file print;if first.id then put 'RESULT ' id= _c_=best32.;run;
+
+NOTE: 12 lines were written to file PRINT.
+NOTE: There were 4206 observations read from the data set WORK.K.
+NOTE: The DATA step printed page 4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              869.76k
+      OS Memory           14120.00k
+      Timestamp           11/13/2026 12:08:41 PM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     80
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+143        
+144        
+145        
+146        
+The SAS System
+
+147        

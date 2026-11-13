@@ -1,0 +1,1010 @@
+[
+  {
+    "global_id": 0,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 0,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0000000000000004,
+    "k": 62
+  },
+  {
+    "global_id": 1,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 1,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0,
+    "k": 62
+  },
+  {
+    "global_id": 2,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 2,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.9999999999999996,
+    "k": 62
+  },
+  {
+    "global_id": 3,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 3,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -2.9900000000000007,
+    "k": 62
+  },
+  {
+    "global_id": 4,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 4,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -2.99,
+    "k": 62
+  },
+  {
+    "global_id": 5,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 5,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -2.9899999999999998,
+    "k": 62
+  },
+  {
+    "global_id": 6,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 6,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -3.0700000000000007,
+    "k": 62
+  },
+  {
+    "global_id": 7,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 7,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -3.0700000000000003,
+    "k": 62
+  },
+  {
+    "global_id": 8,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 8,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -3.07,
+    "k": 62
+  },
+  {
+    "global_id": 9,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 9,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 96.99999999999999,
+    "k": 62
+  },
+  {
+    "global_id": 10,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 10,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 97.0,
+    "k": 62
+  },
+  {
+    "global_id": 11,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 11,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 97.00000000000001,
+    "k": 62
+  },
+  {
+    "global_id": 12,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 12,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.0000000000000002,
+    "k": 87
+  },
+  {
+    "global_id": 13,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 13,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.0,
+    "k": 87
+  },
+  {
+    "global_id": 14,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 14,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -0.9999999999999999,
+    "k": 87
+  },
+  {
+    "global_id": 15,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 15,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000003,
+    "k": 87
+  },
+  {
+    "global_id": 16,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 16,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000002,
+    "k": 87
+  },
+  {
+    "global_id": 17,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 17,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000001,
+    "k": 87
+  },
+  {
+    "global_id": 18,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 18,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -1.0700000000000005,
+    "k": 87
+  },
+  {
+    "global_id": 19,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 19,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -1.0700000000000003,
+    "k": 87
+  },
+  {
+    "global_id": 20,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 20,
+    "lo": -8.07,
+    "hi": 7.93,
+    "target": -1.07,
+    "k": 87
+  },
+  {
+    "global_id": 21,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 21,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 98.99999999999999,
+    "k": 87
+  },
+  {
+    "global_id": 22,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 22,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 99.0,
+    "k": 87
+  },
+  {
+    "global_id": 23,
+    "stem": "dev2-sjpi-halfgrid",
+    "case_id": 23,
+    "lo": 92.0,
+    "hi": 108.0,
+    "target": 99.00000000000001,
+    "k": 87
+  },
+  {
+    "global_id": 24,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 0,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -98.71900000000001,
+    "k": 47
+  },
+  {
+    "global_id": 25,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 1,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -98.719,
+    "k": 47
+  },
+  {
+    "global_id": 26,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 2,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -98.71899999999998,
+    "k": 47
+  },
+  {
+    "global_id": 27,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 3,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 33.14999999999999,
+    "k": 47
+  },
+  {
+    "global_id": 28,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 4,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 33.15,
+    "k": 47
+  },
+  {
+    "global_id": 29,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 5,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 33.150000000000006,
+    "k": 47
+  },
+  {
+    "global_id": 30,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 6,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -96.46940000000001,
+    "k": 123
+  },
+  {
+    "global_id": 31,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 7,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -96.4694,
+    "k": 123
+  },
+  {
+    "global_id": 32,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 8,
+    "lo": -100.125,
+    "hi": -94.205,
+    "target": -96.46939999999998,
+    "k": 123
+  },
+  {
+    "global_id": 33,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 9,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 81.78999999999999,
+    "k": 123
+  },
+  {
+    "global_id": 34,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 10,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 81.79,
+    "k": 123
+  },
+  {
+    "global_id": 35,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 11,
+    "lo": 2.75,
+    "hi": 130.75,
+    "target": 81.79000000000002,
+    "k": 123
+  },
+  {
+    "global_id": 36,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 12,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.990000000000002,
+    "k": 87
+  },
+  {
+    "global_id": 37,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 13,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000011,
+    "k": 87
+  },
+  {
+    "global_id": 38,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 14,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000007,
+    "k": 87
+  },
+  {
+    "global_id": 39,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 15,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9900000000000004,
+    "k": 87
+  },
+  {
+    "global_id": 40,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 16,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.99,
+    "k": 87
+  },
+  {
+    "global_id": 41,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 17,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9899999999999998,
+    "k": 87
+  },
+  {
+    "global_id": 42,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 18,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9899999999999993,
+    "k": 87
+  },
+  {
+    "global_id": 43,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 19,
+    "lo": -7.99,
+    "hi": 8.01,
+    "target": -0.9899999999999984,
+    "k": 87
+  },
+  {
+    "global_id": 44,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 20,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.000000000000007,
+    "k": 62
+  },
+  {
+    "global_id": 45,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 21,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0000000000000036,
+    "k": 62
+  },
+  {
+    "global_id": 46,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 22,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0000000000000018,
+    "k": 62
+  },
+  {
+    "global_id": 47,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 23,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.000000000000001,
+    "k": 62
+  },
+  {
+    "global_id": 48,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 24,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.999999999999999,
+    "k": 62
+  },
+  {
+    "global_id": 49,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 25,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.9999999999999982,
+    "k": 62
+  },
+  {
+    "global_id": 50,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 26,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.9999999999999964,
+    "k": 62
+  },
+  {
+    "global_id": 51,
+    "stem": "dev2-sjpi-halfgrid-heldout",
+    "case_id": 27,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.999999999999993,
+    "k": 62
+  },
+  {
+    "global_id": 52,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 0,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.800000000000001,
+    "k": 2
+  },
+  {
+    "global_id": 53,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 1,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.8,
+    "k": 2
+  },
+  {
+    "global_id": 54,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 2,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.799999999999999,
+    "k": 2
+  },
+  {
+    "global_id": 55,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 3,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.480000000000001,
+    "k": 6
+  },
+  {
+    "global_id": 56,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 4,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.48,
+    "k": 6
+  },
+  {
+    "global_id": 57,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 5,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.4799999999999995,
+    "k": 6
+  },
+  {
+    "global_id": 58,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 6,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.000000000000001,
+    "k": 12
+  },
+  {
+    "global_id": 59,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 7,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -7.0,
+    "k": 12
+  },
+  {
+    "global_id": 60,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 8,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -6.999999999999999,
+    "k": 12
+  },
+  {
+    "global_id": 61,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 9,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -6.040000000000001,
+    "k": 24
+  },
+  {
+    "global_id": 62,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 10,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -6.04,
+    "k": 24
+  },
+  {
+    "global_id": 63,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 11,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -6.039999999999999,
+    "k": 24
+  },
+  {
+    "global_id": 64,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 12,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -5.480000000000001,
+    "k": 31
+  },
+  {
+    "global_id": 65,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 13,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -5.48,
+    "k": 31
+  },
+  {
+    "global_id": 66,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 14,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -5.4799999999999995,
+    "k": 31
+  },
+  {
+    "global_id": 67,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 15,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -4.200000000000001,
+    "k": 47
+  },
+  {
+    "global_id": 68,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 16,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -4.2,
+    "k": 47
+  },
+  {
+    "global_id": 69,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 17,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -4.199999999999999,
+    "k": 47
+  },
+  {
+    "global_id": 70,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 18,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0000000000000004,
+    "k": 62
+  },
+  {
+    "global_id": 71,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 19,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -3.0,
+    "k": 62
+  },
+  {
+    "global_id": 72,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 20,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -2.9999999999999996,
+    "k": 62
+  },
+  {
+    "global_id": 73,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 21,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.9600000000000002,
+    "k": 75
+  },
+  {
+    "global_id": 74,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 22,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.96,
+    "k": 75
+  },
+  {
+    "global_id": 75,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 23,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.9599999999999997,
+    "k": 75
+  },
+  {
+    "global_id": 76,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 24,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.0000000000000002,
+    "k": 87
+  },
+  {
+    "global_id": 77,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 25,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -1.0,
+    "k": 87
+  },
+  {
+    "global_id": 78,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 26,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -0.9999999999999999,
+    "k": 87
+  },
+  {
+    "global_id": 79,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 27,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -0.04000000000000001,
+    "k": 99
+  },
+  {
+    "global_id": 80,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 28,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -0.04,
+    "k": 99
+  },
+  {
+    "global_id": 81,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 29,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": -0.039999999999999994,
+    "k": 99
+  },
+  {
+    "global_id": 82,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 30,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 0.9999999999999999,
+    "k": 112
+  },
+  {
+    "global_id": 83,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 31,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 1.0,
+    "k": 112
+  },
+  {
+    "global_id": 84,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 32,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 1.0000000000000002,
+    "k": 112
+  },
+  {
+    "global_id": 85,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 33,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 1.8799999999999997,
+    "k": 123
+  },
+  {
+    "global_id": 86,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 34,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 1.88,
+    "k": 123
+  },
+  {
+    "global_id": 87,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 35,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 1.8800000000000001,
+    "k": 123
+  },
+  {
+    "global_id": 88,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 36,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 2.9999999999999996,
+    "k": 137
+  },
+  {
+    "global_id": 89,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 37,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 3.0,
+    "k": 137
+  },
+  {
+    "global_id": 90,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 38,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 3.0000000000000004,
+    "k": 137
+  },
+  {
+    "global_id": 91,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 39,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 3.9599999999999995,
+    "k": 149
+  },
+  {
+    "global_id": 92,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 40,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 3.96,
+    "k": 149
+  },
+  {
+    "global_id": 93,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 41,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 3.9600000000000004,
+    "k": 149
+  },
+  {
+    "global_id": 94,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 42,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 6.039999999999999,
+    "k": 175
+  },
+  {
+    "global_id": 95,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 43,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 6.04,
+    "k": 175
+  },
+  {
+    "global_id": 96,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 44,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 6.040000000000001,
+    "k": 175
+  },
+  {
+    "global_id": 97,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 45,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 7.719999999999999,
+    "k": 196
+  },
+  {
+    "global_id": 98,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 46,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 7.72,
+    "k": 196
+  },
+  {
+    "global_id": 99,
+    "stem": "dev2-sjpi-halfgrid-profile",
+    "case_id": 47,
+    "lo": -8.0,
+    "hi": 8.0,
+    "target": 7.720000000000001,
+    "k": 196
+  },
+  {
+    "global_id": 100,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 0,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 0.5199999999999999,
+    "k": 6
+  },
+  {
+    "global_id": 101,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 1,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 0.52,
+    "k": 6
+  },
+  {
+    "global_id": 102,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 2,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 0.5200000000000001,
+    "k": 6
+  },
+  {
+    "global_id": 103,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 3,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 4.999999999999999,
+    "k": 62
+  },
+  {
+    "global_id": 104,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 4,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 5.0,
+    "k": 62
+  },
+  {
+    "global_id": 105,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 5,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 5.000000000000001,
+    "k": 62
+  },
+  {
+    "global_id": 106,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 6,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 6.999999999999999,
+    "k": 87
+  },
+  {
+    "global_id": 107,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 7,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 7.0,
+    "k": 87
+  },
+  {
+    "global_id": 108,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 8,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 7.000000000000001,
+    "k": 87
+  },
+  {
+    "global_id": 109,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 9,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 11.959999999999999,
+    "k": 149
+  },
+  {
+    "global_id": 110,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 10,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 11.96,
+    "k": 149
+  },
+  {
+    "global_id": 111,
+    "stem": "dev2-sjpi-halfgrid-zero",
+    "case_id": 11,
+    "lo": 0.0,
+    "hi": 16.0,
+    "target": 11.960000000000003,
+    "k": 149
+  }
+]

@@ -1,15 +1,19 @@
 # FEAT-univ-distributions — dev2 SJPI support investigation
 
-**SUPPORT NOT COMPLETE / NOT ACCEPTED.** No production SJPI implementation,
-no `root.zig` import, no PROC integration, and no existing golden change.
-Do not remove dev4's explicit unsupported guard on the basis of this work.
-A candidate which matches ordinary samples still fails half-grid examples.
-Adding a half-grid exclusion would not satisfy the assigned acceptance.
+**SUPPORT NOT COMPLETE / NOT ACCEPTED.** The independently callable
+`src/stat/univ_kernel_sjpi.zig:fromBins` now implements bandwidth selection for
+an already assigned 201-point histogram, with test discovery in root.zig.
+It does NOT assign raw observations to bins and does not enable PROC SJPI.
+Do not remove dev4's unsupported guard: no tested raw-sample binning candidate
+yet passes all half-grid examples. Excluding those samples would not satisfy
+the assigned acceptance. See [the follow-up](halfgrid-README.md).
 
 Baseline acquired by clean `git merge --ff-only feat/stat/batch-3`: `6aa9b33`.
 Read CLAUDE.md, lexer.zig, D-029, dev4's retained README and kernel API, and the
 manager checkout's ignored statistical manual, printed pp.448–449.
-Only this evidence directory is changed. No jira.md or other dev's module edit.
+The first landing (4d061f4) changed only this evidence directory. The follow-up
+also adds the owned numeric module and root test import. No jira.md or other
+developer's UNIV module is changed.
 
 ## Reproduction and provenance
 
@@ -107,13 +111,14 @@ is different. Further work should obtain UNIV-specific bin assignments (or
 an asymmetric half-grid experiment that separates the candidate assignments),
 not repeat direct-plugin/solve-equation formula guessing.
 
-No `src/stat/univ_kernel_sjpi.zig` is shipped because there is not yet a
-validated generic algorithm. Therefore the requested callable API and runnable
-production regression coverage remain unimplemented. Non-normal-to-normal
-kernel warning behavior still belongs to integration; dev4's retained SJPI
-probe establishes it, but it is not implemented by this support investigation.
-Degenerate/zero-IQR behavior and no-bracket fallback also need API decisions
-consistent with actual SAS outcomes. The entire parent ticket is not closed.
+The follow-up implements the proven binned numerical core with 23 SAS bandwidth
+comparisons, captured-diagnostic tests and the oracle-established no-bracket
+maximum fallback. Raw-sample bin assignment and PROC integration remain absent.
+Non-normal-to-normal kernel warning behavior belongs to integration; dev4's
+retained SJPI probe establishes it, but this numeric helper does not select a
+requested kernel kind. Degenerate/zero-IQR requests are rejected visibly by the
+helper; caller-level SAS warning/empty-estimate behavior is not implemented by
+it. The entire parent ticket is not closed.
 
 ## Primary references
 

@@ -1,0 +1,150 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data all;
+39         do nreq=100,1000,10000,100000,1000000;
+40          do shape=1 to 2;
+41           id+1;
+42           if shape=1 then do;x=0;f=nreq/2;output;x=1;output;end;
+43           else do;x=0;f=nreq*.4;output;x=.005;output;x=.5;f=nreq*.1;output;x=1;output;end;
+44          end;
+45         end;
+46         run;
+
+NOTE: The data set WORK.ALL has 30 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              532.46k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:29:40 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+47         proc univariate data=all noprint;by id;freq f;var x;
+48         output out=stats n=n qrange=q std=sd;
+49         histogram x / noplot kernel(c=sjpi) outkernel=k;run;
+
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=1.1497 has a bandwidth of 0.4577 and an AMISE of 0.0165.
+NOTE: The above message was for the following BY group:
+      id=1
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=146.8 has a bandwidth of 0.2922 and an AMISE of 5.51E8.
+NOTE: The above message was for the following BY group:
+      id=2
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=1.1445 has a bandwidth of 0.2875 and an AMISE of 0.0026.
+NOTE: The above message was for the following BY group:
+      id=3
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=146.14 has a bandwidth of 0.1835 and an AMISE of 8.58E7.
+NOTE: The above message was for the following BY group:
+      id=4
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=1.144 has a bandwidth of 0.1813 and an AMISE of 0.0004.
+NOTE: The above message was for the following BY group:
+      id=5
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=146.07 has a bandwidth of 0.1158 and an AMISE of 1.36E7.
+NOTE: The above message was for the following BY group:
+      id=6
+The SAS System
+
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=1.1439 has a bandwidth of 0.1144 and an AMISE of 0.0001.
+NOTE: The above message was for the following BY group:
+      id=7
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=146.07 has a bandwidth of 0.073 and an AMISE of 2.15E6.
+NOTE: The above message was for the following BY group:
+      id=8
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=1.1439 has a bandwidth of 0.0722 and an AMISE of 103E-7.
+NOTE: The above message was for the following BY group:
+      id=9
+WARNING: Algorithm for Sheather-Jones Plug In did not converge; using maximum bandwidth value.
+NOTE: The normal kernel estimate for c=146.07 has a bandwidth of 0.0461 and an AMISE of 340911.
+NOTE: The above message was for the following BY group:
+      id=10
+NOTE: The data set WORK.STATS has 10 observations and 4 variables.
+NOTE: The data set WORK.K has 2772 observations and 7 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.02 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              3197.62k
+      OS Memory           13744.00k
+      Timestamp           11/13/2026 12:29:40 PM
+      Step Count                        3  Switch Count  5
+      Page Faults                       0
+      Page Reclaims                     725
+      Page Swaps                        0
+      Voluntary Context Switches        21
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+50         data _null_;set stats;file print;put 'STATS ' id= n=best32. q=best32. sd=best32.;run;
+
+NOTE: 10 lines were written to file PRINT.
+NOTE: There were 10 observations read from the data set WORK.STATS.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              693.76k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:29:40 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     73
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+51         data _null_;set k;by id;file print;if first.id then put 'RESULT ' id= _c_=best32.;run;
+The SAS System
+
+
+NOTE: 10 lines were written to file PRINT.
+NOTE: There were 2772 observations read from the data set WORK.K.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              742.59k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:29:40 PM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+52         
+53         
+54         
+55         
+The SAS System
+
+56         

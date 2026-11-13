@@ -1,0 +1,183 @@
+discovery  id= 0 k= 62 ULP= -1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000001
+discovery  id= 1 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000000
+discovery  id= 2 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFFF
+discovery  id= 3 k= 62 ULP= -1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007EB851EB851ED
+discovery  id= 4 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007EB851EB851EC
+discovery  id= 5 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007EB851EB851EB
+discovery  id= 6 k= 62 ULP= -1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C0088F5C28F5C291
+discovery  id= 7 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C0088F5C28F5C290
+discovery  id= 8 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C0088F5C28F5C28F
+discovery  id= 9 k= 62 ULP= -1 bin= 62 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.38108150502348 target_hex=40583FFFFFFFFFFF
+discovery  id=10 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353843 target_hex=4058400000000000
+discovery  id=11 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353843 target_hex=4058400000000001
+discovery  id=12 k= 87 ULP= -1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000001
+discovery  id=13 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000000
+discovery  id=14 k= 87 ULP=  1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFEFFFFFFFFFFFFF
+discovery  id=15 k= 87 ULP= -1 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B1
+discovery  id=16 k= 87 ULP=  0 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B0
+discovery  id=17 k= 87 ULP=  1 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147AF
+discovery  id=18 k= 87 ULP= -1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF11EB851EB8521
+discovery  id=19 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF11EB851EB8520
+discovery  id=20 k= 87 ULP=  1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF11EB851EB851F
+discovery  id=21 k= 87 ULP= -1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=4058BFFFFFFFFFFF
+discovery  id=22 k= 87 ULP=  0 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495605 target_hex=4058C00000000000
+discovery  id=23 k= 87 ULP=  1 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495605 target_hex=4058C00000000001
+heldout    id= 0 k= 47 ULP= -1 bin= 47 left_h=1.08488486214197 right_h=1.09452035835745 oracle_h=1.08488486214196 target_hex=C058AE04189374BD
+heldout    id= 1 k= 47 ULP=  0 bin= 48 left_h=1.08488486214197 right_h=1.09452035835745 oracle_h=1.09452035835745 target_hex=C058AE04189374BC
+heldout    id= 2 k= 47 ULP=  1 bin= 48 left_h=1.08488486214197 right_h=1.09452035835745 oracle_h=1.09452035835745 target_hex=C058AE04189374BB
+heldout    id= 3 k= 47 ULP= -1 bin= 48 left_h=23.4626666538726 right_h=23.6726293247844 oracle_h=23.6726293247841 target_hex=4040933333333332
+heldout    id= 4 k= 47 ULP=  0 bin= 48 left_h=23.4626666538726 right_h=23.6726293247844 oracle_h=23.6726293247841 target_hex=4040933333333333
+heldout    id= 5 k= 47 ULP=  1 bin= 48 left_h=23.4626666538726 right_h=23.6726293247844 oracle_h=23.6726293247841 target_hex=4040933333333334
+heldout    id= 6 k=123 ULP= -1 bin=123 left_h=1.48798638322278 right_h=1.47498718222794 oracle_h=1.48798638322277 target_hex=C0581E0AA64C2F84
+heldout    id= 7 k=123 ULP=  0 bin=124 left_h=1.48798638322278 right_h=1.47498718222794 oracle_h=1.47498718222793 target_hex=C0581E0AA64C2F83
+heldout    id= 8 k=123 ULP=  1 bin=124 left_h=1.48798638322279 right_h=1.47498718222794 oracle_h=1.47498718222793 target_hex=C0581E0AA64C2F82
+heldout    id= 9 k=123 ULP= -1 bin=123 left_h=32.1896960912545 right_h=31.892163703619 oracle_h=32.1896960912544 target_hex=4054728F5C28F5C2
+heldout    id=10 k=123 ULP=  0 bin=124 left_h=32.1896960912545 right_h=31.892163703619 oracle_h=31.8921637036185 target_hex=4054728F5C28F5C3
+heldout    id=11 k=123 ULP=  1 bin=124 left_h=32.1896960912545 right_h=31.892163703619 oracle_h=31.8921637036185 target_hex=4054728F5C28F5C4
+transition id=12 k= 87 ULP=-16 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFEFAE147AE147C0
+transition id=13 k= 87 ULP= -8 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFEFAE147AE147B8
+transition id=14 k= 87 ULP= -4 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B4
+transition id=15 k= 87 ULP= -2 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B2
+transition id=16 k= 87 ULP=  2 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147AE
+transition id=17 k= 87 ULP=  4 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147AC
+transition id=18 k= 87 ULP=  8 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147A8
+transition id=19 k= 87 ULP= 16 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147A0
+transition id=20 k= 62 ULP=-16 bin= 62 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.38108150502343 target_hex=C008000000000010
+transition id=21 k= 62 ULP= -8 bin= 62 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.38108150502343 target_hex=C008000000000008
+transition id=22 k= 62 ULP= -4 bin= 62 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.38108150502343 target_hex=C008000000000004
+transition id=23 k= 62 ULP= -2 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000002
+transition id=24 k= 62 ULP=  2 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFFE
+transition id=25 k= 62 ULP=  4 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFFC
+transition id=26 k= 62 ULP=  8 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFF8
+transition id=27 k= 62 ULP= 16 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFF0
+background id= 0 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000000
+background id= 1 k= 62 ULP=  0 bin= 63 left_h=3.3816620871755 right_h=3.41331895680163 oracle_h=3.41331895680161 target_hex=C008000000000000
+background id= 2 k= 62 ULP=  0 bin= 63 left_h=3.38147631499836 right_h=3.41313144554902 oracle_h=3.413131445549 target_hex=C008000000000000
+background id= 3 k= 62 ULP=  0 bin= 63 left_h=3.07084236813867 right_h=3.0946476256406 oracle_h=3.09464762564059 target_hex=C008000000000000
+background id= 4 k= 62 ULP=  0 bin= 63 left_h=3.51777099660847 right_h=3.54139366836543 oracle_h=3.54139366836539 target_hex=C008000000000000
+background id= 5 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000000
+background id= 6 k= 87 ULP=  0 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B0
+background id= 7 k= 87 ULP=  0 bin= 88 left_h=4.15780687559252 right_h=4.18011097247016 oracle_h=4.18011097247015 target_hex=BFEFAE147AE147B0
+background id= 8 k= 87 ULP=  0 bin= 88 left_h=4.15773024645801 right_h=4.1800339322671 oracle_h=4.18003393226709 target_hex=BFEFAE147AE147B0
+background id= 9 k= 87 ULP=  0 bin= 88 left_h=3.52908865368981 right_h=3.53651505121119 oracle_h=3.53651505121118 target_hex=BFEFAE147AE147B0
+background id=10 k= 87 ULP=  0 bin= 88 left_h=4.30855578660832 right_h=4.34126116849313 oracle_h=4.34126116849309 target_hex=BFEFAE147AE147B0
+background id=11 k= 87 ULP=  0 bin= 88 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.17930409495606 target_hex=BFEFAE147AE147B0
+background_left id= 0 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000000
+background_left id= 1 k= 87 ULP=  0 bin= 87 left_h=4.15780687559252 right_h=4.18011097247016 oracle_h=4.15780687559251 target_hex=BFF0000000000000
+background_left id= 2 k= 87 ULP=  0 bin= 87 left_h=4.15773024645801 right_h=4.1800339322671 oracle_h=4.15773024645796 target_hex=BFF0000000000000
+background_left id= 3 k= 87 ULP=  0 bin= 87 left_h=3.52908865368981 right_h=3.53651505121119 oracle_h=3.5290886536898 target_hex=BFF0000000000000
+background_left id= 4 k= 87 ULP=  0 bin= 87 left_h=4.30855578660832 right_h=4.34126116849313 oracle_h=4.3085557866083 target_hex=BFF0000000000000
+background_left id= 5 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000000
+background_left id= 6 k=  6 ULP=  0 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=3FE0A3D70A3D70A4
+background_left id= 7 k=  6 ULP=  0 bin=  6 left_h=2.70069112364174 right_h=2.68289395620303 oracle_h=2.70069112364172 target_hex=3FE0A3D70A3D70A4
+background_left id= 8 k=  6 ULP=  0 bin=  6 left_h=2.7003639604697 right_h=2.6825689489894 oracle_h=2.70036396046964 target_hex=3FE0A3D70A3D70A4
+background_left id= 9 k=  6 ULP=  0 bin=  6 left_h=2.26340848062221 right_h=2.25597520398951 oracle_h=2.26340848062216 target_hex=3FE0A3D70A3D70A4
+background_left id=10 k=  6 ULP=  0 bin=  6 left_h=2.80458118088526 right_h=2.79676453710936 oracle_h=2.80458118088521 target_hex=3FE0A3D70A3D70A4
+background_left id=11 k=  6 ULP=  0 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=3FE0A3D70A3D70A4
+profile    id= 0 k=  2 ULP= -1 bin=  2 left_h=2.78414930821403 right_h=2.76174443790704 oracle_h=2.78414930821398 target_hex=C01F333333333334
+profile    id= 1 k=  2 ULP=  0 bin=  2 left_h=2.78414930821403 right_h=2.76174443790704 oracle_h=2.78414930821398 target_hex=C01F333333333333
+profile    id= 2 k=  2 ULP=  1 bin=  3 left_h=2.78414930821403 right_h=2.76174443790704 oracle_h=2.76174443790701 target_hex=C01F333333333332
+profile    id= 3 k=  6 ULP= -1 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=C01DEB851EB851ED
+profile    id= 4 k=  6 ULP=  0 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=C01DEB851EB851EC
+profile    id= 5 k=  6 ULP=  1 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=C01DEB851EB851EB
+profile    id= 6 k= 12 ULP= -1 bin= 12 left_h=2.61083390522426 right_h=2.60054913387614 oracle_h=2.61083390522422 target_hex=C01C000000000001
+profile    id= 7 k= 12 ULP=  0 bin= 12 left_h=2.61083390522426 right_h=2.60054913387614 oracle_h=2.61083390522422 target_hex=C01C000000000000
+profile    id= 8 k= 12 ULP=  1 bin= 12 left_h=2.61083390522426 right_h=2.60054913387614 oracle_h=2.61083390522422 target_hex=C01BFFFFFFFFFFFF
+profile    id= 9 k= 24 ULP= -1 bin= 24 left_h=2.5659364579828 right_h=2.57026841869324 oracle_h=2.56593645798277 target_hex=C01828F5C28F5C2A
+profile    id=10 k= 24 ULP=  0 bin= 25 left_h=2.5659364579828 right_h=2.57026841869324 oracle_h=2.57026841869321 target_hex=C01828F5C28F5C29
+profile    id=11 k= 24 ULP=  1 bin= 25 left_h=2.5659364579828 right_h=2.57026841869324 oracle_h=2.57026841869321 target_hex=C01828F5C28F5C28
+profile    id=12 k= 31 ULP= -1 bin= 31 left_h=2.62079357195792 right_h=2.63367581900787 oracle_h=2.62079357195788 target_hex=C015EB851EB851ED
+profile    id=13 k= 31 ULP=  0 bin= 31 left_h=2.62079357195792 right_h=2.63367581900787 oracle_h=2.62079357195788 target_hex=C015EB851EB851EC
+profile    id=14 k= 31 ULP=  1 bin= 31 left_h=2.62079357195792 right_h=2.63367581900787 oracle_h=2.62079357195788 target_hex=C015EB851EB851EB
+profile    id=15 k= 47 ULP= -1 bin= 47 left_h=2.93293505783433 right_h=2.9589769394978 oracle_h=2.9329350578343 target_hex=C010CCCCCCCCCCCE
+profile    id=16 k= 47 ULP=  0 bin= 48 left_h=2.93293505783433 right_h=2.9589769394978 oracle_h=2.95897693949779 target_hex=C010CCCCCCCCCCCD
+profile    id=17 k= 47 ULP=  1 bin= 48 left_h=2.93293505783433 right_h=2.9589769394978 oracle_h=2.95897693949779 target_hex=C010CCCCCCCCCCCC
+profile    id=18 k= 62 ULP= -1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000001
+profile    id=19 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C008000000000000
+profile    id=20 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=C007FFFFFFFFFFFF
+profile    id=21 k= 75 ULP= -1 bin= 75 left_h=3.81577522595014 right_h=3.84794454346073 oracle_h=3.8157752259501 target_hex=BFFF5C28F5C28F5D
+profile    id=22 k= 75 ULP=  0 bin= 75 left_h=3.81577522595014 right_h=3.84794454346073 oracle_h=3.8157752259501 target_hex=BFFF5C28F5C28F5C
+profile    id=23 k= 75 ULP=  1 bin= 76 left_h=3.81577522595014 right_h=3.84794454346073 oracle_h=3.8479445434607 target_hex=BFFF5C28F5C28F5B
+profile    id=24 k= 87 ULP= -1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000001
+profile    id=25 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFF0000000000000
+profile    id=26 k= 87 ULP=  1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=BFEFFFFFFFFFFFFF
+profile    id=27 k= 99 ULP= -1 bin=100 left_h=4.34236213013437 right_h=4.34858602417076 oracle_h=4.34858602417076 target_hex=BFA47AE147AE147C
+profile    id=28 k= 99 ULP=  0 bin=100 left_h=4.34236213013437 right_h=4.34858602417076 oracle_h=4.34858602417076 target_hex=BFA47AE147AE147B
+profile    id=29 k= 99 ULP=  1 bin=100 left_h=4.34236213013437 right_h=4.34858602417076 oracle_h=4.34858602417076 target_hex=BFA47AE147AE147A
+profile    id=30 k=112 ULP= -1 bin=112 left_h=4.30439831295032 right_h=4.28807694292605 oracle_h=4.30439831295031 target_hex=3FEFFFFFFFFFFFFF
+profile    id=31 k=112 ULP=  0 bin=112 left_h=4.30439831295032 right_h=4.28807694292605 oracle_h=4.30439831295031 target_hex=3FF0000000000000
+profile    id=32 k=112 ULP=  1 bin=112 left_h=4.30439831295032 right_h=4.28807694292605 oracle_h=4.30439831295031 target_hex=3FF0000000000001
+profile    id=33 k=123 ULP= -1 bin=123 left_h=4.02323167775518 right_h=3.987000796604 oracle_h=4.02323167775516 target_hex=3FFE147AE147AE13
+profile    id=34 k=123 ULP=  0 bin=123 left_h=4.02323167775518 right_h=3.987000796604 oracle_h=4.02323167775516 target_hex=3FFE147AE147AE14
+profile    id=35 k=123 ULP=  1 bin=123 left_h=4.02323167775518 right_h=3.987000796604 oracle_h=4.02323167775516 target_hex=3FFE147AE147AE15
+profile    id=36 k=137 ULP= -1 bin=137 left_h=3.47572993628814 right_h=3.4428667258916 oracle_h=3.47572993628812 target_hex=4007FFFFFFFFFFFF
+profile    id=37 k=137 ULP=  0 bin=137 left_h=3.47572993628814 right_h=3.4428667258916 oracle_h=3.47572993628812 target_hex=4008000000000000
+profile    id=38 k=137 ULP=  1 bin=137 left_h=3.47572993628814 right_h=3.4428667258916 oracle_h=3.47572993628812 target_hex=4008000000000001
+profile    id=39 k=149 ULP= -1 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778691 target_hex=400FAE147AE147AD
+profile    id=40 k=149 ULP=  0 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778691 target_hex=400FAE147AE147AE
+profile    id=41 k=149 ULP=  1 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778691 target_hex=400FAE147AE147AF
+profile    id=42 k=175 ULP= -1 bin=176 left_h=3.06294356662176 right_h=3.0647285191342 oracle_h=3.06472851913419 target_hex=401828F5C28F5C28
+profile    id=43 k=175 ULP=  0 bin=176 left_h=3.06294356662176 right_h=3.0647285191342 oracle_h=3.06472851913419 target_hex=401828F5C28F5C29
+profile    id=44 k=175 ULP=  1 bin=176 left_h=3.06294356662176 right_h=3.0647285191342 oracle_h=3.06472851913419 target_hex=401828F5C28F5C2A
+profile    id=45 k=196 ULP= -1 bin=196 left_h=3.1761335505314 right_h=3.18733038984289 oracle_h=3.17613355053133 target_hex=401EE147AE147AE0
+profile    id=46 k=196 ULP=  0 bin=196 left_h=3.1761335505314 right_h=3.18733038984289 oracle_h=3.17613355053133 target_hex=401EE147AE147AE1
+profile    id=47 k=196 ULP=  1 bin=196 left_h=3.1761335505314 right_h=3.18733038984289 oracle_h=3.17613355053133 target_hex=401EE147AE147AE2
+zero       id= 0 k=  6 ULP= -1 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=3FE0A3D70A3D70A3
+zero       id= 1 k=  6 ULP=  0 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=3FE0A3D70A3D70A4
+zero       id= 2 k=  6 ULP=  1 bin=  6 left_h=2.70149888948185 right_h=2.68221285810703 oracle_h=2.70149888948183 target_hex=3FE0A3D70A3D70A5
+zero       id= 3 k= 62 ULP= -1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=4013FFFFFFFFFFFF
+zero       id= 4 k= 62 ULP=  0 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=4014000000000000
+zero       id= 5 k= 62 ULP=  1 bin= 63 left_h=3.38108150502348 right_h=3.41461325353848 oracle_h=3.41461325353844 target_hex=4014000000000001
+zero       id= 6 k= 87 ULP= -1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=401BFFFFFFFFFFFF
+zero       id= 7 k= 87 ULP=  0 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=401C000000000000
+zero       id= 8 k= 87 ULP=  1 bin= 87 left_h=4.1569910748253 right_h=4.17930409495606 oracle_h=4.15699107482525 target_hex=401C000000000001
+zero       id= 9 k=149 ULP= -1 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778688 target_hex=4027EB851EB851EB
+zero       id=10 k=149 ULP=  0 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778691 target_hex=4027EB851EB851EC
+zero       id=11 k=149 ULP=  1 bin=150 left_h=3.20683183135198 right_h=3.19320733778697 oracle_h=3.19320733778691 target_hex=4027EB851EB851ED
+
+Unique forced-bin matches: 136/136; max |h-oracle|=4.40536e-13; tolerance=1e-10
+
+Arithmetic candidate           discovery heldout transition background background_left profile zero total
+center_recombine_fma_up           21/24 11/12 11/16  6/12  6/12 32/48  6/12  93/136
+center_inverse_fma                18/24 11/12 15/16 12/12  0/12 28/48  7/12  91/136
+center_inverse_half_up            18/24 11/12 15/16 12/12  0/12 28/48  7/12  91/136
+normalized_half_up                18/24 11/12 15/16 12/12  0/12 28/48  7/12  91/136
+center_plus_half_down             12/24 10/12 13/16  0/12 12/12 36/48  7/12  90/136
+fma_center_plus_half_up           17/24  8/12 13/16  6/12  6/12 33/48  7/12  90/136
+normalized_abs_half_up            18/24 10/12 15/16 12/12  0/12 28/48  7/12  90/136
+center_div_half_up                18/24 11/12 15/16 12/12  0/12 27/48  6/12  89/136
+center_plus_half_up               16/24  8/12 13/16 12/12  0/12 33/48  7/12  89/136
+shifted_origin_fma_up             16/24  9/12 13/16  6/12  6/12 33/48  6/12  89/136
+fma_center_plus_half_down         13/24 10/12 12/16  0/12 12/12 34/48  7/12  88/136
+index_fma_up                      17/24 11/12 13/16  6/12  6/12 29/48  6/12  88/136
+fma_centers_up                    16/24  9/12 13/16  6/12  6/12 31/48  6/12  87/136
+normalized_fma_up                 16/24 11/12 13/16 12/12  0/12 29/48  6/12  87/136
+normalized_index_up               16/24 11/12 13/16 12/12  0/12 29/48  6/12  87/136
+shifted_origin_down               12/24 10/12 13/16  0/12 12/12 33/48  7/12  87/136
+shifted_origin_up                 16/24  8/12 13/16 12/12  0/12 30/48  7/12  86/136
+fma_centers_down                  12/24  9/12 12/16  0/12 12/12 34/48  6/12  85/136
+index_centers_down                12/24  8/12 11/16  0/12 12/12 36/48  6/12  85/136
+index_fma_down                    13/24  7/12 13/16  0/12 12/12 34/48  6/12  85/136
+shifted_origin_fma_down           12/24  9/12 12/16  0/12 12/12 34/48  6/12  85/136
+absolute_div_ties_even            10/24 11/12 15/16  6/12  6/12 30/48  6/12  84/136
+absolute_inverse_fma              15/24 11/12 14/16 12/12  0/12 25/48  7/12  84/136
+absolute_inverse_ties_even         9/24 11/12 14/16  6/12  6/12 31/48  7/12  84/136
+center_inverse_ties_even           8/24 11/12 15/16  6/12  6/12 31/48  7/12  84/136
+normalized_fma_down               12/24  7/12 13/16  0/12 12/12 34/48  6/12  84/136
+normalized_index_down             12/24  7/12 13/16  0/12 12/12 34/48  6/12  84/136
+normalized_ties_even               8/24 11/12 15/16  6/12  6/12 31/48  7/12  84/136
+index_product_up                  16/24 10/12 13/16 12/12  0/12 26/48  6/12  83/136
+normalized_abs_ties_even           8/24 10/12 15/16  6/12  6/12 31/48  7/12  83/136
+absolute_inverse_half_up          15/24 11/12 14/16 12/12  0/12 23/48  7/12  82/136
+absolute_div_half_up              15/24 11/12 15/16 12/12  0/12 22/48  6/12  81/136
+index_centers_up                  13/24 10/12 12/16  0/12  6/12 34/48  6/12  81/136
+center_div_ties_even               8/24 11/12 15/16  6/12  6/12 28/48  6/12  80/136
+index_product_down                12/24  6/12 13/16  0/12 12/12 31/48  6/12  80/136
+repeated_centers_down             10/24  3/12  6/16  0/12 12/12 31/48  5/12  67/136
+repeated_edges_down               10/24  3/12  6/16  0/12 12/12 31/48  5/12  67/136
+repeated_nearest_down             10/24  3/12  6/16  0/12 12/12 31/48  5/12  67/136
+repeated_nearest_up               10/24  3/12  6/16  0/12 12/12 28/48  5/12  64/136
+repeated_centers_up               10/24  3/12  6/16  0/12  6/12 28/48  4/12  57/136
+repeated_edges_up                 10/24  3/12  6/16  0/12  6/12 28/48  4/12  57/136
+
+SUPPORT NOT ACCEPTED: none of these fixed arithmetic candidates explains all bin decisions.

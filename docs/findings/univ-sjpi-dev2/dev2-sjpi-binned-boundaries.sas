@@ -1,0 +1,15 @@
+ods graphics off;
+data all;
+do nreq=100,1000,10000,100000,1000000;
+ do shape=1 to 2;
+  id+1;
+  if shape=1 then do;x=0;f=nreq/2;output;x=1;output;end;
+  else do;x=0;f=nreq*.4;output;x=.005;output;x=.5;f=nreq*.1;output;x=1;output;end;
+ end;
+end;
+run;
+proc univariate data=all noprint;by id;freq f;var x;
+output out=stats n=n qrange=q std=sd;
+histogram x / noplot kernel(c=sjpi) outkernel=k;run;
+data _null_;set stats;file print;put 'STATS ' id= n=best32. q=best32. sd=best32.;run;
+data _null_;set k;by id;file print;if first.id then put 'RESULT ' id= _c_=best32.;run;

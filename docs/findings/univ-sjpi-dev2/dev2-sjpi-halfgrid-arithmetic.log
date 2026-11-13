@@ -1,0 +1,61 @@
+The SAS System
+
+36         
+37         data d;input id k lo :hex16. hi :hex16. x :hex16.;datalines;
+
+NOTE: The data set WORK.D has 112 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.26k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:13:05 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     124
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+150        ;
+151        data _null_;set d;file print;
+152        step=(hi-lo)/200; inv=1/step; centered=x-lo;
+153        z=centered/step; z2=centered*inv;
+154        bound=lo+(k+.5)*step; l=lo+k*step; r=lo+(k+1)*step;
+155        ld=x-l; rd=r-x;
+156        idx=floorz(z+.5); nearest=(ld>=rd);
+157        put id= k= step=hex16. inv=hex16. centered=hex16. z=hex16. z2=hex16.;
+158        put id= bound=hex16. l=hex16. r=hex16. ld=hex16. rd=hex16. idx= nearest=;
+159        run;
+
+NOTE: 336 lines were written to file PRINT.
+NOTE: There were 112 observations read from the data set WORK.D.
+NOTE: The DATA step printed pages 1-6.
+NOTE: DATA statement used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              2397.56k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 12:13:05 PM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     561
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+160        
+161        
+162        
+163        
+The SAS System
+
+164        
