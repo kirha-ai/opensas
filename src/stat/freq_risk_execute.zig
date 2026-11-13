@@ -73,6 +73,7 @@ const Builder = struct {
 fn methodName(m: p.Method) []const u8 {
     return switch (m) {
         .ac => "Agresti",
+        .blaker => "Blaker",
         .exact => "Clopper-Pearson (Exact)",
         .jeffreys => "Jeffreys",
         .lr => "Likelihood Ratio",
@@ -101,6 +102,11 @@ fn integer(x: f64) bool {
     return std.math.isFinite(x) and x >= 0 and x <= std.math.maxInt(u32) and x == @floor(x);
 }
 fn binLimits(b: *Builder, s: k.Binomial, cl: p.CL, correct: bool) diag.Error!k.Interval {
+    if (cl.method == .blaker) {
+        if (!integer(s.success) or !integer(s.total)) return p.gap(b.d, 0, "Blaker limits for noninteger or oversized counts");
+        const result = try exact.binomialBlaker(@intFromFloat(s.success), @intFromFloat(s.total), b.alpha);
+        return .{ .lower = result.lower, .upper = result.upper };
+    }
     if (cl.method == .midp) {
         if (!integer(s.success) or !integer(s.total)) return p.gap(b.d, 0, "exact mid-p for noninteger or oversized counts");
         const result = try exact.binomial(@intFromFloat(s.success), @intFromFloat(s.total), 0.5, b.alpha, true);
@@ -205,6 +211,11 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
             };
             for (cls) |cl| {
                 if (cl.method == .exact and !integer_counts) continue;
+                if (cl.method == .blaker and !integer_counts) {
+                    for (table.counts) |v| if (v > std.math.maxInt(u32)) return p.gap(d, 0, "Blaker limits for oversized counts");
+                    try d.report(.note, 0, "Blaker confidence limits for the binomial proportion cannot be computed when there are noninteger frequencies.", .{});
+                    continue;
+                }
                 try rows.append(a, ciRow(try methodLabel(a, cl, .binomial, req.correct), try binLimits(&b, s, cl, req.correct)));
             }
             if (rows.items.len > 0) try b.intervals("Confidence Limits for the Binomial Proportion", "", rows.items);

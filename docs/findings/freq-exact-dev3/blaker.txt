@@ -1,0 +1,102 @@
+
+The FREQ Procedure
+
+Statistics for Table of x
+
+ Binomial Proportion
+        x = 1
+
+Proportion      0.2000
+ASE             0.1265
+
+Confidence Limits for the Binomial Proportion
+      Proportion = 0.2000
+ 
+Type      95% Confidence Limits
+
+Blaker    0.0368         0.5556
+
+  Test of H0: Proportion = 0.5
+
+ASE under H0              0.1581
+Z                        -1.8974
+One-sided Pr <  Z         0.0289
+Two-sided Pr > |Z|        0.0578
+
+Sample Size = 10
+
+Obs  Table                        Proportion  Type                           LowerCL                          UpperCL
+
+ 1  Table x                              0.2 Blaker                 0.03677145593142                 0.55555286230792
+
+The FREQ Procedure
+
+Statistics for Table of x
+
+ Binomial Proportion
+        x = 1
+
+Proportion      0.0000
+ASE             0.0000
+
+ Confidence Limits for the Binomial Proportion
+              Proportion = 0.0000
+ 
+Type                       95% Confidence Limits
+
+Blaker                     0.0000         0.2829
+Clopper-Pearson (Exact)    0.0000         0.3085
+
+  Test of H0: Proportion = 0.5
+
+ASE under H0              0.1581
+Z                        -3.1623
+One-sided Pr <  Z         0.0008
+Two-sided Pr > |Z|        0.0016
+
+Sample Size = 10
+
+The FREQ Procedure
+
+Statistics for Table of x
+
+ Binomial Proportion
+        x = 2
+
+Proportion      1.0000
+ASE             0.0000
+
+Confidence Limits for the Binomial Proportion
+      Proportion = 1.0000
+ 
+Type      95% Confidence Limits
+
+Blaker    0.7171         1.0000
+
+  Test of H0: Proportion = 0.5
+
+ASE under H0              0.1581
+Z                         3.1623
+One-sided Pr >  Z         0.0008
+Two-sided Pr > |Z|        0.0016
+
+Sample Size = 10
+
+The FREQ Procedure
+
+Statistics for Table of x
+
+ Binomial Proportion
+        x = 1
+
+Proportion      0.2500
+ASE             0.1369
+
+  Test of H0: Proportion = 0.5
+
+ASE under H0              0.1581
+Z                        -1.5811
+One-sided Pr <  Z         0.0569
+Two-sided Pr > |Z|        0.1138
+
+Sample Size = 10

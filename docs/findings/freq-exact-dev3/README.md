@@ -4,6 +4,28 @@ Status: **public integration implemented, not full-ticket acceptance**. Numerica
 `freq_exact_unconditional.zig` and `freq_exact_polynomial.zig`; this change does
 not edit either file.
 
+## Blaker follow-up after fed5f13 landed
+
+Review correctly identified a public interval gap omitted from the previous
+handoff. Blaker is in this ticket's delegated exact-interval scope: the manual
+documents BINOMIAL(CL=BLAKER) at pp.110 and 177 and defines it by inversion of
+the two-sided exact Blaker test. It is a TABLES interval option, not a separate
+EXACT statistic option. The previously retained numerical kernel was not enough
+to claim that public path was connected.
+
+The parser and risk execution adapter now dispatch CL=BLAKER to that kernel.
+No EXACT statement is required. Fractional frequencies produce SAS's NOTE and
+omit the Blaker interval; unsupported oversized counts remain fail-loud.
+This follow-up changes no numerical algorithm or expected listing fixture.
+
+Actual runtime evidence is retained here as `blaker.sas`, `blaker.txt`, and
+`blaker.log`: SAS_VERSION=9.04.01M9P060525, zero errors and zero warnings.
+The k=2,n=10 interval is [.03677145593142,.55555286230792]; k=0 and k=10
+limits print [0,.2829] and [.7171,1]. The fractional case k=2.5,n=10 emits
+the documented NOTE and no Blaker interval. Public regression exercises these
+paths, mixed CL=(BLAKER EXACT), formatted LEVEL selection, and invalid families
+or CORRECT suboptions. The full-ticket RR compatibility blocker remains open.
+
 ## Actual SAS 9.4 M9 evidence, 2026-11-13
 
 Command: `/Users/thomas/sas/bin/sasrun <absolute-path> -f text -o - -l /dev/null`.
@@ -60,17 +82,18 @@ were absent; no claim is made to have reread missing files.
 
 ## Runnable checks
 
-Eight public acceptance tests in `freq_exact_public.zig`: Fisher ties and MC fallback;
+Nine public acceptance tests in `freq_exact_public.zig`: Fisher ties and MC fallback;
 MC reproducibility/deadline; conditional families and TABLES selection;
 binomial/multinomial/NI/superiority/TOST; zero margins and captured fractional
 count errors; stratified conditioning and missing controls; interval family
 methods/column orientation and PFORMAT; CL=EXACT prerequisites and column
-defaults. A separate ninth public test retains the ordinary-alpha RR SCORE2
+defaults; and the Blaker follow-up described above. A separate public test retains the ordinary-alpha RR SCORE2
 endpoint discrepancy as a mathematical reciprocal/known-difference certificate;
 it is explicitly NOT a SAS acceptance pass. Existing enumeration,
 six-standard-error Monte Carlo checks, and confidence boundary tests remain.
 The obsolete Fisher rejection assertion in `proc.zig` is replaced by affirmative
-public tests. No expected listing fixture changes are included.
+public tests. The earlier CL=EXACT gap fixture was converted to a supported
+listing in a separate oracle-backed commit; the Blaker follow-up adds no golden.
 
 ## Remaining acceptance work
 

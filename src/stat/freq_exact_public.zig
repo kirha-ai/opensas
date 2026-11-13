@@ -496,3 +496,31 @@ test "public CL EXACT requires the statement and does not override its column de
     try std.testing.expect(std.mem.indexOf(u8, norisks, "Risk Difference (Column 1)") != null);
     try std.testing.expect(std.mem.indexOf(u8, norisks, "Risk Difference (Column 2)") == null);
 }
+
+test "public BINOMIAL Blaker limits match SAS interior boundaries and fractional omission" {
+    // SAS 9.04.01M9P060525, blaker.sas: this TABLES CL option needs no
+    // EXACT statement. It is an exact interval, distinct from CP and mid-p.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 2, 8 }, 1);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r / binomial(cl=(blaker exact)) noprint; run;", &d);
+    for ([_][]const u8{ "Blaker", "0.0368", "0.5556", "Clopper-Pearson", "0.0252", "0.5561" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+    var zero = try Harness.init(a, &.{ 0, 10 }, 1);
+    const lower = try zero.run("proc freq data=d; weight w / zeros; tables r / bin(cl=blaker level=1) noprint; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, lower, "0.2829") != null);
+    const upper = try zero.run("proc freq data=d; weight w / zeros; tables r / bin(cl=blaker level='2') noprint; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, upper, "0.7171") != null);
+    var fractional = try Harness.init(a, &.{ 2.5, 7.5 }, 1);
+    const omitted = try fractional.run("proc freq data=d; weight w; tables r / bin(cl=blaker) noprint; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, omitted, "Blaker") == null);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Blaker confidence limits") != null);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "riskdiff(cl=blaker)", "or(cl=blaker)", "bin(cl=blaker(correct))" }) |option| {
+        var errors = diag.Diagnostics.init(a);
+        const source = try std.fmt.allocPrint(a, "proc freq data=d; tables r / {s}; run;", .{option});
+        try std.testing.expectError(error.ParseError, h.run(source, &errors));
+        try std.testing.expect(errors.hasErrors());
+    }
+}
