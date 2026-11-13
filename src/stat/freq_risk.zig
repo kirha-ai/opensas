@@ -428,3 +428,15 @@ test "FEAT-freq-risk SAS infinite ratios fractional counts and rare events" {
     try expectLimits((try ratio(rare, .second, .relative_risk, 0.05, .score, true)).limits, 0.9962, 1.0064);
     try expectLimits(try differenceLimits(rare, .first, 0.05, .miettinen_nurminen, false, true), -0.0064, 0.0038);
 }
+
+test "FEAT-freq-risk SAS opposite boundary proportions score and LR" {
+    const t = Table2x2{ .cells = .{ 10, 0, 0, 10 } };
+    try expectLimits(try differenceLimits(t, .first, 0.05, .miettinen_nurminen, false, true), 0.6636, 1);
+    try expectLimits(try differenceLimits(t, .second, 0.05, .miettinen_nurminen, false, true), -1, -0.6636);
+    for ([_]RatioMethod{ .score, .likelihood_ratio }, [_]f64{ 3.4730, 5.7224 }, [_]f64{ 0.2879, 0.1748 }) |method, lower, upper| {
+        const first = try ratio(t, .first, .relative_risk, 0.05, method, true);
+        try std.testing.expectApproxEqAbs(lower, first.limits.lower.?, 0.00005);
+        try std.testing.expect(std.math.isInf(first.limits.upper.?));
+        try expectLimits((try ratio(t, .second, .relative_risk, 0.05, method, true)).limits, 0, upper);
+    }
+}
