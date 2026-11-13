@@ -826,3 +826,26 @@ test "dev2 exact boundary reciprocal score preserves rare tails beyond squared R
         try t.expectApproxEqRel(reverse.upper, value.upper, 1e-13);
     }
 }
+
+
+test "dev2 exact boundary SAS FM ordering confirms SCORE2 nuisance endpoint certificate" {
+    const t = std.testing;
+    // Fresh SAS 9.04.01M9P06052025 ordering.sas. Four-decimal score
+    // precision only; the probability-one certificate below is exact.
+    const cases = [_]struct { n1: u32, n2: u32, r: f64, scores: []const f64 }{
+        .{ .n1 = 2, .n2 = 5, .r = 0.249913109375, .scores = &.{ -0.8163, 0.8169 } },
+        .{ .n1 = 4, .n2 = 3, .r = 0.11966864267985, .scores = &.{ -0.7374, 0.8031, 2.3436, 3.8841 } },
+    };
+    for (cases) |c| {
+        const observed = try statistic(.{ 0, c.n1, c.n2, 0 }, .relative_risk, .score2, c.r);
+        for (0..c.n1 + 1) |i| {
+            const x: u32 = @intCast(i);
+            const z = try statistic(.{ x, c.n1 - x, c.n2, 0 }, .relative_risk, .score2, c.r);
+            if (i < c.scores.len) try t.expectApproxEqAbs(c.scores[i], z, 0.00005);
+            try t.expect(selected(z, observed, .two_sided));
+        }
+        const result = (try riskTail(tableOf(.{ 0, c.n1, c.n2, 0 }), .first, .relative_risk, .score2, c.r, .two_sided, .{ .tolerance = 1e-13 })).complete;
+        try t.expectEqual(@as(f64, 1), result.lower);
+        try t.expectEqual(@as(f64, 1), result.upper);
+    }
+}
