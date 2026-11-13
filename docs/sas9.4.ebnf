@@ -1023,7 +1023,9 @@ freq_risk_cl = name [ "(" "CORRECT" [ "=" ( "NO" | "MEE" ) ] ")" ] ;
    OR has Wald, modified Wald, score, LR, mid-p; RELRISK has Wald, modified
    Wald, score, LR. Documented long aliases are accepted. COLUMN=BOTH is
    for RISKDIFF. Selected LEVEL uses formatted analysis-level order.
-   Blaker, CL=EXACT for RD/OR/RR, COMMON, OUTLEVEL and
+   CL=EXACT for RD/OR/RR selects limits computed by the EXACT statement;
+   without its matching EXACT request a warning is issued, as in SAS.
+   Blaker, COMMON, OUTLEVEL and
    statistics OUTPUT remain explicit rc2 gaps at this checkpoint.
    Risk cores import no exact module; the execution adapter owns mid-p calls. *)
 

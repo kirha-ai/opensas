@@ -96,7 +96,8 @@ const Reader = struct {
             .odds_ratio => m == .wald or m == .waldmodified or m == .exact or m == .mn or m == .lr or m == .midp,
         };
         if (!valid) return self.fail("method is not valid for this risk analysis");
-        if (m == .exact and family != .binomial) return gap(self.d, t.line, "risk CL=EXACT / EXACT statement integration");
+        // Non-binomial EXACT limits are dispatched by freq_exact_public after
+        // table construction; preserve the typed request here.
         return m;
     }
     fn confidence(self: *Reader, req: *Request) diag.Error!void {
@@ -303,7 +304,7 @@ test "FEAT-freq-risk parser captures invalid requests versus pending dependencie
         try std.testing.expect(d.hasErrors());
         try std.testing.expect(!diag.gapHit());
     }
-    for ([_][]const u8{ "bin(cl=blaker)", "relrisk(cl=exact)", "bin(outlevel)" }) |source| {
+    for ([_][]const u8{ "bin(cl=blaker)", "bin(outlevel)" }) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;
