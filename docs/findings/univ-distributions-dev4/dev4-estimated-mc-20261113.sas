@@ -1,0 +1,18 @@
+ods graphics off;ods exclude all;
+data d;do i=1 to 40;u=((i-.5)/40)**1.5;x=sqrt(-2*log1px(-u));gp=((1-u)**(-.3)-1)/.3;output;end;run;
+%macro fit(id,var,opts);
+ods output GoodnessOfFit=g;
+proc univariate data=d noprint;histogram &var / noplot &opts;run;
+ods exclude none;
+data _null_;set g;file print;put "&id|" TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%fit(ge,x,gumbel(edfseed=13579 edfnsamples=5000));
+%fit(gm,x,gumbel(mu=0 edfseed=13579 edfnsamples=5000));
+%fit(gs,x,gumbel(sigma=1 edfseed=13579 edfnsamples=5000));
+%fit(ie,x,igauss(edfseed=13579 edfnsamples=5000));
+%fit(im,x,igauss(mu=1 edfseed=13579 edfnsamples=5000));
+%fit(il,x,igauss(lambda=1 edfseed=13579 edfnsamples=5000));
+%fit(pa,gp,pareto(alpha=-.3 edfseed=13579 edfnsamples=5000));
+%fit(ps,gp,pareto(sigma=1 edfseed=13579 edfnsamples=5000));
+%fit(pe,gp,pareto(edfseed=13579 edfnsamples=5000));

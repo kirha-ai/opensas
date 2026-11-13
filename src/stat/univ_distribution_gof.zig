@@ -180,3 +180,45 @@ test "UNIVARIATE EDF adapter generates and refits actual family samples with a f
     try std.testing.expect(d.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "no replication was discarded") != null);
 }
+
+test "UNIVARIATE estimated-family MC callbacks agree with independent M9 probes" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var x: [40]f64 = undefined;
+    var gp: [40]f64 = undefined;
+    for (&x, &gp, 0..) |*v, *p, i| {
+        const u = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 40, 1.5);
+        v.* = @sqrt(-2 * std.math.log1p(-u));
+        p.* = (std.math.pow(f64, 1 - u, -0.3) - 1) / 0.3;
+    }
+    const cases = [_]struct { id: []const u8, request: fitting.Request, probabilities: [3]f64 }{
+        .{ .id = "ge", .request = .{ .family = .gumbel }, .probabilities = .{ 1, 0.9894, 0.9924 } },
+        .{ .id = "gm", .request = .{ .family = .gumbel, .mu = 0 }, .probabilities = .{ 0, 0, 0 } },
+        .{ .id = "gs", .request = .{ .family = .gumbel, .sigma = 1 }, .probabilities = .{ 0.0132, 0.0006, 0.0004 } },
+        .{ .id = "ie", .request = .{ .family = .igauss }, .probabilities = .{ 0.022, 0.0014, 0.0012 } },
+        .{ .id = "im", .request = .{ .family = .igauss, .mu = 1 }, .probabilities = .{ 0.0972, 0.0336, 0.0404 } },
+        .{ .id = "il", .request = .{ .family = .igauss, .lambda = 1 }, .probabilities = .{ 0.1134, 0.0206, 0.0246 } },
+        .{ .id = "pa", .request = .{ .family = .pareto, .alpha = -0.3 }, .probabilities = .{ 0.8004, 0.4602, 0.2696 } },
+        .{ .id = "pe", .request = .{ .family = .pareto }, .probabilities = .{ 0.9728, 0.8428, 0.6252 } },
+    };
+    for (cases) |case| {
+        var d = diag.Diagnostics.init(a);
+        var request = case.request;
+        request.edfseed = 86531;
+        request.edfnsamples = 1000;
+        const sample: []const f64 = if (request.family == .pareto) &gp else &x;
+        const fitted = try fitting.fit(&d, sample, request);
+        const result = compute(&d, sample, fitted, request) catch |err| {
+            std.debug.print("MC probe {s}: {s}\n", .{ case.id, @errorName(err) });
+            for (d.list.items) |entry| std.debug.print("{s}\n", .{entry.message});
+            return err;
+        };
+        try std.testing.expectEqual(@as(usize, 1000), result.simulation.?.samples);
+        for ([_]f64{ result.d.?.value, result.w2.?.value, result.a2.?.value }, case.probabilities) |actual, reference| {
+            const pooled = @max((actual + reference) / 2, 1.0 / 1000.0);
+            const tolerance = 5 * @sqrt(pooled * (1 - pooled) * (1.0 / 1000.0 + 1.0 / 5000.0)) + 1.0 / 1000.0;
+            try std.testing.expectApproxEqAbs(reference, actual, tolerance);
+        }
+    }
+}
