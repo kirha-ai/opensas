@@ -1,4 +1,6 @@
-/* expect-rc: 2. FEAT-freq-risk public intermediate. Independent sasrun evidence /tmp/opensas-stat-batch2/FEAT-freq-risk/public/; numerical comparisons at printed precision. Full exact/common ticket acceptance remains pending. */
+/* FEAT-freq-exact CL=EXACT integration. SAS 9.4 M9 cl-regression.sas,
+   2026-11-13: RD columns [.1145,.6675] and [-.6675,-.1145].
+   Full exact numerical acceptance remains pending; this fixture is now supported. */
 options nodate nonumber; ods graphics off;
 data t; input r c w; datalines;
 1 1 12

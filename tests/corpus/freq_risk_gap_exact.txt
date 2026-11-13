@@ -1,0 +1,71 @@
+                        The FREQ Procedure
+
+                        Table of r by c
+
+              r         c
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |  Total
+              ---------+--------+--------+
+              1        |     12 |      8 |     20
+                       |  24.00 |  16.00 |  40.00
+                       |  60.00 |  40.00 |
+                       |  70.59 |  24.24 |
+              ---------+--------+--------+
+              2        |      5 |     25 |     30
+                       |  10.00 |  50.00 |  60.00
+                       |  16.67 |  83.33 |
+                       |  29.41 |  75.76 |
+              ---------+--------+--------+
+              Total          17       33       50
+                          34.00    66.00   100.00
+
+Statistics for Table of r by c
+
+Risk Difference (Column 1)
+Exact Confidence Limits
+95% Lower Conf Limit  0.1145
+95% Upper Conf Limit  0.6675
+
+Risk Difference (Column 2)
+Exact Confidence Limits
+95% Lower Conf Limit  -0.6675
+95% Upper Conf Limit  -0.1145
+
+Column 1 Risk Estimates
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Row 1                             0.6000      0.1095        0.3853        0.8147
+Row 2                             0.1667      0.0680        0.0333        0.3000
+Total                             0.3400      0.0670        0.2087        0.4713
+Difference                        0.4333      0.1290        0.1806        0.6861
+
+Difference is (Row 1 - Row 2)
+
+Column 1 Exact Risk Confidence Limits
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Row 1                               0.3605        0.8088
+Row 2                               0.0564        0.3472
+Total                               0.2121        0.4877
+
+Column 2 Risk Estimates
+
+Statistic / Method              Estimate         ASE  95% Lower CL  95% Upper CL
+Row 1                             0.4000      0.1095        0.1853        0.6147
+Row 2                             0.8333      0.0680        0.7000        0.9667
+Total                             0.6600      0.0670        0.5287        0.7913
+Difference                       -0.4333      0.1290       -0.6861       -0.1806
+
+Difference is (Row 1 - Row 2)
+
+Column 2 Exact Risk Confidence Limits
+
+Statistic / Method            95% Lower CL  95% Upper CL
+Row 1                               0.1912        0.6395
+Row 2                               0.6528        0.9436
+Total                               0.5123        0.7879
+
+Sample Size = 50
