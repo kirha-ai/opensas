@@ -7,7 +7,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const k = @import("freq_tests.zig");
 const p = @import("freq_tests_parse.zig");
 const render = @import("freq_tests_render.zig");
-pub const Table = struct { numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
+pub const Table = struct { suppress_fisher: bool = false, numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
 pub const Report = struct { goodness_of_fit: ?k.GoodnessOfFit = null, chi_square: ?k.ChiSquare = null, warning: ?bool = null };
 fn canonicalName(name: []const u8) []const u8 {
     return if (name.len > 5 and std.ascii.eqlIgnoreCase(name[0..5], "work.")) name[5..] else name;
@@ -121,7 +121,11 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (options.warn.output) report.warning = chisq.sparse;
         try warn(d, chisq.sparse, options, proc_noprint);
         if (m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
-        if (!proc_noprint) try render.contingency(a, out, chisq, options, m.counts[0]);
+        if (!proc_noprint) {
+            var displayed = chisq;
+            if (table.suppress_fisher) displayed.fisher = null;
+            try render.contingency(a, out, displayed, options, m.counts[0]);
+        }
     }
     if (options.measures or options.plcorr) {
         var ordinal = try k.association(a, m, options.alpha);

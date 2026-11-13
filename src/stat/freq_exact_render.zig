@@ -31,7 +31,7 @@ fn nLine(a: A, out: *Out, label: []const u8, value: f64) Error!void {
     try line(a, out, label, if (std.math.isFinite(value)) try std.fmt.allocPrint(a, "{d:.4}", .{value}) else if (value == std.math.inf(f64)) "Infinity" else ".");
 }
 
-pub const Test = struct { statistic: ?f64 = null, probabilities: dist.Probabilities, directional: bool = false, right_sided: bool = false };
+pub const Test = struct { statistic: ?f64 = null, probabilities: dist.Probabilities, directional: bool = false, right_sided: bool = false, two_doubled: bool = false };
 pub const Result = union(enum) { complete: Test, exhausted, not_defined };
 pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: parse.Options) Error!void {
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n\n", .{title}));
@@ -51,7 +51,7 @@ pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: p
     if (r.directional) try pLine(a, out, if (r.right_sided) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic", r.probabilities.one_sided, options) else try pLine(a, out, "Exact Pr >= Statistic", r.probabilities.two_sided, options);
     if (options.point) try pLine(a, out, "Point Pr = Statistic", r.probabilities.point, options);
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, (if (r.directional) r.probabilities.one_sided else r.probabilities.two_sided) - r.probabilities.point / 2), options);
-    if (r.directional) try pLine(a, out, "Two-sided Pr >= |Statistic|", r.probabilities.two_sided, options);
+    if (r.directional) try pLine(a, out, if (r.two_doubled) "Two-sided = 2 * One-sided" else "Two-sided Pr >= |Statistic|", r.probabilities.two_sided, options);
 }
 
 pub const Fisher = struct { first_cell: ?u32 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
