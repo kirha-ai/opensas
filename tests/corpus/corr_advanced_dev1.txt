@@ -194,5 +194,5 @@ x 70 2.04286 0.78824 2.00000 1.00000 3.00000
 
 polyserial Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-y x 70 0.51865 0.09703 28.57034 <.0001 17.93754 <.0001
+y x 70 0.51865 0.09703 28.57035 <.0001 17.93754 <.0001
 

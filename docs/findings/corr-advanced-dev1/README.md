@@ -115,7 +115,7 @@ Runnable regression in src/stat/corr.zig checks:
 The numerically differentiated Wald statistics are checked to 1e-3 absolute:
 for the balanced table, the old polychoric Wald was 31.67254 versus SAS 31.6730; the current scoring
 solver gives 31.67302,
-and polyserial Wald=28.57034 versus SAS 28.5704. These are known last-digit
+and polyserial Wald=28.57035 versus SAS 28.5704. These are known last-digit
 differences, not claims of four-decimal equality. Coefficients, SE and LR retain
 the tighter tolerances in the table.
 
