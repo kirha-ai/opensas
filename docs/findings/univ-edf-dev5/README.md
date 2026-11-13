@@ -11,6 +11,8 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
 - `Request`: local `Family`, explicit `Estimated` SAS-parameter flags (true
   means estimated), fitted/specified shapes `alpha`, `beta`, `sigma`, `c`.
   For lognormal, ZETA is scale and SIGMA is shape; MU applies to normal.
+  Map Family by tag name or switch, not enum ordinals: this is an independent
+  enum and does not promise the same ordinal order as the distribution module.
 - `availability(Request) -> Available`: Table 4.31 D/W2/A2 mask, including
   strict shape boundaries and unavailable Johnson tests. It is not a promise
   that all available cases have implemented probability tables.
@@ -61,9 +63,14 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   below 5. Fully known power remains supported. EVIDENCE-POWER.md documents
   the difference from Table 4.31; it is not an invented implementation exclusion.
 
+- Estimated-threshold gamma now covers all four masks, with 30672 independent
+  heldout rows. Tail bounds are checked before interior interpolation, matching
+  M9 even when near-boundary critical surfaces are non-monotone. See
+  EVIDENCE-GAMMA-THETA.md.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated-threshold gamma, lognormal and
+- Estimated-threshold lognormal and
   Weibull probabilities; family/shape-dependent critical tables/interpolation.
   Availability is implemented, probability computation fails loudly where
   these documented-available combinations lack tables.
