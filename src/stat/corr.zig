@@ -1314,7 +1314,7 @@ test "CORR sparse polychoric boundary fails through captured diagnostics instead
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
 }
 
-test "CORR absolute convergence and iteration exhaustion match asymmetric SAS table" {
+test "CORR convergence and iteration exhaustion match asymmetric SAS table" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -1483,3 +1483,42 @@ test "CORR case2 public convergence is not defeated by quadrature error" {
     }
 }
 
+test "CORR quadrature change preserves independent interior SAS controls" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const first = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 17 }, &.{ 0, 20, 4 }, &.{ 2, 0, 23 }, &.{ 2, 20, 14 }, &.{ 12, 0, 3 }, &.{ 12, 20, 29 } });
+    const second = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 26 }, &.{ 0, 3, 13 }, &.{ 0, 23, 4 }, &.{ 7, 0, 3 }, &.{ 7, 3, 18 }, &.{ 7, 23, 31 } });
+    const third = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 11 }, &.{ 0, 2, 4 }, &.{ 0, 7, 3 }, &.{ 1, 0, 5 }, &.{ 1, 2, 17 }, &.{ 1, 7, 6 }, &.{ 9, 0, 2 }, &.{ 9, 2, 7 }, &.{ 9, 7, 19 } });
+    const fourth = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ -1, 2, 14 }, &.{ -1, 11, 9 }, &.{ 3, 2, 6 }, &.{ 3, 11, 23 } });
+    const Case = struct { ds: *Dataset, source: []const u8, r: f64, se: f64, lr: f64 };
+    for ([_]Case{
+        .{ .ds = first, .source = "proc corr polychoric;var x;with y;freq f;run;", .r = 0.73357532289915, .se = 0.0836568956254, .lr = 32.2741142794848 },
+        .{ .ds = second, .source = "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;", .r = 0.80508700896629, .se = 0.06662433183458, .lr = 43.9079638988586 },
+        .{ .ds = third, .source = "proc corr polychoric;var x;with y;freq f;run;", .r = 0.64919651354426, .se = 0.093706839039, .lr = 24.0452695361532 },
+        .{ .ds = fourth, .source = "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;", .r = 0.60674978943585, .se = 0.16026513167272, .lr = 8.93456112392664 },
+    }) |c| {
+        const result = (try Testing.analyze(a, c.ds, c.source)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(result.converged);
+        try std.testing.expectApproxEqAbs(c.r, result.r, 5e-8);
+        try std.testing.expectApproxEqAbs(c.se, result.se, 5e-7);
+        try std.testing.expectApproxEqAbs(c.lr, result.lr, 1e-7);
+    }
+}
+
+test "CORR convergence scaling and near-zero fallback match SAS stopping steps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ordinary = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 17 }, &.{ 0, 20, 4 }, &.{ 2, 0, 23 }, &.{ 2, 20, 14 }, &.{ 12, 0, 3 }, &.{ 12, 20, 29 } });
+    const early = (try Testing.analyze(a, ordinary, "proc corr polychoric(maxiter=4);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(!early.converged);
+    const fifth = (try Testing.analyze(a, ordinary, "proc corr polychoric(maxiter=5);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fifth.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.73357532289915), fifth.r, 5e-8);
+    const near_zero = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 17 }, &.{ 0, 20, 4 }, &.{ 2, 0, 23 }, &.{ 2, 20, 14 }, &.{ 12, 0, 5 }, &.{ 12, 20, 27 } });
+    const fourth = (try Testing.analyze(a, near_zero, "proc corr polychoric(maxiter=4);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fourth.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.67528568038814), fourth.r, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.09426981785414), fourth.se, 5e-7);
+}
