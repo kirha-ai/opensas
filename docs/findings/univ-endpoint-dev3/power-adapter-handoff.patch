@@ -1,0 +1,10 @@
+--- a/src/stat/univ_distribution_fit.zig
++++ b/src/stat/univ_distribution_fit.zig
+@@ -70,6 +70,7 @@
+     if (r.maxiter == 0 or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
+     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
+     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
++    if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
+     if (r.itprint and r.family == .weibull and (r.c == null or r.theta == null)) {
+         diag.markGap();
+         return d.fail(error.ParseError, 0, "UNIVARIATE: Weibull ITPRINT history is not implemented", .{});

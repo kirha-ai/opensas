@@ -77,8 +77,8 @@ All matched sigma values agree to numerical roundoff; tests allow
 1e-10*(1+sigma) for normalization/translation arithmetic. Supplied theta and
 alpha are checked exactly. Free-alpha agreement uses 5e-5 absolute tolerance,
 covering SAS's finite shape iteration; the earlier grid's largest difference
-was 4.27e-5. New admissible prospective scale errors are at most 5.83e-16 and
-shape differences at most 5.29e-7. Every published candidate has strict support
+was 4.27e-5. The independent pilot audit measures new admissible prospective scale errors
+of at most 5.83e-16 and shape differences of at most 5.29e-7. Every published candidate has strict support
 and finite log-likelihood.
 
 The old test expecting sigma=max(x)-theta has been replaced with the M9-derived
@@ -137,3 +137,23 @@ Remaining in scope: the recorded inadmissible-pilot/free-alpha exception,
 free/joint-theta power stopping, beta's coupled small-unit failure, and Pareto's
 nonregular fallback selection. The fixed-theta improvement does not waive any
 of these or mark the parent accepted.
+
+## Landed adapter check on e1147d3
+
+The direct adapter regression exposed a public dispatcher guard: POWER with
+estimated sigma is still rejected before entering the endpoint helper. The
+existing fitEndpoint handler accepts the new reason tags via its generic
+nonconvergence branch, but this request does not reach that handler yet.
+
+`power-adapter-handoff.patch` is the precise one-line dispatch addition for the
+adapter owner: route power with **fixed theta and estimated sigma** to the helper.
+Joint-theta power remains guarded. `power-adapter-regression.zig.txt` is ready to
+append to the helper tests with that integration: it checks a retained curve,
+converged=false/no_fit=false, nonstationary_candidate and a captured warning;
+then an initialization failure with no_fit=true and its captured warning.
+
+On e1147d3 the prepared regression fails at the old not-implemented guard; it is
+not represented as a passing integration test. It is deliberately not enabled
+in the green helper build until the owner applies the dispatch change. No
+dev4-owned module was edited, even temporarily. This additional integration
+requirement is distinct from the numerical oracle gap recorded above.
