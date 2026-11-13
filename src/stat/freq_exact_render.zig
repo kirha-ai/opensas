@@ -9,13 +9,26 @@ const Error = dist.Error;
 const A = std.mem.Allocator;
 const Out = std.ArrayList(u8);
 
+fn rounded(p: f64, decimals: usize) f64 {
+    if (decimals > 15) return p;
+    const scale = std.math.pow(f64, 10, @floatFromInt(decimals));
+    const x = p * scale;
+    // SAS rounds positive decimal half ties upward. Exact probability sums
+    // may arrive a few ulps below the tie (Barnard 37/128 at PFORMAT=8.6).
+    return @floor(x + 0.5 + 16 * std.math.floatEps(f64) * @max(1, @abs(x))) / scale;
+}
+
 pub fn probability(a: A, value: ?f64, style: parse.ProbabilityFormat) Error![]const u8 {
     const p = value orelse return ".";
     if (!std.math.isFinite(p)) return ".";
     return switch (style) {
-        .default => if (p < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{p}),
-        .exact => std.mem.trim(u8, try fmt.apply(a, .{ .num = p }, if (p < 0.001 and p > 0) "e10.3" else "6.4"), " "),
-        .named => |name| std.mem.trim(u8, try fmt.apply(a, .{ .num = p }, name), " "),
+        .default => if (p < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{rounded(p, 4)}),
+        .exact => std.mem.trim(u8, try fmt.apply(a, .{ .num = if (p < 0.001 and p > 0) p else rounded(p, 4) }, if (p < 0.001 and p > 0) "e10.3" else "6.4"), " "),
+        .named => |name| blk: {
+            const spec = fmt.parseSpec(name);
+            const displayed = if (spec.name.len == 0 or std.ascii.eqlIgnoreCase(spec.name, "f")) rounded(p, spec.d) else p;
+            break :blk std.mem.trim(u8, try fmt.apply(a, .{ .num = displayed }, name), " ");
+        },
     };
 }
 fn line(a: A, out: *Out, label: []const u8, value: []const u8) Error!void {
@@ -110,6 +123,7 @@ test "Fisher rendering distinguishes observed mass from tied POINT and missing r
     try std.testing.expect(std.mem.indexOf(u8, out.items, "0.0000") == null);
     try std.testing.expectEqualStrings("<.0001", try probability(a, 0.000001, .default));
     try std.testing.expectEqualStrings("0.123456", try probability(a, 0.123456, .{ .named = "8.6" }));
+    try std.testing.expectEqualStrings("0.289063", try probability(a, 37.0 / 128.0, .{ .named = "8.6" }));
 }
 
 pub fn zelen(a: A, out: *Out, r: strata.Zelen, options: parse.Options) Error!void {
