@@ -1,0 +1,245 @@
+
+                                       g=1
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 0.01786 0.2704 8
+
+
+                                       g=2
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 1.00000 . 5
+
+
+                                       g=3
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 1.00000 <.0001 6
+
+
+                                       g=4
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x -0.14286 1.0000 9
+
+
+                                       g=5
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 0.00000 0.3643 6
+
+
+                                       g=6
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x -0.62500 1.0000 6
+
+
+                                       g=7
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x . . 4
+
+
+                                       g=1
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x 0.01786 8
+
+
+                                       g=2
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x 1.00000 5
+
+
+                                       g=3
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x 1.00000 6
+
+
+                                       g=4
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x -0.14286 9
+
+
+                                       g=5
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x 0.00000 6
+
+
+                                       g=6
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x -0.62500 6
+
+
+                                       g=7
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+y x . 4
+
+
+                                       g=1
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 0.01786 0.2704 8
+
+
+                                       g=2
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 1.00000 . 5
+
+
+                                       g=3
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 1.00000 <.0001 6
+
+
+                                       g=4
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x -0.14286 1.0000 9
+
+
+                                       g=5
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x 0.00000 0.3643 6
+
+
+                                       g=6
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x -0.62500 1.0000 6
+
+
+                                       g=7
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+
+hoeffding Correlation Coefficients
+Row Column Correlation P N
+y x . . 4
+
