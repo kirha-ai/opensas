@@ -211,7 +211,8 @@ Precise remaining tags (none waived by a green checkpoint):
   `dev4-univ-thresholds` probe suppresses the Pareto curve. The old guard-based
   expect-error assertion is not used to falsely reject the now-implemented
   regular solver. This concrete curve-presence discrepancy remains unaccepted.
-- **TRACE/PARITY:** Weibull ITPRINT remains explicit; Johnson real traces/status
+- **TRACE/PARITY:** Weibull ITPRINT now delivers real Newton/profile evaluations
+  through HISTOGRAM and plot-consumer paths. Johnson and Weibull actual traces
   are delivered, but proprietary SAS optimizer trajectories are not replicated.
 - **FINAL-ACCEPTANCE:** full public heldouts, remaining option/schema behavior,
   and full ticket validation are not complete. No jira.md change or completion
@@ -255,3 +256,39 @@ curve and `initialization_failed` plus no curve, with exactly one warning in
 each case. The full targeted UNIVARIATE run passes 62 tests, including this
 handed-off regression; the earlier narrow filter selected only root and is not
 counted as regression verification.
+
+## ITPRINT, MC and output-options milestone
+
+Weibull tracing records initial/Newton/profile/selected parameter states with
+their actual log-likelihoods. Tests independently recompute those likelihoods,
+check the final trace against the returned fit, and prove trace-on/off results
+are identical. Closed-form scale fits have a closed-form event, not invented
+iterations. Failed iteration budgets retain nonconverged status. Conditional
+fits during threshold searches do not overwrite the outer report/trace. Public
+HISTOGRAM and QQ tests exercise listing delivery. M9 rejects Weibull MAXITER
+outside 5–100; the parser enforces that range. The valid trace probe has zero
+errors/warnings; the separate MAXITER=1 probe intentionally records the error.
+
+Eight new estimated-family Monte Carlo checks compare independent 1000-draw
+runs with 5000-draw M9 references: all three Gumbel masks, all three inverse
+Gaussian masks, Pareto fixed alpha/free sigma and both parameters estimated.
+They pass pooled binomial uncertainty checks. The additional fixed-sigma/free-
+alpha Pareto reference is NOT claimed accepted: its three reported probabilities
+equal 1078/4925, 224/4925 and 123/4925 despite EDFNSAMPLES=5000, consistent with
+excluded failed fits (an inference, not an exposed SAS replication counter).
+Our no-discard contract remains; that conditional reference needs further work.
+
+Output options are captured directly, including WORK-qualified names and the
+documented OUTHIST alias. KEEP/DROP/RENAME establish the output descriptor before
+WHERE evaluation. An old name removed by RENAME errors and retains an empty
+descriptor as in the oracle. Options are applied before publishing, so output
+libraries cannot receive unfiltered rows. Histogram/kernel dataset labels are
+set to the M9 values. The new corpus fixture checks BY/CLASS/FREQ, raw formatted
+class representatives, independent options, renamed WHERE variables and schema.
+Its final M9 v3 probe has zero errors and warnings; golden changes are separate.
+
+The fixture exposed normal FFT wrap contributions missing from the core. The
+owned kernel module now implements the periodic convolution and shared-period
+hint; see kernel-period-handoff.md for the additive API and remaining grid issue.
+Independent single/multiple-bandwidth M9 heldouts cover narrow and large
+bandwidths to 1e-12. No dev3-owned helper file was edited.

@@ -1,0 +1,87 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data d;input x @@;datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 4 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              522.78k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 03:40:47 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+40         ;
+41         proc univariate data=d noprint;histogram x / noplot kernel(c=.2 .5 1 2) endpoints=-2 to 3 by .5 outkernel=k;
+41       ! run;
+
+NOTE: The normal kernel estimate for c=0.2 has a bandwidth of 0.1137 and an AMISE of 0.6205.
+NOTE: The normal kernel estimate for c=0.5 has a bandwidth of 0.2842 and an AMISE of 0.2546.
+WARNING: The normal kernel estimate for c=1 has a large bandwidth of 0.5684, which results in the wrap-around effect at 
+         the ends of the horizontal axis.
+NOTE: The normal kernel estimate for c=1 has a bandwidth of 0.5684 and an AMISE of 0.228.
+WARNING: The normal kernel estimate for c=2 has a large bandwidth of 1.1368, which results in the wrap-around effect at 
+         the ends of the horizontal axis.
+NOTE: The normal kernel estimate for c=2 has a bandwidth of 1.1368 and an AMISE of 1.7248.
+NOTE: The data set WORK.K has 2048 observations and 6 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2433.45k
+      OS Memory           13228.00k
+      Timestamp           11/13/2026 03:40:47 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     487
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+42         data _null_;set k;file print;if _value_=-.5 or _value_=.5 then put _c_=best32. _value_=best32.
+42       ! _density_=best32.;run;
+
+NOTE: 8 lines were written to file PRINT.
+NOTE: There were 2048 observations read from the data set WORK.K.
+The SAS System
+
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              699.56k
+      OS Memory           12968.00k
+      Timestamp           11/13/2026 03:40:47 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     107
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+43         
+44         
+45         
+46         
+The SAS System
+
+47

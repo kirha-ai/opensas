@@ -1,0 +1,131 @@
+
+The UNIVARIATE Procedure
+
+                               Optimization Start
+                              Parameter Estimates
+                                       Gradient           Lower           Upper
+                                      Objective           Bound           Bound
+  N Parameter          Estimate        Function      Constraint      Constraint
+
+  1 EV Scale           0.600282       -3.852391     0.000001000               .
+  2 EV Location        1.960320    -3.55271E-15               .               .
+
+Value of Objective Function = 22.011989776
+
+
+The UNIVARIATE Procedure
+
+Newton-Raphson Optimization with Line Search
+
+
+Minimum Iterations                                    5
+Maximum Iterations                                   50
+Maximum Function Calls                              500
+ABSGCONV Gradient Criterion                     0.00001
+GCONV Gradient Criterion                           1E-8
+GCONV2 Gradient Criterion                             0
+ABSFCONV Function Criterion                           0
+FCONV Function Criterion                   2.220446E-16
+FCONV2 Function Criterion                             0
+FSIZE Parameter                                       0
+ABSXCONV Parameter Change Criterion                   0
+XCONV Parameter Change Criterion                      0
+XSIZE Parameter                                       0
+ABSCONV Function Criterion                 -1.34078E154
+Line Search Method                                    2
+Starting Alpha for Line Search                        1
+Line Search Precision LSPRECISION                   0.9
+DAMPSTEP Parameter for Line Search                    4
+Singularity Tolerance (SINGULAR)                   1E-8
+Constraint Precision (LCEPS)                       1E-8
+Linearly Dependent Constraints (LCSING)            1E-8
+Releasing Active Constraints (LCDEACT)                .
+
+Newton-Raphson Optimization with Line Search
+
+Without Parameter Scaling
+
+Parameter Estimates               2
+Lower Bounds                      1
+Upper Bounds                      0
+
+                                             Optimization Start
+
+Active Constraints                                  0  Objective Function                       22.011989776
+Max Abs Gradient Element                 3.8523905491                                                       
+
+
+                                                                 Objective     Max Abs                Slope of
+                     Function         Active        Objective     Function    Gradient       Step       Search
+Iter     Restarts       Calls    Constraints         Function       Change     Element       Size    Direction
+
+   1            0           5              0         21.84347       0.1685      0.8425      1.000       -0.294
+   2            0           8              0         21.83200       0.0115      0.0694      1.000      -0.0218
+   3            0          11              0         21.83192     0.000085    0.000578      1.000      -0.0002
+   4            0          14              0         21.83192     5.838E-9    4.107E-8      1.000       -12E-9
+   5            0          16              0         21.83192            0    2.467E-7      7.006      -59E-18
+
+                                            Optimization Results
+
+Iterations                                          5  Function Calls                                     18
+Hessian Calls                                       6  Active Constraints                                  0
+Objective Function                       21.831915622  Max Abs Gradient Element                 2.4668874E-7
+Slope of Search Direction                -5.86856E-17  Ridge                                               0
+
+The UNIVARIATE Procedure
+
+Convergence criterion (GCONV=1E-8) satisfied.                              
+
+The UNIVARIATE Procedure
+
+              Optimization Results
+              Parameter Estimates
+                                       Gradient
+                                      Objective
+  N Parameter          Estimate        Function
+
+  1 EV Scale           0.705486     0.000000247
+  2 EV Location        1.909875    5.9847368E-8
+
+Value of Objective Function = 21.831915622
+
+
+
+Algorithm converged.                                                       
+
+The UNIVARIATE Procedure
+Fitted Weibull Distribution for x
+
+Parameters for Weibull Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    6.752248
+Shape       C        1.417463
+Mean                  6.14245
+Std Dev              4.394686
+
+
+        Goodness-of-Fit Tests for Weibull Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Cramer-von Mises      W-Sq    0.01771443   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    0.13073041   Pr > A-Sq    >0.250
+
+
+Quantiles for Weibull Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.26304
+    5.0     1.00000     0.83064
+   10.0     1.00000     1.38026
+   25.0     2.50000     2.80362
+   50.0     5.00000     5.21378
+   75.0     9.00000     8.50208
+   90.0    15.00000    12.16148
+   95.0    15.00000    14.64248
+   99.0    15.00000    19.83165

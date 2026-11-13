@@ -1,0 +1,17 @@
+
+H 1 1  2 1
+H 1 1  4 1
+H 1 4  6 1
+H 1 4  8 1
+H 2 2  0 1
+H 2 2  2 1
+H 2 3  4 1
+H 2 3  6 1
+K 1 1  2   0.24549943
+K 2 2  2   0.23691282
+K 2 3  2   0.00120887
+
+NAME=b TYPE=1 LENGTH=8 LABEL=  FORMAT=
+NAME=c TYPE=1 LENGTH=8 LABEL=Synthetic group FORMAT=GROUPFMT
+NAME=_MINPT_ TYPE=1 LENGTH=8 LABEL=Left endpoint of Histogram Interval FORMAT=
+NAME=n TYPE=1 LENGTH=8 LABEL=Observation Count in Interval FORMAT=
