@@ -1,0 +1,5 @@
+low interval (0.3, 0.55001) p bounds (0.9738448907215946, 0.9999954063137295) derivative bounds (np.float64(14.221110963998186), np.float64(73.17371259717463))
+lower interval (0.55, 1.10001) p bounds (np.float64(0.5308859163479729), np.float64(0.970159301488204)) derivative bounds (np.float64(-0.9900138771935473), np.float64(-0.3742075616541496))
+middle interval (1.1, 2.95001) p bounds (np.float64(0.04407667918140146), np.float64(0.5309050847075911)) derivative bounds (np.float64(-0.7825052244162924), np.float64(-0.05304542238372074))
+upper interval (2.95, 10.30001) p bounds (1.4644020089900696e-05, 0.04407307392937651) derivative bounds (np.float64(-1.1986646782034176), np.float64(-1.048509586869891))
+All polynomial regions stay strictly inside [0,1]; outer branches are exactly 1 and 1e-5, perfect D exactly 0. No clipping.
