@@ -132,12 +132,25 @@ full gate counts are reported separately at landing time.
    difference (~.176) is NOT accepted as numerical equivalence. SAS also omits
    curves for alpha=2/5 samples where the helper can return a warned mathematical
    boundary candidate. Public failure/fallback parity is not complete.
-3. **Pareto EPM:** M9 accepts this method although the supplied older manual
-   documents MLE only. The n=101 probe returns sigma=1.935473, alpha=-.37398,
-   unchanged when alpha or sigma is supplied. Its algorithm has not been
-   established. Requests fail explicitly; no silent MLE replacement is allowed.
+EPM is **outside the cited contract**, not a third acceptance gap. A full-text
+search of all 22,444 lines of the supplied Sixth Edition manual found zero EPM
+or expanded-name matches; see `manual-scope.txt` for exact command and SHA256.
+M9 accepting a newer/undocumented option does not expand this ticket. Keep the
+existing unsupported_method result; do not substitute MLE or pursue EPM here.
 
 Core regular MLE support can be reviewed independently of these unresolved
 cases, but neither this support slice nor the parent ticket is marked fully
 accepted. The parent adapter still owns public option handling, warnings,
 fallback-publication decisions and output/ODS regression acceptance.
+
+## Bounded fallback diagnosis after core landing
+
+See [fallback-diagnosis.md](fallback-diagnosis.md), the full-precision HEX16 ODS
+probe, and independent `analyze-diagnostics.py` / `score-audit.json`. Power and
+beta(alpha,1) are identical likelihoods and produce identical oracle behavior.
+The new checks correct their numerical upper-boundary likelihood equivalence;
+explicit fixed-endpoint request validation remains strict. Three new regression
+tests cover identical likelihoods, reflected Pareto equivalence/score, and
+feasible improvements at SAS's returned finite curves. Those curves are not
+stationary fits, and generic warning tags do not cure mismatched public output.
+The two in-scope fallback/stopping mismatches above remain unresolved.
