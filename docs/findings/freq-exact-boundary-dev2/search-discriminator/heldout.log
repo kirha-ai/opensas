@@ -1,0 +1,1034 @@
+The SAS System
+
+36         
+37         ods exclude all;
+38         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              520.26k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+43         ;
+44         run;
+45         ods output RelRisk1ExactCL=o0noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.939;exact
+45       !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O0NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1916.98k
+      OS Memory           14260.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        3  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     554
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+46         data _null_;set o0noscore;if Name1="XU_RRC1" then put "HOLD,3,4,0.939,noscore," nValue1 best32.;run;
+
+HOLD,3,4,0.939,noscore,                0.22059767586844
+NOTE: There were 9 observations read from the data set WORK.O0NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:57 AM
+The SAS System
+
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     62
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         ods output RelRisk1ExactCL=o0score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.939;exact
+47       ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O0SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1512.12k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        5  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     257
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+48         data _null_;set o0score;if Name1="XU_RRC1" then put "HOLD,3,4,0.939,score," nValue1 best32.;run;
+
+HOLD,3,4,0.939,score,                0.22254594149344
+NOTE: There were 9 observations read from the data set WORK.O0SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+49         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+54         ;
+55         run;
+56         ods output RelRisk1ExactCL=o1noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.94;exact
+56       ! relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O1NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1513.12k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        8  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+57         data _null_;set o1noscore;if Name1="XU_RRC1" then put "HOLD,3,4,0.94,noscore," nValue1 best32.;run;
+
+HOLD,3,4,0.94,noscore,                0.22054290771484
+NOTE: There were 9 observations read from the data set WORK.O1NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:57 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+58         ods output RelRisk1ExactCL=o1score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.94;exact
+58       ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O1SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.01 seconds
+      memory              1513.43k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        10  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+59         data _null_;set o1score;if Name1="XU_RRC1" then put "HOLD,3,4,0.94,score," nValue1 best32.;run;
+
+HOLD,3,4,0.94,score,                0.22211519677734
+NOTE: There were 9 observations read from the data set WORK.O1SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+60         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+The SAS System
+
+      Step Count                        12  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+65         ;
+66         run;
+67         ods output RelRisk1ExactCL=o2noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.941;exact
+67       !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O2NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1511.73k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        13  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+68         data _null_;set o2noscore;if Name1="XU_RRC1" then put "HOLD,3,4,0.941,noscore," nValue1 best32.;run;
+
+HOLD,3,4,0.941,noscore,                0.22047315325055
+NOTE: There were 9 observations read from the data set WORK.O2NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              602.42k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+69         ods output RelRisk1ExactCL=o2score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.941;exact
+69       ! relrisk(method=score);run;
+The SAS System
+
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O2SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1513.93k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        15  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+70         data _null_;set o2score;if Name1="XU_RRC1" then put "HOLD,3,4,0.941,score," nValue1 best32.;run;
+
+HOLD,3,4,0.941,score,                0.22218606731305
+NOTE: There were 9 observations read from the data set WORK.O2SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+71         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        17  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+76         ;
+77         run;
+78         ods output RelRisk1ExactCL=o3noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.949;exact
+78       !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O3NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1513.71k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        18  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     252
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+79         data _null_;set o3noscore;if Name1="XU_RRC1" then put "HOLD,5,2,0.949,noscore," nValue1 best32.;run;
+
+HOLD,5,2,0.949,noscore,                0.13840692693536
+NOTE: There were 9 observations read from the data set WORK.O3NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+80         ods output RelRisk1ExactCL=o3score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.949;exact
+80       ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O3SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+The SAS System
+
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1513.79k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        20  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     252
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+81         data _null_;set o3score;if Name1="XU_RRC1" then put "HOLD,5,2,0.949,score," nValue1 best32.;run;
+
+HOLD,5,2,0.949,score,                0.13840692693536
+NOTE: There were 9 observations read from the data set WORK.O3SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+82         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              521.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        22  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+87         ;
+88         run;
+The SAS System
+
+89         ods output RelRisk1ExactCL=o4noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.95;exact
+89       ! relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O4NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1516.42k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        23  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     255
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+90         data _null_;set o4noscore;if Name1="XU_RRC1" then put "HOLD,5,2,0.95,noscore," nValue1 best32.;run;
+
+HOLD,5,2,0.95,noscore,                0.13783298839222
+NOTE: There were 9 observations read from the data set WORK.O4NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        24  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+91         ods output RelRisk1ExactCL=o4score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.95;exact
+91       ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O4SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.02 seconds
+      system cpu time     0.00 seconds
+      memory              1515.53k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        25  Switch Count  6
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        28
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+92         data _null_;set o4score;if Name1="XU_RRC1" then put "HOLD,5,2,0.95,score," nValue1 best32.;run;
+
+HOLD,5,2,0.95,score,                0.13783298839222
+NOTE: There were 9 observations read from the data set WORK.O4SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        26  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+93         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.20k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        27  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+98         ;
+99         run;
+100        ods output RelRisk1ExactCL=o5noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.951;exact
+100      !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O5NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+The SAS System
+
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1514.42k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        28  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+101        data _null_;set o5noscore;if Name1="XU_RRC1" then put "HOLD,5,2,0.951,noscore," nValue1 best32.;run;
+
+HOLD,5,2,0.951,noscore,                0.13783298839222
+NOTE: There were 9 observations read from the data set WORK.O5NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.14k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        29  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+102        ods output RelRisk1ExactCL=o5score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.951;exact
+102      ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O5SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1521.45k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        30  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      2
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           800
+      
+
+103        data _null_;set o5score;if Name1="XU_RRC1" then put "HOLD,5,2,0.951,score," nValue1 best32.;run;
+
+HOLD,5,2,0.951,score,                0.13783298839222
+NOTE: There were 9 observations read from the data set WORK.O5SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        31  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+104        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.12k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        32  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+109        ;
+110        run;
+111        ods output RelRisk1ExactCL=o6noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.937;exact
+111      !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O6NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1521.35k
+      OS Memory           14516.00k
+The SAS System
+
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        33  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+112        data _null_;set o6noscore;if Name1="XU_RRC1" then put "HOLD,2,7,0.937,noscore," nValue1 best32.;run;
+
+HOLD,2,7,0.937,noscore,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O6NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              602.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        34  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+113        ods output RelRisk1ExactCL=o6score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.937;exact
+113      ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O6SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1519.93k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        35  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+114        data _null_;set o6score;if Name1="XU_RRC1" then put "HOLD,2,7,0.937,score," nValue1 best32.;run;
+
+HOLD,2,7,0.937,score,                         0.31875
+The SAS System
+
+NOTE: There were 9 observations read from the data set WORK.O6SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        36  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+115        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        37  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+120        ;
+121        run;
+122        ods output RelRisk1ExactCL=o7noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.94;exact
+122      ! relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O7NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1514.40k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        38  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     251
+      Page Swaps                        0
+      Voluntary Context Switches        27
+The SAS System
+
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+123        data _null_;set o7noscore;if Name1="XU_RRC1" then put "HOLD,2,7,0.94,noscore," nValue1 best32.;run;
+
+HOLD,2,7,0.94,noscore,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O7NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        39  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+124        ods output RelRisk1ExactCL=o7score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.94;exact
+124      ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O7SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1517.65k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        40  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+125        data _null_;set o7score;if Name1="XU_RRC1" then put "HOLD,2,7,0.94,score," nValue1 best32.;run;
+
+HOLD,2,7,0.94,score,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O7SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.04k
+The SAS System
+
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        41  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+126        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              527.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        42  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+131        ;
+132        run;
+133        ods output RelRisk1ExactCL=o8noscore;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.943;exact
+133      !  relrisk(method=noscore);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O8NOSCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1518.73k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        43  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+134        data _null_;set o8noscore;if Name1="XU_RRC1" then put "HOLD,2,7,0.943,noscore," nValue1 best32.;run;
+The SAS System
+
+
+HOLD,2,7,0.943,noscore,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O8NOSCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              603.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        44  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+135        ods output RelRisk1ExactCL=o8score;proc freq data=t;weight n / zeros;tables r*c / relrisk alpha=0.943;exact
+135      ! relrisk(method=score);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O8SCORE has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1516.65k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        45  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     250
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+136        data _null_;set o8score;if Name1="XU_RRC1" then put "HOLD,2,7,0.943,score," nValue1 best32.;run;
+
+HOLD,2,7,0.943,score,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O8SCORE.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              602.04k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:39:58 AM
+      Step Count                        46  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+137        
+138        
+139        
+The SAS System
+
+140        

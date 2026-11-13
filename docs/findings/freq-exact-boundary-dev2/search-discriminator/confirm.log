@@ -1,0 +1,3436 @@
+The SAS System
+
+36         
+37         ods exclude all;
+38         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.01k
+      OS Memory           11688.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     125
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+43         ;
+44         run;
+45         ods output RelRisk1ExactCL=o0a RelRisk2ExactCL=o0b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+45       ! alpha=0.95;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O0B has 9 observations and 5 variables.
+NOTE: The data set WORK.O0A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              2268.54k
+      OS Memory           14776.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        3  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     638
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+46         data _null_;set o0a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,noscore,columns,1," Name1 ","
+46       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,columns,1,XL_RRC1 ,                4.57153676458681
+CHECK,2,3,0.95,noscore,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O0A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              596.17k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     62
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+47         data _null_;set o0b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,noscore,columns,2," Name1 ","
+47       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,columns,2,XL_RRC2 ,                               0
+CHECK,2,3,0.95,noscore,columns,2,XU_RRC2 ,                0.31043853759765
+NOTE: There were 9 observations read from the data set WORK.O0B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+48         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           13992.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+53         ;
+54         run;
+The SAS System
+
+55         ods output RelRisk1ExactCL=o1a RelRisk2ExactCL=o1b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+55       ! alpha=0.95;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O1B has 9 observations and 5 variables.
+NOTE: The data set WORK.O1A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1859.85k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        7  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     324
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+56         data _null_;set o1a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,noscore,both,1," Name1 ","
+56       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,both,1,XL_RRC1 ,                               0
+CHECK,2,3,0.95,noscore,both,1,XU_RRC1 ,                0.21874482291085
+NOTE: There were 9 observations read from the data set WORK.O1A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+57         data _null_;set o1b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,noscore,both,2," Name1 ","
+57       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,both,2,XL_RRC2 ,                3.22124955148464
+CHECK,2,3,0.95,noscore,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O1B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+The SAS System
+
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+58         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        10  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+63         ;
+64         run;
+65         ods output RelRisk1ExactCL=o2a RelRisk2ExactCL=o2b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+65       ! alpha=0.95;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O2B has 9 observations and 5 variables.
+NOTE: The data set WORK.O2A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1859.85k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        11  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     314
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+The SAS System
+
+66         data _null_;set o2a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,noscore,repeat,1," Name1 ","
+66       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,repeat,1,XL_RRC1 ,                               0
+CHECK,2,3,0.95,noscore,repeat,1,XU_RRC1 ,                0.31043853759765
+NOTE: There were 9 observations read from the data set WORK.O2A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              599.23k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        12  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+67         data _null_;set o2b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,noscore,repeat,2," Name1 ","
+67       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,noscore,repeat,2,XL_RRC2 ,                4.57153676458681
+CHECK,2,3,0.95,noscore,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O2B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        13  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+68         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        14  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+73         ;
+74         run;
+75         ods output RelRisk1ExactCL=o3a RelRisk2ExactCL=o3b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+75       ! alpha=0.95;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O3B has 9 observations and 5 variables.
+NOTE: The data set WORK.O3A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.07 seconds
+      system cpu time     0.00 seconds
+      memory              1858.85k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        15  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+76         data _null_;set o3a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score,columns,1," Name1 ","
+76       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,columns,1,XL_RRC1 ,                4.55058479309082
+CHECK,2,3,0.95,score,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O3A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+77         data _null_;set o3b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score,columns,2," Name1 ","
+The SAS System
+
+77       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,columns,2,XL_RRC2 ,                               0
+CHECK,2,3,0.95,score,columns,2,XU_RRC2 ,                0.31043853759765
+NOTE: There were 9 observations read from the data set WORK.O3B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              599.23k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        17  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+78         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        18  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+83         ;
+84         run;
+85         ods output RelRisk1ExactCL=o4a RelRisk2ExactCL=o4b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+85       ! alpha=0.95;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O4B has 9 observations and 5 variables.
+NOTE: The data set WORK.O4A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.07 seconds
+      system cpu time     0.00 seconds
+      memory              1859.89k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+The SAS System
+
+      Step Count                        19  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+86         data _null_;set o4a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score,both,1," Name1 ","
+86       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,both,1,XL_RRC1 ,                               0
+CHECK,2,3,0.95,score,both,1,XU_RRC1 ,                0.21874482291085
+NOTE: There were 9 observations read from the data set WORK.O4A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        20  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+87         data _null_;set o4b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score,both,2," Name1 ","
+87       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,both,2,XL_RRC2 ,                3.21760177612304
+CHECK,2,3,0.95,score,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O4B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+88         data t;input r c n;datalines;
+
+The SAS System
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.40k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        22  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+93         ;
+94         run;
+95         ods output RelRisk1ExactCL=o5a RelRisk2ExactCL=o5b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+95       ! alpha=0.95;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O5B has 9 observations and 5 variables.
+NOTE: The data set WORK.O5A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.07 seconds
+      user cpu time       0.08 seconds
+      system cpu time     0.00 seconds
+      memory              1862.09k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        23  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     318
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+96         data _null_;set o5a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score,repeat,1," Name1 ","
+96       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,repeat,1,XL_RRC1 ,                               0
+CHECK,2,3,0.95,score,repeat,1,XU_RRC1 ,                0.31043853759765
+NOTE: There were 9 observations read from the data set WORK.O5A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        24  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+97         data _null_;set o5b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score,repeat,2," Name1 ","
+97       ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score,repeat,2,XL_RRC2 ,                4.55058479309082
+CHECK,2,3,0.95,score,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O5B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        25  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+98         data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        26  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+103        ;
+104        run;
+105        ods output RelRisk1ExactCL=o6a RelRisk2ExactCL=o6b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+105      ! alpha=0.95;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+The SAS System
+
+NOTE: The data set WORK.O6B has 9 observations and 5 variables.
+NOTE: The data set WORK.O6A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1861.23k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        27  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     323
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+106        data _null_;set o6a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score2,columns,1," Name1 ","
+106      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,columns,1,XL_RRC1 ,                5.99999985098838
+CHECK,2,3,0.95,score2,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O6A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        28  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+107        data _null_;set o6b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score2,columns,2," Name1 ","
+107      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,columns,2,XL_RRC2 ,                               0
+CHECK,2,3,0.95,score2,columns,2,XU_RRC2 ,                0.25000019073486
+NOTE: There were 9 observations read from the data set WORK.O6B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.25k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        29  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+108        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        30  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+113        ;
+114        run;
+115        ods output RelRisk1ExactCL=o7a RelRisk2ExactCL=o7b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+115      ! alpha=0.95;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O7B has 9 observations and 5 variables.
+NOTE: The data set WORK.O7A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.00 seconds
+      memory              1862.17k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        31  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     318
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+116        data _null_;set o7a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score2,both,1," Name1 ","
+116      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,both,1,XL_RRC1 ,                               0
+The SAS System
+
+CHECK,2,3,0.95,score2,both,1,XU_RRC1 ,                0.16666684831891
+NOTE: There were 9 observations read from the data set WORK.O7A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        32  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+117        data _null_;set o7b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score2,both,2," Name1 ","
+117      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,both,2,XL_RRC2 ,                3.99999991059303
+CHECK,2,3,0.95,score2,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O7B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        33  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+118        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.37k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        34  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     79
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+123        ;
+124        run;
+125        ods output RelRisk1ExactCL=o8a RelRisk2ExactCL=o8b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+125      ! alpha=0.95;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O8B has 9 observations and 5 variables.
+NOTE: The data set WORK.O8A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1861.98k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        35  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     316
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+126        data _null_;set o8a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,3,0.95,score2,repeat,1," Name1 ","
+126      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,repeat,1,XL_RRC1 ,                               0
+CHECK,2,3,0.95,score2,repeat,1,XU_RRC1 ,                0.25000019073486
+NOTE: There were 9 observations read from the data set WORK.O8A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        36  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+127        data _null_;set o8b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,3,0.95,score2,repeat,2," Name1 ","
+127      ! nValue1 best32.;run;
+
+CHECK,2,3,0.95,score2,repeat,2,XL_RRC2 ,                5.99999985098838
+CHECK,2,3,0.95,score2,repeat,2,XU_RRC2 ,                               .
+The SAS System
+
+NOTE: There were 9 observations read from the data set WORK.O8B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        37  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+128        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        38  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+133        ;
+134        run;
+135        ods output RelRisk1ExactCL=o9a RelRisk2ExactCL=o9b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+135      ! alpha=0.94;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O9B has 9 observations and 5 variables.
+NOTE: The data set WORK.O9A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1861.37k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        39  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     315
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+136        data _null_;set o9a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,noscore,columns,1," Name1 ","
+136      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,columns,1,XL_RRC1 ,                7.15856371147124
+CHECK,2,5,0.94,noscore,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O9A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.71k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        40  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+137        data _null_;set o9b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,noscore,columns,2," Name1 ","
+137      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.94,noscore,columns,2,XU_RRC2 ,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O9B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.71k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        41  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+138        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              522.53k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        42  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+143        ;
+144        run;
+145        ods output RelRisk1ExactCL=o10a RelRisk2ExactCL=o10b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+145      ! alpha=0.94;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O10B has 9 observations and 5 variables.
+NOTE: The data set WORK.O10A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1861.90k
+      OS Memory           15288.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        43  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     314
+      Page Swaps                        0
+      Voluntary Context Switches        36
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+146        data _null_;set o10a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,noscore,both,1," Name1 ","
+146      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,noscore,both,1,XU_RRC1 ,                0.13969282670454
+NOTE: There were 9 observations read from the data set WORK.O10A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        44  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+The SAS System
+
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+147        data _null_;set o10b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,noscore,both,2," Name1 ","
+147      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,both,2,XL_RRC2 ,                3.13725490196078
+CHECK,2,5,0.94,noscore,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O10B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        45  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+148        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.67k
+      OS Memory           14248.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        46  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+153        ;
+154        run;
+155        ods output RelRisk1ExactCL=o11a RelRisk2ExactCL=o11b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+155      ! alpha=0.94;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O11B has 9 observations and 5 variables.
+NOTE: The data set WORK.O11A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1862.85k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        47  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     318
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+156        data _null_;set o11a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,noscore,repeat,1," Name1 ","
+156      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,noscore,repeat,1,XU_RRC1 ,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O11A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        48  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+157        data _null_;set o11b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,noscore,repeat,2," Name1 ","
+157      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,noscore,repeat,2,XL_RRC2 ,                7.15856371147124
+CHECK,2,5,0.94,noscore,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O11B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        49  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+158        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.87k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        50  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+163        ;
+164        run;
+165        ods output RelRisk1ExactCL=o12a RelRisk2ExactCL=o12b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+165      ! alpha=0.94;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O12B has 9 observations and 5 variables.
+NOTE: The data set WORK.O12A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1862.43k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        51  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     319
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+166        data _null_;set o12a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score,columns,1," Name1 ","
+166      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,columns,1,XL_RRC1 ,                7.13499450683593
+CHECK,2,5,0.94,score,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O12A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        52  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+167        data _null_;set o12b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score,columns,2," Name1 ","
+167      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.94,score,columns,2,XU_RRC2 ,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O12B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        53  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+168        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.23k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        54  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+The SAS System
+
+173        ;
+174        run;
+175        ods output RelRisk1ExactCL=o13a RelRisk2ExactCL=o13b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+175      ! alpha=0.94;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O13B has 9 observations and 5 variables.
+NOTE: The data set WORK.O13A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.00 seconds
+      memory              1864.56k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        55  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+176        data _null_;set o13a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score,both,1," Name1 ","
+176      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,score,both,1,XU_RRC1 ,                0.13969282670454
+NOTE: There were 9 observations read from the data set WORK.O13A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        56  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+177        data _null_;set o13b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score,both,2," Name1 ","
+177      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,both,2,XL_RRC2 ,                3.18044662475586
+CHECK,2,5,0.94,score,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O13B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        57  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+178        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:14 AM
+      Step Count                        58  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+183        ;
+184        run;
+185        ods output RelRisk1ExactCL=o14a RelRisk2ExactCL=o14b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+185      ! alpha=0.94;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O14B has 9 observations and 5 variables.
+NOTE: The data set WORK.O14A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.09 seconds
+      system cpu time     0.00 seconds
+      memory              1860.15k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        59  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     316
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1056
+The SAS System
+
+      
+
+186        data _null_;set o14a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score,repeat,1," Name1 ","
+186      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,score,repeat,1,XU_RRC1 ,                         0.31875
+NOTE: There were 9 observations read from the data set WORK.O14A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        60  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+187        data _null_;set o14b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score,repeat,2," Name1 ","
+187      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score,repeat,2,XL_RRC2 ,                7.13499450683593
+CHECK,2,5,0.94,score,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O14B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        61  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+188        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+The SAS System
+
+      Step Count                        62  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+193        ;
+194        run;
+195        ods output RelRisk1ExactCL=o15a RelRisk2ExactCL=o15b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+195      ! alpha=0.94;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O15B has 9 observations and 5 variables.
+NOTE: The data set WORK.O15A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.14 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.00 seconds
+      memory              1861.06k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        63  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     312
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+196        data _null_;set o15a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score2,columns,1," Name1 ","
+196      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,columns,1,XL_RRC1 ,                 9.9999998062849
+CHECK,2,5,0.94,score2,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O15A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.53k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        64  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+The SAS System
+
+
+197        data _null_;set o15b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score2,columns,2," Name1 ","
+197      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.94,score2,columns,2,XU_RRC2 ,                0.25000019073486
+NOTE: There were 9 observations read from the data set WORK.O15B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              602.54k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        65  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+198        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              521.90k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        66  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+203        ;
+204        run;
+205        ods output RelRisk1ExactCL=o16a RelRisk2ExactCL=o16b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+205      ! alpha=0.94;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O16B has 9 observations and 5 variables.
+NOTE: The data set WORK.O16A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.13 seconds
+      user cpu time       0.13 seconds
+      system cpu time     0.00 seconds
+      memory              1862.54k
+The SAS System
+
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        67  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      5
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+206        data _null_;set o16a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score2,both,1," Name1 ","
+206      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,score2,both,1,XU_RRC1 ,                0.10000003467906
+NOTE: There were 9 observations read from the data set WORK.O16A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.53k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        68  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+207        data _null_;set o16b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score2,both,2," Name1 ","
+207      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,both,2,XL_RRC2 ,                3.99999991059303
+CHECK,2,5,0.94,score2,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O16B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.53k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        69  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+The SAS System
+
+208        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.90k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        70  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+213        ;
+214        run;
+215        ods output RelRisk1ExactCL=o17a RelRisk2ExactCL=o17b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+215      ! alpha=0.94;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O17B has 9 observations and 5 variables.
+NOTE: The data set WORK.O17A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.14 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.00 seconds
+      memory              1860.07k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        71  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     314
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+216        data _null_;set o17a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.94,score2,repeat,1," Name1 ","
+216      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.94,score2,repeat,1,XU_RRC1 ,                0.25000019073486
+NOTE: There were 9 observations read from the data set WORK.O17A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+The SAS System
+
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        72  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+217        data _null_;set o17b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.94,score2,repeat,2," Name1 ","
+217      ! nValue1 best32.;run;
+
+CHECK,2,5,0.94,score2,repeat,2,XL_RRC2 ,                 9.9999998062849
+CHECK,2,5,0.94,score2,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O17B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        73  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+218        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.93k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        74  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+223        ;
+224        run;
+225        ods output RelRisk1ExactCL=o18a RelRisk2ExactCL=o18b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+225      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+The SAS System
+
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O18B has 9 observations and 5 variables.
+NOTE: The data set WORK.O18A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              1862.43k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        75  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     317
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+226        data _null_;set o18a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,noscore,columns,1," Name1 ","
+226      !  nValue1 best32.;run;
+
+CHECK,2,5,0.99,noscore,columns,1,XL_RRC1 ,                7.65729459875723
+CHECK,2,5,0.99,noscore,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O18A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        76  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+227        data _null_;set o18b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,noscore,columns,2," Name1 ","
+227      !  nValue1 best32.;run;
+
+CHECK,2,5,0.99,noscore,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.99,noscore,columns,2,XU_RRC2 ,                0.29643859863278
+NOTE: There were 9 observations read from the data set WORK.O18B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+The SAS System
+
+      Step Count                        77  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+228        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        78  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+233        ;
+234        run;
+235        ods output RelRisk1ExactCL=o19a RelRisk2ExactCL=o19b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+235      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O19B has 9 observations and 5 variables.
+NOTE: The data set WORK.O19A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1860.43k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        79  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     316
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+236        data _null_;set o19a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,noscore,both,1," Name1 ","
+236      ! nValue1 best32.;run;
+The SAS System
+
+
+CHECK,2,5,0.99,noscore,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,noscore,both,1,XU_RRC1 ,                0.13059442693536
+NOTE: There were 9 observations read from the data set WORK.O19A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              606.28k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        80  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+237        data _null_;set o19b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,noscore,both,2," Name1 ","
+237      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,noscore,both,2,XL_RRC2 ,                3.37337986555104
+CHECK,2,5,0.99,noscore,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O19B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        81  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+238        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        82  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+243        ;
+244        run;
+245        ods output RelRisk1ExactCL=o20a RelRisk2ExactCL=o20b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+245      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O20B has 9 observations and 5 variables.
+NOTE: The data set WORK.O20A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1862.59k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        83  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     317
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+246        data _null_;set o20a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,noscore,repeat,1," Name1 ","
+246      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,noscore,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,noscore,repeat,1,XU_RRC1 ,                0.29643859863278
+NOTE: There were 9 observations read from the data set WORK.O20A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        84  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+247        data _null_;set o20b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,noscore,repeat,2," Name1 ","
+247      ! nValue1 best32.;run;
+
+The SAS System
+
+CHECK,2,5,0.99,noscore,repeat,2,XL_RRC2 ,                7.65729459875723
+CHECK,2,5,0.99,noscore,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O20B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.20k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        85  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+248        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.17k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        86  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+253        ;
+254        run;
+255        ods output RelRisk1ExactCL=o21a RelRisk2ExactCL=o21b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+255      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O21B has 9 observations and 5 variables.
+NOTE: The data set WORK.O21A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1864.59k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        87  Switch Count  8
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     316
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+256        data _null_;set o21a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score,columns,1," Name1 ","
+256      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,columns,1,XL_RRC1 ,                7.62221145629882
+CHECK,2,5,0.99,score,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O21A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        88  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+257        data _null_;set o21b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score,columns,2," Name1 ","
+257      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.99,score,columns,2,XU_RRC2 ,                0.29590005548095
+NOTE: There were 9 observations read from the data set WORK.O21B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        89  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+258        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.81k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        90  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+263        ;
+264        run;
+265        ods output RelRisk1ExactCL=o22a RelRisk2ExactCL=o22b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+265      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O22B has 9 observations and 5 variables.
+NOTE: The data set WORK.O22A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1862.79k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        91  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     314
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1064
+      
+
+266        data _null_;set o22a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score,both,1," Name1 ","
+266      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,score,both,1,XU_RRC1 ,                0.13118726556951
+NOTE: There were 9 observations read from the data set WORK.O22A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.87k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        92  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+267        data _null_;set o22b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score,both,2," Name1 ","
+267      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,both,2,XL_RRC2 ,                3.37355613708496
+CHECK,2,5,0.99,score,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O22B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        93  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+268        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.23k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        94  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+273        ;
+274        run;
+275        ods output RelRisk1ExactCL=o23a RelRisk2ExactCL=o23b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+275      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O23B has 9 observations and 5 variables.
+NOTE: The data set WORK.O23A has 9 observations and 5 variables.
+The SAS System
+
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.09 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1863.07k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        95  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     317
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+276        data _null_;set o23a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score,repeat,1," Name1 ","
+276      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,score,repeat,1,XU_RRC1 ,                0.29590005548095
+NOTE: There were 9 observations read from the data set WORK.O23A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.84k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        96  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+277        data _null_;set o23b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score,repeat,2," Name1 ","
+277      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score,repeat,2,XL_RRC2 ,                7.62221145629882
+CHECK,2,5,0.99,score,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O23B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.87k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        97  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+278        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.81k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:15 AM
+      Step Count                        98  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+283        ;
+284        run;
+285        ods output RelRisk1ExactCL=o24a RelRisk2ExactCL=o24b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+285      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O24B has 9 observations and 5 variables.
+NOTE: The data set WORK.O24A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.15 seconds
+      user cpu time       0.15 seconds
+      system cpu time     0.00 seconds
+      memory              1863.07k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        99  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     312
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      3
+      Block Input Operations            0
+      Block Output Operations           1064
+      
+
+286        data _null_;set o24a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score2,columns,1," Name1 ","
+286      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,columns,1,XL_RRC1 ,                 9.9999998062849
+CHECK,2,5,0.99,score2,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O24A.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.84k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        100  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+287        data _null_;set o24b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score2,columns,2," Name1 ","
+287      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,columns,2,XL_RRC2 ,                               0
+CHECK,2,5,0.99,score2,columns,2,XU_RRC2 ,                  0.249913109375
+NOTE: There were 9 observations read from the data set WORK.O24B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.87k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        101  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+288        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.81k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        102  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+The SAS System
+
+      
+
+293        ;
+294        run;
+295        ods output RelRisk1ExactCL=o25a RelRisk2ExactCL=o25b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+295      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O25B has 9 observations and 5 variables.
+NOTE: The data set WORK.O25A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.13 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.01 seconds
+      memory              1861.29k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        103  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     315
+      Page Swaps                        0
+      Voluntary Context Switches        36
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           1064
+      
+
+296        data _null_;set o25a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score2,both,1," Name1 ","
+296      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,both,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,score2,both,1,XU_RRC1 ,                0.09998577450284
+NOTE: There were 9 observations read from the data set WORK.O25A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        104  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+297        data _null_;set o25b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score2,both,2," Name1 ","
+297      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,both,2,XL_RRC2 ,                3.99999991059303
+CHECK,2,5,0.99,score2,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O25B.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        105  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+298        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.81k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        106  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+303        ;
+304        run;
+305        ods output RelRisk1ExactCL=o26a RelRisk2ExactCL=o26b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+305      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O26B has 9 observations and 5 variables.
+NOTE: The data set WORK.O26A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.15 seconds
+      user cpu time       0.14 seconds
+      system cpu time     0.00 seconds
+      memory              1858.65k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        107  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     314
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      2
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+306        data _null_;set o26a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,2,5,0.99,score2,repeat,1," Name1 ","
+306      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,repeat,1,XL_RRC1 ,                               0
+CHECK,2,5,0.99,score2,repeat,1,XU_RRC1 ,                  0.249913109375
+NOTE: There were 9 observations read from the data set WORK.O26A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              610.64k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        108  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+307        data _null_;set o26b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,2,5,0.99,score2,repeat,2," Name1 ","
+307      ! nValue1 best32.;run;
+
+CHECK,2,5,0.99,score2,repeat,2,XL_RRC2 ,                 9.9999998062849
+CHECK,2,5,0.99,score2,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O26B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        109  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+308        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.26k
+The SAS System
+
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        110  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+313        ;
+314        run;
+315        ods output RelRisk1ExactCL=o27a RelRisk2ExactCL=o27b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+315      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O27B has 9 observations and 5 variables.
+NOTE: The data set WORK.O27A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1860.60k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        111  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     317
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+316        data _null_;set o27a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,noscore,columns,1," Name1 ","
+316      !  nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,columns,1,XL_RRC1 ,                4.78504672897197
+CHECK,4,3,0.99,noscore,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O27A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        112  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           0
+      
+
+317        data _null_;set o27b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,noscore,columns,2," Name1 ","
+317      !  nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,columns,2,XL_RRC2 ,                               0
+CHECK,4,3,0.99,noscore,columns,2,XU_RRC2 ,                0.16049406263563
+NOTE: There were 9 observations read from the data set WORK.O27B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        113  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+318        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              521.26k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        114  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+323        ;
+324        run;
+325        ods output RelRisk1ExactCL=o28a RelRisk2ExactCL=o28b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+325      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O28B has 9 observations and 5 variables.
+NOTE: The data set WORK.O28A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              1862.32k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        115  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     318
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+326        data _null_;set o28a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,noscore,both,1," Name1 ","
+326      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,both,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,noscore,both,1,XU_RRC1 ,                0.20898437499999
+NOTE: There were 9 observations read from the data set WORK.O28A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        116  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+327        data _null_;set o28b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,noscore,both,2," Name1 ","
+327      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,both,2,XL_RRC2 ,                6.23076008905251
+CHECK,4,3,0.99,noscore,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O28B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        117  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+The SAS System
+
+      
+
+328        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.48k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        118  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+333        ;
+334        run;
+335        ods output RelRisk1ExactCL=o29a RelRisk2ExactCL=o29b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+335      ! alpha=0.99;exact relrisk(method=noscore column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O29B has 9 observations and 5 variables.
+NOTE: The data set WORK.O29A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1860.53k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        119  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        36
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+336        data _null_;set o29a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,noscore,repeat,1," Name1 ","
+336      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,repeat,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,noscore,repeat,1,XU_RRC1 ,                0.16049406263563
+NOTE: There were 9 observations read from the data set WORK.O29A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        120  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+337        data _null_;set o29b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,noscore,repeat,2," Name1 ","
+337      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,noscore,repeat,2,XL_RRC2 ,                4.78504672897197
+CHECK,4,3,0.99,noscore,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O29B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        121  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+338        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.14k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        122  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+343        ;
+344        run;
+The SAS System
+
+345        ods output RelRisk1ExactCL=o30a RelRisk2ExactCL=o30b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+345      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O30B has 9 observations and 5 variables.
+NOTE: The data set WORK.O30A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.11 seconds
+      system cpu time     0.00 seconds
+      memory              1860.71k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        123  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     320
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+346        data _null_;set o30a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score,columns,1," Name1 ","
+346      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,columns,1,XL_RRC1 ,                4.78593063354492
+CHECK,4,3,0.99,score,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O30A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        124  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+347        data _null_;set o30b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score,columns,2," Name1 ","
+347      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,columns,2,XL_RRC2 ,                               0
+CHECK,4,3,0.99,score,columns,2,XU_RRC2 ,                0.16117636362711
+NOTE: There were 9 observations read from the data set WORK.O30B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+The SAS System
+
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        125  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+348        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.59k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        126  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+353        ;
+354        run;
+355        ods output RelRisk1ExactCL=o31a RelRisk2ExactCL=o31b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+355      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O31B has 9 observations and 5 variables.
+NOTE: The data set WORK.O31A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.10 seconds
+      system cpu time     0.00 seconds
+      memory              1863.65k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        127  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     317
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+The SAS System
+
+356        data _null_;set o31a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score,both,1," Name1 ","
+356      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,both,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,score,both,1,XU_RRC1 ,                0.20862155097307
+NOTE: There were 9 observations read from the data set WORK.O31A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              599.35k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        128  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+357        data _null_;set o31b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score,both,2," Name1 ","
+357      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,both,2,XL_RRC2 ,                6.20312118530273
+CHECK,4,3,0.99,score,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O31B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        129  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+358        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.14k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        130  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+363        ;
+364        run;
+365        ods output RelRisk1ExactCL=o32a RelRisk2ExactCL=o32b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+365      ! alpha=0.99;exact relrisk(method=score column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O32B has 9 observations and 5 variables.
+NOTE: The data set WORK.O32A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.10 seconds
+      user cpu time       0.11 seconds
+      system cpu time     0.00 seconds
+      memory              1861.07k
+      OS Memory           15544.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        131  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     315
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      5
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+366        data _null_;set o32a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score,repeat,1," Name1 ","
+366      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,repeat,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,score,repeat,1,XU_RRC1 ,                0.16117636362711
+NOTE: There were 9 observations read from the data set WORK.O32A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        132  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+367        data _null_;set o32b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score,repeat,2," Name1 ","
+The SAS System
+
+367      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score,repeat,2,XL_RRC2 ,                4.78593063354492
+CHECK,4,3,0.99,score,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O32B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              599.35k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        133  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+368        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.48k
+      OS Memory           14504.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        134  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+373        ;
+374        run;
+375        ods output RelRisk1ExactCL=o33a RelRisk2ExactCL=o33b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+375      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O33B has 9 observations and 5 variables.
+NOTE: The data set WORK.O33A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.16 seconds
+      user cpu time       0.16 seconds
+      system cpu time     0.00 seconds
+      memory              1862.29k
+      OS Memory           15800.00k
+      Timestamp           11/13/2026 05:33:16 AM
+The SAS System
+
+      Step Count                        135  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     353
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      4
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+376        data _null_;set o33a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score2,columns,1," Name1 ","
+376      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,columns,1,XL_RRC1 ,                5.99999985098838
+CHECK,4,3,0.99,score2,columns,1,XU_RRC1 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O33A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        136  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+377        data _null_;set o33b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score2,columns,2," Name1 ","
+377      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,columns,2,XL_RRC2 ,                               0
+CHECK,4,3,0.99,score2,columns,2,XU_RRC2 ,                0.11966864267985
+NOTE: There were 9 observations read from the data set WORK.O33B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        137  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+378        data t;input r c n;datalines;
+
+The SAS System
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.14k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:16 AM
+      Step Count                        138  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+383        ;
+384        run;
+385        ods output RelRisk1ExactCL=o34a RelRisk2ExactCL=o34b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+385      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+NOTE: The data set WORK.O34B has 9 observations and 5 variables.
+NOTE: The data set WORK.O34A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.15 seconds
+      user cpu time       0.16 seconds
+      system cpu time     0.01 seconds
+      memory              1858.54k
+      OS Memory           15800.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        139  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     312
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      5
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+386        data _null_;set o34a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score2,both,1," Name1 ","
+386      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,both,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,score2,both,1,XU_RRC1 ,                0.16666684831891
+NOTE: There were 9 observations read from the data set WORK.O34A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        140  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+387        data _null_;set o34b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score2,both,2," Name1 ","
+387      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,both,2,XL_RRC2 ,                7.99999979138374
+CHECK,4,3,0.99,score2,both,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O34B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        141  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+388        data t;input r c n;datalines;
+
+NOTE: The data set WORK.T has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.84k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        142  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+393        ;
+394        run;
+395        ods output RelRisk1ExactCL=o35a RelRisk2ExactCL=o35b;proc freq data=t;weight n / zeros;tables r*c / relrisk
+395      ! alpha=0.99;exact relrisk(method=score2 column=both);run;
+
+NOTE: One or more RELRISK statistics are not computed for the table of r by c due to a zero cell.
+The SAS System
+
+NOTE: The data set WORK.O35B has 9 observations and 5 variables.
+NOTE: The data set WORK.O35A has 9 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.T.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.15 seconds
+      user cpu time       0.15 seconds
+      system cpu time     0.00 seconds
+      memory              1863.40k
+      OS Memory           15800.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        143  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     313
+      Page Swaps                        0
+      Voluntary Context Switches        35
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+396        data _null_;set o35a;if Name1 in ("XL_RRC1","XU_RRC1") then put "CHECK,4,3,0.99,score2,repeat,1," Name1 ","
+396      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,repeat,1,XL_RRC1 ,                               0
+CHECK,4,3,0.99,score2,repeat,1,XU_RRC1 ,                0.11966864267985
+NOTE: There were 9 observations read from the data set WORK.O35A.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        144  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+397        data _null_;set o35b;if Name1 in ("XL_RRC2","XU_RRC2") then put "CHECK,4,3,0.99,score2,repeat,2," Name1 ","
+397      ! nValue1 best32.;run;
+
+CHECK,4,3,0.99,score2,repeat,2,XL_RRC2 ,                5.99999985098838
+CHECK,4,3,0.99,score2,repeat,2,XU_RRC2 ,                               .
+NOTE: There were 9 observations read from the data set WORK.O35B.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              596.29k
+      OS Memory           14760.00k
+      Timestamp           11/13/2026 05:33:17 AM
+      Step Count                        145  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+398        
+399        
+400        
+The SAS System
+
+401        
