@@ -57,9 +57,13 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
 - Estimated beta now uses ordered fitted-shape response surfaces, with n>=10.
   EVIDENCE-BETA.md records 17628 independent numeric/bound checks.
 
+- M9 estimated-power requests emit no EDF table, including explicit ALPHA=EST
+  below 5. Fully known power remains supported. EVIDENCE-POWER.md documents
+  the difference from Table 4.31; it is not an invented implementation exclusion.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated-threshold gamma and estimated power probabilities; estimated-threshold lognormal and
+- Estimated-threshold gamma, lognormal and
   Weibull probabilities; family/shape-dependent critical tables/interpolation.
   Availability is implemented, probability computation fails loudly where
   these documented-available combinations lack tables.

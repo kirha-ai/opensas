@@ -1,6 +1,7 @@
 //! Standalone UNIVARIATE EDF inference. No dependency on distribution fitting,
-//! rendering, or ODS. Table 4.31 (Statistical Procedures pp.447–448) controls
-//! availability; an unavailable test is distinct from a missing implementation.
+//! rendering, or ODS. Table 4.31 (Statistical Procedures pp.447–448), with
+//! verified M9 differences, controls availability. An unavailable test is
+//! distinct from a missing implementation.
 const std = @import("std");
 const diag = @import("../diag.zig");
 pub const Family = enum { normal, lognormal, exponential, gamma, weibull, beta, power, gumbel, igauss, pareto, rayleigh, sb, su };
@@ -43,7 +44,10 @@ pub fn availability(r: Request) Available {
         .gamma => if (e.theta or e.sigma or e.alpha) (if (r.alpha > 1) all else .{}) else all,
         .weibull => if (e.theta) (if (r.c > 2) all else .{}) else if (e.sigma or e.c) quadratic else all,
         .beta => if (e.theta or e.sigma) .{} else if (!e.alpha and !e.beta) all else if (e.alpha and e.beta and r.alpha < 5 and r.beta < 5) all else .{},
-        .power => if (e.theta or e.sigma) .{} else if (!e.alpha or r.alpha < 5) all else .{},
+        // M9 emits no EDF table for estimated power, even alpha<5 and
+        // explicit ALPHA=EST (unlike Table 4.31). Retained power probes
+        // contrast these requests with the available all-known case.
+        .power => if (e.theta or e.sigma or e.alpha) .{} else all,
         .sb, .su => .{},
     };
 }
@@ -825,4 +829,19 @@ test "dev5 EDF estimated beta independent M9 shapes and bound holdouts" {
     try std.testing.expectEqual(@as(usize, 17628), count);
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } }, s, 9));
+}
+
+test "dev5 EDF M9 power estimation has no table despite documented alpha bound" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const stats: Statistics = .{ .d = 0.1, .w2 = 0.1, .a2 = 0.5 };
+    for ([_]f64{ 0.20232801849515, 1.01164009247576, 4.95703645313125 }) |alpha| {
+        const estimated: Request = .{ .family = .power, .estimated = .{ .alpha = true }, .alpha = alpha };
+        try std.testing.expectEqual(Available{}, availability(estimated));
+        try std.testing.expectEqual(Result{}, try tabulated(&d, estimated, stats, 30));
+        const specified = try tabulated(&d, .{ .family = .power, .alpha = alpha }, stats, 30);
+        try std.testing.expect(specified.d != null and specified.w2 != null and specified.a2 != null);
+    }
+    try std.testing.expect(!d.hasErrors());
 }
