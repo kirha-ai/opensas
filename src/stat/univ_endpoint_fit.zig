@@ -9,7 +9,7 @@ pub const Fixed = struct { theta: ?f64 = 0, sigma: ?f64 = null, alpha: ?f64 = nu
 pub const Method = enum { mle, epm };
 /// Internal solver budget, not the accepted-but-ineffective SAS beta MAXITER.
 pub const Controls = struct { maxiter: usize = 1000, tolerance: f64 = 1e-9, method: Method = .mle };
-pub const Reason = enum { invalid_sample, invalid_parameters, invalid_controls, unsupported_combination, unsupported_method, outside_support, no_local_maximum, iteration_limit, boundary_solution };
+pub const Reason = enum { invalid_sample, invalid_parameters, invalid_controls, unsupported_combination, unsupported_method, initialization_failed, nonstationary_candidate, outside_support, no_local_maximum, iteration_limit, boundary_solution };
 pub const Curve = struct { parameters: Parameters, log_likelihood: f64, iterations: usize = 0 };
 pub const Result = union(enum) { converged: Curve, nonconverged: struct { reason: Reason, best: ?Curve = null } };
 fn fail(reason: Reason) Result {
@@ -68,12 +68,16 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     }
     if (x[0] == x[x.len - 1]) return fail(.invalid_sample);
     if (family == .power and fixed.theta != null) {
-        const sigma = fixed.sigma orelse (x[x.len - 1] - fixed.theta.?);
+        const sigma = fixed.sigma orelse (powerScaleStart(x, fixed.theta.?, fixed.alpha == null) orelse return fail(.initialization_failed));
+        if (!std.math.isFinite(sigma) or !(sigma > x[x.len - 1] - fixed.theta.?)) return fail(.initialization_failed);
         var sum: f64 = 0;
         for (x) |v| sum += @log((v - fixed.theta.?) / sigma);
         const p: Parameters = .{ .theta = fixed.theta.?, .sigma = sigma, .alpha = fixed.alpha orelse (-@as(f64, @floatFromInt(x.len)) / sum) };
         const curve: Curve = .{ .parameters = p, .log_likelihood = logLikelihood(family, x, p) };
-        return if (fixed.sigma == null) .{ .nonconverged = .{ .reason = .boundary_solution, .best = curve } } else .{ .converged = curve };
+        // This reproduces SAS's finite returned candidate, not a stationary
+        // maximum in the documented parameter domain. Keep that distinction
+        // explicit for the adapter even when all parameters match the oracle.
+        return if (fixed.sigma == null) .{ .nonconverged = .{ .reason = .nonstationary_candidate, .best = curve } } else .{ .converged = curve };
     }
     if (family == .pareto and fixed.alpha != null and fixed.sigma == null and (fixed.alpha.? == 0 or fixed.alpha.? == 1)) {
         var scale: f64 = 0;
@@ -84,6 +88,54 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     }
     if (family == .pareto and fixed.alpha == null and fixed.sigma == null) return paretoProfile(x, fixed.theta.?, controls);
     return optimize(family, x, fixed, controls);
+}
+
+/// M9 fixed-theta power scale initializer, prospectively verified on fresh
+/// shapes/n, fixed alpha, affine changes and inadmissible moment regions.
+/// Samples are normalized before forming central moments to avoid overflow
+/// and loss of precision from translating observations far from zero.
+fn powerScaleStart(x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
+    if (x.len < 4) return null;
+    const span = x[x.len - 1] - x[0];
+    if (!(span > 0) or !std.math.isFinite(span)) return null;
+    const n: f64 = @floatFromInt(x.len);
+    var mean: f64 = 0;
+    for (x) |v| mean += ((v - x[0]) / span) / n;
+    var ss2: f64 = 0;
+    var ss3: f64 = 0;
+    var ss4: f64 = 0;
+    for (x) |v| {
+        const d = (v - x[0]) / span - mean;
+        ss2 += d * d;
+        ss3 += d * d * d;
+        ss4 += d * d * d * d;
+    }
+    const variance = ss2 / (n - 1);
+    const skew = n * ss3 / ((n - 1) * (n - 2) * variance * @sqrt(variance));
+    const kurt = n * (n + 1) * ss4 / ((n - 1) * (n - 2) * (n - 3) * variance * variance) - 3 * (n - 1) * (n - 1) / ((n - 2) * (n - 3));
+    const denominator = 1.5 * skew * skew - kurt;
+    const total = (6 + 3 * kurt - 3 * skew * skew) / denominator;
+    var sigma = span + 0.002;
+    if (denominator > 0 and total > 0 and std.math.isFinite(total)) {
+        const imbalance2 = skew * skew * (total + 2) * (total + 2) / (16 * (total + 1) + skew * skew * (total + 2) * (total + 2));
+        if (!(imbalance2 >= 0 and imbalance2 < 1)) return null;
+        const width = 2 * span * @sqrt(variance * (total + 1) / (1 - imbalance2));
+        if (!std.math.isFinite(width)) return null;
+        sigma = span + @min(@as(f64, 0.002), 0.1 * (width - span));
+    } else if (estimate_alpha) {
+        // Invalid four-moment shapes cannot initialize a free alpha. With
+        // alpha supplied, M9 can still use its finite range+.002 width.
+        return null;
+    }
+    if (!(sigma > x[x.len - 1] - theta) or !std.math.isFinite(sigma)) return null;
+    if (estimate_alpha) {
+        // The shape start must also be admissible for the actual fixed
+        // endpoints, not just for the four-moment distribution's endpoints.
+        const ymean = (x[0] - theta) / sigma + (span / sigma) * mean;
+        const yvariance = variance * (span / sigma) * (span / sigma);
+        if (!(ymean * (1 - ymean) > yvariance)) return null;
+    }
+    return sigma;
 }
 
 const Problem = struct {
@@ -550,4 +602,14 @@ test "endpoint SAS returned fallback curves admit feasible likelihood improvemen
     try std.testing.expect(logLikelihood(.pareto, &y, next) > logLikelihood(.pareto, &y, sas_pareto));
     // This establishes why these oracle curves cannot be used as expected
     // stationary optima. It does NOT waive matching their public output.
+}
+
+test "endpoint fixed power scale bypasses the four-moment initializer" {
+    const x = [_]f64{ 0.1, 0.2, 0.8 };
+    const supplied = fit(.power, &x, .{ .theta = 0, .sigma = 1 }, .{});
+    try std.testing.expect(supplied == .converged);
+    try std.testing.expectApproxEqAbs(-3 / (@log(@as(f64, 0.1)) + @log(@as(f64, 0.2)) + @log(@as(f64, 0.8))), supplied.converged.parameters.alpha, 1e-12);
+    const estimated = fit(.power, &x, .{ .theta = 0 }, .{});
+    try std.testing.expectEqual(Reason.initialization_failed, estimated.nonconverged.reason);
+    try std.testing.expect(estimated.nonconverged.best == null);
 }
