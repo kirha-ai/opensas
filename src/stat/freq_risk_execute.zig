@@ -64,8 +64,8 @@ const Builder = struct {
         // Newcombe analysis provides confidence limits only, never a test.
         if (req.method == .newcombe) rows.shrinkRetainingCapacity(1);
         if (hypothesis != .equality) {
-            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Lower Conf Limit", .{100 * (1 - 2 * self.alpha)}), .values = .{ result.limits.lower, null, null, null, null } });
-            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Upper Conf Limit", .{100 * (1 - 2 * self.alpha)}), .values = .{ result.limits.upper, null, null, null, null } });
+            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Lower Conf Limit", .{100 - 200 * self.alpha}), .values = .{ result.limits.lower, null, null, null, null } });
+            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Upper Conf Limit", .{100 - 200 * self.alpha}), .values = .{ result.limits.upper, null, null, null, null } });
         }
         try self.add(title, subtitle, &.{"Value"}, rows.items, if (req.correct) "Continuity correction included." else "");
     }
@@ -143,7 +143,6 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         try names.append(b.a, "Equivalence Analysis");
     }
     for (hs.items, names.items) |h, name| {
-        if (h != .equality and b.alpha >= 0.5) return p.gap(b.d, 0, "NI/equivalence ALPHA >= .5");
         const variance = req.variance orelse (if (req.family == .binomial and h == .equality) infer.Variance.null_value else .sample);
         const result = (switch (req.family) {
             .binomial => infer.binomial(sample.?, h, variance, b.alpha, req.correct),
@@ -401,17 +400,22 @@ test "FEAT-freq-risk SAS remaining NI SUP methods and LR equality reporting" {
     try std.testing.expect(seen_chi and seen_p);
 }
 
-test "FEAT-freq-risk high alpha pending path remains an explicit captured gap" {
-    // SAS acceptance/alpha-nonsymmetric.sas accepts .5 and .6. At .6,
-    // binomial NI Wald limits are [.3770,.3230]; RR score intervals are
-    // missing but its TOST p=.9949 remains computed. Until the numerical
-    // inference contract is extended, do not misclassify valid SAS as rc1.
+test "FEAT-freq-risk public high alpha preserves SAS reversed confidence limits" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     var d = diag.Diagnostics.init(arena.allocator());
-    diag.resetGap();
-    defer diag.resetGap();
-    try std.testing.expectError(error.ExecError, execute(arena.allocator(), &d, .{ .name = "x", .row_labels = &.{ "1", "2" }, .counts = &.{ 7, 13 }, .one_way = true }, .{ .binomial = .{ .family = .binomial, .noninf = true } }, 0.6));
-    try std.testing.expect(d.hasErrors() and diag.gapHit());
-    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    const sections = try execute(arena.allocator(), &d, .{ .name = "x", .row_labels = &.{ "1", "2" }, .counts = &.{ 7, 13 }, .one_way = true }, .{ .binomial = .{ .family = .binomial, .noninf = true } }, 0.6);
+    var found: usize = 0;
+    for (sections.sections) |section| for (section.rows) |row| {
+        if (std.mem.endsWith(u8, row.label, "% Lower Conf Limit")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 0.3770), row.values[0].?, 0.00005);
+            found += 1;
+        }
+        if (std.mem.endsWith(u8, row.label, "% Upper Conf Limit")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 0.3230), row.values[0].?, 0.00005);
+            found += 1;
+        }
+    };
+    try std.testing.expectEqual(@as(usize, 2), found);
+    try std.testing.expect(!d.hasErrors());
 }
