@@ -1,0 +1,342 @@
+
+                                       b=1
+The CORR Procedure
+
+2 Variables: x y
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 3 2.33333 1.52753 7.00000 1.00000 4.00000
+y 3 4.00000 1.00000 12.00000 3.00000 5.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.32733
+P - 0.7877
+N 3 3
+y 0.32733 1.00000
+P 0.7877 -
+N 3 3
+
+
+                                       b=2
+The CORR Procedure
+
+2 Variables: x y
+
+Simple Statistics
+Variable N Mean Std Dev Sum Minimum Maximum
+x 3 5.00000 2.00000 15.00000 3.00000 7.00000
+y 3 4.00000 4.35890 12.00000 1.00000 9.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.91766
+P - 0.2601
+N 3 3
+y 0.91766 1.00000
+P 0.2601 -
+N 3 3
+
+
+                                       b=1
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              1              1       33.33              1        33.33
+              2              1       33.33              2        66.67
+              4              1       33.33              3       100.00
+
+                        The FREQ Procedure
+
+                        Table of x by y
+
+              x         y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |3       |4       |5       |  Total
+              ---------+--------+--------+--------+
+              1        |      1 |      0 |      0 |      1
+                       |  33.33 |   0.00 |   0.00 |  33.33
+                       | 100.00 |   0.00 |   0.00 |
+                       | 100.00 |   0.00 |   0.00 |
+              ---------+--------+--------+--------+
+              2        |      0 |      0 |      1 |      1
+                       |   0.00 |   0.00 |  33.33 |  33.33
+                       |   0.00 |   0.00 | 100.00 |
+                       |   0.00 |   0.00 | 100.00 |
+              ---------+--------+--------+--------+
+              4        |      0 |      1 |      0 |      1
+                       |   0.00 |  33.33 |   0.00 |  33.33
+                       |   0.00 | 100.00 |   0.00 |
+                       |   0.00 | 100.00 |   0.00 |
+              ---------+--------+--------+--------+
+              Total           1        1        1        3
+                          33.33    33.33    33.33   100.00
+
+                                       b=2
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              x      Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+              3              1       33.33              1        33.33
+              5              1       33.33              2        66.67
+              7              1       33.33              3       100.00
+
+                        The FREQ Procedure
+
+                        Table of x by y
+
+              x         y
+
+              Frequency|
+              Percent  |
+              Row Pct  |
+              Col Pct  |1       |2       |9       |  Total
+              ---------+--------+--------+--------+
+              3        |      1 |      0 |      0 |      1
+                       |  33.33 |   0.00 |   0.00 |  33.33
+                       | 100.00 |   0.00 |   0.00 |
+                       | 100.00 |   0.00 |   0.00 |
+              ---------+--------+--------+--------+
+              5        |      0 |      1 |      0 |      1
+                       |   0.00 |  33.33 |   0.00 |  33.33
+                       |   0.00 | 100.00 |   0.00 |
+                       |   0.00 | 100.00 |   0.00 |
+              ---------+--------+--------+--------+
+              7        |      0 |      0 |      1 |      1
+                       |   0.00 |   0.00 |  33.33 |  33.33
+                       |   0.00 |   0.00 | 100.00 |
+                       |   0.00 |   0.00 | 100.00 |
+              ---------+--------+--------+--------+
+              Total           1        1        1        3
+                          33.33    33.33    33.33   100.00
+                                 The UNIVARIATE Procedure
+
+                                       b=1
+
+Variable:  x
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                  2.33333333  Sum Observations               7
+Std Deviation         1.52752523  Variance              2.33333333
+Skewness              0.93521953  Kurtosis                       .
+Uncorrected SS                21  Corrected SS          4.66666667
+Coeff Variation      65.46536707  Std Error Mean         0.8819171
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                  2.33333333  Std Deviation         1.52752523
+Median                         2  Variance              2.33333333
+Mode                           .  Range                          3
+                                  Interquartile Range            3
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 2.64575131    Pr > |t|  0.1181
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               4
+              99%                    4
+              95%                    4
+              90%                    4
+              75% Q3                 4
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    1                1    1
+                   2    2                2    2
+                   4    3                4    3
+
+Variable:  y
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           4  Sum Observations              12
+Std Deviation                  1  Variance                       1
+Skewness                       0  Kurtosis                       .
+Uncorrected SS                50  Corrected SS                   2
+Coeff Variation               25  Std Error Mean        0.57735027
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           4  Std Deviation                  1
+Median                         4  Variance                       1
+Mode                           .  Range                          2
+                                  Interquartile Range            2
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 6.92820323    Pr > |t|  0.0202
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               5
+              99%                    5
+              95%                    5
+              90%                    5
+              75% Q3                 5
+              50% Median             4
+              25% Q1                 3
+              10%                    3
+              5%                     3
+              1%                     3
+              0% Min                 3
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   3    1                3    1
+                   4    3                4    3
+                   5    2                5    2
+
+                                       b=2
+
+Variable:  x
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           5  Sum Observations              15
+Std Deviation                  2  Variance                       4
+Skewness                       0  Kurtosis                       .
+Uncorrected SS                83  Corrected SS                   8
+Coeff Variation               40  Std Error Mean        1.15470054
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           5  Std Deviation                  2
+Median                         5  Variance                       4
+Mode                           .  Range                          4
+                                  Interquartile Range            4
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 4.33012702    Pr > |t|  0.0494
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               7
+              99%                    7
+              95%                    7
+              90%                    7
+              75% Q3                 7
+              50% Median             5
+              25% Q1                 3
+              10%                    3
+              5%                     3
+              1%                     3
+              0% Min                 3
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   3    4                3    4
+                   5    5                5    5
+                   7    6                7    6
+
+Variable:  y
+
+                           Moments
+
+N                              3  Sum Weights                    3
+Mean                           4  Sum Observations              12
+Std Deviation         4.35889894  Variance                      19
+Skewness              1.63005916  Kurtosis                       .
+Uncorrected SS                86  Corrected SS                  38
+Coeff Variation     108.97247359  Std Error Mean        2.51661148
+
+                    Basic Statistical Measures
+
+      Location                    Variability
+
+Mean                           4  Std Deviation         4.35889894
+Median                         2  Variance                      19
+Mode                           .  Range                          8
+                                  Interquartile Range            8
+
+                    Tests for Location: Mu0=0
+
+Test           -Statistic-    -----p Value------
+
+Student's t    t 1.58943883    Pr > |t|  0.2529
+Sign           M       1.5    Pr >= |M| 0.2500
+Signed Rank    S         3    Pr >= |S| 0.2500
+
+                    Quantiles (Definition 5)
+
+              100% Max               9
+              99%                    9
+              95%                    9
+              90%                    9
+              75% Q3                 9
+              50% Median             2
+              25% Q1                 1
+              10%                    1
+              5%                     1
+              1%                     1
+              0% Min                 1
+
+                       Extreme Observations
+
+           ----Lowest----        ---Highest---
+
+           Value      Obs        Value      Obs
+
+                   1    4                1    4
+                   2    5                2    5
+                   9    6                9    6
+ODS_CORR=  0.327326835354
+ODS_MEAN=  2.333333333333
+ODS_CUM=2
+ODS_TOTAL=3
+ODS_MOMENT=  2.333333333333
+ODS_MEDIAN=2
+ODS_BASIC=2
