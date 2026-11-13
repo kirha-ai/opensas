@@ -1,0 +1,9 @@
+
+                            Corr                              StdErr                               limit
+
+                               .                                   .                                   3
+                0.67528568038814                    0.09426981785414                                   4
+                0.67528568038814                    0.09426981785414                                   5
+                0.67528568038814                    0.09426981785414                                   6
+                0.67528568038814                    0.09426981785414                                   7
+sasrun: /private/tmp/dev1-corr-relative-fallback.sas: 0 error(s), 1 warning(s) in 5.893s -> /dev/null

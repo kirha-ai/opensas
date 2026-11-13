@@ -403,7 +403,9 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
         if (!accepted) break;
         var change: f64 = 0;
-        for (params, candidate) |p, c| change = @max(change, @abs(c - p));
+        // SAS MAXITER/CONVERGE probes distinguish relative scaling from an
+        // absolute maximum; near-zero estimates use the absolute change.
+        for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(p) < 0.01) 1 else @abs(p)));
         @memcpy(params, candidate);
         if (boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
             // The likelihood gap is below the rectangle quadrature's relative

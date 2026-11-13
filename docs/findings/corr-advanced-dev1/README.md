@@ -2,6 +2,11 @@
 
 Status: **INCOMPLETE; do not mark DONE.**
 
+Latest bounded follow-up: [quadrature-descent/README.md](quadrature-descent/README.md)
+fixes a false likelihood/convergence signal in case 2 and adds independent
+finite-SE controls. The diagnostic candidate improves to 37/40, retaining all
+35 prior passes; cases 3, 21 and 22 remain. No tight-boundary guard was removed.
+
 Sparse-boundary update: default/loose inference now passes SAS original, mirrored,
 transposed, relabeled and held-out cases. See [sparse-boundary.md](sparse-boundary.md).
 Only unresolved tight-tolerance boundary information remains explicitly rejected.
@@ -68,13 +73,11 @@ No shared FREQ file, jira.md, dispatch, or ODS infrastructure was modified.
    tolerances and rejects only unresolved information at tighter settings. Needed:
    stable boundary likelihood/information treatment with SAS evidence. This is
    not marked outside scope. Manager should coordinate any shared FREQ repair.
-The polychoric CONVERGE gap identified at the interim checkpoint is now closed:
-`corr_polychoric.zig` specializes the existing Newton solver for absolute parameter
-changes, without modifying FREQ. Bivariate-normal quadrature uses 1024 segments.
-The asymmetric 3x3 N=1000 oracle exhausts MAXITER=3 and 4 at CONVERGE=.01;
-with CONVERGE=1e-8 it gives rho=.94595, SE=.01381, LR=353.3860. Runnable
-regression checks these cases (5e-6 coefficient/SE, 5e-5 LR). Source and stdout:
-`converge-oracle.sas` / `converge-oracle.txt`.
+The stopping norm is now pinned by explicit SAS MAXITER/CONVERGE discriminators
+in `quadrature-descent/`. CORR uses relative parameter change with an absolute
+fallback near zero, matching the actual reference and existing FREQ convention.
+The earlier absolute-only interpretation was insufficient. FREQ is unchanged.
+The asymmetric N=1000 checks remain, and new independent finite-SE controls pass.
 
 Increasing quadrature resolution improved the sparse-boundary experiment to
 rho=.99924814, SE=.38878795, but still did not match SAS .99903/.11695.

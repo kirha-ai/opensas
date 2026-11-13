@@ -1,0 +1,123 @@
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 90      10.44444      10.04609      20.00000             0      20.00000
+x                 90       5.08889       5.22020       2.00000             0      12.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 90        0.73358       0.08366       76.8928    <.0001       32.2741    <.0001
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 95       9.45263      10.47060       3.00000             0      23.00000
+x                 95       3.83158       3.50274       7.00000             0       7.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 95        0.80509       0.06662      146.0225    <.0001       43.9080    <.0001
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 90      10.44444      10.04609      20.00000             0      20.00000
+x                 90       5.08889       5.22020       2.00000             0      12.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 90        0.73358       0.08366       76.8928    <.0001       32.2741    <.0001
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  90                  0.73357532289915                   0.0836568956254
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   76.8928463981563                 1.8048970431715E-18                    32.2741142794848
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                 1.3388513262441E-8
+
+The CORR Procedure
+
+   1 With Variables:    y        
+   1      Variables:    x        
+     Freq Variable:     f        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev        Median       Minimum       Maximum
+
+y                 95       9.45263      10.47060       3.00000             0      23.00000
+x                 95       3.83158       3.50274       7.00000             0       7.00000
+
+
+                                           Polychoric Correlations
+ 
+                                                   -------------Wald Test------------    -------LR Test------
+            With                                     Standard                    Pr >                    Pr >
+Variable    Variable           N    Correlation         Error    Chi-Square     ChiSq    Chi-Square     ChiSq
+
+x           y                 95        0.80509       0.06662      146.0225    <.0001       43.9080    <.0001
+
+          With
+Obs  Var  Var                               NObs                              Corr                            StdErr
+
+ 1    x    y                                  95                  0.80508700896629                  0.06662433183458
+
+ 
+Obs                         WaldChiSq                       ProbWaldChiSq                             LRChiSq
+
+ 1                   146.022542011183                 1.2835509509296E-33                    43.9079638988586
+
+ 
+Obs                       ProbLRChiSq
+
+ 1                3.4418555590144E-11
+sasrun: /private/tmp/dev1-corr-quadrature-interior-precision.sas: 0 error(s), 0 warning(s) in 9.983s -> /dev/null

@@ -1,0 +1,6 @@
+
+                            Corr                              StdErr                                  cv
+
+                0.73357532289915                     0.0836568956254                              0.0002
+                0.73357532289915                     0.0836568956254                             0.00008
+sasrun: /private/tmp/dev1-corr-interior-norm.sas: 0 error(s), 0 warning(s) in 4.248s -> /dev/null
