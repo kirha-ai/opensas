@@ -6,6 +6,8 @@ Sparse-boundary update: default/loose inference now passes SAS original, mirrore
 transposed, relabeled and held-out cases. See [sparse-boundary.md](sparse-boundary.md).
 Only unresolved tight-tolerance boundary information remains explicitly rejected.
 The older failure numbers below are retained as historical evidence. Assigned worktree/branch: opensas-dev1 / dev1.
+Hoeffding probability integration is now accepted; see [hoeffding-integration.md](hoeffding-integration.md).
+The remaining polychoric investigation is in [singular-information.md](singular-information.md).
 Claim baseline a8de7cccf038af0dea74906838afb341f79f5d7c. Final rebased SHA and gate
 counts are in the developer handoff, not asserted by this document.
 
@@ -40,7 +42,8 @@ counts are in the developer handoff, not asserted by this document.
   missing tests. NGROUPS and iteration failure return missing estimates with a
   visible warning. Unresolved tight-tolerance boundary information fails explicitly (see below).
 - Hoeffding D coefficients including both kinds of ties, constants and FREQ.
-  **Only HOEFFDING NOPROB is available.** A probability request fails explicitly.
+  HOEFFDING probabilities now use the landed SAS-calibrated support module.
+  Small-N missing inference and NOPROB suppression are covered by public tests.
 - Separate typed Pearson/rank/ordinal results; NOPRINT/NOPROB/NOSIMPLE honored.
   Rank/ordinal simple statistics use frequency-weighted medians.
 
@@ -49,16 +52,13 @@ manager checkout because the ignored reference is absent from dev1. Existing
 FEAT-corr-core findings and FREQ polychoric evidence were inspected before edits.
 No shared FREQ file, jira.md, dispatch, or ODS infrastructure was modified.
 
-## Blocking acceptance gaps (in scope, not exclusions)
+## Acceptance gaps and resolutions (no scope exclusions)
 
-1. **Hoeffding probability parity is not implemented.** A characteristic-function
-   inversion of the theoretical BKR spectral distribution matched several rounded
-   high-statistic listings but failed the discriminating low/medium grid below.
-   More quadrature precision did not explain the difference. The unverified solver
-   and its fixed upper-tail cutoff were removed from production; no approximate
-   probability is silently exposed. `hoeffding-spectral-experiment.py` retains the
-   standalone calculation, not an accepted implementation. Needed: reproduce and
-   independently validate SAS's probability approximation across the distribution.
+1. **Hoeffding probability gap closed.** Dev5's independently verified calibrated
+   distribution is integrated through `probability(D,N)`. The prior spectral
+   experiment below remains historical evidence, not production. Public CORR
+   tests cover the discriminators, tied/FREQ data, missing pairs, N=4/5/6, NOPROB
+   and ODS advanced capture rejection. See `hoeffding-integration.md`.
 2. **Tight-tolerance polychoric boundary information remains unresolved.**
    The original blanket sparse failure below is now fixed for default/loose settings;
    [sparse-boundary.md](sparse-boundary.md) records accepted cases and the narrower gap. For counts
@@ -82,7 +82,7 @@ An analytic-derivative/Fisher-scoring experiment also failed that comparison;
 it was not retained. Those were intermediate experiments. The later scoring/initialization fix is in
 [sparse-boundary.md](sparse-boundary.md); full tight-boundary acceptance remains open.
 
-Consequently no claim of full polychoric or Hoeffding inference completion is made.
+Full polychoric acceptance is still open; Hoeffding probability integration is accepted.
 
 ## Oracle evidence and tolerances
 
@@ -138,7 +138,9 @@ The low-statistic discrepancy is ~7.68e-4: it exceeds the 5e-5 tolerance needed
 for agreement with a four-decimal probability listing. No relaxed tolerance was
 used to declare it passing. D regressions use 1e-10 for exact rational cases and
 5e-6 for five-decimal listings. FREQ and expanded D/rank results agree within
-1e-10. Inference requests are tested as captured errors, not successful p-values.
+1e-10. The former probability rejection is removed. Integrated inference is now checked
+at 5e-13 absolute against full-precision SAS p-values; invalid combinations and
+advanced ODS mislabeling remain captured errors.
 
 ## Corpus and integration
 
@@ -154,5 +156,5 @@ for rank/ordinal-only requests. Preserve dev5's capture hook when rebasing. No
 advanced ODS publishing is claimed by this change.
 
 The authorized CORR grammar section now annotates: SPEARMAN/KENDALL, PARTIAL, FISHER suboptions, ALPHA, SINGULAR,
-POLYCHORIC/POLYSERIAL suboptions, and the explicit incomplete Hoeffding status.
+POLYCHORIC/POLYSERIAL suboptions, and the remaining tight-polychoric guard.
 No other EBNF sections or jira.md were edited.

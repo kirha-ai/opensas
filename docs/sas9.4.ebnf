@@ -853,7 +853,7 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
 
 (* PROC CORR — Statistical Procedures pp.8–36.
    Typed Pearson/rank/partial/Fisher/reliability and ordinal estimates are implemented.
-   HOEFFDING currently requires NOPROB; probability support is a separate module.
+   HOEFFDING includes calibrated probabilities with tied/FREQ/small-N conventions.
    Polychoric boundary information below numerical resolution fails explicitly.
    OUTP=/other output data sets and plots remain fail-loud. *)
 proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"

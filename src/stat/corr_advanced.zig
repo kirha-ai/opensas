@@ -383,7 +383,6 @@ pub fn hoeffding(data: []const Observation) Estimate {
         d3 += v.f * (rx - 2) * (ry - 2) * (q - 1);
     }
     result.r = 30 * ((n - 2) * (n - 3) * d1 + d2 - 2 * (n - 2) * d3) / (n * (n - 1) * (n - 2) * (n - 3) * (n - 4));
-    // Probability calibration is deliberately unavailable: the theoretical
-    // spectral distribution differs from SAS 9.4 M9 at printed precision.
+    result.p = @import("corr_hoeffding_probability.zig").probability(result.r, result.n);
     return result;
 }
