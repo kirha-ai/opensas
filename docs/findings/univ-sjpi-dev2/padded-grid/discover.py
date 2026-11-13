@@ -78,7 +78,7 @@ def main():
                            old_passed=163-len(failed_old),probe_passed=72-len(failed_probes),
                            exact_thresholds=exact_thresholds,failed_old=failed_old,failed_probes=failed_probes,
                            metadata=metadata,metadata_failures=metadata_failures,viable=viable))
-    assert len(models) == 80
+    assert len(models) == 88
     viable = [m for m in models if m['viable']]
     report = dict(old_count=163,probe_count=72,threshold_count=6,models=models,
                   viable_identities=[{k:m[k] for k in ('origin','spacing','decision')} for m in viable],

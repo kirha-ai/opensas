@@ -10,10 +10,13 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent/'absolute-grid'))
 from grids import fma
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent/'extended-precision'))
+from binary_model import Arithmetic, nearest_integer
 
 ORIGINS = ('fingerprint', 'direct_half_range')
 SPACINGS = ('original_range', 'padded_endpoints')
-DECISIONS = ('q_div_up', 'q_div_even', 'q_inverse_up', 'q_inverse_even') + tuple(
+DECISIONS = ('q_div_up', 'q_div_even', 'q_inverse_up', 'q_inverse_even',
+             'ratio_one_even_binary64', 'ratio_one_even_extended64') + tuple(
     center+'_'+decision for center in ('relative', 'absolute', 'absolute_fma', 'relative_fraction')
     for decision in ('distance_left', 'distance_right', 'midpoint_left', 'midpoint_right'))
 
@@ -54,6 +57,14 @@ def padded_index(x, low, high, origin_method, spacing_method, decision):
     p = parameters(low, high, origin_method, spacing_method)
     z = x-p['origin']
     d = p['step']
+    if decision.startswith('ratio_one_even_'):
+        # The offset itself is stored binary64; only this complete normalized
+        # one-based index expression varies in retained precision.
+        arithmetic = Arithmetic('extended64' if decision.endswith('extended64') else 'binary64')
+        span = p['upper']-p['origin']
+        fraction = arithmetic.op('/', z, span)
+        one_based = arithmetic.op('+', arithmetic.op('*', fraction, 400), 1)
+        return nearest_integer(one_based)-1
     if decision.startswith('q_'):
         q = z/d if decision.startswith('q_div') else z*(1/d)
         return int(q+.5) if decision.endswith('_up') else round(q)

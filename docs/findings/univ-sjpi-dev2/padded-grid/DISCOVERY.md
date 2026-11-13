@@ -54,3 +54,22 @@ spacings: 16 additional configurations, total 80. No other family or tolerance
 is added. This is an explicit amendment to the initial discovery stop rule,
 not a claim that the original 64-model family passed. The selected mechanism
 must still be frozen before fresh heldouts, and all old prerequisites stand.
+
+## Second recorded discovery amendment: one-based integer conversion
+
+The relative-fraction/left-distance mechanism reproduces 72/72 transition
+queries and 6/6 thresholds, but only 123/163 old cases. A full nearest-set audit
+finds nine old outcomes outside its closest stored centers, so switching a
+fixed left/right tie preference cannot repair it.
+
+Add ONLY the canonical one-based normalized-grid index expression
+nearest_even((z/(u-o))*400 + 1)-1, once with binary64 arithmetic and once with
+64-significand-bit retained intermediate arithmetic; z and u-o are stored
+binary64 first. This distinguishes an integer conversion of a one-based
+401-point coordinate from comparing pre-rounded center arrays. It is tied to
+the padded-grid indexing convention, not a per-index tie rule or fitted ULP
+tolerance. The prior unpadded q-only x87 family is not reused as a selector.
+There are eight added configurations across the existing origin/spacing
+controls, total 88. Prior 64- and 80-configuration outcomes are retained.
+No fresh oracle has been run; any successful identity must still be frozen
+before the independent heldouts.
