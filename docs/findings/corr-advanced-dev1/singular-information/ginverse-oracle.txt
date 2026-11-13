@@ -1,0 +1,25 @@
+
+      rho        gd        sd     ratio
+
+  0.99903 0.0282354 0.0282354 0.0553985
+
+
+      rho        gd        sd     ratio
+
+   0.9995 94.776496 94.776496 0.0000905
+
+
+      rho        gd        sd     ratio
+
+   0.9997  17407675  17407675 4.925E-10
+
+
+      rho        gd        sd     ratio
+
+   0.9998         0         0 7.373E-17
+
+
+      rho        gd        sd     ratio
+
+0.9998533         0         0 1.979E-24
+sasrun: /private/tmp/dev1-corr-ginverse-oracle.sas: 0 error(s), 0 warning(s) in 3.317s -> /dev/null

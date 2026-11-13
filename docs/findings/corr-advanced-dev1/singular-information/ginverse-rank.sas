@@ -1,0 +1,16 @@
+options linesize=240 pagesize=max;
+proc iml;
+results=j(1,5,.);
+dims={2 5 10};factors={1 100};
+do di=1 to 3;dim=dims[di];
+ do fi=1 to 2;factor=factors[fi];
+  do exponent=-8 to -18 by -1;
+   m=i(dim);m[dim,dim]=10##exponent;m=m*factor;
+   g=ginv(m);s=sweep(m);
+   results=results//(dim||factor||exponent||g[dim,dim]||abs(s[dim,dim]));
+  end;
+ end;
+end;
+results=results[2:nrow(results),];
+print results[colname={'dimension' 'scale' 'exponent' 'ginv' 'sweep'} format=best24.];
+quit;
