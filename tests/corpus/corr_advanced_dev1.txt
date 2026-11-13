@@ -179,7 +179,7 @@ y 70 2.05714 0.75921 2.00000 1.00000 3.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 70 0.59061 0.10494 31.67254 <.0001 18.29784 <.0001
+x y 70 0.59061 0.10494 31.67302 <.0001 18.29784 <.0001
 
 The CORR Procedure
 
