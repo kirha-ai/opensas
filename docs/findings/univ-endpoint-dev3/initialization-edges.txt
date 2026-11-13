@@ -1,0 +1,186 @@
+
+initial_edge_01
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      19.002
+Shape       Alpha         0.5
+Mean                   7.3339
+Std Dev              5.665302
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00180
+    5.0     1.00000     1.04741
+   10.0     1.00000     1.18992
+   25.0     1.00000     2.18753
+   50.0     1.00000     5.75040
+   75.0     1.00000    11.68853
+   90.0    20.00000    16.39152
+   95.0    20.00000    18.14921
+   99.0    20.00000    19.62376
+
+initial_edge_03
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      19.002
+Shape       Alpha         0.5
+Mean                   7.3339
+Std Dev              5.665302
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00180
+    5.0     1.00000     1.04741
+   10.0     1.00000     1.18992
+   25.0     1.00000     2.18753
+   50.0    10.50000     5.75040
+   75.0    20.00000    11.68853
+   90.0    20.00000    16.39152
+   95.0    20.00000    18.14921
+   99.0    20.00000    19.62376
+
+initial_edge_04
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.557486
+Mean                 3.864133
+Std Dev              2.398749
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00197
+    5.0    1.00000     1.03701
+   10.0    1.00000     1.12856
+   25.0    5.00000     1.66555
+   50.0    5.00000     3.30782
+   75.0    5.00000     5.77616
+   90.0    9.00000     7.62390
+   95.0    9.00000     8.29851
+   99.0    9.00000     8.85893
+
+initial_edge_05
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha         0.5
+Mean                 3.667233
+Std Dev              2.385735
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00070
+    5.0    1.00000     1.01991
+   10.0    1.00000     1.07992
+   25.0    5.00000     1.50003
+   50.0    5.00000     3.00040
+   75.0    5.00000     5.50103
+   90.0    9.00000     7.48152
+   95.0    9.00000     8.22171
+   99.0    9.00000     8.84266
+
+initial_edge_07
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      19.002
+Shape       Alpha         0.5
+Mean                   7.3339
+Std Dev              5.665302
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00180
+    5.0     1.00000     1.04741
+   10.0     1.00000     1.18992
+   25.0     1.01000     2.18753
+   50.0     1.02000     5.75040
+   75.0     1.03000    11.68853
+   90.0    20.00000    16.39152
+   95.0    20.00000    18.14921
+   99.0    20.00000    19.62376
+
+initial_edge_09
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       1.002
+Shape       Alpha         0.5
+Mean                   1.3339
+Std Dev              0.298739
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00000
+    5.0    1.00000     1.00241
+   10.0    1.00000     1.00992
+   25.0    1.00000     1.06253
+   50.0    1.00000     1.25040
+   75.0    1.50000     1.56353
+   90.0    2.00000     1.81152
+   95.0    2.00000     1.90420
+   99.0    2.00000     1.98196

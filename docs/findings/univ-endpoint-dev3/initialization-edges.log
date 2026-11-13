@@ -1,0 +1,1044 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         %macro show;
+39         %put DEV3_CASE &case;
+40         %if %sysfunc(exist(p)) %then %do;
+41         data _null_; set p; put 'DEV3_PARAMETER ' Symbol $ ' ' Estimate hex16.; run;
+42         proc datasets lib=work nolist; delete p; quit;
+43         %end;
+44         %mend;
+45         %let case=initial_edge_00; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              540.10k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     120
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+47         ;
+48         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_00
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 8 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              590.67k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        3  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     59
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+The SAS System
+
+49         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+49       ! power(theta=.9999 sigma=est alpha=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              543.12k
+      OS Memory           12968.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     175
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE initial_edge_00
+50         %let case=initial_edge_01; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.17k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     107
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+52         ;
+53         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_01
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+The SAS System
+
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 8 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+54         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+54       ! power(theta=.9999 sigma=est alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 1.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1106.25k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     248
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE initial_edge_01
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  40330083126E978D
+DEV3_PARAMETER Alpha  3FE0000000000000
+DEV3_PARAMETER    401D55E9E1B089A0
+DEV3_PARAMETER    4016A944E1E15E2C
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              587.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        8  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     60
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              365.20k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     63
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+55         %let case=initial_edge_02; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              521.48k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        10  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     84
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+57         ;
+58         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_02
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4034000000000000
+DEV3_SAMPLE 4034000000000000
+DEV3_SAMPLE 4034000000000000
+The SAS System
+
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 8 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+59         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+59       ! power(theta=.9999 sigma=est alpha=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              480.48k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        12  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     55
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE initial_edge_02
+60         %let case=initial_edge_03; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 8 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              522.32k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        13  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     84
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+62         ;
+63         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_03
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4034000000000000
+DEV3_SAMPLE 4034000000000000
+DEV3_SAMPLE 4034000000000000
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 8 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+64         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+64       ! power(theta=.9999 sigma=est alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              900.62k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        15  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     125
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           272
+      
+
+DEV3_CASE initial_edge_03
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  40330083126E978D
+DEV3_PARAMETER Alpha  3FE0000000000000
+DEV3_PARAMETER    401D55E9E1B089A0
+DEV3_PARAMETER    4016A944E1E15E2C
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              348.06k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        17  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+65         %let case=initial_edge_04; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 9 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.32k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        18  Switch Count  2
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+67         ;
+68         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_04
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4022000000000000
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+69         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+69       ! power(theta=.9999 sigma=est alpha=est) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 3.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.78k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        20  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE initial_edge_04
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  4020010624DD2F1B
+DEV3_PARAMETER Alpha  3FE1D6ECF6C69F04
+DEV3_PARAMETER    400EE9BEB0ADA804
+DEV3_PARAMETER    400330A3246B29D2
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.06k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        22  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+70         %let case=initial_edge_05; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 9 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.32k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+The SAS System
+
+      Step Count                        23  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+72         ;
+73         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_05
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4014000000000000
+DEV3_SAMPLE 4022000000000000
+NOTE: There were 9 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        24  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+74         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+74       ! power(theta=.9999 sigma=est alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 4.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.78k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        25  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        12
+The SAS System
+
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE initial_edge_05
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  4020010624DD2F1B
+DEV3_PARAMETER Alpha  3FE0000000000000
+DEV3_PARAMETER    400D567E6E0BBDEC
+DEV3_PARAMETER    400315FC79282252
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        26  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.06k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        27  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+75         %let case=initial_edge_06; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 5 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.32k
+      OS Memory           13480.00k
+The SAS System
+
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        28  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+77         ;
+78         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_06
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF028F5C28F5C29
+DEV3_SAMPLE 3FF051EB851EB852
+DEV3_SAMPLE 3FF07AE147AE147B
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 5 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        29  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+79         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+79       ! power(theta=.9999 sigma=est alpha=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              481.59k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        30  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE initial_edge_06
+80         %let case=initial_edge_07; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 5 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              522.03k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        31  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+82         ;
+83         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_07
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF028F5C28F5C29
+DEV3_SAMPLE 3FF051EB851EB852
+DEV3_SAMPLE 3FF07AE147AE147B
+DEV3_SAMPLE 4034000000000000
+NOTE: There were 5 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.57k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        32  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+84         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+84       ! power(theta=.9999 sigma=est alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+The SAS System
+
+NOTE: The PROCEDURE UNIVARIATE printed page 5.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.78k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        33  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     117
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE initial_edge_07
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  40330083126E978D
+DEV3_PARAMETER Alpha  3FE0000000000000
+DEV3_PARAMETER    401D55E9E1B089A0
+DEV3_PARAMETER    4016A944E1E15E2C
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.57k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        34  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.06k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        35  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        10
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+85         %let case=initial_edge_08; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 4 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.03k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        36  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+87         ;
+88         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_08
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4000000000000000
+NOTE: There were 4 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              585.57k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        37  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+89         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+89       ! power(theta=.9999 sigma=est alpha=est) noplot; run; %show;
+
+WARNING: One or more parameters for the power function distribution cannot be estimated.
+NOTE: The value specified for ALPHA may be adversely affecting the search algorithm.  Try respecifying the value or 
+      deleting the option.
+NOTE: The power function curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+The SAS System
+
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              481.59k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        38  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE initial_edge_08
+90         %let case=initial_edge_09; data d; input x @@; datalines;
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 4 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.03k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        39  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+92         ;
+93         %put DEV3_SAMPLE_CASE &case; data _null_; set d; put 'DEV3_SAMPLE ' x hex16.; run;
+DEV3_SAMPLE_CASE initial_edge_09
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 3FF0000000000000
+DEV3_SAMPLE 4000000000000000
+NOTE: There were 4 observations read from the data set WORK.D.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              585.57k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        40  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+94         title "&case"; ods output ParameterEstimates=p; proc univariate data=d noprint; histogram x /
+94       ! power(theta=.9999 sigma=est alpha=0.5) noplot; run; %show;
+
+NOTE: None of the EDF goodness-of-fit statistics for the Power Function distribution are available.
+NOTE: The data set WORK.P has 5 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 6.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.78k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        41  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        12
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE initial_edge_09
+
+DEV3_PARAMETER Theta  3FEFFF2E48E8A71E
+DEV3_PARAMETER Sigma  3FF0083126E978D3
+DEV3_PARAMETER Alpha  3FE0000000000000
+DEV3_PARAMETER    3FF557A786C22680
+DEV3_PARAMETER    3FD31E88D916BC92
+NOTE: There were 5 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.57k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        42  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+The SAS System
+
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              349.09k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:09:42 PM
+      Step Count                        43  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+95         
+96         
+97         
+98         
+The SAS System
+
+99         

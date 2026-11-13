@@ -1,0 +1,160 @@
+
+fixed_alpha
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008308
+Shape       Alpha           2
+Shape       Beta          1.5
+Mean                 0.004748
+Std Dev              0.001938
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00061
+    5.0    0.00100     0.00140
+   10.0    0.00155     0.00201
+   25.0    0.00239     0.00328
+   50.0    0.00386     0.00487
+   75.0    0.00548     0.00632
+   90.0    0.00661     0.00729
+   95.0    0.00748     0.00768
+   99.0    0.00821     0.00810
+
+fixed_moment_width
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.009754
+Shape       Alpha    1.248422
+Shape       Beta          1.5
+Mean                 0.004431
+Std Dev              0.002508
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00017
+    5.0    0.00100     0.00062
+   10.0    0.00155     0.00109
+   25.0    0.00239     0.00233
+   50.0    0.00386     0.00431
+   75.0    0.00548     0.00643
+   90.0    0.00661     0.00798
+   95.0    0.00748     0.00865
+   99.0    0.00821     0.00938
+
+fixed_feasible
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008616
+Shape       Alpha    1.433958
+Shape       Beta          1.5
+Mean                 0.004211
+Std Dev              0.002171
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00024
+    5.0    0.00100     0.00076
+   10.0    0.00155     0.00125
+   25.0    0.00239     0.00244
+   50.0    0.00386     0.00419
+   75.0    0.00548     0.00596
+   90.0    0.00661     0.00722
+   95.0    0.00748     0.00775
+   99.0    0.00821     0.00832
+
+fixed_padded
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.009604
+Shape       Alpha     1.26906
+Shape       Beta          1.5
+Mean                 0.004402
+Std Dev              0.002465
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00018
+    5.0    0.00100     0.00063
+   10.0    0.00155     0.00110
+   25.0    0.00239     0.00235
+   50.0    0.00386     0.00429
+   75.0    0.00548     0.00637
+   90.0    0.00661     0.00788
+   95.0    0.00748     0.00853
+   99.0    0.00821     0.00924
+
+fixed_near_and_candidate
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.000591
+Scale       Sigma    0.007819
+Shape       Alpha    1.099065
+Shape       Beta          1.5
+Mean                 0.003898
+Std Dev              0.002036
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00067
+    5.0    0.00100     0.00094
+   10.0    0.00155     0.00125
+   25.0    0.00239     0.00216
+   50.0    0.00386     0.00372
+   75.0    0.00548     0.00550
+   90.0    0.00661     0.00684
+   95.0    0.00748     0.00743
+   99.0    0.00821     0.00808

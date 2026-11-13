@@ -1,0 +1,584 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data d; do i=1 to 31; x=.01*quantile('beta',(i-.375)/31.25,2,3); output; end; run;
+
+NOTE: The data set WORK.D has 31 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.50k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     132
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+39         proc means data=d noprint; var x; output out=m mean=mean std=sd skewness=skew kurtosis=kurt min=lo max=hi;
+39       ! run;
+
+NOTE: There were 31 observations read from the data set WORK.D.
+NOTE: The data set WORK.M has 1 observations and 8 variables.
+NOTE: PROCEDURE MEANS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              6974.89k
+      OS Memory           17872.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     1777
+      Page Swaps                        0
+      Voluntary Context Switches        24
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+40         data _null_; set m;
+41         t=(6+3*kurt-3*skew*skew)/(1.5*skew*skew-kurt);
+42         r=sign(skew)*sqrt(skew*skew*(t+2)**2/(16*(t+1)+skew*skew*(t+2)**2));
+43         w=2*sd*sqrt((t+1)/(1-r*r)); mt=mean-w*(1-r)/2;
+44         s0=hi-lo+min(.002,.1*(w-(hi-lo))); t0=lo-min(.001,.1*(lo-mt));
+45         call symputx('s0',put(s0,best32.)); call symputx('w',put(w,best32.));
+46         call symputx('mt',put(mt,best32.)); call symputx('t0',put(t0,best32.));
+47         call symputx('padded',put(hi-lo+.002,best32.)); call symputx('safe',put(1.05*hi,best32.));
+48         call symputx('near',put(lo-.00001,best32.));
+49         put 'DEV3_CONTROL s0 ' s0 hex16.; put 'DEV3_CONTROL w ' w hex16.;
+50         put 'DEV3_CONTROL mt ' mt hex16.; put 'DEV3_CONTROL t0 ' t0 hex16.;
+51         run;
+
+DEV3_CONTROL s0 3F800383898526D3
+The SAS System
+
+DEV3_CONTROL w 3F83F9EAD59ABCE2
+DEV3_CONTROL mt 3EF4F3BF34D92100
+DEV3_CONTROL t0 3F41CD2CDC16DD1B
+NOTE: There were 1 observations read from the data set WORK.M.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.10k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     69
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+52         %macro fit(case,opts);
+53         title "&case"; ods output ParameterEstimates=p;
+54         proc univariate data=d noprint; histogram x / beta(&opts beta=1.5) noplot; run;
+55         %put DEV3_CASE &case;
+56         %if %sysfunc(exist(p)) %then %do;
+57         data _null_; set p; put 'DEV3_PARAMETER ' Symbol $ ' ' Estimate hex16.; run;
+58         proc datasets lib=work nolist; delete p; quit;
+59         %end;
+60         %mend;
+61         %fit(baseline,%str(theta=0 sigma=est));
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              550.90k
+      OS Memory           12968.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     174
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE baseline
+62         %fit(fixed_alpha,%str(theta=0 sigma=est alpha=2));
+The SAS System
+
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 1.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1111.09k
+      OS Memory           13484.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     260
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE fixed_alpha
+
+DEV3_PARAMETER Theta  0000000000000000
+DEV3_PARAMETER Sigma  3F810408C060BFB1
+DEV3_PARAMETER Alpha  4000000000000000
+DEV3_PARAMETER Beta  3FF8000000000000
+DEV3_PARAMETER    3F7372532500DB13
+DEV3_PARAMETER    3F5FC19201109C57
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.67k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     59
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              366.39k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     65
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+63         %fit(fixed_candidate,%str(theta=0 sigma=&s0));
+
+ERROR: The largest value of x is greater than or equal to the upper threshold (THETA + SIGMA) for the beta fit.
+NOTE: The beta scale parameter (SIGMA) must be greater than 0.0082056214.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.20k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     57
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE fixed_candidate
+64         %fit(fixed_moment_width,%str(theta=0 sigma=&w));
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.23k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        10  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE fixed_moment_width
+
+The SAS System
+
+DEV3_PARAMETER Theta  0000000000000000
+DEV3_PARAMETER Sigma  3F83F9EAD59AABEB
+DEV3_PARAMETER Alpha  3FF3F989C7C08069
+DEV3_PARAMETER Beta  3FF8000000000000
+DEV3_PARAMETER    3F7225D042E17A84
+DEV3_PARAMETER    3F648C9088E98FB7
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.67k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        12  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+65         %fit(fixed_feasible,%str(theta=0 sigma=&safe));
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 3.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              898.23k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        13  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+The SAS System
+
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE fixed_feasible
+
+DEV3_PARAMETER Theta  0000000000000000
+DEV3_PARAMETER Sigma  3F81A536D936BBD0
+DEV3_PARAMETER Alpha  3FF6F17DFCFCECC2
+DEV3_PARAMETER Beta  3FF8000000000000
+DEV3_PARAMETER    3F713F88B2737CD9
+DEV3_PARAMETER    3F61C9D1AEE0FA64
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.67k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        14  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        15  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+66         %fit(fixed_padded,%str(theta=0 sigma=&padded));
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 4.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              898.23k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        16  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE fixed_padded
+
+DEV3_PARAMETER Theta  0000000000000000
+DEV3_PARAMETER Sigma  3F83AB60D95B9279
+DEV3_PARAMETER Alpha  3FF44E11D24AE693
+DEV3_PARAMETER Beta  3FF8000000000000
+DEV3_PARAMETER    3F72076D4E3F08C4
+DEV3_PARAMETER    3F6431473E94CFF7
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              595.57k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        17  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              348.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        18  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           8
+      
+
+67         %fit(fixed_moment_location,%str(theta=&mt sigma=est));
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              490.84k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        19  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE fixed_moment_location
+68         %fit(fixed_location_candidate,%str(theta=&t0 sigma=est));
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              489.07k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        20  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE fixed_location_candidate
+69         %fit(fixed_near_minimum,%str(theta=&near sigma=est));
+The SAS System
+
+
+WARNING: One or more parameters for the beta distribution cannot be estimated.
+NOTE: The value specified for ALPHA/BETA may be adversely affecting the search algorithm.  Try respecifying the value 
+      or deleting the option.
+NOTE: The beta curve was not drawn because estimates could not be computed for all parameters.
+WARNING: Output 'ParameterEstimates' was not created.  Make sure that the output object name, label, or path is spelled 
+         correctly.  Also, verify that the appropriate procedure options are used to produce the requested output 
+         object.  For example, verify that the NOPRINT option is not used.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              493.20k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+DEV3_CASE fixed_near_minimum
+70         %fit(fixed_near_and_candidate,%str(theta=&near sigma=&s0));
+
+NOTE: None of the EDF goodness-of-fit statistics for the Beta distribution are available.
+NOTE: The data set WORK.P has 6 observations and 6 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 5.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              904.01k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        22  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+DEV3_CASE fixed_near_and_candidate
+
+DEV3_PARAMETER Theta  3F43610490E27091
+DEV3_PARAMETER Sigma  3F80038389851290
+DEV3_PARAMETER Alpha  3FF195C4D8E742F7
+DEV3_PARAMETER Beta  3FF8000000000000
+DEV3_PARAMETER    3F6FEE7D1D7624C2
+DEV3_PARAMETER    3F60AE18B2F7F5D9
+NOTE: There were 6 observations read from the data set WORK.P.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              587.07k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        23  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     61
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+
+NOTE: Deleting WORK.P (memtype=DATA).
+NOTE: PROCEDURE DATASETS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              347.21k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 12:03:59 PM
+      Step Count                        24  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+71         
+72         
+73         
+74         
+The SAS System
+
+75         
