@@ -1,0 +1,50 @@
+
+                                           Var
+Obs                                  id    Name    Descr                                                 x
+
+  1                                   0     x      Mean                                  -0.00999999999999
+  2                                   0     x      Variance                                           19.5
+  3                                   0     x      Standard Deviation                     4.41588043316392
+  4                                   0     x      Range                                                16
+  5                                   0     x      Interquartile Range                                   4
+  6                                   0     x      Bandwidth                              2.40906559988014
+  7                                   1     x      Mean                                                  0
+  8                                   1     x      Variance                                           19.5
+  9                                   1     x      Standard Deviation                     4.41588043316392
+ 10                                   1     x      Range                                                16
+ 11                                   1     x      Interquartile Range                                   4
+ 12                                   1     x      Bandwidth                              2.44313219683651
+ 13                                   2     x      Mean                                   0.00999999999999
+ 14                                   2     x      Variance                                           19.5
+ 15                                   2     x      Standard Deviation                     4.41588043316392
+ 16                                   2     x      Range                                                16
+ 17                                   2     x      Interquartile Range                                   4
+ 18                                   2     x      Bandwidth                              2.40906559988014
+
+id=0 var=x value=-8 density=0.0218170376 count=1 _ERROR_=0 _N_=1
+id=0 var=x value=-3.04 density=0.0662350017 count=1 _ERROR_=0 _N_=63
+id=0 var=x value=-2 density=0.081521326 count=1 _ERROR_=0 _N_=76
+id=0 var=x value=-1.04 density=0.091466071 count=1 _ERROR_=0 _N_=88
+id=0 var=x value=6.02296E-15 density=0.0953283047 count=1 _ERROR_=0 _N_=101
+id=0 var=x value=0.96 density=0.0917925323 count=1 _ERROR_=0 _N_=113
+id=0 var=x value=2 density=0.0810237628 count=1 _ERROR_=0 _N_=126
+id=0 var=x value=2.96 density=0.0668181509 count=1 _ERROR_=0 _N_=138
+id=0 var=x value=8 density=0.0216415967 count=1 _ERROR_=0 _N_=201
+id=1 var=x value=-8 density=0.0217688037 count=1 _ERROR_=0 _N_=202
+id=1 var=x value=-3.04 density=0.0661007297 count=1 _ERROR_=0 _N_=264
+id=1 var=x value=-2 density=0.0810015572 count=1 _ERROR_=0 _N_=277
+id=1 var=x value=-1.04 density=0.0906644632 count=1 _ERROR_=0 _N_=289
+id=1 var=x value=6.02296E-15 density=0.0943686949 count=1 _ERROR_=0 _N_=302
+id=1 var=x value=0.96 density=0.0908823887 count=1 _ERROR_=0 _N_=314
+id=1 var=x value=2 density=0.0804347178 count=1 _ERROR_=0 _N_=327
+id=1 var=x value=3.04 density=0.0655003689 count=1 _ERROR_=0 _N_=340
+id=1 var=x value=8 density=0.0217382416 count=1 _ERROR_=0 _N_=402
+id=2 var=x value=-8 density=0.0216415967 count=1 _ERROR_=0 _N_=403
+id=2 var=x value=-2.96 density=0.0668181509 count=1 _ERROR_=0 _N_=466
+id=2 var=x value=-2 density=0.0810237628 count=1 _ERROR_=0 _N_=478
+id=2 var=x value=-0.96 density=0.0917925323 count=1 _ERROR_=0 _N_=491
+id=2 var=x value=6.02296E-15 density=0.0953283047 count=1 _ERROR_=0 _N_=503
+id=2 var=x value=1.04 density=0.091466071 count=1 _ERROR_=0 _N_=516
+id=2 var=x value=2 density=0.081521326 count=1 _ERROR_=0 _N_=528
+id=2 var=x value=3.04 density=0.0662350017 count=1 _ERROR_=0 _N_=541
+id=2 var=x value=8 density=0.0218170376 count=1 _ERROR_=0 _N_=603

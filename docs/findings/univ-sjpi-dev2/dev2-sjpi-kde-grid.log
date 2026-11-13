@@ -1,0 +1,210 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         data d;input x @@;datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 4 observations and 1 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              522.78k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+40         ;
+41         %macro p(ng);
+42         ods exclude all;ods output UnivariateStatistics=s;
+43         proc kde data=d;univar x / ngrid=&ng plots=none unistats sjpitol=1e-12;run;
+44         ods exclude none;
+45         data _null_;set s;if descr='Bandwidth';file print;put "NGRID=&ng " x=best32.;run;
+46         %mend;
+47         %p(101);%p(129);%p(401);%p(1001);
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: The data set WORK.S has 6 observations and 3 variables.
+NOTE: PROCEDURE KDE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              994.60k
+      OS Memory           13228.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     361
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: There were 6 observations read from the data set WORK.S.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              714.98k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     113
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: The data set WORK.S has 6 observations and 3 variables.
+NOTE: PROCEDURE KDE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              916.35k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     165
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: There were 6 observations read from the data set WORK.S.
+NOTE: The DATA step printed page 2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              594.29k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: The data set WORK.S has 6 observations and 3 variables.
+The SAS System
+
+NOTE: PROCEDURE KDE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              908.09k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        7  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     172
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: There were 6 observations read from the data set WORK.S.
+NOTE: The DATA step printed page 3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              594.29k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+NOTE: Processing UNIVAR statement number 1.
+NOTE: The data set WORK.S has 6 observations and 3 variables.
+NOTE: PROCEDURE KDE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              1004.10k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     182
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+The SAS System
+
+
+NOTE: 1 lines were written to file PRINT.
+NOTE: There were 6 observations read from the data set WORK.S.
+NOTE: The DATA step printed page 4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              597.35k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 08:08:44 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+48         
+49         
+50         
+51         
+The SAS System
+
+52         
