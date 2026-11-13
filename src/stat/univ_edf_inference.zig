@@ -96,6 +96,7 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     }
     if (r.family == .exponential) return exponentialEstimated(s, n, e);
     if (r.family == .gamma and !e.theta) return gammaFixedThreshold(s, n, e, r.alpha);
+    if (r.family == .beta) return betaEstimated(s, n, r.alpha, r.beta);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
         if (location and e.sigma) {
@@ -450,6 +451,71 @@ fn gammaFixedThreshold(s: Statistics, n: usize, e: Estimated, alpha: f64) Result
     return .{ .d = probabilities[0], .w2 = probabilities[1], .a2 = probabilities[2] };
 }
 
+// Beta with both shapes estimated and fixed endpoints. SAS orders the shapes
+// before evaluating its response surface. The basis is 1,1/n,1/n²,1/a,1/b,
+// 1/a²,1/b²,1/(ab),1/(an),1/(bn),1/(a²n), where a=min(alpha,beta).
+const beta_surface = [3][11][11]f64{
+    .{
+        .{ -0.4935788, -1.1176393, 4.45766343, 0.02166398, 0.00733572, -0.00148902, 0.00127073, -0.00483091, -0.0260283, 0, 0.00558273 },
+        .{ -0.33298133, -1.0344245, 3.67982251, 0.02632985, 0.01000331, -0.0017406, 0.00134497, -0.00562044, -0.0260283, -0.0, 0.00558273 },
+        .{ -0.29301588, -1.0175177, 3.47347889, 0.02751549, 0.01062667, -0.00181183, 0.00133783, -0.00576672, -0.0260283, 0.0, 0.00558273 },
+        .{ -0.24658657, -1.0042209, 3.27608133, 0.02891993, 0.0115291, -0.00187497, 0.00145446, -0.00609057, -0.0260283, 0.0, 0.00558273 },
+        .{ -0.18870349, -0.99371936, 3.07147244, 0.03094256, 0.01245141, -0.00203446, 0.00152317, -0.00631082, -0.0260283, 0.0, 0.00558273 },
+        .{ -0.10399148, -0.99139922, 2.79909104, 0.03375728, 0.01379012, -0.00223231, 0.00166495, -0.00674438, -0.0260283, 0.0, 0.00558273 },
+        .{ -0.03245568, -0.99419584, 2.53524153, 0.03638472, 0.01482675, -0.00247883, 0.00174616, -0.00703386, -0.0260283, 0.0, 0.00558273 },
+        .{ 0.04797031, -1.0021937, 2.16418465, 0.03958051, 0.0161847, -0.00288566, 0.00190419, -0.00743565, -0.0260283, 0.0, 0.00558273 },
+        .{ 0.10145278, -1.0085216, 1.92959094, 0.04113529, 0.01652617, -0.00306261, 0.00201796, -0.00758076, -0.0260283, 0.0, 0.00558273 },
+        .{ 0.14957155, -1.021212, 1.6041709, 0.04263786, 0.01760329, -0.00321166, 0.0021456, -0.00803754, -0.0260283, -0.0, 0.00558273 },
+        .{ 0.20799018, -1.051528, 1.37200723, 0.04455331, 0.0154491, -0.00369848, 0.00184544, -0.00684421, -0.0260283, -0.0, 0.00558273 },
+    },
+    .{
+        .{ -2.974818, 0.27473286, -0.15140973, 0.05080609, 0.01474709, -0.00285792, 0.00358155, -0.01219687, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -2.6021844, 0.10532774, -0.64171831, 0.06158432, 0.02125456, -0.00295309, 0.00404355, -0.01479526, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -2.5093391, 0.05792217, -0.70978457, 0.06448781, 0.0231865, -0.00291534, 0.00413736, -0.01543329, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -2.4015827, -0.00059808, -0.77726873, 0.06847451, 0.02478314, -0.00307722, 0.00428325, -0.01585707, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -2.2672082, -0.07438582, -0.92319741, 0.0739452, 0.02747684, -0.00328166, 0.00472135, -0.0168944, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -2.0724273, -0.16507454, -1.2818045, 0.08213107, 0.031293, -0.00343808, 0.00561344, -0.01847707, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -1.9090824, -0.26680299, -1.2911029, 0.09047695, 0.03546742, -0.00399796, 0.00553886, -0.01941023, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -1.7262425, -0.35939033, -1.4037305, 0.10141877, 0.03819627, -0.00502537, 0.00613989, -0.02054459, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -1.6066006, -0.38946259, -1.7939437, 0.10780496, 0.04155155, -0.00550687, 0.00590918, -0.02127141, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -1.4992187, -0.4118453, -2.0717335, 0.11429876, 0.04363233, -0.00632494, 0.00574002, -0.0217127, -0.1814982, 0.0276344, 0.02557601 },
+        .{ -1.3717163, -0.3788905, -3.0467281, 0.12253289, 0.04096475, -0.00739457, 0.00763039, -0.02229696, -0.1814982, 0.0276344, 0.02557601 },
+    },
+    .{
+        .{ -1.0732935, -0.01296508, 0.07174981, 0.02484624, 0.00791841, 0, 0.00300491, -0.00883332, -0.08084881, 0, 0.00733925 },
+        .{ -0.75347229, -0.1147223, -0.69812424, 0.0322369, 0.01180142, 0.0, 0.00332621, -0.01069554, -0.08084881, 0.0, 0.00733925 },
+        .{ -0.67275168, -0.14280002, -0.84531041, 0.03427736, 0.01278763, -0.0, 0.0034303, -0.01108, -0.08084881, -0.0, 0.00733925 },
+        .{ -0.57872459, -0.17104192, -1.0387654, 0.03696831, 0.01394272, 0.0, 0.00376817, -0.01174074, -0.08084881, 0.0, 0.00733925 },
+        .{ -0.46004811, -0.21809154, -1.2194425, 0.04028383, 0.01537747, 0.0, 0.00377995, -0.01208674, -0.08084881, 0.0, 0.00733925 },
+        .{ -0.28679473, -0.27197925, -1.6766151, 0.04641348, 0.01844267, -0.0, 0.00448886, -0.01370631, -0.08084881, 0.0, 0.00733925 },
+        .{ -0.13814841, -0.34929386, -1.8219301, 0.05143384, 0.02192502, 0.0, 0.00453578, -0.01471986, -0.08084881, 0.0, 0.00733925 },
+        .{ 0.03046956, -0.44230124, -1.8584241, 0.05737956, 0.02537649, -0.0, 0.00472291, -0.0158302, -0.08084881, 0.0, 0.00733925 },
+        .{ 0.14182909, -0.46295998, -2.4162819, 0.06193926, 0.02739692, -0.0, 0.00529159, -0.01708185, -0.08084881, -0.0, 0.00733925 },
+        .{ 0.24322913, -0.49643928, -2.6594705, 0.06478465, 0.03056285, -0.0, 0.00467555, -0.01733151, -0.08084881, 0.0, 0.00733925 },
+        .{ 0.36293179, -0.49193381, -3.4457799, 0.0696423, 0.031218, 0.0, 0.00620746, -0.018984, -0.08084881, 0.0, 0.00733925 },
+    },
+};
+
+fn betaEstimated(s: Statistics, n: usize, alpha: f64, beta: f64) Result {
+    if (n < 10) return .{};
+    const inv = 1 / @as(f64, @floatFromInt(n));
+    const ia = 1 / @min(alpha, beta);
+    const ib = 1 / @max(alpha, beta);
+    const basis = [_]f64{ 1, inv, inv * inv, ia, ib, ia * ia, ib * ib, ia * ib, ia * inv, ib * inv, ia * ia * inv };
+    const stats = [_]f64{ s.d, s.w2, s.a2 };
+    var p: [3]Probability = undefined;
+    for (beta_surface, 0..) |table, t| {
+        var criticals: [11]f64 = undefined;
+        for (table, 0..) |row, i| {
+            var log_critical: f64 = 0;
+            for (row, basis) |coefficient, term| log_critical += coefficient * term;
+            criticals[i] = @exp(log_critical) * (if (t == 0) @sqrt(inv) else 1);
+        }
+        p[t] = exponentialProbability(stats[t], &criticals);
+    }
+    return .{ .d = p[0], .w2 = p[1], .a2 = p[2] };
+}
+
 pub const SimulationOptions = struct {
     /// Caller resolves omitted/time-of-day seed once, and can retain it in ODS.
     seed: u64,
@@ -723,4 +789,40 @@ test "dev5 EDF fixed-threshold gamma three estimation masks independent M9 holdo
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 2 }, s, 9));
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 1 }, s, 20));
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .alpha = true }, .alpha = 0.99 }, s, 20));
+}
+
+test "dev5 EDF estimated beta independent M9 shapes and bound holdouts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var count: usize = 0;
+    for ([_][]const u8{ @embedFile("testdata/univ_edf_dev5_beta.txt"), @embedFile("testdata/univ_edf_dev5_beta_bounds.txt") }) |input| {
+        var lines = std.mem.splitScalar(u8, input, '\n');
+        while (lines.next()) |line| {
+            if (line.len == 0) continue;
+            var fields = std.mem.splitScalar(u8, line, '|');
+            _ = fields.next().?;
+            const n = try std.fmt.parseInt(usize, fields.next().?, 10);
+            _ = fields.next().?;
+            const statistic = fields.next().?;
+            const value = try std.fmt.parseFloat(f64, fields.next().?);
+            const expected = try std.fmt.parseFloat(f64, fields.next().?);
+            const sign = fields.next().?;
+            const alpha = try std.fmt.parseFloat(f64, fields.next().?);
+            const beta = try std.fmt.parseFloat(f64, fields.next().?);
+            var s: Statistics = .{ .d = 0, .w2 = 0, .a2 = 0 };
+            const test_d = std.mem.eql(u8, statistic, "D");
+            const test_w = std.mem.eql(u8, statistic, "W-Sq");
+            if (test_d) s.d = value else if (test_w) s.w2 = value else s.a2 = value;
+            const result = try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true }, .alpha = alpha, .beta = beta }, s, n);
+            const p = if (test_d) result.d.? else if (test_w) result.w2.? else result.a2.?;
+            try std.testing.expectApproxEqAbs(expected, p.value, 1e-10);
+            const expected_sign: Sign = if (std.mem.eql(u8, sign, ">")) .greater else if (std.mem.eql(u8, sign, "<")) .less else .exact;
+            try std.testing.expectEqual(expected_sign, p.sign);
+            count += 1;
+        }
+    }
+    try std.testing.expectEqual(@as(usize, 17628), count);
+    const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } }, s, 9));
 }

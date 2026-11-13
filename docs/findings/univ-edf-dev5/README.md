@@ -54,9 +54,12 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   response surfaces. M9 requires alpha>1 and n>=10 for estimated gamma; see
   EVIDENCE-GAMMA-FIXED.md for direct availability and independent holdouts.
 
+- Estimated beta now uses ordered fitted-shape response surfaces, with n>=10.
+  EVIDENCE-BETA.md records 17628 independent numeric/bound checks.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated-threshold gamma and estimated beta/power probabilities; estimated-threshold lognormal and
+- Estimated-threshold gamma and estimated power probabilities; estimated-threshold lognormal and
   Weibull probabilities; family/shape-dependent critical tables/interpolation.
   Availability is implemented, probability computation fails loudly where
   these documented-available combinations lack tables.
