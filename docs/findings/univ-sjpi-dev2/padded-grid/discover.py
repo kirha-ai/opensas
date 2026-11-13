@@ -15,6 +15,7 @@ old = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(old)
 from grids import unrank, bits
 from model import ORIGINS, SPACINGS, DECISIONS, padded_index, parameters, counts
+from report_format import compact_report, dumps
 
 
 def all_samples():
@@ -84,7 +85,8 @@ def main():
                   viable_identities=[{k:m[k] for k in ('origin','spacing','decision')} for m in viable],
                   selected={k:viable[0][k] for k in ('origin','spacing','decision')} if viable else None)
     args.out.mkdir(parents=True,exist_ok=True)
-    (args.out/'discovery-results.json').write_text(json.dumps(report,indent=2)+'\n')
+    report=compact_report(report,[r['name'] for r in records],[r['name'] for r in observations])
+    (args.out/'discovery-results.json').write_text(dumps(report))
     for m in sorted(models,key=lambda m:(-m['old_passed'],-m['probe_passed']))[:12]:
         print(m['origin'],m['spacing'],m['decision'],f'old={m["old_passed"]}/163 probes={m["probe_passed"]}/72 thresholds={m["exact_thresholds"]}/6 metadata={len(m["metadata"])} viable={m["viable"]}')
     print('Viable:',report['viable_identities'])

@@ -1,0 +1,14 @@
+fingerprint original_range ratio_one_even_extended64 old=147/163 probes=72/72 thresholds=6/6 metadata=0 viable=False
+fingerprint padded_endpoints ratio_one_even_extended64 old=147/163 probes=72/72 thresholds=6/6 metadata=0 viable=False
+direct_half_range original_range ratio_one_even_extended64 old=133/163 probes=57/72 thresholds=3/6 metadata=0 viable=False
+direct_half_range padded_endpoints ratio_one_even_extended64 old=133/163 probes=57/72 thresholds=3/6 metadata=0 viable=False
+fingerprint original_range absolute_fma_distance_right old=129/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint padded_endpoints absolute_fma_distance_right old=129/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint original_range relative_distance_right old=127/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint original_range absolute_distance_right old=127/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint padded_endpoints relative_distance_right old=127/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint padded_endpoints absolute_distance_right old=127/163 probes=62/72 thresholds=4/6 metadata=0 viable=False
+fingerprint original_range integer_fma_high_distance_left old=126/163 probes=67/72 thresholds=5/6 metadata=0 viable=False
+fingerprint padded_endpoints integer_fma_high_distance_left old=126/163 probes=67/72 thresholds=5/6 metadata=0 viable=False
+Viable: []
+Selected by frozen tuple order: None

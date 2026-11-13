@@ -8,7 +8,7 @@ and return a GLOBAL padded index. They do not receive the observed target k.
 The scored original-grid index is padded_index-100; no clamping to 100..300
 or forcing of min/max assignments is allowed.
 
-The bounded discovery family has 2 origins x 2 spacings x 16 decisions = 64:
+The initial discovery family had 2 origins x 2 spacings x 16 decisions = 64:
 
 - fingerprint endpoints: o=((low-R)+low)/2 and u=((high+R)+high)/2, every
   operation stored binary64, R=high-low;

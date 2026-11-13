@@ -1,0 +1,4 @@
+163/163 conserve counts, map extrema to 100/300, preserve exact variance numerator and pair-distance counts after common shift 100.
+{'name': 'dev2-sjpi-halfgrid-profile:7', 'low': -8.0, 'high': 8.0, 'x': -7.0, 'origin': -16.0, 'shifted_x': 9.0, 'exact_padded_q': 112.5, 'predicted_padded_bin': 113, 'oracle_padded_bin': 112, 'predicted_bandwidth': 2.6005491338761426, 'oracle_bandwidth': 2.6108339052242213}
+{'name': 'dev2-sjpi-halfgrid:1', 'low': -8.0, 'high': 8.0, 'x': -3.0, 'origin': -16.0, 'shifted_x': 13.0, 'exact_padded_q': 162.5, 'predicted_padded_bin': 163, 'oracle_padded_bin': 163, 'predicted_bandwidth': 3.414613253538483, 'oracle_bandwidth': 3.4146132535384353}
+{'name': 'dev2-sjpi-halfgrid:13', 'low': -8.0, 'high': 8.0, 'x': -1.0, 'origin': -16.0, 'shifted_x': 15.0, 'exact_padded_q': 187.5, 'predicted_padded_bin': 187, 'oracle_padded_bin': 187, 'predicted_bandwidth': 4.156991074825298, 'oracle_bandwidth': 4.156991074825253}

@@ -23,6 +23,13 @@ and a common -2^-49 translation residual narrow the open mechanism to an
 additional absolute-coordinate rounding path. A post-measurement origin/
 subtraction fingerprint is retained as an unvalidated clue, not a bin selector.
 
+The [padded 401-point mechanism pass](padded-grid/README.md) tested that clue
+without assuming it was SAS's implementation. The best rejected formulation
+matches all six transitions and 72/72 transition groups, but only 147/163 old
+assignments. Its computed bins pass count/extrema and exact padding-removal
+invariance checks on all 163 samples. Raw quantization is still wrong on 16
+retained cases, so no model was promoted to fresh validation or a raw adapter.
+
 Baseline acquired by clean `git merge --ff-only feat/stat/batch-3`: `6aa9b33`.
 Read CLAUDE.md, lexer.zig, D-029, dev4's retained README and kernel API, and the
 manager checkout's ignored statistical manual, printed pp.448–449.
