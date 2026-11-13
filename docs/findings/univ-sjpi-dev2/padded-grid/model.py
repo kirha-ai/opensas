@@ -14,7 +14,7 @@ from grids import fma
 ORIGINS = ('fingerprint', 'direct_half_range')
 SPACINGS = ('original_range', 'padded_endpoints')
 DECISIONS = ('q_div_up', 'q_div_even', 'q_inverse_up', 'q_inverse_even') + tuple(
-    center+'_'+decision for center in ('relative', 'absolute', 'absolute_fma')
+    center+'_'+decision for center in ('relative', 'absolute', 'absolute_fma', 'relative_fraction')
     for decision in ('distance_left', 'distance_right', 'midpoint_left', 'midpoint_right'))
 
 
@@ -36,7 +36,9 @@ def parameters(low, high, origin_method, spacing_method):
 def grid(low, high, origin_method, spacing_method, representation):
     p = parameters(low, high, origin_method, spacing_method)
     o, d = p['origin'], p['step']
-    if representation == 'relative':
+    if representation == 'relative_fraction':
+        values = tuple((j/400)*(p['upper']-o) for j in range(401))
+    elif representation == 'relative':
         values = tuple(j*d for j in range(401))
     elif representation == 'absolute':
         values = tuple((o+j*d)-o for j in range(401))
@@ -55,7 +57,9 @@ def padded_index(x, low, high, origin_method, spacing_method, decision):
     if decision.startswith('q_'):
         q = z/d if decision.startswith('q_div') else z*(1/d)
         return int(q+.5) if decision.endswith('_up') else round(q)
-    if decision.startswith('absolute_fma_'):
+    if decision.startswith('relative_fraction_'):
+        representation, rule = 'relative_fraction', decision[len('relative_fraction_'):]
+    elif decision.startswith('absolute_fma_'):
         representation, rule = 'absolute_fma', decision[len('absolute_fma_'):]
     elif decision.startswith('absolute_'):
         representation, rule = 'absolute', decision[len('absolute_'):]

@@ -38,3 +38,19 @@ in model.py (fingerprint origin and R/200 spacing first), freeze its code/hash
 and identity BEFORE new heldout outcomes, and run new indices/domains AND
 independent whole-sample bandwidth probes. Only then implement a raw adapter.
 Metadata and degenerate/numerical-boundary behavior must remain explicit.
+
+## Recorded discovery amendment, before any fresh oracle outcomes
+
+The initial 64 configurations failed (best 129/163 and 4/6 thresholds).
+Their complete results are retained in discovery64-results.json; they are not
+overwritten as successful or omitted from acceptance.
+
+The remaining threshold errors of the best configuration are all at k=88.
+One narrowly justified center-construction order was missing: a 401-point
+linspace can compute relative centers as (j/400)*(u-o), rather than j*step.
+The two orders differ by one ULP at relevant centers. Add ONLY this relative
+fraction representation with the same four decisions and existing origins/
+spacings: 16 additional configurations, total 80. No other family or tolerance
+is added. This is an explicit amendment to the initial discovery stop rule,
+not a claim that the original 64-model family passed. The selected mechanism
+must still be frozen before fresh heldouts, and all old prerequisites stand.
