@@ -1,0 +1,15 @@
+ods graphics off;ods exclude all;
+data d;do i=1 to 40;u=((i-.5)/40)**1.5;x=sqrt(-2*log(1-u));output;end;run;
+%macro p(id,opts);
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(r1,rayleigh(sigma=1 edfseed=13579 edfnsamples=10000));
+%p(r2,rayleigh(sigma=1 edfseed=13579 edfnsamples=10000));
+%p(re,rayleigh(edfseed=13579 edfnsamples=10000));
+%p(g,gumbel(mu=0 sigma=1 edfseed=13579 edfnsamples=10000));
+%p(i,igauss(mu=1 lambda=1 edfseed=13579 edfnsamples=10000));
+%p(p,pareto(theta=0 sigma=1 alpha=-.5 edfseed=13579 edfnsamples=10000));

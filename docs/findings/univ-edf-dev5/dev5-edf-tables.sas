@@ -1,0 +1,17 @@
+ods graphics off; ods exclude all;
+%macro probe(id,gen,opts);
+data d;do n=20,100,500;do g=0 to 160;do i=1 to n;u=((i-.5)/n)**(1+g*.025);x=&gen;output;end;end;end;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by n g;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%probe(nmu,quantile('normal',u),normal(mu=0));
+%probe(nsig,quantile('normal',u),normal(sigma=1));
+%probe(exp,-log(1-u),exponential(theta=0));
+%probe(expboth,-log(1-u),exponential(theta=est));
+%probe(exptheta,-log(1-u),exponential(theta=est sigma=1));
+%probe(wboth,(-log(1-u))**.5,weibull(theta=0));
+%probe(wc,(-log(1-u))**.5,weibull(theta=0 c=2));
+%probe(wsig,(-log(1-u))**.5,weibull(theta=0 sigma=1));

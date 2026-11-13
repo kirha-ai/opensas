@@ -1,0 +1,16 @@
+ods graphics off;ods exclude all;
+%macro p(id,gen,opts);
+data d;do n=37,83;do g=0 to 60;do i=1 to n;u=((i-.37)/(n+.26))**(1+g*.121);x=&gen;output;end;end;end;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by n g;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(nmu,quantile('normal',u),normal(mu=0));
+%p(nsig,quantile('normal',u),normal(sigma=1));
+%p(lz,exp(quantile('normal',u)),lognormal(zeta=0));
+%p(ls,exp(quantile('normal',u)),lognormal(sigma=1));
+%p(wboth,(-log1px(-u))**(1/.7),weibull(theta=0));
+%p(wc,(-log1px(-u))**(1/4),weibull(theta=0 c=4));
+%p(wsig,(-log1px(-u))**(1/.7),weibull(theta=0 sigma=1));
