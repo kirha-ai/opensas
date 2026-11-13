@@ -21,7 +21,8 @@ pub fn logLikelihood(family: Family, x: []const f64, p: Parameters) f64 {
     if (family != .pareto and (!(p.alpha > 0) or !(p.beta > 0) or !std.math.isFinite(p.beta))) return -std.math.inf(f64);
     var sum: f64 = 0;
     const beta = if (family == .power) 1 else p.beta;
-    const lb = if (family == .beta) f.lgammaOf(p.alpha) + f.lgammaOf(beta) - f.lgammaOf(p.alpha + beta) else if (family == .power) -@log(p.alpha) else 0;
+    // B(alpha,1)=1/alpha exactly, including the power boundary limit.
+    const lb = if (family == .beta and beta != 1) f.lgammaOf(p.alpha) + f.lgammaOf(beta) - f.lgammaOf(p.alpha + beta) else if (family != .pareto) -@log(p.alpha) else 0;
     for (x) |v| {
         const y = (v - p.theta) / p.sigma;
         if (!(y > 0)) return -std.math.inf(f64);
@@ -36,7 +37,7 @@ pub fn logLikelihood(family: Family, x: []const f64, p: Parameters) f64 {
             const ratio = if (@abs(a) < 1e-5) -y * (1 + a * (0.5 + a * (1.0 / 3.0 + a / 4))) else std.math.log1p(-a) / p.alpha;
             sum += -@log(p.sigma) + (1 - p.alpha) * ratio;
         } else {
-            if (family == .power and y == 1) {
+            if (beta == 1 and y == 1) {
                 sum += @log(p.alpha / p.sigma);
                 continue;
             }
@@ -489,4 +490,64 @@ test "endpoint affine invariance and explicit unsupported method and budget stat
     try std.testing.expectEqual(Reason.invalid_sample, fit(.beta, &.{ 2, 1 }, .{}, .{}).nonconverged.reason);
     try std.testing.expectEqual(Reason.invalid_parameters, fit(.beta, &.{ 0.1, 0.2 }, .{ .sigma = -1 }, .{}).nonconverged.reason);
     try std.testing.expectEqual(Reason.invalid_sample, fit(.pareto, &.{ 1, std.math.nan(f64) }, .{}, .{}).nonconverged.reason);
+}
+
+test "endpoint power and beta second shape one share the same likelihood including upper boundary" {
+    const x = [_]f64{ 0.1, 0.2, 0.4, 0.8, 1 };
+    for ([_]f64{ 0.5, 1, 2, 7 }) |alpha| {
+        for ([_]f64{ 1, 1.2, 3 }) |sigma| {
+            const p: Parameters = .{ .alpha = alpha, .beta = 1, .sigma = sigma };
+            try std.testing.expectEqual(logLikelihood(.power, &x, p), logLikelihood(.beta, &x, p));
+        }
+    }
+    // The likelihood's one-sided boundary extension is not a relaxation of
+    // SAS validation for an explicitly supplied endpoint equal to the data.
+    try std.testing.expectEqual(Reason.outside_support, fit(.beta, &x, .{ .sigma = 1, .alpha = 2, .beta = 1 }, .{}).nonconverged.reason);
+}
+
+test "endpoint positive Pareto is a reflected power likelihood with analytic scores" {
+    const p: Parameters = .{ .theta = -2, .sigma = 7, .alpha = 0.3 };
+    const x = [_]f64{ -1, 0, 2, 3, 5 };
+    var reflected: [x.len]f64 = undefined;
+    const width = p.sigma / p.alpha;
+    for (&reflected, x) |*y, v| y.* = p.theta + width - v;
+    const power: Parameters = .{ .sigma = width, .alpha = 1 / p.alpha };
+    try std.testing.expectApproxEqAbs(logLikelihood(.pareto, &x, p), logLikelihood(.power, &reflected, power), 1e-12);
+    // Check the physical scale score against the density, independently of
+    // profile coordinates and the optimizer's numerical derivatives.
+    var score: f64 = 0;
+    for (x) |v| score += -1 / p.sigma + (1 - p.alpha) * (v - p.theta) / (p.sigma * (p.sigma - p.alpha * (v - p.theta)));
+    var plus = p;
+    var minus = p;
+    plus.sigma += 1e-5;
+    minus.sigma -= 1e-5;
+    const numerical = (logLikelihood(.pareto, &x, plus) - logLikelihood(.pareto, &x, minus)) / 2e-5;
+    try std.testing.expectApproxEqAbs(score, numerical, 1e-9);
+}
+
+test "endpoint SAS returned fallback curves admit feasible likelihood improvements" {
+    var x: [41]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const q = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 41.25;
+        v.* = q * q;
+    }
+    // HEX16 ODS values from solver-diagnostics.log, not rounded table text.
+    const sas_power: Parameters = .{ .theta = -0.0004709966269561704, .sigma = 0.9716969696969697, .alpha = 0.528649722075328 };
+    const original = logLikelihood(.power, &x, sas_power);
+    try std.testing.expectEqual(original, logLikelihood(.beta, &x, sas_power));
+    var next = sas_power;
+    next.theta += 0.1 * (x[0] - sas_power.theta);
+    try std.testing.expect(logLikelihood(.power, &x, next) > original);
+    next = sas_power;
+    next.sigma -= 0.1 * (sas_power.theta + sas_power.sigma - x[x.len - 1]);
+    try std.testing.expect(logLikelihood(.power, &x, next) > original);
+
+    const y = [_]f64{ 3, 4, 5, 6, 8, 10, 12, 17 };
+    const sas_pareto: Parameters = .{ .sigma = 17.793117455502788, .alpha = 1.0451945031410557 };
+    next = sas_pareto;
+    next.sigma -= 0.1 * (sas_pareto.sigma - sas_pareto.alpha * y[y.len - 1]);
+    try std.testing.expect(std.math.isFinite(logLikelihood(.pareto, &y, next)));
+    try std.testing.expect(logLikelihood(.pareto, &y, next) > logLikelihood(.pareto, &y, sas_pareto));
+    // This establishes why these oracle curves cannot be used as expected
+    // stationary optima. It does NOT waive matching their public output.
 }
