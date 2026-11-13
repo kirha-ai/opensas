@@ -72,6 +72,7 @@ test {
     _ = @import("proc.zig");
     _ = @import("stat/corr.zig");
     _ = @import("stat/normality.zig");
+    _ = @import("stat/univ_edf_inference.zig");
     _ = @import("macro.zig");
     _ = @import("sql.zig");
 }
