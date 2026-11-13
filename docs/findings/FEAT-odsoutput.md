@@ -17,7 +17,11 @@ order, warns for absent objects, and expires requests after the next PROC.
 Minimal hooks: corr.zig after compute/before render; freq.zig after typed table
 construction/before rendering; proc.zig in the existing UNIVARIATE per-variable
 computation. Schema adapters live in separate stat/ods_* files. No algorithm
-files were rewritten. CORR advanced mode compatibility is checked at landing.
+files were rewritten. The independently landing advanced CORR producer was
+read at report time: partial pairs and rank/ordinal SimpleStats change meanings
+or columns. The adapter explicitly rejects those capture combinations until
+verified schemas are added; it cannot mislabel them as ordinary Pearson output.
+This guard tolerates both the current and advanced Result shapes at compile time.
 
 ## Supported named-table contract
 

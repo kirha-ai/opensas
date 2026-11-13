@@ -8,6 +8,7 @@ const b = @import("ods_table.zig");
 pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture, result: corr.Result) diag.Error!void {
     const spec = result.spec;
     if (spec.options.noprint) return;
+    try validateMode(d, capture, spec);
     for (result.groups) |group| {
         var label_len: usize = 0;
         var name_len: usize = 1;
@@ -59,4 +60,39 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
             try capture.publish(a, d, "PearsonCorr", &t.ds);
         }
     }
+}
+// The advanced producer is landing independently. Do not interpret its partial
+// pairs or rank-specific SimpleStats schema as the ordinary Pearson objects.
+// The compile-time field checks also preserve the pre-advanced Result contract.
+fn validateMode(d: *diag.Diagnostics, capture: *const ods.Capture, spec: anytype) diag.Error!void {
+    if (!capture.wants("PearsonCorr") and !capture.wants("SimpleStats")) return;
+    if (@hasField(@TypeOf(spec), "partial")) if (spec.partial.len > 0) {
+        diag.markGap();
+        return d.fail(error.ParseError, 0, "ODS OUTPUT: partial CORR table schemas are not supported", .{});
+    };
+    inline for (.{ "spearman", "kendall", "hoeffding" }) |field| {
+        if (@hasField(@TypeOf(spec.options), field)) if (@field(spec.options, field)) {
+            diag.markGap();
+            return d.fail(error.ParseError, 0, "ODS OUTPUT: rank CORR table schemas are not supported", .{});
+        };
+    }
+    inline for (.{ "polychoric", "polyserial" }) |field| {
+        if (@hasField(@TypeOf(spec.options), field)) if (@field(spec.options, field) != null) {
+            diag.markGap();
+            return d.fail(error.ParseError, 0, "ODS OUTPUT: ordinal CORR table schemas are not supported", .{});
+        };
+    }
+}
+
+test "FEAT-odsoutput richer CORR producers cannot mislabel captured tables" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var capture: ods.Capture = .{};
+    try capture.parse(a, &d, try @import("../lexer.zig").tokenize(a, "ods output PearsonCorr=p SimpleStats=s;", &d));
+    try std.testing.expectError(error.ParseError, validateMode(&d, &capture, .{ .options = .{}, .partial = &[_]usize{1} }));
+    try std.testing.expectError(error.ParseError, validateMode(&d, &capture, .{ .options = .{ .spearman = true } }));
+    try std.testing.expectError(error.ParseError, validateMode(&d, &capture, .{ .options = .{ .polychoric = @as(?u8, 1) } }));
+    try std.testing.expect(d.hasErrors());
 }
