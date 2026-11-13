@@ -1,0 +1,14 @@
+options nonumber nodate;
+data j; do i=1 to 101; z=probit((i-.375)/101.25); b=1/(1+exp((.4-z)/1.2)); u=3+2*sinh((z-.4)/1.2); output; end; run;
+%macro fit(v,f,opts,label);
+title "&label";
+proc univariate data=j; var &v; histogram &v / &f(fitmethod=&opts) noplot; run;
+%mend;
+%fit(b,sb,moments,SB moments default);
+%fit(b,sb,moments theta=est sigma=est,SB moments estimated);
+%fit(b,sb,mle,SB MLE default);
+%fit(b,sb,mle theta=est sigma=est,SB MLE estimated);
+%fit(u,su,moments,SU moments estimated);
+%fit(u,su,moments theta=3 sigma=2,SU moments fixed);
+%fit(u,su,mle optseed=123,SU MLE estimated);
+%fit(u,su,mle theta=3 sigma=2 optseed=123,SU MLE fixed);
