@@ -347,22 +347,20 @@ test "endpoint SAS degeneracy, uniform boundary and failed endpoint fits" {
     try std.testing.expectEqual(Reason.unsupported_combination, fit(.pareto, x, .{ .theta = null }, .{}).nonconverged.reason);
 }
 
-test "endpoint boundary power curves remain warned and Pareto absent roots remain loud" {
+test "endpoint stopped power curves remain explicit and Pareto absent roots remain loud" {
     var x: [41]f64 = undefined;
     for (&x, 0..) |*v, i| {
         const q = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 41.25;
         v.* = q * q;
     }
     const r = fit(.power, &x, .{}, .{});
-    try std.testing.expectEqual(Reason.boundary_solution, r.nonconverged.reason);
+    try std.testing.expectEqual(Reason.nonstationary_candidate, r.nonconverged.reason);
     const p = r.nonconverged.best.?.parameters;
-    try std.testing.expectEqual(x[40], p.sigma);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.5176533456070203), p.alpha, 1e-12);
-    // SAS finite-stopped curve: sigma=.971697, alpha=.517165. This exact
-    // boundary optimum is within .002 scale and .0005 shape, never labelled
-    // an interior optimum or exact SAS optimizer replication.
-    try std.testing.expectApproxEqAbs(@as(f64, 0.971697), p.sigma, 0.002);
-    try std.testing.expectApproxEqAbs(@as(f64, 0.517165), p.alpha, 0.0005);
+    // M9's returned pilot, not the earlier mathematical max(x) boundary
+    // substitution. Retained HEX16 estimates establish the new expectation.
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9716969696969697), p.sigma, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5171650979229946), p.alpha, 5e-5);
+    try std.testing.expect(p.sigma > x[40]);
     try std.testing.expect(std.math.isFinite(r.nonconverged.best.?.log_likelihood));
     for ([_]f64{ 1, 3, 4 }) |shift| {
         var y = [_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 };
@@ -612,4 +610,54 @@ test "endpoint fixed power scale bypasses the four-moment initializer" {
     const estimated = fit(.power, &x, .{ .theta = 0 }, .{});
     try std.testing.expectEqual(Reason.initialization_failed, estimated.nonconverged.reason);
     try std.testing.expect(estimated.nonconverged.best == null);
+}
+
+test "endpoint fixed-theta power prospective oracle candidate and retained inadmissible-pilot gap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var rows = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_power_dev3_cases.txt"), '\n');
+    var matched: usize = 0;
+    var unresolved: usize = 0;
+    while (rows.next()) |row| {
+        if (row[0] == '#') continue;
+        var fields = std.mem.splitScalar(u8, row, '|');
+        const id = fields.next().?;
+        const theta = try std.fmt.parseFloat(f64, fields.next().?);
+        const raw_alpha = fields.next().?;
+        const alpha = if (std.mem.eql(u8, raw_alpha, "est")) null else try std.fmt.parseFloat(f64, raw_alpha);
+        const expected_sigma = fields.next().?;
+        const expected_alpha = fields.next().?;
+        var samples = std.mem.splitScalar(u8, fields.next().?, ',');
+        var x: std.ArrayList(f64) = .empty;
+        while (samples.next()) |value| try x.append(arena.allocator(), try std.fmt.parseFloat(f64, value));
+        const result = fit(.power, x.items, .{ .theta = theta, .alpha = alpha }, .{});
+        try std.testing.expect(result == .nonconverged);
+        const got = result.nonconverged;
+        if (std.mem.eql(u8, expected_sigma, "est")) {
+            try std.testing.expect(got.best == null);
+            matched += 1;
+            continue;
+        }
+        if (got.best == null) {
+            // This invalid-four-moment/free-alpha case returns a curve in SAS.
+            // Keep the mismatch visible, not silently converted to a golden
+            // failure or hidden by dropping the row from the oracle corpus.
+            try std.testing.expectEqualStrings("initial_edge_04", id);
+            try std.testing.expectEqual(Reason.initialization_failed, got.reason);
+            unresolved += 1;
+            continue;
+        }
+        try std.testing.expectEqual(Reason.nonstationary_candidate, got.reason);
+        const p = got.best.?.parameters;
+        try std.testing.expectEqual(theta, p.theta);
+        if (alpha) |a| try std.testing.expectEqual(a, p.alpha);
+        const sigma = try std.fmt.parseFloat(f64, expected_sigma);
+        try std.testing.expectApproxEqAbs(sigma, p.sigma, 1e-10 * (1 + sigma));
+        try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, expected_alpha), p.alpha, 5e-5);
+        try std.testing.expect(p.sigma > x.items[x.items.len - 1] - theta);
+        try std.testing.expect(std.math.isFinite(got.best.?.log_likelihood));
+        matched += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 84), matched);
+    try std.testing.expectEqual(@as(usize, 1), unresolved);
 }
