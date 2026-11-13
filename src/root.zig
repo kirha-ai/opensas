@@ -23,6 +23,7 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/corr_hoeffding_probability.zig");
     _ = @import("ods.zig");
     _ = @import("stat/freq_stratified_execute.zig");
     _ = @import("stat/freq_stratified_render.zig");
