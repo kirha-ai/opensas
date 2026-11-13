@@ -94,6 +94,7 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
             .a2 = interpolate(s.a2, &.{ 1.248, 1.610, 1.933, 2.492, 3.070, 3.880, 4.500, 6.000 }, &levels),
         };
     }
+    if (r.family == .exponential) return exponentialEstimated(s, n, e);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
         if (location and e.sigma) {
@@ -132,6 +133,168 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
         };
     }
     return d.fail(error.ParseError, 0, "UNIVARIATE: EDF inference requires unimplemented parameter-dependent tables or a simulation callback for {s}", .{@tagName(r.family)});
+}
+
+// SAS M9 exponential response surfaces, extracted from piecewise-linear
+// probability segments at ten sample sizes, independently checked at nine more.
+// Order: median, 0.25, 0.20, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005, 0.0025, 0.001.
+// The median and 0.25 are TWO separate upper bounds; no interpolation between
+// them. Coefficients parameterize log critical values (sqrt(n)*D for D).
+const exponential_levels = [_]f64{ 0.5, 0.25, 0.20, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005, 0.0025, 0.001 };
+const exp_d = [_][3]f64{
+    .{ -0.34884625, -0.2237514, 0.17486795 },
+    .{ -0.16567106, -0.21533671, 0.0811213 },
+    .{ -0.12109459, -0.2053766, -0.04688748 },
+    .{ -0.06896504, -0.19554437, -0.19590888 },
+    .{ -0.00260487, -0.20086635, -0.19138697 },
+    .{ 0.09382164, -0.21179441, -0.22651095 },
+    .{ 0.1753938, -0.22531372, -0.27868198 },
+    .{ 0.26713071, -0.23995834, -0.43034813 },
+    .{ 0.32615868, -0.24779166, -0.76755233 },
+    .{ 0.37922604, -0.24382217, -1.2217659 },
+    .{ 0.43764642, -0.22806409, -1.81134551 },
+};
+const exp_w = [_][2]f64{
+    .{ -2.6056895, 0.18479393 },
+    .{ -2.1568413, 0.04187505 },
+    .{ -2.04413, 0.02149181 },
+    .{ -1.9123271, -0.01537821 },
+    .{ -1.7469892, -0.09140959 },
+    .{ -1.5067391, -0.24603488 },
+    .{ -1.3066812, -0.37657834 },
+    .{ -1.0831492, -0.58328568 },
+    .{ -0.93636232, -0.8041545 },
+    .{ -0.8055666, -0.95564045 },
+    .{ -0.65283933, -1.192646 },
+};
+const exp_a = [_][2]f64{
+    .{ -0.70180186, -0.2147402 },
+    .{ -0.30653442, -0.30192468 },
+    .{ -0.20555538, -0.31465587 },
+    .{ -0.08816246, -0.33593033 },
+    .{ 0.05996144, -0.38303162 },
+    .{ 0.27846455, -0.45957353 },
+    .{ 0.46388675, -0.45493574 },
+    .{ 0.67090395, -0.36978474 },
+    .{ 0.8078886, -0.21808416 },
+    .{ 0.92997681, 0.00896518 },
+    .{ 1.0763137, 0.26815749 },
+};
+const exptheta_d = [_][3]f64{
+    .{ -0.1880318, -0.20652846, 0.18711928 },
+    .{ 0.01898755, -0.16679491, -0.26921778 },
+    .{ 0.0711226, -0.16755907, -0.26471205 },
+    .{ 0.13006802, -0.16454187, -0.16196104 },
+    .{ 0.20267903, -0.15293427, -0.26803949 },
+    .{ 0.30668926, -0.14267496, -0.53471849 },
+    .{ 0.39336034, -0.13646324, -0.79360973 },
+    .{ 0.49029461, -0.14551843, -0.85934334 },
+    .{ 0.5533429, -0.01604847, -0.86389918 },
+    .{ 0.60357367, -0.1259946, -1.4966097 },
+    .{ 0.66971909, -0.13547152, -2.0135789 },
+};
+const exptheta_w = [_][2]f64{
+    .{ -2.1308363, 0.21272455 },
+    .{ -1.5618844, 0.04205112 },
+    .{ -1.4203776, 0.01837406 },
+    .{ -1.2582052, -0.01466264 },
+    .{ -1.0567643, -0.07569159 },
+    .{ -0.77417375, -0.21282362 },
+    .{ -0.54428916, -0.3561997 },
+    .{ -0.30102612, -0.4572686 },
+    .{ -0.1401565, -0.63000387 },
+    .{ -0.00324516, -0.80758823 },
+    .{ 0.1517132, -1.0320772 },
+};
+const exptheta_a = [_][2]f64{
+    .{ -0.2555143, -0.07775099 },
+    .{ 0.22181459, -0.01800514 },
+    .{ 0.34317831, -0.00545342 },
+    .{ 0.48201135, 0.04086803 },
+    .{ 0.65800011, 0.07632829 },
+    .{ 0.91253926, 0.10267162 },
+    .{ 1.12219051, 0.13559866 },
+    .{ 1.3517246, 0.18626199 },
+    .{ 1.50407819, 0.15393238 },
+    .{ 1.64011453, 0.105906 },
+    .{ 1.79272159, 0.12212243 },
+};
+const expboth_d = [_][4]f64{
+    .{ -0.348134, -0.23732181, -0.43764886, -0.94529455 },
+    .{ -0.16995139, -0.16266977, -0.64539379, -0.3113225 },
+    .{ -0.12199367, -0.19751486, -0.52355559, -0.63246777 },
+    .{ -0.0690534, -0.20376548, -0.48039334, -0.91170047 },
+    .{ -0.00235169, -0.21865553, -0.40470909, -1.3508482 },
+    .{ 0.09381459, -0.22891231, -0.38984819, -1.4857804 },
+    .{ 0.17697729, -0.26783961, -0.23664388, -2.2226247 },
+    .{ 0.26510385, -0.22159365, -0.42923785, -2.2670288 },
+    .{ 0.32672117, -0.29924764, -0.12438271, -3.3586959 },
+    .{ 0.3866408, -0.40324334, 0.22997952, -4.5193242 },
+    .{ 0.43334322, -0.14035849, -0.76510682, -2.1654585 },
+};
+const expboth_w = [_][3]f64{
+    .{ -2.5823807, -0.40159718, -0.41659897 },
+    .{ -2.1384254, -0.2658554, -1.1064228 },
+    .{ -2.0310676, -0.18536061, -1.3705747 },
+    .{ -1.9065991, -0.0958071, -1.6719008 },
+    .{ -1.7492204, 0.02456784, -2.0779952 },
+    .{ -1.5101355, 0.06148346, -2.3695116 },
+    .{ -1.3149815, 0.13385682, -2.6999987 },
+    .{ -1.0920466, 0.19236082, -3.1117203 },
+    .{ -0.95338453, 0.30120114, -3.5821639 },
+    .{ -0.83692236, 0.4330389, -3.9851576 },
+    .{ -0.6960093, 0.51963659, -4.2926435 },
+};
+const expboth_a = [_][4]f64{
+    .{ -0.71940969, -4.3586614, 26.7976435, -65.225476 },
+    .{ -0.317372, -4.9944919, 29.3455876, -76.490117 },
+    .{ -0.21629039, -5.0192176, 28.2869663, -73.443849 },
+    .{ -0.100039, -4.8589883, 24.4478564, -61.67257 },
+    .{ 0.0488662, -4.8582838, 22.7715691, -57.88102 },
+    .{ 0.26948285, -5.0615871, 23.0002786, -60.74452 },
+    .{ 0.45296004, -4.8844429, 18.7644176, -49.035546 },
+    .{ 0.65739, -4.4492338, 11.5929654, -29.918027 },
+    .{ 0.79209856, -4.2458822, 8.99352021, -25.56038 },
+    .{ 0.91671452, -4.1969881, 6.07805512, -11.966731 },
+    .{ 1.067331, -3.116039, -2.77214797, 13.19961773 },
+};
+
+fn exponentialProbability(value: f64, critical: []const f64) Probability {
+    if (value < critical[0]) return .{ .value = 0.5, .sign = .greater };
+    return interpolate(value, critical[1..], exponential_levels[1..]);
+}
+
+/// n is the ORIGINAL sample size. When only theta is estimated, SAS excludes
+/// one fitted minimum from the EDF sample: the caller must compute raw D/W2/A2
+/// on those n-1 observations. The probability correction also uses n-1.
+fn exponentialEstimated(s: Statistics, n: usize, e: Estimated) Result {
+    const effective_n = n - @as(usize, if (e.theta and !e.sigma) 1 else 0);
+    // M9 emits no EDF table with fewer than five effective observations.
+    if (effective_n < 5) return .{};
+    const nf: f64 = @floatFromInt(effective_n);
+    const inv = 1 / nf;
+    const root_inv = @sqrt(inv);
+    var d: [11]f64 = undefined;
+    var w: [11]f64 = undefined;
+    var a: [11]f64 = undefined;
+    for (0..11) |i| {
+        if (e.theta and e.sigma) {
+            const dc = expboth_d[i];
+            const wc = expboth_w[i];
+            const ac = expboth_a[i];
+            d[i] = @exp(dc[0] + dc[1] * root_inv + dc[2] * inv + dc[3] * inv * inv) * root_inv;
+            w[i] = @exp(wc[0] + wc[1] * root_inv + wc[2] * inv);
+            a[i] = @exp(ac[0] + inv * (ac[1] + inv * (ac[2] + inv * ac[3])));
+        } else {
+            const dc = if (e.theta) exptheta_d[i] else exp_d[i];
+            const wc = if (e.theta) exptheta_w[i] else exp_w[i];
+            const ac = if (e.theta) exptheta_a[i] else exp_a[i];
+            d[i] = @exp(dc[0] + dc[1] * root_inv + dc[2] * inv * inv) * root_inv;
+            w[i] = @exp(wc[0] + wc[1] * inv);
+            a[i] = @exp(ac[0] + ac[1] * inv);
+        }
+    }
+    return .{ .d = exponentialProbability(s.d, &d), .w2 = exponentialProbability(s.w2, &w), .a2 = exponentialProbability(s.a2, &a) };
 }
 
 pub const SimulationOptions = struct {
@@ -331,7 +494,44 @@ test "dev5 EDF unimplemented inference differs from documented unavailability" {
     try std.testing.expectEqual(Result{}, unavailable);
     try std.testing.expect(!d.hasErrors());
     try std.testing.expectError(error.ParseError, tabulated(&d, .{ .family = .gamma, .estimated = .{ .theta = true }, .alpha = 2 }, s, 30));
-    try std.testing.expectError(error.ParseError, tabulated(&d, .{ .family = .exponential, .estimated = .{ .sigma = true } }, s, 30));
+    try std.testing.expect((try tabulated(&d, .{ .family = .exponential, .estimated = .{ .sigma = true } }, s, 30)).d != null);
     try std.testing.expectError(error.ParseError, tabulated(&d, .{ .family = .normal }, s, 0));
     try std.testing.expect(d.hasErrors());
+}
+
+test "dev5 EDF exponential all estimation masks independent M9 holdouts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var lines = std.mem.splitScalar(u8, @embedFile("testdata/univ_edf_dev5_exponential.txt"), '\n');
+    var count: usize = 0;
+    while (lines.next()) |line| {
+        if (line.len == 0) continue;
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const id = fields.next().?;
+        const n = try std.fmt.parseInt(usize, fields.next().?, 10);
+        _ = fields.next().?;
+        const statistic = fields.next().?;
+        const value = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected = try std.fmt.parseFloat(f64, fields.next().?);
+        const sign = fields.next().?;
+        const e: Estimated = if (std.mem.eql(u8, id, "exp")) .{ .sigma = true } else if (std.mem.eql(u8, id, "exptheta")) .{ .theta = true } else .{ .theta = true, .sigma = true };
+        var s: Statistics = .{ .d = 0, .w2 = 0, .a2 = 0 };
+        const test_d = std.mem.eql(u8, statistic, "D");
+        const test_w = std.mem.eql(u8, statistic, "W-Sq");
+        if (test_d) s.d = value else if (test_w) s.w2 = value else s.a2 = value;
+        const result = try tabulated(&d, .{ .family = .exponential, .estimated = e }, s, n);
+        const p = if (test_d) result.d.? else if (test_w) result.w2.? else result.a2.?;
+        try std.testing.expectApproxEqAbs(expected, p.value, 2e-10);
+        const expected_sign: Sign = if (std.mem.eql(u8, sign, ">")) .greater else if (std.mem.eql(u8, sign, "<")) .less else .exact;
+        try std.testing.expectEqual(expected_sign, p.sign);
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 9438), count);
+    const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    for (2..5) |n| {
+        try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .exponential, .estimated = .{ .sigma = true } }, s, n));
+        try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .exponential, .estimated = .{ .sigma = true, .theta = true } }, s, n));
+    }
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .exponential, .estimated = .{ .theta = true } }, s, 5));
 }
