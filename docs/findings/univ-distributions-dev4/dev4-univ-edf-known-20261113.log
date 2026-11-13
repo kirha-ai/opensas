@@ -1,0 +1,80 @@
+The SAS System
+
+36         
+37         ods graphics off;
+38         ods exclude all;
+39         data d;do n=20,100,500;do g=0 to 40;do i=1 to n;x=quantile('normal',((i-.5)/n)**(1+g*.025));output;end;end;
+39       ! end;run;
+
+NOTE: The data set WORK.D has 25420 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1364.57k
+      OS Memory           12712.00k
+      Timestamp           11/13/2026 06:00:42 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     303
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1800
+      
+
+40         ods output GoodnessOfFit=gof;
+41         proc univariate data=d noprint;by n g;histogram x / noplot normal(mu=0 sigma=1);run;
+
+NOTE: The data set WORK.GOF has 369 observations and 11 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.04 seconds
+      user cpu time       0.04 seconds
+      system cpu time     0.01 seconds
+      memory              2294.93k
+      OS Memory           15408.00k
+      Timestamp           11/13/2026 06:00:42 AM
+      Step Count                        3  Switch Count  9
+      Page Faults                       0
+      Page Reclaims                     749
+      Page Swaps                        0
+      Voluntary Context Switches        37
+      Involuntary Context Switches      2
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+42         ods exclude none;
+43         data _null_;set gof;file print;put n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|'
+43       ! pSign;run;
+
+NOTE: 369 lines were written to file PRINT.
+NOTE: There were 369 observations read from the data set WORK.GOF.
+NOTE: The DATA step printed pages 1-7.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              732.96k
+      OS Memory           14504.00k
+The SAS System
+
+      Timestamp           11/13/2026 06:00:42 AM
+      Step Count                        4  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     69
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+44         
+45         
+46         
+47         
+The SAS System
+
+48

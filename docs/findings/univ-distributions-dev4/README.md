@@ -39,8 +39,9 @@ output descriptors additionally pp.462–463. Rendering is outside this ticket.
 
 Computation must accept sorted finite samples after grouping and FREQ handling,
 return typed numerical results, and never render or perform ODS registration.
-Manager/dev5 integration needs statement dispatch in runUnivariate and per-group
-delivery to ODS. Blanket plot guards must not be silently removed without
+Dev4 owns statement dispatch in runUnivariate, per-group delivery to the landed
+ODS infrastructure, numerical rendering and output datasets. Manager coordinates
+landing and does not implement feature code. Blanket plot guards must not be silently removed without
 preserving diagnostics for unsupported graphics requests.
 
 ## Implementation checkpoint (not ticket acceptance)
@@ -57,6 +58,10 @@ preserving diagnostics for unsupported graphics requests.
 - `univ_distribution_parse.zig`: family parameter lists, EST, parameter
   aliases, gamma/Weibull iteration controls, Johnson percentile controls,
   PERCENTS, MIDPERCENTS and NOPRINT. Unknown options fail via captured diagnostics.
+- `univ_distribution_gof.zig`: complete-parameter EDF probability tables,
+  finite-sample corrections and stored p-value bound signs. Estimated-parameter
+  and simulation methods remain guarded; dev2 is a proposed disjoint owner
+  for those methods if manager dispatches that assignment.
 - `univ_kernel.zig`: three kernels, reflections, numeric and normal-reference
   MISE bandwidths; direct density and SAS's 128-interval binned/interpolated
   density are separate APIs. SJPI is explicitly unsupported.
@@ -105,6 +110,11 @@ Pareto failure are real SAS outcomes, not waived acceptance failures.
    and changes nonnormal requested kernels to normal with a warning. This is
    not reproduced by the tested standard direct-plugin/solve-equation pilot
    formulas. The SJPI request guard remains until its SAS variant is established.
+8. `edf-known`: 369 EDF rows over n=20/100/500 and 41 shape perturbations.
+   Complete-parameter table interpolation reproduces every stored probability
+   to max absolute error 7.511e-14, with zero bound-sign mismatches. Independent
+   fixed beta(2,3) probe agrees at displayed precision. Unit checks cover all
+   three sample sizes and both probability bounds.
 
 ### Remaining acceptance gaps
 
@@ -112,11 +122,11 @@ The ticket is NOT DONE. Remaining work includes:
 
 - Johnson MOMENTS/MLE and optimizer controls; beta/power endpoint/scale
   estimation; Pareto estimation and boundary convergence cases.
-- EDF availability rules, all probability tables/interpolation and simulation
-  controls. Raw statistics are not a substitute for those probabilities.
+- EDF availability rules, estimated-parameter probability tables/interpolation
+  and simulation controls. Complete-parameter probabilities are implemented.
 - SJPI; complete automatic output grids and OUTKERNEL/OUTHISTOGRAM descriptors,
   default bins, numeric range grammar and complete option-list semantics.
-- Full plot-statement parsing/PROC dispatch, table rendering and dev5 ODS
+- Full plot-statement parsing/PROC dispatch, table rendering and landed ODS
   delivery; BY/CLASS/FREQ/WEIGHT and empty/degenerate end-to-end acceptance.
 - Broader independent SAS verification of all distributions, parameter
   combinations, tails, rank options and numerical convergence boundaries.

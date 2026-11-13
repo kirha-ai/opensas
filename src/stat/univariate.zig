@@ -1785,4 +1785,5 @@ test {
     _ = @import("univ_kernel.zig");
     _ = @import("univ_distribution_parse.zig");
     _ = @import("univ_distribution_values.zig");
+    _ = @import("univ_distribution_gof.zig");
 }
