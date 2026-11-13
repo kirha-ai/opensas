@@ -1,0 +1,341 @@
+
+b=1
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+b    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1           2      100.00             2       100.00  
+
+
+Table of b by x
+
+b         x
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      1 |      1 |      2
+         |  50.00 |  50.00 | 100.00
+         |  50.00 |  50.00 |
+         | 100.00 | 100.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+
+Table of x by x
+
+x         x
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|  Total
+---------+--------+--------+
+       1 |      1 |      0 |      1
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+       2 |      0 |      1 |      1
+         |   0.00 |  50.00 |  50.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+b=2
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+b    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+2           2      100.00             2       100.00  
+
+
+Table of b by x
+
+b         x
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       2|       3|  Total
+---------+--------+--------+
+       2 |      1 |      1 |      2
+         |  50.00 |  50.00 | 100.00
+         |  50.00 |  50.00 |
+         | 100.00 | 100.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+
+Table of x by x
+
+x         x
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       2|       3|  Total
+---------+--------+--------+
+       2 |      1 |      0 |      1
+         |  50.00 |   0.00 |  50.00
+         | 100.00 |   0.00 |
+         | 100.00 |   0.00 |
+---------+--------+--------+
+       3 |      0 |      1 |      1
+         |   0.00 |  50.00 |  50.00
+         |   0.00 | 100.00 |
+         |   0.00 | 100.00 |
+---------+--------+--------+
+Total           1        1        2
+            50.00    50.00   100.00
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.C                                                   Observations          30 
+Member Type          DATA                                                     Variables             12 
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 05:14:21                                      Observation Length    344
+Last Modified        11/13/2026 05:14:21                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                                                                                                  
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            380                                                                                         
+Obs in First Data Page      30                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_workC7BF0001EABE_odaws02-euw1.oda.sas.com/SAS_                                 
+                            work9DB20001EABE_odaws02-euw1.oda.sas.com/c.sas7bdat                                        
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749234                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                            Variables in Creation Order
+ 
+ #    Variable      Type    Len    Format    Label
+
+ 1    b             Num       8                                                   
+ 2    Table         Char    256                                                   
+ 3    b2            Num       8                                                   
+ 4    x             Num       8                                                   
+ 5    _TYPE_        Char      2              Variables Contributing to Observation
+ 6    _TABLE_       Num       8              Table Number                         
+ 7    Frequency     Num       8    BEST7.    Frequency Count                      
+ 8    Percent       Num       8    F6.2      Percent of Two-Way Table Frequency   
+ 9    RowPercent    Num       8    F6.2      Percent of Row Frequency             
+10    ColPercent    Num       8    F6.2      Percent of Column Frequency          
+11    Missing       Num       8              Frequency Missing                    
+12    x2            Num       8                                                   
+
+                                                                                     Row        Col
+Obs    b       Table       b2    x    _TYPE_    _TABLE_    Frequency    Percent    Percent    Percent    Missing    x2
+
+  1    1    Table b * x     1    1      11         1              1      50.00      50.00     100.00        .        .
+  2    1    Table b * x     1    2      11         1              1      50.00      50.00     100.00        .        .
+  3    1    Table b * x     1    .      10         1              2     100.00        .          .          .        .
+  4    1    Table b * x     .    1      01         1              1      50.00        .          .          .        .
+  5    1    Table b * x     .    2      01         1              1      50.00        .          .          .        .
+  6    1    Table b * x     .    .      00         1              2     100.00        .          .          0        .
+  7    1    Table x * x     .    1      11         1              1      50.00     100.00     100.00        .        1
+  8    1    Table x * x     .    1      11         1              0       0.00       0.00       0.00        .        2
+  9    1    Table x * x     .    1      10         1              1      50.00        .          .          .        .
+ 10    1    Table x * x     .    2      11         1              0       0.00       0.00       0.00        .        1
+ 11    1    Table x * x     .    2      11         1              1      50.00     100.00     100.00        .        2
+ 12    1    Table x * x     .    2      10         1              1      50.00        .          .          .        .
+ 13    1    Table x * x     .    .      01         1              1      50.00        .          .          .        1
+ 14    1    Table x * x     .    .      01         1              1      50.00        .          .          .        2
+ 15    1    Table x * x     .    .      00         1              2     100.00        .          .          0        .
+ 16    2    Table b * x     2    2      11         1              1      50.00      50.00     100.00        .        .
+ 17    2    Table b * x     2    3      11         1              1      50.00      50.00     100.00        .        .
+ 18    2    Table b * x     2    .      10         1              2     100.00        .          .          .        .
+ 19    2    Table b * x     .    2      01         1              1      50.00        .          .          .        .
+ 20    2    Table b * x     .    3      01         1              1      50.00        .          .          .        .
+ 21    2    Table b * x     .    .      00         1              2     100.00        .          .          0        .
+ 22    2    Table x * x     .    2      11         1              1      50.00     100.00     100.00        .        2
+ 23    2    Table x * x     .    2      11         1              0       0.00       0.00       0.00        .        3
+ 24    2    Table x * x     .    2      10         1              1      50.00        .          .          .        .
+ 25    2    Table x * x     .    3      11         1              0       0.00       0.00       0.00        .        2
+ 26    2    Table x * x     .    3      11         1              1      50.00     100.00     100.00        .        3
+ 27    2    Table x * x     .    3      10         1              1      50.00        .          .          .        .
+ 28    2    Table x * x     .    .      01         1              1      50.00        .          .          .        2
+ 29    2    Table x * x     .    .      01         1              1      50.00        .          .          .        3
+ 30    2    Table x * x     .    .      00         1              2     100.00        .          .          0        .
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.O                                                   Observations          2  
+Member Type          DATA                                                     Variables             8  
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 05:14:21                                      Observation Length    312
+Last Modified        11/13/2026 05:14:21                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                One-Way Frequencies                                                               
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            419                                                                                         
+Obs in First Data Page      2                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_workC7BF0001EABE_odaws02-euw1.oda.sas.com/SAS_                                 
+                            work9DB20001EABE_odaws02-euw1.oda.sas.com/o.sas7bdat                                        
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749231                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                    Variables in Creation Order
+ 
+#    Variable        Type    Len    Format    Label
+
+1    b               Num       8                                  
+2    Table           Char    256                                  
+3    F_b             Char      1              b                   
+4    b2              Num       8              b                   
+5    Frequency       Num       8    BEST8.                        
+6    Percent         Num       8    6.2                           
+7    CumFrequency    Num       8    BEST8.    Cumulative Frequency
+8    CumPercent      Num       8    6.2       Cumulative Percent  
+
+                                                               Cum         Cum
+Obs    b     Table     F_b    b2    Frequency    Percent    Frequency    Percent
+
+ 1     1    Table b     1      1           2     100.00            2     100.00 
+ 2     2    Table b     2      2           2     100.00            2     100.00 
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           4    Sum Weights                  4
+Mean                        2    Sum Observations             8
+Std Deviation      0.81649658    Variance            0.66666667
+Skewness                    0    Kurtosis                   1.5
+Uncorrected SS             18    Corrected SS                 2
+Coeff Variation     40.824829    Std Error Mean      0.40824829
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.000000     Std Deviation            0.81650
+Median   2.000000     Variance                 0.66667
+Mode     2.000000     Range                    2.00000
+                      Interquartile Range      1.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  4.898979    Pr > |t|    0.0163
+Sign           M         2    Pr >= |M|   0.1250
+Signed Rank    S         5    Pr >= |S|   0.1250
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max           3.0
+99%                3.0
+95%                3.0
+90%                3.0
+75% Q3             2.5
+50% Median         2.0
+25% Q1             1.5
+10%                1.0
+5%                 1.0
+1%                 1.0
+0% Min             1.0
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+    2        3            2        2
+    2        2            2        3
+    3        4            3        4
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.SAME                                                Observations          6 
+Member Type          DATA                                                     Variables             7 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 05:14:21                                      Observation Length    72
+Last Modified        11/13/2026 05:14:21                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Moments                                                                          
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            1816                                                                                        
+Obs in First Data Page      6                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_workC7BF0001EABE_odaws02-euw1.oda.sas.com/SAS_                                 
+                            work9DB20001EABE_odaws02-euw1.oda.sas.com/same.sas7bdat                                     
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749229                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+      Variables in Creation Order
+ 
+#    Variable    Type    Len    Format
+
+1    VarName     Char      1          
+2    Label1      Char     15          
+3    cValue1     Char     10          
+4    nValue1     Num       8    D12.3 
+5    Label2      Char     16          
+6    cValue2     Char     10          
+7    nValue2     Num       8    D12.3 

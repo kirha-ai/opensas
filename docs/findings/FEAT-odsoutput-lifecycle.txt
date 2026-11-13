@@ -1,0 +1,399 @@
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       2.00000       1.00000       6.00000       1.00000       3.00000
+y                  3       3.00000       1.00000       9.00000       2.00000       4.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       0.50000
+                       0.6667
+
+y       0.50000       1.00000
+         0.6667              
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean                        2    Sum Observations             6
+Std Deviation               1    Variance                     1
+Skewness                    0    Kurtosis                     .
+Uncorrected SS             14    Corrected SS                 2
+Coeff Variation            50    Std Error Mean      0.57735027
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.000000     Std Deviation            1.00000
+Median   2.000000     Variance                 1.00000
+Mode      .           Range                    2.00000
+                      Interquartile Range      2.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  3.464102    Pr > |t|    0.0742
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             3
+99%                  3
+95%                  3
+90%                  3
+75% Q3               3
+50% Median           2
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+    2        2            2        2
+    3        3            3        3
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1           1       33.33             1        33.33  
+2           1       33.33             2        66.67  
+3           1       33.33             3       100.00  
+
+Obs    x    y
+
+ 1     1    2
+ 2     2    4
+ 3     3    3
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean                        2    Sum Observations             6
+Std Deviation               1    Variance                     1
+Skewness                    0    Kurtosis                     .
+Uncorrected SS             14    Corrected SS                 2
+Coeff Variation            50    Std Error Mean      0.57735027
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.000000     Std Deviation            1.00000
+Median   2.000000     Variance                 1.00000
+Mode      .           Range                    2.00000
+                      Interquartile Range      2.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  3.464102    Pr > |t|    0.0742
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             3
+99%                  3
+95%                  3
+90%                  3
+75% Q3               3
+50% Median           2
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+    2        2            2        2
+    3        3            3        3
+
+The UNIVARIATE Procedure
+Variable:  x
+y = 2
+
+                            Moments
+
+N                           1    Sum Weights                  1
+Mean                        1    Sum Observations             1
+Std Deviation               .    Variance                     .
+Skewness                    .    Kurtosis                     .
+Uncorrected SS              1    Corrected SS                 0
+Coeff Variation             .    Std Error Mean               .
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     1.000000     Std Deviation                  .
+Median   1.000000     Variance                       .
+Mode     1.000000     Range                          0
+                      Interquartile Range            0
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|     .    
+Sign           M       0.5    Pr >= |M|   1.0000
+Signed Rank    S       0.5    Pr >= |S|   1.0000
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             1
+99%                  1
+95%                  1
+90%                  1
+75% Q3               1
+50% Median           1
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+
+The UNIVARIATE Procedure
+Variable:  x
+y = 3
+
+                            Moments
+
+N                           1    Sum Weights                  1
+Mean                        3    Sum Observations             3
+Std Deviation               .    Variance                     .
+Skewness                    .    Kurtosis                     .
+Uncorrected SS              9    Corrected SS                 0
+Coeff Variation             .    Std Error Mean               .
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     3.000000     Std Deviation                  .
+Median   3.000000     Variance                       .
+Mode     3.000000     Range                          0
+                      Interquartile Range            0
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|     .    
+Sign           M       0.5    Pr >= |M|   1.0000
+Signed Rank    S       0.5    Pr >= |S|   1.0000
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             3
+99%                  3
+95%                  3
+90%                  3
+75% Q3               3
+50% Median           3
+25% Q1               3
+10%                  3
+5%                   3
+1%                   3
+0% Min               3
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    3        3            3        3
+
+The UNIVARIATE Procedure
+Variable:  x
+y = 4
+
+                            Moments
+
+N                           1    Sum Weights                  1
+Mean                        2    Sum Observations             2
+Std Deviation               .    Variance                     .
+Skewness                    .    Kurtosis                     .
+Uncorrected SS              4    Corrected SS                 0
+Coeff Variation             .    Std Error Mean               .
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.000000     Std Deviation                  .
+Median   2.000000     Variance                       .
+Mode     2.000000     Range                          0
+                      Interquartile Range            0
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t         .    Pr > |t|     .    
+Sign           M       0.5    Pr >= |M|   1.0000
+Signed Rank    S       0.5    Pr >= |S|   1.0000
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             2
+99%                  2
+95%                  2
+90%                  2
+75% Q3               2
+50% Median           2
+25% Q1               2
+10%                  2
+5%                   2
+1%                   2
+0% Min               2
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    2        2            2        2
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.CL                                                  Observations          18
+Member Type          DATA                                                     Variables             8 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:29:04                                      Observation Length    88
+Last Modified        11/13/2026 04:29:04                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Moments                                                                          
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            1486                                                                                        
+Obs in First Data Page      18                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_workF3020000313D_odaws02-euw1.oda.sas.com/SAS_                                 
+                            work56110000313D_odaws02-euw1.oda.sas.com/cl.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1074790841                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+      Variables in Creation Order
+ 
+#    Variable    Type    Len    Format
+
+1    VarName     Char      1          
+2    y           Char     16          
+3    Label1      Char     15          
+4    cValue1     Char     10          
+5    nValue1     Num       8    D12.3 
+6    Label2      Char     16          
+7    cValue2     Char     10          
+8    nValue2     Num       8    D12.3 
+
+       Var                               c                                             c
+Obs    Name    y    Label1             Value1         nValue1    Label2              Value2         nValue2
+
+  1     x      2    N                    1           1.000000    Sum Weights           1           1.000000
+  2     x      2    Mean                 1           1.000000    Sum Observations      1           1.000000
+  3     x      2    Std Deviation        .                  .    Variance              .                  .
+  4     x      2    Skewness             .                  .    Kurtosis              .                  .
+  5     x      2    Uncorrected SS       1           1.000000    Corrected SS          0                  0
+  6     x      2    Coeff Variation      .                  .    Std Error Mean        .                  .
+  7     x      3    N                    1           1.000000    Sum Weights           1           1.000000
+  8     x      3    Mean                 3           3.000000    Sum Observations      3           3.000000
+  9     x      3    Std Deviation        .                  .    Variance              .                  .
+ 10     x      3    Skewness             .                  .    Kurtosis              .                  .
+ 11     x      3    Uncorrected SS       9           9.000000    Corrected SS          0                  0
+ 12     x      3    Coeff Variation      .                  .    Std Error Mean        .                  .
+ 13     x      4    N                    1           1.000000    Sum Weights           1           1.000000
+ 14     x      4    Mean                 2           2.000000    Sum Observations      2           2.000000
+ 15     x      4    Std Deviation        .                  .    Variance              .                  .
+ 16     x      4    Skewness             .                  .    Kurtosis              .                  .
+ 17     x      4    Uncorrected SS       4           4.000000    Corrected SS          0                  0
+ 18     x      4    Coeff Variation      .                  .    Std Error Mean        .                  .

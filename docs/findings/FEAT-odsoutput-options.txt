@@ -1,0 +1,258 @@
+
+The FREQ Procedure
+
+                                                 Table of x by y
+ 
+                                                        Std    Pearson         Cell                 Row    Column
+    x       y   Frequency   Expected   Deviation   Residual   Residual   Chi-Square   Percent   Percent   Percent
+-----------------------------------------------------------------------------------------------------------------
+    1       1           1     1.0000           0          0          0            0     25.00     50.00     50.00
+            2           1     1.0000           0          0          0            0     25.00     50.00     50.00
+
+        Total           2                                                               50.00    100.00          
+-----------------------------------------------------------------------------------------------------------------
+    2       1           1     1.0000           0          0          0            0     25.00     50.00     50.00
+            2           1     1.0000           0          0          0            0     25.00     50.00     50.00
+
+        Total           2                                                               50.00    100.00          
+-----------------------------------------------------------------------------------------------------------------
+Total       1           2                                                               50.00              100.00
+            2           2                                                               50.00              100.00
+
+        Total           4                                                              100.00                    
+-----------------------------------------------------------------------------------------------------------------
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.CL                                                  Observations          9  
+Member Type          DATA                                                     Variables             16 
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:59:25                                      Observation Length    368
+Last Modified        11/13/2026 04:59:25                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                Crosstabulation Table                                                             
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            355                                                                                         
+Obs in First Data Page      9                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work672D00015856_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workFB7400015856_odaws02-euw1.oda.sas.com/cl.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749217                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                             Variables in Creation Order
+ 
+ #    Variable           Type    Len    Format    Label
+
+ 1    Table              Char    256                                                
+ 2    F_x                Char      5              x                                 
+ 3    x                  Num       8                                                
+ 4    F_y                Char      5              y                                 
+ 5    y                  Num       8                                                
+ 6    Frequency          Num       8    BEST8.    Frequency Count                   
+ 7    Expected           Num       8    D8.       Expected Frequency                
+ 8    Deviation          Num       8    D8.       Deviation from Expected Frequency 
+ 9    StdResidual        Num       8    D8.       Standardized Residual             
+10    PearsonResidual    Num       8    D8.       Pearson Residual                  
+11    CellChiSquare      Num       8    D8.       Cell Chi-Square                   
+12    Percent            Num       8    6.2       Percent of Two-Way Table Frequency
+13    RowPercent         Num       8    6.2       Percent of Row Frequency          
+14    ColPercent         Num       8    6.2       Percent of Column Frequency       
+15    Missing            Num       8    BEST8.    Frequency Missing                 
+16    _SkipLine          Char      1                                                
+
+The FREQ Procedure
+
+Table 1 of x by y
+Controlling for b=1
+
+x               y
+
+Frequency      |
+Expected       |
+Deviation      |
+Cell Chi-Square|
+Tot Pct        |
+Percent        |
+Row Pct        |
+Col Pct        |
+Cumulative Col%|       1|       2|  Total
+---------------+--------+--------+
+             1 |      1 |      1 |      2
+               |      1 |      1 |
+               |      0 |      0 |
+               |      0 |      0 |
+               |  25.00 |  25.00 |  50.00
+               |  25.00 |  25.00 |  50.00
+               |  50.00 |  50.00 |
+               |  50.00 |  50.00 |
+               |  50.00 |  50.00 |  50.00
+---------------+--------+--------+
+             2 |      1 |      1 |      2
+               |      1 |      1 |
+               |      0 |      0 |
+               |      0 |      0 |
+               |  25.00 |  25.00 |  50.00
+               |  25.00 |  25.00 |  50.00
+               |  50.00 |  50.00 |
+               |  50.00 |  50.00 |
+               | 100.00 | 100.00 | 100.00
+---------------+--------+--------+
+Total                 2        2        4
+                  50.00    50.00   100.00
+                  50.00    50.00   100.00
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.GRID                                                Observations          9  
+Member Type          DATA                                                     Variables             16 
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:59:25                                      Observation Length    376
+Last Modified        11/13/2026 04:59:25                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                Frequency Counts and Percentages                                                  
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            348                                                                                         
+Obs in First Data Page      9                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work672D00015856_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workFB7400015856_odaws02-euw1.oda.sas.com/grid.sas7bdat                                     
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749218                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                              Variables in Creation Order
+ 
+ #    Variable         Type    Len    Format    Label
+
+ 1    Table            Char    256                                                    
+ 2    b                Num       8                                                    
+ 3    x                Num       8                                                    
+ 4    y                Num       8                                                    
+ 5    _TYPE_           Char      3              Variables Contributing to Observation 
+ 6    _TABLE_          Num       8              Table Number                          
+ 7    Frequency        Num       8    BEST7.    Frequency Count                       
+ 8    Expected         Num       8    BEST6.    Expected Frequency                    
+ 9    Deviation        Num       8    BEST6.    Deviation from Expected Frequency     
+10    CellChiSquare    Num       8    BEST6.    Cell Chi-Square                       
+11    TotalPercent     Num       8    F6.2      Percent of Total Frequency            
+12    Percent          Num       8    F6.2      Percent of Two-Way Table Frequency    
+13    RowPercent       Num       8    F6.2      Percent of Row Frequency              
+14    ColPercent       Num       8    F6.2      Percent of Column Frequency           
+15    CumColPercent    Num       8    F6.2      Cumulative Percent of Column Frequency
+16    Missing          Num       8              Frequency Missing                     
+
+                                                                 C                                       C
+                                                                 e       T                               u
+                                                                 l       o                               m
+                                                                 l       t               R       C       C
+                                         F               D       C       a               o       o       o
+                                         r       E       e       h       l               w       l       l
+                                   _     e       x       v       i       P       P       P       P       P     M
+                               _   T     q       p       i       S       e       e       e       e       e     i
+          T                    T   A     u       e       a       q       r       r       r       r       r     s
+          a                    Y   B     e       c       t       u       c       c       c       c       c     s
+O         b                    P   L     n       t       i       a       e       e       e       e       e     i
+b         l                    E   E     c       e       o       r       n       n       n       n       n     n
+s         e          b  x  y   _   _     y       d       n       e       t       t       t       t       t     g
+
+1  Table 1 of x * y  1  1  1  111  1        1       1       0       0   25.00   25.00   50.00   50.00   50.00  .
+2  Table 1 of x * y  1  1  2  111  1        1       1       0       0   25.00   25.00   50.00   50.00   50.00  .
+3  Table 1 of x * y  1  1  .  110  1        2       .       .       .   50.00   50.00     .       .     50.00  .
+4  Table 1 of x * y  1  2  1  111  1        1       1       0       0   25.00   25.00   50.00   50.00  100.00  .
+5  Table 1 of x * y  1  2  2  111  1        1       1       0       0   25.00   25.00   50.00   50.00  100.00  .
+6  Table 1 of x * y  1  2  .  110  1        2       .       .       .   50.00   50.00     .       .    100.00  .
+7  Table 1 of x * y  1  .  1  101  1        2       .       .       .   50.00   50.00     .       .       .    .
+8  Table 1 of x * y  1  .  2  101  1        2       .       .       .   50.00   50.00     .       .       .    .
+9  Table 1 of x * y  1  .  .  100  1        4       .       .       .  100.00  100.00     .       .       .    0
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  4       1.50000       0.57735       6.00000       1.00000       2.00000
+y                  4       1.50000       0.57735       6.00000       1.00000       2.00000
+
+
+Pearson Correlation Coefficients, N = 4
+ 
+              x             y
+
+x       1.00000       0.00000
+
+y       0.00000       1.00000
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.NP                                                  Observations          2 
+Member Type          DATA                                                     Variables             3 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:59:25                                      Observation Length    24
+Last Modified        11/13/2026 04:59:25                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Pearson Correlations                                                             
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            5431                                                                                        
+Obs in First Data Page      2                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work672D00015856_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workFB7400015856_odaws02-euw1.oda.sas.com/np.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610749216                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+      Variables in Creation Order
+ 
+#    Variable    Type    Len    Format
+
+1    Variable    Char      1          
+2    x           Num       8    8.5   
+3    y           Num       8    8.5   

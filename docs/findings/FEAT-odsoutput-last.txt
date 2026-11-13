@@ -1,0 +1,45 @@
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       2.33333       1.52753       7.00000       1.00000       4.00000
+y                  3       2.00000       1.00000       6.00000       1.00000       3.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000      -0.65465
+                       0.5456
+
+y      -0.65465       1.00000
+         0.5456              
+
+Obs    Variable           x           y          Px          Py
+
+ 1        x         1.00000    -0.65465       _          0.5456
+ 2        y        -0.65465     1.00000      0.5456       _    
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1           1       33.33             1        33.33  
+2           1       33.33             2        66.67  
+4           1       33.33             3       100.00  
+
+                                                         Cum         Cum
+Obs     Table     F_x    x    Frequency    Percent    Frequency    Percent
+
+ 1     Table x     1     1           1      33.33            1      33.33 
+ 2     Table x     2     2           1      33.33            2      66.67 
+ 3     Table x     4     4           1      33.33            3     100.00 

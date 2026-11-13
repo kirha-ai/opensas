@@ -1,0 +1,250 @@
+The SAS System
+
+36         
+37         data d; input x y; datalines;
+
+NOTE: The data set WORK.D has 3 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+41         ;
+42         ods output PearsonCorr=c Moments=m;
+43         proc corr data=d; var x y; run;
+
+NOTE: The data set WORK.C has 2 observations and 5 variables.
+WARNING: Output 'Moments' was not created.  Make sure that the output object name, label, or path is spelled correctly. 
+          Also, verify that the appropriate procedure options are used to produce the requested output object.  For 
+         example, verify that the NOPRINT option is not used.
+NOTE: The PROCEDURE CORR printed page 1.
+NOTE: PROCEDURE CORR used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1392.65k
+      OS Memory           13484.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     420
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+44         proc univariate data=d; var x; run;
+
+NOTE: The PROCEDURE UNIVARIATE printed page 2.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              650.75k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        4  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     91
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45         %put FIRST_C=%sysfunc(exist(c)) FIRST_M=%sysfunc(exist(m));
+FIRST_C=1 FIRST_M=0
+46         ods output OneWayFreqs=o1 OneWayFreqs=o2;
+47         proc freq data=d; tables x; run;
+
+NOTE: The data set WORK.O2 has 3 observations and 7 variables.
+NOTE: The data set WORK.O1 has 3 observations and 7 variables.
+NOTE: There were 3 observations read from the data set WORK.D.
+NOTE: The PROCEDURE FREQ printed page 3.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1738.23k
+      OS Memory           14260.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        5  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     335
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+48         %put O1=%sysfunc(exist(o1)) O2=%sysfunc(exist(o2));
+O1=1 O2=1
+49         ods output Moments=after;
+50         proc print data=d; run;
+
+WARNING: Output 'Moments' was not created.  Make sure that the output object name, label, or path is spelled correctly. 
+          Also, verify that the appropriate procedure options are used to produce the requested output object.  For 
+         example, verify that the NOPRINT option is not used.
+NOTE: There were 3 observations read from the data set WORK.D.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              487.09k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     71
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+51         proc univariate data=d; var x; run;
+
+NOTE: The PROCEDURE UNIVARIATE printed page 5.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              635.40k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     58
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+52         %put AFTER=%sysfunc(exist(after));
+AFTER=0
+53         ods output Moments=empty;
+54         proc univariate data=d(where=(x>99)); var x; run;
+
+NOTE: No observations were selected from data set WORK.D.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              708.06k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     109
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           16
+      
+WARNING: Output 'Moments' was not created.  Make sure that the output object name, label, or path is spelled correctly. 
+          Also, verify that the appropriate procedure options are used to produce the requested output object.  For 
+         example, verify that the NOPRINT option is not used.
+
+55         %put EMPTY=%sysfunc(exist(empty));
+EMPTY=0
+56         ods output Moments=cl Quantiles=cq BasicMeasures=cb;
+57         proc univariate data=d; class y; var x; run;
+
+NOTE: The data set WORK.CB has 12 observations and 6 variables.
+NOTE: The data set WORK.CQ has 33 observations and 4 variables.
+NOTE: The data set WORK.CL has 18 observations and 8 variables.
+The SAS System
+
+NOTE: The PROCEDURE UNIVARIATE printed pages 6-8.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1717.35k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        9  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     296
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+58         proc contents data=cl varnum; run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              787.90k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     108
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+NOTE: The PROCEDURE CONTENTS printed page 9.
+
+59         proc print data=cl; run;
+
+NOTE: There were 18 observations read from the data set WORK.CL.
+NOTE: The PROCEDURE PRINT printed page 10.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              530.42k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 04:29:03 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     55
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+The SAS System
+
+
+60         
+61         
+62         
+63         
+The SAS System
+
+64         

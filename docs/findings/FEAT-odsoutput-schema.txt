@@ -1,0 +1,876 @@
+
+b=1
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       2.33333       1.52753       7.00000       1.00000       4.00000
+y                  3       4.00000       1.00000      12.00000       3.00000       5.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       0.32733
+                       0.7877
+
+y       0.32733       1.00000
+         0.7877              
+
+b=2
+
+The CORR Procedure
+
+   2  Variables:    x        y        
+
+
+                                    Simple Statistics
+ 
+Variable           N          Mean       Std Dev           Sum       Minimum       Maximum
+
+x                  3       5.00000       2.00000      15.00000       3.00000       7.00000
+y                  3       4.00000       4.35890      12.00000       1.00000       9.00000
+
+
+Pearson Correlation Coefficients, N = 3 
+       Prob > |r| under H0: Rho=0
+ 
+              x             y
+
+x       1.00000       0.91766
+                       0.2601
+
+y       0.91766       1.00000
+         0.2601              
+
+b=1
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+1           1       33.33             1        33.33  
+2           1       33.33             2        66.67  
+4           1       33.33             3       100.00  
+
+
+Table of x by y
+
+x         y
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       3|       4|       5|  Total
+---------+--------+--------+--------+
+       1 |      1 |      0 |      0 |      1
+         |  33.33 |   0.00 |   0.00 |  33.33
+         | 100.00 |   0.00 |   0.00 |
+         | 100.00 |   0.00 |   0.00 |
+---------+--------+--------+--------+
+       2 |      0 |      0 |      1 |      1
+         |   0.00 |   0.00 |  33.33 |  33.33
+         |   0.00 |   0.00 | 100.00 |
+         |   0.00 |   0.00 | 100.00 |
+---------+--------+--------+--------+
+       4 |      0 |      1 |      0 |      1
+         |   0.00 |  33.33 |   0.00 |  33.33
+         |   0.00 | 100.00 |   0.00 |
+         |   0.00 | 100.00 |   0.00 |
+---------+--------+--------+--------+
+Total           1        1        1        3
+            33.33    33.33    33.33   100.00
+
+b=2
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+x    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+3           1       33.33             1        33.33  
+5           1       33.33             2        66.67  
+7           1       33.33             3       100.00  
+
+
+Table of x by y
+
+x         y
+
+Frequency|
+Percent  |
+Row Pct  |
+Col Pct  |       1|       2|       9|  Total
+---------+--------+--------+--------+
+       3 |      1 |      0 |      0 |      1
+         |  33.33 |   0.00 |   0.00 |  33.33
+         | 100.00 |   0.00 |   0.00 |
+         | 100.00 |   0.00 |   0.00 |
+---------+--------+--------+--------+
+       5 |      0 |      1 |      0 |      1
+         |   0.00 |  33.33 |   0.00 |  33.33
+         |   0.00 | 100.00 |   0.00 |
+         |   0.00 | 100.00 |   0.00 |
+---------+--------+--------+--------+
+       7 |      0 |      0 |      1 |      1
+         |   0.00 |   0.00 |  33.33 |  33.33
+         |   0.00 |   0.00 | 100.00 |
+         |   0.00 |   0.00 | 100.00 |
+---------+--------+--------+--------+
+Total           1        1        1        3
+            33.33    33.33    33.33   100.00
+
+b=1
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean               2.33333333    Sum Observations             7
+Std Deviation      1.52752523    Variance            2.33333333
+Skewness           0.93521953    Kurtosis                     .
+Uncorrected SS             21    Corrected SS        4.66666667
+Coeff Variation    65.4653671    Std Error Mean       0.8819171
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.333333     Std Deviation            1.52753
+Median   2.000000     Variance                 2.33333
+Mode      .           Range                    3.00000
+                      Interquartile Range      3.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  2.645751    Pr > |t|    0.1181
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             4
+99%                  4
+95%                  4
+90%                  4
+75% Q3               4
+50% Median           2
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+    2        2            2        2
+    4        3            4        3
+
+b=1
+
+The UNIVARIATE Procedure
+Variable:  y
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean                        4    Sum Observations            12
+Std Deviation               1    Variance                     1
+Skewness                    0    Kurtosis                     .
+Uncorrected SS             50    Corrected SS                 2
+Coeff Variation            25    Std Error Mean      0.57735027
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     4.000000     Std Deviation            1.00000
+Median   4.000000     Variance                 1.00000
+Mode      .           Range                    2.00000
+                      Interquartile Range      2.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  6.928203    Pr > |t|    0.0202
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             5
+99%                  5
+95%                  5
+90%                  5
+75% Q3               5
+50% Median           4
+25% Q1               3
+10%                  3
+5%                   3
+1%                   3
+0% Min               3
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    3        1            3        1
+    4        3            4        3
+    5        2            5        2
+
+b=2
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean                        5    Sum Observations            15
+Std Deviation               2    Variance                     4
+Skewness                    0    Kurtosis                     .
+Uncorrected SS             83    Corrected SS                 8
+Coeff Variation            40    Std Error Mean      1.15470054
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     5.000000     Std Deviation            2.00000
+Median   5.000000     Variance                 4.00000
+Mode      .           Range                    4.00000
+                      Interquartile Range      4.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  4.330127    Pr > |t|    0.0494
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             7
+99%                  7
+95%                  7
+90%                  7
+75% Q3               7
+50% Median           5
+25% Q1               3
+10%                  3
+5%                   3
+1%                   3
+0% Min               3
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    3        4            3        4
+    5        5            5        5
+    7        6            7        6
+
+b=2
+
+The UNIVARIATE Procedure
+Variable:  y
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean                        4    Sum Observations            12
+Std Deviation      4.35889894    Variance                    19
+Skewness           1.63005916    Kurtosis                     .
+Uncorrected SS             86    Corrected SS                38
+Coeff Variation    108.972474    Std Error Mean      2.51661148
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     4.000000     Std Deviation            4.35890
+Median   2.000000     Variance                19.00000
+Mode      .           Range                    8.00000
+                      Interquartile Range      8.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  1.589439    Pr > |t|    0.2529
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             9
+99%                  9
+95%                  9
+90%                  9
+75% Q3               9
+50% Median           2
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        4            1        4
+    2        5            2        5
+    9        6            9        6
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.PC                                                  Observations          4 
+Member Type          DATA                                                     Variables             6 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:22:52                                      Observation Length    48
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Pearson Correlations                                                             
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            2722                                                                                        
+Obs in First Data Page      4                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/pc.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711751                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+       Variables in Creation Order
+ 
+#    Variable    Type    Len    Format
+
+1    b           Num       8             
+2    Variable    Char      1             
+3    x           Num       8    8.5      
+4    y           Num       8    8.5      
+5    Px          Num       8    PVALUE8.4
+6    Py          Num       8    PVALUE8.4
+
+b=1 Variable=x x=1 y=0.32732683535398 Px=_ Py=0.78770438499034 _ERROR_=0 _N_=1
+b=1 Variable=y x=0.32732683535398 y=1 Px=0.78770438499034 Py=_ _ERROR_=0 _N_=2
+b=2 Variable=x x=1 y=0.91766293548224 Px=_ Py=0.260146938293 _ERROR_=0 _N_=3
+b=2 Variable=y x=0.91766293548224 y=1 Px=0.260146938293 Py=_ _ERROR_=0 _N_=4
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.SS                                                  Observations          4 
+Member Type          DATA                                                     Variables             8 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:22:52                                      Observation Length    64
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Simple Statistics                                                                
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            2043                                                                                        
+Obs in First Data Page      4                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/ss.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711750                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+           Variables in Creation Order
+ 
+#    Variable    Type    Len    Format    Label
+
+1    b           Num       8                     
+2    Variable    Char      8                     
+3    NObs        Num       8    8.        N      
+4    Mean        Num       8    D10.             
+5    StdDev      Num       8    D10.      Std Dev
+6    Sum         Num       8    D10.             
+7    Min         Num       8    D10.      Minimum
+8    Max         Num       8    D10.      Maximum
+
+b=1 Variable=x NObs=3 Mean=2.33333333333333 StdDev=1.52752523165194 Sum=7 Min=1 Max=4 _ERROR_=0 _N_=1
+b=1 Variable=y NObs=3 Mean=4 StdDev=1 Sum=12 Min=3 Max=5 _ERROR_=0 _N_=2
+b=2 Variable=x NObs=3 Mean=5 StdDev=2 Sum=15 Min=3 Max=7 _ERROR_=0 _N_=3
+b=2 Variable=y NObs=3 Mean=4 StdDev=4.35889894354067 Sum=12 Min=1 Max=9 _ERROR_=0 _N_=4
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.OW                                                  Observations          6  
+Member Type          DATA                                                     Variables             8  
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:22:52                                      Observation Length    312
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                One-Way Frequencies                                                               
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            419                                                                                         
+Obs in First Data Page      6                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/ow.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711754                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                    Variables in Creation Order
+ 
+#    Variable        Type    Len    Format    Label
+
+1    b               Num       8                                  
+2    Table           Char    256                                  
+3    F_x             Char      1              x                   
+4    x               Num       8                                  
+5    Frequency       Num       8    BEST8.                        
+6    Percent         Num       8    6.2                           
+7    CumFrequency    Num       8    BEST8.    Cumulative Frequency
+8    CumPercent      Num       8    6.2       Cumulative Percent  
+
+b=1 Table=Table x F_x=1 x=1 Frequency=1 Percent=33.3333333333333 CumFrequency=1 CumPercent=33.3333333333333 _ERROR_=0
+_N_=1
+b=1 Table=Table x F_x=2 x=2 Frequency=1 Percent=33.3333333333333 CumFrequency=2 CumPercent=66.6666666666666 _ERROR_=0
+_N_=2
+b=1 Table=Table x F_x=4 x=4 Frequency=1 Percent=33.3333333333333 CumFrequency=3 CumPercent=100 _ERROR_=0 _N_=3
+b=2 Table=Table x F_x=3 x=3 Frequency=1 Percent=33.3333333333333 CumFrequency=1 CumPercent=33.3333333333333 _ERROR_=0
+_N_=4
+b=2 Table=Table x F_x=5 x=5 Frequency=1 Percent=33.3333333333333 CumFrequency=2 CumPercent=66.6666666666666 _ERROR_=0
+_N_=5
+b=2 Table=Table x F_x=7 x=7 Frequency=1 Percent=33.3333333333333 CumFrequency=3 CumPercent=100 _ERROR_=0 _N_=6
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.CT                                                  Observations          32 
+Member Type          DATA                                                     Variables             11 
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:22:52                                      Observation Length    336
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                Frequency Counts and Percentages                                                  
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            389                                                                                         
+Obs in First Data Page      32                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/ct.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711755                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                            Variables in Creation Order
+ 
+ #    Variable      Type    Len    Format    Label
+
+ 1    b             Num       8                                                   
+ 2    Table         Char    256                                                   
+ 3    x             Num       8                                                   
+ 4    y             Num       8                                                   
+ 5    _TYPE_        Char      2              Variables Contributing to Observation
+ 6    _TABLE_       Num       8              Table Number                         
+ 7    Frequency     Num       8    BEST7.    Frequency Count                      
+ 8    Percent       Num       8    F6.2      Percent of Two-Way Table Frequency   
+ 9    RowPercent    Num       8    F6.2      Percent of Row Frequency             
+10    ColPercent    Num       8    F6.2      Percent of Column Frequency          
+11    Missing       Num       8              Frequency Missing                    
+
+b=1 Table=Table x * y x=1 y=3 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=1
+b=1 Table=Table x * y x=1 y=4 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=2
+b=1 Table=Table x * y x=1 y=5 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=3
+b=1 Table=Table x * y x=1 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=4
+b=1 Table=Table x * y x=2 y=3 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=5
+b=1 Table=Table x * y x=2 y=4 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=6
+b=1 Table=Table x * y x=2 y=5 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=7
+b=1 Table=Table x * y x=2 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=8
+b=1 Table=Table x * y x=4 y=3 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=9
+b=1 Table=Table x * y x=4 y=4 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=10
+b=1 Table=Table x * y x=4 y=5 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=11
+b=1 Table=Table x * y x=4 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=12
+b=1 Table=Table x * y x=. y=3 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=13
+b=1 Table=Table x * y x=. y=4 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=14
+b=1 Table=Table x * y x=. y=5 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=15
+b=1 Table=Table x * y x=. y=. _TYPE_=00 _TABLE_=1 Frequency=3 Percent=100 RowPercent=. ColPercent=. Missing=0 _ERROR_=0
+_N_=16
+b=2 Table=Table x * y x=3 y=1 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=17
+b=2 Table=Table x * y x=3 y=2 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=18
+b=2 Table=Table x * y x=3 y=9 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=19
+b=2 Table=Table x * y x=3 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=20
+b=2 Table=Table x * y x=5 y=1 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=21
+b=2 Table=Table x * y x=5 y=2 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=22
+b=2 Table=Table x * y x=5 y=9 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=23
+b=2 Table=Table x * y x=5 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=24
+b=2 Table=Table x * y x=7 y=1 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=25
+b=2 Table=Table x * y x=7 y=2 _TYPE_=11 _TABLE_=1 Frequency=0 Percent=0 RowPercent=0 ColPercent=0 Missing=. _ERROR_=0
+_N_=26
+b=2 Table=Table x * y x=7 y=9 _TYPE_=11 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=100 ColPercent=100
+Missing=. _ERROR_=0 _N_=27
+b=2 Table=Table x * y x=7 y=. _TYPE_=10 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=28
+b=2 Table=Table x * y x=. y=1 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=29
+b=2 Table=Table x * y x=. y=2 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=30
+
+b=2 Table=Table x * y x=. y=9 _TYPE_=01 _TABLE_=1 Frequency=1 Percent=33.3333333333333 RowPercent=. ColPercent=.
+Missing=. _ERROR_=0 _N_=31
+b=2 Table=Table x * y x=. y=. _TYPE_=00 _TABLE_=1 Frequency=3 Percent=100 RowPercent=. ColPercent=. Missing=0 _ERROR_=0
+_N_=32
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.MO                                                  Observations          24
+Member Type          DATA                                                     Variables             8 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:22:52                                      Observation Length    80
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Moments                                                                          
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            1635                                                                                        
+Obs in First Data Page      24                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/mo.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711752                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+      Variables in Creation Order
+ 
+#    Variable    Type    Len    Format
+
+1    b           Num       8          
+2    VarName     Char      1          
+3    Label1      Char     15          
+4    cValue1     Char     10          
+5    nValue1     Num       8    D12.3 
+6    Label2      Char     16          
+7    cValue2     Char     10          
+8    nValue2     Num       8    D12.3 
+
+b=1 VarName=x Label1=N cValue1=3 nValue1=3 Label2=Sum Weights cValue2=3 nValue2=3 _ERROR_=0 _N_=1
+b=1 VarName=x Label1=Mean cValue1=2.33333333 nValue1=2.33333333333333 Label2=Sum Observations cValue2=7 nValue2=7
+_ERROR_=0 _N_=2
+b=1 VarName=x Label1=Std Deviation cValue1=1.52752523 nValue1=1.52752523165194 Label2=Variance cValue2=2.33333333
+nValue2=2.33333333333333 _ERROR_=0 _N_=3
+b=1 VarName=x Label1=Skewness cValue1=0.93521953 nValue1=0.93521952958282 Label2=Kurtosis cValue2=. nValue2=. _ERROR_=0
+_N_=4
+b=1 VarName=x Label1=Uncorrected SS cValue1=21 nValue1=21 Label2=Corrected SS cValue2=4.66666667
+nValue2=4.66666666666666 _ERROR_=0 _N_=5
+b=1 VarName=x Label1=Coeff Variation cValue1=65.4653671 nValue1=65.4653670707977 Label2=Std Error Mean cValue2=0.8819171
+nValue2=0.88191710368819 _ERROR_=0 _N_=6
+b=1 VarName=y Label1=N cValue1=3 nValue1=3 Label2=Sum Weights cValue2=3 nValue2=3 _ERROR_=0 _N_=7
+b=1 VarName=y Label1=Mean cValue1=4 nValue1=4 Label2=Sum Observations cValue2=12 nValue2=12 _ERROR_=0 _N_=8
+b=1 VarName=y Label1=Std Deviation cValue1=1 nValue1=1 Label2=Variance cValue2=1 nValue2=1 _ERROR_=0 _N_=9
+b=1 VarName=y Label1=Skewness cValue1=0 nValue1=0 Label2=Kurtosis cValue2=. nValue2=. _ERROR_=0 _N_=10
+b=1 VarName=y Label1=Uncorrected SS cValue1=50 nValue1=50 Label2=Corrected SS cValue2=2 nValue2=2 _ERROR_=0 _N_=11
+b=1 VarName=y Label1=Coeff Variation cValue1=25 nValue1=25 Label2=Std Error Mean cValue2=0.57735027
+nValue2=0.57735026918962 _ERROR_=0 _N_=12
+b=2 VarName=x Label1=N cValue1=3 nValue1=3 Label2=Sum Weights cValue2=3 nValue2=3 _ERROR_=0 _N_=13
+b=2 VarName=x Label1=Mean cValue1=5 nValue1=5 Label2=Sum Observations cValue2=15 nValue2=15 _ERROR_=0 _N_=14
+b=2 VarName=x Label1=Std Deviation cValue1=2 nValue1=2 Label2=Variance cValue2=4 nValue2=4 _ERROR_=0 _N_=15
+b=2 VarName=x Label1=Skewness cValue1=0 nValue1=0 Label2=Kurtosis cValue2=. nValue2=. _ERROR_=0 _N_=16
+b=2 VarName=x Label1=Uncorrected SS cValue1=83 nValue1=83 Label2=Corrected SS cValue2=8 nValue2=8 _ERROR_=0 _N_=17
+b=2 VarName=x Label1=Coeff Variation cValue1=40 nValue1=40 Label2=Std Error Mean cValue2=1.15470054
+nValue2=1.15470053837925 _ERROR_=0 _N_=18
+b=2 VarName=y Label1=N cValue1=3 nValue1=3 Label2=Sum Weights cValue2=3 nValue2=3 _ERROR_=0 _N_=19
+b=2 VarName=y Label1=Mean cValue1=4 nValue1=4 Label2=Sum Observations cValue2=12 nValue2=12 _ERROR_=0 _N_=20
+b=2 VarName=y Label1=Std Deviation cValue1=4.35889894 nValue1=4.35889894354067 Label2=Variance cValue2=19 nValue2=19
+_ERROR_=0 _N_=21
+b=2 VarName=y Label1=Skewness cValue1=1.63005916 nValue1=1.63005916171188 Label2=Kurtosis cValue2=. nValue2=. _ERROR_=0
+_N_=22
+b=2 VarName=y Label1=Uncorrected SS cValue1=86 nValue1=86 Label2=Corrected SS cValue2=38 nValue2=38 _ERROR_=0 _N_=23
+b=2 VarName=y Label1=Coeff Variation cValue1=108.972474 nValue1=108.972473588516 Label2=Std Error Mean
+cValue2=2.51661148 nValue2=2.51661147842358 _ERROR_=0 _N_=24
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.QU                                                  Observations          44
+Member Type          DATA                                                     Variables             4 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:22:52                                      Observation Length    32
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Quantiles                                                                        
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            4078                                                                                        
+Obs in First Data Page      44                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/qu.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711756                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+            Variables in Creation Order
+ 
+#    Variable    Type    Len    Format    Label
+
+1    b           Num       8                      
+2    VarName     Char      1                      
+3    Quantile    Char     10              Level   
+4    Estimate    Num       8    2.        Quantile
+
+b=1 VarName=x Quantile=100% Max Estimate=4 _ERROR_=0 _N_=1
+b=1 VarName=x Quantile=99% Estimate=4 _ERROR_=0 _N_=2
+b=1 VarName=x Quantile=95% Estimate=4 _ERROR_=0 _N_=3
+b=1 VarName=x Quantile=90% Estimate=4 _ERROR_=0 _N_=4
+b=1 VarName=x Quantile=75% Q3 Estimate=4 _ERROR_=0 _N_=5
+b=1 VarName=x Quantile=50% Median Estimate=2 _ERROR_=0 _N_=6
+b=1 VarName=x Quantile=25% Q1 Estimate=1 _ERROR_=0 _N_=7
+b=1 VarName=x Quantile=10% Estimate=1 _ERROR_=0 _N_=8
+b=1 VarName=x Quantile=5% Estimate=1 _ERROR_=0 _N_=9
+b=1 VarName=x Quantile=1% Estimate=1 _ERROR_=0 _N_=10
+b=1 VarName=x Quantile=0% Min Estimate=1 _ERROR_=0 _N_=11
+b=1 VarName=y Quantile=100% Max Estimate=5 _ERROR_=0 _N_=12
+b=1 VarName=y Quantile=99% Estimate=5 _ERROR_=0 _N_=13
+b=1 VarName=y Quantile=95% Estimate=5 _ERROR_=0 _N_=14
+b=1 VarName=y Quantile=90% Estimate=5 _ERROR_=0 _N_=15
+b=1 VarName=y Quantile=75% Q3 Estimate=5 _ERROR_=0 _N_=16
+b=1 VarName=y Quantile=50% Median Estimate=4 _ERROR_=0 _N_=17
+b=1 VarName=y Quantile=25% Q1 Estimate=3 _ERROR_=0 _N_=18
+b=1 VarName=y Quantile=10% Estimate=3 _ERROR_=0 _N_=19
+b=1 VarName=y Quantile=5% Estimate=3 _ERROR_=0 _N_=20
+b=1 VarName=y Quantile=1% Estimate=3 _ERROR_=0 _N_=21
+b=1 VarName=y Quantile=0% Min Estimate=3 _ERROR_=0 _N_=22
+b=2 VarName=x Quantile=100% Max Estimate=7 _ERROR_=0 _N_=23
+b=2 VarName=x Quantile=99% Estimate=7 _ERROR_=0 _N_=24
+b=2 VarName=x Quantile=95% Estimate=7 _ERROR_=0 _N_=25
+b=2 VarName=x Quantile=90% Estimate=7 _ERROR_=0 _N_=26
+b=2 VarName=x Quantile=75% Q3 Estimate=7 _ERROR_=0 _N_=27
+b=2 VarName=x Quantile=50% Median Estimate=5 _ERROR_=0 _N_=28
+b=2 VarName=x Quantile=25% Q1 Estimate=3 _ERROR_=0 _N_=29
+b=2 VarName=x Quantile=10% Estimate=3 _ERROR_=0 _N_=30
+b=2 VarName=x Quantile=5% Estimate=3 _ERROR_=0 _N_=31
+b=2 VarName=x Quantile=1% Estimate=3 _ERROR_=0 _N_=32
+b=2 VarName=x Quantile=0% Min Estimate=3 _ERROR_=0 _N_=33
+b=2 VarName=y Quantile=100% Max Estimate=9 _ERROR_=0 _N_=34
+b=2 VarName=y Quantile=99% Estimate=9 _ERROR_=0 _N_=35
+b=2 VarName=y Quantile=95% Estimate=9 _ERROR_=0 _N_=36
+b=2 VarName=y Quantile=90% Estimate=9 _ERROR_=0 _N_=37
+b=2 VarName=y Quantile=75% Q3 Estimate=9 _ERROR_=0 _N_=38
+b=2 VarName=y Quantile=50% Median Estimate=2 _ERROR_=0 _N_=39
+b=2 VarName=y Quantile=25% Q1 Estimate=1 _ERROR_=0 _N_=40
+b=2 VarName=y Quantile=10% Estimate=1 _ERROR_=0 _N_=41
+b=2 VarName=y Quantile=5% Estimate=1 _ERROR_=0 _N_=42
+b=2 VarName=y Quantile=1% Estimate=1 _ERROR_=0 _N_=43
+b=2 VarName=y Quantile=0% Min Estimate=1 _ERROR_=0 _N_=44
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.BM                                                  Observations          16
+Member Type          DATA                                                     Variables             6 
+Engine               V9                                                       Indexes               0 
+Created              11/13/2026 04:22:52                                      Observation Length    56
+Last Modified        11/13/2026 04:22:52                                      Deleted Observations  0 
+Protection                                                                    Compressed            NO
+Data Set Type                                                                 Sorted                NO
+Label                Basic Measures of Location and Variability                                       
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                            
+Encoding             utf-8  Unicode (UTF-8)                                                           
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            2334                                                                                        
+Obs in First Data Page      16                                                                                          
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work319C00014615_odaws01-euw1.oda.sas.com/SAS_                                 
+                            work110200014615_odaws01-euw1.oda.sas.com/bm.sas7bdat                                       
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610711753                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                        Variables in Creation Order
+ 
+#    Variable      Type    Len    Format    Label
+
+1    b             Num       8                                             
+2    VarName       Char      1                                             
+3    LocMeasure    Char      6              Measure of Location            
+4    LocValue      Num       8    8.6       Value of Measure of Location   
+5    VarMeasure    Char     19              Measure of Variability         
+6    VarValue      Num       8    D10.      Value of Measure of Variability
+
+b=1 VarName=x LocMeasure=Mean LocValue=2.33333333333333 VarMeasure=Std Deviation VarValue=1.52752523165194 _ERROR_=0
+_N_=1
+b=1 VarName=x LocMeasure=Median LocValue=2 VarMeasure=Variance VarValue=2.33333333333333 _ERROR_=0 _N_=2
+b=1 VarName=x LocMeasure=Mode LocValue=. VarMeasure=Range VarValue=3 _ERROR_=0 _N_=3
+b=1 VarName=x LocMeasure=  LocValue=_ VarMeasure=Interquartile Range VarValue=3 _ERROR_=0 _N_=4
+b=1 VarName=y LocMeasure=Mean LocValue=4 VarMeasure=Std Deviation VarValue=1 _ERROR_=0 _N_=5
+b=1 VarName=y LocMeasure=Median LocValue=4 VarMeasure=Variance VarValue=1 _ERROR_=0 _N_=6
+b=1 VarName=y LocMeasure=Mode LocValue=. VarMeasure=Range VarValue=2 _ERROR_=0 _N_=7
+b=1 VarName=y LocMeasure=  LocValue=_ VarMeasure=Interquartile Range VarValue=2 _ERROR_=0 _N_=8
+b=2 VarName=x LocMeasure=Mean LocValue=5 VarMeasure=Std Deviation VarValue=2 _ERROR_=0 _N_=9
+b=2 VarName=x LocMeasure=Median LocValue=5 VarMeasure=Variance VarValue=4 _ERROR_=0 _N_=10
+b=2 VarName=x LocMeasure=Mode LocValue=. VarMeasure=Range VarValue=4 _ERROR_=0 _N_=11
+b=2 VarName=x LocMeasure=  LocValue=_ VarMeasure=Interquartile Range VarValue=4 _ERROR_=0 _N_=12
+b=2 VarName=y LocMeasure=Mean LocValue=4 VarMeasure=Std Deviation VarValue=4.35889894354067 _ERROR_=0 _N_=13
+b=2 VarName=y LocMeasure=Median LocValue=2 VarMeasure=Variance VarValue=19 _ERROR_=0 _N_=14
+b=2 VarName=y LocMeasure=Mode LocValue=. VarMeasure=Range VarValue=8 _ERROR_=0 _N_=15
+b=2 VarName=y LocMeasure=  LocValue=_ VarMeasure=Interquartile Range VarValue=8 _ERROR_=0 _N_=16

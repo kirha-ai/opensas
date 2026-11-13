@@ -1,0 +1,231 @@
+The SAS System
+
+36         
+37         data d; input x y w; datalines;
+
+NOTE: The data set WORK.D has 4 observations and 3 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+42         ;
+43         ods output Moments=m Quantiles=q BasicMeasures=b;
+44         proc univariate data=d; weight w; var x; run;
+
+NOTE: The data set WORK.B has 4 observations and 5 variables.
+NOTE: The data set WORK.Q has 11 observations and 3 variables.
+NOTE: The data set WORK.M has 6 observations and 7 variables.
+NOTE: The PROCEDURE UNIVARIATE printed page 1.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2096.62k
+      OS Memory           14516.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        3  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     600
+      Page Swaps                        0
+      Voluntary Context Switches        32
+      Involuntary Context Switches      6
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+45         proc print data=m; run;
+
+NOTE: There were 6 observations read from the data set WORK.M.
+NOTE: The PROCEDURE PRINT printed page 2.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              520.87k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        4  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     76
+      Page Swaps                        0
+      Voluntary Context Switches        1
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+45       !                         proc print data=q; run;
+
+NOTE: There were 11 observations read from the data set WORK.Q.
+NOTE: The PROCEDURE PRINT printed page 3.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              495.50k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        5  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+45       !                                                 proc print data=b; run;
+
+NOTE: There were 4 observations read from the data set WORK.B.
+NOTE: The PROCEDURE PRINT printed page 4.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              510.76k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        6  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     52
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+46         ods output OneWayFreqs=o CrossTabFreqs=c;
+47         proc freq data=d; weight w; tables x x*y; run;
+
+NOTE: Percentages and other statistics are not computed because there are negative weights. Plots are not produced.
+NOTE: The data set WORK.C has 12 observations and 7 variables.
+NOTE: The data set WORK.O has 2 observations and 5 variables.
+NOTE: There were 4 observations read from the data set WORK.D.
+The SAS System
+
+NOTE: The PROCEDURE FREQ printed page 5.
+NOTE: PROCEDURE FREQ used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.01 seconds
+      memory              2067.37k
+      OS Memory           14776.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        7  Switch Count  8
+      Page Faults                       0
+      Page Reclaims                     408
+      Page Swaps                        0
+      Voluntary Context Switches        37
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           1056
+      
+
+48         proc contents data=o varnum; run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              791.64k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        8  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        5
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+NOTE: The PROCEDURE CONTENTS printed page 6.
+
+48       !                                   proc print data=o; run;
+
+NOTE: There were 2 observations read from the data set WORK.O.
+NOTE: The PROCEDURE PRINT printed page 7.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              530.01k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        9  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     51
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+The SAS System
+
+
+49         proc contents data=c varnum; run;
+
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              796.90k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        10  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     92
+      Page Swaps                        0
+      Voluntary Context Switches        3
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+NOTE: The PROCEDURE CONTENTS printed page 8.
+
+49       !                                   proc print data=c; run;
+
+NOTE: There were 12 observations read from the data set WORK.C.
+NOTE: The PROCEDURE PRINT printed page 9.
+NOTE: PROCEDURE PRINT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              544.68k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 05:32:10 AM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+50         
+51         
+52         
+53         
+The SAS System
+
+54         

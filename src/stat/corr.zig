@@ -463,7 +463,9 @@ fn renderMoments(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Grou
 }
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
     const s = try parse(cx, toks);
-    try render(cx.arena, out, try compute(cx, s));
+    const result = try compute(cx, s);
+    if (cx.capture) |capture| try @import("ods_corr.zig").publish(cx.arena, cx.diags, capture, result);
+    try render(cx.arena, out, result);
 }
 
 const Testing = struct {

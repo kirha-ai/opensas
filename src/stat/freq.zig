@@ -582,6 +582,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             const output_cols = try uniqueColumns(a, cols);
             var tab = try computeTable(a, ds, cols, analysis_wc, opts.zeros, req.missing, opts.order, fl.items);
             tab.score_kind = req.scores;
+            if (any and !opts.noprint and !req.noprint) if (cx.capture) |capture|
+                try @import("ods_freq.zig").publish(a, cx.diags, capture, &view, bc, group.rep, &tab, req);
             if (req.out_name) |name| {
                 if (outputs[k] == null) for (cols, 0..) |ci, j| if (std.mem.indexOfScalar(usize, cols[0..j], ci) != null) try cx.diags.report(.warning, 0, "Variable {s} already exists on file {s}.", .{ ds.columns.items[ci].name, name });
                 const part = try tableOutput(a, &view, ds, cols, fl.items, &tab, req, opts.zeros);

@@ -1,0 +1,217 @@
+
+The FREQ Procedure
+
+a    Frequency
+--------------
+            1 
+A           2 
+B           1 
+
+  Frequency
+ Missing = 1
+
+
+Table of a by b
+
+a               b
+
+Frequency      |
+Expected       |
+Deviation      |
+Cell Chi-Square|       1|       2|  Total
+---------------+--------+--------+
+A              |      1 |      1 |      2
+               | 1.3333 | 0.6667 |
+               | -0.333 | 0.3333 |
+               | 0.0833 | 0.1667 |
+---------------+--------+--------+
+B              |      1 |      0 |      1
+               | 0.6667 | 0.3333 |
+               | 0.3333 | -0.333 |
+               | 0.1667 | 0.3333 |
+---------------+--------+--------+
+Total                 2        1        3
+
+Frequency Missing = 1
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.O                                                   Observations          3  
+Member Type          DATA                                                     Variables             4  
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:31:30                                      Observation Length    280
+Last Modified        11/13/2026 04:31:30                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                One-Way Frequencies                                                               
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            467                                                                                         
+Obs in First Data Page      3                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work3E3F0000593F_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workF5E90000593F_odaws02-euw1.oda.sas.com/o.sas7bdat                                        
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610728815                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+           Variables in Creation Order
+ 
+#    Variable     Type    Len    Format    Label
+
+1    Table        Char    256                   
+2    F_a          Char      1              a    
+3    a            Char      8                   
+4    Frequency    Num       8    BEST8.         
+
+Obs     Table     F_a    a    Frequency
+
+ 1     Table a                       1 
+ 2     Table a     A     A           2 
+ 3     Table a     B     B           1 
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.C                                                   Observations          9  
+Member Type          DATA                                                     Variables             10 
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:31:30                                      Observation Length    328
+Last Modified        11/13/2026 04:31:30                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                Frequency Counts and Percentages                                                  
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            399                                                                                         
+Obs in First Data Page      9                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work3E3F0000593F_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workF5E90000593F_odaws02-euw1.oda.sas.com/c.sas7bdat                                        
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610728816                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                             Variables in Creation Order
+ 
+ #    Variable         Type    Len    Format    Label
+
+ 1    Table            Char    256                                                   
+ 2    a                Char      8                                                   
+ 3    b                Num       8                                                   
+ 4    _TYPE_           Char      2              Variables Contributing to Observation
+ 5    _TABLE_          Num       8              Table Number                         
+ 6    Frequency        Num       8    BEST7.    Frequency Count                      
+ 7    Expected         Num       8    BEST6.    Expected Frequency                   
+ 8    Deviation        Num       8    BEST6.    Deviation from Expected Frequency    
+ 9    CellChiSquare    Num       8    BEST6.    Cell Chi-Square                      
+10    Missing          Num       8              Frequency Missing                    
+
+                                                                                            Cell
+                                                                                             Chi
+Obs       Table       a    b    _TYPE_    _TABLE_    Frequency    Expected    Deviation    Square     Missing
+
+ 1     Table a * b    A    1      11         1              1      1.3333      -0.333      0.0833        .   
+ 2     Table a * b    A    2      11         1              1      0.6667      0.3333      0.1667        .   
+ 3     Table a * b    A    .      10         1              2           .           .           .        .   
+ 4     Table a * b    B    1      11         1              1      0.6667      0.3333      0.1667        .   
+ 5     Table a * b    B    2      11         1              0      0.3333      -0.333      0.3333        .   
+ 6     Table a * b    B    .      10         1              1           .           .           .        .   
+ 7     Table a * b         1      01         1              2           .           .           .        .   
+ 8     Table a * b         2      01         1              1           .           .           .        .   
+ 9     Table a * b         .      00         1              3           .           .           .        1   
+
+The FREQ Procedure
+
+                                   Cumulative    Cumulative
+a    b    Frequency     Percent     Frequency      Percent
+-----------------------------------------------------------
+A    1           1       33.33             1        33.33  
+A    2           1       33.33             2        66.67  
+B    1           1       33.33             3       100.00  
+
+                   Frequency Missing = 1
+
+The FREQ Procedure
+
+                              Cumulative    Cumulative
+a    Frequency     Percent     Frequency      Percent
+------------------------------------------------------
+A           3       75.00             3        75.00  
+B           1       25.00             4       100.00  
+
+                Frequency Missing = 1
+
+The CONTENTS Procedure
+
+Data Set Name        WORK.N                                                   Observations          2  
+Member Type          DATA                                                     Variables             7  
+Engine               V9                                                       Indexes               0  
+Created              11/13/2026 04:31:30                                      Observation Length    304
+Last Modified        11/13/2026 04:31:30                                      Deleted Observations  0  
+Protection                                                                    Compressed            NO 
+Data Set Type                                                                 Sorted                NO 
+Label                One-Way Frequencies                                                               
+Data Representation  SOLARIS_X86_64, LINUX_X86_64, ALPHA_TRU64, LINUX_IA64                             
+Encoding             utf-8  Unicode (UTF-8)                                                            
+
+
+                                           Engine/Host Dependent Information
+
+Data Set Page Size          131072                                                                                      
+Number of Data Set Pages    1                                                                                           
+First Data Page             1                                                                                           
+Max Obs per Page            430                                                                                         
+Obs in First Data Page      2                                                                                           
+Number of Data Set Repairs  0                                                                                           
+Filename                    /saswork/SAS_work3E3F0000593F_odaws02-euw1.oda.sas.com/SAS_                                 
+                            workF5E90000593F_odaws02-euw1.oda.sas.com/n.sas7bdat                                        
+Release Created             9.0401M9                                                                                    
+Host Created                Linux                                                                                       
+Inode Number                1610728814                                                                                  
+Access Permission           rw-r--r--                                                                                   
+Owner Name                  u64592586                                                                                   
+File Size                   256KB                                                                                       
+File Size (bytes)           262144                                                                                      
+
+
+                    Variables in Creation Order
+ 
+#    Variable        Type    Len    Format    Label
+
+1    Table           Char    256                                  
+2    F_a             Char      1              a                   
+3    a               Char      8                                  
+4    Frequency       Num       8    BEST8.                        
+5    Percent         Num       8    6.2                           
+6    CumFrequency    Num       8    BEST8.    Cumulative Frequency
+7    CumPercent      Num       8    6.2       Cumulative Percent  
+
+                                                         Cum         Cum
+Obs     Table     F_a    a    Frequency    Percent    Frequency    Percent
+
+ 1     Table a     A     A           3      75.00            3      75.00 
+ 2     Table a     B     B           1      25.00            4     100.00 

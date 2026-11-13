@@ -1,0 +1,81 @@
+
+The UNIVARIATE Procedure
+Variable:  x
+
+               Missing Values
+ 
+                       -----Percent Of-----
+Missing                             Missing
+  Value       Count     All Obs         Obs
+
+      .           1      100.00      100.00
+
+The UNIVARIATE Procedure
+Variable:  x
+
+                            Moments
+
+N                           3    Sum Weights                  3
+Mean               2.33333333    Sum Observations             7
+Std Deviation      1.52752523    Variance            2.33333333
+Skewness           0.93521953    Kurtosis                     .
+Uncorrected SS             21    Corrected SS        4.66666667
+Coeff Variation    65.4653671    Std Error Mean       0.8819171
+
+
+              Basic Statistical Measures
+ 
+    Location                    Variability
+
+Mean     2.333333     Std Deviation            1.52753
+Median   2.000000     Variance                 2.33333
+Mode      .           Range                    3.00000
+                      Interquartile Range      3.00000
+
+
+           Tests for Location: Mu0=0
+ 
+Test           -Statistic-    -----p Value------
+
+Student's t    t  2.645751    Pr > |t|    0.1181
+Sign           M       1.5    Pr >= |M|   0.2500
+Signed Rank    S         3    Pr >= |S|   0.2500
+
+
+Quantiles (Definition 5)
+ 
+Level         Quantile
+
+100% Max             4
+99%                  4
+95%                  4
+90%                  4
+75% Q3               4
+50% Median           2
+25% Q1               1
+10%                  1
+5%                   1
+1%                   1
+0% Min               1
+
+
+        Extreme Observations
+ 
+----Lowest----        ----Highest---
+ 
+Value      Obs        Value      Obs
+
+    1        1            1        1
+    2        2            2        2
+    4        3            4        3
+
+VarName=x Label1=N cValue1=3 nValue1=3.000000 Label2=Sum Weights cValue2=3 nValue2=3.000000 _ERROR_=0 _N_=1
+VarName=x Label1=Mean cValue1=2.33333333 nValue1=2.333333 Label2=Sum Observations cValue2=7 nValue2=7.000000 _ERROR_=0
+_N_=2
+VarName=x Label1=Std Deviation cValue1=1.52752523 nValue1=1.527525 Label2=Variance cValue2=2.33333333 nValue2=2.333333
+_ERROR_=0 _N_=3
+VarName=x Label1=Skewness cValue1=0.93521953 nValue1=0.935220 Label2=Kurtosis cValue2=. nValue2=. _ERROR_=0 _N_=4
+VarName=x Label1=Uncorrected SS cValue1=21 nValue1=21.000000 Label2=Corrected SS cValue2=4.66666667 nValue2=4.666667
+_ERROR_=0 _N_=5
+VarName=x Label1=Coeff Variation cValue1=65.4653671 nValue1=65.465367 Label2=Std Error Mean cValue2=0.8819171
+nValue2=0.881917 _ERROR_=0 _N_=6

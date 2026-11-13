@@ -198,13 +198,19 @@ title_stmt     = "TITLE" [ digit ] [ string ] ";" ;               (* opensas *)
 footnote_stmt  = "FOOTNOTE" [ digit ] [ string ] ";" ;            (* opensas *)
                  (* FOOTNOTE1..10 likewise, printed below the listing
                    (bug_titlecancel, title_in_sql) *)
-ods_stmt       = "ODS" { any_token } ";" ;                        (* opensas: destination open/close
-                 (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5 [CLOSE], _ALL_ CLOSE) and the
-                 results/graphics/escapechar toggles are accepted as listing no-ops
-                 — opensas renders to ONE output stream (main.zig); ODS OUTPUT/
-                 SELECT/EXCLUDE/TRACE FAIL LOUD by name (audit probe: ods select
-                 all; → "ODS select is not supported yet"). NOT marked: no ODS
-                 semantics execute — the accepted forms are deliberate no-ops. *)
+ods_stmt       = ods_output_stmt | "ODS" { any_token } ";" ;
+                 (* Destination open/close (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5,
+                    _ALL_ CLOSE) and results/graphics/escapechar remain deliberate
+                    listing no-ops (D-022). SELECT/EXCLUDE/TRACE fail loud. *)
+ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
+                | ods_table_name "=" ( sas_name | two_level_name )
+                  { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
+ods_table_name  = "PearsonCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
+                | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
+                 (* Typed capture; default requests expire after next PROC.
+                    BY objects concatenate, missing objects warn without creating
+                    a dataset. Unknown tables and unimplemented OUTPUT options
+                    fail visibly. No destination rendering or selection implied. *)
 x_stmt         = "X" [ ( name | string ) { name | string } ] ";" ;  (* opensas: parsed,
                  accepted inert — the shell command is NOT executed (audit probe:
                  x "echo …"; runs clean, no command runs). Accepted-inert by

@@ -45,7 +45,8 @@ const freq_stat = @import("stat/freq.zig");
 /// of `(arena, lib, diags)` threaded through all 15 run* signatures. `out` stays
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics };
+pub const ods = @import("ods.zig");
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4760,7 +4761,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (!univ.hasUsableWeight(bd.rows.items, wcol, extra)) continue;
         if (ccols.items.len == 0) {
             const analysis = try univ.analysisView(arena, bd, acols.items, wcol, extra);
-            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
+            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
@@ -4785,7 +4786,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 for (g.rows) |r| try gd.rows.append(arena, r);
                 if (!univ.hasUsableWeight(gd.rows.items, wcol, extra)) continue;
                 const analysis = try univ.analysisView(arena, gd, acols.items, wcol, extra);
-                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
+                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
             }
         }
     }
@@ -4802,7 +4803,7 @@ fn isQuantileStat(k: StatKind) bool {
 
 /// One variable's Moments + Quantiles block. `wcol` names a WEIGHT column
 /// (WEIGHT-uni-impl); null → every obs weighs 1 (identical to the unweighted case).
-fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize) !void {
+fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize, cx: ProcCtx, bycols: []const usize, classcols: []const usize) !void {
     // computeStatsV already carries the weighted N / Sum Weights (Σwᵢ) / weighted
     // Mean (Σwᵢxᵢ/Σwᵢ) / weighted Std (CSS over the VARDEF divisor, BUG-statvardef)
     // / weighted CSS (Σwᵢ(xᵢ−x̄w)²) / weighted USS (Σwᵢxᵢ²) / weighted Sum (Σwᵢxᵢ).
@@ -4919,6 +4920,11 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "Mean", s.mean, "Std Deviation", s.std);
     try momentLine(arena, out, "Median", med, "Variance", variance);
     const mi = modeInfo(vals);
+    if (cx.capture) |capture| try @import("stat/ods_univariate.zig").publish(arena, cx.diags, capture, ds, col, bycols, classcols,
+        .{ .left = .{ nf, s.mean, s.std, skew_out, s.uss, cv },
+           .right = .{ s.sumw, s.sum, variance, kurt_out, s.css, sem },
+           .quantiles = .{ s.max, p99, p95, p90, q3, med, q1, p10, p5, p1, s.min },
+           .mode = if (mi.count < 2 and pairs.len != 1) nan else mi.mode });
     try momentLine(arena, out, "Mode", if (mi.count < 2 and pairs.len != 1) nan else mi.mode, "Range", s.max - s.min);
     try out.appendSlice(arena, " " ** 34); // no fourth Location stat — blank pair
     try uPair(arena, out, "Interquartile Range", q3 - q1);
