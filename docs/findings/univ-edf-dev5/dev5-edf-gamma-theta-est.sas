@@ -1,0 +1,13 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(shape,mask);
+data d;array xx[500] _temporary_;do n=10,20,50,100,200,500;do g=0 to 600;sm=0;ss=0;
+do i=1 to n;v=(i-.41)/(n+.18);u=.5+.5*sign(2*v-1)*abs(2*v-1)**(1+g*.006);xx[i]=quantile('gamma',u,&shape);sm+xx[i]/n;ss+xx[i]*xx[i]/n;end;
+do i=1 to n;%if &mask=2 %then %do;x=3+(xx[i]-sm)*sqrt(&shape/(ss-sm*sm))+2*&shape;%end;%else %do;x=3+xx[i];%end;output;end;end;end;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n g;histogram x / noplot gamma(theta=est %if &mask=2 %then %do; sigma=1 %end; maxiter=100 alphadelta=1e-10);run;
+data shapes;set pars;by n g;retain FitAlpha;if Symbol='Alpha' then FitAlpha=Estimate;if last.g then output;keep n g FitAlpha;run;
+ods exclude none;
+data _null_;merge gof(in=ok) shapes;by n g;if ok;file print;put "gtheta&mask._&shape|" n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign '|' FitAlpha best32.;run;
+ods exclude all;
+%mend;
+%p(1.5,2);%p(3,2);%p(5,2);%p(10,2);%p(1.5,3);%p(3,3);%p(5,3);%p(10,3);

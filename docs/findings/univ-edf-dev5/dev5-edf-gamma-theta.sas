@@ -1,0 +1,10 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(shape,mask);
+data d;do n=10,20,50,100,200;do g=0 to 700;do i=1 to n;u=((i-.41)/(n+.18))**(1+g*.006);x=3+quantile('gamma',u,&shape);output;end;end;end;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n g;histogram x / noplot gamma(theta=est alpha=&shape %if &mask=0 %then %do; sigma=1 %end; maxiter=100);run;
+ods exclude none;
+data _null_;set gof;file print;put "gtheta&mask._&shape|" n best8. '|' g best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(1.5,0);%p(3,0);%p(10,0);%p(1.5,1);%p(3,1);%p(10,1);
