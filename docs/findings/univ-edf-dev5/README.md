@@ -68,10 +68,13 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   M9 even when near-boundary critical surfaces are non-monotone. See
   EVIDENCE-GAMMA-THETA.md.
 
+- Estimated-threshold Weibull now covers all four masks. 30294 numerical
+  heldouts and 600 independent two-sided median checks pass. See
+  EVIDENCE-WEIBULL-THETA.md.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated-threshold lognormal and
-  Weibull probabilities; family/shape-dependent critical tables/interpolation.
+- Estimated-threshold lognormal probabilities and their remaining shape surfaces.
   Availability is implemented, probability computation fails loudly where
   these documented-available combinations lack tables.
 - Dev4 integration and generation/refitting callbacks. Statistical comparisons
