@@ -4458,6 +4458,7 @@ fn isUnivOutGapOption(kw: []const u8) bool {
 }
 
 const univ = @import("stat/univariate.zig");
+const univ_distributions = @import("stat/univ_distribution_statements.zig");
 
 pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.Error!void {
     const arena = cx.arena;
@@ -4470,6 +4471,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var mu0: f64 = 0; // MU0= reference for Tests for Location (F1); default 0
     var extra: univ.Options = .{};
     var outputs: std.ArrayList(univ.Output) = .empty;
+    var histograms: std.ArrayList(univ_distributions.Statement) = .empty;
     var ids: std.ArrayList([]const u8) = .empty;
     var i: usize = 2; // past `proc univariate`
     while (i < toks.len and toks[i].tag != .semicolon) {
@@ -4577,7 +4579,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             i += 1;
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
                 if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &ids);
-        } else if (tkKw(toks[i], "histogram") or tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
+        } else if (tkKw(toks[i], "histogram")) {
+            try histograms.append(arena, try univ_distributions.parseStatement(arena, diags, toks, &i));
+        } else if (tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
             // Plot statements produce graphics we never render; swallowing them
             // silently no-op'd a requested plot (BUG-univplotnoop). Fail loud, as
             // ID/OUTPUT-pctlpts beside them already do. Five named, valid SAS 9.4
@@ -4703,6 +4707,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
+    if (wcol != null and histograms.items.len > 0) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
     try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
     if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
@@ -4743,8 +4748,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
 
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
-
-    if (noprint) return; // NOPRINT suppresses the Moments/Quantiles listing
+    if (noprint) {
+        try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
+        return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
+    }
     try out.appendSlice(arena, (" " ** 33) ++ "The UNIVARIATE Procedure\n");
     // One block set PER BY GROUP (BUG-univignoresby: BY was parsed and then
     // ignored — the listing printed ONE pooled Moments block over ALL obs, the
@@ -4790,6 +4797,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             }
         }
     }
+    try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
 }
 
 /// A percentile-family statistic whose value the shared MEANS output builder
@@ -17189,6 +17197,8 @@ test "NOTE-freqallmissnone: a formatted category containing missing is wholly mi
 }
 /// Shared numerical and grouping helpers for the UNIVARIATE extension (D-029).
 pub const UnivariateHelpers = struct {
+    pub const appendVarListName = @import("proc.zig").appendVarListName;
+    pub const expandVarPrefixes = @import("proc.zig").expandVarPrefixes;
     pub const VarDef = @import("proc.zig").VarDef;
     pub const XW = @import("proc.zig").XW;
     pub const Stats = @import("proc.zig").Stats;

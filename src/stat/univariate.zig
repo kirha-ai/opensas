@@ -1207,7 +1207,7 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
 /// Select the first weight-eligible original value within this BY group and
 /// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
 /// missing weights must not supply a representative, even without EXCLNPWGT.
-fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
+pub fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
     const level = rep[ci];
     const oi = opt.obscol orelse return level;
     rows: for (ds.rows.items) |row| {
