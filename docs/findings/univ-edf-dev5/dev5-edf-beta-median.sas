@@ -1,0 +1,16 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(aa,bb);
+data state;do n=10,20,50,100,200;do t=1 to 3;lo=0;hi=8;output;end;end;run;
+%do step=1 %to 44;
+data d;set state;g=(lo+hi)/2;do i=1 to n;v=(i-.41)/(n+.18);u=.5+.5*sign(2*v-1)*abs(2*v-1)**(1/(1+g));x=quantile('beta',u,&aa,&bb);output;end;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n t;histogram x / noplot beta(theta=0 sigma=1);run;
+data shapes;set pars;by n t;retain FitAlpha FitBeta;if Symbol='Alpha' then FitAlpha=Estimate;if Symbol='Beta' then FitBeta=Estimate;if last.t then output;keep n t FitAlpha FitBeta;run;
+data selected;set gof;if (t=1 and TestLab='D') or (t=2 and TestLab='W-Sq') or (t=3 and TestLab='A-Sq');keep n t Stat pValue pSign;run;
+data state;merge state selected shapes;by n t;g=(lo+hi)/2;if pValue=.5 and pSign='>' then lo=g;else hi=g;run;
+%end;
+ods exclude none;
+data _null_;set state;file print;put "beta_&aa._&bb|" n best8. '|' t best8. '|' Stat best32. '|' FitAlpha best32. '|' FitBeta best32. '|' lo best32. '|' hi best32.;run;
+ods exclude all;
+%mend;
+%p(.3,.3);%p(.5,1);%p(1,2);%p(2,4);%p(4,4);%p(.3,3);%p(.8,1.5);%p(1.5,3);

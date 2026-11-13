@@ -1,0 +1,14 @@
+options ls=256;ods graphics off;ods exclude all;
+data d;do n=2 to 12;do i=1 to n;x=(i-.5)/n;output;end;end;run;
+%macro p(id,opts);
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by n;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" n best8. '|' TestLab;run;
+ods exclude all;
+%mend;
+%p(nknown,normal(mu=0 sigma=1));%p(npartial,normal(sigma=1));%p(nest,normal);
+%p(bknown,beta(alpha=1 beta=1));%p(best,beta);
+%p(gknown,gamma(alpha=2 sigma=1));
+%p(wknown,weibull(c=2 sigma=1));%p(west,weibull);
+%p(lest,lognormal);
