@@ -30,6 +30,8 @@ pub fn known(statistics: dist.Edf, n: usize) Result {
 
 pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
+    if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
+    if (request.family == .normal and request.mu == null and request.sigma == null) return normalEstimated(dist.edf(distribution, x).?, x.len);
     const all_known = switch (request.family) {
         .normal => request.mu != null and request.sigma != null,
         .lognormal => request.theta != null and request.zeta != null and request.sigma != null,
@@ -42,6 +44,18 @@ pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribu
     };
     if (!all_known) return d.fail(error.ParseError, 0, "UNIVARIATE: estimated-parameter EDF probabilities are not implemented", .{});
     return known(dist.edf(distribution, x).?, x.len);
+}
+
+pub fn normalEstimated(statistics: dist.Edf, n: usize) Result {
+    std.debug.assert(n > 0);
+    const nf: f64 = @floatFromInt(n);
+    const levels = [_]f64{ 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005 };
+    return .{
+        .statistics = statistics,
+        .d = interpolate(statistics.d * (@sqrt(nf) - 0.01 + 0.85 / @sqrt(nf)), &.{ 0.775, 0.819, 0.895, 0.955, 1.035 }, &.{ 0.15, 0.10, 0.05, 0.025, 0.01 }),
+        .w2 = interpolate(statistics.w2 * (1 + 0.5 / nf), &.{ 0.074, 0.091, 0.104, 0.126, 0.148, 0.178, 0.201 }, &levels),
+        .a2 = interpolate(statistics.a2 * (1 + 0.75 / nf + 2.25 / (nf * nf)), &.{ 0.470, 0.561, 0.631, 0.752, 0.873, 1.035, 1.159 }, &levels),
+    };
 }
 
 test "UNIVARIATE complete-parameter EDF probabilities SAS M9 stored values and signs" {
@@ -74,5 +88,14 @@ test "UNIVARIATE estimated-parameter requests cannot reuse known-parameter proba
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     var d = diag.Diagnostics.init(arena.allocator());
-    try std.testing.expectError(error.ParseError, compute(&d, &.{ 1, 2, 3 }, .{ .family = .normal, .p = .{} }, .{ .family = .normal }));
+    try std.testing.expectError(error.ParseError, compute(&d, &.{ 1, 2, 3 }, .{ .family = .normal, .p = .{} }, .{ .family = .normal, .mu = 0 }));
+}
+
+test "UNIVARIATE fitted-normal histogram EDF lower-tail knots match SAS M9" {
+    const r = normalEstimated(.{ .d = 0.06316825604689, .w2 = 0.13635603505674, .a2 = 0.8901915619608 }, 100);
+    try std.testing.expectEqual(Sign.greater, r.d.sign);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.03745702814542), r.w2.value, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.02277145446509), r.a2.value, 1e-12);
+    const tail = normalEstimated(.{ .d = 0.1, .w2 = 0.1872120512639994 / 1.005, .a2 = 1 }, 100);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00799738016), tail.w2.value, 1e-12);
 }

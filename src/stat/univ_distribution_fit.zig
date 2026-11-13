@@ -18,10 +18,27 @@ pub const Request = struct {
     gamma: ?f64 = null,
     maxiter: usize = 20,
     alphainitial: ?f64 = null,
-    alphadelta: f64 = 1e-8,
+    alphadelta: f64 = 1e-5,
     fitmethod: JohnsonMethod = .percentiles,
     fitinterval: f64 = 0.524,
     fittolerance: f64 = 0.01,
+    optboundrange: f64 = 100,
+    optmaxiter: usize = 500,
+    optmaxstarts: usize = 100,
+    optseed: ?f64 = null,
+    opttolerance: f64 = 1e-8,
+    optprint: bool = false,
+    itprint: bool = false,
+    edfnsamples: usize = 500,
+    edfseed: ?f64 = null,
+    specified_fields: std.StaticBitSet(std.meta.fields(dist.Parameters).len) = .initEmpty(),
+
+    pub fn specified(self: Request, comptime name: []const u8) bool {
+        inline for (std.meta.fields(dist.Parameters), 0..) |field, i| {
+            if (comptime std.mem.eql(u8, field.name, name)) return self.specified_fields.isSet(i);
+        }
+        @compileError("unknown distribution parameter");
+    }
 };
 
 /// Sorted finite sample, after FREQ expansion. No missing-value filtering or

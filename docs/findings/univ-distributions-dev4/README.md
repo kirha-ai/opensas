@@ -11,7 +11,8 @@ The ignored manual and retained evidence are read from the manager checkout.
 ## Required numerical surface
 
 Source: SAS 9.4 Statistical Procedures pp.307–341, 359–407, 431–459;
-output descriptors additionally pp.462–463. Rendering is outside this ticket.
+output descriptors additionally pp.462–463. Only graphics rendering is outside
+this ticket; numerical rendering and public statement behavior belong to dev4.
 
 - Thirteen families: beta, exponential, gamma, Gumbel (maximum extreme
   value), inverse Gaussian, lognormal, normal, generalized Pareto, power,
@@ -58,19 +59,25 @@ preserving diagnostics for unsupported graphics requests.
 - `univ_distribution_parse.zig`: family parameter lists, EST, parameter
   aliases, gamma/Weibull iteration controls, Johnson percentile controls,
   PERCENTS, MIDPERCENTS and NOPRINT. Unknown options fail via captured diagnostics.
-- `univ_distribution_gof.zig`: complete-parameter EDF probability tables,
-  finite-sample corrections and stored p-value bound signs. Estimated-parameter
-  and simulation methods remain guarded; dev2 is a proposed disjoint owner
-  for those methods if manager dispatches that assignment.
+- `univ_distribution_gof.zig`: complete-parameter and fitted-normal EDF tables,
+  finite-sample corrections and stored p-value bound signs. Other estimated-
+  parameter and simulation methods remain guarded.
 - `univ_kernel.zig`: three kernels, reflections, numeric and normal-reference
   MISE bandwidths; direct density and SAS's 128-interval binned/interpolated
   density are separate APIs. SJPI is explicitly unsupported.
 - `univ_distribution_values.zig`: explicit equal-width endpoint counts,
   RTINCLUDE, observed and fitted percentages, occupied-outer-bin trimming,
   standardized QQ/probability coordinates/reference lines, Weibull2 transform.
-- `univariate.zig` imports these modules in its test block. No PROC dispatch
-  guard is removed and no ODS infrastructure is modified. These APIs are not
-  yet reachable through a completed end-to-end PROC implementation.
+- Public HISTOGRAM dispatch, explicit/automatic bin calculation, BY/FREQ,
+  OUTHISTOGRAM and OUTKERNEL are implemented in the current working tree.
+  Numerical tables publish typed ParameterEstimates/FitQuantiles/GoodnessOfFit/
+  Bins objects using the landed ODS builder. Existing summary ODS hooks remain.
+  Integration tests check output values, descriptors and absence of unrequested
+  output datasets. Constant/comparative bins and broader metadata remain open.
+- SAS M9 rejects WEIGHT with all five plot statements. The public guard is a
+  compatibility error (not a feature-gap exemption), before output publication.
+- Singer owns new standalone SJPI support. Dev4 retains its adapter, all existing
+  modules, statement behavior, numerical rendering and final acceptance.
 
 ### Oracle findings
 
@@ -131,6 +138,11 @@ The ticket is NOT DONE. Remaining work includes:
 - Broader independent SAS verification of all distributions, parameter
   combinations, tails, rank options and numerical convergence boundaries.
 
-No expected-output golden is changed. The new tests are directly runnable via
-`zig build test`; full gate status must be recorded at landing, not inferred
-from these unit tests. No jira.md edit, fetch, pull, push, or mid-task rebase.
+New unit checks are directly runnable via `zig build test`. The working-tree
+`univ_dist_hist_dev4` corpus fixture has a SAS-derived golden; implementation and
+golden will be committed separately. Full gate status is recorded at report-time,
+not inferred from unit tests. No jira.md edit, fetch, pull or push.
+
+The earlier green foundation report rebased once at report-time onto 0f2d151 and
+recorded HEAD 0196bb1: 1237 tests, 2050 corpus, 11 programs. The current integration
+work is newer and does not inherit that gate result.
