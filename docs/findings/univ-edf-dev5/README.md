@@ -46,10 +46,12 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
 - Seeded callback simulation, count/m probabilities including zero, reproducible
   seed behavior, invalid controls and callback failure propagation.
 
+- Estimated exponential tables now cover all three estimation masks, including
+  separate >.500/>.250 bounds and effective n-1 when only theta is estimated.
+  See EVIDENCE-EXPONENTIAL.md for independent validation and integration details.
+
 ## Concrete remaining gaps (full acceptance is NOT met)
 
-- Estimated exponential tables for all three estimation masks, including
-  n-dependent critical values and both >.500 and >.250 upper bounds.
 - Estimated gamma/beta/power probabilities; estimated-threshold lognormal and
   Weibull probabilities; family/shape-dependent critical tables/interpolation.
   Availability is implemented, probability computation fails loudly where
