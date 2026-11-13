@@ -1,0 +1,10 @@
+options nonumber nodate;
+data j; do i=1 to 51; z=probit((i-.375)/51.25); u=2*sinh(z/1.1); output; end; run;
+title 'SU one-iteration fallback with fixed gamma';
+proc univariate data=j; var u;
+histogram u / su(fitmethod=mle gamma=0 optseed=42 optmaxstarts=1 optmaxiter=1 optprint) noplot;
+run;
+title 'SU one-iteration fallback with fixed location';
+proc univariate data=j; var u;
+histogram u / su(fitmethod=mle theta=0 optseed=42 optmaxstarts=1 optmaxiter=1 optprint) noplot;
+run;

@@ -20,7 +20,10 @@ pub const Controls = struct {
 };
 pub const Failure = enum { unsupported_combination, invalid_sample, invalid_parameters, invalid_controls, outside_support, no_moment_solution, iteration_limit, no_interior_maximum };
 pub const Success = struct { parameters: Parameters, iterations: usize = 0, starts: usize = 0, log_likelihood: ?f64 = null };
-pub const Result = union(enum) { converged: Success, nonconverged: Failure };
+/// A valid fallback is a curve, not an established optimum. The adapter must
+/// publish its nonconvergence warning alongside it, never relabel it converged.
+pub const Nonconvergence = struct { reason: Failure, best: ?Success = null };
+pub const Result = union(enum) { converged: Success, nonconverged: Nonconvergence };
 
 const Moments = struct { mean: f64, variance: f64, skew: f64, kurt: f64 };
 fn sampleMoments(x: []const f64) Moments {
@@ -89,7 +92,7 @@ fn norm(r: [2]f64) f64 {
 }
 
 fn momentFit(family: Family, x: []const f64, fixed: Fixed) Result {
-    if (x.len < 4) return .{ .nonconverged = .invalid_sample };
+    if (x.len < 4) return .{ .nonconverged = .{ .reason = .invalid_sample } };
     const target = sampleMoments(x);
     // Multiple shape starts are needed near the lognormal dividing curve.
     for ([_]f64{ 0.5, 1, 2, 4, 8 }) |delta0| {
@@ -105,7 +108,7 @@ fn momentFit(family: Family, x: []const f64, fixed: Fixed) Result {
                 }
                 const lambda = @sqrt(target.variance / m.variance);
                 const p: Parameters = .{ .theta = fixed.theta orelse (target.mean - lambda * m.mean), .lambda = fixed.lambda orelse lambda, .delta = fixed.delta orelse delta, .gamma = fixed.gamma orelse q[1] };
-                if (!supported(family, x, p)) return .{ .nonconverged = .outside_support };
+                if (!supported(family, x, p)) return .{ .nonconverged = .{ .reason = .outside_support } };
                 return .{ .converged = .{ .parameters = p, .iterations = iter + 1 } };
             }
             var jac: [2][2]f64 = undefined;
@@ -136,7 +139,7 @@ fn momentFit(family: Family, x: []const f64, fixed: Fixed) Result {
             if (!accepted) break;
         }
     }
-    return .{ .nonconverged = .no_moment_solution };
+    return .{ .nonconverged = .{ .reason = .no_moment_solution } };
 }
 
 fn supported(family: Family, x: []const f64, p: Parameters) bool {
@@ -179,25 +182,25 @@ fn conditional(family: Family, x: []const f64, fixed: Fixed, theta: f64, lambda:
 }
 
 pub fn fit(family: Family, method: Method, x: []const f64, fixed: Fixed, controls: Controls) Result {
-    if (x.len < 2) return .{ .nonconverged = .invalid_sample };
-    for (x, 0..) |v, i| if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return .{ .nonconverged = .invalid_sample };
+    if (x.len < 2) return .{ .nonconverged = .{ .reason = .invalid_sample } };
+    for (x, 0..) |v, i| if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return .{ .nonconverged = .{ .reason = .invalid_sample } };
     inline for (std.meta.fields(Fixed)) |field| {
-        if (@field(fixed, field.name)) |v| if (!std.math.isFinite(v)) return .{ .nonconverged = .invalid_parameters };
+        if (@field(fixed, field.name)) |v| if (!std.math.isFinite(v)) return .{ .nonconverged = .{ .reason = .invalid_parameters } };
     }
-    if ((fixed.lambda != null and fixed.lambda.? <= 0) or (fixed.delta != null and fixed.delta.? <= 0)) return .{ .nonconverged = .invalid_parameters };
-    if (controls.optmaxiter == 0 or controls.optmaxstarts == 0 or !(controls.opttolerance > 0) or !std.math.isFinite(controls.opttolerance) or !(controls.optboundrange > 0) or !std.math.isFinite(controls.optboundrange) or controls.optseed == 0) return .{ .nonconverged = .invalid_controls };
+    if ((fixed.lambda != null and fixed.lambda.? <= 0) or (fixed.delta != null and fixed.delta.? <= 0)) return .{ .nonconverged = .{ .reason = .invalid_parameters } };
+    if (controls.optmaxiter == 0 or controls.optmaxstarts == 0 or !(controls.opttolerance > 0) or !std.math.isFinite(controls.opttolerance) or !(controls.optboundrange > 0) or !std.math.isFinite(controls.optboundrange) or controls.optseed == 0) return .{ .nonconverged = .{ .reason = .invalid_controls } };
     if (fixed.theta != null and fixed.lambda != null and fixed.delta != null and fixed.gamma != null) {
         const p: Parameters = .{ .theta = fixed.theta.?, .lambda = fixed.lambda.?, .delta = fixed.delta.?, .gamma = fixed.gamma.? };
-        return if (supported(family, x, p)) .{ .converged = .{ .parameters = p } } else .{ .nonconverged = .outside_support };
+        return if (supported(family, x, p)) .{ .converged = .{ .parameters = p } } else .{ .nonconverged = .{ .reason = .outside_support } };
     }
-    if (x[0] == x[x.len - 1]) return .{ .nonconverged = .invalid_sample };
+    if (x[0] == x[x.len - 1]) return .{ .nonconverged = .{ .reason = .invalid_sample } };
     if (family == .sb) {
-        if (fixed.delta != null or fixed.gamma != null or (fixed.theta == null and fixed.lambda != null)) return .{ .nonconverged = .unsupported_combination };
-        if (method == .mle and (fixed.theta == null or fixed.lambda == null)) return .{ .nonconverged = .unsupported_combination };
+        if (fixed.delta != null or fixed.gamma != null or (fixed.theta == null and fixed.lambda != null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
+        if (method == .mle and (fixed.theta == null or fixed.lambda == null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
     }
-    if (family == .su and method == .moments and (fixed.theta != null or fixed.lambda != null or fixed.delta != null or fixed.gamma != null)) return .{ .nonconverged = .unsupported_combination };
+    if (family == .su and method == .moments and (fixed.theta != null or fixed.lambda != null or fixed.delta != null or fixed.gamma != null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
     if (method == .moments) return momentFit(family, x, fixed);
-    if (fixed.theta != null and fixed.lambda != null) return if (conditional(family, x, fixed, fixed.theta.?, fixed.lambda.?)) |s| .{ .converged = s } else .{ .nonconverged = .outside_support };
+    if (fixed.theta != null and fixed.lambda != null) return if (conditional(family, x, fixed, fixed.theta.?, fixed.lambda.?)) |s| .{ .converged = s } else .{ .nonconverged = .{ .reason = .outside_support } };
     return mleFit(family, x, fixed, controls);
 }
 
@@ -246,6 +249,7 @@ fn mleFit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Resu
     const origin: [2]f64 = .{ (initial.theta - sm.mean) / profile.scale, @log(initial.lambda / profile.scale) };
     var rng = std.Random.DefaultPrng.init(controls.optseed);
     var best: ?Success = null;
+    var fallback: ?Success = null;
     var limited = false;
     var total: usize = 0;
     for (0..controls.optmaxstarts) |start| {
@@ -261,6 +265,8 @@ fn mleFit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Resu
             total += 1;
             const value = profile.value(q);
             if (!std.math.isFinite(value)) break;
+            const valid = profile.evaluate(q).?;
+            if (fallback == null or valid.log_likelihood.? > fallback.?.log_likelihood.?) fallback = valid;
             if (controls.trace) |trace| {
                 const current = profile.evaluate(q).?;
                 trace(controls.trace_context, .{ .start = start + 1, .iteration = iteration + 1, .parameters = current.parameters, .log_likelihood = current.log_likelihood.? });
@@ -313,17 +319,31 @@ fn mleFit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Resu
             if (!accepted) break;
             if (iteration + 1 == controls.optmaxiter) limited = true;
         }
+        // Include the last accepted step even when its iteration used the
+        // remaining budget; never preserve an invalid trial from line search.
+        if (profile.evaluate(q)) |valid| {
+            if (fallback == null or valid.log_likelihood.? > fallback.?.log_likelihood.?) fallback = valid;
+        }
         if (converged) {
             const candidate = profile.evaluate(q).?;
             if (best == null or candidate.log_likelihood.? > best.?.log_likelihood.?) best = candidate;
         }
     }
     if (best) |*s| {
+        // A stopped start can beat a converged local optimum. Preserve the
+        // better curve and its unresolved status instead of hiding it behind
+        // a worse optimum from another start.
+        if (fallback == null or fallback.?.log_likelihood.? <= s.log_likelihood.? + controls.opttolerance * @as(f64, @floatFromInt(x.len))) {
+            s.iterations = total;
+            s.starts = controls.optmaxstarts;
+            return .{ .converged = s.* };
+        }
+    }
+    if (fallback) |*s| {
         s.iterations = total;
         s.starts = controls.optmaxstarts;
-        return .{ .converged = s.* };
     }
-    return .{ .nonconverged = if (limited) .iteration_limit else .no_interior_maximum };
+    return .{ .nonconverged = .{ .reason = if (limited) .iteration_limit else .no_interior_maximum, .best = fallback } };
 }
 
 test "Johnson SU analytic moments agree with independent normal quadrature" {
@@ -349,7 +369,7 @@ fn oracleSample(family: Family) [101]f64 {
 }
 fn checkParameters(expected: Parameters, result: Result, tolerance: f64) !void {
     if (result != .converged) {
-        std.debug.print("Johnson failed: {s}\n", .{@tagName(result.nonconverged)});
+        std.debug.print("Johnson failed: {s}\n", .{@tagName(result.nonconverged.reason)});
         return error.TestUnexpectedResult;
     }
     inline for (std.meta.fields(Parameters)) |field| {
@@ -378,14 +398,14 @@ test "Johnson MLE SAS M9 conditional shapes and unrestricted SU" {
 test "Johnson invalid samples, support endpoints and SAS unsupported combinations stay tagged" {
     const b = oracleSample(.sb);
     const u = oracleSample(.su);
-    try std.testing.expectEqual(Failure.unsupported_combination, fit(.sb, .mle, &b, .{}, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.unsupported_combination, fit(.sb, .mle, &b, .{ .theta = 0, .lambda = 1, .delta = 2 }, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.unsupported_combination, fit(.su, .moments, &u, .{ .theta = 3 }, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.outside_support, fit(.sb, .mle, &.{ 0, 0.5, 1 }, .{ .theta = 0, .lambda = 1 }, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.invalid_sample, fit(.su, .moments, &.{ 1, 1, 1, 1 }, .{}, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.invalid_sample, fit(.su, .mle, &.{ 2, 1 }, .{}, .{}).nonconverged);
-    try std.testing.expectEqual(Failure.invalid_controls, fit(.su, .mle, &u, .{}, .{ .optmaxiter = 0 }).nonconverged);
-    try std.testing.expectEqual(Failure.iteration_limit, fit(.su, .mle, &u, .{}, .{ .optmaxiter = 1, .optmaxstarts = 1 }).nonconverged);
+    try std.testing.expectEqual(Failure.unsupported_combination, fit(.sb, .mle, &b, .{}, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.unsupported_combination, fit(.sb, .mle, &b, .{ .theta = 0, .lambda = 1, .delta = 2 }, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.unsupported_combination, fit(.su, .moments, &u, .{ .theta = 3 }, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.outside_support, fit(.sb, .mle, &.{ 0, 0.5, 1 }, .{ .theta = 0, .lambda = 1 }, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.invalid_sample, fit(.su, .moments, &.{ 1, 1, 1, 1 }, .{}, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.invalid_sample, fit(.su, .mle, &.{ 2, 1 }, .{}, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Failure.invalid_controls, fit(.su, .mle, &u, .{}, .{ .optmaxiter = 0 }).nonconverged.reason);
+    try std.testing.expectEqual(Failure.iteration_limit, fit(.su, .mle, &u, .{}, .{ .optmaxiter = 1, .optmaxstarts = 1 }).nonconverged.reason);
 }
 
 test "Johnson heldout SAS M9 opposite skew and conditional endpoint fits" {
@@ -399,7 +419,7 @@ test "Johnson heldout SAS M9 opposite skew and conditional endpoint fits" {
     }
     try checkParameters(.{ .theta = -2.00445, .lambda = 5.010861, .delta = 0.803561, .gamma = -0.70178 }, fit(.sb, .moments, &b, .{}, .{}), 5e-5);
     try checkParameters(.{ .theta = -2, .lambda = 5, .delta = 0.816062, .gamma = -0.71405 }, fit(.sb, .mle, &b, .{ .theta = -2, .lambda = 5 }, .{}), 6e-6);
-    try std.testing.expectEqual(Failure.no_moment_solution, fit(.su, .moments, &u, .{}, .{}).nonconverged);
+    try std.testing.expectEqual(Failure.no_moment_solution, fit(.su, .moments, &u, .{}, .{}).nonconverged.reason);
     const controls: Controls = .{ .optseed = 321, .optmaxstarts = 10 };
     try checkParameters(.{ .theta = -3.99631, .lambda = 1.478673, .delta = 0.9, .gamma = -0.65 }, fit(.su, .mle, &u, .{ .delta = 0.9, .gamma = -0.65 }, controls), 3e-5);
     try checkParameters(.{ .theta = -4.01707, .lambda = 1.471514, .delta = 0.9, .gamma = -0.6635 }, fit(.su, .mle, &u, .{ .delta = 0.9 }, controls), 3e-5);
@@ -422,12 +442,12 @@ test "Johnson symmetric moments, strict optimizer controls and normal-limit fail
     }
     try checkParameters(.{ .theta = -0.00101, .lambda = 1.002028, .delta = 0.698438, .gamma = 0 }, fit(.sb, .moments, &b, .{}, .{}), 6e-6);
     try checkParameters(.{ .theta = 0, .lambda = 4.011827, .delta = 1.837622, .gamma = 0 }, fit(.su, .moments, &u, .{}, .{}), 6e-6);
-    try std.testing.expectEqual(Failure.no_moment_solution, fit(.su, .moments, &z, .{}, .{}).nonconverged);
+    try std.testing.expectEqual(Failure.no_moment_solution, fit(.su, .moments, &z, .{}, .{}).nonconverged.reason);
     try std.testing.expect(fit(.su, .mle, &z, .{}, .{ .optmaxstarts = 1, .optseed = 42 }) == .nonconverged);
     try checkParameters(.{ .theta = 0, .lambda = 2.403494, .delta = 1.281552, .gamma = 0 }, fit(.su, .mle, &u, .{}, .{ .optmaxstarts = 1, .optboundrange = 2, .opttolerance = 1e-10, .optseed = 42 }), 6e-6);
 }
 
-test "Johnson seeded starts and trace honor iteration budget without publishing last iterate" {
+test "Johnson seeded starts and trace honor iteration budget without labelling fallback converged" {
     const Trace = struct {
         count: usize = 0,
         digest: f64 = 0,
@@ -470,4 +490,52 @@ test "Johnson fits preserve affine transformations and fixed parameter identity"
     try std.testing.expectEqual(options.theta.?, p.theta);
     try std.testing.expectEqual(options.lambda.?, p.lambda);
     try std.testing.expectEqual(options.gamma.?, p.gamma);
+}
+
+test "Johnson SAS IterLimit keeps a valid explicitly nonconverged curve and fixed values" {
+    var x: [51]f64 = undefined;
+    var z: [51]f64 = undefined;
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("univ_johnson_dev3_boundary_scores.csv"), '\n');
+    for (&x, &z) |*v, *score| {
+        score.* = try std.fmt.parseFloat(f64, lines.next().?);
+        v.* = 2 * std.math.sinh(score.* / 1.1);
+    }
+    const Objective = struct {
+        // Direct observation-wise density calculation, independent of the
+        // optimizer's profiled sufficient-statistic likelihood calculation.
+        fn value(sample: []const f64, p: Parameters) f64 {
+            var sum: f64 = 0;
+            for (sample) |v| {
+                const y = (v - p.theta) / p.lambda;
+                const normal = p.gamma + p.delta * std.math.asinh(y);
+                sum += @log(p.delta / p.lambda) - 0.5 * @log(2 * std.math.pi * (1 + y * y)) - normal * normal / 2;
+            }
+            return sum;
+        }
+    };
+    // boundaries.log: IterLimit, zero local optima, but a returned curve.
+    // Its printed parameter vector is a lower bound, not a demand that our
+    // different local solver reproduce SAS's one-step trajectory.
+    const sas_fallback: Parameters = .{ .theta = 0, .lambda = 1.653148, .delta = 0.94738, .gamma = 0 };
+    for ([_]Fixed{ .{}, .{ .theta = 0 }, .{ .gamma = 0 }, .{ .delta = 1.1 } }) |fixed| {
+        const result = fit(.su, .mle, &x, fixed, .{ .optseed = 42, .optmaxstarts = 1, .optmaxiter = 1 });
+        try std.testing.expect(result == .nonconverged);
+        try std.testing.expectEqual(Failure.iteration_limit, result.nonconverged.reason);
+        const candidate = result.nonconverged.best.?;
+        try std.testing.expect(supported(.su, &x, candidate.parameters));
+        try std.testing.expectApproxEqAbs(Objective.value(&x, candidate.parameters), candidate.log_likelihood.?, 1e-10);
+        if (fixed.delta == null) try std.testing.expect(candidate.log_likelihood.? >= Objective.value(&x, sas_fallback) - 1e-4);
+        inline for (std.meta.fields(Fixed)) |field| {
+            if (@field(fixed, field.name)) |v| try std.testing.expectEqual(v, @field(candidate.parameters, field.name));
+        }
+        try std.testing.expectEqual(@as(usize, 1), candidate.iterations);
+        try std.testing.expectEqual(@as(usize, 1), candidate.starts);
+    }
+    const normal_limit = fit(.su, .mle, &z, .{}, .{ .optseed = 42, .optmaxstarts = 1 });
+    try std.testing.expect(normal_limit == .nonconverged);
+    try std.testing.expect(supported(.su, &z, normal_limit.nonconverged.best.?.parameters));
+    try std.testing.expect(std.math.isFinite(normal_limit.nonconverged.best.?.log_likelihood.?));
+    const invalid = fit(.sb, .mle, &.{ 0, 0.5, 1 }, .{ .theta = 0, .lambda = 1 }, .{});
+    try std.testing.expectEqual(Failure.outside_support, invalid.nonconverged.reason);
+    try std.testing.expect(invalid.nonconverged.best == null);
 }

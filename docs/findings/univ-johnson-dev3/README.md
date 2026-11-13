@@ -4,7 +4,8 @@ Status: SUPPORT implementation; parent ticket remains dev4's. This is not a
 claim of full public-statement or exact SAS optimizer acceptance. No parser,
 PROC, dev4 module, jira.md, or feature inventory was modified. The only shared
 change is the permitted root.zig test import. Baseline: feat/stat/batch-3
-9a4a503. Read CLAUDE.md, lexer.zig, decisions.md (D-029), dev4's distribution
+9a4a503; bounce rebased once onto 6e35c58, preserving both Johnson and EDF
+test imports. Read CLAUDE.md, lexer.zig, decisions.md (D-029), dev4's distribution
 modules and retained findings before implementation.
 
 ## Contract for dev4
@@ -23,8 +24,12 @@ modules and retained findings before implementation.
 - `Result.converged`: parameters, iteration/start counts, optional log-likelihood.
   Counts are zero for closed-form/fixed results. MOMENTS counts its successful
   Newton solve; MLE iterations count all starts. `Result.nonconverged` carries
-  a distinct reason and **no publishable parameter vector**. The adapter must
-  turn it into a captured diagnostic; do not silently fall back to percentiles.
+  `{ reason, best: ?Success }`. Invalid requests and failed moment equations
+  have no curve. MLE can retain the best finite, support-valid curve when its
+  iteration budget expires or no interior maximum is established. The adapter
+  must render that curve **with an explicit nonconvergence warning/status**;
+  it must never relabel it converged or silently substitute percentiles. The
+  optional payload contains actual parameters, log-likelihood and counts.
 - `Controls`: optmaxiter=500, optmaxstarts=100, optboundrange=100,
   opttolerance=1e-8, positive optseed (deterministic helper default 1).
   Optional `trace(context, Iteration)` supplies start, iteration, parameters and
@@ -75,6 +80,9 @@ The .txt/.log evidence is committed separately from code and test fixtures.
   endpoint error is intentional oracle evidence, not a clean successful run.
 - `su-fixed-shapes`: SU endpoint optimization with delta, gamma, or both held
   fixed. This verifies conditional fitting never overwrites supplied shapes.
+- `fallback-status`: one-iteration SU fits with fixed location or gamma retain
+  curves and the fixed values while OPTPRINT reports IterLimit. This establishes
+  that diagnostic status must not erase otherwise valid numerical output.
 
 ## Numerical method and precision
 
@@ -118,10 +126,29 @@ against the independent probes; exact optimizer trajectory parity is unverified.
 SAS can print approximate fallback curves even with no established optimum:
 `boundaries.log` explicitly records IterLimit, zero distinct local optima, and a
 returned sample-point solution after OPTMAXITER=1. Normal-score SU MLE prints
-scale=101.3848, delta=104.3006 near the normal limit. This helper deliberately
-returns nonconverged in those cases, as required by the assignment's prohibition
-on public silent approximate outputs. It does not reproduce those fallback
-parameter tables. Full SAS fallback-output parity is therefore not claimed.
+scale=101.3848, delta=104.3006 near the normal limit. The original core dropped
+these curves; that was a concrete compatibility gap, not an acceptance exclusion.
+The incremental fallback change now returns the best valid curve in
+`nonconverged.best`, retaining the reason and never asserting an optimum. Invalid
+trial points, unsupported requests and support failures do not gain a fallback.
+The final accepted step is considered even if it exhausted the iteration budget.
+A better stopped candidate is not hidden by a worse converged local optimum.
+
+The regression checks both one-iteration and normal-limit payloads, finite direct
+observation-wise log-likelihood, exact fixed-parameter preservation, support and
+iteration counts. The one-iteration curve's likelihood is at least the likelihood
+of SAS's retained printed fallback vector (allowing its displayed rounding),
+without requiring the same parameter vector from different local solvers. Nine
+standalone tests now cover the helper. The core bounce alone passed 1266 tests,
+2052 corpus fixtures and 11 programs at be9af09; the incremental fallback change
+requires its own full gate before landing.
+
+Remaining numerical difference: own seeded starts and optimizer trajectories
+can produce different finite fallback parameters and different local stopping
+statuses from SAS, especially near the normal/lognormal limits. We report the
+actual unresolved status and actual curve, not a fabricated SAS vector or trace.
+Converged interior fits remain checked against the retained M9 heldouts. Exact
+random-start trajectory parity is not claimed or required by this support task.
 
 The parent still needs the adapter, parser option checks, captured error mapping,
 OPTPRINT/ODS delivery and public regression acceptance. No helper-only green run
