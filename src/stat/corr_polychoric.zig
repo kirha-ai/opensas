@@ -377,9 +377,13 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
                 return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
             if (!(probability > 0)) continue;
             cellGradient(m, params, i, j, derivatives);
+            // SAS's information denominator safeguard is distinct from the
+            // actual likelihood probability. The bounded case-2 oracle also
+            // discriminates this at finite, nonzero standard errors.
+            const information_probability = @max(probability, 1e-12);
             for (0..dim) |r| {
                 gradient[r] -= n * derivatives[r] / probability;
-                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / probability;
+                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / information_probability;
             }
         }
         @memcpy(saved_information, hessian);
