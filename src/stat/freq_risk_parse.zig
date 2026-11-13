@@ -4,7 +4,7 @@ const lex = @import("../lexer.zig");
 const diag = @import("../diag.zig");
 const infer = @import("freq_risk_inference.zig");
 pub const Family = enum { binomial, difference, relative_risk, odds_ratio };
-pub const Method = enum { ac, exact, jeffreys, lr, logit, midp, wald, wilson, ha, mn, newcombe, waldmodified, fm };
+pub const Method = enum { ac, blaker, exact, jeffreys, lr, logit, midp, wald, wilson, ha, mn, newcombe, waldmodified, fm };
 pub const CL = struct { method: Method, correct: bool = false, bias: bool = true };
 pub const Level = union(enum) { number: usize, value: []const u8 };
 pub const Request = struct {
@@ -84,13 +84,13 @@ const Reader = struct {
         self.i += 1;
         if ((kw(t, "agresticoull") or kw(t, "clopperpearson")) and family != .binomial) return self.fail("binomial method alias used for another family");
         if ((kw(t, "agresticaffo") or kw(t, "mn")) and family != .difference) return self.fail("risk difference method alias used for another family");
-        const m: Method = if (kw(t, "wald")) .wald else if (kw(t, "waldmodified")) .waldmodified else if (kw(t, "lr") or kw(t, "likelihoodratio")) .lr else if (kw(t, "exact") or kw(t, "clopperpearson")) .exact else if (kw(t, "midp")) .midp else if (kw(t, "ac") or kw(t, "agresticoull") or kw(t, "agresticaffo")) .ac else if (kw(t, "jeffreys")) .jeffreys else if (kw(t, "logit")) .logit else if (kw(t, "wilson")) .wilson else if (kw(t, "ha")) .ha else if (kw(t, "newcombe")) .newcombe else if (kw(t, "mn")) .mn else if (kw(t, "fm")) .fm else if (kw(t, "score")) (if (test_method) .fm else if (family == .binomial) .wilson else .mn) else if (kw(t, "blaker") and family == .binomial and !test_method) return gap(self.d, t.line, "binomial Blaker limits") else return self.fail("invalid risk method");
+        const m: Method = if (kw(t, "wald")) .wald else if (kw(t, "waldmodified")) .waldmodified else if (kw(t, "lr") or kw(t, "likelihoodratio")) .lr else if (kw(t, "exact") or kw(t, "clopperpearson")) .exact else if (kw(t, "midp")) .midp else if (kw(t, "ac") or kw(t, "agresticoull") or kw(t, "agresticaffo")) .ac else if (kw(t, "jeffreys")) .jeffreys else if (kw(t, "logit")) .logit else if (kw(t, "wilson")) .wilson else if (kw(t, "ha")) .ha else if (kw(t, "newcombe")) .newcombe else if (kw(t, "mn")) .mn else if (kw(t, "fm")) .fm else if (kw(t, "score")) (if (test_method) .fm else if (family == .binomial) .wilson else .mn) else if (kw(t, "blaker")) .blaker else return self.fail("invalid risk method");
         const valid = if (test_method) switch (family) {
             .difference => m == .wald or m == .ha or m == .fm or m == .newcombe,
             .relative_risk => m == .wald or m == .waldmodified or m == .fm or m == .lr,
             else => false,
         } else switch (family) {
-            .binomial => m == .wald or m == .exact or m == .ac or m == .jeffreys or m == .lr or m == .logit or m == .midp or m == .wilson,
+            .binomial => m == .wald or m == .exact or m == .blaker or m == .ac or m == .jeffreys or m == .lr or m == .logit or m == .midp or m == .wilson,
             .difference => m == .wald or m == .exact or m == .ac or m == .ha or m == .mn or m == .newcombe,
             .relative_risk => m == .wald or m == .waldmodified or m == .exact or m == .mn or m == .lr,
             .odds_ratio => m == .wald or m == .waldmodified or m == .exact or m == .mn or m == .lr or m == .midp,
@@ -304,7 +304,7 @@ test "FEAT-freq-risk parser captures invalid requests versus pending dependencie
         try std.testing.expect(d.hasErrors());
         try std.testing.expect(!diag.gapHit());
     }
-    for ([_][]const u8{ "bin(cl=blaker)", "bin(outlevel)" }) |source| {
+    for ([_][]const u8{"bin(outlevel)"}) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;

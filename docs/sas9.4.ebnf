@@ -1018,14 +1018,14 @@ freq_risk_suboption = "COMMON" (* RISKDIFF only; opensas *) | "CL" "=" ( freq_ri
                    | "METHOD" "=" name ;
 freq_risk_number = [ "-" | "+" ] number ;
 freq_risk_cl = name [ "(" "CORRECT" [ "=" ( "NO" | "MEE" ) ] ")" ] ;
-(* Family-specific validation applies: BIN has Wald, CP/EXACT, AC, Jeffreys,
+(* Family-specific validation applies: BIN has Wald, CP/EXACT, Blaker, AC, Jeffreys,
    LR, logit, mid-p, Wilson; RISKDIFF has Wald, AC, HA, MN, Newcombe;
    OR has Wald, modified Wald, score, LR, mid-p; RELRISK has Wald, modified
    Wald, score, LR. Documented long aliases are accepted. COLUMN=BOTH is
    for RISKDIFF. Selected LEVEL uses formatted analysis-level order.
    CL=EXACT for RD/OR/RR selects limits computed by the EXACT statement;
    without its matching EXACT request a warning is issued, as in SAS.
-   Blaker, COMMON, OUTLEVEL and
+   COMMON, OUTLEVEL and
    statistics OUTPUT remain explicit rc2 gaps at this checkpoint.
    Risk cores import no exact module; the execution adapter owns mid-p calls. *)
 
