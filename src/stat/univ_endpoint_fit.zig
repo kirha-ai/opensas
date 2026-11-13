@@ -123,8 +123,11 @@ fn powerScaleStart(x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
         if (!std.math.isFinite(width)) return null;
         sigma = span + @min(@as(f64, 0.002), 0.1 * (width - span));
     } else if (estimate_alpha) {
-        // Invalid four-moment shapes cannot initialize a free alpha. With
-        // alpha supplied, M9 can still use its finite range+.002 width.
+        // ponytail: free-alpha initialization outside this moment region
+        // is not reproduced yet. M9 returns some such curves; region failure
+        // does not prove the conditional shape equation has no solution.
+        // See fallback-start-discriminator.md for prospective counterexamples.
+        // With alpha supplied, M9 can use its finite range+.002 width.
         return null;
     }
     if (!(sigma > x[x.len - 1] - theta) or !std.math.isFinite(sigma)) return null;
