@@ -4745,7 +4745,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         }
     }
 
-    try univ_plots.execute(cx, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
+    try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
     if (noprint) {

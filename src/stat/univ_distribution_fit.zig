@@ -9,6 +9,7 @@ pub const Report = struct { converged: bool = true, no_fit: bool = false, reason
 pub const Trace = struct {
     allocator: std.mem.Allocator,
     iterations: std.ArrayList(johnson.Iteration) = .empty,
+    weibull: std.ArrayList(WeibullIteration) = .empty,
     failed: bool = false,
     fn record(context: ?*anyopaque, iteration: johnson.Iteration) void {
         const self: *Trace = @ptrCast(@alignCast(context.?));
@@ -17,7 +18,66 @@ pub const Trace = struct {
         };
     }
 };
+pub const WeibullIteration = struct {
+    phase: enum { initial, newton, closed_form, threshold_profile, selected },
+    iteration: usize,
+    parameters: dist.Parameters,
+    log_likelihood: f64,
+};
+
+fn traceWeibull(r: Request, p: dist.Parameters, likelihood: f64, phase: @FieldType(WeibullIteration, "phase"), iteration: usize) diag.Error!void {
+    if (r.trace) |trace| try trace.weibull.append(trace.allocator, .{ .phase = phase, .iteration = iteration, .parameters = p, .log_likelihood = likelihood });
+}
 pub const JohnsonMethod = enum { percentiles, moments, mle };
+test "UNIVARIATE Weibull trace records real fits without changing optimization" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const x = [_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 };
+    const plain = try fit(&d, &x, .{ .family = .weibull });
+    var report: Report = .{};
+    var trace: Trace = .{ .allocator = a };
+    const fitted = try fit(&d, &x, .{ .family = .weibull, .itprint = true, .report = &report, .trace = &trace });
+    try std.testing.expectEqualDeep(plain, fitted);
+    try std.testing.expect(report.converged and report.iterations > 0);
+    try std.testing.expectEqual(report.iterations + 1, trace.weibull.items.len);
+    for (trace.weibull.items) |entry| {
+        const p = entry.parameters;
+        var likelihood: f64 = 0;
+        for (x) |v| {
+            const y = (v - p.theta) / p.sigma;
+            likelihood += @log(p.c / p.sigma) + (p.c - 1) * @log(y) - std.math.pow(f64, y, p.c);
+        }
+        try std.testing.expectApproxEqAbs(likelihood, entry.log_likelihood, 1e-12);
+    }
+    const last = trace.weibull.items[trace.weibull.items.len - 1];
+    try std.testing.expectEqualDeep(fitted.p, last.parameters);
+    try std.testing.expectApproxEqAbs(@as(f64, -21.831915622), last.log_likelihood, 5e-9);
+    var failed_trace: Trace = .{ .allocator = a };
+    try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .weibull, .maxiter = 1, .trace = &failed_trace, .report = &report }));
+    try std.testing.expect(!report.converged);
+    try std.testing.expectEqualStrings("iteration_limit", report.reason.?);
+    try std.testing.expectEqual(@as(usize, 2), failed_trace.weibull.items.len);
+}
+
+test "UNIVARIATE Weibull threshold trace records profile and selected parameters" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const base: dist.Distribution = .{ .family = .gamma, .p = .{ .theta = 2, .sigma = 2, .alpha = 3 } };
+    var x: [51]f64 = undefined;
+    for (&x, 0..) |*v, i| v.* = base.quantile((@as(f64, @floatFromInt(i + 1)) - 0.375) / 51.25);
+    const plain = try fit(&d, &x, .{ .family = .weibull, .theta = null });
+    var trace: Trace = .{ .allocator = a };
+    const traced = try fit(&d, &x, .{ .family = .weibull, .theta = null, .itprint = true, .trace = &trace });
+    try std.testing.expectEqualDeep(plain, traced);
+    try std.testing.expect(trace.weibull.items.len > 100);
+    const last = trace.weibull.items[trace.weibull.items.len - 1];
+    try std.testing.expectEqual(@FieldType(WeibullIteration, "phase").selected, last.phase);
+    try std.testing.expectEqualDeep(traced.p, last.parameters);
+}
 test "UNIVARIATE endpoint landed adapter preserves candidate warning and failed initialization status" {
     const adapter = @import("univ_distribution_fit.zig");
     const diagnostics = @import("../diag.zig");
@@ -100,10 +160,6 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
     if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
-    if (r.itprint and r.family == .weibull and (r.c == null or r.theta == null)) {
-        diag.markGap();
-        return d.fail(error.ParseError, 0, "UNIVARIATE: Weibull ITPRINT history is not implemented", .{});
-    }
     if (r.theta == null and (r.family == .gamma or r.family == .lognormal or r.family == .weibull)) return fitThreshold(d, x, r);
     const n: f64 = @floatFromInt(x.len);
     var p: dist.Parameters = .{};
@@ -176,7 +232,13 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
             if (r.c == null) {
                 var c: f64 = 1;
                 var converged = false;
-                for (0..r.maxiter) |_| {
+                if (r.trace != null) {
+                    var initial = p;
+                    initial.c = c;
+                    initial.sigma = r.sigma orelse weibullScale(x, p.theta, c);
+                    try traceWeibull(r, initial, logLikelihood(x, .{ .family = .weibull, .p = initial }), .initial, 0);
+                }
+                for (0..r.maxiter) |iteration| {
                     var s0: f64 = 0;
                     var s1: f64 = 0;
                     var s2: f64 = 0;
@@ -194,16 +256,27 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
                     if (next <= 0) next = c / 2;
                     if (@abs(next - c) < 1e-8) converged = true;
                     c = next;
+                    if (r.report) |report| report.iterations = iteration + 1;
+                    if (r.trace != null) {
+                        var candidate = p;
+                        candidate.c = c;
+                        candidate.sigma = r.sigma orelse weibullScale(x, p.theta, c);
+                        try traceWeibull(r, candidate, logLikelihood(x, .{ .family = .weibull, .p = candidate }), .newton, iteration + 1);
+                    }
                     if (converged) break;
                 }
-                if (!converged) return convergence(d);
+                if (!converged) {
+                    if (r.report) |report| {
+                        report.converged = false;
+                        report.reason = "iteration_limit";
+                    }
+                    return convergence(d);
+                }
                 p.c = c;
             }
             if (r.sigma == null) {
-                const scale = x[x.len - 1] - p.theta;
-                var sum: f64 = 0;
-                for (x) |v| sum += std.math.pow(f64, (v - p.theta) / scale, p.c) / n;
-                p.sigma = scale * std.math.pow(f64, sum, 1 / p.c);
+                p.sigma = weibullScale(x, p.theta, p.c);
+                if (r.c != null and r.trace != null) try traceWeibull(r, p, logLikelihood(x, .{ .family = .weibull, .p = p }), .closed_form, 0);
             }
         },
         .power => {
@@ -302,21 +375,33 @@ fn logLikelihood(x: []const f64, distribution: dist.Distribution) f64 {
     return sum;
 }
 
-fn thresholdCandidate(d: *diag.Diagnostics, x: []const f64, r: Request, log_distance: f64) ?dist.Distribution {
+fn weibullScale(x: []const f64, theta: f64, c: f64) f64 {
+    const scale = x[x.len - 1] - theta;
+    var sum: f64 = 0;
+    for (x) |v| sum += std.math.pow(f64, (v - theta) / scale, c) / @as(f64, @floatFromInt(x.len));
+    return scale * std.math.pow(f64, sum, 1 / c);
+}
+
+fn thresholdCandidate(d: *diag.Diagnostics, x: []const f64, r: Request, log_distance: f64) diag.Error!?dist.Distribution {
     var fixed = r;
     fixed.theta = x[0] - (x[x.len - 1] - x[0]) * @exp(log_distance);
+    fixed.trace = null;
+    fixed.report = null;
+    fixed.itprint = false;
     // Failed conditional iterations are not a fitted curve. Keep their
     // diagnostics local; the caller reports failure of the complete fit.
     var local = diag.Diagnostics.init(d.arena);
-    return fit(&local, x, fixed) catch null;
+    return fit(&local, x, fixed) catch |err| if (err == error.OutOfMemory) return err else null;
 }
 
-fn thresholdLikelihood(d: *diag.Diagnostics, x: []const f64, r: Request, distance: f64) f64 {
-    const candidate = thresholdCandidate(d, x, r, distance) orelse return -std.math.inf(f64);
+fn thresholdLikelihood(d: *diag.Diagnostics, x: []const f64, r: Request, distance: f64) diag.Error!f64 {
+    const candidate = (try thresholdCandidate(d, x, r, distance)) orelse return -std.math.inf(f64);
     // M9 uses the adjusted lognormal profile with n-1 log(sigma), matching
     // its n-1 shape estimate. The unadjusted MLE gives theta=.398939 on the
     // retained gamma-score sample; SAS returns .896031.
-    return logLikelihood(x, candidate) + (if (r.family == .lognormal and r.sigma == null) @log(candidate.p.sigma) else @as(f64, 0));
+    const likelihood = logLikelihood(x, candidate) + (if (r.family == .lognormal and r.sigma == null) @log(candidate.p.sigma) else @as(f64, 0));
+    if (r.family == .weibull) if (r.trace) |trace| try traceWeibull(r, candidate.p, likelihood, .threshold_profile, trace.weibull.items.len);
+    return likelihood;
 }
 
 fn fitThreshold(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.Distribution {
@@ -325,40 +410,40 @@ fn fitThreshold(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dis
     var best_ll = -std.math.inf(f64);
     var left: f64 = -16;
     var middle: f64 = -15.75;
-    var fl = thresholdLikelihood(d, x, r, left);
-    var fm = thresholdLikelihood(d, x, r, middle);
+    var fl = try thresholdLikelihood(d, x, r, left);
+    var fm = try thresholdLikelihood(d, x, r, middle);
     // Three-parameter likelihoods can be unbounded at a support endpoint.
     // Select an interior local maximum, never a finite last boundary iterate.
     for (0..126) |_| {
         const right = middle + 0.25;
-        const fr = thresholdLikelihood(d, x, r, right);
+        const fr = try thresholdLikelihood(d, x, r, right);
         if (fm > fl and fm > fr and std.math.isFinite(fm)) {
             var lo = left;
             var hi = right;
             const ratio = 0.6180339887498949;
             var u = hi - ratio * (hi - lo);
             var v = lo + ratio * (hi - lo);
-            var fu = thresholdLikelihood(d, x, r, u);
-            var fv = thresholdLikelihood(d, x, r, v);
+            var fu = try thresholdLikelihood(d, x, r, u);
+            var fv = try thresholdLikelihood(d, x, r, v);
             for (0..80) |_| {
                 if (fu > fv) {
                     hi = v;
                     v = u;
                     fv = fu;
                     u = hi - ratio * (hi - lo);
-                    fu = thresholdLikelihood(d, x, r, u);
+                    fu = try thresholdLikelihood(d, x, r, u);
                 } else {
                     lo = u;
                     u = v;
                     fu = fv;
                     v = lo + ratio * (hi - lo);
-                    fv = thresholdLikelihood(d, x, r, v);
+                    fv = try thresholdLikelihood(d, x, r, v);
                 }
             }
             const at = if (fu > fv) u else v;
             const score = @max(fu, fv);
             if (score > best_ll) {
-                best = thresholdCandidate(d, x, r, at);
+                best = try thresholdCandidate(d, x, r, at);
                 best_ll = score;
             }
         }
@@ -367,7 +452,15 @@ fn fitThreshold(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dis
         fl = fm;
         fm = fr;
     }
-    return best orelse return convergence(d);
+    const result = best orelse {
+        if (r.report) |report| {
+            report.converged = false;
+            report.reason = "no_interior_maximum";
+        }
+        return convergence(d);
+    };
+    if (r.family == .weibull) if (r.trace) |trace| try traceWeibull(r, result.p, best_ll, .selected, trace.weibull.items.len);
+    return result;
 }
 
 test "UNIVARIATE estimated thresholds SAS M9 lognormal gamma Weibull" {
