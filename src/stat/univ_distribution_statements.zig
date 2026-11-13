@@ -28,6 +28,8 @@ pub const Statement = struct {
     endpoint_labels: bool,
     right: bool,
     output: ?[]const u8,
+    output_options: []const Token = &.{},
+    kernel_output_options: []const Token = &.{},
     tokens: []const Token,
 };
 
@@ -44,18 +46,22 @@ fn number(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!f64 {
     return sign * v;
 }
 
-fn outputName(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error![]const u8 {
+fn outputName(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, options: *[]const Token) diag.Error![]const u8 {
+    options.* = &.{};
     if (t[i.*].tag != .name) return d.fail(error.ParseError, 0, "UNIVARIATE: expected output dataset name", .{});
+    if (i.* + 2 < t.len and t[i.* + 1].tag == .dot and t[i.* + 2].tag != .name) return d.fail(error.ParseError, 0, "UNIVARIATE: expected output dataset member name", .{});
     const name = try univ.datasetName(a, t, i);
     if (t[i.*].tag == .lparen) {
         var depth: usize = 1;
         i.* += 1;
+        const start = i.*;
         while (i.* < t.len and depth > 0) : (i.* += 1) {
             if (t[i.*].tag == .semicolon or t[i.*].tag == .eof) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed output dataset options", .{});
             if (t[i.*].tag == .lparen) depth += 1;
             if (t[i.*].tag == .rparen) depth -= 1;
         }
         if (depth != 0) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed output dataset options", .{});
+        options.* = t[start .. i.* - 1];
     }
     return name;
 }
@@ -74,6 +80,8 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     var right = false;
     var output: ?[]const u8 = null;
     var outkernel: ?[]const u8 = null;
+    var output_options: []const Token = &.{};
+    var kernel_output_options: []const Token = &.{};
     var kernels: []kernel.Request = &.{};
     var vscale: kernel.VScale = .percent;
     while (t[i.*].tag != .semicolon and t[i.*].tag != .eof) {
@@ -105,10 +113,10 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
         }
         if (t[i.*].tag != .eq) return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported HISTOGRAM option {s}", .{key});
         i.* += 1;
-        if (eq(key, "outhistogram")) {
-            output = try outputName(a, d, t, i);
+        if (eq(key, "outhistogram") or eq(key, "outhist")) {
+            output = try outputName(a, d, t, i, &output_options);
         } else if (eq(key, "outkernel")) {
-            outkernel = try outputName(a, d, t, i);
+            outkernel = try outputName(a, d, t, i, &kernel_output_options);
         } else if (eq(key, "vscale")) {
             const name = t[i.*].text;
             vscale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid VSCALE", .{});
@@ -145,7 +153,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
         for (midpoints.items) |point| try endpoints.append(a, point - width / 2);
         try endpoints.append(a, midpoints.items[midpoints.items.len - 1] + width / 2);
     }
-    return .{ .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .tokens = t[start..i.*] };
+    return .{ .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*] };
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
@@ -165,11 +173,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
         };
         const output = try a.create(Dataset);
         output.* = Dataset.init(a, statement.output orelse "");
+        output.label = "Histogram Statistics";
         for (keys.items) |ci| _ = try output.addColumnLike(descriptors.columns.items[ci].name, descriptors.columns.items[ci]);
         _ = try output.addColumn("_VAR_", .char);
         var variable_length: usize = 8;
         for (cols.items) |ci| variable_length = @max(variable_length, ds.columns.items[ci].name.len);
         const kd = try kernel_output.create(a, &descriptors, keys.items, variable_length, statement.vscale);
+        kd.label = "Kernel Density Estimates";
         output.setLen("_VAR_", variable_length);
         output.setLabel("_VAR_", "Variable Name");
         const location = if (!statement.endpoint_labels) "_MIDPT_" else if (statement.right) "_MAXPT_" else "_MINPT_";
@@ -216,7 +226,18 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         const pairs = try a.alloc(h.XW, x.items.len);
                         for (x.items, pairs) |v, *p| p.* = .{ .x = v, .w = 1 };
                         const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
-                        for (statement.kernels) |request| try kernel_output.append(cx.diags, kd, ds, keys.items, representative, ci, x.items, iqr, request, local_statement.endpoints, statement.vscale);
+                        const range = x.items[x.items.len - 1] - x.items[0];
+                        var period: f64 = 0;
+                        if (range > 0 and iqr > 0) for (statement.kernels) |request| {
+                            const estimate = try kernel.fit(cx.diags, x.items, iqr, request);
+                            period = @max(period, estimate.fftPeriod(range) orelse return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: invalid kernel grid", .{}));
+                            if (request.kind == .normal and estimate.bandwidth > range / 2) try cx.diags.warn(0, "UNIVARIATE: normal kernel bandwidth is large and produces wrap-around at the axis ends", .{});
+                        };
+                        for (statement.kernels) |request| {
+                            var shared = request;
+                            if (period > 0) shared.fft_period = period;
+                            try kernel_output.append(cx.diags, kd, ds, keys.items, representative, ci, x.items, iqr, shared, local_statement.endpoints, statement.vscale);
+                        }
                     }
                     if (statement.curves.len == 0) {
                         try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, null);
@@ -225,8 +246,9 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         var trace: fitting.Trace = .{ .allocator = a };
                         var actual_request = request;
                         actual_request.report = &report;
-                        if (request.optprint) actual_request.trace = &trace;
+                        if (request.optprint or request.itprint) actual_request.trace = &trace;
                         const curve = fitting.fit(cx.diags, x.items, actual_request) catch |err| {
+                            if (request.itprint and trace.weibull.items.len > 0) try rendering.renderTrace(a, out, trace, report);
                             if (report.no_fit) {
                                 if (request.optprint) try rendering.renderTrace(a, out, trace, report);
                                 try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, null);
@@ -234,7 +256,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                             }
                             return err;
                         };
-                        if (request.optprint) try rendering.renderTrace(a, out, trace, report);
+                        if (request.optprint or (request.itprint and trace.weibull.items.len > 0)) try rendering.renderTrace(a, out, trace, report);
                         try rows(cx, output, ds, keys.items, representative, ci, x.items, local_statement, curve);
                         if (!curves.noprint) {
                             const bins = try values.histogram(a, cx.diags, x.items, local_statement.endpoints, statement.right, curve);
@@ -245,15 +267,55 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             }
         }
         if (statement.output) |name| {
+            applyOutputOptions(a, cx.diags, output, statement.output_options) catch |err| {
+                output.rows.clearRetainingCapacity();
+                try cx.lib.put(name, output);
+                return err;
+            };
             try cx.lib.put(name, output);
-            try h.applyOutOptions(a, output, statement.tokens, cx.diags, "outhistogram");
         }
         if (statement.kernel_output) |name| {
             kd.name = name;
+            applyOutputOptions(a, cx.diags, kd, statement.kernel_output_options) catch |err| {
+                kd.rows.clearRetainingCapacity();
+                try cx.lib.put(name, kd);
+                return err;
+            };
             try cx.lib.put(name, kd);
-            try h.applyOutOptions(a, kd, statement.tokens, cx.diags, "outkernel");
         }
     }
+}
+
+/// Output WHERE refers to the final output descriptor (after KEEP/DROP/RENAME).
+/// Keep this procedure-owned ordering separate from input dataset semantics.
+fn applyOutputOptions(a: std.mem.Allocator, d: *diag.Diagnostics, ds: *Dataset, options: []const Token) diag.Error!void {
+    var structural: std.ArrayList(Token) = .empty;
+    var where: std.ArrayList(Token) = .empty;
+    var depth: usize = 0;
+    var i: usize = 0;
+    while (i < options.len) {
+        if (depth == 0 and options[i].tag == .name and eq(options[i].text, "where") and i + 2 < options.len and options[i + 1].tag == .eq and options[i + 2].tag == .lparen) {
+            const start = i;
+            i += 3;
+            var nesting: usize = 1;
+            while (i < options.len and nesting > 0) : (i += 1) {
+                if (options[i].tag == .lparen) nesting += 1;
+                if (options[i].tag == .rparen) nesting -= 1;
+            }
+            if (nesting != 0) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed output WHERE", .{});
+            try where.appendSlice(a, options[start..i]);
+            continue;
+        }
+        if (options[i].tag == .lparen) depth += 1;
+        if (options[i].tag == .rparen and depth > 0) depth -= 1;
+        try structural.append(a, options[i]);
+        i += 1;
+    }
+    const before = d.count();
+    try @import("../io.zig").applyDatasetOptions(a, ds, structural.items, d, false);
+    if (d.errSince(before)) return error.ParseError;
+    try @import("../io.zig").applyDatasetOptions(a, ds, where.items, d, false);
+    if (d.errSince(before)) return error.ParseError;
 }
 
 fn rows(cx: proc.ProcCtx, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, statement: Statement, curve: ?dist.Distribution) diag.Error!void {
@@ -451,4 +513,60 @@ test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reac
         warned = true;
     };
     try std.testing.expect(warned);
+}
+
+test "UNIVARIATE public Weibull ITPRINT renders actual iteration history" {
+    @import("../format.zig").resetPerRun();
+    defer @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const lexer = @import("../lexer.zig");
+    const t = try lexer.tokenize(a, "proc univariate data=d noprint;histogram x / noplot weibull(itprint maxiter=5) endpoints=0 to 20 by 5 outhistogram=h;run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Weibull Optimization History") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Optimization status: converged") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "newton") != null);
+    try std.testing.expectApproxEqAbs(@as(f64, 47.9626), lib.find("h").?.rows.items[0][5].num, 5e-5);
+    var bad = diag.Diagnostics.init(a);
+    const invalid = try lexer.tokenize(a, "histogram x / noplot weibull(maxiter=1);", &bad);
+    var i: usize = 0;
+    try std.testing.expectError(error.ParseError, parseStatement(a, &bad, invalid, &i));
+}
+
+test "UNIVARIATE output WHERE follows the renamed descriptor for qualified outputs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var out: std.ArrayList(u8) = .empty;
+    const valid = try lex.tokenize(a, "proc univariate data=d noprint;histogram x / noplot endpoints=0 to 20 by 5 outhist=work.good(keep=_count_ rename=(_count_=n) where=(n>0));run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, valid);
+    const good = lib.find("work.good").?;
+    try std.testing.expectEqualStrings("Histogram Statistics", good.label.?);
+    try std.testing.expectEqual(@as(usize, 1), good.columns.items.len);
+    try std.testing.expectEqualStrings("n", good.columns.items[0].name);
+    try std.testing.expectEqual(@as(usize, 4), good.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 4), good.rows.items[0][0].num);
+    var invalid_diag = diag.Diagnostics.init(a);
+    const invalid = try lex.tokenize(a, "proc univariate data=d noprint;histogram x / noplot endpoints=0 to 20 by 5 outhistogram=work.bad(keep=_count_ rename=(_count_=n) where=(_count_>0));run;", &invalid_diag);
+    try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &invalid_diag }, &out, invalid));
+    const bad = lib.find("work.bad").?;
+    try std.testing.expectEqual(@as(usize, 0), bad.rows.items.len);
+    try std.testing.expectEqualStrings("n", bad.columns.items[0].name);
+    try std.testing.expect(invalid_diag.hasErrors());
 }
