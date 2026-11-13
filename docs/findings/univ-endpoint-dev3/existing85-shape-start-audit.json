@@ -1,0 +1,1326 @@
+[
+  {
+    "id": "grid_000",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.019484314892299,
+      "feasible": true,
+      "two_moment_alpha": 0.46839494788186053,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.019484314892299,
+    "oracle_alpha": 0.5164733127841548,
+    "sigma_residual": 0.0,
+    "alpha_residual": 3.457722395072693e-07
+  },
+  {
+    "id": "grid_001",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.04871078723074751,
+      "feasible": true,
+      "two_moment_alpha": 0.4683949478818608,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.0487107872307475,
+    "oracle_alpha": 0.516473320787238,
+    "sigma_residual": 6.938893903907228e-18,
+    "alpha_residual": 3.377691563111185e-07
+  },
+  {
+    "id": "grid_002",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09742157446149502,
+      "feasible": true,
+      "two_moment_alpha": 0.4683949478818608,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.097421574461495,
+    "oracle_alpha": 0.5164733466858707,
+    "sigma_residual": 1.3877787807814457e-17,
+    "alpha_residual": 3.1187052351722144e-07
+  },
+  {
+    "id": "grid_003",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.19484314892299004,
+      "feasible": true,
+      "two_moment_alpha": 0.4683949478818608,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.19484314892299,
+    "oracle_alpha": 0.5164734181543619,
+    "sigma_residual": 2.7755575615628914e-17,
+    "alpha_residual": 2.404020323920619e-07
+  },
+  {
+    "id": "grid_004",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.292264723384485,
+      "feasible": true,
+      "two_moment_alpha": 0.4683949478818607,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.29226472338448506,
+    "oracle_alpha": 0.5164734746911241,
+    "sigma_residual": -5.551115123125783e-17,
+    "alpha_residual": 1.8386527012026477e-07
+  },
+  {
+    "id": "grid_005",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.3896862978459801,
+      "feasible": true,
+      "two_moment_alpha": 0.4683949478818608,
+      "conditional_alpha": 0.5164736585563943,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.38968629784598,
+    "oracle_alpha": 0.5164735063574076,
+    "sigma_residual": 5.551115123125783e-17,
+    "alpha_residual": 1.521989866359874e-07
+  },
+  {
+    "id": "grid_006",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.48684848484848486,
+      "feasible": true,
+      "two_moment_alpha": 0.46798999419454895,
+      "conditional_alpha": 0.5166157785982481,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.48684848484848486,
+    "oracle_alpha": 0.5166156390240314,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.3957421673982395e-07
+  },
+  {
+    "id": "grid_007",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.6807878787878788,
+      "feasible": true,
+      "two_moment_alpha": 0.4670963601538151,
+      "conditional_alpha": 0.5169294118023251,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.6807878787878788,
+    "oracle_alpha": 0.5169293764753745,
+    "sigma_residual": 0.0,
+    "alpha_residual": 3.5326950587055705e-08
+  },
+  {
+    "id": "grid_008",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.9716969696969697,
+      "feasible": true,
+      "two_moment_alpha": 0.46642475512831677,
+      "conditional_alpha": 0.5171651290501567,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.9716969696969697,
+    "oracle_alpha": 0.5171650979229946,
+    "sigma_residual": 0.0,
+    "alpha_residual": 3.1127162070099246e-08
+  },
+  {
+    "id": "grid_009",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.9413939393939394,
+      "feasible": true,
+      "two_moment_alpha": 0.4656397168603402,
+      "conditional_alpha": 0.5174406676913125,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.9413939393939394,
+    "oracle_alpha": 0.5174406605504459,
+    "sigma_residual": 0.0,
+    "alpha_residual": 7.1408665647254566e-09
+  },
+  {
+    "id": "grid_010",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 3.8807878787878787,
+      "feasible": true,
+      "two_moment_alpha": 0.46524659086123143,
+      "conditional_alpha": 0.5175786537216942,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 3.8807878787878787,
+    "oracle_alpha": 0.5175359626501397,
+    "sigma_residual": 0.0,
+    "alpha_residual": 4.2691071554523674e-05
+  },
+  {
+    "id": "grid_011",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 5.820181818181818,
+      "feasible": true,
+      "two_moment_alpha": 0.46511545880111205,
+      "conditional_alpha": 0.5176246812309573,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 5.820181818181818,
+    "oracle_alpha": 0.5175964681605539,
+    "sigma_residual": 0.0,
+    "alpha_residual": 2.8213070403348972e-05
+  },
+  {
+    "id": "grid_012",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 6.789878787878788,
+      "feasible": true,
+      "two_moment_alpha": 0.4650779842212755,
+      "conditional_alpha": 0.5176378349042835,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 6.789878787878788,
+    "oracle_alpha": 0.5176174662548698,
+    "sigma_residual": 0.0,
+    "alpha_residual": 2.0368649413682327e-05
+  },
+  {
+    "id": "grid_013",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 7.759575757575758,
+      "feasible": true,
+      "two_moment_alpha": 0.46504987587166696,
+      "conditional_alpha": 0.5176477010218042,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 7.759575757575758,
+    "oracle_alpha": 0.5176348096234483,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.2891398355918682e-05
+  },
+  {
+    "id": "grid_014",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 7.953515151515151,
+      "feasible": true,
+      "two_moment_alpha": 0.4650450766782757,
+      "conditional_alpha": 0.5176493855547873,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 7.953515151515151,
+    "oracle_alpha": 0.51763788649929,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.149905549735486e-05
+  },
+  {
+    "id": "grid_015",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.147454545454545,
+      "feasible": true,
+      "two_moment_alpha": 0.4650405059618036,
+      "conditional_alpha": 0.5176509898919528,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.147454545454545,
+    "oracle_alpha": 0.5176408352754479,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.0154616504887137e-05
+  },
+  {
+    "id": "grid_016",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.341393939393939,
+      "feasible": true,
+      "two_moment_alpha": 0.4650361477858229,
+      "conditional_alpha": 0.5176525196269924,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.341393939393939,
+    "oracle_alpha": 0.5176436554550391,
+    "sigma_residual": 0.0,
+    "alpha_residual": 8.864171953337774e-06
+  },
+  {
+    "id": "grid_017",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.438363636363636,
+      "feasible": true,
+      "two_moment_alpha": 0.4650340438209881,
+      "conditional_alpha": 0.5176532581261316,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.438363636363636,
+    "oracle_alpha": 0.5176450169854967,
+    "sigma_residual": 0.0,
+    "alpha_residual": 8.241140634912547e-06
+  },
+  {
+    "id": "grid_018",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.448060606060606,
+      "feasible": true,
+      "two_moment_alpha": 0.46503383608100674,
+      "conditional_alpha": 0.5176533310436077,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.448060606060606,
+    "oracle_alpha": 0.5176451513476057,
+    "sigma_residual": 0.0,
+    "alpha_residual": 8.179696001975323e-06
+  },
+  {
+    "id": "grid_019",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.45,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_020",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.450969696969697,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_021",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.457757575757576,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_022",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.486848484848485,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_023",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.535333333333336,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_024",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.729272727272727,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_025",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 9.698969696969698,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_026",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 11.638363636363637,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_027",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.3114400000000002,
+      "feasible": true,
+      "two_moment_alpha": 0.4385453612569567,
+      "conditional_alpha": 0.5303914690836027,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.3114400000000002,
+    "oracle_alpha": 0.5303914304396766,
+    "sigma_residual": 0.0,
+    "alpha_residual": 3.8643926059123146e-08
+  },
+  {
+    "id": "grid_028",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.358992,
+      "feasible": true,
+      "two_moment_alpha": 0.43802069448021713,
+      "conditional_alpha": 0.5305822766286417,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 2.358992,
+    "oracle_alpha": 0.5305822579807584,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.8647883237576934e-08
+  },
+  {
+    "id": "grid_029",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.5946911999999998,
+      "feasible": true,
+      "two_moment_alpha": 0.4379610282183973,
+      "conditional_alpha": 0.5306039761831809,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 2.5946911999999998,
+    "oracle_alpha": 0.5306039586525673,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.7530613627414482e-08
+  },
+  {
+    "id": "grid_030",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.61826112,
+      "feasible": true,
+      "two_moment_alpha": 0.43795565242783074,
+      "conditional_alpha": 0.5306059312672926,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 2.61826112,
+    "oracle_alpha": 0.5306059138518457,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.741544686240104e-08
+  },
+  {
+    "id": "grid_031",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.6234988799999996,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_032",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.6470688,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_033",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 2.882768,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_034",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 5.23976,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_035",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.34213429497349956,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_036",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.6158417309522992,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_037",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.6774259040475291,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_038",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.683584321357052,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_039",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.684952858536946,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_040",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.6911112758464691,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_041",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.7526954489416992,
+      "feasible": false
+    }
+  },
+  {
+    "id": "grid_042",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.3681133474771532,
+      "feasible": false
+    }
+  },
+  {
+    "id": "controlled_000",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09726270847764057,
+      "feasible": true,
+      "two_moment_alpha": 0.4806331849716336,
+      "conditional_alpha": 0.5169093637056552,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.09726270847764057,
+    "oracle_alpha": 0.5169088825532686,
+    "sigma_residual": 0.0,
+    "alpha_residual": 4.81152386599959e-07
+  },
+  {
+    "id": "controlled_001",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.9716969696969697,
+      "feasible": true,
+      "two_moment_alpha": 0.4798977627340341,
+      "conditional_alpha": 0.5171651290501567,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.9716969696969697,
+    "oracle_alpha": 0.5171649977919298,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.3125822684312283e-07
+  },
+  {
+    "id": "controlled_002",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.729272727272727,
+      "feasible": false
+    }
+  },
+  {
+    "id": "controlled_003",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09721296188163199,
+      "feasible": true,
+      "two_moment_alpha": 0.4849566675040457,
+      "conditional_alpha": 0.5170460962072794,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.09721296188163198,
+    "oracle_alpha": 0.5170456143394244,
+    "sigma_residual": 1.3877787807814457e-17,
+    "alpha_residual": 4.818678549511901e-07
+  },
+  {
+    "id": "controlled_004",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.9716969696969697,
+      "feasible": true,
+      "two_moment_alpha": 0.48461331539603525,
+      "conditional_alpha": 0.5171651290501567,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.9716969696969697,
+    "oracle_alpha": 0.5171649646016382,
+    "sigma_residual": 0.0,
+    "alpha_residual": 1.6444851846930675e-07
+  },
+  {
+    "id": "controlled_005",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 8.729272727272727,
+      "feasible": false
+    }
+  },
+  {
+    "id": "controlled_016",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.009543261312491587,
+      "feasible": true,
+      "two_moment_alpha": 0.4439310799420069,
+      "conditional_alpha": 0.5284332713176491,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.009543261312491585,
+    "oracle_alpha": 0.528430885917729,
+    "sigma_residual": 1.734723475976807e-18,
+    "alpha_residual": 2.3853999200351694e-06
+  },
+  {
+    "id": "controlled_017",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09543261312491585,
+      "feasible": true,
+      "two_moment_alpha": 0.4439310799420069,
+      "conditional_alpha": 0.5284332713176491,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.09543261312491587,
+    "oracle_alpha": 0.5284311491709819,
+    "sigma_residual": -1.3877787807814457e-17,
+    "alpha_residual": 2.122146667171698e-06
+  },
+  {
+    "id": "controlled_018",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.009872593833648781,
+      "feasible": false
+    }
+  },
+  {
+    "id": "controlled_019",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09872593833648781,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_000",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09134966028381161,
+      "feasible": true,
+      "two_moment_alpha": 0.5247853710321885,
+      "conditional_alpha": 0.5458498533136922,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.0913496602838122,
+    "oracle_alpha": 0.5458497808175745,
+    "sigma_residual": -5.828670879282072e-16,
+    "alpha_residual": 7.249611766457775e-08
+  },
+  {
+    "id": "prospective_001",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09134966028381161,
+      "feasible": true,
+      "two_moment_alpha": 0.5247853710321885,
+      "conditional_alpha": 0.5458498533136922,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.0913496602838122,
+    "oracle_alpha": 0.4,
+    "sigma_residual": -5.828670879282072e-16,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_002",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.09134966028381161,
+      "feasible": true,
+      "two_moment_alpha": 0.5247853710321885,
+      "conditional_alpha": 0.5458498533136922,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 0.0913496602838122,
+    "oracle_alpha": 2.0,
+    "sigma_residual": -5.828670879282072e-16,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_003",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.9423068659197036,
+      "feasible": true,
+      "two_moment_alpha": 0.3302047700534048,
+      "conditional_alpha": 0.3586451671644037,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": false,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.9423068659197036,
+    "oracle_alpha": 0.35864511283573397,
+    "sigma_residual": 0.0,
+    "alpha_residual": 5.4328669729653e-08
+  },
+  {
+    "id": "prospective_004",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.9423068659197036,
+      "feasible": true,
+      "two_moment_alpha": 0.3302047700534048,
+      "conditional_alpha": 0.3586451671644037,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.9423068659197036,
+    "oracle_alpha": 0.4,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_005",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.9423068659197036,
+      "feasible": true,
+      "two_moment_alpha": 0.3302047700534048,
+      "conditional_alpha": 0.3586451671644037,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.9423068659197036,
+    "oracle_alpha": 2.0,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_006",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.009683499129963108,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_007",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.009683499129963108,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_008",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.009683499129963108,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_009",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.05902999066166088,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_010",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.05902999066166088,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_011",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 0.05902999066166088,
+      "feasible": false
+    }
+  },
+  {
+    "id": "prospective_012",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 18.002,
+      "feasible": true,
+      "two_moment_alpha": 1.0002333146317464,
+      "conditional_alpha": 0.4496644157416846,
+      "positive_start": true,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "prospective_013",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 18.002,
+      "feasible": true,
+      "two_moment_alpha": 1.0002333146317464,
+      "conditional_alpha": 0.4496644157416846,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 18.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_014",
+    "oracle_curve": false,
+    "model": {
+      "width_available": false
+    }
+  },
+  {
+    "id": "prospective_015",
+    "oracle_curve": false,
+    "model": {
+      "width_available": false
+    }
+  },
+  {
+    "id": "prospective_016",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 3.002,
+      "feasible": true,
+      "two_moment_alpha": 0.17579458727894726,
+      "conditional_alpha": 0.3385380022179402,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": false,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 3.002,
+    "oracle_alpha": 0.3385374738978145,
+    "sigma_residual": 0.0,
+    "alpha_residual": 5.283201257033632e-07
+  },
+  {
+    "id": "prospective_017",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 3.002,
+      "feasible": true,
+      "two_moment_alpha": 0.17579458727894726,
+      "conditional_alpha": 0.3385380022179402,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 3.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "prospective_018",
+    "oracle_curve": false,
+    "model": {
+      "width_available": false
+    }
+  },
+  {
+    "id": "prospective_019",
+    "oracle_curve": false,
+    "model": {
+      "width_available": false
+    }
+  },
+  {
+    "id": "prospective_020",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.03997263329620432,
+      "conditional_alpha": 0.10283910291205395,
+      "positive_start": false,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "prospective_021",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.03997263329620432,
+      "conditional_alpha": 0.10283910291205395,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 19.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "initial_edge_00",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.015606908552540216,
+      "conditional_alpha": 0.0940244055383167,
+      "positive_start": false,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "initial_edge_01",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.015606908552540216,
+      "conditional_alpha": 0.0940244055383167,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 19.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "initial_edge_02",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.06240198211129157,
+      "conditional_alpha": 0.16454154943706967,
+      "positive_start": false,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "initial_edge_03",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.06240198211129157,
+      "conditional_alpha": 0.16454154943706967,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 19.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "initial_edge_04",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 8.002,
+      "feasible": true,
+      "two_moment_alpha": 1.5006623831548054,
+      "conditional_alpha": 0.5574869933799278,
+      "positive_start": true,
+      "two_moment_newton": false,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.002,
+    "oracle_alpha": 0.5574860401002018,
+    "sigma_residual": 0.0,
+    "alpha_residual": 9.532797260458636e-07
+  },
+  {
+    "id": "initial_edge_05",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": false,
+      "sigma": 8.002,
+      "feasible": true,
+      "two_moment_alpha": 1.5006623831548054,
+      "conditional_alpha": 0.5574869933799278,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 8.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "initial_edge_06",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.03946501639414352,
+      "conditional_alpha": 0.15154223284751805,
+      "positive_start": false,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "initial_edge_07",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 19.002,
+      "feasible": true,
+      "two_moment_alpha": -0.03946501639414352,
+      "conditional_alpha": 0.15154223284751805,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 19.002,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 0.0,
+    "alpha_residual": 0.0
+  },
+  {
+    "id": "initial_edge_08",
+    "oracle_curve": false,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.002,
+      "feasible": true,
+      "two_moment_alpha": -0.06185088814770461,
+      "conditional_alpha": 0.14472349115022698,
+      "positive_start": false,
+      "two_moment_newton": false,
+      "default_one_newton": false,
+      "capped_start_newton": false
+    }
+  },
+  {
+    "id": "initial_edge_09",
+    "oracle_curve": true,
+    "model": {
+      "width_available": true,
+      "four_moment_valid": true,
+      "sigma": 1.002,
+      "feasible": true,
+      "two_moment_alpha": -0.06185088814770461,
+      "conditional_alpha": 0.14472349115022698,
+      "positive_start": true,
+      "two_moment_newton": true,
+      "default_one_newton": true,
+      "capped_start_newton": true
+    },
+    "oracle_sigma": 1.0019999999999996,
+    "oracle_alpha": 0.5,
+    "sigma_residual": 4.440892098500626e-16,
+    "alpha_residual": 0.0
+  }
+]

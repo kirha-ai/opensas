@@ -1,0 +1,832 @@
+
+coupling_001
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008872
+Shape       Alpha        0.75
+Shape       Beta          1.5
+Mean                 0.002957
+Std Dev               0.00232
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00001
+    5.0    0.00100     0.00011
+   10.0    0.00155     0.00027
+   25.0    0.00239     0.00093
+   50.0    0.00386     0.00247
+   75.0    0.00548     0.00464
+   90.0    0.00661     0.00651
+   95.0    0.00748     0.00737
+   99.0    0.00821     0.00835
+
+coupling_002
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008561
+Shape       Alpha           1
+Shape       Beta          1.5
+Mean                 0.003424
+Std Dev              0.002242
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00006
+    5.0    0.00100     0.00029
+   10.0    0.00155     0.00058
+   25.0    0.00239     0.00149
+   50.0    0.00386     0.00317
+   75.0    0.00548     0.00516
+   90.0    0.00661     0.00672
+   95.0    0.00748     0.00740
+   99.0    0.00821     0.00816
+
+coupling_003
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008369
+Shape       Alpha         1.5
+Shape       Beta          1.5
+Mean                 0.004184
+Std Dev              0.002092
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00027
+    5.0    0.00100     0.00081
+   10.0    0.00155     0.00131
+   25.0    0.00239     0.00249
+   50.0    0.00386     0.00418
+   75.0    0.00548     0.00587
+   90.0    0.00661     0.00706
+   95.0    0.00748     0.00755
+   99.0    0.00821     0.00809
+
+coupling_004
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008308
+Shape       Alpha           2
+Shape       Beta          1.5
+Mean                 0.004748
+Std Dev              0.001938
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00061
+    5.0    0.00100     0.00140
+   10.0    0.00155     0.00201
+   25.0    0.00239     0.00328
+   50.0    0.00386     0.00487
+   75.0    0.00548     0.00632
+   90.0    0.00661     0.00729
+   95.0    0.00748     0.00768
+   99.0    0.00821     0.00810
+
+coupling_005
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008264
+Shape       Alpha           3
+Shape       Beta          1.5
+Mean                 0.005509
+Std Dev              0.001661
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00140
+    5.0    0.00100     0.00245
+   10.0    0.00155     0.00313
+   25.0    0.00239     0.00437
+   50.0    0.00386     0.00573
+   75.0    0.00548     0.00685
+   90.0    0.00661     0.00755
+   95.0    0.00748     0.00783
+   99.0    0.00821     0.00812
+
+coupling_006
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.008214
+Shape       Alpha     1.51988
+Shape       Beta          1.5
+Mean                 0.004134
+Std Dev              0.002048
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00028
+    5.0    0.00100     0.00082
+   10.0    0.00155     0.00131
+   25.0    0.00239     0.00248
+   50.0    0.00386     0.00414
+   75.0    0.00548     0.00579
+   90.0    0.00661     0.00694
+   95.0    0.00748     0.00742
+   99.0    0.00821     0.00795
+
+coupling_007
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma     0.00837
+Shape       Alpha    1.484949
+Shape       Beta          1.5
+Mean                 0.004164
+Std Dev              0.002096
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00027
+    5.0    0.00100     0.00080
+   10.0    0.00155     0.00129
+   25.0    0.00239     0.00247
+   50.0    0.00386     0.00416
+   75.0    0.00548     0.00586
+   90.0    0.00661     0.00705
+   95.0    0.00748     0.00755
+   99.0    0.00821     0.00809
+
+coupling_008
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.009026
+Shape       Alpha    1.358664
+Shape       Beta          1.5
+Mean                  0.00429
+Std Dev              0.002295
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00060     0.00021
+    5.0    0.00100     0.00070
+   10.0    0.00155     0.00118
+   25.0    0.00239     0.00240
+   50.0    0.00386     0.00423
+   75.0    0.00548     0.00613
+   90.0    0.00661     0.00750
+   95.0    0.00748     0.00807
+   99.0    0.00821     0.00870
+
+coupling_009
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.083719
+Shape       Alpha    1.484348
+Shape       Beta          1.5
+Mean                  0.04164
+Std Dev              0.020971
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00266
+    5.0    0.00997     0.00796
+   10.0    0.01549     0.01287
+   25.0    0.02394     0.02466
+   50.0    0.03857     0.04159
+   75.0    0.05481     0.05857
+   90.0    0.06612     0.07051
+   95.0    0.07478     0.07550
+   99.0    0.08206     0.08095
+
+coupling_010
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.088723
+Shape       Alpha        0.75
+Shape       Beta          1.5
+Mean                 0.029574
+Std Dev                0.0232
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00012
+    5.0    0.00997     0.00106
+   10.0    0.01549     0.00268
+   25.0    0.02394     0.00928
+   50.0    0.03857     0.02472
+   75.0    0.05481     0.04645
+   90.0    0.06612     0.06509
+   95.0    0.07478     0.07366
+   99.0    0.08206     0.08351
+
+coupling_011
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.085607
+Shape       Alpha           1
+Shape       Beta          1.5
+Mean                 0.034243
+Std Dev              0.022417
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00057
+    5.0    0.00997     0.00288
+   10.0    0.01549     0.00581
+   25.0    0.02394     0.01494
+   50.0    0.03857     0.03168
+   75.0    0.05481     0.05163
+   90.0    0.06612     0.06716
+   95.0    0.07478     0.07399
+   99.0    0.08206     0.08163
+
+coupling_012
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma     0.08369
+Shape       Alpha         1.5
+Shape       Beta          1.5
+Mean                 0.041845
+Std Dev              0.020922
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00275
+    5.0    0.00997     0.00814
+   10.0    0.01549     0.01310
+   25.0    0.02394     0.02494
+   50.0    0.03857     0.04184
+   75.0    0.05481     0.05875
+   90.0    0.06612     0.07059
+   95.0    0.07478     0.07555
+   99.0    0.08206     0.08094
+
+coupling_013
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.083084
+Shape       Alpha           2
+Shape       Beta          1.5
+Mean                 0.047477
+Std Dev              0.019382
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00614
+    5.0    0.00997     0.01398
+   10.0    0.01549     0.02005
+   25.0    0.02394     0.03277
+   50.0    0.03857     0.04872
+   75.0    0.05481     0.06324
+   90.0    0.06612     0.07286
+   95.0    0.07478     0.07677
+   99.0    0.08206     0.08097
+
+coupling_014
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma     0.08264
+Shape       Alpha           3
+Shape       Beta          1.5
+Mean                 0.055093
+Std Dev              0.016611
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.01403
+    5.0    0.00997     0.02446
+   10.0    0.01549     0.03125
+   25.0    0.02394     0.04367
+   50.0    0.03857     0.05727
+   75.0    0.05481     0.06850
+   90.0    0.06612     0.07550
+   95.0    0.07478     0.07826
+   99.0    0.08206     0.08119
+
+coupling_015
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.082138
+Shape       Alpha     1.51988
+Shape       Beta          1.5
+Mean                 0.041339
+Std Dev              0.020483
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00281
+    5.0    0.00997     0.00822
+   10.0    0.01549     0.01314
+   25.0    0.02394     0.02483
+   50.0    0.03857     0.04141
+   75.0    0.05481     0.05790
+   90.0    0.06612     0.06942
+   95.0    0.07478     0.07423
+   99.0    0.08206     0.07947
+
+coupling_016
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.083697
+Shape       Alpha    1.484949
+Shape       Beta          1.5
+Mean                 0.041638
+Std Dev              0.020964
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00266
+    5.0    0.00997     0.00797
+   10.0    0.01549     0.01287
+   25.0    0.02394     0.02467
+   50.0    0.03857     0.04159
+   75.0    0.05481     0.05857
+   90.0    0.06612     0.07049
+   95.0    0.07478     0.07548
+   99.0    0.08206     0.08092
+
+coupling_017
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.090262
+Shape       Alpha    1.358664
+Shape       Beta          1.5
+Mean                   0.0429
+Std Dev              0.022947
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.00601     0.00212
+    5.0    0.00997     0.00702
+   10.0    0.01549     0.01183
+   25.0    0.02394     0.02401
+   50.0    0.03857     0.04232
+   75.0    0.05481     0.06133
+   90.0    0.06612     0.07496
+   95.0    0.07478     0.08072
+   99.0    0.08206     0.08703
+
+coupling_018
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.837196
+Shape       Alpha    1.484434
+Shape       Beta          1.5
+Mean                 0.416415
+Std Dev              0.209705
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.02658
+    5.0    0.09969     0.07964
+   10.0    0.15493     0.12868
+   25.0    0.23942     0.24663
+   50.0    0.38573     0.41587
+   75.0    0.54812     0.58576
+   90.0    0.66123     0.70508
+   95.0    0.74785     0.75501
+   99.0    0.82056     0.80946
+
+coupling_019
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.887239
+Shape       Alpha        0.75
+Shape       Beta          1.5
+Mean                 0.295746
+Std Dev              0.232003
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.00123
+    5.0    0.09969     0.01056
+   10.0    0.15493     0.02675
+   25.0    0.23942     0.09280
+   50.0    0.38573     0.24718
+   75.0    0.54812     0.46451
+   90.0    0.66123     0.65087
+   95.0    0.74785     0.73660
+   99.0    0.82056     0.83509
+
+coupling_020
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.856072
+Shape       Alpha           1
+Shape       Beta          1.5
+Mean                 0.342429
+Std Dev              0.224172
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.00572
+    5.0    0.09969     0.02878
+   10.0    0.15493     0.05807
+   25.0    0.23942     0.14940
+   50.0    0.38573     0.31678
+   75.0    0.54812     0.51634
+   90.0    0.66123     0.67164
+   95.0    0.74785     0.73989
+   99.0    0.82056     0.81634
+
+coupling_021
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.836898
+Shape       Alpha         1.5
+Shape       Beta          1.5
+Mean                 0.418449
+Std Dev              0.209224
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.02748
+    5.0    0.09969     0.08144
+   10.0    0.15493     0.13095
+   25.0    0.23942     0.24941
+   50.0    0.38573     0.41845
+   75.0    0.54812     0.58749
+   90.0    0.66123     0.70594
+   95.0    0.74785     0.75546
+   99.0    0.82056     0.80942
+
+coupling_022
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.830849
+Shape       Alpha           2
+Shape       Beta          1.5
+Mean                 0.474771
+Std Dev              0.193824
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.06145
+    5.0    0.09969     0.13979
+   10.0    0.15493     0.20054
+   25.0    0.23942     0.32775
+   50.0    0.38573     0.48719
+   75.0    0.54812     0.63240
+   90.0    0.66123     0.72857
+   95.0    0.74785     0.76770
+   99.0    0.82056     0.80970
+
+coupling_023
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.826398
+Shape       Alpha           3
+Shape       Beta          1.5
+Mean                 0.550932
+Std Dev              0.166112
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.14031
+    5.0    0.09969     0.24460
+   10.0    0.15493     0.31251
+   25.0    0.23942     0.43674
+   50.0    0.38573     0.57274
+   75.0    0.54812     0.68498
+   90.0    0.66123     0.75497
+   95.0    0.74785     0.78263
+   99.0    0.82056     0.81185
+
+coupling_024
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.821383
+Shape       Alpha     1.51988
+Shape       Beta          1.5
+Mean                 0.413395
+Std Dev              0.204833
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.02813
+    5.0    0.09969     0.08222
+   10.0    0.15493     0.13143
+   25.0    0.23942     0.24834
+   50.0    0.38573     0.41406
+   75.0    0.54812     0.57899
+   90.0    0.66123     0.69423
+   95.0    0.74785     0.74234
+   99.0    0.82056     0.79472
+
+coupling_025
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.836973
+Shape       Alpha    1.484949
+Shape       Beta          1.5
+Mean                 0.416377
+Std Dev              0.209635
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.02660
+    5.0    0.09969     0.07968
+   10.0    0.15493     0.12872
+   25.0    0.23942     0.24666
+   50.0    0.38573     0.41585
+   75.0    0.54812     0.58567
+   90.0    0.66123     0.70493
+   95.0    0.74785     0.75483
+   99.0    0.82056     0.80925
+
+coupling_026
+
+The UNIVARIATE Procedure
+Fitted Beta Distribution for x
+
+Parameters for Beta Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta           0
+Scale       Sigma    0.902618
+Shape       Alpha    1.358664
+Shape       Beta          1.5
+Mean                 0.428996
+Std Dev              0.229469
+
+
+Quantiles for Beta Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    0.06014     0.02122
+    5.0    0.09969     0.07020
+   10.0    0.15493     0.11835
+   25.0    0.23942     0.24005
+   50.0    0.38573     0.42317
+   75.0    0.54812     0.61331
+   90.0    0.66123     0.74960
+   95.0    0.74785     0.80719
+   99.0    0.82056     0.87032

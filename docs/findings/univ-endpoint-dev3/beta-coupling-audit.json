@@ -1,0 +1,425 @@
+[
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_000",
+    "parameters": {},
+    "returned": false
+  },
+  {
+    "scale": 0.01,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_001",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.008871909829161796,
+      "alpha": 0.75,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.00887239932600593,
+    "normalized_sigma_error": -4.8949684413462924e-05
+  },
+  {
+    "scale": 0.01,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_002",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.008560633724237635,
+      "alpha": 1.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.008560753446659925,
+    "normalized_sigma_error": -1.1972242229020547e-05
+  },
+  {
+    "scale": 0.01,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_003",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.00836898342996887,
+      "alpha": 1.5,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.008368993333622166,
+    "normalized_sigma_error": -9.903653296755577e-07
+  },
+  {
+    "scale": 0.01,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_004",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.008308475848110538,
+      "alpha": 2.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.008308491700326104,
+    "normalized_sigma_error": -1.5852215566256045e-06
+  },
+  {
+    "scale": 0.01,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_005",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.008263979198116368,
+      "alpha": 3.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.008263983314929585,
+    "normalized_sigma_error": -4.116813216714643e-07
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_006",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.00821382698091,
+      "alpha": 1.5198795461376406,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.5198795461376409,
+    "alpha_error": -2.220446049250313e-16
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_007",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.00836973378674,
+      "alpha": 1.48494949571932,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.4849494957193197,
+    "alpha_error": 2.220446049250313e-16
+  },
+  {
+    "scale": 0.01,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_008",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.0090261834955,
+      "alpha": 1.35866358276936,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.3586635827693594,
+    "alpha_error": 6.661338147750939e-16
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_009",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08371915036035928,
+      "alpha": 1.4843483087531288,
+      "beta": 1.5
+    },
+    "returned": true,
+    "normalized_sigma": 0.8371915036035927
+  },
+  {
+    "scale": 0.1,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_010",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08872264882033032,
+      "alpha": 0.75,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.08872399326005931,
+    "normalized_sigma_error": -1.344439728989677e-05
+  },
+  {
+    "scale": 0.1,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_011",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08560741284957442,
+      "alpha": 1.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.08560753446659924,
+    "normalized_sigma_error": -1.2161702482582637e-06
+  },
+  {
+    "scale": 0.1,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_012",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08368992605154654,
+      "alpha": 1.5,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.08368993333622166,
+    "normalized_sigma_error": -7.284675113128358e-08
+  },
+  {
+    "scale": 0.1,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_013",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08308421117537478,
+      "alpha": 2.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.08308491700326104,
+    "normalized_sigma_error": -7.058278862631662e-06
+  },
+  {
+    "scale": 0.1,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_014",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08263973962670838,
+      "alpha": 3.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.08263983314929588,
+    "normalized_sigma_error": -9.352258749373288e-07
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_015",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.0821382698091,
+      "alpha": 1.5198795461376413,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.5198795461376409,
+    "alpha_error": 4.440892098500626e-16
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_016",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.08369733786741,
+      "alpha": 1.4849494957191032,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.484949495719102,
+    "alpha_error": 1.1102230246251565e-15
+  },
+  {
+    "scale": 0.1,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_017",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.09026183495506,
+      "alpha": 1.3586635827683375,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.3586635827683389,
+    "alpha_error": -1.3322676295501878e-15
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": null,
+    "kind": "joint",
+    "id": "coupling_018",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8371962875783985,
+      "alpha": 1.4844342647640796,
+      "beta": 1.5
+    },
+    "returned": true,
+    "normalized_sigma": 0.8371962875783985
+  },
+  {
+    "scale": 1,
+    "alpha": 0.75,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_019",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8872393837153048,
+      "alpha": 0.75,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.8872399326005931,
+    "normalized_sigma_error": -5.488852883317463e-07
+  },
+  {
+    "scale": 1,
+    "alpha": 1,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_020",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8560720204166954,
+      "alpha": 1.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.8560753446659923,
+    "normalized_sigma_error": -3.3242492969431936e-06
+  },
+  {
+    "scale": 1,
+    "alpha": 1.5,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_021",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8368977562681619,
+      "alpha": 1.5,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.8368993333622166,
+    "normalized_sigma_error": -1.5770940546833145e-06
+  },
+  {
+    "scale": 1,
+    "alpha": 2,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_022",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8308491606960846,
+      "alpha": 2.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.8308491700326104,
+    "normalized_sigma_error": -9.336525774727988e-09
+  },
+  {
+    "scale": 1,
+    "alpha": 3,
+    "sigma_factor": null,
+    "kind": "scale-only",
+    "id": "coupling_023",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.8263982738277192,
+      "alpha": 3.0,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_sigma": 0.8263983314929586,
+    "normalized_sigma_error": -5.76652393613486e-08
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.001,
+    "kind": "shape-only",
+    "id": "coupling_024",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.82138269809105,
+      "alpha": 1.5198795461375254,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.5198795461375245,
+    "alpha_error": 8.881784197001252e-16
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.02,
+    "kind": "shape-only",
+    "id": "coupling_025",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.83697337867419,
+      "alpha": 1.4849494957189076,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.4849494957189062,
+    "alpha_error": 1.3322676295501878e-15
+  },
+  {
+    "scale": 1,
+    "alpha": null,
+    "sigma_factor": 1.1,
+    "kind": "shape-only",
+    "id": "coupling_026",
+    "parameters": {
+      "theta": 0.0,
+      "sigma": 0.9026183495506,
+      "alpha": 1.3586635827683373,
+      "beta": 1.5
+    },
+    "returned": true,
+    "conditional_alpha": 1.3586635827683389,
+    "alpha_error": -1.5543122344752192e-15
+  }
+]

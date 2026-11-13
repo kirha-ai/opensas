@@ -1,0 +1,150 @@
+[
+  {
+    "id": "mixture_000",
+    "values": [
+      1,
+      5,
+      5,
+      5,
+      9
+    ],
+    "theta": 0.999999,
+    "sigma": 8.002,
+    "parameters": {
+      "theta": 0.999999,
+      "sigma": 8.002,
+      "alpha": 0.2781541727581197
+    },
+    "conditional_alpha": 0.2781541727581198,
+    "alpha_error": -1.1102230246251565e-16
+  },
+  {
+    "id": "mixture_004",
+    "values": [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      9
+    ],
+    "theta": 0.9999,
+    "sigma": 8.002,
+    "parameters": {
+      "theta": 0.9999,
+      "sigma": 8.002,
+      "alpha": 0.4743469734872582
+    },
+    "conditional_alpha": 0.474346973487258,
+    "alpha_error": 1.6653345369377348e-16
+  },
+  {
+    "id": "mixture_007",
+    "values": [
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      9
+    ],
+    "theta": 0.9999,
+    "sigma": 8.002,
+    "parameters": {
+      "theta": 0.9999,
+      "sigma": 8.002,
+      "alpha": 0.5574869933799276
+    },
+    "conditional_alpha": 0.5574869933799278,
+    "alpha_error": -2.220446049250313e-16
+  },
+  {
+    "id": "mixture_012",
+    "values": [
+      1,
+      10,
+      10,
+      10,
+      10,
+      10,
+      19
+    ],
+    "theta": 0.9999,
+    "sigma": 18.002,
+    "parameters": {
+      "theta": 0.9999,
+      "sigma": 18.002,
+      "alpha": 0.4496644157416846
+    },
+    "conditional_alpha": 0.4496644157416846,
+    "alpha_error": 0.0
+  },
+  {
+    "id": "mixture_029",
+    "values": [
+      7,
+      47,
+      47,
+      47,
+      47,
+      47,
+      47,
+      47,
+      87
+    ],
+    "theta": 6.999,
+    "sigma": 80.002,
+    "parameters": {
+      "theta": 6.999,
+      "sigma": 80.002,
+      "alpha": 0.5575569206797877
+    },
+    "conditional_alpha": 0.5575569206797877,
+    "alpha_error": 0.0
+  },
+  {
+    "id": "mixture_031",
+    "values": [
+      1,
+      1,
+      1,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      5,
+      9,
+      9,
+      9
+    ],
+    "theta": 0.9999,
+    "sigma": 8.002,
+    "parameters": {
+      "theta": 0.9999,
+      "sigma": 8.002,
+      "alpha": 0.5574869933799277
+    },
+    "conditional_alpha": 0.5574869933799278,
+    "alpha_error": -1.1102230246251565e-16
+  }
+]

@@ -1,0 +1,713 @@
+
+mixture_004
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.474347
+Mean                 3.574412
+Std Dev              2.376384
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00039
+    5.0    1.00000     1.01437
+   10.0    1.00000     1.06228
+   25.0    5.00000     1.43039
+   50.0    5.00000     2.85590
+   75.0    5.00000     5.36312
+   90.0    9.00000     7.40807
+   95.0    9.00000     8.18175
+   99.0    9.00000     8.83414
+
+mixture_005
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma       8.002
+Shape       Alpha    0.562098
+Mean                 3.878403
+Std Dev              2.399377
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00121
+    5.0    1.00000     1.03778
+   10.0    1.00000     1.13209
+   25.0    5.00000     1.67837
+   50.0    5.00000     3.33059
+   75.0    5.00000     5.79552
+   90.0    9.00000     7.63328
+   95.0    9.00000     8.30312
+   99.0    9.00000     8.85920
+
+mixture_006
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.999999
+Scale       Sigma       8.002
+Shape       Alpha    0.433751
+Mean                 3.420835
+Std Dev              2.356172
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00020
+    5.0    1.00000     1.00801
+   10.0    1.00000     1.03960
+   25.0    5.00000     1.32747
+   50.0    5.00000     2.61876
+   75.0    5.00000     5.12245
+   90.0    9.00000     7.27633
+   95.0    9.00000     8.10953
+   99.0    9.00000     8.81872
+
+mixture_007
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.557486
+Mean                 3.864133
+Std Dev              2.398749
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00197
+    5.0    1.00000     1.03701
+   10.0    1.00000     1.12856
+   25.0    5.00000     1.66555
+   50.0    5.00000     3.30782
+   75.0    5.00000     5.77616
+   90.0    9.00000     7.62390
+   95.0    9.00000     8.29851
+   99.0    9.00000     8.85893
+
+mixture_008
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma       8.002
+Shape       Alpha    0.650303
+Mean                 4.152194
+Std Dev              2.401845
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00573
+    5.0    1.00000     1.07890
+   10.0    1.00000     1.23098
+   25.0    5.00000     1.94826
+   50.0    5.00000     3.75508
+   75.0    5.00000     6.14032
+   90.0    9.00000     7.80411
+   95.0    9.00000     8.39408
+   99.0    9.00000     8.87828
+
+mixture_009
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.999999
+Scale       Sigma       8.002
+Shape       Alpha    0.552654
+Mean                 3.848245
+Std Dev               2.39803
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00192
+    5.0    1.00000     1.03540
+   10.0    5.00000     1.12409
+   25.0    5.00000     1.65133
+   50.0    5.00000     3.28297
+   75.0    5.00000     5.75476
+   90.0    5.00000     7.61306
+   95.0    9.00000     8.29274
+   99.0    9.00000     8.85779
+
+mixture_010
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.687189
+Mean                 4.259101
+Std Dev              2.398412
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00974
+    5.0    1.00000     1.10221
+   10.0    5.00000     1.28044
+   25.0    5.00000     2.06424
+   50.0    5.00000     3.91826
+   75.0    5.00000     6.26477
+   90.0    5.00000     7.86445
+   95.0    9.00000     8.42636
+   99.0    9.00000     8.88572
+
+mixture_011
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma       8.002
+Shape       Alpha    0.782519
+Mean                 4.511847
+Std Dev              2.380635
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.02125
+    5.0    1.00000     1.17301
+   10.0    5.00000     1.42096
+   25.0    5.00000     2.35985
+   50.0    5.00000     4.29893
+   75.0    5.00000     6.53934
+   90.0    5.00000     7.99297
+   95.0    9.00000     8.49330
+   99.0    9.00000     8.89888
+
+mixture_016
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      18.002
+Shape       Alpha    0.530846
+Mean                  7.24239
+Std Dev              5.385682
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00297
+    5.0     1.00000     1.06365
+   10.0     1.00000     1.23515
+   25.0    10.00000     2.32171
+   50.0    10.00000     5.87794
+   75.0    10.00000    11.47029
+   90.0    19.00000    15.76116
+   95.0    19.00000    17.34384
+   99.0    19.00000    18.66428
+
+mixture_017
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9997
+Scale       Sigma      18.002
+Shape       Alpha     0.56762
+Mean                 7.518047
+Std Dev              5.399374
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00509
+    5.0     1.00000     1.09158
+   10.0     1.00000     1.31129
+   25.0    10.00000     2.56517
+   50.0    10.00000     6.30834
+   75.0    10.00000    11.84423
+   90.0    19.00000    15.95199
+   95.0    19.00000    17.44628
+   99.0    19.00000    18.68576
+
+mixture_018
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma      18.002
+Shape       Alpha    0.614264
+Mean                 7.849172
+Std Dev              5.405663
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00899
+    5.0     1.00000     1.13618
+   10.0     1.00000     1.42299
+   25.0    10.00000     2.88347
+   50.0    10.00000     6.82345
+   75.0    10.00000    12.26903
+   90.0    19.00000    16.16354
+   95.0    19.00000    17.55882
+   99.0    19.00000    18.70886
+
+mixture_019
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9985
+Scale       Sigma      18.002
+Shape       Alpha    0.631729
+Mean                 7.968028
+Std Dev              5.405272
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.01079
+    5.0     1.00000     1.15548
+   10.0     1.00000     1.46879
+   25.0    10.00000     3.00429
+   50.0    10.00000     7.00751
+   75.0    10.00000    12.41539
+   90.0    19.00000    16.23512
+   95.0    19.00000    17.59659
+   99.0    19.00000    18.71637
+
+mixture_022
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.619416
+Mean                 4.060612
+Std Dev              2.402863
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00462
+    5.0    1.00000     1.06340
+   10.0    3.00000     1.19433
+   25.0    5.00000     1.85343
+   50.0    5.00000     3.61332
+   75.0    5.00000     6.02905
+   90.0    9.00000     7.75025
+   95.0    9.00000     8.36596
+   99.0    9.00000     8.87311
+
+mixture_023
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma       8.002
+Shape       Alpha     0.72252
+Mean                 4.355482
+Std Dev              2.393171
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.01265
+    5.0    1.00000     1.12562
+   10.0    3.00000     1.32949
+   25.0    5.00000     2.17368
+   50.0    5.00000     4.06491
+   75.0    5.00000     6.37275
+   90.0    9.00000     7.91521
+   95.0    9.00000     8.45262
+   99.0    9.00000     8.89046
+
+mixture_026
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.999999
+Scale       Sigma       8.002
+Shape       Alpha    0.433686
+Mean                  3.42058
+Std Dev              2.356133
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00019
+    5.0    1.00000     1.00800
+   10.0    1.00000     1.03957
+   25.0    4.90000     1.32731
+   50.0    5.00000     2.61837
+   75.0    5.10000     5.12204
+   90.0    9.00000     7.27610
+   95.0    9.00000     8.10940
+   99.0    9.00000     8.81869
+
+mixture_027
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.557377
+Mean                 3.863774
+Std Dev              2.398733
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00197
+    5.0    1.00000     1.03697
+   10.0    1.00000     1.12845
+   25.0    4.90000     1.66522
+   50.0    5.00000     3.30726
+   75.0    5.10000     5.77567
+   90.0    9.00000     7.62365
+   95.0    9.00000     8.29837
+   99.0    9.00000     8.85891
+
+mixture_028
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta       0.999
+Scale       Sigma       8.002
+Shape       Alpha    0.650161
+Mean                 4.151775
+Std Dev              2.401854
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00571
+    5.0    1.00000     1.07882
+   10.0    1.00000     1.23080
+   25.0    4.90000     1.94781
+   50.0    5.00000     3.75443
+   75.0    5.10000     6.13982
+   90.0    9.00000     7.80387
+   95.0    9.00000     8.39396
+   99.0    9.00000     8.87825
+
+mixture_030
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta     7.09999
+Scale       Sigma       0.802
+Shape       Alpha    0.556788
+Mean                 7.386827
+Std Dev              0.240404
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    7.10000     7.10020
+    5.0    7.10000     7.10368
+   10.0    7.10000     7.11282
+   25.0    7.50000     7.16650
+   50.0    7.50000     7.33094
+   75.0    7.50000     7.57838
+   90.0    7.90000     7.76372
+   95.0    7.90000     7.83141
+   99.0    7.90000     7.88764
+
+mixture_031
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma       8.002
+Shape       Alpha    0.557485
+Mean                 3.864131
+Std Dev              2.398749
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00197
+    5.0    1.00000     1.03701
+   10.0    1.00000     1.12856
+   25.0    5.00000     1.66554
+   50.0    5.00000     3.30782
+   75.0    5.00000     5.77615
+   90.0    9.00000     7.62390
+   95.0    9.00000     8.29850
+   99.0    9.00000     8.85893
+
+mixture_032
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.999999
+Scale       Sigma       8.002
+Shape       Alpha         0.5
+Mean                 3.667332
+Std Dev              2.385735
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00080
+    5.0    1.00000     1.02000
+   10.0    1.00000     1.08002
+   25.0    5.00000     1.50012
+   50.0    5.00000     3.00050
+   75.0    5.00000     5.50112
+   90.0    9.00000     7.48162
+   95.0    9.00000     8.22180
+   99.0    9.00000     8.84276
+
+mixture_033
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta    0.999999
+Scale       Sigma       8.002
+Shape       Alpha         0.5
+Mean                 3.667332
+Std Dev              2.385735
+
+
+Quantiles for Power Function Distribution
+ 
+          ------Quantile------
+Percent   Observed   Estimated
+
+    1.0    1.00000     1.00080
+    5.0    1.00000     1.02000
+   10.0    1.00000     1.08002
+   25.0    5.00000     1.50012
+   50.0    5.00000     3.00050
+   75.0    5.00000     5.50112
+   90.0    9.00000     7.48162
+   95.0    9.00000     8.22180
+   99.0    9.00000     8.84276
+
+mixture_034
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      18.002
+Shape       Alpha         0.5
+Mean                 7.000567
+Std Dev              5.367159
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00170
+    5.0     1.00000     1.04491
+   10.0     1.00000     1.17992
+   25.0    10.00000     2.12503
+   50.0    10.00000     5.50040
+   75.0    10.00000    11.12603
+   90.0    19.00000    15.58152
+   95.0    19.00000    17.24671
+   99.0    19.00000    18.64366
+
+mixture_035
+
+The UNIVARIATE Procedure
+Fitted Power Function Distribution for x
+
+Parameters for Power Function Distribution
+ 
+Parameter   Symbol   Estimate
+
+Threshold   Theta      0.9999
+Scale       Sigma      18.002
+Shape       Alpha         0.5
+Mean                 7.000567
+Std Dev              5.367159
+
+
+Quantiles for Power Function Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     1.00170
+    5.0     1.00000     1.04491
+   10.0     1.00000     1.17992
+   25.0    10.00000     2.12503
+   50.0    10.00000     5.50040
+   75.0    10.00000    11.12603
+   90.0    19.00000    15.58152
+   95.0    19.00000    17.24671
+   99.0    19.00000    18.64366
