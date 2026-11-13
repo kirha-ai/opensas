@@ -181,6 +181,10 @@ OUTKERNEL grid values/descriptors and no unrequested output dataset publication.
 The `univ_dist_hist_dev4` golden comes from the actual source/output/log triplet
 at `/private/tmp/dev4-univ-hist-integration-20261113.*`; its `.sas` source is
 also committed as the runnable corpus fixture. The golden is a separate commit.
+The final checkpoint fixture combines both output datasets in one FILE PRINT
+step to avoid testing DATA-step page separation. Its fresh M9 rerun is retained
+at `/private/tmp/dev4-univ-hist-checkpoint-v2-20261113.*` and reports zero errors
+and warnings. All 18 numerical rows are unchanged; the separator disappears.
 
 Precise remaining tags (none waived by a green checkpoint):
 

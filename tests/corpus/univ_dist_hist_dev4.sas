@@ -18,9 +18,7 @@ histogram x / noplot normal(mu=0 sigma=2 noprint)
  endpoints=0 to 10 by 2 outhistogram=h;
 histogram x / noplot endpoints=0 to 10 by 2 rtinclude outhistogram=r;
 run;
-data _null_;set h;file print;
-put g 1. ' ' _MINPT_ 2. ' ' _COUNT_ 1. ' ' _OBSPCT_ 6.2 ' ' _EXPPCT_ 10.6;
-run;
-data _null_;set r;file print;
-put g 1. ' ' _MAXPT_ 2. ' ' _COUNT_ 1. ' ' _OBSPCT_ 6.2;
+data _null_;set h(in=fitted) r;file print;
+if fitted then put g 1. ' ' _MINPT_ 2. ' ' _COUNT_ 1. ' ' _OBSPCT_ 6.2 ' ' _EXPPCT_ 10.6;
+else put g 1. ' ' _MAXPT_ 2. ' ' _COUNT_ 1. ' ' _OBSPCT_ 6.2;
 run;
