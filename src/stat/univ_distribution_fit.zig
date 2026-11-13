@@ -18,6 +18,35 @@ pub const Trace = struct {
     }
 };
 pub const JohnsonMethod = enum { percentiles, moments, mle };
+test "UNIVARIATE endpoint landed adapter preserves candidate warning and failed initialization status" {
+    const adapter = @import("univ_distribution_fit.zig");
+    const diagnostics = @import("../diag.zig");
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diagnostics.Diagnostics.init(arena.allocator());
+    var report: adapter.Report = .{};
+    var x: [41]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const q = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 41.25;
+        v.* = q * q;
+    }
+    const curve = try adapter.fit(&d, &x, .{ .family = .power, .theta = 0, .sigma = null, .report = &report });
+    try std.testing.expect(!report.converged and !report.no_fit);
+    try std.testing.expectEqualStrings("nonstationary_candidate", report.reason.?);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9716969696969697), curve.p.sigma, 1e-12);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expect(d.list.items[0].severity == .warning);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "retaining the finite fallback curve") != null);
+
+    var failed = diagnostics.Diagnostics.init(arena.allocator());
+    try std.testing.expectError(error.ParseError, adapter.fit(&failed, &.{ 0.1, 0.2, 0.8 }, .{ .family = .power, .theta = 0, .sigma = null, .report = &report }));
+    try std.testing.expect(!report.converged and report.no_fit);
+    try std.testing.expectEqualStrings("initialization_failed", report.reason.?);
+    try std.testing.expectEqual(@as(usize, 1), failed.list.items.len);
+    try std.testing.expect(failed.list.items[0].severity == .warning);
+    try std.testing.expect(std.mem.indexOf(u8, failed.list.items[0].message, "no fitted curve is available") != null);
+}
+
 pub const Request = struct {
     family: dist.Family,
     theta: ?f64 = 0,
@@ -70,6 +99,7 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     if (r.maxiter == 0 or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
+    if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
     if (r.itprint and r.family == .weibull and (r.c == null or r.theta == null)) {
         diag.markGap();
         return d.fail(error.ParseError, 0, "UNIVARIATE: Weibull ITPRINT history is not implemented", .{});
