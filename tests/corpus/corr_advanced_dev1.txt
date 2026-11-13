@@ -1,0 +1,198 @@
+The CORR Procedure
+
+3 Variables: x y z
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+x 8 4.50000 2.44949 4.50000 1.00000 8.00000
+y 8 8.87500 4.94072 8.50000 2.00000 17.00000
+z 8 3.50000 1.60357 3.50000 1.00000 6.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y z
+x 1.00000 0.96204 0.87287
+P - 0.0001 0.0047
+N 8 8 8
+y 0.96204 1.00000 0.96467
+P 0.0001 - 0.0001
+N 8 8 8
+z 0.87287 0.96467 1.00000
+P 0.0047 0.0001 -
+N 8 8 8
+
+spearman Correlation Coefficients
+Row Column Correlation P N
+x x 1.00000 . 8
+x y 0.94612 0.0004 8
+x z 0.86753 0.0052 8
+y x 0.94612 0.0004 8
+y y 1.00000 . 8
+y z 0.97578 <.0001 8
+z x 0.86753 0.0052 8
+z y 0.97578 <.0001 8
+z z 1.00000 . 8
+
+kendall Correlation Coefficients
+Row Column Correlation P N
+x x 1.00000 . 8
+x y 0.83650 0.0041 8
+x z 0.74125 0.0120 8
+y x 0.83650 0.0041 8
+y y 1.00000 . 8
+y z 0.94356 0.0016 8
+z x 0.74125 0.0120 8
+z y 0.94356 0.0016 8
+z z 1.00000 . 8
+
+Cronbach Coefficient Alpha
+Raw 0.86905
+Standardized 0.97669
+Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha
+x 0.94640 0.72328 0.92567 0.98202
+y 0.99376 0.88889 0.99551 0.93212
+z 0.94220 0.86731 0.92762 0.98065
+
+Pearson Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 8 1.97262 0.06872 0.95657 0.77286 0.99234 <.0001
+z x 8 1.34502 0.06235 0.85719 0.38519 0.97371 0.0026
+z y 8 2.00916 0.06890 0.95955 0.78709 0.99287 <.0001
+
+Spearman Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 8 1.79346 0.06758 0.93857 0.69073 0.98908 <.0001
+z x 8 1.32302 0.06197 0.85135 0.36664 0.97256 0.0031
+z y 8 2.20068 0.06970 0.97220 0.84953 0.99513 <.0001
+
+The CORR Procedure
+
+2 Variables: x y
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+z 8 3.50000 1.60357 3.50000 1.00000 6.00000
+x 8 4.50000 2.44949 4.50000 1.00000 8.00000
+y 8 8.87500 4.94072 8.50000 2.00000 17.00000
+
+Partial Statistics
+Variable Variance Std Dev
+x 1.66667 1.29099
+y 1.97685 1.40601
+
+Pearson Partial Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x y
+x 1.00000 0.93350
+P - 0.0021
+N 8 8
+y 0.93350 1.00000
+P 0.0021 -
+N 8 8
+
+spearman Partial Correlation Coefficients
+Row Column Correlation P N
+x x 1.00000 . 8
+x y 0.91539 0.0038 8
+y x 0.91539 0.0038 8
+y y 1.00000 . 8
+
+kendall Partial Correlation Coefficients
+Row Column Correlation N
+x x 1.00000 8
+x y 0.61666 8
+y x 0.61666 8
+y y 1.00000 8
+
+Pearson Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 8 1.68497 0.07779 0.92274 0.55612 0.98874 0.0008
+
+Spearman Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 8 1.55983 0.07628 0.90213 0.46491 0.98561 0.0018
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 10 8.10000 4.86370 8.00000 2.00000 17.00000
+x 10 4.20000 2.44040 4.50000 1.00000 8.00000
+
+Pearson Correlation Coefficients
+Prob > |r| under H0: Rho=0
+Number of Observations
+Variable x
+y 0.96233
+P <.0001
+N 10
+
+spearman Correlation Coefficients
+Row Column Correlation P N
+y x 0.94770 <.0001 10
+
+Pearson Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 10 1.97648 0.00000 0.96233 0.90371 1.00000 0.0001
+
+Spearman Fisher Correlation Statistics
+Row Column N Z Bias Estimate Lower Upper P
+y x 10 1.80867 0.00000 0.94770 0.86785 1.00000 0.0006
+
+The CORR Procedure
+
+3 Variables: x y z
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+x 8 4.50000 2.44949 4.50000 1.00000 8.00000
+y 8 8.87500 4.94072 8.50000 2.00000 17.00000
+z 8 3.50000 1.60357 3.50000 1.00000 6.00000
+
+hoeffding Correlation Coefficients
+Row Column Correlation N
+x x 1.00000 8
+x y 0.38839 8
+x z 0.20089 8
+y x 0.38839 8
+y y 0.87667 8
+y z 0.59515 8
+z x 0.20089 8
+z y 0.59515 8
+z z 0.67299 8
+
+The CORR Procedure
+
+2 Variables: x y
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+x 70 2.04286 0.78824 2.00000 1.00000 3.00000
+y 70 2.05714 0.75921 2.00000 1.00000 3.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+x y 70 0.59061 0.10494 31.67254 <.0001 18.29784 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 70 2.05714 0.75921 2.00000 1.00000 3.00000
+x 70 2.04286 0.78824 2.00000 1.00000 3.00000
+
+polyserial Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 70 0.51865 0.09703 28.57034 <.0001 17.93754 <.0001
+
