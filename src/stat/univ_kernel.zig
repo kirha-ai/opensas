@@ -4,7 +4,7 @@ const std = @import("std");
 const diag = @import("../diag.zig");
 pub const Kind = enum { normal, quadratic, triangular };
 pub const Bandwidth = union(enum) { numeric: f64, mise, sjpi };
-pub const Request = struct { kind: Kind = .normal, bandwidth: Bandwidth = .mise, lower: ?f64 = null, upper: ?f64 = null };
+pub const Request = struct { kind: Kind = .normal, bandwidth: Bandwidth = .mise, lower: ?f64 = null, upper: ?f64 = null, fft_period: ?f64 = null };
 pub const Estimate = struct {
     request: Request,
     c: f64,
@@ -31,7 +31,9 @@ pub const Estimate = struct {
         if (x.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: degenerate kernel grid", .{});
         const step = (x[x.len - 1] - x[0]) / 128;
         if (!(step > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: degenerate kernel grid", .{});
+        const period = self.fftPeriod(step * 128) orelse return d.fail(error.ParseError, 0, "UNIVARIATE: kernel FFT grid is not finite", .{});
         const pos = (value - x[0]) / step;
+        if (!std.math.isFinite(pos)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel point exceeds grid resolution", .{});
         const low = @floor(pos);
         const frac = pos - low;
         var result: f64 = 0;
@@ -41,30 +43,70 @@ pub const Estimate = struct {
             const w = at - left;
             const a = x[0] + low * step;
             const b = x[0] + left * step;
-            const k00 = self.reflected(a, b, x[0], step);
-            const k01 = self.reflected(a, b + step, x[0], step);
-            const k10 = self.reflected(a + step, b, x[0], step);
-            const k11 = self.reflected(a + step, b + step, x[0], step);
+            const k00 = self.reflected(a, b, x[0], step, period);
+            const k01 = self.reflected(a, b + step, x[0], step, period);
+            const k10 = self.reflected(a + step, b, x[0], step, period);
+            const k11 = self.reflected(a + step, b + step, x[0], step, period);
             result += (1 - frac) * ((1 - w) * k00 + w * k01) + frac * ((1 - w) * k10 + w * k11);
         }
-        return result / (@as(f64, @floatFromInt(x.len)) * self.bandwidth);
+        return result / @as(f64, @floatFromInt(x.len));
     }
 
-    fn reflected(self: Estimate, point: f64, observation: f64, origin: f64, step: f64) f64 {
+    /// Period of the padded power-of-two FFT lattice. Shared with output-grid
+    /// adapters so density periodicity and available ordinates cannot disagree.
+    pub fn fftPeriod(self: Estimate, range: f64) ?f64 {
+        if (!(range > 0)) return null;
+        if (self.request.fft_period) |period| return if (period > 0 and std.math.isFinite(period)) period else null;
+        const cutoff: f64 = if (self.request.kind == .normal) 3 else 1;
+        const period = if (2 * cutoff * self.bandwidth > range) 4 * range else 2 * range;
+        return if (std.math.isFinite(period)) period else null;
+    }
+
+    fn fftKernel(self: Estimate, displacement: f64, period: f64) f64 {
+        if (self.request.kind != .normal) return kernel(self.request.kind, displacement / self.bandwidth) / self.bandwidth;
+        const centered = displacement - @round(displacement / period) * period;
+        const ratio = self.bandwidth / period;
+        if (ratio >= 0.25) {
+            // Dual Fourier series converges rapidly for broad bandwidths and
+            // avoids a number of image terms proportional to h/period.
+            var sum: f64 = 1;
+            var k: f64 = 1;
+            while (true) : (k += 1) {
+                const amplitude = 2 * @exp(-2 * std.math.pi * std.math.pi * ratio * ratio * k * k);
+                sum += amplitude * @cos(2 * std.math.pi * k * centered / period);
+                if (amplitude < 1e-17) return sum / period;
+            }
+        }
+        // Adjacent Gaussian images reproduce the periodic FFT convolution.
+        // SAS caps padding and warns when bandwidth is large. Sum images to
+        // numerical convergence rather than dropping the resulting wraparound.
+        var sum = kernel(.normal, centered / self.bandwidth);
+        var j: f64 = 1;
+        while (true) : (j += 1) {
+            const term = kernel(.normal, (centered - j * period) / self.bandwidth) + kernel(.normal, (centered + j * period) / self.bandwidth);
+            sum += term;
+            if (term <= 1e-17 * sum) return sum / self.bandwidth;
+        }
+    }
+
+    fn reflected(self: Estimate, point: f64, observation: f64, origin: f64, step: f64, period: f64) f64 {
         if (self.request.lower) |bound| if (point < bound) return 0;
         if (self.request.upper) |bound| if (point > bound) return 0;
-        var value = kernel(self.request.kind, (point - observation) / self.bandwidth);
-        if (self.request.lower) |bound| value += self.latticeKernel(2 * bound - point, observation, origin, step);
-        if (self.request.upper) |bound| value += self.latticeKernel(2 * bound - point, observation, origin, step);
+        var value = self.fftKernel(point - observation, period);
+        if (self.request.lower) |bound| value += self.latticeKernel(2 * bound - point, observation, origin, step, period);
+        if (self.request.upper) |bound| value += self.latticeKernel(2 * bound - point, observation, origin, step, period);
         return value;
     }
 
-    fn latticeKernel(self: Estimate, point: f64, observation: f64, origin: f64, step: f64) f64 {
+    fn latticeKernel(self: Estimate, point: f64, observation: f64, origin: f64, step: f64, period: f64) f64 {
+        const first = origin - (period - 128 * step) / 2;
+        const last = first + period - step;
+        if (point < first or point > last) return 0;
         const position = (point - origin) / step;
         const low = @floor(position);
         const fraction = position - low;
         const at = origin + low * step;
-        return (1 - fraction) * kernel(self.request.kind, (at - observation) / self.bandwidth) + fraction * kernel(self.request.kind, (at + step - observation) / self.bandwidth);
+        return (1 - fraction) * self.fftKernel(at - observation, period) + fraction * self.fftKernel(at + step - observation, period);
     }
 };
 
@@ -138,4 +180,25 @@ test "UNIVARIATE kernel MISE bandwidth and binned OUTKERNEL SAS M9" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.084391), try bounded.binnedDensity(&x, 0, &d), 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.098456), try bounded.binnedDensity(&x, 0.015625, &d), 5e-7);
     try std.testing.expectError(error.ParseError, fit(&d, &x, 6.5, .{ .bandwidth = .sjpi }));
+}
+
+test "UNIVARIATE normal FFT periodic density matches independent M9 bandwidth heldouts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0, 0.3, 0.8, 1 };
+    const cases = [_][3]f64{
+        .{ 0.2, 0.00011050570727, 0.21404575878347 },
+        .{ 0.5, 0.08135287831555, 0.62430481294114 },
+        .{ 1, 0.20258005097361, 0.55592464996715 },
+        .{ 2, 0.24602365145292, 0.33294504741228 },
+    };
+    for (cases) |row| {
+        const estimate = try fit(&d, &x, 0.75, .{ .bandwidth = .{ .numeric = row[0] } });
+        try std.testing.expectApproxEqAbs(row[1], try estimate.binnedDensity(&x, -0.5, &d), 1e-12);
+        try std.testing.expectApproxEqAbs(row[2], try estimate.binnedDensity(&x, 0.5, &d), 1e-12);
+    }
+    // Multiple bandwidths in one statement share the largest padded lattice.
+    const shared = try fit(&d, &x, 0.75, .{ .bandwidth = .{ .numeric = 0.2 }, .fft_period = 4 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0000552502448), try shared.binnedDensity(&x, -0.5, &d), 1e-12);
 }
