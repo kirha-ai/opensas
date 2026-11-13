@@ -1,0 +1,110 @@
+[
+  {
+    "id": 0,
+    "domain": 0,
+    "k": 86,
+    "low": -8.0,
+    "high": 8.0,
+    "midpoint_hex": "BFF147AE147AE148",
+    "midpoint_rank": "4615829330084568759",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  },
+  {
+    "id": 1,
+    "domain": 0,
+    "k": 87,
+    "low": -8.0,
+    "high": 8.0,
+    "midpoint_hex": "BFF0000000000000",
+    "midpoint_rank": "4616189618054758399",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  },
+  {
+    "id": 2,
+    "domain": 0,
+    "k": 88,
+    "low": -8.0,
+    "high": 8.0,
+    "midpoint_hex": "BFED70A3D70A3D71",
+    "midpoint_rank": "4616910193995137678",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  },
+  {
+    "id": 3,
+    "domain": 1,
+    "k": 86,
+    "low": -7.99,
+    "high": 8.01,
+    "midpoint_hex": "BFF11EB851EB8520",
+    "midpoint_rank": "4615874366080842463",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  },
+  {
+    "id": 4,
+    "domain": 1,
+    "k": 87,
+    "low": -7.99,
+    "high": 8.01,
+    "midpoint_hex": "BFEFAE147AE147B0",
+    "midpoint_rank": "4616279690047305807",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  },
+  {
+    "id": 5,
+    "domain": 1,
+    "k": 88,
+    "low": -7.99,
+    "high": 8.01,
+    "midpoint_hex": "BFED1EB851EB8521",
+    "midpoint_rank": "4617000265987685086",
+    "background_indices": [
+      0,
+      13,
+      34,
+      55,
+      106,
+      152,
+      200
+    ]
+  }
+]
