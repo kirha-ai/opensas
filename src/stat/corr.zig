@@ -304,10 +304,6 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null or opts.hoeffding)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
     if (opts.polyserial != null and with.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: POLYSERIAL requires WITH.", .{});
     if (opts.alpha and with.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ALPHA is invalid with WITH.", .{});
-    if (opts.hoeffding and !opts.noprob) {
-        diag.markGap();
-        return cx.diags.fail(error.ParseError, 0, "PROC CORR: SAS-compatible Hoeffding probability inference is not implemented; HOEFFDING NOPROB supports coefficients only.", .{});
-    }
     if (opts.alpha or opts.cov or opts.csscp or opts.sscp or (!opts.spearman and !opts.kendall and !opts.hoeffding and opts.polychoric == null and opts.polyserial == null)) opts.pearson = true;
     return .{ .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
 }
@@ -1165,14 +1161,14 @@ test "CORR ordinal SAS joint MLE and convergence options" {
     try std.testing.expect(!fail_result.converged and std.math.isNan(fail_result.r));
 }
 
-test "CORR Hoeffding SAS tied coefficients with explicit NOPROB" {
+test "CORR Hoeffding SAS tied coefficients and probability integration" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
     const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{ &.{ 1, 2, 1 }, &.{ 2, 5, 3 }, &.{ 3, 5, 2 }, &.{ 4, 9, 4 }, &.{ 5, 8, 3 }, &.{ 6, 13, 5 }, &.{ 7, 12, 4 }, &.{ 8, 17, 6 } });
-    const g = (try Testing.analyze(a, ds, "proc corr hoeffding noprob; var x y z; run;")).groups[0];
+    const g = (try Testing.analyze(a, ds, "proc corr hoeffding; var x y z; run;")).groups[0];
     try std.testing.expectApproxEqAbs(@as(f64, 0.38839), g.hoeffding[1].r, 0.000005);
-    try std.testing.expect(std.math.isNan(g.hoeffding[1].p));
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0018), g.hoeffding[1].p, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.20089), g.hoeffding[2].r, 0.000005);
 
     try std.testing.expectApproxEqAbs(@as(f64, 0.87667), g.hoeffding[4].r, 0.000005);
@@ -1255,11 +1251,12 @@ test "CORR Hoeffding untied low medium high degenerate and FREQ replication coef
     defer arena.deinit();
     const a = arena.allocator();
     const ys = [_][]const f64{ &.{ 3, 7, 1, 8, 2, 6, 4, 5 }, &.{ 1, 3, 2, 5, 4, 7, 6, 8 }, &.{ 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 }, &.{ 2, 9, 1, 8, 4, 11, 3, 12, 5, 10, 6, 7 } };
-    for (ys, [_]f64{ 1.0 / 56.0, 9.0 / 28.0, 1, 5.0 / 198.0 }) |y, expected| {
+    for (ys, [_]f64{ 1.0 / 56.0, 9.0 / 28.0, 1, 5.0 / 198.0 }, [_]f64{ 0.27035003097535, 0.00421936667347, 0, 0.19028121558348 }) |y, expected, expected_p| {
         const ds = try Testing.dataset(a, &.{ "x", "y" }, &.{});
         for (y, 1..) |value, i| try ds.appendRow(&.{ .{ .num = @floatFromInt(i) }, .{ .num = value } });
-        const p = (try Testing.analyze(a, ds, "proc corr hoeffding noprob; var x; with y; run;")).groups[0].hoeffding[0];
+        const p = (try Testing.analyze(a, ds, "proc corr hoeffding; var x; with y; run;")).groups[0].hoeffding[0];
         try Testing.near(expected, p.r);
+        try std.testing.expectApproxEqAbs(expected_p, p.p, 5e-13);
     }
     const compressed = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 3, 2 }, &.{ 1, 1, 1 }, &.{ 2, 2, 3 }, &.{ 3, 3, 1 }, &.{ 4, 1, 2 } });
     const expanded = try Testing.dataset(a, &.{ "x", "y" }, &.{});
@@ -1269,19 +1266,19 @@ test "CORR Hoeffding untied low medium high degenerate and FREQ replication coef
     const c = (try Testing.analyze(a, compressed, "proc corr spearman kendall hoeffding noprob; var x y; freq f; run;")).groups[0];
     const e = (try Testing.analyze(a, expanded, "proc corr spearman kendall hoeffding noprob; var x y; run;")).groups[0];
     try Testing.near(-1.0 / 7.0, c.hoeffding[1].r);
-    for (c.hoeffding, e.hoeffding) |v, w| try Testing.near(v.r, w.r);
+    for (c.hoeffding, e.hoeffding) |v, w| {
+        try Testing.near(v.r, w.r);
+        try std.testing.expectApproxEqAbs(v.p, w.p, 5e-13);
+    }
     try Testing.near(c.spearman[1].r, e.spearman[1].r);
     try Testing.near(c.kendall[1].r, e.kendall[1].r);
     const constant = try Testing.dataset(a, &.{ "x", "y" }, &.{ &.{ 1, 1 }, &.{ 2, 1 }, &.{ 3, 1 }, &.{ 4, 1 }, &.{ 5, 1 }, &.{ 6, 1 } });
     const d = (try Testing.analyze(a, constant, "proc corr hoeffding noprob; var x y; run;")).groups[0];
     try Testing.near(-0.625, d.hoeffding[1].r);
     try Testing.near(-1.171875, d.hoeffding[3].r);
-    var lib = @import("../exec.zig").Library.init(a);
-    try lib.put("d", constant);
-    var diagnostics = diag.Diagnostics.init(a);
-    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
-    try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, "proc corr hoeffding; var x y; run;", &diagnostics)));
-    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "probability inference is not implemented") != null);
+    try Testing.near(1, c.hoeffding[1].p);
+    try Testing.near(1, d.hoeffding[1].p);
+    try Testing.near(1, d.hoeffding[3].p);
 }
 test "CORR ordinal boundaries and ORDINAL NGROUPS options" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -1385,4 +1382,52 @@ test "CORR positive rectangle integration resolves near-boundary quadrants" {
     }
     const rare = kernel.rectangleProbability(-0.4, -0.3, 0.3, 0.4, 0.99);
     try std.testing.expect(rare > 0 and rare < 1e-5);
+}
+
+test "CORR public Hoeffding small N fractional FREQ exclusions and NOPROB" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]usize{ 4, 5, 6 }) |n| {
+        const ds = try Testing.dataset(a, &.{ "x", "y" }, &.{});
+        for (0..n) |i| try ds.appendRow(&.{ .{ .num = @floatFromInt(i) }, .{ .num = @floatFromInt(i) } });
+        const result = try Testing.analyze(a, ds, "proc corr hoeffding nosimple;var x;with y;run;");
+        const pair = result.groups[0].hoeffding[0];
+        if (n < 5) try std.testing.expect(std.math.isNan(pair.r)) else try Testing.near(1, pair.r);
+        if (n <= 5) try std.testing.expect(std.math.isNan(pair.p)) else try Testing.near(0, pair.p);
+        var listing: std.ArrayList(u8) = .empty;
+        try render(a, &listing, result);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "Row Column Correlation P N") != null);
+        const suppressed = try Testing.analyze(a, ds, "proc corr hoeffding nosimple noprob;var x;with y;run;");
+        listing.clearRetainingCapacity();
+        try render(a, &listing, suppressed);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "Row Column Correlation P N") == null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "Row Column Correlation N") != null);
+    }
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 3, 2.9 }, &.{ 1, 1, 1 }, &.{ 2, 2, 3 }, &.{ 3, 3, 1 }, &.{ 4, 1, 2 }, &.{ 100, -100, 0 }, &.{ 200, -200, nan } });
+    const pair = (try Testing.analyze(a, ds, "proc corr hoeffding;var x;with y;freq f;run;")).groups[0].hoeffding[0];
+    try Testing.near(9, pair.n);
+    try Testing.near(-1.0 / 7.0, pair.r);
+    try Testing.near(1, pair.p);
+    const missing = try Testing.dataset(a, &.{ "x", "y" }, &.{ &.{ 1, 1 }, &.{ 2, 4 }, &.{ 3, 2 }, &.{ 4, 6 }, &.{ 5, 3 }, &.{ 6, 5 }, &.{ 7, nan }, &.{ nan, 7 } });
+    const complete_pair = (try Testing.analyze(a, missing, "proc corr hoeffding;var x;with y;run;")).groups[0].hoeffding[0];
+    try Testing.near(6, complete_pair.n);
+    try Testing.near(0, complete_pair.r);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.36426667551153), complete_pair.p, 5e-13);
+}
+test "CORR public Hoeffding preserves ODS advanced capture rejection" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y" }, &.{ &.{ 1, 2 }, &.{ 2, 1 }, &.{ 3, 4 }, &.{ 4, 3 }, &.{ 5, 6 }, &.{ 6, 5 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var diagnostics = diag.Diagnostics.init(a);
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &diagnostics, try lex.tokenize(a, "ods output PearsonCorr=p SimpleStats=s;", &diagnostics));
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics, .capture = &capture };
+    var listing: std.ArrayList(u8) = .empty;
+    try std.testing.expectError(error.ParseError, run(cx, &listing, try lex.tokenize(a, "proc corr hoeffding;var x y;run;", &diagnostics)));
+    try std.testing.expect(diagnostics.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ODS OUTPUT") != null);
 }
