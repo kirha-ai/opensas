@@ -13,6 +13,7 @@ pub const Options = struct {
     clip_upper: bool = true,
     shared_axis_padding: ?f64 = null,
     shared_fft_padding: ?f64 = null,
+    shared_fft_period: ?f64 = null,
     max_axis_steps: usize = 1000000,
 };
 pub const Padding = struct { axis: f64 = 0, fft: f64 = 0 };
@@ -50,7 +51,12 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     const own = padding(&.{estimate});
     const axis_pad = @ceil((options.shared_axis_padding orelse own.axis) / step) * step;
     const fft_pad = options.shared_fft_padding orelse own.fft;
-    const length: usize = if (fft_pad <= (if (constant) range else range / 2)) 256 else 512;
+    const period_hint = options.shared_fft_period orelse estimate.request.fft_period;
+    const length: usize = if (period_hint) |period| blk: {
+        if (period == 2 * range) break :blk 256;
+        if (period == 4 * range) break :blk 512;
+        return d.fail(error.ParseError, 0, "UNIVARIATE: output FFT period must span two or four data ranges", .{});
+    } else if (fft_pad <= (if (constant) range else range / 2)) 256 else 512;
     if (own.fft > 1.5 * range) try d.warn(0, "UNIVARIATE: kernel bandwidth produces wrap-around at the finite output grid ends", .{});
     const origin = lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
     const grid_last = origin + @as(f64, @floatFromInt(length - 1)) * step;

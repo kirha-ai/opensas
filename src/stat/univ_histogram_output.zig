@@ -227,7 +227,7 @@ test "dev3 OUTHISTOGRAM M9 shared constant key count controls windows and ties" 
             return error.TestUnexpectedResult;
         }
     }
-    try std.testing.expect(compared > 800);
+    try std.testing.expectEqual(@as(usize, 833), compared);
 }
 
 test "dev3 output schema retains key attributes and constant failed-curve fields" {

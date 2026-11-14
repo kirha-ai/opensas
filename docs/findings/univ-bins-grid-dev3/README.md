@@ -77,8 +77,9 @@ raw output/log triplets in this directory use unique absolute dev3 paths:
   quadratic and triangular characteristic functions provide the spectral
   ordinates. Reflection and compact support masks are separate from extent.
 - Kernel grids share the largest period/padding across bandwidths. The f36b582
-  Request.fft_period/Estimate.fftPeriod handoff is integrated at the dependency
-  checkpoint; zero-range fallback remains this output helper's responsibility.
+  Request.fft_period/Estimate.fftPeriod handoff is integrated after rebasing onto
+  f36b582. Nonconstant batches use the largest Estimate.fftPeriod; explicit
+  period hints must be two or four data ranges or fail visibly; zero-range fallback remains this output helper's responsibility.
 - Constants use an artificial unit data range for the kernel lattice, but the
   histogram width for vertical scaling. Constant FFT padding depends on the
   point-mass span, not the artificial data span. The constant center lattice
@@ -135,3 +136,20 @@ covered by `extra-controls`. `window-order` intentionally tests incompatible and
 nonpositive controls (SAS errors); its empty-array dump warnings are probe
 instrumentation. The first window-controls connection failed before a SAS job
 started; the retained rerun succeeded. No failed run is called a clean fit.
+
+## Recovery checkpoint verification (2026-11-14)
+
+All pre-existing tracked and untracked helper work was checkpointed before a
+conflict-free local rebase onto f36b58200891b3376b6c6f93637d1279a72e6698.
+The two fixture export scripts reproduced the expected files byte-for-byte from
+the retained actual SAS logs (833 histogram and 10,085 kernel rows). A fresh run
+of the absolute public constant fixture with `sasrun ... -f text -o - -l /dev/null`
+reproduced its 15-row expected file byte-for-byte; output is retained locally at
+`/tmp/opensas-dev3-recovery-20261114-constant.txt`.
+
+Eight focused Zig tests pass, including the shared-period regression against
+dev4's independently retained M9 density at -.5. This preserves the distinction
+between the finite Fourier numerical formula and oracle parity: 10,082 kernel
+density rows match, three remain recorded disagreements. No density tolerance
+was relaxed. The full gate result and exact tested commit are supplied in the
+final handoff; focused tests alone do not establish public adapter completion.

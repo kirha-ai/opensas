@@ -89,6 +89,11 @@ pub fn appendEstimates(d: *diag.Diagnostics, output: *Dataset, source: *Dataset,
     var actual = options;
     actual.shared_axis_padding = options.shared_axis_padding orelse shared.axis;
     actual.shared_fft_padding = options.shared_fft_padding orelse shared.fft;
+    if (x.len > 1 and x[x.len - 1] > x[0] and options.shared_fft_period == null) {
+        var period: f64 = 0;
+        for (estimates) |estimate| period = @max(period, estimate.fftPeriod(x[x.len - 1] - x[0]) orelse return d.fail(error.ParseError, 0, "UNIVARIATE: invalid shared output FFT period", .{}));
+        actual.shared_fft_period = period;
+    }
     if (estimates.len > 1) for (estimates[1..]) |estimate| {
         if (!std.meta.eql(estimate.request.lower, estimates[0].request.lower)) actual.clip_lower = false;
         if (!std.meta.eql(estimate.request.upper, estimates[0].request.upper)) actual.clip_upper = false;
@@ -300,4 +305,20 @@ test "dev3 class sample six eight excludes value two outside native FFT lattice"
     }
     try std.testing.expect(saw_four);
     try std.testing.expectEqualStrings("Kernel Density Estimates", output.label.?);
+}
+
+test "dev3 output honors shared period supplied by statement owner" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var source = Dataset.init(a, "d");
+    _ = try source.addColumn("x", .num);
+    const x = [_]f64{ 0, 0.3, 0.8, 1 };
+    const output = try create(a, &source, &.{}, 8, .percent);
+    try appendBatch(&d, output, &source, &.{}, &.{}, 0, &x, 0.75, &.{.{ .bandwidth = .{ .numeric = 0.2 }, .fft_period = 4 }}, &.{ -0.5, 0, 0.5, 1, 1.5 }, .percent, .{});
+    try std.testing.expectEqual(@as(f64, -0.5), output.rows.items[0][3].num);
+    // SAS M9 dev4-kernel-periodic-heldout: C=.2 on the shared four-range grid.
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0000552502448), output.rows.items[0][5].num, 1e-12);
+    try std.testing.expectError(error.ParseError, appendBatch(&d, output, &source, &.{}, &.{}, 0, &x, 0.75, &.{.{ .fft_period = 3 }}, &.{ 0, 1 }, .percent, .{}));
 }
