@@ -1,0 +1,4 @@
+WARNING: SINGULAR= option is allowed only when a PARTIAL statement is also specified.
+
+Extracted from the diagnostic replay of transition-refined.sas; two occurrences,
+one for SINGULAR=1e-16 and one for SINGULAR=.5. No errors.

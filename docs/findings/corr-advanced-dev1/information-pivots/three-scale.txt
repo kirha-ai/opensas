@@ -1,0 +1,24 @@
+
+                               g                                NObs                                Corr                              StdErr                           WaldChiSq                             LRChiSq
+
+                               1                                 110                   -0.99901846933219                                   0                                   .                    133.007262304564
+                               2                               11000                             -0.9999                                   0                                   .                    13300.7262304564
+                               3                             1100000                             -0.9999                                   0                                   .                    1330072.62304564
+                               4                                 112                   -0.99634377908992                                   0                                   .                    53.5111399982072
+                               5                               11200                              -0.999                                   0                                   .                    5351.11399982073
+                               6                             1120000                              -0.999                                   0                                   .                    535111.399982072
+                               7                                  90                    0.98771303561774                                   0                                   .                    16.6843289550059
+                               8                                9000                               0.999                                   0                                   .                    1668.43289550062
+                               9                              900000                               0.999                                   0                                   .                    166843.289550062
+
+p=0.11111111111111 z1=BFF387BE2CA7A36E z2=BFF387BE2CA7A36E diff=0 same=1
+p=0.46666666666666 z1=BFB56A333562831F z2=BFB56A333562831F diff=0 same=1
+p=0.88888888888888 z1=3FF387BE2CA7A36C z2=3FF387BE2CA7A36C diff=0 same=1
+p=0.46363636363636 z1=BFB75DE8FFAF8A0A z2=BFB75DE8FFAF8A0A diff=0 same=1
+p=0.78181818181818 z1=3FE8E83AF36127BB z2=3FE8E83AF36127BB diff=0 same=1
+p=0.31818181818181 z1=BFDE422D4D243F82 z2=BFDE422D4D243F82 diff=0 same=1
+p=0.67272727272727 z1=3FDCA320CA101627 z2=3FDCA320CA101627 diff=0 same=1
+p=0.16071428571428 z1=BFEFBA95BABB6F0B z2=BFEFBA95BABB6F0B diff=0 same=1
+p=0.41071428571428 z1=BFCCE3FF8C236312 z2=BFCCE3FF8C236312 diff=0 same=1
+p=0.66071428571428 z1=3FDA85BF7C6A29BB z2=3FDA85BF7C6A29BB diff=0 same=1
+sasrun: /private/tmp/dev1-corr-three-scale.sas: 0 error(s), 0 warning(s) in 3.645s -> /dev/null

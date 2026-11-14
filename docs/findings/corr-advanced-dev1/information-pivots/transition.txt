@@ -1,0 +1,22 @@
+
+setting                                   g                                NObs                                Corr                              StdErr
+
+default                                   1                                 720                    0.98771303561774                                   0
+default                                   2                                 900                    0.98771303561774                                   0
+default                                   3                                 990                    0.98771303566856                                   0
+default                                   4                                1080                               0.999                                   0
+default                                   5                                1170                               0.999                                   0
+default                                   6                                1800                               0.999                                   0
+tiny                                      1                                 720                    0.98771303561774                                   0
+tiny                                      2                                 900                    0.98771303561774                                   0
+tiny                                      3                                 990                    0.98771303566856                                   0
+tiny                                      4                                1080                               0.999                                   0
+tiny                                      5                                1170                               0.999                                   0
+tiny                                      6                                1800                               0.999                                   0
+large                                     1                                 720                    0.98771303561774                                   0
+large                                     2                                 900                    0.98771303561774                                   0
+large                                     3                                 990                    0.98771303566856                                   0
+large                                     4                                1080                               0.999                                   0
+large                                     5                                1170                               0.999                                   0
+large                                     6                                1800                               0.999                                   0
+sasrun: /private/tmp/dev1-corr-pivot-transition.sas: 0 error(s), 2 warning(s) in 3.949s -> /dev/null

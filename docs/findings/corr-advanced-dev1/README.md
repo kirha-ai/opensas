@@ -2,6 +2,12 @@
 
 Status: **INCOMPLETE; do not mark DONE.**
 
+Latest rank follow-up: [information-pivots/README.md](information-pivots/README.md)
+identifies the native absolute information-pivot decision. The diagnostic
+candidate now passes all original 40 cases but fails 4/18 new independent
+holdouts. Production retains the tight-boundary guard; boundary-step and nested
+category compatibility remain open. The earlier comparisons below are history.
+
 Latest bounded follow-up: [quadrature-descent/README.md](quadrature-descent/README.md)
 fixes a false likelihood/convergence signal in case 2 and adds independent
 finite-SE controls. The diagnostic candidate improves to 37/40, retaining all
