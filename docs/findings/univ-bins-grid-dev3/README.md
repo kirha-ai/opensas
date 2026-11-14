@@ -153,3 +153,10 @@ between the finite Fourier numerical formula and oracle parity: 10,082 kernel
 density rows match, three remain recorded disagreements. No density tolerance
 was relaxed. The full gate result and exact tested commit are supplied in the
 final handoff; focused tests alone do not establish public adapter completion.
+
+The first full gate exposed a listing-only leading blank line in the constant
+golden (2,056/2,057 corpus cases, 11/11 programs). The fresh SAS stdout starts
+with one blank line; removing exactly that byte gives byte-for-byte equality
+with all 15 interpreter rows. The corpus golden removes only that listing
+preamble. No numeric text, row, tolerance or interpreter behavior was changed.
+The original SAS log and fresh stdout remain intact as evidence.
