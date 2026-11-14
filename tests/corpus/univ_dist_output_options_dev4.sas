@@ -19,8 +19,13 @@ histogram x / noplot endpoints=0 to 10 by 2 kernel(c=.5)
 run;
 proc contents data=h out=hm noprint;run;
 proc sort data=hm;by varnum;run;
-data _null_;set h(in=histogram) k(in=kernel) hm(in=metadata);file print;
+data _null_;length label $256 format $49;
+set h(in=histogram) k(in=kernel) hm(in=metadata);file print;
 if histogram then put 'H ' b 1. ' ' c 1. ' ' _minpt_ 2. ' ' n 1.;
 else if kernel then put 'K ' b 1. ' ' c 1. ' ' v 2. ' ' density 12.8;
-else put name= type= length= label= format=;
+else do;
+ if missing(label) then label='<blank>';
+ if missing(format) then format='<blank>';
+ put name= type= length= label= format=;
+end;
 run;

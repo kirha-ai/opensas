@@ -276,7 +276,12 @@ They pass pooled binomial uncertainty checks. The additional fixed-sigma/free-
 alpha Pareto reference is NOT claimed accepted: its three reported probabilities
 equal 1078/4925, 224/4925 and 123/4925 despite EDFNSAMPLES=5000, consistent with
 excluded failed fits (an inference, not an exposed SAS replication counter).
-Our no-discard contract remains; that conditional reference needs further work.
+The current adapter propagates failed refits. Manager clarified that the user
+prohibits SILENT discard, not transparent accounting with a verified successful-
+fit denominator. Follow-up must verify independent seeds and sample counts,
+distinguish attempted/valid/failed fits and coordinate additive API work with
+dev5. Unsupported algorithms and malformed inputs must still propagate errors.
+The existing all-failure propagation policy is not a permanent scope exclusion.
 
 Output options are captured directly, including WORK-qualified names and the
 documented OUTHIST alias. KEEP/DROP/RENAME establish the output descriptor before
@@ -285,7 +290,11 @@ descriptor as in the oracle. Options are applied before publishing, so output
 libraries cannot receive unfiltered rows. Histogram/kernel dataset labels are
 set to the M9 values. The new corpus fixture checks BY/CLASS/FREQ, raw formatted
 class representatives, independent options, renamed WHERE variables and schema.
-Its final M9 v3 probe has zero errors and warnings; golden changes are separate.
+Its final M9 v5 probe has zero errors and warnings; golden changes are separate.
+Serialization uses explicit character lengths and prints blank metadata fields
+as `<blank>` in both engines. This avoids unrelated list-PUT blank spacing and
+implicit character-length inference; dataset labels and numeric values are
+unchanged. All oracle versions remain retained as evidence.
 
 The fixture exposed normal FFT wrap contributions missing from the core. The
 owned kernel module now implements the periodic convolution and shared-period
