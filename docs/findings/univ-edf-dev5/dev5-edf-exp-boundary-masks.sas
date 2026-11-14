@@ -1,0 +1,10 @@
+options ls=256;ods graphics off;ods exclude all;
+data d;do grp=1 to 3;do i=1 to 10;if i<=grp then x=1;else x=i-grp+1;output;end;end;run;
+%macro p(id,opts);
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by grp;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" grp best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(known,exponential(theta=1 sigma=4));%p(scale,exponential(theta=1));%p(theta,exponential(theta=est sigma=4));%p(both,exponential(theta=est));

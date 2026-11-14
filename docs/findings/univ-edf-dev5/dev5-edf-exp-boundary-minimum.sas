@@ -1,0 +1,10 @@
+options ls=256;ods graphics off;ods exclude all;
+data d;do m=1 to 5;do i=1 to 5;x=3;output;end;do i=1 to m;u=(i-.5)/m;x=3-4*log1px(-u);output;end;end;run;
+%macro p(id,opts);
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;by m;histogram x / noplot &opts;run;
+ods exclude none;
+data _null_;set gof;file print;put "&id|" m best8. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(known,exponential(theta=3 sigma=4));%p(scale,exponential(theta=3));
