@@ -23,6 +23,9 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/univ_histogram_bins.zig");
+    _ = @import("stat/univ_histogram_output.zig");
+    _ = @import("stat/univ_kernel_output.zig");
     _ = @import("stat/univ_endpoint_fit.zig");
     _ = @import("stat/univ_johnson_fit.zig");
     _ = @import("stat/univ_kernel_sjpi.zig");
