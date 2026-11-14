@@ -1,0 +1,37 @@
+
+grid7
+
+The UNIVARIATE Procedure
+Fitted Normal Distribution for x
+
+Parameters for Normal Distribution
+ 
+Parameter   Symbol   Estimate
+
+Mean        Mu              5
+Std Dev     Sigma           2
+
+
+        Goodness-of-Fit Tests for Normal Distribution
+ 
+Test                  ----Statistic-----   ------p Value------
+
+Kolmogorov-Smirnov    D       0.30819280   Pr > D       >0.250
+Cramer-von Mises      W-Sq    0.18063166   Pr > W-Sq    >0.250
+Anderson-Darling      A-Sq    3.50443761   Pr > A-Sq     0.017
+
+
+Quantiles for Normal Distribution
+ 
+          -------Quantile------
+Percent    Observed   Estimated
+
+    1.0     1.00000     0.34730
+    5.0     1.00000     1.71029
+   10.0     1.00000     2.43690
+   25.0     2.50000     3.65102
+   50.0     5.00000     5.00000
+   75.0     9.00000     6.34898
+   90.0    15.00000     7.56310
+   95.0    15.00000     8.28971
+   99.0    15.00000     9.65270

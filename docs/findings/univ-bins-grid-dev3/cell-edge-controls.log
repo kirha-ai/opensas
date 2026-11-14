@@ -1,0 +1,1997 @@
+The SAS System
+
+36         
+37         options nonumber nodate linesize=256;
+38         %macro dump(ds);
+39         %if %sysfunc(exist(&ds)) %then %do;
+40         proc contents data=&ds out=meta noprint; run;
+41         proc sort data=meta; by varnum; run;
+42         data _null_; set meta; length line $1000;
+43         line=cats("DEV3_META|&ds|",varnum,'|',name,'|',type,'|',length,'|',label,'|',format,'|',formatl,'|',formatd,'|',informat,'|',informl,'|',informd); ll=lengthn(line); put line $varying1000. ll;
+44         run;
+45         data _null_; set &ds; array nn _numeric_; array cc _character_; length line $1000;
+46         do zz=1 to dim(nn); nm=vname(nn[zz]); line=cats("DEV3_N|&ds|",_n_,'|',nm,'|',put(nn[zz],hex16.)); ll=lengthn(line); put line $varying1000. ll; end;
+47         do zz=1 to dim(cc); nm=vname(cc[zz]); line=cats("DEV3_C|&ds|",_n_,'|',nm,'|',cc[zz]); ll=lengthn(line); put line $varying1000. ll; end;
+48         run;
+49         %end;
+50         %mend;
+51         %macro summary(ds);
+52         data _null_; set &ds end=done; retain first second;
+53         if _n_=1 then first=_value_; if _n_=2 then second=_value_;
+54         if done then put "DEV3_GRID|&ds|" _n_ best12. '|' first hex16. '|' second hex16. '|' _value_ hex16.;
+55         run;
+56         %mend;
+57         data d; length g $1; g="A"; do i=0 to 19; x=i/19; y=x; output; end; g="B"; do i=1 to 10; x=.37; y=.; output; end; g="C"; do i=1 to 10; x=.; y=2+i/10; output; end; run;
+
+NOTE: The data set WORK.D has 40 observations and 4 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              541.35k
+      OS Memory           11432.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     118
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+58         proc univariate data=d noprint; class g; histogram x y / noplot  outhistogram=cells0; run;
+
+NOTE: The data set WORK.CELLS0 has 16 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              2503.53k
+      OS Memory           13228.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        3  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     574
+      Page Swaps                        0
+      Voluntary Context Switches        11
+      Involuntary Context Switches      0
+      Block Input Operations            0
+The SAS System
+
+      Block Output Operations           264
+      
+
+58       !                                                                                            %dump(cells0);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              1059.98k
+      OS Memory           13488.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     169
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              860.82k
+      OS Memory           13228.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     149
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells0|1|g|2|1|||0|0||0|0
+DEV3_META|cells0|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells0|3|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells0|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|cells0|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              643.98k
+      OS Memory           13224.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        6  Switch Count  0
+The SAS System
+
+      Page Faults                       0
+      Page Reclaims                     122
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|cells0|1|_MIDPT_|0000000000000000
+DEV3_N|cells0|1|_OBSPCT_|402E000000000000
+DEV3_N|cells0|1|_COUNT_|4008000000000000
+DEV3_C|cells0|1|g|A
+DEV3_C|cells0|1|_VAR_|x
+DEV3_N|cells0|2|_MIDPT_|3FD0000000000000
+DEV3_N|cells0|2|_OBSPCT_|4039000000000000
+DEV3_N|cells0|2|_COUNT_|4014000000000000
+DEV3_C|cells0|2|g|A
+DEV3_C|cells0|2|_VAR_|x
+DEV3_N|cells0|3|_MIDPT_|3FE0000000000000
+DEV3_N|cells0|3|_OBSPCT_|4034000000000000
+DEV3_N|cells0|3|_COUNT_|4010000000000000
+DEV3_C|cells0|3|g|A
+DEV3_C|cells0|3|_VAR_|x
+DEV3_N|cells0|4|_MIDPT_|3FE8000000000000
+DEV3_N|cells0|4|_OBSPCT_|4039000000000000
+DEV3_N|cells0|4|_COUNT_|4014000000000000
+DEV3_C|cells0|4|g|A
+DEV3_C|cells0|4|_VAR_|x
+DEV3_N|cells0|5|_MIDPT_|3FF0000000000000
+DEV3_N|cells0|5|_OBSPCT_|402E000000000000
+DEV3_N|cells0|5|_COUNT_|4008000000000000
+DEV3_C|cells0|5|g|A
+DEV3_C|cells0|5|_VAR_|x
+DEV3_N|cells0|6|_MIDPT_|3FD0000000000000
+DEV3_N|cells0|6|_OBSPCT_|4059000000000000
+DEV3_N|cells0|6|_COUNT_|4024000000000000
+DEV3_C|cells0|6|g|B
+DEV3_C|cells0|6|_VAR_|x
+DEV3_N|cells0|7|_MIDPT_|0000000000000000
+DEV3_N|cells0|7|_OBSPCT_|402E000000000000
+DEV3_N|cells0|7|_COUNT_|4008000000000000
+DEV3_C|cells0|7|g|A
+DEV3_C|cells0|7|_VAR_|y
+DEV3_N|cells0|8|_MIDPT_|3FD0000000000000
+DEV3_N|cells0|8|_OBSPCT_|4039000000000000
+DEV3_N|cells0|8|_COUNT_|4014000000000000
+DEV3_C|cells0|8|g|A
+DEV3_C|cells0|8|_VAR_|y
+DEV3_N|cells0|9|_MIDPT_|3FE0000000000000
+DEV3_N|cells0|9|_OBSPCT_|4034000000000000
+DEV3_N|cells0|9|_COUNT_|4010000000000000
+DEV3_C|cells0|9|g|A
+DEV3_C|cells0|9|_VAR_|y
+DEV3_N|cells0|10|_MIDPT_|3FE8000000000000
+DEV3_N|cells0|10|_OBSPCT_|4039000000000000
+DEV3_N|cells0|10|_COUNT_|4014000000000000
+The SAS System
+
+DEV3_C|cells0|10|g|A
+DEV3_C|cells0|10|_VAR_|y
+DEV3_N|cells0|11|_MIDPT_|3FF0000000000000
+DEV3_N|cells0|11|_OBSPCT_|402E000000000000
+DEV3_N|cells0|11|_COUNT_|4008000000000000
+DEV3_C|cells0|11|g|A
+DEV3_C|cells0|11|_VAR_|y
+DEV3_N|cells0|12|_MIDPT_|4000000000000000
+DEV3_N|cells0|12|_OBSPCT_|4024000000000000
+DEV3_N|cells0|12|_COUNT_|3FF0000000000000
+DEV3_C|cells0|12|g|C
+DEV3_C|cells0|12|_VAR_|y
+DEV3_N|cells0|13|_MIDPT_|4002000000000000
+DEV3_N|cells0|13|_OBSPCT_|4034000000000000
+DEV3_N|cells0|13|_COUNT_|4000000000000000
+DEV3_C|cells0|13|g|C
+DEV3_C|cells0|13|_VAR_|y
+DEV3_N|cells0|14|_MIDPT_|4004000000000000
+DEV3_N|cells0|14|_OBSPCT_|403E000000000000
+DEV3_N|cells0|14|_COUNT_|4008000000000000
+DEV3_C|cells0|14|g|C
+DEV3_C|cells0|14|_VAR_|y
+DEV3_N|cells0|15|_MIDPT_|4006000000000000
+DEV3_N|cells0|15|_OBSPCT_|4034000000000000
+DEV3_N|cells0|15|_COUNT_|4000000000000000
+DEV3_C|cells0|15|g|C
+DEV3_C|cells0|15|_VAR_|y
+DEV3_N|cells0|16|_MIDPT_|4008000000000000
+DEV3_N|cells0|16|_OBSPCT_|4034000000000000
+DEV3_N|cells0|16|_COUNT_|4000000000000000
+DEV3_C|cells0|16|g|C
+DEV3_C|cells0|16|_VAR_|y
+NOTE: There were 16 observations read from the data set WORK.CELLS0.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              672.29k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     80
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+59         proc univariate data=d noprint; class g / keylevel="B"; histogram x y / noplot  outhistogram=cells1; run;
+
+WARNING: MIDPOINTS= UNIFORM is used for y since there are no observations in the key class.
+NOTE: The data set WORK.CELLS1 has 10 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              801.23k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        8  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+59       !                                                                                                           %dump(cells1);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.32k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        9  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     148
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              847.76k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        10  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells1|1|g|2|1|||0|0||0|0
+DEV3_META|cells1|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells1|3|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells1|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+The SAS System
+
+DEV3_META|cells1|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              622.81k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        11  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|cells1|1|_MIDPT_|3FD7AE147AE147AE
+DEV3_N|cells1|1|_OBSPCT_|4059000000000000
+DEV3_N|cells1|1|_COUNT_|4024000000000000
+DEV3_C|cells1|1|g|B
+DEV3_C|cells1|1|_VAR_|x
+DEV3_N|cells1|2|_MIDPT_|0000000000000000
+DEV3_N|cells1|2|_OBSPCT_|4034000000000000
+DEV3_N|cells1|2|_COUNT_|4010000000000000
+DEV3_C|cells1|2|g|A
+DEV3_C|cells1|2|_VAR_|x
+DEV3_N|cells1|3|_MIDPT_|3FD7AE147AE147AE
+DEV3_N|cells1|3|_OBSPCT_|4041800000000000
+DEV3_N|cells1|3|_COUNT_|401C000000000000
+DEV3_C|cells1|3|g|A
+DEV3_C|cells1|3|_VAR_|x
+DEV3_N|cells1|4|_MIDPT_|3FE7AE147AE147AE
+DEV3_N|cells1|4|_OBSPCT_|4041800000000000
+DEV3_N|cells1|4|_COUNT_|401C000000000000
+DEV3_C|cells1|4|g|A
+DEV3_C|cells1|4|_VAR_|x
+DEV3_N|cells1|5|_MIDPT_|3FF1C28F5C28F5C2
+DEV3_N|cells1|5|_OBSPCT_|4024000000000000
+DEV3_N|cells1|5|_COUNT_|4000000000000000
+DEV3_C|cells1|5|g|A
+DEV3_C|cells1|5|_VAR_|x
+DEV3_N|cells1|6|_MIDPT_|0000000000000000
+DEV3_N|cells1|6|_OBSPCT_|403E000000000000
+DEV3_N|cells1|6|_COUNT_|4018000000000000
+DEV3_C|cells1|6|g|A
+DEV3_C|cells1|6|_VAR_|y
+DEV3_N|cells1|7|_MIDPT_|3FE3333333333333
+DEV3_N|cells1|7|_OBSPCT_|404E000000000000
+DEV3_N|cells1|7|_COUNT_|4028000000000000
+DEV3_C|cells1|7|g|A
+DEV3_C|cells1|7|_VAR_|y
+DEV3_N|cells1|8|_MIDPT_|3FF3333333333333
+DEV3_N|cells1|8|_OBSPCT_|4024000000000000
+DEV3_N|cells1|8|_COUNT_|4000000000000000
+The SAS System
+
+DEV3_C|cells1|8|g|A
+DEV3_C|cells1|8|_VAR_|y
+DEV3_N|cells1|9|_MIDPT_|4003333333333333
+DEV3_N|cells1|9|_OBSPCT_|404E000000000000
+DEV3_N|cells1|9|_COUNT_|4018000000000000
+DEV3_C|cells1|9|g|C
+DEV3_C|cells1|9|_VAR_|y
+DEV3_N|cells1|10|_MIDPT_|4008000000000000
+DEV3_N|cells1|10|_OBSPCT_|4044000000000000
+DEV3_N|cells1|10|_COUNT_|4010000000000000
+DEV3_C|cells1|10|g|C
+DEV3_C|cells1|10|_VAR_|y
+NOTE: There were 10 observations read from the data set WORK.CELLS1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              672.12k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        12  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     49
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+60         proc univariate data=d noprint; class g / keylevel="C"; histogram x y / noplot  outhistogram=cells2; run;
+
+WARNING: MIDPOINTS= UNIFORM is used for x since there are no observations in the key class.
+NOTE: The data set WORK.CELLS2 has 14 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              802.79k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        13  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+60       !                                                                                                           %dump(cells2);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+The SAS System
+
+      memory              1056.10k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        14  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     150
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              847.62k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        15  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells2|1|g|2|1|||0|0||0|0
+DEV3_META|cells2|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells2|3|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells2|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|cells2|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              622.81k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        16  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+The SAS System
+
+DEV3_N|cells2|1|_MIDPT_|0000000000000000
+DEV3_N|cells2|1|_OBSPCT_|402E000000000000
+DEV3_N|cells2|1|_COUNT_|4008000000000000
+DEV3_C|cells2|1|g|A
+DEV3_C|cells2|1|_VAR_|x
+DEV3_N|cells2|2|_MIDPT_|3FD0000000000000
+DEV3_N|cells2|2|_OBSPCT_|4039000000000000
+DEV3_N|cells2|2|_COUNT_|4014000000000000
+DEV3_C|cells2|2|g|A
+DEV3_C|cells2|2|_VAR_|x
+DEV3_N|cells2|3|_MIDPT_|3FE0000000000000
+DEV3_N|cells2|3|_OBSPCT_|4034000000000000
+DEV3_N|cells2|3|_COUNT_|4010000000000000
+DEV3_C|cells2|3|g|A
+DEV3_C|cells2|3|_VAR_|x
+DEV3_N|cells2|4|_MIDPT_|3FE8000000000000
+DEV3_N|cells2|4|_OBSPCT_|4039000000000000
+DEV3_N|cells2|4|_COUNT_|4014000000000000
+DEV3_C|cells2|4|g|A
+DEV3_C|cells2|4|_VAR_|x
+DEV3_N|cells2|5|_MIDPT_|3FF0000000000000
+DEV3_N|cells2|5|_OBSPCT_|402E000000000000
+DEV3_N|cells2|5|_COUNT_|4008000000000000
+DEV3_C|cells2|5|g|A
+DEV3_C|cells2|5|_VAR_|x
+DEV3_N|cells2|6|_MIDPT_|3FD0000000000000
+DEV3_N|cells2|6|_OBSPCT_|4059000000000000
+DEV3_N|cells2|6|_COUNT_|4024000000000000
+DEV3_C|cells2|6|g|B
+DEV3_C|cells2|6|_VAR_|x
+DEV3_N|cells2|7|_MIDPT_|4000CCCCCCCCCCCD
+DEV3_N|cells2|7|_OBSPCT_|4034000000000000
+DEV3_N|cells2|7|_COUNT_|4000000000000000
+DEV3_C|cells2|7|g|C
+DEV3_C|cells2|7|_VAR_|y
+DEV3_N|cells2|8|_MIDPT_|4003333333333333
+DEV3_N|cells2|8|_OBSPCT_|403E000000000000
+DEV3_N|cells2|8|_COUNT_|4008000000000000
+DEV3_C|cells2|8|g|C
+DEV3_C|cells2|8|_VAR_|y
+DEV3_N|cells2|9|_MIDPT_|4005999999999999
+DEV3_N|cells2|9|_OBSPCT_|403E000000000000
+DEV3_N|cells2|9|_COUNT_|4008000000000000
+DEV3_C|cells2|9|g|C
+DEV3_C|cells2|9|_VAR_|y
+DEV3_N|cells2|10|_MIDPT_|4007FFFFFFFFFFFF
+DEV3_N|cells2|10|_OBSPCT_|4034000000000000
+DEV3_N|cells2|10|_COUNT_|4000000000000000
+DEV3_C|cells2|10|g|C
+DEV3_C|cells2|10|_VAR_|y
+DEV3_N|cells2|11|_MIDPT_|0000000000000000
+DEV3_N|cells2|11|_OBSPCT_|402E000000000000
+DEV3_N|cells2|11|_COUNT_|4008000000000000
+DEV3_C|cells2|11|g|A
+DEV3_C|cells2|11|_VAR_|y
+DEV3_N|cells2|12|_MIDPT_|3FD3333333333333
+DEV3_N|cells2|12|_OBSPCT_|403E000000000000
+DEV3_N|cells2|12|_COUNT_|4018000000000000
+The SAS System
+
+DEV3_C|cells2|12|g|A
+DEV3_C|cells2|12|_VAR_|y
+DEV3_N|cells2|13|_MIDPT_|3FE3333333333333
+DEV3_N|cells2|13|_OBSPCT_|403E000000000000
+DEV3_N|cells2|13|_COUNT_|4018000000000000
+DEV3_C|cells2|13|g|A
+DEV3_C|cells2|13|_VAR_|y
+DEV3_N|cells2|14|_MIDPT_|3FECCCCCCCCCCCCC
+DEV3_N|cells2|14|_OBSPCT_|4039000000000000
+DEV3_N|cells2|14|_COUNT_|4014000000000000
+DEV3_C|cells2|14|g|A
+DEV3_C|cells2|14|_VAR_|y
+NOTE: There were 14 observations read from the data set WORK.CELLS2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              672.06k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        17  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+61         proc univariate data=d noprint; class g; histogram x y / noplot maxnbin=3 outhistogram=cells3; run;
+
+NOTE: The data set WORK.CELLS3 has 12 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              803.14k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        18  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+61       !                                                                                                     %dump(cells3);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.18k
+The SAS System
+
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        19  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              847.43k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        20  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells3|1|g|2|1|||0|0||0|0
+DEV3_META|cells3|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells3|3|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells3|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|cells3|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              622.81k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        21  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     50
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|cells3|1|_MIDPT_|0000000000000000
+The SAS System
+
+DEV3_N|cells3|1|_OBSPCT_|402E000000000000
+DEV3_N|cells3|1|_COUNT_|4008000000000000
+DEV3_C|cells3|1|g|A
+DEV3_C|cells3|1|_VAR_|x
+DEV3_N|cells3|2|_MIDPT_|3FD0000000000000
+DEV3_N|cells3|2|_OBSPCT_|4039000000000000
+DEV3_N|cells3|2|_COUNT_|4014000000000000
+DEV3_C|cells3|2|g|A
+DEV3_C|cells3|2|_VAR_|x
+DEV3_N|cells3|3|_MIDPT_|3FE0000000000000
+DEV3_N|cells3|3|_OBSPCT_|4034000000000000
+DEV3_N|cells3|3|_COUNT_|4010000000000000
+DEV3_C|cells3|3|g|A
+DEV3_C|cells3|3|_VAR_|x
+DEV3_N|cells3|4|_MIDPT_|3FE8000000000000
+DEV3_N|cells3|4|_OBSPCT_|4039000000000000
+DEV3_N|cells3|4|_COUNT_|4014000000000000
+DEV3_C|cells3|4|g|A
+DEV3_C|cells3|4|_VAR_|x
+DEV3_N|cells3|5|_MIDPT_|3FF0000000000000
+DEV3_N|cells3|5|_OBSPCT_|402E000000000000
+DEV3_N|cells3|5|_COUNT_|4008000000000000
+DEV3_C|cells3|5|g|A
+DEV3_C|cells3|5|_VAR_|x
+DEV3_N|cells3|6|_MIDPT_|3FD0000000000000
+DEV3_N|cells3|6|_OBSPCT_|4059000000000000
+DEV3_N|cells3|6|_COUNT_|4024000000000000
+DEV3_C|cells3|6|g|B
+DEV3_C|cells3|6|_VAR_|x
+DEV3_N|cells3|7|_MIDPT_|0000000000000000
+DEV3_N|cells3|7|_OBSPCT_|402E000000000000
+DEV3_N|cells3|7|_COUNT_|4008000000000000
+DEV3_C|cells3|7|g|A
+DEV3_C|cells3|7|_VAR_|y
+DEV3_N|cells3|8|_MIDPT_|3FD0000000000000
+DEV3_N|cells3|8|_OBSPCT_|4039000000000000
+DEV3_N|cells3|8|_COUNT_|4014000000000000
+DEV3_C|cells3|8|g|A
+DEV3_C|cells3|8|_VAR_|y
+DEV3_N|cells3|9|_MIDPT_|3FE0000000000000
+DEV3_N|cells3|9|_OBSPCT_|4034000000000000
+DEV3_N|cells3|9|_COUNT_|4010000000000000
+DEV3_C|cells3|9|g|A
+DEV3_C|cells3|9|_VAR_|y
+DEV3_N|cells3|10|_MIDPT_|3FE8000000000000
+DEV3_N|cells3|10|_OBSPCT_|4039000000000000
+DEV3_N|cells3|10|_COUNT_|4014000000000000
+DEV3_C|cells3|10|g|A
+DEV3_C|cells3|10|_VAR_|y
+DEV3_N|cells3|11|_MIDPT_|3FF0000000000000
+DEV3_N|cells3|11|_OBSPCT_|402E000000000000
+DEV3_N|cells3|11|_COUNT_|4008000000000000
+DEV3_C|cells3|11|g|A
+DEV3_C|cells3|11|_VAR_|y
+DEV3_N|cells3|12|_MIDPT_|3FF0000000000000
+DEV3_N|cells3|12|_OBSPCT_|0000000000000000
+DEV3_N|cells3|12|_COUNT_|0000000000000000
+DEV3_C|cells3|12|g|C
+The SAS System
+
+DEV3_C|cells3|12|_VAR_|y
+NOTE: There were 12 observations read from the data set WORK.CELLS3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              672.12k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        22  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+62         proc univariate data=d noprint; class g; histogram x y / noplot maxsigmas=1 outhistogram=cells4; run;
+
+NOTE: The data set WORK.CELLS4 has 12 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              802.93k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        23  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+62       !                                                                                                       %dump(cells4);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.10k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        24  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+The SAS System
+
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              848.45k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        25  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells4|1|g|2|1|||0|0||0|0
+DEV3_META|cells4|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells4|3|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells4|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|cells4|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              622.81k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        26  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     51
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|cells4|1|_MIDPT_|0000000000000000
+DEV3_N|cells4|1|_OBSPCT_|402E000000000000
+DEV3_N|cells4|1|_COUNT_|4008000000000000
+DEV3_C|cells4|1|g|A
+DEV3_C|cells4|1|_VAR_|x
+DEV3_N|cells4|2|_MIDPT_|3FD0000000000000
+DEV3_N|cells4|2|_OBSPCT_|4039000000000000
+DEV3_N|cells4|2|_COUNT_|4014000000000000
+DEV3_C|cells4|2|g|A
+DEV3_C|cells4|2|_VAR_|x
+DEV3_N|cells4|3|_MIDPT_|3FE0000000000000
+DEV3_N|cells4|3|_OBSPCT_|4034000000000000
+The SAS System
+
+DEV3_N|cells4|3|_COUNT_|4010000000000000
+DEV3_C|cells4|3|g|A
+DEV3_C|cells4|3|_VAR_|x
+DEV3_N|cells4|4|_MIDPT_|3FE8000000000000
+DEV3_N|cells4|4|_OBSPCT_|4039000000000000
+DEV3_N|cells4|4|_COUNT_|4014000000000000
+DEV3_C|cells4|4|g|A
+DEV3_C|cells4|4|_VAR_|x
+DEV3_N|cells4|5|_MIDPT_|3FF0000000000000
+DEV3_N|cells4|5|_OBSPCT_|402E000000000000
+DEV3_N|cells4|5|_COUNT_|4008000000000000
+DEV3_C|cells4|5|g|A
+DEV3_C|cells4|5|_VAR_|x
+DEV3_N|cells4|6|_MIDPT_|3FD0000000000000
+DEV3_N|cells4|6|_OBSPCT_|4059000000000000
+DEV3_N|cells4|6|_COUNT_|4024000000000000
+DEV3_C|cells4|6|g|B
+DEV3_C|cells4|6|_VAR_|x
+DEV3_N|cells4|7|_MIDPT_|0000000000000000
+DEV3_N|cells4|7|_OBSPCT_|402E000000000000
+DEV3_N|cells4|7|_COUNT_|4008000000000000
+DEV3_C|cells4|7|g|A
+DEV3_C|cells4|7|_VAR_|y
+DEV3_N|cells4|8|_MIDPT_|3FD0000000000000
+DEV3_N|cells4|8|_OBSPCT_|4039000000000000
+DEV3_N|cells4|8|_COUNT_|4014000000000000
+DEV3_C|cells4|8|g|A
+DEV3_C|cells4|8|_VAR_|y
+DEV3_N|cells4|9|_MIDPT_|3FE0000000000000
+DEV3_N|cells4|9|_OBSPCT_|4034000000000000
+DEV3_N|cells4|9|_COUNT_|4010000000000000
+DEV3_C|cells4|9|g|A
+DEV3_C|cells4|9|_VAR_|y
+DEV3_N|cells4|10|_MIDPT_|3FE8000000000000
+DEV3_N|cells4|10|_OBSPCT_|4039000000000000
+DEV3_N|cells4|10|_COUNT_|4014000000000000
+DEV3_C|cells4|10|g|A
+DEV3_C|cells4|10|_VAR_|y
+DEV3_N|cells4|11|_MIDPT_|3FF0000000000000
+DEV3_N|cells4|11|_OBSPCT_|402E000000000000
+DEV3_N|cells4|11|_COUNT_|4008000000000000
+DEV3_C|cells4|11|g|A
+DEV3_C|cells4|11|_VAR_|y
+DEV3_N|cells4|12|_MIDPT_|3FF0000000000000
+DEV3_N|cells4|12|_OBSPCT_|0000000000000000
+DEV3_N|cells4|12|_COUNT_|0000000000000000
+DEV3_C|cells4|12|g|C
+DEV3_C|cells4|12|_VAR_|y
+NOTE: There were 12 observations read from the data set WORK.CELLS4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              672.12k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        27  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     67
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+63         proc univariate data=d noprint; class g; histogram x y / noplot endpoints=uniform rtinclude outhistogram=cells5; run;
+
+NOTE: The data set WORK.CELLS5 has 11 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              802.03k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        28  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     119
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+63       !                                                                                                                       %dump(cells5);
+
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1056.15k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        29  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     149
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 5 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.28k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+The SAS System
+
+      Step Count                        30  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|cells5|1|g|2|1|||0|0||0|0
+DEV3_META|cells5|2|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|cells5|3|_MAXPT_|1|8|Right endpoint of Histogram Interval||0|0||0|0
+DEV3_META|cells5|4|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|cells5|5|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 5 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              622.81k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        31  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     53
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|cells5|1|_MAXPT_|0000000000000000
+DEV3_N|cells5|1|_OBSPCT_|4014000000000000
+DEV3_N|cells5|1|_COUNT_|3FF0000000000000
+DEV3_C|cells5|1|g|A
+DEV3_C|cells5|1|_VAR_|x
+DEV3_N|cells5|2|_MAXPT_|3FD0000000000000
+DEV3_N|cells5|2|_OBSPCT_|4034000000000000
+DEV3_N|cells5|2|_COUNT_|4010000000000000
+DEV3_C|cells5|2|g|A
+DEV3_C|cells5|2|_VAR_|x
+DEV3_N|cells5|3|_MAXPT_|3FE0000000000000
+DEV3_N|cells5|3|_OBSPCT_|4039000000000000
+DEV3_N|cells5|3|_COUNT_|4014000000000000
+DEV3_C|cells5|3|g|A
+DEV3_C|cells5|3|_VAR_|x
+DEV3_N|cells5|4|_MAXPT_|3FE8000000000000
+DEV3_N|cells5|4|_OBSPCT_|4039000000000000
+DEV3_N|cells5|4|_COUNT_|4014000000000000
+DEV3_C|cells5|4|g|A
+DEV3_C|cells5|4|_VAR_|x
+DEV3_N|cells5|5|_MAXPT_|3FF0000000000000
+DEV3_N|cells5|5|_OBSPCT_|4039000000000000
+DEV3_N|cells5|5|_COUNT_|4014000000000000
+The SAS System
+
+DEV3_C|cells5|5|g|A
+DEV3_C|cells5|5|_VAR_|x
+DEV3_N|cells5|6|_MAXPT_|3FE0000000000000
+DEV3_N|cells5|6|_OBSPCT_|4059000000000000
+DEV3_N|cells5|6|_COUNT_|4024000000000000
+DEV3_C|cells5|6|g|B
+DEV3_C|cells5|6|_VAR_|x
+DEV3_N|cells5|7|_MAXPT_|0000000000000000
+DEV3_N|cells5|7|_OBSPCT_|4014000000000000
+DEV3_N|cells5|7|_COUNT_|3FF0000000000000
+DEV3_C|cells5|7|g|A
+DEV3_C|cells5|7|_VAR_|y
+DEV3_N|cells5|8|_MAXPT_|3FE3333333333333
+DEV3_N|cells5|8|_OBSPCT_|404B800000000000
+DEV3_N|cells5|8|_COUNT_|4026000000000000
+DEV3_C|cells5|8|g|A
+DEV3_C|cells5|8|_VAR_|y
+DEV3_N|cells5|9|_MAXPT_|3FF3333333333333
+DEV3_N|cells5|9|_OBSPCT_|4044000000000000
+DEV3_N|cells5|9|_COUNT_|4020000000000000
+DEV3_C|cells5|9|g|A
+DEV3_C|cells5|9|_VAR_|y
+DEV3_N|cells5|10|_MAXPT_|4003333333333333
+DEV3_N|cells5|10|_OBSPCT_|4044000000000000
+DEV3_N|cells5|10|_COUNT_|4010000000000000
+DEV3_C|cells5|10|g|C
+DEV3_C|cells5|10|_VAR_|y
+DEV3_N|cells5|11|_MAXPT_|4008000000000000
+DEV3_N|cells5|11|_OBSPCT_|404E000000000000
+DEV3_N|cells5|11|_COUNT_|4018000000000000
+DEV3_C|cells5|11|g|C
+DEV3_C|cells5|11|_VAR_|y
+NOTE: There were 11 observations read from the data set WORK.CELLS5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              672.17k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        32  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      1
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+64         data d; do i=0 to 20; x=i/20; output; end; run;
+
+NOTE: The data set WORK.D has 21 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              515.64k
+The SAS System
+
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        33  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     78
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+65         proc univariate data=d noprint; histogram x / noplot nmidpoints=2 outhistogram=counts0; run;
+
+NOTE: The data set WORK.COUNTS0 has 2 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              771.56k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        34  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+65       !                                                                                              %dump(counts0);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1056.40k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        35  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+The SAS System
+
+      system cpu time     0.00 seconds
+      memory              850.48k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        36  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts0|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts0|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts0|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts0|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        37  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts0|1|_MIDPT_|0000000000000000
+DEV3_N|counts0|1|_OBSPCT_|4047CF3CF3CF3CF4
+DEV3_N|counts0|1|_COUNT_|4024000000000000
+DEV3_C|counts0|1|_VAR_|x
+DEV3_N|counts0|2|_MIDPT_|3FF0000000000000
+DEV3_N|counts0|2|_OBSPCT_|404A30C30C30C30C
+DEV3_N|counts0|2|_COUNT_|4026000000000000
+DEV3_C|counts0|2|_VAR_|x
+NOTE: There were 2 observations read from the data set WORK.COUNTS0.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.35k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        38  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+The SAS System
+
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+66         proc univariate data=d noprint; histogram x / noplot nmidpoints=6 outhistogram=counts1; run;
+
+NOTE: The data set WORK.COUNTS1 has 6 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              773.43k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        39  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+66       !                                                                                              %dump(counts1);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              1055.25k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        40  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.21k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        41  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts1|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts1|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts1|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts1|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        42  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts1|1|_MIDPT_|0000000000000000
+DEV3_N|counts1|1|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts1|1|_COUNT_|4000000000000000
+DEV3_C|counts1|1|_VAR_|x
+DEV3_N|counts1|2|_MIDPT_|3FC999999999999A
+DEV3_N|counts1|2|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts1|2|_COUNT_|4010000000000000
+DEV3_C|counts1|2|_VAR_|x
+DEV3_N|counts1|3|_MIDPT_|3FD999999999999A
+DEV3_N|counts1|3|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts1|3|_COUNT_|4010000000000000
+DEV3_C|counts1|3|_VAR_|x
+DEV3_N|counts1|4|_MIDPT_|3FE3333333333334
+DEV3_N|counts1|4|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts1|4|_COUNT_|4010000000000000
+DEV3_C|counts1|4|_VAR_|x
+DEV3_N|counts1|5|_MIDPT_|3FE999999999999A
+DEV3_N|counts1|5|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts1|5|_COUNT_|4010000000000000
+DEV3_C|counts1|5|_VAR_|x
+DEV3_N|counts1|6|_MIDPT_|3FF0000000000000
+DEV3_N|counts1|6|_OBSPCT_|402C924924924924
+DEV3_N|counts1|6|_COUNT_|4007FFFFFFFFFFFF
+DEV3_C|counts1|6|_VAR_|x
+NOTE: There were 6 observations read from the data set WORK.COUNTS1.
+NOTE: DATA statement used (Total process time):
+The SAS System
+
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.23k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        43  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+67         proc univariate data=d noprint; histogram x / noplot nmidpoints=8 outhistogram=counts2; run;
+
+NOTE: The data set WORK.COUNTS2 has 6 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              771.56k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        44  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+67       !                                                                                              %dump(counts2);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1056.40k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        45  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     148
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+The SAS System
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              850.31k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        46  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts2|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts2|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts2|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts2|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        47  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts2|1|_MIDPT_|0000000000000000
+DEV3_N|counts2|1|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts2|1|_COUNT_|4000000000000000
+DEV3_C|counts2|1|_VAR_|x
+DEV3_N|counts2|2|_MIDPT_|3FC999999999999A
+DEV3_N|counts2|2|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts2|2|_COUNT_|4010000000000000
+DEV3_C|counts2|2|_VAR_|x
+DEV3_N|counts2|3|_MIDPT_|3FD999999999999A
+DEV3_N|counts2|3|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts2|3|_COUNT_|4010000000000000
+DEV3_C|counts2|3|_VAR_|x
+DEV3_N|counts2|4|_MIDPT_|3FE3333333333334
+DEV3_N|counts2|4|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts2|4|_COUNT_|4010000000000000
+DEV3_C|counts2|4|_VAR_|x
+The SAS System
+
+DEV3_N|counts2|5|_MIDPT_|3FE999999999999A
+DEV3_N|counts2|5|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts2|5|_COUNT_|4010000000000000
+DEV3_C|counts2|5|_VAR_|x
+DEV3_N|counts2|6|_MIDPT_|3FF0000000000000
+DEV3_N|counts2|6|_OBSPCT_|402C924924924924
+DEV3_N|counts2|6|_COUNT_|4007FFFFFFFFFFFF
+DEV3_C|counts2|6|_VAR_|x
+NOTE: There were 6 observations read from the data set WORK.COUNTS2.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.23k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        48  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+68         proc univariate data=d noprint; histogram x / noplot nmidpoints=20 outhistogram=counts3; run;
+
+NOTE: The data set WORK.COUNTS3 has 11 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              771.56k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        49  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+68       !                                                                                               %dump(counts3);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.10k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        50  Switch Count  2
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.43k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        51  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts3|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts3|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts3|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts3|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        52  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts3|1|_MIDPT_|0000000000000000
+DEV3_N|counts3|1|_OBSPCT_|40130C30C30C30C3
+DEV3_N|counts3|1|_COUNT_|3FF0000000000000
+DEV3_C|counts3|1|_VAR_|x
+DEV3_N|counts3|2|_MIDPT_|3FB999999999999A
+DEV3_N|counts3|2|_OBSPCT_|40230C30C30C30C3
+The SAS System
+
+DEV3_N|counts3|2|_COUNT_|4000000000000000
+DEV3_C|counts3|2|_VAR_|x
+DEV3_N|counts3|3|_MIDPT_|3FC999999999999A
+DEV3_N|counts3|3|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|3|_COUNT_|4000000000000000
+DEV3_C|counts3|3|_VAR_|x
+DEV3_N|counts3|4|_MIDPT_|3FD3333333333334
+DEV3_N|counts3|4|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|4|_COUNT_|4000000000000000
+DEV3_C|counts3|4|_VAR_|x
+DEV3_N|counts3|5|_MIDPT_|3FD999999999999A
+DEV3_N|counts3|5|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|5|_COUNT_|4000000000000000
+DEV3_C|counts3|5|_VAR_|x
+DEV3_N|counts3|6|_MIDPT_|3FE0000000000000
+DEV3_N|counts3|6|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|6|_COUNT_|4000000000000000
+DEV3_C|counts3|6|_VAR_|x
+DEV3_N|counts3|7|_MIDPT_|3FE3333333333333
+DEV3_N|counts3|7|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|7|_COUNT_|4000000000000000
+DEV3_C|counts3|7|_VAR_|x
+DEV3_N|counts3|8|_MIDPT_|3FE6666666666666
+DEV3_N|counts3|8|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|8|_COUNT_|4000000000000000
+DEV3_C|counts3|8|_VAR_|x
+DEV3_N|counts3|9|_MIDPT_|3FE9999999999999
+DEV3_N|counts3|9|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|9|_COUNT_|4000000000000000
+DEV3_C|counts3|9|_VAR_|x
+DEV3_N|counts3|10|_MIDPT_|3FECCCCCCCCCCCCC
+DEV3_N|counts3|10|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|10|_COUNT_|4000000000000000
+DEV3_C|counts3|10|_VAR_|x
+DEV3_N|counts3|11|_MIDPT_|3FEFFFFFFFFFFFFF
+DEV3_N|counts3|11|_OBSPCT_|40230C30C30C30C3
+DEV3_N|counts3|11|_COUNT_|4000000000000000
+DEV3_C|counts3|11|_VAR_|x
+NOTE: There were 11 observations read from the data set WORK.COUNTS3.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.35k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        53  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+69         proc univariate data=d noprint; histogram x / noplot nendpoints=2 rtinclude outhistogram=counts4; run;
+
+The SAS System
+
+NOTE: The data set WORK.COUNTS4 has 2 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              771.56k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        54  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+69       !                                                                                                        %dump(counts4);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.10k
+      OS Memory           14000.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        55  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              849.21k
+      OS Memory           13740.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        56  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+The SAS System
+
+
+DEV3_META|counts4|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts4|2|_MAXPT_|1|8|Right endpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts4|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts4|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              633.06k
+      OS Memory           13480.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        57  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts4|1|_MAXPT_|0000000000000000
+DEV3_N|counts4|1|_OBSPCT_|40130C30C30C30C3
+DEV3_N|counts4|1|_COUNT_|3FF0000000000000
+DEV3_C|counts4|1|_VAR_|x
+DEV3_N|counts4|2|_MAXPT_|3FF0000000000000
+DEV3_N|counts4|2|_OBSPCT_|4057CF3CF3CF3CF4
+DEV3_N|counts4|2|_COUNT_|4034000000000000
+DEV3_C|counts4|2|_VAR_|x
+NOTE: There were 2 observations read from the data set WORK.COUNTS4.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.01 seconds
+      memory              673.35k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        58  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     66
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+70         proc univariate data=d noprint; histogram x / noplot nendpoints=8 outhistogram=counts5; run;
+
+NOTE: The data set WORK.COUNTS5 has 6 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              777.70k
+The SAS System
+
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        59  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     115
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+70       !                                                                                              %dump(counts5);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.10k
+      OS Memory           14256.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        60  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     147
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           280
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.21k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        61  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts5|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts5|2|_MINPT_|1|8|Left endpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts5|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts5|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        62  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts5|1|_MINPT_|0000000000000000
+DEV3_N|counts5|1|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts5|1|_COUNT_|4010000000000000
+DEV3_C|counts5|1|_VAR_|x
+DEV3_N|counts5|2|_MINPT_|3FC999999999999A
+DEV3_N|counts5|2|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts5|2|_COUNT_|4010000000000000
+DEV3_C|counts5|2|_VAR_|x
+DEV3_N|counts5|3|_MINPT_|3FD999999999999A
+DEV3_N|counts5|3|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts5|3|_COUNT_|4010000000000000
+DEV3_C|counts5|3|_VAR_|x
+DEV3_N|counts5|4|_MINPT_|3FE3333333333334
+DEV3_N|counts5|4|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts5|4|_COUNT_|4010000000000000
+DEV3_C|counts5|4|_VAR_|x
+DEV3_N|counts5|5|_MINPT_|3FE999999999999A
+DEV3_N|counts5|5|_OBSPCT_|40330C30C30C30C3
+DEV3_N|counts5|5|_COUNT_|4010000000000000
+DEV3_C|counts5|5|_VAR_|x
+DEV3_N|counts5|6|_MINPT_|3FF0000000000000
+DEV3_N|counts5|6|_OBSPCT_|40130C30C30C30C3
+DEV3_N|counts5|6|_COUNT_|3FF0000000000000
+DEV3_C|counts5|6|_VAR_|x
+NOTE: There were 6 observations read from the data set WORK.COUNTS5.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.35k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        63  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+The SAS System
+
+      
+
+71         proc univariate data=d noprint; histogram x / noplot endpoints rtinclude outhistogram=counts6; run;
+
+NOTE: The data set WORK.COUNTS6 has 5 observations and 4 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              777.70k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        64  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     114
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+71       !                                                                                                     %dump(counts6);
+
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE CONTENTS used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1055.10k
+      OS Memory           14256.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        65  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     148
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           272
+      
+
+
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: The data set WORK.META has 4 observations and 41 variables.
+NOTE: PROCEDURE SORT used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              849.48k
+      OS Memory           13996.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        66  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     111
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+The SAS System
+
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+
+DEV3_META|counts6|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|counts6|2|_MAXPT_|1|8|Right endpoint of Histogram Interval||0|0||0|0
+DEV3_META|counts6|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|counts6|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+NOTE: There were 4 observations read from the data set WORK.META.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              624.92k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        67  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+
+DEV3_N|counts6|1|_MAXPT_|0000000000000000
+DEV3_N|counts6|1|_OBSPCT_|40130C30C30C30C3
+DEV3_N|counts6|1|_COUNT_|3FF0000000000000
+DEV3_C|counts6|1|_VAR_|x
+DEV3_N|counts6|2|_MAXPT_|3FD0000000000000
+DEV3_N|counts6|2|_OBSPCT_|4037CF3CF3CF3CF4
+DEV3_N|counts6|2|_COUNT_|4014000000000000
+DEV3_C|counts6|2|_VAR_|x
+DEV3_N|counts6|3|_MAXPT_|3FE0000000000000
+DEV3_N|counts6|3|_OBSPCT_|4037CF3CF3CF3CF4
+DEV3_N|counts6|3|_COUNT_|4014000000000000
+DEV3_C|counts6|3|_VAR_|x
+DEV3_N|counts6|4|_MAXPT_|3FE8000000000000
+DEV3_N|counts6|4|_OBSPCT_|4037CF3CF3CF3CF4
+DEV3_N|counts6|4|_COUNT_|4014000000000000
+DEV3_C|counts6|4|_VAR_|x
+DEV3_N|counts6|5|_MAXPT_|3FF0000000000000
+DEV3_N|counts6|5|_OBSPCT_|4037CF3CF3CF3CF4
+DEV3_N|counts6|5|_COUNT_|4014000000000000
+DEV3_C|counts6|5|_VAR_|x
+NOTE: There were 5 observations read from the data set WORK.COUNTS6.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              673.50k
+      OS Memory           13736.00k
+      Timestamp           11/13/2026 02:40:15 PM
+      Step Count                        68  Switch Count  0
+      Page Faults                       0
+The SAS System
+
+      Page Reclaims                     48
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           8
+      
+
+72         
+73         
+74         
+75         
+The SAS System
+
+76         

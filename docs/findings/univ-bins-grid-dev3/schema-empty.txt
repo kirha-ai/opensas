@@ -1,0 +1,40 @@
+DEV3_SHAPE|kfmt|8|309
+DEV3_META|kfmt|1|g|1|4|By label|Z|3|0|COMMA|4|0
+DEV3_META|kfmt|2|c|2|5|Class label|$|5|0||0|0
+DEV3_META|kfmt|3|_VAR_|2|17|Variable Name||0|0||0|0
+DEV3_META|kfmt|4|_TYPE_|2|16|Kernel Function Type||0|0||0|0
+DEV3_META|kfmt|5|_C_|1|8|Standardized Bandwidth Parameter||0|0||0|0
+DEV3_META|kfmt|6|_VALUE_|1|8|Data Value||0|0||0|0
+DEV3_META|kfmt|7|_PERCENT_|1|8|Percent of Observations Per Data Unit||0|0||0|0
+DEV3_META|kfmt|8|_DENSITY_|1|8|Density||0|0||0|0
+DEV3_SHAPE|hfmt|6|4
+DEV3_META|hfmt|1|g|1|4|By label|Z|3|0|COMMA|4|0
+DEV3_META|hfmt|2|c|2|5|Class label|$|5|0||0|0
+DEV3_META|hfmt|3|_VAR_|2|17|Variable Name||0|0||0|0
+DEV3_META|hfmt|4|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|hfmt|5|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|hfmt|6|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+DEV3_SHAPE|kmiss|6|0
+DEV3_META|kmiss|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|kmiss|2|_TYPE_|2|16|Kernel Function Type||0|0||0|0
+DEV3_META|kmiss|3|_C_|1|8|Standardized Bandwidth Parameter||0|0||0|0
+DEV3_META|kmiss|4|_VALUE_|1|8|Data Value||0|0||0|0
+DEV3_META|kmiss|5|_PERCENT_|1|8|Percent of Observations Per Data Unit||0|0||0|0
+DEV3_META|kmiss|6|_DENSITY_|1|8|Density||0|0||0|0
+DEV3_SHAPE|hmiss|4|0
+DEV3_META|hmiss|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|hmiss|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|hmiss|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|hmiss|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0
+DEV3_SHAPE|kempty|6|0
+DEV3_META|kempty|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|kempty|2|_TYPE_|2|16|Kernel Function Type||0|0||0|0
+DEV3_META|kempty|3|_C_|1|8|Standardized Bandwidth Parameter||0|0||0|0
+DEV3_META|kempty|4|_VALUE_|1|8|Data Value||0|0||0|0
+DEV3_META|kempty|5|_PERCENT_|1|8|Percent of Observations Per Data Unit||0|0||0|0
+DEV3_META|kempty|6|_DENSITY_|1|8|Density||0|0||0|0
+DEV3_SHAPE|hempty|4|0
+DEV3_META|hempty|1|_VAR_|2|8|Variable Name||0|0||0|0
+DEV3_META|hempty|2|_MIDPT_|1|8|Midpoint of Histogram Interval||0|0||0|0
+DEV3_META|hempty|3|_OBSPCT_|1|8|Percent of Observations in Interval||0|0||0|0
+DEV3_META|hempty|4|_COUNT_|1|8|Observation Count in Interval||0|0||0|0

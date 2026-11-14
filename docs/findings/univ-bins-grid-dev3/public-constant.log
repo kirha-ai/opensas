@@ -1,0 +1,156 @@
+The SAS System
+
+36         
+37         options nonumber nodate;
+38         data d;
+39         input g x @@;
+40         datalines;
+
+NOTE: SAS went to a new line when INPUT statement reached past the end of a line.
+NOTE: The data set WORK.D has 10 observations and 2 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              523.43k
+      OS Memory           11432.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        2  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     116
+      Page Swaps                        0
+      Voluntary Context Switches        9
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+42         ;
+43         run;
+44         proc univariate data=d noprint;
+45         by g;
+46         histogram x / noplot outhistogram=h;
+47         histogram x / noplot endpoints outhistogram=e;
+48         histogram x / noplot endpoints rtinclude outhistogram=r;
+49         run;
+
+NOTE: The data set WORK.H has 5 observations and 5 variables.
+NOTE: The data set WORK.E has 5 observations and 5 variables.
+NOTE: The data set WORK.R has 5 observations and 5 variables.
+NOTE: PROCEDURE UNIVARIATE used (Total process time):
+      real time           0.01 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              3298.76k
+      OS Memory           14004.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        3  Switch Count  6
+      Page Faults                       0
+      Page Reclaims                     818
+      Page Swaps                        0
+      Voluntary Context Switches        27
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           792
+      
+
+50         data a; set h; kind='MID'; point=_midpt_; keep g kind point _obspct_ _count_; run;
+
+NOTE: There were 5 observations read from the data set WORK.H.
+NOTE: The data set WORK.A has 5 observations and 5 variables.
+The SAS System
+
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.01 seconds
+      system cpu time     0.00 seconds
+      memory              799.34k
+      OS Memory           13740.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        4  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     121
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+51         data b; set e; kind='END'; point=_minpt_; keep g kind point _obspct_ _count_; run;
+
+NOTE: There were 5 observations read from the data set WORK.E.
+NOTE: The data set WORK.B has 5 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              799.39k
+      OS Memory           13740.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        5  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+
+52         data c; set r; kind='RGT'; point=_maxpt_; keep g kind point _obspct_ _count_; run;
+
+NOTE: There were 5 observations read from the data set WORK.R.
+NOTE: The data set WORK.C has 5 observations and 5 variables.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              798.73k
+      OS Memory           13740.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        6  Switch Count  2
+      Page Faults                       0
+      Page Reclaims                     112
+      Page Swaps                        0
+      Voluntary Context Switches        8
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           264
+      
+The SAS System
+
+
+53         data _null_; set a b c; file print;
+54         put kind $3. ' ' g 1. ' ' point 12.5 ' ' _obspct_ 8.2 ' ' _count_ 4.;
+55         run;
+
+NOTE: 15 lines were written to file PRINT.
+NOTE: There were 5 observations read from the data set WORK.A.
+NOTE: There were 5 observations read from the data set WORK.B.
+NOTE: There were 5 observations read from the data set WORK.C.
+NOTE: The DATA step printed page 1.
+NOTE: DATA statement used (Total process time):
+      real time           0.00 seconds
+      user cpu time       0.00 seconds
+      system cpu time     0.00 seconds
+      memory              1317.03k
+      OS Memory           14256.00k
+      Timestamp           11/14/2026 02:46:21 AM
+      Step Count                        7  Switch Count  0
+      Page Faults                       0
+      Page Reclaims                     163
+      Page Swaps                        0
+      Voluntary Context Switches        0
+      Involuntary Context Switches      0
+      Block Input Operations            0
+      Block Output Operations           0
+      
+
+56         
+57         
+58         
+59         
+The SAS System
+
+60         

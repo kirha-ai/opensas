@@ -1,0 +1,1421 @@
+DEV3_META|shared0|           1|g                               |           2|           4|
+DEV3_META|shared0|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared0|           3|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|shared0|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared0|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared0|           1|_MIDPT_                         |4000000000000000
+DEV3_N|shared0|           1|_OBSPCT_                        |4042C00000000000
+DEV3_N|shared0|           1|_COUNT_                         |4008000000000000
+DEV3_C|shared0|           1|g                               |
+A
+DEV3_C|shared0|           1|_VAR_                           |
+x
+DEV3_N|shared0|           2|_MIDPT_                         |4018000000000000
+DEV3_N|shared0|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|shared0|           2|_COUNT_                         |4000000000000000
+DEV3_C|shared0|           2|g                               |
+A
+DEV3_C|shared0|           2|_VAR_                           |
+x
+DEV3_N|shared0|           3|_MIDPT_                         |4024000000000000
+DEV3_N|shared0|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|shared0|           3|_COUNT_                         |4000000000000000
+DEV3_C|shared0|           3|g                               |
+A
+DEV3_C|shared0|           3|_VAR_                           |
+x
+DEV3_N|shared0|           4|_MIDPT_                         |402C000000000000
+DEV3_N|shared0|           4|_OBSPCT_                        |4029000000000000
+DEV3_N|shared0|           4|_COUNT_                         |3FF0000000000000
+DEV3_C|shared0|           4|g                               |
+A
+DEV3_C|shared0|           4|_VAR_                           |
+x
+DEV3_N|shared0|           5|_MIDPT_                         |4036000000000000
+DEV3_N|shared0|           5|_OBSPCT_                        |4059000000000000
+DEV3_N|shared0|           5|_COUNT_                         |4059000000000000
+DEV3_C|shared0|           5|g                               |
+B
+DEV3_C|shared0|           5|_VAR_                           |
+x
+DEV3_META|shared1|           1|g                               |           2|           4|
+DEV3_META|shared1|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared1|           3|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|shared1|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared1|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared1|           1|_MIDPT_                         |0000000000000000
+DEV3_N|shared1|           1|_OBSPCT_                        |4029000000000000
+DEV3_N|shared1|           1|_COUNT_                         |3FF0000000000000
+DEV3_C|shared1|           1|g                               |
+A
+DEV3_C|shared1|           1|_VAR_                           |
+x
+DEV3_N|shared1|           2|_MIDPT_                         |4008000000000000
+DEV3_N|shared1|           2|_OBSPCT_                        |4042C00000000000
+DEV3_N|shared1|           2|_COUNT_                         |4008000000000000
+DEV3_C|shared1|           2|g                               |
+A
+DEV3_C|shared1|           2|_VAR_                           |
+x
+DEV3_N|shared1|           3|_MIDPT_                         |4018000000000000
+DEV3_N|shared1|           3|_OBSPCT_                        |4029000000000000
+DEV3_N|shared1|           3|_COUNT_                         |3FF0000000000000
+DEV3_C|shared1|           3|g                               |
+A
+DEV3_C|shared1|           3|_VAR_                           |
+x
+DEV3_N|shared1|           4|_MIDPT_                         |4022000000000000
+DEV3_N|shared1|           4|_OBSPCT_                        |4039000000000000
+DEV3_N|shared1|           4|_COUNT_                         |4000000000000000
+DEV3_C|shared1|           4|g                               |
+A
+DEV3_C|shared1|           4|_VAR_                           |
+x
+DEV3_N|shared1|           5|_MIDPT_                         |4028000000000000
+DEV3_N|shared1|           5|_OBSPCT_                        |0000000000000000
+DEV3_N|shared1|           5|_COUNT_                         |0000000000000000
+DEV3_C|shared1|           5|g                               |
+A
+DEV3_C|shared1|           5|_VAR_                           |
+x
+DEV3_N|shared1|           6|_MIDPT_                         |402E000000000000
+DEV3_N|shared1|           6|_OBSPCT_                        |4029000000000000
+DEV3_N|shared1|           6|_COUNT_                         |3FF0000000000000
+DEV3_C|shared1|           6|g                               |
+A
+DEV3_C|shared1|           6|_VAR_                           |
+x
+DEV3_N|shared1|           7|_MIDPT_                         |4035000000000000
+DEV3_N|shared1|           7|_OBSPCT_                        |4059000000000000
+DEV3_N|shared1|           7|_COUNT_                         |4059000000000000
+DEV3_C|shared1|           7|g                               |
+B
+DEV3_C|shared1|           7|_VAR_                           |
+x
+DEV3_META|shared2|           1|g                               |           2|           4|
+DEV3_META|shared2|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared2|           3|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|shared2|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared2|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared2|           1|_MINPT_                         |0000000000000000
+DEV3_N|shared2|           1|_OBSPCT_                        |4042C00000000000
+DEV3_N|shared2|           1|_COUNT_                         |4008000000000000
+DEV3_C|shared2|           1|g                               |
+A
+DEV3_C|shared2|           1|_VAR_                           |
+x
+DEV3_N|shared2|           2|_MINPT_                         |4010000000000000
+DEV3_N|shared2|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|shared2|           2|_COUNT_                         |4000000000000000
+DEV3_C|shared2|           2|g                               |
+A
+DEV3_C|shared2|           2|_VAR_                           |
+x
+DEV3_N|shared2|           3|_MINPT_                         |4020000000000000
+DEV3_N|shared2|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|shared2|           3|_COUNT_                         |4000000000000000
+DEV3_C|shared2|           3|g                               |
+A
+DEV3_C|shared2|           3|_VAR_                           |
+x
+DEV3_N|shared2|           4|_MINPT_                         |4028000000000000
+DEV3_N|shared2|           4|_OBSPCT_                        |4029000000000000
+DEV3_N|shared2|           4|_COUNT_                         |3FF0000000000000
+DEV3_C|shared2|           4|g                               |
+A
+DEV3_C|shared2|           4|_VAR_                           |
+x
+DEV3_N|shared2|           5|_MINPT_                         |4034000000000000
+DEV3_N|shared2|           5|_OBSPCT_                        |4059000000000000
+DEV3_N|shared2|           5|_COUNT_                         |4059000000000000
+DEV3_C|shared2|           5|g                               |
+B
+DEV3_C|shared2|           5|_VAR_                           |
+x
+DEV3_META|shared3|           1|g                               |           2|           4|
+DEV3_META|shared3|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared3|           3|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|shared3|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared3|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared3|           1|_MINPT_                         |0000000000000000
+DEV3_N|shared3|           1|_OBSPCT_                        |4039000000000000
+DEV3_N|shared3|           1|_COUNT_                         |4000000000000000
+DEV3_C|shared3|           1|g                               |
+A
+DEV3_C|shared3|           1|_VAR_                           |
+x
+DEV3_N|shared3|           2|_MINPT_                         |4008000000000000
+DEV3_N|shared3|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|shared3|           2|_COUNT_                         |4000000000000000
+DEV3_C|shared3|           2|g                               |
+A
+DEV3_C|shared3|           2|_VAR_                           |
+x
+DEV3_N|shared3|           3|_MINPT_                         |4018000000000000
+DEV3_N|shared3|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|shared3|           3|_COUNT_                         |4000000000000000
+DEV3_C|shared3|           3|g                               |
+A
+DEV3_C|shared3|           3|_VAR_                           |
+x
+DEV3_N|shared3|           4|_MINPT_                         |4022000000000000
+DEV3_N|shared3|           4|_OBSPCT_                        |4029000000000000
+DEV3_N|shared3|           4|_COUNT_                         |3FF0000000000000
+DEV3_C|shared3|           4|g                               |
+A
+DEV3_C|shared3|           4|_VAR_                           |
+x
+DEV3_N|shared3|           5|_MINPT_                         |4028000000000000
+DEV3_N|shared3|           5|_OBSPCT_                        |0000000000000000
+DEV3_N|shared3|           5|_COUNT_                         |0000000000000000
+DEV3_C|shared3|           5|g                               |
+A
+DEV3_C|shared3|           5|_VAR_                           |
+x
+DEV3_N|shared3|           6|_MINPT_                         |402E000000000000
+DEV3_N|shared3|           6|_OBSPCT_                        |4029000000000000
+DEV3_N|shared3|           6|_COUNT_                         |3FF0000000000000
+DEV3_C|shared3|           6|g                               |
+A
+DEV3_C|shared3|           6|_VAR_                           |
+x
+DEV3_N|shared3|           7|_MINPT_                         |4032000000000000
+DEV3_N|shared3|           7|_OBSPCT_                        |4058C00000000000
+DEV3_N|shared3|           7|_COUNT_                         |4058C00000000000
+DEV3_C|shared3|           7|g                               |
+B
+DEV3_C|shared3|           7|_VAR_                           |
+x
+DEV3_N|shared3|           8|_MINPT_                         |4035000000000000
+DEV3_N|shared3|           8|_OBSPCT_                        |3FF0000000000000
+DEV3_N|shared3|           8|_COUNT_                         |3FF0000000000000
+DEV3_C|shared3|           8|g                               |
+B
+DEV3_C|shared3|           8|_VAR_                           |
+x
+DEV3_META|shared4|           1|g                               |           2|           4|
+DEV3_META|shared4|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared4|           3|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|shared4|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared4|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared4|           1|_MIDPT_                         |4033F33333333332
+DEV3_N|shared4|           1|_OBSPCT_                        |4008000000000000
+DEV3_N|shared4|           1|_COUNT_                         |4008000000000000
+DEV3_C|shared4|           1|g                               |
+B
+DEV3_C|shared4|           1|_VAR_                           |
+x
+DEV3_N|shared4|           2|_MIDPT_                         |4034199999999998
+DEV3_N|shared4|           2|_OBSPCT_                        |402E000000000000
+DEV3_N|shared4|           2|_COUNT_                         |402E000000000000
+DEV3_C|shared4|           2|g                               |
+B
+DEV3_C|shared4|           2|_VAR_                           |
+x
+DEV3_N|shared4|           3|_MIDPT_                         |40343FFFFFFFFFFE
+DEV3_N|shared4|           3|_OBSPCT_                        |402E000000000000
+DEV3_N|shared4|           3|_COUNT_                         |402E000000000000
+DEV3_C|shared4|           3|g                               |
+B
+DEV3_C|shared4|           3|_VAR_                           |
+x
+DEV3_N|shared4|           4|_MIDPT_                         |4034666666666664
+DEV3_N|shared4|           4|_OBSPCT_                        |402E000000000000
+DEV3_N|shared4|           4|_COUNT_                         |402E000000000000
+DEV3_C|shared4|           4|g                               |
+B
+DEV3_C|shared4|           4|_VAR_                           |
+x
+DEV3_N|shared4|           5|_MIDPT_                         |40348CCCCCCCCCCA
+DEV3_N|shared4|           5|_OBSPCT_                        |402C000000000000
+DEV3_N|shared4|           5|_COUNT_                         |402C000000000000
+DEV3_C|shared4|           5|g                               |
+B
+DEV3_C|shared4|           5|_VAR_                           |
+x
+DEV3_N|shared4|           6|_MIDPT_                         |4034B33333333330
+DEV3_N|shared4|           6|_OBSPCT_                        |402E000000000000
+DEV3_N|shared4|           6|_COUNT_                         |402E000000000000
+DEV3_C|shared4|           6|g                               |
+B
+DEV3_C|shared4|           6|_VAR_                           |
+x
+DEV3_N|shared4|           7|_MIDPT_                         |4034D99999999996
+DEV3_N|shared4|           7|_OBSPCT_                        |402E000000000000
+DEV3_N|shared4|           7|_COUNT_                         |402E000000000000
+DEV3_C|shared4|           7|g                               |
+B
+DEV3_C|shared4|           7|_VAR_                           |
+x
+DEV3_N|shared4|           8|_MIDPT_                         |4034FFFFFFFFFFFC
+DEV3_N|shared4|           8|_OBSPCT_                        |4020000000000000
+DEV3_N|shared4|           8|_COUNT_                         |4020000000000000
+DEV3_C|shared4|           8|g                               |
+B
+DEV3_C|shared4|           8|_VAR_                           |
+x
+DEV3_N|shared4|           9|_MIDPT_                         |3FF0CCCCCCCCCCCC
+DEV3_N|shared4|           9|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|           9|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|           9|g                               |
+A
+DEV3_C|shared4|           9|_VAR_                           |
+x
+DEV3_N|shared4|          10|_MIDPT_                         |3FF3333333333332
+DEV3_N|shared4|          10|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          10|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          10|g                               |
+A
+DEV3_C|shared4|          10|_VAR_                           |
+x
+DEV3_N|shared4|          11|_MIDPT_                         |3FF5999999999998
+DEV3_N|shared4|          11|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          11|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          11|g                               |
+A
+DEV3_C|shared4|          11|_VAR_                           |
+x
+DEV3_N|shared4|          12|_MIDPT_                         |3FF7FFFFFFFFFFFE
+DEV3_N|shared4|          12|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          12|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          12|g                               |
+A
+DEV3_C|shared4|          12|_VAR_                           |
+x
+DEV3_N|shared4|          13|_MIDPT_                         |3FFA666666666664
+DEV3_N|shared4|          13|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          13|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          13|g                               |
+A
+DEV3_C|shared4|          13|_VAR_                           |
+x
+DEV3_N|shared4|          14|_MIDPT_                         |3FFCCCCCCCCCCCCA
+DEV3_N|shared4|          14|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          14|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          14|g                               |
+A
+DEV3_C|shared4|          14|_VAR_                           |
+x
+DEV3_N|shared4|          15|_MIDPT_                         |3FFF333333333330
+DEV3_N|shared4|          15|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          15|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          15|g                               |
+A
+DEV3_C|shared4|          15|_VAR_                           |
+x
+DEV3_N|shared4|          16|_MIDPT_                         |4000CCCCCCCCCCCB
+DEV3_N|shared4|          16|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          16|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          16|g                               |
+A
+DEV3_C|shared4|          16|_VAR_                           |
+x
+DEV3_N|shared4|          17|_MIDPT_                         |4001FFFFFFFFFFFE
+DEV3_N|shared4|          17|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          17|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          17|g                               |
+A
+DEV3_C|shared4|          17|_VAR_                           |
+x
+DEV3_N|shared4|          18|_MIDPT_                         |4003333333333331
+DEV3_N|shared4|          18|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          18|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          18|g                               |
+A
+DEV3_C|shared4|          18|_VAR_                           |
+x
+DEV3_N|shared4|          19|_MIDPT_                         |4004666666666664
+DEV3_N|shared4|          19|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          19|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          19|g                               |
+A
+DEV3_C|shared4|          19|_VAR_                           |
+x
+DEV3_N|shared4|          20|_MIDPT_                         |4005999999999997
+DEV3_N|shared4|          20|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          20|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          20|g                               |
+A
+DEV3_C|shared4|          20|_VAR_                           |
+x
+DEV3_N|shared4|          21|_MIDPT_                         |4006CCCCCCCCCCCA
+DEV3_N|shared4|          21|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          21|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          21|g                               |
+A
+DEV3_C|shared4|          21|_VAR_                           |
+x
+DEV3_N|shared4|          22|_MIDPT_                         |4007FFFFFFFFFFFD
+DEV3_N|shared4|          22|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          22|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          22|g                               |
+A
+DEV3_C|shared4|          22|_VAR_                           |
+x
+DEV3_N|shared4|          23|_MIDPT_                         |4009333333333330
+DEV3_N|shared4|          23|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          23|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          23|g                               |
+A
+DEV3_C|shared4|          23|_VAR_                           |
+x
+DEV3_N|shared4|          24|_MIDPT_                         |400A666666666663
+DEV3_N|shared4|          24|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          24|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          24|g                               |
+A
+DEV3_C|shared4|          24|_VAR_                           |
+x
+DEV3_N|shared4|          25|_MIDPT_                         |400B999999999996
+DEV3_N|shared4|          25|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          25|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          25|g                               |
+A
+DEV3_C|shared4|          25|_VAR_                           |
+x
+DEV3_N|shared4|          26|_MIDPT_                         |400CCCCCCCCCCCC9
+DEV3_N|shared4|          26|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          26|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          26|g                               |
+A
+DEV3_C|shared4|          26|_VAR_                           |
+x
+DEV3_N|shared4|          27|_MIDPT_                         |400DFFFFFFFFFFFC
+DEV3_N|shared4|          27|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          27|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          27|g                               |
+A
+DEV3_C|shared4|          27|_VAR_                           |
+x
+DEV3_N|shared4|          28|_MIDPT_                         |400F33333333332F
+DEV3_N|shared4|          28|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          28|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          28|g                               |
+A
+DEV3_C|shared4|          28|_VAR_                           |
+x
+DEV3_N|shared4|          29|_MIDPT_                         |4010333333333331
+DEV3_N|shared4|          29|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          29|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          29|g                               |
+A
+DEV3_C|shared4|          29|_VAR_                           |
+x
+DEV3_N|shared4|          30|_MIDPT_                         |4010CCCCCCCCCCCB
+DEV3_N|shared4|          30|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          30|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          30|g                               |
+A
+DEV3_C|shared4|          30|_VAR_                           |
+x
+DEV3_N|shared4|          31|_MIDPT_                         |4011666666666665
+DEV3_N|shared4|          31|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          31|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          31|g                               |
+A
+DEV3_C|shared4|          31|_VAR_                           |
+x
+DEV3_N|shared4|          32|_MIDPT_                         |4011FFFFFFFFFFFF
+DEV3_N|shared4|          32|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          32|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          32|g                               |
+A
+DEV3_C|shared4|          32|_VAR_                           |
+x
+DEV3_N|shared4|          33|_MIDPT_                         |4012999999999999
+DEV3_N|shared4|          33|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          33|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          33|g                               |
+A
+DEV3_C|shared4|          33|_VAR_                           |
+x
+DEV3_N|shared4|          34|_MIDPT_                         |4013333333333333
+DEV3_N|shared4|          34|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          34|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          34|g                               |
+A
+DEV3_C|shared4|          34|_VAR_                           |
+x
+DEV3_N|shared4|          35|_MIDPT_                         |4013CCCCCCCCCCCD
+DEV3_N|shared4|          35|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          35|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          35|g                               |
+A
+DEV3_C|shared4|          35|_VAR_                           |
+x
+DEV3_N|shared4|          36|_MIDPT_                         |4014666666666667
+DEV3_N|shared4|          36|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          36|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          36|g                               |
+A
+DEV3_C|shared4|          36|_VAR_                           |
+x
+DEV3_N|shared4|          37|_MIDPT_                         |4015000000000001
+DEV3_N|shared4|          37|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          37|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          37|g                               |
+A
+DEV3_C|shared4|          37|_VAR_                           |
+x
+DEV3_N|shared4|          38|_MIDPT_                         |401599999999999B
+DEV3_N|shared4|          38|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          38|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          38|g                               |
+A
+DEV3_C|shared4|          38|_VAR_                           |
+x
+DEV3_N|shared4|          39|_MIDPT_                         |4016333333333335
+DEV3_N|shared4|          39|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          39|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          39|g                               |
+A
+DEV3_C|shared4|          39|_VAR_                           |
+x
+DEV3_N|shared4|          40|_MIDPT_                         |4016CCCCCCCCCCCF
+DEV3_N|shared4|          40|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          40|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          40|g                               |
+A
+DEV3_C|shared4|          40|_VAR_                           |
+x
+DEV3_N|shared4|          41|_MIDPT_                         |4017666666666669
+DEV3_N|shared4|          41|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          41|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          41|g                               |
+A
+DEV3_C|shared4|          41|_VAR_                           |
+x
+DEV3_N|shared4|          42|_MIDPT_                         |4018000000000003
+DEV3_N|shared4|          42|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          42|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          42|g                               |
+A
+DEV3_C|shared4|          42|_VAR_                           |
+x
+DEV3_N|shared4|          43|_MIDPT_                         |401899999999999D
+DEV3_N|shared4|          43|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          43|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          43|g                               |
+A
+DEV3_C|shared4|          43|_VAR_                           |
+x
+DEV3_N|shared4|          44|_MIDPT_                         |4019333333333337
+DEV3_N|shared4|          44|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          44|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          44|g                               |
+A
+DEV3_C|shared4|          44|_VAR_                           |
+x
+DEV3_N|shared4|          45|_MIDPT_                         |4019CCCCCCCCCCD1
+DEV3_N|shared4|          45|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          45|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          45|g                               |
+A
+DEV3_C|shared4|          45|_VAR_                           |
+x
+DEV3_N|shared4|          46|_MIDPT_                         |401A66666666666B
+DEV3_N|shared4|          46|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          46|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          46|g                               |
+A
+DEV3_C|shared4|          46|_VAR_                           |
+x
+DEV3_N|shared4|          47|_MIDPT_                         |401B000000000005
+DEV3_N|shared4|          47|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          47|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          47|g                               |
+A
+DEV3_C|shared4|          47|_VAR_                           |
+x
+DEV3_N|shared4|          48|_MIDPT_                         |401B99999999999F
+DEV3_N|shared4|          48|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          48|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          48|g                               |
+A
+DEV3_C|shared4|          48|_VAR_                           |
+x
+DEV3_N|shared4|          49|_MIDPT_                         |401C333333333339
+DEV3_N|shared4|          49|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          49|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          49|g                               |
+A
+DEV3_C|shared4|          49|_VAR_                           |
+x
+DEV3_N|shared4|          50|_MIDPT_                         |401CCCCCCCCCCCD3
+DEV3_N|shared4|          50|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          50|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          50|g                               |
+A
+DEV3_C|shared4|          50|_VAR_                           |
+x
+DEV3_N|shared4|          51|_MIDPT_                         |401D66666666666D
+DEV3_N|shared4|          51|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          51|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          51|g                               |
+A
+DEV3_C|shared4|          51|_VAR_                           |
+x
+DEV3_N|shared4|          52|_MIDPT_                         |401E000000000007
+DEV3_N|shared4|          52|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          52|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          52|g                               |
+A
+DEV3_C|shared4|          52|_VAR_                           |
+x
+DEV3_N|shared4|          53|_MIDPT_                         |401E9999999999A1
+DEV3_N|shared4|          53|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          53|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          53|g                               |
+A
+DEV3_C|shared4|          53|_VAR_                           |
+x
+DEV3_N|shared4|          54|_MIDPT_                         |401F33333333333B
+DEV3_N|shared4|          54|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          54|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          54|g                               |
+A
+DEV3_C|shared4|          54|_VAR_                           |
+x
+DEV3_N|shared4|          55|_MIDPT_                         |401FCCCCCCCCCCD5
+DEV3_N|shared4|          55|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          55|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          55|g                               |
+A
+DEV3_C|shared4|          55|_VAR_                           |
+x
+DEV3_N|shared4|          56|_MIDPT_                         |4020333333333337
+DEV3_N|shared4|          56|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          56|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          56|g                               |
+A
+DEV3_C|shared4|          56|_VAR_                           |
+x
+DEV3_N|shared4|          57|_MIDPT_                         |4020800000000004
+DEV3_N|shared4|          57|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          57|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          57|g                               |
+A
+DEV3_C|shared4|          57|_VAR_                           |
+x
+DEV3_N|shared4|          58|_MIDPT_                         |4020CCCCCCCCCCD1
+DEV3_N|shared4|          58|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          58|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          58|g                               |
+A
+DEV3_C|shared4|          58|_VAR_                           |
+x
+DEV3_N|shared4|          59|_MIDPT_                         |402119999999999E
+DEV3_N|shared4|          59|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          59|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          59|g                               |
+A
+DEV3_C|shared4|          59|_VAR_                           |
+x
+DEV3_N|shared4|          60|_MIDPT_                         |402166666666666B
+DEV3_N|shared4|          60|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          60|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          60|g                               |
+A
+DEV3_C|shared4|          60|_VAR_                           |
+x
+DEV3_N|shared4|          61|_MIDPT_                         |4021B33333333338
+DEV3_N|shared4|          61|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          61|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          61|g                               |
+A
+DEV3_C|shared4|          61|_VAR_                           |
+x
+DEV3_N|shared4|          62|_MIDPT_                         |4022000000000005
+DEV3_N|shared4|          62|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          62|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          62|g                               |
+A
+DEV3_C|shared4|          62|_VAR_                           |
+x
+DEV3_N|shared4|          63|_MIDPT_                         |40224CCCCCCCCCD2
+DEV3_N|shared4|          63|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          63|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          63|g                               |
+A
+DEV3_C|shared4|          63|_VAR_                           |
+x
+DEV3_N|shared4|          64|_MIDPT_                         |402299999999999F
+DEV3_N|shared4|          64|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          64|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          64|g                               |
+A
+DEV3_C|shared4|          64|_VAR_                           |
+x
+DEV3_N|shared4|          65|_MIDPT_                         |4022E6666666666C
+DEV3_N|shared4|          65|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          65|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          65|g                               |
+A
+DEV3_C|shared4|          65|_VAR_                           |
+x
+DEV3_N|shared4|          66|_MIDPT_                         |4023333333333339
+DEV3_N|shared4|          66|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          66|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          66|g                               |
+A
+DEV3_C|shared4|          66|_VAR_                           |
+x
+DEV3_N|shared4|          67|_MIDPT_                         |4023800000000006
+DEV3_N|shared4|          67|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          67|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          67|g                               |
+A
+DEV3_C|shared4|          67|_VAR_                           |
+x
+DEV3_N|shared4|          68|_MIDPT_                         |4023CCCCCCCCCCD3
+DEV3_N|shared4|          68|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          68|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          68|g                               |
+A
+DEV3_C|shared4|          68|_VAR_                           |
+x
+DEV3_N|shared4|          69|_MIDPT_                         |40241999999999A0
+DEV3_N|shared4|          69|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|          69|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|          69|g                               |
+A
+DEV3_C|shared4|          69|_VAR_                           |
+x
+DEV3_N|shared4|          70|_MIDPT_                         |402466666666666D
+DEV3_N|shared4|          70|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          70|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          70|g                               |
+A
+DEV3_C|shared4|          70|_VAR_                           |
+x
+DEV3_N|shared4|          71|_MIDPT_                         |4024B3333333333A
+DEV3_N|shared4|          71|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          71|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          71|g                               |
+A
+DEV3_C|shared4|          71|_VAR_                           |
+x
+DEV3_N|shared4|          72|_MIDPT_                         |4025000000000007
+DEV3_N|shared4|          72|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          72|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          72|g                               |
+A
+DEV3_C|shared4|          72|_VAR_                           |
+x
+DEV3_N|shared4|          73|_MIDPT_                         |40254CCCCCCCCCD4
+DEV3_N|shared4|          73|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          73|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          73|g                               |
+A
+DEV3_C|shared4|          73|_VAR_                           |
+x
+DEV3_N|shared4|          74|_MIDPT_                         |40259999999999A1
+DEV3_N|shared4|          74|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          74|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          74|g                               |
+A
+DEV3_C|shared4|          74|_VAR_                           |
+x
+DEV3_N|shared4|          75|_MIDPT_                         |4025E6666666666E
+DEV3_N|shared4|          75|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          75|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          75|g                               |
+A
+DEV3_C|shared4|          75|_VAR_                           |
+x
+DEV3_N|shared4|          76|_MIDPT_                         |402633333333333B
+DEV3_N|shared4|          76|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          76|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          76|g                               |
+A
+DEV3_C|shared4|          76|_VAR_                           |
+x
+DEV3_N|shared4|          77|_MIDPT_                         |4026800000000008
+DEV3_N|shared4|          77|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          77|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          77|g                               |
+A
+DEV3_C|shared4|          77|_VAR_                           |
+x
+DEV3_N|shared4|          78|_MIDPT_                         |4026CCCCCCCCCCD5
+DEV3_N|shared4|          78|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          78|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          78|g                               |
+A
+DEV3_C|shared4|          78|_VAR_                           |
+x
+DEV3_N|shared4|          79|_MIDPT_                         |40271999999999A2
+DEV3_N|shared4|          79|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          79|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          79|g                               |
+A
+DEV3_C|shared4|          79|_VAR_                           |
+x
+DEV3_N|shared4|          80|_MIDPT_                         |402766666666666F
+DEV3_N|shared4|          80|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          80|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          80|g                               |
+A
+DEV3_C|shared4|          80|_VAR_                           |
+x
+DEV3_N|shared4|          81|_MIDPT_                         |4027B3333333333C
+DEV3_N|shared4|          81|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          81|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          81|g                               |
+A
+DEV3_C|shared4|          81|_VAR_                           |
+x
+DEV3_N|shared4|          82|_MIDPT_                         |4028000000000009
+DEV3_N|shared4|          82|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          82|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          82|g                               |
+A
+DEV3_C|shared4|          82|_VAR_                           |
+x
+DEV3_N|shared4|          83|_MIDPT_                         |40284CCCCCCCCCD6
+DEV3_N|shared4|          83|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          83|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          83|g                               |
+A
+DEV3_C|shared4|          83|_VAR_                           |
+x
+DEV3_N|shared4|          84|_MIDPT_                         |40289999999999A3
+DEV3_N|shared4|          84|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          84|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          84|g                               |
+A
+DEV3_C|shared4|          84|_VAR_                           |
+x
+DEV3_N|shared4|          85|_MIDPT_                         |4028E66666666670
+DEV3_N|shared4|          85|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          85|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          85|g                               |
+A
+DEV3_C|shared4|          85|_VAR_                           |
+x
+DEV3_N|shared4|          86|_MIDPT_                         |402933333333333D
+DEV3_N|shared4|          86|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          86|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          86|g                               |
+A
+DEV3_C|shared4|          86|_VAR_                           |
+x
+DEV3_N|shared4|          87|_MIDPT_                         |402980000000000A
+DEV3_N|shared4|          87|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          87|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          87|g                               |
+A
+DEV3_C|shared4|          87|_VAR_                           |
+x
+DEV3_N|shared4|          88|_MIDPT_                         |4029CCCCCCCCCCD7
+DEV3_N|shared4|          88|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          88|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          88|g                               |
+A
+DEV3_C|shared4|          88|_VAR_                           |
+x
+DEV3_N|shared4|          89|_MIDPT_                         |402A1999999999A4
+DEV3_N|shared4|          89|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          89|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          89|g                               |
+A
+DEV3_C|shared4|          89|_VAR_                           |
+x
+DEV3_N|shared4|          90|_MIDPT_                         |402A666666666671
+DEV3_N|shared4|          90|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          90|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          90|g                               |
+A
+DEV3_C|shared4|          90|_VAR_                           |
+x
+DEV3_N|shared4|          91|_MIDPT_                         |402AB3333333333E
+DEV3_N|shared4|          91|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          91|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          91|g                               |
+A
+DEV3_C|shared4|          91|_VAR_                           |
+x
+DEV3_N|shared4|          92|_MIDPT_                         |402B00000000000B
+DEV3_N|shared4|          92|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          92|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          92|g                               |
+A
+DEV3_C|shared4|          92|_VAR_                           |
+x
+DEV3_N|shared4|          93|_MIDPT_                         |402B4CCCCCCCCCD8
+DEV3_N|shared4|          93|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          93|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          93|g                               |
+A
+DEV3_C|shared4|          93|_VAR_                           |
+x
+DEV3_N|shared4|          94|_MIDPT_                         |402B9999999999A5
+DEV3_N|shared4|          94|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          94|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          94|g                               |
+A
+DEV3_C|shared4|          94|_VAR_                           |
+x
+DEV3_N|shared4|          95|_MIDPT_                         |402BE66666666672
+DEV3_N|shared4|          95|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          95|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          95|g                               |
+A
+DEV3_C|shared4|          95|_VAR_                           |
+x
+DEV3_N|shared4|          96|_MIDPT_                         |402C33333333333F
+DEV3_N|shared4|          96|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          96|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          96|g                               |
+A
+DEV3_C|shared4|          96|_VAR_                           |
+x
+DEV3_N|shared4|          97|_MIDPT_                         |402C80000000000C
+DEV3_N|shared4|          97|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          97|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          97|g                               |
+A
+DEV3_C|shared4|          97|_VAR_                           |
+x
+DEV3_N|shared4|          98|_MIDPT_                         |402CCCCCCCCCCCD9
+DEV3_N|shared4|          98|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          98|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          98|g                               |
+A
+DEV3_C|shared4|          98|_VAR_                           |
+x
+DEV3_N|shared4|          99|_MIDPT_                         |402D1999999999A6
+DEV3_N|shared4|          99|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|          99|_COUNT_                         |0000000000000000
+DEV3_C|shared4|          99|g                               |
+A
+DEV3_C|shared4|          99|_VAR_                           |
+x
+DEV3_N|shared4|         100|_MIDPT_                         |402D666666666673
+DEV3_N|shared4|         100|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|         100|_COUNT_                         |0000000000000000
+DEV3_C|shared4|         100|g                               |
+A
+DEV3_C|shared4|         100|_VAR_                           |
+x
+DEV3_N|shared4|         101|_MIDPT_                         |402DB33333333340
+DEV3_N|shared4|         101|_OBSPCT_                        |0000000000000000
+DEV3_N|shared4|         101|_COUNT_                         |0000000000000000
+DEV3_C|shared4|         101|g                               |
+A
+DEV3_C|shared4|         101|_VAR_                           |
+x
+DEV3_N|shared4|         102|_MIDPT_                         |402E00000000000D
+DEV3_N|shared4|         102|_OBSPCT_                        |4029000000000000
+DEV3_N|shared4|         102|_COUNT_                         |3FF0000000000000
+DEV3_C|shared4|         102|g                               |
+A
+DEV3_C|shared4|         102|_VAR_                           |
+x
+DEV3_META|shared5|           1|g                               |           2|           4|
+DEV3_META|shared5|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared5|           3|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|shared5|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared5|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared5|           1|_MIDPT_                         |4000000000000000
+DEV3_N|shared5|           1|_OBSPCT_                        |4042C00000000000
+DEV3_N|shared5|           1|_COUNT_                         |4008000000000000
+DEV3_C|shared5|           1|g                               |
+A
+DEV3_C|shared5|           1|_VAR_                           |
+x
+DEV3_N|shared5|           2|_MIDPT_                         |4018000000000000
+DEV3_N|shared5|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|shared5|           2|_COUNT_                         |4000000000000000
+DEV3_C|shared5|           2|g                               |
+A
+DEV3_C|shared5|           2|_VAR_                           |
+x
+DEV3_N|shared5|           3|_MIDPT_                         |4024000000000000
+DEV3_N|shared5|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|shared5|           3|_COUNT_                         |4000000000000000
+DEV3_C|shared5|           3|g                               |
+A
+DEV3_C|shared5|           3|_VAR_                           |
+x
+DEV3_N|shared5|           4|_MIDPT_                         |402C000000000000
+DEV3_N|shared5|           4|_OBSPCT_                        |4029000000000000
+DEV3_N|shared5|           4|_COUNT_                         |3FF0000000000000
+DEV3_C|shared5|           4|g                               |
+A
+DEV3_C|shared5|           4|_VAR_                           |
+x
+DEV3_N|shared5|           5|_MIDPT_                         |4036000000000000
+DEV3_N|shared5|           5|_OBSPCT_                        |4059000000000000
+DEV3_N|shared5|           5|_COUNT_                         |4059000000000000
+DEV3_C|shared5|           5|g                               |
+B
+DEV3_C|shared5|           5|_VAR_                           |
+x
+DEV3_META|shared6|           1|g                               |           2|           4|
+DEV3_META|shared6|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared6|           3|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|shared6|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared6|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared6|           1|_MIDPT_                         |0000000000000000
+DEV3_N|shared6|           1|_OBSPCT_                        |4049000000000000
+DEV3_N|shared6|           1|_COUNT_                         |4010000000000000
+DEV3_C|shared6|           1|g                               |
+A
+DEV3_C|shared6|           1|_VAR_                           |
+x
+DEV3_N|shared6|           2|_MIDPT_                         |4024000000000000
+DEV3_N|shared6|           2|_OBSPCT_                        |4042C00000000000
+DEV3_N|shared6|           2|_COUNT_                         |4008000000000000
+DEV3_C|shared6|           2|g                               |
+A
+DEV3_C|shared6|           2|_VAR_                           |
+x
+DEV3_N|shared6|           3|_MIDPT_                         |4034000000000000
+DEV3_N|shared6|           3|_OBSPCT_                        |4029000000000000
+DEV3_N|shared6|           3|_COUNT_                         |3FF0000000000000
+DEV3_C|shared6|           3|g                               |
+A
+DEV3_C|shared6|           3|_VAR_                           |
+x
+DEV3_N|shared6|           4|_MIDPT_                         |4034000000000000
+DEV3_N|shared6|           4|_OBSPCT_                        |4059000000000000
+DEV3_N|shared6|           4|_COUNT_                         |4059000000000000
+DEV3_C|shared6|           4|g                               |
+B
+DEV3_C|shared6|           4|_VAR_                           |
+x
+DEV3_META|shared7|           1|g                               |           2|           4|
+DEV3_META|shared7|           2|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|shared7|           3|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|shared7|           4|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|shared7|           5|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|shared7|           1|_MINPT_                         |0000000000000000
+DEV3_N|shared7|           1|_OBSPCT_                        |4052C00000000000
+DEV3_N|shared7|           1|_COUNT_                         |4018000000000000
+DEV3_C|shared7|           1|g                               |
+A
+DEV3_C|shared7|           1|_VAR_                           |
+x
+DEV3_N|shared7|           2|_MINPT_                         |4024000000000000
+DEV3_N|shared7|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|shared7|           2|_COUNT_                         |4000000000000000
+DEV3_C|shared7|           2|g                               |
+A
+DEV3_C|shared7|           2|_VAR_                           |
+x
+DEV3_N|shared7|           3|_MINPT_                         |4034000000000000
+DEV3_N|shared7|           3|_OBSPCT_                        |4059000000000000
+DEV3_N|shared7|           3|_COUNT_                         |4059000000000000
+DEV3_C|shared7|           3|g                               |
+B
+DEV3_C|shared7|           3|_VAR_                           |
+x
+DEV3_META|count0|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count0|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count0|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count0|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count0|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count0|           1|_OBSPCT_                        |4039000000000000
+DEV3_N|count0|           1|_COUNT_                         |4014000000000000
+DEV3_C|count0|           1|_VAR_                           |
+x
+DEV3_N|count0|           2|_MIDPT_                         |3FE0000000000000
+DEV3_N|count0|           2|_OBSPCT_                        |4049000000000000
+DEV3_N|count0|           2|_COUNT_                         |4024000000000000
+DEV3_C|count0|           2|_VAR_                           |
+x
+DEV3_N|count0|           3|_MIDPT_                         |3FF0000000000000
+DEV3_N|count0|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|count0|           3|_COUNT_                         |4014000000000000
+DEV3_C|count0|           3|_VAR_                           |
+x
+DEV3_META|count1|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count1|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count1|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count1|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count1|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count1|           1|_OBSPCT_                        |4039000000000000
+DEV3_N|count1|           1|_COUNT_                         |4014000000000000
+DEV3_C|count1|           1|_VAR_                           |
+x
+DEV3_N|count1|           2|_MIDPT_                         |3FE0000000000000
+DEV3_N|count1|           2|_OBSPCT_                        |4049000000000000
+DEV3_N|count1|           2|_COUNT_                         |4024000000000000
+DEV3_C|count1|           2|_VAR_                           |
+x
+DEV3_N|count1|           3|_MIDPT_                         |3FF0000000000000
+DEV3_N|count1|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|count1|           3|_COUNT_                         |4014000000000000
+DEV3_C|count1|           3|_VAR_                           |
+x
+DEV3_META|count2|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count2|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count2|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count2|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count2|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count2|           1|_OBSPCT_                        |402E000000000000
+DEV3_N|count2|           1|_COUNT_                         |4008000000000000
+DEV3_C|count2|           1|_VAR_                           |
+x
+DEV3_N|count2|           2|_MIDPT_                         |3FD0000000000000
+DEV3_N|count2|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|count2|           2|_COUNT_                         |4014000000000000
+DEV3_C|count2|           2|_VAR_                           |
+x
+DEV3_N|count2|           3|_MIDPT_                         |3FE0000000000000
+DEV3_N|count2|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count2|           3|_COUNT_                         |4010000000000000
+DEV3_C|count2|           3|_VAR_                           |
+x
+DEV3_N|count2|           4|_MIDPT_                         |3FE8000000000000
+DEV3_N|count2|           4|_OBSPCT_                        |4039000000000000
+DEV3_N|count2|           4|_COUNT_                         |4014000000000000
+DEV3_C|count2|           4|_VAR_                           |
+x
+DEV3_N|count2|           5|_MIDPT_                         |3FF0000000000000
+DEV3_N|count2|           5|_OBSPCT_                        |402E000000000000
+DEV3_N|count2|           5|_COUNT_                         |4008000000000000
+DEV3_C|count2|           5|_VAR_                           |
+x
+DEV3_META|count3|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count3|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count3|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count3|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count3|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count3|           1|_OBSPCT_                        |4024000000000000
+DEV3_N|count3|           1|_COUNT_                         |4000000000000000
+DEV3_C|count3|           1|_VAR_                           |
+x
+DEV3_N|count3|           2|_MIDPT_                         |3FC999999999999A
+DEV3_N|count3|           2|_OBSPCT_                        |4034000000000000
+DEV3_N|count3|           2|_COUNT_                         |4010000000000000
+DEV3_C|count3|           2|_VAR_                           |
+x
+DEV3_N|count3|           3|_MIDPT_                         |3FD999999999999A
+DEV3_N|count3|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count3|           3|_COUNT_                         |4010000000000000
+DEV3_C|count3|           3|_VAR_                           |
+x
+DEV3_N|count3|           4|_MIDPT_                         |3FE3333333333334
+DEV3_N|count3|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count3|           4|_COUNT_                         |4010000000000000
+DEV3_C|count3|           4|_VAR_                           |
+x
+DEV3_N|count3|           5|_MIDPT_                         |3FE999999999999A
+DEV3_N|count3|           5|_OBSPCT_                        |4034000000000000
+DEV3_N|count3|           5|_COUNT_                         |4010000000000000
+DEV3_C|count3|           5|_VAR_                           |
+x
+DEV3_N|count3|           6|_MIDPT_                         |3FF0000000000000
+DEV3_N|count3|           6|_OBSPCT_                        |4024000000000000
+DEV3_N|count3|           6|_COUNT_                         |4000000000000000
+DEV3_C|count3|           6|_VAR_                           |
+x
+DEV3_META|count4|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count4|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count4|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count4|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count4|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count4|           1|_OBSPCT_                        |4024000000000000
+DEV3_N|count4|           1|_COUNT_                         |4000000000000000
+DEV3_C|count4|           1|_VAR_                           |
+x
+DEV3_N|count4|           2|_MIDPT_                         |3FC999999999999A
+DEV3_N|count4|           2|_OBSPCT_                        |4034000000000000
+DEV3_N|count4|           2|_COUNT_                         |4010000000000000
+DEV3_C|count4|           2|_VAR_                           |
+x
+DEV3_N|count4|           3|_MIDPT_                         |3FD999999999999A
+DEV3_N|count4|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count4|           3|_COUNT_                         |4010000000000000
+DEV3_C|count4|           3|_VAR_                           |
+x
+DEV3_N|count4|           4|_MIDPT_                         |3FE3333333333334
+DEV3_N|count4|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count4|           4|_COUNT_                         |4010000000000000
+DEV3_C|count4|           4|_VAR_                           |
+x
+DEV3_N|count4|           5|_MIDPT_                         |3FE999999999999A
+DEV3_N|count4|           5|_OBSPCT_                        |4034000000000000
+DEV3_N|count4|           5|_COUNT_                         |4010000000000000
+DEV3_C|count4|           5|_VAR_                           |
+x
+DEV3_N|count4|           6|_MIDPT_                         |3FF0000000000000
+DEV3_N|count4|           6|_OBSPCT_                        |4024000000000000
+DEV3_N|count4|           6|_COUNT_                         |4000000000000000
+DEV3_C|count4|           6|_VAR_                           |
+x
+DEV3_META|count5|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count5|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count5|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count5|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count5|           1|_MINPT_                         |0000000000000000
+DEV3_N|count5|           1|_OBSPCT_                        |4049000000000000
+DEV3_N|count5|           1|_COUNT_                         |4024000000000000
+DEV3_C|count5|           1|_VAR_                           |
+x
+DEV3_N|count5|           2|_MINPT_                         |3FE0000000000000
+DEV3_N|count5|           2|_OBSPCT_                        |4046800000000000
+DEV3_N|count5|           2|_COUNT_                         |4022000000000000
+DEV3_C|count5|           2|_VAR_                           |
+x
+DEV3_N|count5|           3|_MINPT_                         |3FF0000000000000
+DEV3_N|count5|           3|_OBSPCT_                        |4014000000000000
+DEV3_N|count5|           3|_COUNT_                         |3FF0000000000000
+DEV3_C|count5|           3|_VAR_                           |
+x
+DEV3_META|count6|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count6|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count6|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count6|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count6|           1|_MINPT_                         |0000000000000000
+DEV3_N|count6|           1|_OBSPCT_                        |4049000000000000
+DEV3_N|count6|           1|_COUNT_                         |4024000000000000
+DEV3_C|count6|           1|_VAR_                           |
+x
+DEV3_N|count6|           2|_MINPT_                         |3FE0000000000000
+DEV3_N|count6|           2|_OBSPCT_                        |4046800000000000
+DEV3_N|count6|           2|_COUNT_                         |4022000000000000
+DEV3_C|count6|           2|_VAR_                           |
+x
+DEV3_N|count6|           3|_MINPT_                         |3FF0000000000000
+DEV3_N|count6|           3|_OBSPCT_                        |4014000000000000
+DEV3_N|count6|           3|_COUNT_                         |3FF0000000000000
+DEV3_C|count6|           3|_VAR_                           |
+x
+DEV3_META|count7|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count7|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count7|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count7|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count7|           1|_MINPT_                         |0000000000000000
+DEV3_N|count7|           1|_OBSPCT_                        |4039000000000000
+DEV3_N|count7|           1|_COUNT_                         |4014000000000000
+DEV3_C|count7|           1|_VAR_                           |
+x
+DEV3_N|count7|           2|_MINPT_                         |3FD0000000000000
+DEV3_N|count7|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|count7|           2|_COUNT_                         |4014000000000000
+DEV3_C|count7|           2|_VAR_                           |
+x
+DEV3_N|count7|           3|_MINPT_                         |3FE0000000000000
+DEV3_N|count7|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|count7|           3|_COUNT_                         |4014000000000000
+DEV3_C|count7|           3|_VAR_                           |
+x
+DEV3_N|count7|           4|_MINPT_                         |3FE8000000000000
+DEV3_N|count7|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count7|           4|_COUNT_                         |4010000000000000
+DEV3_C|count7|           4|_VAR_                           |
+x
+DEV3_N|count7|           5|_MINPT_                         |3FF0000000000000
+DEV3_N|count7|           5|_OBSPCT_                        |4014000000000000
+DEV3_N|count7|           5|_COUNT_                         |3FF0000000000000
+DEV3_C|count7|           5|_VAR_                           |
+x
+DEV3_META|count8|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count8|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count8|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count8|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count8|           1|_MINPT_                         |0000000000000000
+DEV3_N|count8|           1|_OBSPCT_                        |4034000000000000
+DEV3_N|count8|           1|_COUNT_                         |4010000000000000
+DEV3_C|count8|           1|_VAR_                           |
+x
+DEV3_N|count8|           2|_MINPT_                         |3FC999999999999A
+DEV3_N|count8|           2|_OBSPCT_                        |4034000000000000
+DEV3_N|count8|           2|_COUNT_                         |4010000000000000
+DEV3_C|count8|           2|_VAR_                           |
+x
+DEV3_N|count8|           3|_MINPT_                         |3FD999999999999A
+DEV3_N|count8|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count8|           3|_COUNT_                         |4010000000000000
+DEV3_C|count8|           3|_VAR_                           |
+x
+DEV3_N|count8|           4|_MINPT_                         |3FE3333333333334
+DEV3_N|count8|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count8|           4|_COUNT_                         |4010000000000000
+DEV3_C|count8|           4|_VAR_                           |
+x
+DEV3_N|count8|           5|_MINPT_                         |3FE999999999999A
+DEV3_N|count8|           5|_OBSPCT_                        |402E000000000000
+DEV3_N|count8|           5|_COUNT_                         |4008000000000000
+DEV3_C|count8|           5|_VAR_                           |
+x
+DEV3_N|count8|           6|_MINPT_                         |3FF0000000000000
+DEV3_N|count8|           6|_OBSPCT_                        |4014000000000000
+DEV3_N|count8|           6|_COUNT_                         |3FF0000000000000
+DEV3_C|count8|           6|_VAR_                           |
+x
+DEV3_META|count9|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count9|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count9|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count9|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count9|           1|_MINPT_                         |0000000000000000
+DEV3_N|count9|           1|_OBSPCT_                        |4034000000000000
+DEV3_N|count9|           1|_COUNT_                         |4010000000000000
+DEV3_C|count9|           1|_VAR_                           |
+x
+DEV3_N|count9|           2|_MINPT_                         |3FC999999999999A
+DEV3_N|count9|           2|_OBSPCT_                        |4034000000000000
+DEV3_N|count9|           2|_COUNT_                         |4010000000000000
+DEV3_C|count9|           2|_VAR_                           |
+x
+DEV3_N|count9|           3|_MINPT_                         |3FD999999999999A
+DEV3_N|count9|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count9|           3|_COUNT_                         |4010000000000000
+DEV3_C|count9|           3|_VAR_                           |
+x
+DEV3_N|count9|           4|_MINPT_                         |3FE3333333333334
+DEV3_N|count9|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count9|           4|_COUNT_                         |4010000000000000
+DEV3_C|count9|           4|_VAR_                           |
+x
+DEV3_N|count9|           5|_MINPT_                         |3FE999999999999A
+DEV3_N|count9|           5|_OBSPCT_                        |402E000000000000
+DEV3_N|count9|           5|_COUNT_                         |4008000000000000
+DEV3_C|count9|           5|_VAR_                           |
+x
+DEV3_N|count9|           6|_MINPT_                         |3FF0000000000000
+DEV3_N|count9|           6|_OBSPCT_                        |4014000000000000
+DEV3_N|count9|           6|_COUNT_                         |3FF0000000000000
+DEV3_C|count9|           6|_VAR_                           |
+x
+DEV3_META|count10|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count10|           2|_MIDPT_                         |           1|           8|
+Midpoint of Histogram Interval                                                                      |
+DEV3_META|count10|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count10|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count10|           1|_MIDPT_                         |0000000000000000
+DEV3_N|count10|           1|_OBSPCT_                        |402E000000000000
+DEV3_N|count10|           1|_COUNT_                         |4008000000000000
+DEV3_C|count10|           1|_VAR_                           |
+x
+DEV3_N|count10|           2|_MIDPT_                         |3FD0000000000000
+DEV3_N|count10|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|count10|           2|_COUNT_                         |4014000000000000
+DEV3_C|count10|           2|_VAR_                           |
+x
+DEV3_N|count10|           3|_MIDPT_                         |3FE0000000000000
+DEV3_N|count10|           3|_OBSPCT_                        |4034000000000000
+DEV3_N|count10|           3|_COUNT_                         |4010000000000000
+DEV3_C|count10|           3|_VAR_                           |
+x
+DEV3_N|count10|           4|_MIDPT_                         |3FE8000000000000
+DEV3_N|count10|           4|_OBSPCT_                        |4039000000000000
+DEV3_N|count10|           4|_COUNT_                         |4014000000000000
+DEV3_C|count10|           4|_VAR_                           |
+x
+DEV3_N|count10|           5|_MIDPT_                         |3FF0000000000000
+DEV3_N|count10|           5|_OBSPCT_                        |402E000000000000
+DEV3_N|count10|           5|_COUNT_                         |4008000000000000
+DEV3_C|count10|           5|_VAR_                           |
+x
+DEV3_META|count11|           1|_VAR_                           |           2|           8|
+Variable Name                                                                                       |
+DEV3_META|count11|           2|_MINPT_                         |           1|           8|
+Left endpoint of Histogram Interval                                                                 |
+DEV3_META|count11|           3|_OBSPCT_                        |           1|           8|
+Percent of Observations in Interval                                                                 |
+DEV3_META|count11|           4|_COUNT_                         |           1|           8|
+Observation Count in Interval                                                                       |
+DEV3_N|count11|           1|_MINPT_                         |0000000000000000
+DEV3_N|count11|           1|_OBSPCT_                        |4039000000000000
+DEV3_N|count11|           1|_COUNT_                         |4014000000000000
+DEV3_C|count11|           1|_VAR_                           |
+x
+DEV3_N|count11|           2|_MINPT_                         |3FD0000000000000
+DEV3_N|count11|           2|_OBSPCT_                        |4039000000000000
+DEV3_N|count11|           2|_COUNT_                         |4014000000000000
+DEV3_C|count11|           2|_VAR_                           |
+x
+DEV3_N|count11|           3|_MINPT_                         |3FE0000000000000
+DEV3_N|count11|           3|_OBSPCT_                        |4039000000000000
+DEV3_N|count11|           3|_COUNT_                         |4014000000000000
+DEV3_C|count11|           3|_VAR_                           |
+x
+DEV3_N|count11|           4|_MINPT_                         |3FE8000000000000
+DEV3_N|count11|           4|_OBSPCT_                        |4034000000000000
+DEV3_N|count11|           4|_COUNT_                         |4010000000000000
+DEV3_C|count11|           4|_VAR_                           |
+x
+DEV3_N|count11|           5|_MINPT_                         |3FF0000000000000
+DEV3_N|count11|           5|_OBSPCT_                        |4014000000000000
+DEV3_N|count11|           5|_COUNT_                         |3FF0000000000000
+DEV3_C|count11|           5|_VAR_                           |
+x

@@ -1,0 +1,16 @@
+options nonumber nodate linesize=256;
+%macro meta(ds);
+%if %sysfunc(exist(&ds)) %then %do;
+%local handle nv no rc;
+%let handle=%sysfunc(open(&ds)); %let nv=%sysfunc(attrn(&handle,nvars)); %let no=%sysfunc(attrn(&handle,nobs)); %let rc=%sysfunc(close(&handle));
+%put DEV3_SHAPE|&ds|&nv|&no;
+proc contents data=&ds out=meta noprint; run;
+proc sort data=meta; by varnum; run;
+data _null_; set meta; length line $1000;
+line=cats("DEV3_META|&ds|",varnum,'|',name,'|',type,'|',length,'|',label,'|',format,'|',formatl,'|',formatd,'|',informat,'|',informl,'|',informd); ll=lengthn(line); put line $varying1000. ll; run;
+%end; %else %put DEV3_ABSENT|&ds;
+%mend;
+data d; length g 4 c $5 x 4 abcdefghijklmnopq 8; format g z3. c $5. x 8.2; informat g comma4. x comma12.; label g='By label' c='Class label' x='Analysis label'; do i=1 to 5; g=1; c='first'; x=i; abcdefghijklmnopq=.; output; end; run;
+proc univariate data=d noprint; by g; class c; histogram x abcdefghijklmnopq / noplot kernel(c=.5 noprint) outkernel=kfmt outhistogram=hfmt; run; %meta(kfmt); %meta(hfmt);
+data missing; x=.; output; output; run; proc univariate data=missing noprint; histogram x / noplot kernel(c=.5 noprint) outkernel=kmiss outhistogram=hmiss; run; %meta(kmiss); %meta(hmiss);
+data empty; length x 8; stop; run; proc univariate data=empty noprint; histogram x / noplot kernel(c=.5 noprint) outkernel=kempty outhistogram=hempty; run; %meta(kempty); %meta(hempty);

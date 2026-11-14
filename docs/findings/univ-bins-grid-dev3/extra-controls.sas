@@ -1,0 +1,36 @@
+options nonumber nodate linesize=256;
+%macro dump(ds);
+%if %sysfunc(exist(&ds)) %then %do;
+proc contents data=&ds out=meta noprint; run;
+proc sort data=meta; by varnum; run;
+data _null_; set meta; length line $1000;
+line=cats("DEV3_META|&ds|",varnum,'|',name,'|',type,'|',length,'|',label,'|',format,'|',formatl,'|',formatd,'|',informat,'|',informl,'|',informd); ll=lengthn(line); put line $varying1000. ll;
+run;
+data _null_; set &ds; array nn _numeric_; array cc _character_; length line $1000;
+do zz=1 to dim(nn); nm=vname(nn[zz]); line=cats("DEV3_N|&ds|",_n_,'|',nm,'|',put(nn[zz],hex16.)); ll=lengthn(line); put line $varying1000. ll; end;
+do zz=1 to dim(cc); nm=vname(cc[zz]); line=cats("DEV3_C|&ds|",_n_,'|',nm,'|',cc[zz]); ll=lengthn(line); put line $varying1000. ll; end;
+run;
+%end;
+%mend;
+%macro summary(ds);
+data _null_; set &ds end=done; retain first second;
+if _n_=1 then first=_value_; if _n_=2 then second=_value_;
+if done then put "DEV3_GRID|&ds|" _n_ best12. '|' first hex16. '|' second hex16. '|' _value_ hex16.;
+run;
+%mend;
+data d; input x @@; datalines;
+1 2 3 4 6 8 10 15
+;
+proc univariate data=d noprint; histogram x / noplot endpoints=0 to 10 by 5 outhistogram=extra_h0 outkernel=extra_k0; run; %dump(extra_h0); %dump(extra_k0);
+proc univariate data=d noprint; histogram x / noplot endpoints=5 to 10 by 5 outhistogram=extra_h1 outkernel=extra_k1; run; %dump(extra_h1); %dump(extra_k1);
+proc univariate data=d noprint; histogram x / noplot midpoints=0 5 outhistogram=extra_h2 outkernel=extra_k2; run; %dump(extra_h2); %dump(extra_k2);
+proc univariate data=d noprint; histogram x / noplot kernel(c=.5 .6 lower=0 upper=20 noprint) outhistogram=extra_h3 outkernel=extra_k3; run; %dump(extra_h3); %dump(extra_k3);
+proc univariate data=d noprint; histogram x / noplot kernel(k=quadratic c=1 noprint) outhistogram=extra_h4 outkernel=extra_k4; run; %dump(extra_h4); %dump(extra_k4);
+proc univariate data=d noprint; histogram x / noplot kernel(k=triangular c=1 noprint) outhistogram=extra_h5 outkernel=extra_k5; run; %dump(extra_h5); %dump(extra_k5);
+data d; input x @@; datalines;
+.2999999 .299999999999 .29999999999999 .3 .30000000000001 .300000000001 .3000001
+;
+proc univariate data=d noprint; histogram x / noplot endpoints=.1 .3 .5 outhistogram=tie0; run; %dump(tie0);
+proc univariate data=d noprint; histogram x / noplot endpoints=.1 .3 .5 rtinclude outhistogram=tie1; run; %dump(tie1);
+proc univariate data=d noprint; histogram x / noplot midpoints=.2 .4 outhistogram=tie2; run; %dump(tie2);
+data d; x=5; do i=1 to 20; output; end; run; proc univariate data=d noprint; histogram x / noplot kernel outkernel=flatmise; run; %dump(flatmise);
