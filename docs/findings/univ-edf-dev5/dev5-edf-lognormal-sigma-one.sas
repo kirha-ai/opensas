@@ -1,0 +1,13 @@
+options ls=256;ods graphics off;ods exclude all;
+data state;do n=37,83,197;do g=.2 to 2 by .2;do shift=0,3;lo=.4;hi=3;exact=0;output;end;end;end;run;
+%macro iterate;
+%do step=1 %to 70;
+data d;set state;k=(lo+hi)/2;do i=1 to n;v=(i-.29)/(n+.42);u=.5+.5*sign(2*v-1)*abs(2*v-1)**(1+g);x=shift+k*exp(.9*quantile('normal',u));output;end;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n g shift;histogram x / noplot lognormal(theta=est zeta=0);run;
+data shape;set pars;where Symbol='Sigma';keep n g shift Estimate;rename Estimate=FitShape;run;
+data state;merge state shape;by n g shift;k=(lo+hi)/2;if FitShape=1 then do;lo=k;hi=k;exact=1;end;else if FitShape>1 then hi=k;else lo=k;run;
+%end;
+%mend;%iterate;
+ods exclude none;
+data _null_;merge gof state;by n g shift;file print;put n best8. '|' g best8. '|' shift best8. '|' k best32. '|' TestLab '|' Stat best32. '|' pValue best32. '|' pSign '|' FitShape hex16. '|' exact;run;

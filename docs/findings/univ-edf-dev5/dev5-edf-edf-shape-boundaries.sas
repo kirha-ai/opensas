@@ -1,0 +1,12 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(fam,shape);
+data d;do i=1 to 40;u=(i-.5)/40;%if &fam=ln %then %do;x=3+exp(&shape*quantile('normal',u));%end;%else %do;x=3+(-log1px(-u))**(1/&shape);%end;output;end;run;
+data gof;length Stat pValue 8 TestLab $4 pSign $1;stop;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;histogram x / noplot %if &fam=ln %then %do;lognormal(theta=est zeta=0 sigma=&shape)%end;%else %do;weibull(theta=est sigma=1 c=&shape)%end;;run;
+ods exclude none;
+data _null_;if 0 then set gof nobs=nr;file print;put "&fam|&shape|rows|" nr;stop;run;
+ods exclude all;
+%mend;
+%p(ln,2.9999);%p(ln,3);%p(ln,3.0001);%p(wb,1.9999);%p(wb,2);%p(wb,2.0001);
+%put DEV5_EDF_ORACLE_VERSION=&sysvlong4;

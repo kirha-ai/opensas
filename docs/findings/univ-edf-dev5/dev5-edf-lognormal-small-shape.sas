@@ -1,0 +1,12 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(s);
+data d;do i=1 to 100;x=3+exp(&s*quantile('normal',(i-.5)/100));output;end;run;
+data gof;length Stat pValue 8 TestLab $4 pSign $1;stop;run;
+ods output GoodnessOfFit=gof;
+proc univariate data=d noprint;histogram x / noplot lognormal(theta=est zeta=0 sigma=&s);run;
+ods exclude none;
+data _null_;if 0 then set gof nobs=nr;file print;put "&s|rows|" nr;stop;run;
+data _null_;set gof;file print;put "&s|" TestLab '|' Stat best32. '|' pValue best32. '|' pSign;run;
+ods exclude all;
+%mend;
+%p(.001);%p(.01);%p(.025);%p(.05);%p(.075);%p(.09999);%p(.1);%p(.10001);

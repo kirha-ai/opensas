@@ -1,0 +1,26 @@
+options ls=256;ods graphics off;ods exclude all;
+%macro p(fam,shape,mask);
+data state;length Stat pValue FitShape 8 pSign $1;do n=10,20,50,100,200;do t=1 to 3;lo=0;hi=8;output;end;end;run;
+%do step=1 %to 44;
+data d;set state;g=(lo+hi)/2;do i=1 to n;v=(i-.41)/(n+.18);u=.5+.5*sign(2*v-1)*abs(2*v-1)**(1+g);
+%if &fam=ln %then %do;x=3+exp(&shape*quantile('normal',u));%end;%else %do;x=3+(-log1px(-u))**(1/&shape);%end;
+output;end;run;
+data gof;length n t Stat pValue 8 TestLab $4 pSign $1;stop;run;
+ods output GoodnessOfFit=gof ParameterEstimates=pars;
+proc univariate data=d noprint;by n t;histogram x / noplot
+%if &fam=ln %then %do;lognormal(theta=est %if &mask=0 or &mask=1 %then %do; sigma=&shape %end; %if &mask=0 or &mask=2 %then %do; zeta=0 %end;)%end;
+%else %do;weibull(theta=est %if &mask=0 or &mask=1 %then %do; c=&shape %end; %if &mask=0 or &mask=2 %then %do; sigma=1 %end; maxiter=100)%end;
+;run;
+data shapes;set pars;by n t;retain FitShape;
+%if &fam=ln %then %do;if Symbol='Sigma' then FitShape=Estimate;%end;%else %do;if Symbol='C' then FitShape=Estimate;%end;
+if last.t then output;keep n t FitShape;run;
+data selected;set gof;if (t=1 and TestLab='D') or (t=2 and TestLab='W-Sq') or (t=3 and TestLab='A-Sq');keep n t Stat pValue pSign;run;
+data state;merge state(drop=Stat pValue pSign FitShape) selected shapes;by n t;g=(lo+hi)/2;if pValue=.5 and pSign='>' then lo=g;else hi=g;run;
+%end;
+ods exclude none;
+data _null_;set state;file print;put "&fam.&mask._&shape|" n best8. '|' t best8. '|' Stat best32. '|' FitShape best32. '|' lo best32. '|' hi best32.;run;
+ods exclude all;
+%mend;
+%macro grid;%do mask=1 %to 1;
+%p(ln,.15,&mask);%p(ln,.3,&mask);%p(ln,.6,&mask);%p(ln,1,&mask);%p(ln,1.3,&mask);%p(ln,1.7,&mask);%p(ln,2.1,&mask);%p(ln,2.5,&mask);%p(ln,2.85,&mask);
+%end;%mend;%grid;
