@@ -15,11 +15,15 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   enum and does not promise the same ordinal order as the distribution module.
 - `availability(Request) -> Available`: Table 4.31 D/W2/A2 mask, including
   strict shape boundaries and unavailable Johnson tests. It is not a promise
-  that all available cases have implemented probability tables.
+  that all available cases have implemented probability tables. Sample-size
+  limits are applied by tabulated(); publish its nullable results.
 - `tabulated(diags, request, Statistics{d,w2,a2}, n) -> Result`: optional
   `Probability{value,sign}` for each test. `sign` is exact/less/greater.
   Input/raw statistics remain untouched. Null means SAS-unavailable, whereas
-  an available but unimplemented case raises a captured diagnostic.
+  an available but unimplemented case raises a captured diagnostic. For
+  exponential, pass the original sample size and exponential_boundary_count
+  (values equal to fitted theta after FREQ expansion); fit on the full sample
+  and filter only the EDF input. See EVIDENCE-EXPONENTIAL-BOUNDARIES.md.
 - `simulate(diags, request, observed, n, SimulationOptions, Simulator)`:
   Gumbel/IGAUSS/Pareto/Rayleigh bootstrap with default 500 replications and an
   explicit resolved u64 seed. Caller resolves omitted/time-of-day seed once.
@@ -49,7 +53,8 @@ No parser, fit, distribution, PROC, ODS, or dev4 GOF files were changed.
   seed behavior, invalid controls and callback failure propagation.
 
 - Estimated exponential tables now cover all three estimation masks, including
-  separate >.500/>.250 bounds and effective n-1 when only theta is estimated.
+  separate >.500/>.250 bounds and post-boundary EDF counts. Tabulated all-known
+  A2 is absent below five EDF observations; D/W2 remain available.
   See EVIDENCE-EXPONENTIAL.md for independent validation and integration details.
 
 - Fixed-threshold gamma now covers all three estimation masks with fitted-shape

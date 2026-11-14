@@ -6,7 +6,10 @@ helper. The fixed-parameter case retains its separate existing table.
 
 ## Critical values and interpolation
 
-Let m=n except when theta alone is estimated, where m=n-1. D critical values
+Let m be the number of EDF observations after excluding values equal to the
+fitted threshold. In the original distinct-sample calibration, m=n except
+when theta alone is estimated, where m=n-1. See EVIDENCE-EXPONENTIAL-BOUNDARIES.md
+for tied minima and fixed-threshold boundary observations. D critical values
 are exp(L)/sqrt(m), W2/A2 critical values exp(L). Probability levels are
 .5, .25, .20, .15, .10, .05, .025, .01, .005, .0025, .001. The .5 and .25
 knots are separate upper-bound cutoffs, not one interpolated interval.
@@ -48,11 +51,12 @@ in the bisection harness; only successful final source/output are retained.
 
 ## Integration requirement for dev4
 
-When only theta is estimated, SAS computes theta=min(x), then removes exactly
-one minimum observation before computing EDF statistics. This must happen in
+When only theta is estimated, SAS computes theta=min(x), then removes every
+observation equal to that minimum before computing EDF statistics. This must happen in
 the raw-statistics adapter; this helper cannot reconstruct altered W2/A2 from
-uncorrected statistics. Pass the original n to tabulated(): it applies n-1
-internally for probabilities. With n=100, x_i=-log(1-(i-.5)/n), theta-only
+uncorrected statistics. Pass the original n and `Request.exponential_boundary_count` to tabulated();
+it uses n minus that count. The default assumes one excluded point when only
+theta is estimated, zero otherwise. With n=100, x_i=-log(1-(i-.5)/n), theta-only
 SAS gives D=.01005025125628, W2=.00167504187604, A2=.02301752878570. Direct
 recomputation on the remaining 99 observations gives .010050251256281407,
 .001675041876046903, .023017528785715058. Including the minimum would instead
