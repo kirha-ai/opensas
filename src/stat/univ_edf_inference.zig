@@ -1246,7 +1246,8 @@ pub const Simulator = struct {
     context: ?*anyopaque = null,
     /// Generate n observations from the fitted null, refit the estimated
     /// parameters with the same constraints, and return raw EDF statistics.
-    /// Preserve fixed parameters. Errors propagate; never discard failed fits.
+    /// Preserve fixed parameters. This strict callback propagates errors;
+    /// it does not classify or count expected numerical refit failures.
     draw: *const fn (?*anyopaque, std.Random, usize, *diag.Diagnostics) diag.Error!Statistics,
 };
 
