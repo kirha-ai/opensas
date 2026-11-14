@@ -31,6 +31,10 @@ pub const Request = struct {
     beta: f64 = 1,
     sigma: f64 = 1,
     c: f64 = 1,
+    /// Exponential only: count observations equal to the fitted threshold,
+    /// after FREQ expansion. They are excluded from EDF, but not from fitting.
+    /// Null assumes one when theta is estimated and sigma fixed, zero otherwise.
+    exponential_boundary_count: ?usize = null,
 };
 
 /// Availability is not permission to substitute a complete-parameter null law.
@@ -80,7 +84,15 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     const available = availability(r);
     if (!available.a2) return .{};
     const e = r.estimated;
-    const nf: f64 = @floatFromInt(n);
+    var edf_n = n;
+    if (r.family == .exponential) {
+        const excluded = r.exponential_boundary_count orelse (if (e.theta and !e.sigma) @as(usize, 1) else 0);
+        if (excluded > n or (e.theta and !e.sigma and excluded == 0))
+            return d.fail(error.ParseError, 0, "UNIVARIATE: invalid excluded exponential boundary count", .{});
+        edf_n = n - excluded;
+        if (edf_n == 0) return .{};
+    }
+    const nf: f64 = @floatFromInt(edf_n);
     const fixed = switch (r.family) {
         .normal => !e.mu and !e.sigma,
         .lognormal => !e.theta and !e.zeta and !e.sigma,
@@ -95,10 +107,10 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
         return .{
             .d = interpolate(s.d * (@sqrt(nf) + 0.12 + 0.11 / @sqrt(nf)), &.{ 1.019, 1.138, 1.224, 1.358, 1.480, 1.628, 1.731, 1.950 }, &levels),
             .w2 = interpolate((s.w2 - 0.4 / nf + 0.6 / (nf * nf)) * (1 + 1 / nf), &.{ 0.209, 0.284, 0.347, 0.461, 0.581, 0.743, 0.869, 1.167 }, &levels),
-            .a2 = interpolate(s.a2, &.{ 1.248, 1.610, 1.933, 2.492, 3.070, 3.880, 4.500, 6.000 }, &levels),
+            .a2 = if (edf_n >= 5) interpolate(s.a2, &.{ 1.248, 1.610, 1.933, 2.492, 3.070, 3.880, 4.500, 6.000 }, &levels) else null,
         };
     }
-    if (r.family == .exponential) return exponentialEstimated(s, n, e);
+    if (r.family == .exponential) return exponentialEstimated(s, edf_n, e);
     if (r.family == .gamma) return if (e.theta) gammaEstimatedThreshold(s, n, e, r.alpha) else gammaFixedThreshold(s, n, e, r.alpha);
     if (r.family == .beta) return betaEstimated(s, n, r.alpha, r.beta);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
@@ -276,11 +288,9 @@ fn surfaceProbability(value: f64, critical: []const f64) Probability {
     return interpolate(value, critical[1..], surface_levels[1..]);
 }
 
-/// n is the ORIGINAL sample size. When only theta is estimated, SAS excludes
-/// one fitted minimum from the EDF sample: the caller must compute raw D/W2/A2
-/// on those n-1 observations. The probability correction also uses n-1.
-fn exponentialEstimated(s: Statistics, n: usize, e: Estimated) Result {
-    const effective_n = n - @as(usize, if (e.theta and !e.sigma) 1 else 0);
+/// effective_n excludes all observations equal to the fitted threshold.
+/// Parameter fitting still uses the full original sample.
+fn exponentialEstimated(s: Statistics, effective_n: usize, e: Estimated) Result {
     // M9 emits no EDF table with fewer than five effective observations.
     if (effective_n < 5) return .{};
     const nf: f64 = @floatFromInt(effective_n);
@@ -1363,4 +1373,101 @@ test "dev5 EDF Weibull all median brackets independently checked on both sides" 
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .weibull, .estimated = .{ .theta = true }, .c = 3 }, s, 9));
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .weibull, .estimated = .{ .theta = true }, .c = 2 }, s, 30));
+}
+
+test "dev5 EDF exponential probability count excludes every tied minimum" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var lines = std.mem.splitScalar(u8, @embedFile("testdata/univ_edf_dev5_exponential_ties.txt"), '\n');
+    var count: usize = 0;
+    while (lines.next()) |line| {
+        if (line.len == 0) continue;
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const remaining = try std.fmt.parseInt(usize, fields.next().?, 10);
+        const minima = try std.fmt.parseInt(usize, fields.next().?, 10);
+        _ = fields.next().?;
+        const statistic = fields.next().?;
+        const value = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected = try std.fmt.parseFloat(f64, fields.next().?);
+        const sign = fields.next().?;
+        var s: Statistics = .{ .d = 0, .w2 = 0, .a2 = 0 };
+        const test_d = std.mem.eql(u8, statistic, "D");
+        const test_w = std.mem.eql(u8, statistic, "W-Sq");
+        if (test_d) s.d = value else if (test_w) s.w2 = value else s.a2 = value;
+        const r: Request = .{ .family = .exponential, .estimated = .{ .theta = true }, .exponential_boundary_count = minima };
+        const result = try tabulated(&d, r, s, remaining + minima);
+        const p = if (test_d) result.d.? else if (test_w) result.w2.? else result.a2.?;
+        try std.testing.expectApproxEqAbs(expected, p.value, 1e-10);
+        const expected_sign: Sign = if (std.mem.eql(u8, sign, ">")) .greater else if (std.mem.eql(u8, sign, "<")) .less else .exact;
+        try std.testing.expectEqual(expected_sign, p.sign);
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 1098), count);
+    const s: Statistics = .{ .d = 0.1, .w2 = 0.1, .a2 = 0.5 };
+    var r: Request = .{ .family = .exponential, .estimated = .{ .theta = true }, .exponential_boundary_count = 6 };
+    try std.testing.expectEqual(Result{}, try tabulated(&d, r, s, 10));
+    try std.testing.expect((try tabulated(&d, r, s, 11)).d != null);
+    r.exponential_boundary_count = 10;
+    try std.testing.expectEqual(Result{}, try tabulated(&d, r, s, 10));
+    r.exponential_boundary_count = 0;
+    try std.testing.expectError(error.ParseError, tabulated(&d, r, s, 10));
+    r.exponential_boundary_count = 11;
+    try std.testing.expectError(error.ParseError, tabulated(&d, r, s, 10));
+    try std.testing.expect(d.hasErrors());
+}
+
+test "dev5 EDF exponential boundary filtering also applies to known thresholds" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var lines = std.mem.splitScalar(u8, @embedFile("testdata/univ_edf_dev5_exponential_boundaries.txt"), '\n');
+    var count: usize = 0;
+    while (lines.next()) |line| {
+        if (line.len == 0) continue;
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const id = fields.next().?;
+        const minima = try std.fmt.parseInt(usize, fields.next().?, 10);
+        const statistic = fields.next().?;
+        const value = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected = try std.fmt.parseFloat(f64, fields.next().?);
+        const sign = fields.next().?;
+        const both = std.mem.eql(u8, id, "both");
+        const r: Request = .{ .family = .exponential, .estimated = .{ .theta = both or std.mem.eql(u8, id, "theta"), .sigma = both or std.mem.eql(u8, id, "scale") }, .exponential_boundary_count = if (both) 0 else minima };
+        var s: Statistics = .{ .d = 0, .w2 = 0, .a2 = 0 };
+        const test_d = std.mem.eql(u8, statistic, "D");
+        const test_w = std.mem.eql(u8, statistic, "W-Sq");
+        if (test_d) s.d = value else if (test_w) s.w2 = value else s.a2 = value;
+        const result = try tabulated(&d, r, s, 10);
+        const p = if (test_d) result.d.? else if (test_w) result.w2.? else result.a2.?;
+        try std.testing.expectApproxEqAbs(expected, p.value, 1e-10);
+        const expected_sign: Sign = if (std.mem.eql(u8, sign, ">")) .greater else if (std.mem.eql(u8, sign, "<")) .less else .exact;
+        try std.testing.expectEqual(expected_sign, p.sign);
+        count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 36), count);
+}
+
+test "dev5 EDF tabulated complete-parameter AD starts at five EDF observations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    for ([_]Family{ .normal, .lognormal, .exponential, .gamma, .weibull, .beta, .power }) |family| {
+        for (2..5) |n| {
+            const r = try tabulated(&d, .{ .family = family }, s, n);
+            try std.testing.expect(r.d != null and r.w2 != null and r.a2 == null);
+        }
+        try std.testing.expect((try tabulated(&d, .{ .family = family }, s, 5)).a2 != null);
+    }
+    // SAS keeps D/W2 with one observation remaining after boundary filtering.
+    const one = try tabulated(&d, .{ .family = .exponential, .exponential_boundary_count = 5 }, .{ .d = 0.5, .w2 = 1.0 / 12.0, .a2 = 0.38629436111989 }, 6);
+    try std.testing.expectEqual(Probability{ .value = 0.25, .sign = .greater }, one.d.?);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.02798611111111), one.w2.?.value, 1e-12);
+    try std.testing.expect(one.a2 == null);
+    var sampler: TestSampler = .{};
+    for ([_]Family{ .gumbel, .igauss, .pareto, .rayleigh }) |family| {
+        const simulated = try simulate(&d, .{ .family = family }, s, 2, .{ .seed = 1, .samples = 20 }, .{ .context = &sampler, .draw = TestSampler.draw });
+        try std.testing.expect(simulated.probabilities.a2 != null);
+    }
 }
