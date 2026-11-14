@@ -134,9 +134,9 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try h.uNum(a, p.value) }));
     }
     try context.publish("ParameterEstimates", &parameter_table);
-    // SAS does not offer EDF tables for Johnson distributions. For all other
-    // families an unimplemented probability method must fail explicitly.
-    if (curve.family != .sb and curve.family != .su and !(curve.family == .gamma and x.len < 10)) {
+    // The inference helper owns parameter- and sample-dependent availability;
+    // a blanket small-gamma guard would suppress valid all-known D/W2 tests.
+    if (curve.family != .sb and curve.family != .su) {
         const tests = try gof.compute(cx.diags, x, curve, request);
         var table = try context.createTable();
         table.ds.label = "Goodness-of-Fit Tests";

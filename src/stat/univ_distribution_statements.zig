@@ -570,3 +570,63 @@ test "UNIVARIATE output WHERE follows the renamed descriptor for qualified outpu
     try std.testing.expectEqualStrings("n", bad.columns.items[0].name);
     try std.testing.expect(invalid_diag.hasErrors());
 }
+
+test "UNIVARIATE public exponential FREQ boundaries preserve fitted scale and ODS probabilities" {
+    @import("../format.zig").resetPerRun();
+    defer @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "grp", "x", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for (1..4) |group| {
+        try ds.appendRow(&.{ .{ .num = @floatFromInt(group) }, .{ .num = 1 }, .{ .num = @floatFromInt(group) } });
+        for (2..12 - group) |x| try ds.appendRow(&.{ .{ .num = @floatFromInt(group) }, .{ .num = @floatFromInt(x) }, .{ .num = 1 } });
+    }
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output ParameterEstimates=pe GoodnessOfFit=g;", &d));
+    const t = try lex.tokenize(a, "proc univariate data=d noprint;by grp;var x;freq f;histogram x / noplot exponential(theta=1) endpoints=0 to 12 by 2;run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, t);
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const pe = lib.find("pe").?;
+    const gof = lib.find("g").?;
+    try std.testing.expectEqual(@as(usize, 12), pe.rows.items.len);
+    try std.testing.expectEqual(@as(usize, 9), gof.rows.items.len);
+    const scale_col = pe.indexOf("Estimate").?;
+    const stat_col = gof.indexOf("Stat").?;
+    const p_col = gof.indexOf("pValue").?;
+    for ([_]f64{ 4.5, 3.6, 2.8 }, [_]f64{ 0.20612584565148, 0.27298140699918, 0.35541564637523 }, [_]f64{ 0.0610498063026, 0.02109092820893, 0.00463333633783 }, 0..) |scale, statistic, p, i| {
+        try std.testing.expectApproxEqAbs(scale, pe.rows.items[4 * i + 1][scale_col].num, 1e-14);
+        try std.testing.expectApproxEqAbs(statistic, gof.rows.items[3 * i + 1][stat_col].num, 1e-12);
+        try std.testing.expectApproxEqAbs(p, gof.rows.items[3 * i + 1][p_col].num, 1e-10);
+    }
+}
+
+test "UNIVARIATE public small all-known gamma emits D and W2 but no A2" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 4 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output GoodnessOfFit=g;", &d));
+    const t = try lex.tokenize(a, "proc univariate data=d noprint;histogram x / noplot gamma(alpha=2 sigma=1) endpoints=0 to 5 by 1;run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, t);
+    try capture.finish(&lib, &d);
+    const result = lib.find("g").?;
+    try std.testing.expectEqual(@as(usize, 2), result.rows.items.len);
+    try std.testing.expectEqualStrings("D", result.rows.items[0][result.indexOf("TestLab").?].str);
+    try std.testing.expectEqualStrings("W-Sq", result.rows.items[1][result.indexOf("TestLab").?].str);
+}

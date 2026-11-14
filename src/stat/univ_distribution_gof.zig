@@ -25,14 +25,19 @@ pub fn known(statistics: dist.Edf, n: usize) Result {
         .statistics = statistics,
         .d = interpolate(statistics.d * (@sqrt(nf) + 0.12 + 0.11 / @sqrt(nf)), &.{ 1.019, 1.138, 1.224, 1.358, 1.480, 1.628, 1.731, 1.950 }, &probabilities),
         .w2 = interpolate((statistics.w2 - 0.4 / nf + 0.6 / (nf * nf)) * (1 + 1 / nf), &.{ 0.209, 0.284, 0.347, 0.461, 0.581, 0.743, 0.869, 1.167 }, &probabilities),
-        .a2 = interpolate(statistics.a2, &.{ 1.248, 1.610, 1.933, 2.492, 3.070, 3.880, 4.500, 6.000 }, &probabilities),
+        .a2 = if (n >= 5) interpolate(statistics.a2, &.{ 1.248, 1.610, 1.933, 2.492, 3.070, 3.880, 4.500, 6.000 }, &probabilities) else null,
     };
 }
 
 pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
     if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
-    const raw = dist.edf(distribution, x).?;
+    // Fit on every original observation. M9 removes all fitted exponential
+    // threshold equalities only from EDF, including supplied-threshold cases.
+    var boundary_count: usize = 0;
+    if (request.family == .exponential) while (boundary_count < x.len and x[boundary_count] == distribution.p.theta) : (boundary_count += 1) {};
+    if (boundary_count == x.len) return .{ .statistics = .{ .d = std.math.nan(f64), .w2 = std.math.nan(f64), .a2 = std.math.nan(f64) }, .d = null, .w2 = null, .a2 = null };
+    const raw = dist.edf(distribution, x[boundary_count..]).?;
     const stats: inference.Statistics = .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
     const r: inference.Request = .{
         .family = std.meta.stringToEnum(inference.Family, @tagName(request.family)).?,
@@ -41,6 +46,7 @@ pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribu
         .beta = distribution.p.beta,
         .sigma = distribution.p.sigma,
         .c = distribution.p.c,
+        .exponential_boundary_count = if (request.family == .exponential) boundary_count else null,
     };
     switch (request.family) {
         .gumbel, .igauss, .pareto, .rayleigh => {
@@ -335,4 +341,68 @@ test "UNIVARIATE MC typed numerical failures do not swallow malformed requests" 
     sampler.request.theta = null;
     try std.testing.expectError(error.ParseError, sampler.attempt(random, sample.len, &unsupported));
     try std.testing.expect(unsupported.hasErrors());
+}
+
+test "UNIVARIATE exponential EDF filters every boundary tie after full-sample fitting" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const requests = [_]fitting.Request{
+        .{ .family = .exponential, .theta = 1, .sigma = 4 },
+        .{ .family = .exponential, .theta = 1 },
+        .{ .family = .exponential, .theta = null, .sigma = 4 },
+        .{ .family = .exponential, .theta = null },
+    };
+    const statistics = [_][3]f64{
+        .{ 0.29706503780716, 0.19846494206599, 0.12850819832608 },
+        .{ 0.20612584565148, 0.27298140699918, 0.35541564637523 },
+        .{ 0.29706503780716, 0.19846494206599, 0.12850819832608 },
+        .{ 0.11841005329693, 0.07027225654644, 0.07101417870101 },
+    };
+    const probabilities = [_][3]f64{
+        .{ 0.14609523741611, 0.25, 0.25 },
+        .{ 0.0610498063026, 0.02109092820893, 0.00463333633783 },
+        .{ 0.13903989532036, 0.25, 0.25 },
+        .{ 0.16259807862917, 0.25, 0.25 },
+    };
+    for (requests, statistics, probabilities) |request, expected_stat, expected_p| {
+        for (1..4) |ties| {
+            var x: [10]f64 = undefined;
+            for (&x, 0..) |*v, i| v.* = if (i < ties) 1 else @floatFromInt(i - ties + 2);
+            const fitted = try fitting.fit(&d, &x, request);
+            if (request.theta != null and request.sigma == null) {
+                var sum: f64 = 0;
+                for (x) |v| sum += v - 1;
+                try std.testing.expectApproxEqAbs(sum / 10, fitted.p.sigma, 1e-14);
+            }
+            const result = try compute(&d, &x, fitted, request);
+            try std.testing.expect(std.math.isFinite(result.statistics.a2));
+            try std.testing.expectApproxEqAbs(expected_stat[ties - 1], result.statistics.w2, 1e-12);
+            try std.testing.expectApproxEqAbs(expected_p[ties - 1], result.w2.?.value, 1e-10);
+        }
+    }
+    const known_request: fitting.Request = .{ .family = .exponential, .theta = 0, .sigma = 1 };
+    const single = try compute(&d, &.{ 0, @log(@as(f64, 2)) }, .{ .family = .exponential, .p = .{} }, known_request);
+    try std.testing.expect(single.d != null and single.w2 != null and single.a2 == null);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0 / 12.0), single.statistics.w2, 1e-15);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.02798611111111), single.w2.?.value, 1e-12);
+    const empty = try compute(&d, &.{ 0, 0, 0 }, .{ .family = .exponential, .p = .{} }, known_request);
+    try std.testing.expect(empty.d == null and empty.w2 == null and empty.a2 == null);
+    try std.testing.expect(std.math.isNan(empty.statistics.d));
+    try std.testing.expect(!d.hasErrors());
+}
+
+test "UNIVARIATE EDF adapter preserves unrounded shape availability" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var fitted: dist.Distribution = .{ .family = .beta, .p = .{ .alpha = 4.9999996, .beta = 2 } };
+    var x: [40]f64 = undefined;
+    for (&x, 0..) |*v, i| v.* = fitted.quantile((@as(f64, @floatFromInt(i)) + 0.5) / 40);
+    const request: fitting.Request = .{ .family = .beta, .sigma = 1 };
+    const below = try compute(&d, &x, fitted, request);
+    try std.testing.expect(below.d != null and below.w2 != null and below.a2 != null);
+    fitted.p.alpha = 5;
+    const boundary = try compute(&d, &x, fitted, request);
+    try std.testing.expect(boundary.d == null and boundary.w2 == null and boundary.a2 == null);
 }
