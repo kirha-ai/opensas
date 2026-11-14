@@ -60,8 +60,27 @@ const Bootstrap = struct {
     sample: []f64,
     distribution: dist.Distribution,
     request: fitting.Request,
+    const Attempt = union(enum) {
+        statistics: inference.Statistics,
+        numerical_fit_failure: struct { reason: []const u8, retained_candidate: bool },
+    };
     fn draw(context: ?*anyopaque, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!inference.Statistics {
         const self: *Bootstrap = @ptrCast(@alignCast(context.?));
+        const result = self.attempt(random, n, d) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            try d.report(.err, 0, "UNIVARIATE: EDF refit failed; no replication was discarded", .{});
+            return err;
+        };
+        return switch (result) {
+            .statistics => |statistics| statistics,
+            .numerical_fit_failure => |failure| d.fail(error.ParseError, 0, "UNIVARIATE: EDF numerical refit failure ({s}); no replication was discarded", .{failure.reason}),
+        };
+    }
+
+    /// Separate expected numerical fit failures from malformed requests and
+    /// unsupported algorithms. The legacy helper still aborts via draw above;
+    /// only an explicit accounting API may consume an excluded-fit outcome.
+    fn attempt(self: *Bootstrap, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!Attempt {
         std.debug.assert(self.sample.len == n);
         for (self.sample) |*value| {
             // Open (0,1), with exactly representable half-unit endpoints.
@@ -76,10 +95,17 @@ const Bootstrap = struct {
         request.trace = null;
         request.itprint = false;
         request.optprint = false;
-        const fitted = fitting.fit(d, self.sample, request) catch return d.fail(error.ParseError, 0, "UNIVARIATE: EDF refit failed; no replication was discarded", .{});
-        if (!report.converged) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF refit did not converge; no replication was discarded", .{});
+        var trial_diagnostics = diag.Diagnostics.init(d.arena);
+        const fitted = fitting.fit(&trial_diagnostics, self.sample, request) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            if (!report.converged and report.reason != null) return .{ .numerical_fit_failure = .{ .reason = report.reason.?, .retained_candidate = false } };
+            try d.list.appendSlice(d.arena, trial_diagnostics.list.items);
+            return err;
+        };
+        if (!report.converged) return .{ .numerical_fit_failure = .{ .reason = report.reason orelse "nonconverged", .retained_candidate = true } };
+        try d.list.appendSlice(d.arena, trial_diagnostics.list.items);
         const raw = dist.edf(fitted, self.sample).?;
-        return .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
+        return .{ .statistics = .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 } };
     }
 };
 
@@ -221,4 +247,92 @@ test "UNIVARIATE estimated-family MC callbacks agree with independent M9 probes"
             try std.testing.expectApproxEqAbs(reference, actual, tolerance);
         }
     }
+}
+
+test "UNIVARIATE conditional Pareto callback preserves counts and matches independent SAS references" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var x: [40]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const u = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 40, 1.5);
+        v.* = (std.math.pow(f64, 1 - u, -0.3) - 1) / 0.3;
+    }
+    var d = diag.Diagnostics.init(a);
+    const request: fitting.Request = .{ .family = .pareto, .theta = 0, .sigma = 1 };
+    const fitted = try fitting.fit(&d, &x, request);
+    const observed = dist.edf(fitted, &x).?;
+    const references = [_]struct { seed: u64, valid: usize, exceedances: [3]usize }{
+        .{ .seed = 17, .valid = 976, .exceedances = .{ 201, 38, 21 } },
+        .{ .seed = 13579, .valid = 985, .exceedances = .{ 214, 39, 24 } },
+        .{ .seed = 24680, .valid = 972, .exceedances = .{ 227, 47, 23 } },
+    };
+    for (references) |reference| {
+        var sample: [40]f64 = undefined;
+        var sampler: Bootstrap = .{ .sample = &sample, .distribution = fitted, .request = request };
+        var rng = std.Random.DefaultPrng.init(reference.seed);
+        var valid: usize = 0;
+        var failures: usize = 0;
+        var counts: [3]usize = @splat(0);
+        for (0..997) |replication| {
+            switch (try sampler.attempt(rng.random(), sample.len, &d)) {
+                .statistics => |statistics| {
+                    valid += 1;
+                    if (statistics.d >= observed.d) counts[0] += 1;
+                    if (statistics.w2 >= observed.w2) counts[1] += 1;
+                    if (statistics.a2 >= observed.a2) counts[2] += 1;
+                },
+                .numerical_fit_failure => failures += 1,
+            }
+            try std.testing.expectEqual(replication + 1, valid + failures);
+        }
+        try std.testing.expect(valid > 0);
+        const denominator: f64 = @floatFromInt(valid);
+        const reference_denominator: f64 = @floatFromInt(reference.valid);
+        for (counts, reference.exceedances) |count, expected_count| {
+            try std.testing.expect(count <= valid);
+            const probability = @as(f64, @floatFromInt(count)) / denominator;
+            const expected = @as(f64, @floatFromInt(expected_count)) / reference_denominator;
+            const pooled = @max((probability + expected) / 2, 1 / @min(denominator, reference_denominator));
+            const tolerance = 5 * @sqrt(pooled * (1 - pooled) * (1 / denominator + 1 / reference_denominator)) + 1 / @min(denominator, reference_denominator);
+            try std.testing.expectApproxEqAbs(expected, probability, tolerance);
+        }
+        try std.testing.expect(!d.hasErrors());
+    }
+}
+
+test "UNIVARIATE MC typed numerical failures do not swallow malformed requests" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Zero = struct {
+        fn fill(_: *@This(), bytes: []u8) void {
+            @memset(bytes, 0);
+        }
+    };
+    var state: Zero = .{};
+    const random = std.Random.init(&state, Zero.fill);
+    var sample: [40]f64 = undefined;
+    var sampler: Bootstrap = .{ .sample = &sample, .distribution = .{ .family = .pareto, .p = .{ .sigma = 1, .alpha = -0.3 } }, .request = .{ .family = .pareto, .sigma = 1 } };
+    var d = diag.Diagnostics.init(a);
+    // A degenerate generated sample has no estimate; it is a typed numerical
+    // outcome, not malformed SAS input and not a substituted statistic.
+    const result = try sampler.attempt(random, sample.len, &d);
+    try std.testing.expect(result == .numerical_fit_failure);
+    try std.testing.expectEqualStrings("invalid_sample", result.numerical_fit_failure.reason);
+    try std.testing.expect(!result.numerical_fit_failure.retained_candidate);
+    try std.testing.expectEqual(@as(usize, 0), d.count());
+    // Until the additive accounting API lands, the existing simulation path
+    // remains explicitly strict; refactoring must not silently exclude draws.
+    try std.testing.expectError(error.ParseError, Bootstrap.draw(&sampler, random, sample.len, &d));
+    try std.testing.expect(d.hasErrors());
+    var malformed = diag.Diagnostics.init(a);
+    sampler.request.maxiter = 0;
+    try std.testing.expectError(error.ParseError, sampler.attempt(random, sample.len, &malformed));
+    try std.testing.expect(malformed.hasErrors());
+    var unsupported = diag.Diagnostics.init(a);
+    sampler.request.maxiter = 20;
+    sampler.request.theta = null;
+    try std.testing.expectError(error.ParseError, sampler.attempt(random, sample.len, &unsupported));
+    try std.testing.expect(unsupported.hasErrors());
 }
