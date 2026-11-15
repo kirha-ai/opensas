@@ -2011,7 +2011,7 @@ test "dev5 EDF accounted mixed attempts use valid denominator and exact budget" 
         .{ .valid = .{ .d = 0.1, .w2 = 0.2, .a2 = 3 } },
     };
     var sampler: AccountedTestSampler = .{ .outcomes = &outcomes };
-    const got = try simulateAccounted(&d, .{ .family = .pareto }, .{ .d = 0.5, .w2 = 1, .a2 = 2 }, 40, .{ .seed = 17, .samples = 5 }, .{ .context = &sampler, .draw = AccountedTestSampler.draw });
+    const got = try simulateAccounted(&d, .{ .family = .pareto }, .{ .d = 0.5, .w2 = 1, .a2 = 4 }, 40, .{ .seed = 17, .samples = 5 }, .{ .context = &sampler, .draw = AccountedTestSampler.draw });
     try std.testing.expectEqual(@as(usize, 5), sampler.calls);
     try std.testing.expectEqual(@as(usize, 5), got.samples);
     try std.testing.expectEqual(@as(usize, 5), got.attempted);
@@ -2019,9 +2019,9 @@ test "dev5 EDF accounted mixed attempts use valid denominator and exact budget" 
     try std.testing.expectEqual(@as(usize, 2), got.failed);
     try std.testing.expectEqual(@as(u64, 17), got.seed);
     try std.testing.expectEqual(SimulationStatus.conditional, got.status);
-    try std.testing.expectEqualDeep([3]usize{ 2, 1, 2 }, got.exceedances);
+    try std.testing.expectEqualDeep([3]usize{ 2, 1, 0 }, got.exceedances);
     const probabilities = got.probabilities.?;
-    const want = [_]f64{ 2.0 / 3.0, 1.0 / 3.0, 2.0 / 3.0 };
+    const want = [_]f64{ 2.0 / 3.0, 1.0 / 3.0, 0 };
     for ([_]Probability{ probabilities.d.?, probabilities.w2.?, probabilities.a2.? }, want, got.standard_errors.?) |p, expected, se| {
         try std.testing.expectEqual(expected, p.value);
         try std.testing.expectEqual(Sign.exact, p.sign);
