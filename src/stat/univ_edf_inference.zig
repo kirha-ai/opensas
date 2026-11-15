@@ -1280,6 +1280,82 @@ pub fn simulate(d: *diag.Diagnostics, r: Request, observed: Statistics, n: usize
     return .{ .probabilities = .{ .d = p[0], .w2 = p[1], .a2 = p[2] }, .exceedances = counts, .standard_errors = se, .samples = options.samples, .seed = options.seed };
 }
 
+/// Only an explicitly classified numerical refit failure may be excluded.
+/// The callback owns classification; malformed/unsupported requests and resource
+/// errors must be thrown, never translated into this payload. A retained finite
+/// candidate does not make a nonconverged fit valid.
+pub const NumericalFitFailure = struct { reason: []const u8, retained_candidate: bool };
+pub const SimulationAttempt = union(enum) {
+    valid: Statistics,
+    numerical_fit_failure: NumericalFitFailure,
+};
+pub const AccountedSimulator = struct {
+    context: ?*anyopaque = null,
+    draw: *const fn (?*anyopaque, std.Random, usize, *diag.Diagnostics) diag.Error!SimulationAttempt,
+};
+pub const SimulationStatus = enum { all_valid, conditional, no_valid };
+pub const AccountedSimulationResult = struct {
+    /// Null only when no attempt produced valid statistics; never fake zeros.
+    probabilities: ?Result = null,
+    standard_errors: ?[3]f64 = null,
+    /// Counts are ordered D/W2/A2, using >= as in strict simulate.
+    exceedances: [3]usize = .{ 0, 0, 0 },
+    /// Requested attempt budget, not the effective probability denominator.
+    samples: usize,
+    attempted: usize = 0,
+    valid: usize = 0,
+    failed: usize = 0,
+    seed: u64,
+    status: SimulationStatus = .no_valid,
+};
+
+/// Fixed attempt budget, without replacement draws. Conditional probabilities
+/// and binomial SE use valid refits only (dev4 conditional-mc M9 evidence).
+/// This is additive: strict simulate and its callback contract stay unchanged.
+/// Fatal errors abort immediately, even after earlier counted failures. The
+/// failure payload is consumed synchronously, not retained in the aggregate.
+/// no_valid returns counts/status and an ERROR diagnostic, without numbers.
+pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics, n: usize, options: SimulationOptions, sampler: AccountedSimulator) diag.Error!AccountedSimulationResult {
+    try validate(d, observed, n);
+    switch (r.family) {
+        .gumbel, .igauss, .pareto, .rayleigh => {},
+        else => return d.fail(error.ParseError, 0, "UNIVARIATE: this family requires tabulated EDF probabilities", .{}),
+    }
+    if (options.samples == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDFNSAMPLES must be positive", .{});
+    var result: AccountedSimulationResult = .{ .samples = options.samples, .seed = options.seed };
+    var generator = std.Random.DefaultPrng.init(options.seed);
+    for (0..options.samples) |_| {
+        const attempt = try sampler.draw(sampler.context, generator.random(), n, d);
+        result.attempted += 1;
+        switch (attempt) {
+            .numerical_fit_failure => result.failed += 1,
+            .valid => |s| {
+                try validate(d, s, n);
+                result.valid += 1;
+                if (s.d >= observed.d) result.exceedances[0] += 1;
+                if (s.w2 >= observed.w2) result.exceedances[1] += 1;
+                if (s.a2 >= observed.a2) result.exceedances[2] += 1;
+            },
+        }
+    }
+    if (result.failed > 0) try d.warn(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });
+    if (result.valid == 0) {
+        try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
+        return result;
+    }
+    result.status = if (result.failed == 0) .all_valid else .conditional;
+    const m: f64 = @floatFromInt(result.valid);
+    var p: [3]Probability = undefined;
+    var se: [3]f64 = undefined;
+    for (result.exceedances, 0..) |k, i| {
+        p[i] = .{ .value = @as(f64, @floatFromInt(k)) / m };
+        se[i] = @sqrt(p[i].value * (1 - p[i].value) / m);
+    }
+    result.probabilities = .{ .d = p[0], .w2 = p[1], .a2 = p[2] };
+    result.standard_errors = se;
+    return result;
+}
+
 test "dev5 EDF Table 4.31 estimation masks and strict shape boundaries" {
     try std.testing.expect(!availability(.{ .family = .normal, .estimated = .{ .mu = true } }).d);
     try std.testing.expect(availability(.{ .family = .normal, .estimated = .{ .mu = true } }).a2);
@@ -1903,4 +1979,134 @@ test "dev5 EDF lognormal all median brackets preserve probabilities and failed-f
     try std.testing.expectEqual(@as(usize, 1080), count);
     try std.testing.expectEqual(@as(usize, 24), failed_fits);
     try std.testing.expectEqual(@as(usize, 1056), available);
+}
+
+const AccountedTestSampler = struct {
+    calls: usize = 0,
+    outcomes: []const SimulationAttempt,
+    fatal_at: ?usize = null,
+    fatal: diag.Error = error.ExecError,
+
+    fn draw(context: ?*anyopaque, _: std.Random, _: usize, _: *diag.Diagnostics) diag.Error!SimulationAttempt {
+        const self: *@This() = @ptrCast(@alignCast(context.?));
+        const index = self.calls;
+        self.calls += 1;
+        if (self.fatal_at == index) return self.fatal;
+        // A retry beyond the supplied budget fails rather than hanging a test.
+        if (index >= self.outcomes.len) return error.ExecError;
+        return self.outcomes[index];
+    }
+};
+
+test "dev5 EDF accounted mixed attempts use valid denominator and exact budget" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const failure: SimulationAttempt = .{ .numerical_fit_failure = .{ .reason = "iteration_limit", .retained_candidate = true } };
+    const outcomes = [_]SimulationAttempt{
+        failure,
+        .{ .valid = .{ .d = 0.5, .w2 = 1, .a2 = 2 } }, // ties count
+        .{ .valid = .{ .d = 0.7, .w2 = 0.2, .a2 = 0.3 } },
+        failure,
+        .{ .valid = .{ .d = 0.1, .w2 = 0.2, .a2 = 3 } },
+    };
+    var sampler: AccountedTestSampler = .{ .outcomes = &outcomes };
+    const got = try simulateAccounted(&d, .{ .family = .pareto }, .{ .d = 0.5, .w2 = 1, .a2 = 2 }, 40, .{ .seed = 17, .samples = 5 }, .{ .context = &sampler, .draw = AccountedTestSampler.draw });
+    try std.testing.expectEqual(@as(usize, 5), sampler.calls);
+    try std.testing.expectEqual(@as(usize, 5), got.samples);
+    try std.testing.expectEqual(@as(usize, 5), got.attempted);
+    try std.testing.expectEqual(@as(usize, 3), got.valid);
+    try std.testing.expectEqual(@as(usize, 2), got.failed);
+    try std.testing.expectEqual(@as(u64, 17), got.seed);
+    try std.testing.expectEqual(SimulationStatus.conditional, got.status);
+    try std.testing.expectEqualDeep([3]usize{ 2, 1, 2 }, got.exceedances);
+    const probabilities = got.probabilities.?;
+    const want = [_]f64{ 2.0 / 3.0, 1.0 / 3.0, 2.0 / 3.0 };
+    for ([_]Probability{ probabilities.d.?, probabilities.w2.?, probabilities.a2.? }, want, got.standard_errors.?) |p, expected, se| {
+        try std.testing.expectEqual(expected, p.value);
+        try std.testing.expectEqual(Sign.exact, p.sign);
+        try std.testing.expectEqual(@sqrt(expected * (1 - expected) / 3), se);
+    }
+    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=5, valid=3, failed=2; probabilities are conditional on successful/converged refits\n", try d.render());
+}
+
+test "dev5 EDF accounted zero valid remains bounded and returns no fake probabilities" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const failure: SimulationAttempt = .{ .numerical_fit_failure = .{ .reason = "initialization_failed", .retained_candidate = false } };
+    var sampler: AccountedTestSampler = .{ .outcomes = &.{ failure, failure, failure } };
+    const got = try simulateAccounted(&d, .{ .family = .pareto }, .{ .d = 0.5, .w2 = 1, .a2 = 2 }, 40, .{ .seed = 1, .samples = 3 }, .{ .context = &sampler, .draw = AccountedTestSampler.draw });
+    try std.testing.expectEqual(@as(usize, 3), sampler.calls);
+    try std.testing.expectEqual(@as(usize, 3), got.attempted);
+    try std.testing.expectEqual(@as(usize, 3), got.failed);
+    try std.testing.expectEqual(@as(usize, 0), got.valid);
+    try std.testing.expectEqual(SimulationStatus.no_valid, got.status);
+    try std.testing.expect(got.probabilities == null and got.standard_errors == null);
+    try std.testing.expectEqualDeep([3]usize{ 0, 0, 0 }, got.exceedances);
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; probabilities are conditional on successful/converged refits\nERROR: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; no probabilities or standard errors are available\n", try d.render());
+}
+
+test "dev5 EDF accounted fatal and malformed outcomes abort without exclusion" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const observed: Statistics = .{ .d = 0.5, .w2 = 1, .a2 = 2 };
+    const failure: SimulationAttempt = .{ .numerical_fit_failure = .{ .reason = "iteration_limit", .retained_candidate = false } };
+    for ([_]diag.Error{ error.ParseError, error.ExecError, error.OutOfMemory }) |fatal| {
+        var d = diag.Diagnostics.init(arena.allocator());
+        var sampler: AccountedTestSampler = .{ .outcomes = &.{ failure, .{ .valid = observed }, failure }, .fatal_at = 1, .fatal = fatal };
+        try std.testing.expectError(fatal, simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 1, .samples = 3 }, .{ .context = &sampler, .draw = AccountedTestSampler.draw }));
+        try std.testing.expectEqual(@as(usize, 2), sampler.calls);
+        try std.testing.expectEqual(@as(usize, 0), d.count()); // no catch-to-exclusion warning
+    }
+    var d = diag.Diagnostics.init(arena.allocator());
+    var sampler: AccountedTestSampler = .{ .outcomes = &.{.{ .valid = .{ .d = std.math.nan(f64), .w2 = 1, .a2 = 2 } }} };
+    const callback: AccountedSimulator = .{ .context = &sampler, .draw = AccountedTestSampler.draw };
+    try std.testing.expectError(error.ParseError, simulateAccounted(&d, .{ .family = .normal }, observed, 40, .{ .seed = 1 }, callback));
+    try std.testing.expectError(error.ParseError, simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 1, .samples = 0 }, callback));
+    try std.testing.expectError(error.ParseError, simulateAccounted(&d, .{ .family = .pareto }, observed, 1, .{ .seed = 1 }, callback));
+    try std.testing.expectEqual(@as(usize, 0), sampler.calls);
+    try std.testing.expectError(error.ParseError, simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 1 }, callback));
+    try std.testing.expectEqual(@as(usize, 1), sampler.calls);
+    try std.testing.expect(d.hasErrors());
+}
+
+test "dev5 EDF accounted seeded replay and all-valid strict compatibility" {
+    const Seeded = struct {
+        exclude: bool,
+        fn statistics(_: ?*anyopaque, random: std.Random, _: usize, _: *diag.Diagnostics) diag.Error!Statistics {
+            return .{ .d = random.float(f64), .w2 = random.float(f64), .a2 = random.float(f64) };
+        }
+        fn draw(context: ?*anyopaque, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!SimulationAttempt {
+            const self: *@This() = @ptrCast(@alignCast(context.?));
+            const s = try statistics(null, random, n, d);
+            if (self.exclude and s.d < 0.25) return .{ .numerical_fit_failure = .{ .reason = "controlled_failure", .retained_candidate = true } };
+            return .{ .valid = s };
+        }
+    };
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var sampler: Seeded = .{ .exclude = false };
+    const observed: Statistics = .{ .d = 0.5, .w2 = 0.5, .a2 = 0.5 };
+    const options: SimulationOptions = .{ .seed = 13579, .samples = 997 };
+    const callback: AccountedSimulator = .{ .context = &sampler, .draw = Seeded.draw };
+    const strict = try simulate(&d, .{ .family = .pareto }, observed, 40, options, .{ .draw = Seeded.statistics });
+    const accounted = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, options, callback);
+    try std.testing.expectEqualDeep(strict.probabilities, accounted.probabilities.?);
+    try std.testing.expectEqualDeep(strict.standard_errors, accounted.standard_errors.?);
+    try std.testing.expectEqualDeep(strict.exceedances, accounted.exceedances);
+    try std.testing.expectEqual(SimulationStatus.all_valid, accounted.status);
+    try std.testing.expectEqual(@as(usize, 997), accounted.valid);
+    try std.testing.expectEqual(@as(usize, 0), accounted.failed);
+    try std.testing.expectEqual(@as(usize, 0), d.count());
+    sampler.exclude = true;
+    const a = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, options, callback);
+    const b = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, options, callback);
+    try std.testing.expectEqualDeep(a, b);
+    try std.testing.expect(a.failed > 0 and a.valid > 0);
+    try std.testing.expectEqual(a.samples, a.valid + a.failed);
+    const c = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 24680, .samples = 997 }, callback);
+    try std.testing.expect(!std.meta.eql(a.exceedances, c.exceedances));
 }
