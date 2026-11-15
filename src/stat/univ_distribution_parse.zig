@@ -11,6 +11,9 @@ pub const Curves = struct { requests: []fitting.Request, percents: []const f64, 
 pub fn family(name: []const u8) ?dist.Family {
     inline for (std.meta.tags(dist.Family)) |tag| if (eq(name, @tagName(tag))) return tag;
     if (eq(name, "exp")) return .exponential;
+    if (eq(name, "lnorm")) return .lognormal;
+    if (eq(name, "norm")) return .normal;
+    if (eq(name, "weib")) return .weibull;
     return null;
 }
 
@@ -20,7 +23,7 @@ fn parameter(kind: dist.Family, key: []const u8) ?[]const u8 {
         .gamma => "alpha",
         .weibull => "c",
         else => return null,
-    } else if (eq(key, "b") and kind == .beta) "beta" else key;
+    } else if (eq(key, "b") and kind == .beta) "beta" else if (eq(key, "a") and kind == .beta) "alpha" else key;
     const allowed = switch (kind) {
         .normal, .gumbel => "mu sigma",
         .lognormal => "theta sigma zeta",
@@ -60,7 +63,7 @@ pub fn parsePlot(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i
 }
 
 fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, plot: bool) diag.Error!Curves {
-    const weibull2 = plot and eq(t[i.*].text, "weibull2");
+    const weibull2 = plot and (eq(t[i.*].text, "weibull2") or eq(t[i.*].text, "w2"));
     const kind = if (weibull2) dist.Family.weibull else family(t[i.*].text) orelse return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: unknown distribution {s}", .{t[i.*].text});
     i.* += 1;
     const fields = std.meta.fields(dist.Parameters);
@@ -83,7 +86,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                 noline = true;
                 continue;
             }
-            if (plot and (eq(key, "noprint") or eq(key, "midpercents") or eq(key, "percents"))) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} is a HISTOGRAM distribution option", .{key});
+            if (plot and (eq(key, "noprint") or eq(key, "midpercents") or eq(key, "percents") or eq(key, "percent"))) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} is a HISTOGRAM distribution option", .{key});
             if (eq(key, "noprint")) {
                 noprint = true;
                 continue;
@@ -147,7 +150,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                 if (eq(key, "alphadelta")) common.alphadelta = value else common.alphainitial = value;
                 continue;
             }
-            if (eq(key, "percents")) {
+            if (eq(key, "percents") or eq(key, "percent")) {
                 while (t[i.*].tag == .number or t[i.*].tag == .comma) {
                     if (t[i.*].tag == .comma) {
                         i.* += 1;
@@ -231,4 +234,26 @@ test "UNIVARIATE distribution parameter lists aliases and captured rejection" {
     try std.testing.expectEqual(@as(?f64, -1), ln.theta);
     try std.testing.expectEqual(@as(?f64, 2), ln.zeta);
     try std.testing.expectEqual(@as(?f64, 0.5), ln.sigma);
+}
+
+test "UNIVARIATE documented distribution aliases preserve canonical requests" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lex = @import("../lexer.zig");
+    for ([_][]const u8{ "beta(a=2 b=3 percent=10 50 90)", "lnorm(shape=.5)", "norm(mu=2)", "weib(c=2)" }, [_][]const u8{ "beta(alpha=2 beta=3 percents=10 50 90)", "lognormal(sigma=.5)", "normal(mu=2)", "weibull(c=2)" }) |alias, canonical| {
+        var d = diag.Diagnostics.init(a);
+        var i: usize = 0;
+        const actual = try parse(a, &d, try lex.tokenize(a, alias, &d), &i);
+        i = 0;
+        const expected = try parse(a, &d, try lex.tokenize(a, canonical, &d), &i);
+        try std.testing.expectEqualDeep(expected, actual);
+    }
+    for ([_][]const u8{ "qqplot x / w2(theta=1 sigma=2 c=3);", "probplot x / w2(theta=1 sigma=2 slope=.5);" }) |source| {
+        var d = diag.Diagnostics.init(a);
+        var i: usize = 0;
+        const plot = try @import("univ_distribution_plots.zig").parse(a, &d, try lex.tokenize(a, source, &d), &i);
+        try std.testing.expect(plot.weibull2);
+        try std.testing.expectEqual(dist.Family.weibull, plot.curves.requests[0].family);
+    }
 }

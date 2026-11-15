@@ -34,9 +34,9 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
     if (t[i.*].tag == .slash) i.* += 1 else if (t[i.*].tag != .semicolon and t[i.*].tag != .eof) return d.fail(error.ParseError, 0, "UNIVARIATE: expected plot variable list or slash", .{});
     while (t[i.*].tag != .semicolon and t[i.*].tag != .eof) {
         const option = t[i.*].text;
-        if (parameters.family(option) != null or eq(option, "weibull2")) {
+        if (parameters.family(option) != null or eq(option, "weibull2") or eq(option, "w2")) {
             if (statement.curves.requests.len != 0) return d.fail(error.ParseError, 0, "UNIVARIATE: a plot statement accepts only one distribution family", .{});
-            statement.weibull2 = eq(option, "weibull2");
+            statement.weibull2 = eq(option, "weibull2") or eq(option, "w2");
             if (statement.weibull2 and (kind == .cdf or kind == .pp)) return d.fail(error.ParseError, 0, "UNIVARIATE: WEIBULL2 is a QQPLOT/PROBPLOT option", .{});
             statement.curves = try parameters.parsePlot(a, d, t, i);
             continue;
