@@ -124,7 +124,7 @@ fn row(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const u
     try output.appendRow(values);
 }
 
-test "dev3 OUTKERNEL grids and explicit unresolved compact cutoff comparisons" {
+test "dev3 OUTKERNEL grids and compact cutoff oracle comparisons" {
     const binning = @import("univ_histogram_bins.zig");
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -183,7 +183,6 @@ test "dev3 OUTKERNEL grids and explicit unresolved compact cutoff comparisons" {
         .{ .name = "flatmise", .x = &flatmise, .iqr = 0, .requests = &.{} },
     };
     var compared: usize = 0;
-    var differences: usize = 0;
     for (cases) |case| {
         const bin_plan = try binning.determine(a, &d, &.{.{ .sorted = case.x }}, .{});
         const ends = if (case.ends.len > 0) case.ends else bin_plan.endpoints;
@@ -213,27 +212,10 @@ test "dev3 OUTKERNEL grids and explicit unresolved compact cutoff comparisons" {
                 return error.TestUnexpectedResult;
             }
             if (@abs(density - actual_row[5].num) > 1e-9) {
-                try std.testing.expect(report.compact_cutoff_unverified);
-                var gaps = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_kernel_grid_dev3_gaps.txt"), '\n');
-                var known = false;
-                while (gaps.next()) |gap| {
-                    if (gap[0] == '#') continue;
-                    var fields_gap = std.mem.splitScalar(u8, gap, '|');
-                    const name = fields_gap.next().?;
-                    const index = try std.fmt.parseInt(usize, fields_gap.next().?, 10);
-                    if (!std.mem.eql(u8, name, case.name) or index != row_index) continue;
-                    try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, fields_gap.next().?), point, 1e-12);
-                    try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, fields_gap.next().?), density, 1e-14);
-                    try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, fields_gap.next().?), actual_row[5].num, 1e-12);
-                    known = true;
-                    break;
-                }
-                if (!known) {
-                    std.debug.print("unrecorded kernel discrepancy {s} row {d}: {d} vs {d}\n", .{ case.name, row_index, density, actual_row[5].num });
-                    return error.TestUnexpectedResult;
-                }
-                differences += 1;
-            } else try std.testing.expectApproxEqAbs(scaled, actual_row[4].num, 1e-9 * @max(@as(f64, 1), @abs(scaled)));
+                std.debug.print("kernel discrepancy {s} row {d}: oracle {d}, actual {d}\n", .{ case.name, row_index, density, actual_row[5].num });
+                return error.TestUnexpectedResult;
+            }
+            try std.testing.expectApproxEqAbs(scaled, actual_row[4].num, 1e-9 * @max(@as(f64, 1), @abs(scaled)));
             try std.testing.expectEqualStrings(fields.next().?, actual_row[1].str);
             row_index += 1;
             compared += 1;
@@ -244,9 +226,6 @@ test "dev3 OUTKERNEL grids and explicit unresolved compact cutoff comparisons" {
         }
     }
     try std.testing.expectEqual(@as(usize, 10085), compared);
-    // Do not turn these three oracle disagreements into passing equality
-    // expectations or hide them by widening the density tolerance.
-    try std.testing.expectEqual(@as(usize, 3), differences);
 }
 
 test "dev3 OUTKERNEL schema preserves key formats and empty descriptors" {
@@ -321,4 +300,80 @@ test "dev3 output honors shared period supplied by statement owner" {
     // SAS M9 dev4-kernel-periodic-heldout: C=.2 on the shared four-range grid.
     try std.testing.expectApproxEqAbs(@as(f64, 0.0000552502448), output.rows.items[0][5].num, 1e-12);
     try std.testing.expectError(error.ParseError, appendBatch(&d, output, &source, &.{}, &.{}, 0, &x, 0.75, &.{.{ .fft_period = 3 }}, &.{ 0, 1 }, .percent, .{}));
+}
+
+test "dev3 frozen compact cutoff rule prospective SAS M9 heldouts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var source = Dataset.init(a, "d");
+    _ = try source.addColumn("x", .num);
+    var cases = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_compact_heldout_dev3_cases.txt"), '\n');
+    var compared: usize = 0;
+    var case_count: usize = 0;
+    while (cases.next()) |line| {
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const name = fields.next().?;
+        const kind = fields.next().?;
+        const c = fields.next().?;
+        const lower = fields.next().?;
+        const upper = fields.next().?;
+        const first = try std.fmt.parseFloat(f64, fields.next().?);
+        const last = try std.fmt.parseFloat(f64, fields.next().?);
+        const width = try std.fmt.parseFloat(f64, fields.next().?);
+        const iqr = try std.fmt.parseFloat(f64, fields.next().?);
+        var sample: std.ArrayList(f64) = .empty;
+        var observations = std.mem.splitScalar(u8, fields.next().?, ',');
+        while (observations.next()) |v| try sample.append(a, try std.fmt.parseFloat(f64, v));
+        const request: kernel.Request = .{
+            .kind = if (std.mem.eql(u8, kind, "quadratic")) .quadratic else .triangular,
+            .bandwidth = if (std.mem.eql(u8, c, "mise")) .mise else .{ .numeric = try std.fmt.parseFloat(f64, c) },
+            .lower = if (std.mem.eql(u8, lower, "none")) null else try std.fmt.parseFloat(f64, lower),
+            .upper = if (std.mem.eql(u8, upper, "none")) null else try std.fmt.parseFloat(f64, upper),
+        };
+        const endpoints = try a.alloc(f64, 1 + @as(usize, @intFromFloat(@round((last - first) / width))));
+        for (endpoints, 0..) |*v, i| v.* = first + @as(f64, @floatFromInt(i)) * width;
+        const output = try create(a, &source, &.{}, 8, .percent);
+        var report: Report = .{};
+        // These heldouts explicitly supply the complete endpoint window.
+        // M9 retains it outside reflection bounds (with zero densities there).
+        try appendBatch(&d, output, &source, &.{}, &.{}, 0, sample.items, iqr, &.{request}, endpoints, .percent, .{ .bin_width = width, .report = &report, .clip_lower = false, .clip_upper = false });
+        var expected = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_compact_heldout_dev3.txt"), '\n');
+        var index: usize = 0;
+        while (expected.next()) |row_text| {
+            var row_fields = std.mem.splitScalar(u8, row_text, '|');
+            if (!std.mem.eql(u8, row_fields.next().?, name)) continue;
+            if (index >= output.rows.items.len) {
+                std.debug.print("heldout missing row {s}/{d}\n", .{ name, index });
+                return error.TestUnexpectedResult;
+            }
+            const actual = output.rows.items[index];
+            const want = [_]f64{
+                try std.fmt.parseFloat(f64, row_fields.next().?),
+                try std.fmt.parseFloat(f64, row_fields.next().?),
+                try std.fmt.parseFloat(f64, row_fields.next().?),
+                try std.fmt.parseFloat(f64, row_fields.next().?),
+            };
+            const got = [_]f64{ actual[2].num, actual[3].num, actual[5].num, actual[4].num };
+            const tolerance = [_]f64{ 1e-12, 1e-10, 1e-9, 1e-9 * @max(@as(f64, 1), @abs(want[3])) };
+            for (want, got, tolerance, 0..) |w, g, tol, field| {
+                if (@abs(w - g) > tol) {
+                    std.debug.print("heldout {s} row {d} field {d}: oracle {d}, actual {d}\n", .{ name, index, field, w, g });
+                    return error.TestUnexpectedResult;
+                }
+            }
+            index += 1;
+        }
+        if (index != output.rows.items.len) {
+            std.debug.print("heldout {s}: oracle rows {d}, actual rows {d}\n", .{ name, index, output.rows.items.len });
+            return error.TestUnexpectedResult;
+        }
+        try std.testing.expectEqual(index, report.point_count);
+        try std.testing.expect(!report.compact_cutoff_unverified);
+        compared += index;
+        case_count += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 30), case_count);
+    try std.testing.expectEqual(@as(usize, 10752), compared);
 }

@@ -2,6 +2,8 @@
 const std = @import("std");
 const diag = @import("../diag.zig");
 const kernel = @import("univ_kernel.zig");
+// Retain the status field for existing adapters. The connected-component cutoff
+// is now oracle-validated; this is not a claim about other distribution fitting.
 pub const Report = struct { point_count: usize = 0, compact_cutoff_unverified: bool = false };
 pub const Options = struct {
     report: ?*Report = null,
@@ -107,7 +109,6 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     if (last >= origin and last <= grid_last) try points.append(a, last);
     if (options.report) |report| {
         report.point_count += points.items.len;
-        report.compact_cutoff_unverified = report.compact_cutoff_unverified or estimate.request.kind != .normal;
     }
     return .{ .points = try points.toOwnedSlice(a), .origin = origin, .step = step, .length = length, .bin_width = width, .data_origin = lo, .sample_min = x[0], .sample_max = x[x.len - 1] };
 }
@@ -126,6 +127,9 @@ pub const Density = struct {
         return (1 - fraction) * a + fraction * b;
     }
     fn reflection(self: Density, point: f64) f64 {
+        // M9 applies this bandwidth/index guard before interpolation. A retained
+        // spectral run can extend past the nominal support by another node;
+        // interpolating first and then clipping changes reflected edge values.
         const tail = self.estimate.bandwidth * (if (self.estimate.request.kind == .normal) @as(f64, 3) else 1);
         const index = @floor((point - self.plan.data_origin) / self.plan.step);
         if (index < @floor((self.plan.sample_min - self.plan.data_origin - tail) / self.plan.step) or index > @ceil((self.plan.sample_max - self.plan.data_origin + tail) / self.plan.step)) return 0;
@@ -162,9 +166,10 @@ fn characteristic(kind: kernel.Kind, t: f64) f64 {
 
 /// Evaluate the real finite Fourier series directly (at most 512 ordinates).
 /// This is algebraically the same circular convolution as the FFT, without an
-/// FFT dependency. Compact-kernel gaps suppress finite-series ringing outside
-/// the rounded occupied-bin support. Three heldout cutoff disagreements are
-/// retained explicitly; Report marks compact cutoff parity as unverified.
+/// FFT dependency. For compact kernels, retain positive spectral components
+/// connected to deposited data mass and remove disconnected ringing. M9 probes
+/// distinguish this from a bandwidth-radius mask and from trimming outer tails
+/// only: disconnected ringing also occurs between separated sample clusters.
 pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate: kernel.Estimate, plan: Plan) diag.Error!Density {
     if ((plan.length != 256 and plan.length != 512) or !(plan.step > 0) or !std.math.isFinite(plan.step)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid spectral kernel plan", .{});
     if (x.len == 0 or !(estimate.bandwidth > 0) or !std.math.isFinite(estimate.bandwidth)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid kernel estimate for output", .{});
@@ -189,19 +194,32 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
         response[j] = sum / period;
     }
     const ordinates = try a.alloc(f64, length);
-    const radius = @ceil(estimate.bandwidth / plan.step);
     for (ordinates, 0..) |*value, index| {
         const i = @as(i64, @intCast(index));
         var sum: f64 = 0;
-        var occupied = false;
         for (mass[0..length], 0..) |weight, j| {
             if (weight == 0) continue;
             const delta = i - @as(i64, @intCast(j));
             const k: usize = @intCast(@mod(delta, @as(i64, @intCast(length))));
             sum += weight * response[k];
-            if (@as(f64, @floatFromInt(@abs(delta))) <= radius) occupied = true;
         }
-        value.* = if (estimate.request.kind != .normal and !occupied) 0 else @max(@as(f64, 0), sum / @as(f64, @floatFromInt(x.len)));
+        value.* = @max(@as(f64, 0), sum / @as(f64, @floatFromInt(x.len)));
+    }
+    if (estimate.request.kind != .normal) {
+        // Work on the native finite lattice, before boundary interpolation and
+        // reflection. Do not join runs across the two ends of the output grid.
+        var first: usize = 0;
+        while (first < length) {
+            if (ordinates[first] <= 0) {
+                first += 1;
+                continue;
+            }
+            var last = first;
+            var occupied = false;
+            while (last < length and ordinates[last] > 0) : (last += 1) occupied = occupied or mass[last] > 0;
+            if (!occupied) @memset(ordinates[first..last], 0);
+            first = last;
+        }
     }
     return .{ .plan = plan, .estimate = estimate, .ordinates = ordinates };
 }
