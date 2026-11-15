@@ -422,9 +422,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
         if (!accepted) break;
         var change: f64 = 0;
-        // SAS MAXITER/CONVERGE probes distinguish relative scaling from an
-        // absolute maximum; near-zero estimates use the absolute change.
-        for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(p) < 0.01) 1 else @abs(p)));
+        // SAS uses the updated estimate for both the relative denominator and
+        // the near-zero decision. Fresh crossing controls pin both directions
+        // across .01; equality retains relative scaling (stopping-fix evidence).
+        for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(c) < 0.01) 1 else @abs(c)));
         @memcpy(params, candidate);
         if (boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
             // The likelihood gap is below the quadrature error budget. A
@@ -470,4 +471,40 @@ fn chiTail(x: f64, df: f64) f64 {
         if (@abs(delta - 1) < 1e-15) break;
     }
     return @max(0, @min(1, @exp(-z + a * @log(z) - fns.lgammaOf(a)) * h));
+}
+
+test "CORR stopping normalization uses updated estimates across the near-zero threshold" {
+    // Invented fresh controls and SAS 9.4M9 results: stopping-fix/native.txt.
+    // The first two cross from abs(old)<.01 to abs(new)>.01; the other two
+    // cross back below .01. Positive and negative coordinates are covered.
+    const Case = struct {
+        counts: []const f64,
+        xs: []const f64,
+        ys: []const f64,
+        converge: f64,
+        iterations: usize,
+        rho: f64,
+        se: f64,
+        lr: f64,
+    };
+    const cases = [_]Case{
+        .{ .counts = &.{ 55, 102, 193, 41, 61, 8, 71, 97, 67 }, .xs = &.{ 0, 7, 9 }, .ys = &.{ -5, 3, 5 }, .converge = 0.4748404097390406, .iterations = 2, .rho = -0.3505292843734581, .se = 0.0452902589640991, .lr = 50.75449895064003 },
+        .{ .counts = &.{ 218, 55, 310, 136, 222, 214 }, .xs = &.{ -3, 3 }, .ys = &.{ -6, 2, 9 }, .converge = 0.49718716894559606, .iterations = 2, .rho = -0.030698731836646755, .se = 0.04236659486667584, .lr = 0.5260991117779668 },
+        .{ .counts = &.{ 88, 190, 282, 214, 329, 30 }, .xs = &.{ -6, -5 }, .ys = &.{ -7, 0, 5 }, .converge = 0.3745590095305732, .iterations = 1, .rho = -0.6115755673158315, .se = 0.03575778491086687, .lr = 250.292951417337 },
+        .{ .counts = &.{ 79, 214, 218, 292, 134, 75 }, .xs = &.{ -4, 4 }, .ys = &.{ -5, 3, 11 }, .converge = 0.30662452789839933, .iterations = 1, .rho = -0.5913893044649507, .se = 0.03778653417969465, .lr = 205.38319212380748 },
+    };
+    for (cases) |c| {
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const matrix: CountMatrix = .{ .rows = c.xs.len, .cols = c.ys.len, .counts = c.counts, .row_scores = c.xs, .col_scores = c.ys };
+        const first = try polychoric(arena.allocator(), matrix, .{ .converge = c.converge, .maxiter = 1 });
+        try std.testing.expectEqual(c.iterations == 1, first.converged);
+        const result = try polychoric(arena.allocator(), matrix, .{ .converge = c.converge });
+        try std.testing.expect(result.converged);
+        try std.testing.expectEqual(c.iterations, result.iterations);
+        try std.testing.expectApproxEqAbs(c.rho, result.coefficient.estimate.?, 5e-8);
+        try std.testing.expectApproxEqAbs(c.se, result.coefficient.ase.?, 5e-6);
+        try std.testing.expectApproxEqRel(c.se, result.coefficient.ase.?, 1e-4);
+        try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 1e-7 + 2e-9 * sum(c.counts));
+    }
 }
