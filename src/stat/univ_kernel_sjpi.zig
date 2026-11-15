@@ -1,7 +1,7 @@
-//! SJPI solve-the-equation core for an already assigned 201-point histogram.
-//! This does NOT implement SAS UNIVARIATE's raw-sample bin assignment: its
-//! half-grid rounding is still unresolved. Keep the caller's SJPI guard until
-//! that separate step is verified. See docs/findings/univ-sjpi-dev2/README.md.
+//! SJPI raw assignment and solve-the-equation core on a 201-point histogram.
+//! Raw sorted/FREQ-expanded samples use the oracle-validated stored cell edge.
+//! See docs/findings/univ-sjpi-dev3/cell-edge for frozen and prospective evidence.
+//! Public statement dispatch remains a separate integration responsibility.
 //! Independently implemented from the Gaussian derivative identities and the
 //! retained SAS M9 oracle; no third-party implementation is incorporated.
 const std = @import("std");
@@ -24,6 +24,74 @@ pub const Result = struct {
     c: f64,
     selection: enum { root, maximum_fallback } = .root,
 };
+
+pub const RawSample = struct {
+    /// Finite, sorted, missing-filtered observations, with FREQ expanded by the
+    /// caller. Original statistics must use that same effective sample.
+    sorted: []const f64,
+    sample_stddev: f64,
+    iqr: f64,
+};
+
+/// Return no estimate (and a captured warning) for empty/singleton/constant
+/// samples. Native M9 reports errors for nonconstant zero-IQR SJPI; do not
+/// silently replace its scale by the range or substitute another estimator.
+pub fn fromRaw(d: *diag.Diagnostics, sample: RawSample) diag.Error!?Result {
+    const binned = try binRaw(d, sample) orelse return null;
+    return try fromBins(d, binned);
+}
+
+/// Raw assignment is separate from bandwidth selection for adapters that need
+/// the histogram. Empty padded bins are removed only after integer assignment.
+pub fn binRaw(d: *diag.Diagnostics, sample: RawSample) diag.Error!?BinnedSample {
+    @setFloatMode(.strict);
+    const x = sample.sorted;
+    for (x, 0..) |v, i| {
+        if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1]))
+            return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: raw observations must be sorted and finite", .{});
+    }
+    if (x.len < 2 or x[0] == x[x.len - 1]) {
+        try d.warn(0, "UNIVARIATE SJPI: no estimate for fewer than two distinct nonmissing observations", .{});
+        return null;
+    }
+    if (!positiveFinite(sample.sample_stddev) or !positiveFinite(sample.iqr))
+        return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: nonconstant samples require finite positive original SD and IQR", .{});
+    const range = x[x.len - 1] - x[0];
+    const step = range / 200;
+    // Preserve these stored operations. Direct min-range/2 is not equivalent
+    // at half-grid values in translated domains.
+    const lower_pad = x[0] - range;
+    const upper_pad = x[x.len - 1] + range;
+    const lower = (lower_pad + x[0]) / 2;
+    const upper = (upper_pad + x[x.len - 1]) / 2;
+    if (!positiveFinite(step) or !std.math.isFinite(lower) or !std.math.isFinite(upper))
+        return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: padded grid is not representable", .{});
+    var result = BinnedSample{ .counts = [_]usize{0} ** grid_points, .step = step, .sample_stddev = sample.sample_stddev, .iqr = sample.iqr };
+    for (x) |v| {
+        const at = try cellIndex(d, v, lower, upper, 401);
+        if (at < 100 or at > 300)
+            return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: nonempty padding cannot be removed", .{});
+        result.counts[at - 100] += 1;
+    }
+    return result;
+}
+
+fn cellIndex(d: *diag.Diagnostics, x: f64, lower: f64, upper: f64, points: usize) diag.Error!usize {
+    @setFloatMode(.strict);
+    if (points < 2) return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: invalid grid size", .{});
+    const span = upper - lower;
+    const h = span / @as(f64, @floatFromInt(points - 1));
+    const half = h / 2;
+    const edge = lower - half;
+    if (!positiveFinite(h) or !std.math.isFinite(edge) or !(edge < lower))
+        return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: cell edge exceeds floating-point resolution", .{});
+    // Do not rewrite this as (x-lower)/h+.5 or (x-lower+half)/h.
+    const offset = x - edge;
+    const at = @floor(offset / h);
+    if (!std.math.isFinite(at) or at < 0 or at >= @as(f64, @floatFromInt(points)))
+        return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: observation outside padded grid", .{});
+    return @intFromFloat(at);
+}
 
 /// Select a normal-kernel bandwidth from caller-supplied bin counts. This API
 /// deliberately makes no raw-observation nearest-bin decisions. It is not a
@@ -295,4 +363,138 @@ test "UNIV SJPI binned core SAS M9 no-bracket maximum fallback and warning" {
         try std.testing.expectEqual(.warning, message.severity);
         try std.testing.expect(std.mem.indexOf(u8, message.message, "using maximum bandwidth value") != null);
     }
+}
+
+fn parseRawTestValues(a: std.mem.Allocator, text: []const u8) ![]f64 {
+    var list: std.ArrayList(f64) = .empty;
+    var fields = std.mem.splitScalar(u8, text, ',');
+    while (fields.next()) |v| try list.append(a, try std.fmt.parseFloat(f64, v));
+    return list.toOwnedSlice(a);
+}
+
+fn parseRawTestCounts(text: []const u8, counts: []usize) !void {
+    @memset(counts, 0);
+    var fields = std.mem.splitScalar(u8, text, ',');
+    while (fields.next()) |v| {
+        var pair = std.mem.splitScalar(u8, v, ':');
+        const at = try std.fmt.parseInt(usize, pair.next().?, 10);
+        counts[at] = try std.fmt.parseInt(usize, pair.next().?, 10);
+    }
+}
+
+test "UNIV SJPI raw cell edge matches all 163 old and 72 native query counts and bandwidths" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_sjpi_raw_retained_dev3.txt"), '\n');
+    var compared: usize = 0;
+    while (lines.next()) |line| {
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const name = fields.next().?;
+        const sd = try std.fmt.parseFloat(f64, fields.next().?);
+        const iqr = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected_h = try std.fmt.parseFloat(f64, fields.next().?);
+        const x = try parseRawTestValues(a, fields.next().?);
+        var expected: [grid_points]usize = undefined;
+        try parseRawTestCounts(fields.next().?, &expected);
+        const input = RawSample{ .sorted = x, .sample_stddev = sd, .iqr = iqr };
+        const sample = (try binRaw(&d, input)).?;
+        if (!std.mem.eql(usize, &expected, &sample.counts)) {
+            std.debug.print("SJPI raw count discrepancy {s}\n", .{name});
+            return error.TestUnexpectedResult;
+        }
+        var total: usize = 0;
+        for (sample.counts) |n| total += n;
+        try std.testing.expectEqual(x.len, total);
+        const estimate = (try fromRaw(&d, input)).?;
+        if (@abs(estimate.bandwidth - expected_h) > 1e-10) {
+            std.debug.print("SJPI retained bandwidth discrepancy {s}: {d} vs {d}\n", .{ name, estimate.bandwidth, expected_h });
+            return error.TestUnexpectedResult;
+        }
+        compared += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 235), compared);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+}
+
+test "UNIV SJPI cell edge preserves all 60 native binary midpoint controls" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_sjpi_binary_controls_dev3.txt"), '\n');
+    var compared: usize = 0;
+    while (lines.next()) |line| {
+        var fields = std.mem.splitScalar(u8, line, '|');
+        _ = fields.next();
+        const points = try std.fmt.parseInt(usize, fields.next().?, 10);
+        const lower = try std.fmt.parseFloat(f64, fields.next().?);
+        const upper = try std.fmt.parseFloat(f64, fields.next().?);
+        const x = try parseRawTestValues(a, fields.next().?);
+        var expected: [401]usize = undefined;
+        try parseRawTestCounts(fields.next().?, &expected);
+        var actual = [_]usize{0} ** 401;
+        for (x) |v| actual[try cellIndex(&d, v, lower, upper, points)] += 1;
+        try std.testing.expectEqualSlices(usize, expected[0..points], actual[0..points]);
+        compared += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 60), compared);
+}
+
+test "UNIV SJPI raw adapter prospective counts bandwidth transforms ties and FREQ" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_sjpi_raw_fresh_dev3.txt"), '\n');
+    var compared: usize = 0;
+    var fallbacks: usize = 0;
+    while (lines.next()) |line| {
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const name = fields.next().?;
+        const sd = try std.fmt.parseFloat(f64, fields.next().?);
+        const iqr = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected_c = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected_h = try std.fmt.parseFloat(f64, fields.next().?);
+        const selection = fields.next().?;
+        const x = try parseRawTestValues(a, fields.next().?);
+        var expected: [grid_points]usize = undefined;
+        try parseRawTestCounts(fields.next().?, &expected);
+        const input = RawSample{ .sorted = x, .sample_stddev = sd, .iqr = iqr };
+        const binned = (try binRaw(&d, input)).?;
+        try std.testing.expectEqualSlices(usize, &expected, &binned.counts);
+        const result = (try fromRaw(&d, input)).?;
+        if (@abs(result.bandwidth - expected_h) > 1e-10 or @abs(result.c - expected_c) > 1e-10) {
+            std.debug.print("SJPI raw bandwidth discrepancy {s}: h {d} vs {d}, c {d} vs {d}\n", .{ name, result.bandwidth, expected_h, result.c, expected_c });
+            return error.TestUnexpectedResult;
+        }
+        const fallback = std.mem.eql(u8, selection, "maximum_fallback");
+        try std.testing.expectEqual(fallback, result.selection == .maximum_fallback);
+        if (fallback) fallbacks += 1;
+        compared += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 22), compared);
+    try std.testing.expectEqual(@as(usize, 4), fallbacks);
+    try std.testing.expectEqual(fallbacks, d.list.items.len);
+    for (d.list.items) |message| try std.testing.expectEqual(.warning, message.severity);
+}
+
+test "UNIV SJPI raw degeneracy and invalid input use captured diagnostics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    for ([_][]const f64{ &.{}, &.{2.75}, &.{ 2.75, 2.75, 2.75, 2.75, 2.75 } }) |x| {
+        try std.testing.expect((try fromRaw(&d, .{ .sorted = x, .sample_stddev = std.math.nan(f64), .iqr = 0 })) == null);
+    }
+    try std.testing.expectEqual(@as(usize, 3), d.list.items.len);
+    for (d.list.items) |message| try std.testing.expectEqual(.warning, message.severity);
+    var zeroiqr = [_]f64{0} ** 21;
+    zeroiqr[20] = 10;
+    try std.testing.expectError(error.ParseError, fromRaw(&d, .{ .sorted = &zeroiqr, .sample_stddev = 1, .iqr = 0 }));
+    try std.testing.expectError(error.ParseError, fromRaw(&d, .{ .sorted = &.{ 2, 1 }, .sample_stddev = 1, .iqr = 1 }));
+    try std.testing.expectError(error.ParseError, fromRaw(&d, .{ .sorted = &.{ 0, std.math.inf(f64) }, .sample_stddev = 1, .iqr = 1 }));
+    try std.testing.expectError(error.ParseError, fromRaw(&d, .{ .sorted = &.{ -1e308, 1e308 }, .sample_stddev = 1, .iqr = 1 }));
+    try std.testing.expect(d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 7), d.list.items.len);
 }
