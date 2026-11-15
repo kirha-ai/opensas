@@ -199,6 +199,11 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                 r.specified_fields.set(fi);
             }
         }
+        var fixed: dist.Parameters = .{ .mu = if (kind == .igauss) 1 else 0 };
+        inline for (fields) |field| if (@field(r, field.name)) |value| {
+            @field(fixed, field.name) = value;
+        };
+        try (dist.Distribution{ .family = kind, .p = fixed }).validate(d);
     }
     return .{ .requests = requests, .noprint = noprint, .midpercents = midpercents, .noline = noline, .percents = if (percents.items.len == 0) &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 } else percents.items };
 }

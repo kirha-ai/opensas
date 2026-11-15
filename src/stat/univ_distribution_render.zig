@@ -137,7 +137,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     // The inference helper owns parameter- and sample-dependent availability;
     // a blanket small-gamma guard would suppress valid all-known D/W2 tests.
     if (curve.family != .sb and curve.family != .su) {
-        const tests = try gof.compute(cx.diags, x, curve, request);
+        const tests = try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
         var table = try context.createTable();
         table.ds.label = "Goodness-of-Fit Tests";
         try table.char("Test", 18);

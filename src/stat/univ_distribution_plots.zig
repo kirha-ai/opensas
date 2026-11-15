@@ -280,7 +280,9 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             try bd.rows.appendSlice(a, bs.rows);
             const groups = try h.collectGroups(a, &bd, ccols);
             try univ.orderGroups(a, &bd, groups, ccols, levels, null, opt);
-            for (groups) |group| {
+            const resolved = try @import("univ_plot_groups.zig").resolve(a, cx.diags, &bd, groups, ccols, opt);
+            for (try @import("univ_plot_groups.zig").order(a, resolved, opt.key_move)) |index| {
+                const group = resolved.groups[index];
                 if (group.rows.len == 0) continue;
                 var gd = Dataset.init(a, ds.name);
                 gd.columns = ds.columns;

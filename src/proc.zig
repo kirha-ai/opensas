@@ -47,7 +47,8 @@ const freq_stat = @import("stat/freq.zig");
 /// PROC emits listing text".
 pub const ods = @import("ods.zig");
 pub const univariate_plot = @import("stat/univ_plot_data.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null };
+pub const univariate_edf = @import("stat/univ_edf_inference.zig");
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4567,10 +4568,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             i += 1;
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
                 if (toks[i].tag == .slash) {
-                    // as MEANS (BUG-meansclassmiss): only MISSING is modeled
-                    while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
-                        if (toks[i].tag == .name and eqi(toks[i].text, "missing")) class_missing = true;
-                    }
+                    try extra.classPlotOptions(arena, diags, toks, &i, classes.items.len, &class_missing);
                     break;
                 }
                 if (toks[i].tag == .lparen) {

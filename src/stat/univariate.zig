@@ -68,6 +68,8 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     return list.toOwnedSlice(a);
 }
 pub const Options = struct {
+    key_levels: []const []const u8 = &.{},
+    key_move: bool = true,
     inference: inference_parse.Options = .{},
     source: ?*Dataset = null,
     nobs_source: ?*Dataset = null,
@@ -86,6 +88,46 @@ pub const Options = struct {
     nextrval: usize = 0,
     round: []const f64 = &.{},
     outtable: ?[]const u8 = null,
+    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize, missing: *bool) diag.Error!void {
+        i.* += 1;
+        while (!end(t, i.*)) {
+            if (kw(t[i.*], "missing")) {
+                missing.* = true;
+                i.* += 1;
+                continue;
+            }
+            if (kw(t[i.*], "nokeymove")) {
+                self.key_move = false;
+                i.* += 1;
+                continue;
+            }
+            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            i.* += 2;
+            const tuple = t[i.*].tag == .lparen;
+            if (tuple) i.* += 1;
+            var levels: std.ArrayList([]const u8) = .empty;
+            while (!end(t, i.*) and (!tuple or t[i.*].tag != .rparen)) {
+                if (t[i.*].tag == .comma) {
+                    i.* += 1;
+                    continue;
+                }
+                const negative = t[i.*].tag == .minus;
+                if (negative or t[i.*].tag == .plus) i.* += 1;
+                if (t[i.*].tag != .string and t[i.*].tag != .name and t[i.*].tag != .number) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid KEYLEVEL value", .{});
+                const value = if (negative) try std.fmt.allocPrint(a, "-{s}", .{t[i.*].text}) else t[i.*].text;
+                if (value.len > 16) return d.fail(error.ParseError, 0, "UNIVARIATE: KEYLEVEL values cannot exceed 16 characters", .{});
+                try levels.append(a, value);
+                i.* += 1;
+                if (!tuple) break;
+            }
+            if (tuple) {
+                if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed KEYLEVEL tuple", .{});
+                i.* += 1;
+            }
+            if (levels.items.len != count) return d.fail(error.ParseError, 0, "UNIVARIATE: KEYLEVEL must specify one value per CLASS variable", .{});
+            self.key_levels = levels.items;
+        }
+    }
     pub fn identify(self: *Options, a: Allocator, ds: *Dataset, obs: ?[]const usize) !*Dataset {
         const copy = try a.create(Dataset);
         copy.* = Dataset.init(a, ds.name);

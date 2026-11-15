@@ -6,7 +6,8 @@ const diag = @import("../diag.zig");
 const inference = @import("univ_edf_inference.zig");
 pub const Sign = inference.Sign;
 pub const Probability = inference.Probability;
-pub const Result = struct { statistics: dist.Edf, d: ?Probability, w2: ?Probability, a2: ?Probability, simulation: ?inference.SimulationResult = null };
+pub const AccountedSimulator = inference.AccountedSimulator;
+pub const Result = struct { statistics: dist.Edf, d: ?Probability, w2: ?Probability, a2: ?Probability, simulation: ?inference.AccountedSimulationResult = null };
 
 fn interpolate(value: f64, critical: []const f64, probabilities: []const f64) Probability {
     if (value < critical[0]) return .{ .value = probabilities[0], .sign = .greater };
@@ -30,6 +31,12 @@ pub fn known(statistics: dist.Edf, n: usize) Result {
 }
 
 pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request) diag.Error!Result {
+    return computeWithSampler(d, x, distribution, request, null);
+}
+
+/// An explicit embedding sampler permits deterministic integration checks and
+/// specialized callers; the normal public path always generates/refits here.
+pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request, sampler: ?inference.AccountedSimulator) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
     if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
     // Fit on every original observation. M9 removes all fitted exponential
@@ -53,8 +60,9 @@ pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribu
             const sample = try d.arena.alloc(f64, x.len);
             defer d.arena.free(sample);
             var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request };
-            const result = try inference.simulate(d, r, stats, x.len, .{ .seed = try fitting.resolveSeed(d, request.edfseed), .samples = request.edfnsamples }, .{ .context = &bootstrap, .draw = Bootstrap.draw });
-            return .{ .statistics = raw, .d = result.probabilities.d, .w2 = result.probabilities.w2, .a2 = result.probabilities.a2, .simulation = result };
+            const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = try fitting.resolveSeed(d, request.edfseed), .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
+            const probabilities = result.probabilities orelse inference.Result{};
+            return .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result };
         },
         else => {},
     }
@@ -70,6 +78,13 @@ const Bootstrap = struct {
         statistics: inference.Statistics,
         numerical_fit_failure: struct { reason: []const u8, retained_candidate: bool },
     };
+    fn drawAccounted(context: ?*anyopaque, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!inference.SimulationAttempt {
+        const self: *Bootstrap = @ptrCast(@alignCast(context.?));
+        return switch (try self.attempt(random, n, d)) {
+            .statistics => |statistics| .{ .valid = statistics },
+            .numerical_fit_failure => |failure| .{ .numerical_fit_failure = .{ .reason = failure.reason, .retained_candidate = failure.retained_candidate } },
+        };
+    }
     fn draw(context: ?*anyopaque, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!inference.Statistics {
         const self: *Bootstrap = @ptrCast(@alignCast(context.?));
         const result = self.attempt(random, n, d) catch |err| {
@@ -84,8 +99,8 @@ const Bootstrap = struct {
     }
 
     /// Separate expected numerical fit failures from malformed requests and
-    /// unsupported algorithms. The legacy helper still aborts via draw above;
-    /// only an explicit accounting API may consume an excluded-fit outcome.
+    /// unsupported algorithms. Only the explicit accounting API consumes the
+    /// failure outcome; the compatibility draw callback remains strict.
     fn attempt(self: *Bootstrap, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!Attempt {
         std.debug.assert(self.sample.len == n);
         for (self.sample) |*value| {
@@ -210,7 +225,7 @@ test "UNIVARIATE EDF adapter generates and refits actual family samples with a f
     invalid.maxiter = 0;
     try std.testing.expectError(error.ParseError, compute(&d, &x, curve, invalid));
     try std.testing.expect(d.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "no replication was discarded") != null);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "invalid iteration controls") != null);
 }
 
 test "UNIVARIATE estimated-family MC callbacks agree with independent M9 probes" {
@@ -405,4 +420,43 @@ test "UNIVARIATE EDF adapter preserves unrounded shape availability" {
     fitted.p.alpha = 5;
     const boundary = try compute(&d, &x, fitted, request);
     try std.testing.expect(boundary.d == null and boundary.w2 == null and boundary.a2 == null);
+}
+
+test "UNIVARIATE accounted adapter reports controlled exclusions and zero valid results" {
+    const Controlled = struct {
+        calls: usize = 0,
+        all_fail: bool = false,
+        fatal: bool = false,
+        fn draw(raw: ?*anyopaque, _: std.Random, _: usize, d: *diag.Diagnostics) diag.Error!inference.SimulationAttempt {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            self.calls += 1;
+            if (self.fatal and self.calls == 2) return d.fail(error.ExecError, 0, "controlled fatal error", .{});
+            if (self.all_fail or self.calls == 2 or self.calls == 4) return .{ .numerical_fit_failure = .{ .reason = "controlled numerical failure", .retained_candidate = false } };
+            return .{ .valid = if (self.calls == 3) .{ .d = 0.125, .w2 = 1.0 / 48.0, .a2 = 0.14 } else .{ .d = 0.9, .w2 = 0.973333333333, .a2 = 5.63 } };
+        }
+    };
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    var sampler: Controlled = .{};
+    const request: fitting.Request = .{ .family = .rayleigh, .sigma = 1, .edfseed = 17, .edfnsamples = 5 };
+    const result = try computeWithSampler(&d, &.{ 0.5, 1, 2, 3 }, .{ .family = .rayleigh, .p = .{} }, request, .{ .context = &sampler, .draw = Controlled.draw });
+    try std.testing.expectEqual(@as(usize, 5), sampler.calls);
+    try std.testing.expectEqual(@as(usize, 5), result.simulation.?.attempted);
+    try std.testing.expectEqual(@as(usize, 3), result.simulation.?.valid);
+    try std.testing.expectEqual(@as(usize, 2), result.simulation.?.failed);
+    try std.testing.expectEqual(inference.SimulationStatus.conditional, result.simulation.?.status);
+    try std.testing.expectApproxEqAbs(@as(f64, 2.0 / 3.0), result.d.?.value, 1e-15);
+    try std.testing.expectApproxEqAbs(@sqrt(@as(f64, 2.0 / 27.0)), result.simulation.?.standard_errors.?[0], 1e-15);
+    try std.testing.expect(!d.hasErrors());
+    sampler = .{ .all_fail = true };
+    var none_diag = diag.Diagnostics.init(arena.allocator());
+    const none = try computeWithSampler(&none_diag, &.{ 0.5, 1, 2, 3 }, .{ .family = .rayleigh, .p = .{} }, request, .{ .context = &sampler, .draw = Controlled.draw });
+    try std.testing.expectEqual(@as(usize, 5), sampler.calls);
+    try std.testing.expect(none.d == null and none.w2 == null and none.a2 == null);
+    try std.testing.expect(none.simulation.?.standard_errors == null and none_diag.hasErrors());
+    sampler = .{ .all_fail = true, .fatal = true };
+    var fatal_diag = diag.Diagnostics.init(arena.allocator());
+    try std.testing.expectError(error.ExecError, computeWithSampler(&fatal_diag, &.{ 0.5, 1, 2, 3 }, .{ .family = .rayleigh, .p = .{} }, request, .{ .context = &sampler, .draw = Controlled.draw }));
+    try std.testing.expectEqual(@as(usize, 2), sampler.calls);
 }
