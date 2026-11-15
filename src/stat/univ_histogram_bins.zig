@@ -16,6 +16,9 @@ pub const Request = struct {
     target_count: ?usize = null,
     max_nbin: ?usize = null,
     max_sigmas: ?f64 = null,
+    /// Existing boundary lattice, before any budgeted extension. Explicit
+    /// midpoint lists are converted to boundaries by the statement parser.
+    initial_endpoints: []const f64 = &.{},
     /// Resource budget, independently configurable by the owning caller.
     max_intervals: usize = 100000,
 };
@@ -40,6 +43,8 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     if (request.max_nbin != null and request.max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (request.max_nbin != null and request.max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (request.max_sigmas) |v| if (!(v > 0) or !std.math.isFinite(v)) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXSIGMAS must be finite and positive", .{});
+    const explicit = request.initial_endpoints.len != 0;
+    if (explicit) _ = try cover(a, d, &.{}, request.initial_endpoints, request.right);
     var total: usize = 0;
     var minimum = std.math.inf(f64);
     var maximum = -std.math.inf(f64);
@@ -55,7 +60,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     }
     if (total == 0) return .{ .endpoints = &.{}, .width = 0, .mode = request.mode };
     if (request.key_index >= cells.len) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid resolved key cell index", .{});
-    var target = request.target_count;
+    var target = if (explicit) null else request.target_count;
     if (target != null and target.? < 2) {
         try d.warn(0, "UNIVARIATE: histogram count control must be at least 2; ignoring the specified value", .{});
         target = null;
@@ -67,7 +72,9 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     const hi = if (pooled) maximum else key[key.len - 1];
     const n = if (pooled) total else key.len;
     var width: f64 = undefined;
-    if (lo == hi) {
+    if (explicit) {
+        width = request.initial_endpoints[1] - request.initial_endpoints[0];
+    } else if (lo == hi) {
         width = if (lo == 0) 1 else @abs(lo);
     } else if (target) |count| {
         width = try controlledWidth(d, minimum, maximum, count);
@@ -78,7 +85,10 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     if (!(width > 0) or !std.math.isFinite(width)) return d.fail(error.ParseError, 0, "UNIVARIATE: automatic bin width is not representable", .{});
     var first: f64 = undefined;
     var last: f64 = undefined;
-    if (lo == hi) {
+    if (explicit) {
+        first = request.initial_endpoints[0];
+        last = request.initial_endpoints[request.initial_endpoints.len - 1];
+    } else if (lo == hi) {
         first = if (!request.endpoints) lo - width / 2 else if (request.right) lo - width else lo;
         last = first + width;
     } else if (request.endpoints) {
@@ -160,6 +170,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         order[at] = index;
         at += 1;
     }
+    if (explicit and request.max_nbin == null and request.max_sigmas == null and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
     return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
 }
 

@@ -244,26 +244,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                 }
                 if (pooled.items.len == 0) continue;
                 std.mem.sort(f64, pooled.items, {}, std.sort.asc(f64));
-                var plan: binning.Plan = undefined;
-                if (statement.endpoints.len == 0) {
-                    plan = try binning.determine(a, cx.diags, cells, .{ .endpoints = statement.endpoint_labels, .right = statement.right, .mode = statement.mode, .key_index = resolved.key_index, .key_move = opt.key_move, .target_count = statement.target_count, .max_nbin = statement.max_nbin, .max_sigmas = statement.max_sigmas });
-                } else {
-                    const order = try a.alloc(usize, groups.len);
-                    var at: usize = 0;
-                    if (opt.key_move) {
-                        order[at] = resolved.key_index;
-                        at += 1;
-                    }
-                    for (0..groups.len) |gi| {
-                        if (opt.key_move and gi == resolved.key_index) continue;
-                        order[at] = gi;
-                        at += 1;
-                    }
-                    const initial_slots = statement.endpoints.len - @as(usize, if (statement.endpoint_labels) 0 else 1);
-                    if (statement.max_sigmas != null or (statement.max_nbin != null and statement.max_nbin.? > initial_slots)) return proc.failGap(cx.diags, 0, "UNIVARIATE: explicit-window extension with MAXNBIN/MAXSIGMAS needs the shared planner extension", .{});
-                    const clipped = statement.max_nbin != null;
-                    plan = .{ .endpoints = if (clipped) statement.endpoints else try binning.cover(a, cx.diags, pooled.items, statement.endpoints, statement.right), .width = statement.endpoints[1] - statement.endpoints[0], .mode = statement.mode, .cell_order = order, .clipped = clipped };
-                }
+                const plan = try binning.determine(a, cx.diags, cells, .{ .endpoints = statement.endpoint_labels, .right = statement.right, .mode = statement.mode, .key_index = resolved.key_index, .key_move = opt.key_move, .target_count = statement.target_count, .max_nbin = statement.max_nbin, .max_sigmas = statement.max_sigmas, .initial_endpoints = statement.endpoints });
                 var output_options = schema;
                 output_options.bin_width = plan.width;
                 output_options.clipped = plan.clipped;
