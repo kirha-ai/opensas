@@ -938,3 +938,62 @@ test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact ke
         }
     }
 }
+
+test "UNIVARIATE public power location publishes only oracle curves with nonstationary warnings" {
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_power_location_dev5.txt"), '\n');
+    var curves: usize = 0;
+    var absent: usize = 0;
+    while (lines.next()) |line| {
+        if (line[0] == '#') continue;
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        const a = arena.allocator();
+        var fields = std.mem.splitScalar(u8, line, '|');
+        const id = fields.next().?;
+        errdefer std.debug.print("public power location case {s}\n", .{id});
+        const sigma = fields.next().?;
+        const alpha = fields.next().?;
+        const theta = fields.next().?;
+        const exact = std.mem.eql(u8, fields.next().?, "1");
+        var observations = std.mem.splitScalar(u8, fields.next().?, ',');
+        var lib = @import("../exec.zig").Library.init(a);
+        var ds = Dataset.init(a, "d");
+        _ = try ds.addColumn("x", .num);
+        while (observations.next()) |v| try ds.appendRow(&.{.{ .num = try std.fmt.parseFloat(f64, v) }});
+        try lib.put("d", &ds);
+        var d = diag.Diagnostics.init(a);
+        const lex = @import("../lexer.zig");
+        var capture: @import("../ods.zig").Capture = .{};
+        try capture.parse(a, &d, try lex.tokenize(a, "ods output ParameterEstimates=pe;", &d));
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;histogram x / noplot power(theta=est sigma={s} alpha={s}) outhistogram=h;run;", .{ sigma, alpha });
+        const tokens = try lex.tokenize(a, source, &d);
+        var out: std.ArrayList(u8) = .empty;
+        try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, tokens);
+        const no_fit = std.mem.eql(u8, theta, "none");
+        var warned = false;
+        for (d.list.items) |message| {
+            try std.testing.expect(message.severity == .warning);
+            if (std.mem.indexOf(u8, message.message, if (no_fit) "initialization_failed" else "nonstationary_candidate") != null) warned = true;
+        }
+        try std.testing.expect(warned);
+        try capture.finish(&lib, &d);
+        if (no_fit) {
+            absent += 1;
+            try std.testing.expect(lib.find("pe") == null);
+        } else {
+            curves += 1;
+            const pe = lib.find("pe").?;
+            for ([_][]const u8{ "Theta", "Sigma", "Alpha" }, [_][]const u8{ theta, sigma, alpha }) |symbol, value| {
+                var found = false;
+                for (pe.rows.items) |row| if (std.ascii.eqlIgnoreCase(row[4].str, symbol)) {
+                    const expected = try std.fmt.parseFloat(f64, value);
+                    if (exact or !std.ascii.eqlIgnoreCase(symbol, "Theta")) try std.testing.expectEqual(expected, row[5].num) else try std.testing.expectApproxEqAbs(expected, row[5].num, 1e-12);
+                    found = true;
+                };
+                try std.testing.expect(found);
+            }
+        }
+    }
+    try std.testing.expectEqual(@as(usize, 93), curves);
+    try std.testing.expectEqual(@as(usize, 41), absent);
+}

@@ -160,6 +160,10 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
     if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
+    // Verified endpoint helper slice; other power masks keep their guards.
+    if (r.family == .power and r.theta == null and r.sigma != null and
+        r.alpha != null and r.alpha.? > 0 and r.alpha.? < 1)
+        return fitEndpoint(d, x, r);
     if (r.theta == null and (r.family == .gamma or r.family == .lognormal or r.family == .weibull)) return fitThreshold(d, x, r);
     const n: f64 = @floatFromInt(x.len);
     var p: dist.Parameters = .{};
