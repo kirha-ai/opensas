@@ -67,6 +67,9 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
         return if (std.math.isFinite(ll)) .{ .converged = .{ .parameters = p, .log_likelihood = ll } } else fail(.outside_support);
     }
     if (x[0] == x[x.len - 1]) return fail(.invalid_sample);
+    if (family == .power and fixed.theta == null and fixed.sigma != null and
+        fixed.alpha != null and fixed.alpha.? > 0 and fixed.alpha.? < 1)
+        return powerLocation(x, fixed.sigma.?, fixed.alpha.?);
     if (family == .power and fixed.theta != null) {
         const sigma = fixed.sigma orelse (powerScaleStart(x, fixed.theta.?, fixed.alpha == null) orelse return fail(.initialization_failed));
         if (!std.math.isFinite(sigma) or !(sigma > x[x.len - 1] - fixed.theta.?)) return fail(.initialization_failed);
@@ -88,6 +91,42 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     }
     if (family == .pareto and fixed.alpha == null and fixed.sigma == null) return paretoProfile(x, fixed.theta.?, controls);
     return optimize(family, x, fixed, controls);
+}
+
+/// Verified M9 slice: estimated theta, supplied sigma and 0<alpha<1.
+/// SAS's retained point is not a stationary MLE. Its public adapter must carry
+/// the nonstationary_candidate warning/status even when parameters match.
+fn powerLocation(x: []const f64, sigma: f64, alpha: f64) Result {
+    @setFloatMode(.strict); // IEEE rounding order is part of the oracle contract.
+    const lo = x[0];
+    const hi = x[x.len - 1];
+    const span = hi - lo;
+    if (!(sigma > span)) return fail(.outside_support);
+    // Actual reset and nonreset n=2/3 probes emit no curve; n=4 works even
+    // when four-moment shape geometry is inadmissible. No pilot-shape guard.
+    if (x.len < 4) return fail(.initialization_failed);
+    const n: f64 = @floatFromInt(x.len);
+    var normalized_mean: f64 = 0;
+    for (x) |v| normalized_mean += ((v - lo) / span) / n;
+    const mean = lo + span * normalized_mean;
+    const location = mean - sigma * alpha / (alpha + 1);
+    const gap = lo - location;
+    const reset = gap <= 0;
+    const theta = lo - (if (reset) @as(f64, 0.001) else @min(@as(f64, 0.001), 0.1 * gap));
+    if (reset) {
+        // Preserve operation order AND equality. Independent +/-ULP oracle
+        // controls distinguish this from sigma-span >= .002 and from a strict
+        // bound comparison. Do not insert a tolerance or reassociate it.
+        const lower = (hi - sigma) + 0.001;
+        const upper = lo - 0.001;
+        if (!(lower <= upper)) return fail(.initialization_failed);
+    }
+    if (!std.math.isFinite(theta) or !(theta < lo and theta + sigma > hi))
+        return fail(.initialization_failed);
+    const p: Parameters = .{ .theta = theta, .sigma = sigma, .alpha = alpha };
+    const ll = logLikelihood(.power, x, p);
+    if (!std.math.isFinite(ll)) return fail(.initialization_failed);
+    return .{ .nonconverged = .{ .reason = .nonstationary_candidate, .best = .{ .parameters = p, .log_likelihood = ll } } };
 }
 
 /// M9 fixed-theta power scale initializer, prospectively verified on fresh
@@ -663,4 +702,64 @@ test "endpoint fixed-theta power prospective oracle candidate and retained inadm
     }
     try std.testing.expectEqual(@as(usize, 84), matched);
     try std.testing.expectEqual(@as(usize, 1), unresolved);
+}
+
+test "endpoint dev5 fixed-sigma fixed-alpha power location all retained and prospective M9 cases" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var rows = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_power_location_dev5.txt"), '\n');
+    var returned: usize = 0;
+    var absent: usize = 0;
+    while (rows.next()) |row| {
+        if (row[0] == '#') continue;
+        var fields = std.mem.splitScalar(u8, row, '|');
+        const id = fields.next().?;
+        const sigma = try std.fmt.parseFloat(f64, fields.next().?);
+        const alpha = try std.fmt.parseFloat(f64, fields.next().?);
+        const expected = fields.next().?;
+        const exact = std.mem.eql(u8, fields.next().?, "1");
+        var samples = std.mem.splitScalar(u8, fields.next().?, ',');
+        var x: std.ArrayList(f64) = .empty;
+        while (samples.next()) |value| try x.append(arena.allocator(), try std.fmt.parseFloat(f64, value));
+        const result = fit(.power, x.items, .{ .theta = null, .sigma = sigma, .alpha = alpha }, .{});
+        errdefer std.debug.print("power location oracle case {s}\n", .{id});
+        try std.testing.expect(result == .nonconverged);
+        const failure = result.nonconverged;
+        if (std.mem.eql(u8, expected, "none")) {
+            try std.testing.expectEqual(Reason.initialization_failed, failure.reason);
+            try std.testing.expect(failure.best == null);
+            absent += 1;
+        } else {
+            try std.testing.expectEqual(Reason.nonstationary_candidate, failure.reason);
+            const curve = failure.best.?;
+            const theta = try std.fmt.parseFloat(f64, expected);
+            if (exact) try std.testing.expectEqual(theta, curve.parameters.theta) else try std.testing.expectApproxEqAbs(theta, curve.parameters.theta, 1e-12);
+            try std.testing.expectEqual(sigma, curve.parameters.sigma);
+            try std.testing.expectEqual(alpha, curve.parameters.alpha);
+            try std.testing.expectEqual(@as(usize, 0), curve.iterations);
+            try std.testing.expect(curve.parameters.theta < x.items[0]);
+            try std.testing.expect(curve.parameters.theta + sigma > x.items[x.items.len - 1]);
+            try std.testing.expect(std.math.isFinite(curve.log_likelihood));
+            returned += 1;
+        }
+    }
+    try std.testing.expectEqual(@as(usize, 93), returned);
+    try std.testing.expectEqual(@as(usize, 41), absent);
+}
+
+test "endpoint dev5 power location preserves validation and nonstationary status" {
+    const x = [_]f64{ 0, 0.125, 0.25, 0.5, 1 };
+    const fixed: Fixed = .{ .theta = null, .sigma = 1.01, .alpha = 0.125 };
+    const got = fit(.power, &x, fixed, .{}).nonconverged;
+    try std.testing.expectEqual(Reason.nonstationary_candidate, got.reason);
+    const curve = got.best.?;
+    var better = curve.parameters;
+    better.theta += (x[0] - better.theta) / 2;
+    try std.testing.expect(logLikelihood(.power, &x, better) > curve.log_likelihood);
+    try std.testing.expectEqual(Reason.outside_support, fit(.power, &x, .{ .theta = null, .sigma = 1, .alpha = 0.125 }, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Reason.invalid_sample, fit(.power, &.{ 1, 1, 1, 1 }, fixed, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Reason.invalid_sample, fit(.power, &.{ 1, 0, 2, 3 }, fixed, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Reason.invalid_parameters, fit(.power, &x, .{ .theta = null, .sigma = 2, .alpha = 0 }, .{}).nonconverged.reason);
+    try std.testing.expectEqual(Reason.invalid_controls, fit(.power, &x, fixed, .{ .maxiter = 0 }).nonconverged.reason);
+    try std.testing.expectEqual(Reason.unsupported_method, fit(.power, &x, fixed, .{ .method = .epm }).nonconverged.reason);
 }
