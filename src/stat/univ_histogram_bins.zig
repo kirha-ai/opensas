@@ -145,8 +145,8 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         if (cell.sorted.len == 0) continue;
         const cell_min = cell.sorted[0];
         const cell_max = cell.sorted[cell.sorted.len - 1];
-        const first_label = if (request.endpoints) first else first + width / 2;
-        const last_label = if (request.endpoints) last else last - width / 2;
+        const first_label = if (request.endpoints or explicit) first else first + width / 2;
+        const last_label = if (request.endpoints or explicit) last else last - width / 2;
         var below = if (cell_min < first or (request.right and cell_min == first)) @max(@as(f64, 1), @ceil((first - cell_min) / width)) else 0;
         below = @min(below, @max(@as(f64, 0), max_slots - slots));
         if (std.math.isFinite(lower_limit)) below = @min(below, @max(@as(f64, 0), @floor((first_label - lower_limit) / width + 1e-12)));
@@ -170,7 +170,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         order[at] = index;
         at += 1;
     }
-    if (explicit and request.max_nbin == null and request.max_sigmas == null and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
+    if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
     return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
 }
 

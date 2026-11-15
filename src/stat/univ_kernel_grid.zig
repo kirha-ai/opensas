@@ -8,6 +8,7 @@ pub const Report = struct { point_count: usize = 0, compact_cutoff_unverified: b
 pub const Options = struct {
     report: ?*Report = null,
     automatic: bool = false,
+    endpoint_labels: bool = false,
     windowed: bool = false,
     bin_width: ?f64 = null,
     right: bool = false,
@@ -69,7 +70,18 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     // requires an additional interval, including for an explicit endpoint list.
     if (!options.windowed and options.right and x[0] == first) first -= width;
     if (!options.windowed and !options.right and x[x.len - 1] == last) last += width;
-    if (options.automatic and !options.windowed and constant) {
+    if (options.automatic and !options.windowed and options.endpoint_labels) {
+        const raw_pad = options.shared_axis_padding orelse own.axis;
+        // Constant observations use the padded native Fourier lattice to
+        // bound the display padding, independently of the histogram width.
+        const constant_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+        const pad = if (constant) @min(raw_pad, constant_limit) else raw_pad;
+        const lower = (if (constant) x[0] else lo) - pad;
+        const upper = (if (constant) x[0] else hi) + pad;
+        first = @min(first, endpoints[0] + @round((lower - endpoints[0]) / width) * width);
+        last = @max(last, endpoints[0] + @round((upper - endpoints[0]) / width) * width);
+        if (constant and last <= x[0]) last += width;
+    } else if (options.automatic and !options.windowed and constant) {
         // The constant plot extends its center lattice over a unit range.
         // Retain iterative endpoint rounding: M9 includes eleven centers for
         // width .1 but ninety-nine for .01 on the retained heldouts.

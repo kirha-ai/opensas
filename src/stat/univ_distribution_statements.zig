@@ -253,13 +253,15 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     if (x.len == 0) continue;
                     const rep = representatives[gi];
                     if (statement.kernels.len > 0 or statement.kernel_output != null) {
-                        if (statement.endpoints.len == 0 and statement.endpoint_labels) return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint-labelled kernel axes require the endpoint-axis helper handoff", .{});
                         const pairs = try a.alloc(h.XW, x.len);
                         for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
                         const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
                         var report: kernel_output.Report = .{};
                         const automatic = statement.endpoints.len == 0;
-                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
+                        // Retained translated negative-data controls expose an unresolved
+                        // automatic endpoint phase. Explicit lattices remain available.
+                        if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1]) return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel phase for negative nonconstant data is not verified; supply explicit endpoints", .{});
+                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
                     const constant = x[0] == x[x.len - 1];
@@ -809,5 +811,130 @@ test "UNIVARIATE crossed KEYLEVEL promotes its hierarchy and preserves other blo
     for ([_][]const u8{ "B", "B", "A", "A" }, [_][]const u8{ "Y", "X", "X", "Y" }, 0..) |c, q, i| {
         try std.testing.expectEqualStrings(c, result.rows.items[3 * i][0].str);
         try std.testing.expectEqualStrings(q, result.rows.items[3 * i][1].str);
+    }
+}
+
+test "UNIVARIATE public endpoint axes match every SAS M9 coordinate and density" {
+    const samples = [_][]const f64{ &.{ 1, 2, 3, 4, 6, 8, 10, 15 }, &.{ 5, 5, 5, 5 }, &.{ 0, 0, 0, 0 }, &.{ -12, -12, -12, -12 }, &.{ 0.01, 0.01, 0.01, 0.01 } };
+    for (samples, [_][]const u8{ "wide", "five", "zero", "neg", "small" }) |sample, name| {
+        for ([_][]const u8{ ".5", "1", "2" }, [_][]const u8{ "p5", "1", "2" }) |c, suffix| {
+            for ([_]bool{ false, true }) |right| {
+                var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+                defer arena.deinit();
+                const a = arena.allocator();
+                var lib = @import("../exec.zig").Library.init(a);
+                var ds = Dataset.init(a, "d");
+                _ = try ds.addColumn("x", .num);
+                for (sample) |x| try ds.appendRow(&.{.{ .num = x }});
+                try lib.put("d", &ds);
+                var d = diag.Diagnostics.init(a);
+                const text = try std.fmt.allocPrint(a, "proc univariate data=d noprint;histogram x / noplot endpoints {s} kernel(c={s}) outkernel=k;run;", .{ if (right) "rtinclude" else "", c });
+                const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
+                var out: std.ArrayList(u8) = .empty;
+                try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+                const rows = lib.find("k").?.rows.items;
+                const key = try std.fmt.allocPrint(a, "{s}_{s}{s}", .{ name, suffix, if (right) "_r" else "" });
+                var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_axis_dev4.txt"), '\n');
+                var i: usize = 0;
+                while (lines.next()) |line| {
+                    var fields = std.mem.splitScalar(u8, line, '|');
+                    _ = fields.next();
+                    if (!std.mem.eql(u8, fields.next().?, key)) continue;
+                    errdefer std.debug.print("endpoint case {s} row {d}\n", .{ key, i });
+                    try std.testing.expect(i < rows.len);
+                    for ([_]usize{ 3, 5, 4 }) |col| {
+                        const expected = try std.fmt.parseFloat(f64, std.mem.trim(u8, fields.next().?, " "));
+                        try std.testing.expectApproxEqAbs(expected, rows[i][col].num, 1e-9 * @max(@as(f64, 1), @abs(expected)));
+                    }
+                    i += 1;
+                }
+                try std.testing.expectEqual(i, rows.len);
+            }
+        }
+    }
+}
+
+
+test "UNIVARIATE public supplied lattices preserve budgets clipped rows and percentages" {
+    for ([_][]const u8{ "endpoints", "midpoints" }) |kind| {
+        for ([_][]const u8{ "maxnbin=2", "maxnbin=6", "maxnbin=10", "maxsigmas=1", "maxsigmas=3" }) |control| {
+            for ([_]bool{ false, true }) |right| {
+                var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+                defer arena.deinit();
+                const a = arena.allocator();
+                var lib = @import("../exec.zig").Library.init(a);
+                var ds = Dataset.init(a, "d");
+                _ = try ds.addColumn("c", .char);
+                _ = try ds.addColumn("x", .num);
+                for ([_]f64{ 1, 4, 8, 12, -12, -5, 20, 35 }, [_][]const u8{ "A", "A", "A", "A", "B", "B", "C", "C" }) |x, c| try ds.appendRow(&.{ .{ .str = c }, .{ .num = x } });
+                try lib.put("d", &ds);
+                var d = diag.Diagnostics.init(a);
+                const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;class c;var x;histogram x / noplot {s}=0 to 15 by 5 {s} {s} outhistogram=h;run;", .{ kind, control, if (right) "rtinclude" else "" });
+                const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+                var out: std.ArrayList(u8) = .empty;
+                try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+                const rows = lib.find("h").?.rows.items;
+                const key = try std.fmt.allocPrint(a, "{s}_{s}{s}", .{ kind, control, if (right) "_r" else "" });
+                var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_supplied_lattice_dev4.txt"), '\n');
+                var i: usize = 0;
+                while (lines.next()) |line| {
+                    var fields = std.mem.splitScalar(u8, line, '|');
+                    if (!std.mem.eql(u8, fields.next().?, key)) continue;
+                    errdefer std.debug.print("supplied lattice case {s} row {d}\n", .{ key, i });
+                    try std.testing.expect(i < rows.len);
+                    try std.testing.expectEqualStrings(std.mem.trim(u8, fields.next().?, " "), rows[i][0].str);
+                    for ([_]usize{ 2, 4, 3 }) |col| try std.testing.expectApproxEqAbs(try std.fmt.parseFloat(f64, std.mem.trim(u8, fields.next().?, " ")), rows[i][col].num, 1e-12);
+                    i += 1;
+                }
+                try std.testing.expectEqual(i, rows.len);
+            }
+        }
+    }
+}
+
+test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact kernels" {
+    const samples = [_][]const f64{ &.{ 1.2, 1.7, 2.1, 3.6, 5.2, 9.7, 12.3, 17.8 }, &.{ -15, -9, -6, -4, -2, -1, 0, 3 }, &.{ 0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5 }, &.{ -0.1, -0.1, -0.1, -0.1, -0.1, -0.1, -0.1 } };
+    for (samples, [_][]const u8{ "shift", "negative", "half", "tiny" }) |sample, name| {
+        for ([_][]const u8{ "0.3", "1.1" }) |c| {
+            for ([_][]const u8{ "n", "q", "t" }) |kind| {
+                var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+                defer arena.deinit();
+                const a = arena.allocator();
+                var lib = @import("../exec.zig").Library.init(a);
+                var ds = Dataset.init(a, "d");
+                _ = try ds.addColumn("x", .num);
+                for (sample) |x| try ds.appendRow(&.{.{ .num = x }});
+                try lib.put("d", &ds);
+                var d = diag.Diagnostics.init(a);
+                const text = try std.fmt.allocPrint(a, "proc univariate data=d noprint;histogram x / noplot endpoints kernel(k={s} c={s}) outkernel=k;run;", .{ kind, c });
+                const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
+                var out: std.ArrayList(u8) = .empty;
+                if (std.mem.eql(u8, name, "negative")) {
+                    diag.resetGap();
+                    defer diag.resetGap();
+                    try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens));
+                    try std.testing.expect(diag.gapHit());
+                    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "negative nonconstant") != null);
+                    continue;
+                }
+                try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+                const rows = lib.find("k").?.rows.items;
+                const key = try std.fmt.allocPrint(a, "{s}_{s}_{s}", .{ name, kind, c });
+                var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_axis_heldout_dev4.txt"), '\n');
+                var i: usize = 0;
+                while (lines.next()) |line| {
+                    var fields = std.mem.splitScalar(u8, line, '|');
+                    if (!std.mem.eql(u8, fields.next().?, key)) continue;
+                    errdefer std.debug.print("endpoint case {s} row {d}\n", .{ key, i });
+                    try std.testing.expect(i < rows.len);
+                    for ([_]usize{ 3, 5, 4 }) |col| {
+                        const expected = try std.fmt.parseFloat(f64, std.mem.trim(u8, fields.next().?, " "));
+                        try std.testing.expectApproxEqAbs(expected, rows[i][col].num, 1e-9 * @max(@as(f64, 1), @abs(expected)));
+                    }
+                    i += 1;
+                }
+                try std.testing.expectEqual(i, rows.len);
+            }
+        }
     }
 }
