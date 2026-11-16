@@ -42,8 +42,6 @@ page references below use printed page numbers.
 
 - [TODO] FEAT-base-stat-graphics (doc-finder, P1, LARGE; CORR pp. 32–33, 38, 57–60; FREQ p. 252; UNIVARIATE pp. 307–407, 421–430, 468) — Plan and implement documented scatter/ellipse, frequency, histogram, CDF, P-P, Q-Q/probability and summary plots, CLASS comparisons and INSET. Track traditional versus ODS graphics options explicitly. Define an actual graphical artifact/output contract and reconcile it with D-022 before implementation; listing no-ops do not satisfy graph requests. Verify plotted data/parameters and representative rendered outputs.  [deps: FEAT-univ-distributions]
 
-- [TODO] NOTE-odsfitd022 (review, LOW) — D-022 lists only seven typed ODS OUTPUT tables and says other OUTPUT names remain loud, but `src/ods.zig` accepts ParameterEstimates / FitQuantiles / GoodnessOfFit / Bins (and they publish from histogram fits). Amend D-022 to name the landed fit-table captures, or make the extras loud until claimed.  (likely: docs/decisions.md, src/ods.zig)
-
 ---
 
 - [TODO] NOTE-perfcasestack (perf, PRELIMINARY — clean serial, sampled re-runs needed before promotion) — CASE-heavy select over 1M rows measured 237s/1.65GB; ORDER-BY-computed with outobs=10 measured 14.8s/1.18GB (SQL advanced surfaces). If they hold they are likely superlinear (outobs=10 still costing seconds suggests post-projection waste).  (likely: src/sql.zig)
