@@ -68,6 +68,8 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     return list.toOwnedSlice(a);
 }
 pub const Options = struct {
+    key_levels: []const []const u8 = &.{},
+    key_move: bool = true,
     inference: inference_parse.Options = .{},
     source: ?*Dataset = null,
     nobs_source: ?*Dataset = null,
@@ -86,6 +88,46 @@ pub const Options = struct {
     nextrval: usize = 0,
     round: []const f64 = &.{},
     outtable: ?[]const u8 = null,
+    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize, missing: *bool) diag.Error!void {
+        i.* += 1;
+        while (!end(t, i.*)) {
+            if (kw(t[i.*], "missing")) {
+                missing.* = true;
+                i.* += 1;
+                continue;
+            }
+            if (kw(t[i.*], "nokeymove")) {
+                self.key_move = false;
+                i.* += 1;
+                continue;
+            }
+            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            i.* += 2;
+            const tuple = t[i.*].tag == .lparen;
+            if (tuple) i.* += 1;
+            var levels: std.ArrayList([]const u8) = .empty;
+            while (!end(t, i.*) and (!tuple or t[i.*].tag != .rparen)) {
+                if (t[i.*].tag == .comma) {
+                    i.* += 1;
+                    continue;
+                }
+                const negative = t[i.*].tag == .minus;
+                if (negative or t[i.*].tag == .plus) i.* += 1;
+                if (t[i.*].tag != .string and t[i.*].tag != .name and t[i.*].tag != .number) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid KEYLEVEL value", .{});
+                const value = if (negative) try std.fmt.allocPrint(a, "-{s}", .{t[i.*].text}) else t[i.*].text;
+                if (value.len > 16) return d.fail(error.ParseError, 0, "UNIVARIATE: KEYLEVEL values cannot exceed 16 characters", .{});
+                try levels.append(a, value);
+                i.* += 1;
+                if (!tuple) break;
+            }
+            if (tuple) {
+                if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed KEYLEVEL tuple", .{});
+                i.* += 1;
+            }
+            if (levels.items.len != count) return d.fail(error.ParseError, 0, "UNIVARIATE: KEYLEVEL must specify one value per CLASS variable", .{});
+            self.key_levels = levels.items;
+        }
+    }
     pub fn identify(self: *Options, a: Allocator, ds: *Dataset, obs: ?[]const usize) !*Dataset {
         const copy = try a.create(Dataset);
         copy.* = Dataset.init(a, ds.name);
@@ -1207,7 +1249,7 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
 /// Select the first weight-eligible original value within this BY group and
 /// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
 /// missing weights must not supply a representative, even without EXCLNPWGT.
-fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
+pub fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
     const level = rep[ci];
     const oi = opt.obscol orelse return level;
     rows: for (ds.rows.items) |row| {
@@ -1776,4 +1818,14 @@ pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col:
     if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
     const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
     try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference);
+}
+
+// Numerical distribution tests stay independent of rendering/ODS integration.
+test {
+    _ = @import("univ_distributions.zig");
+    _ = @import("univ_distribution_fit.zig");
+    _ = @import("univ_kernel.zig");
+    _ = @import("univ_distribution_parse.zig");
+    _ = @import("univ_distribution_values.zig");
+    _ = @import("univ_distribution_gof.zig");
 }

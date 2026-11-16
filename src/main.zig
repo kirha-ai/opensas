@@ -173,6 +173,7 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // (now-freed) arena, and `format.apply` reads the global catalog (PROC FORMAT
     // reinstalls its own this run) — plus format.zig's other run-scoped globals
     // (BUG-fmterrorneverreset: g_fmt_error, g_nofmterr; see resetPerRun there).
+    ods_capture = .{};
     sas.format.resetPerRun();
     sas.functions.resetPerRun(); // drop prior-run prx/dsfns/hashing handles (taste #12)
     sas.diag.resetGap(); // clear the per-run opensas-gap flag (D-009 exit code)
@@ -1395,6 +1396,7 @@ fn stepEnd(toks: []const Token, from: usize) usize {
 /// top-level handler (GAP-titleinsql). The numbered-line/cancel semantics and the
 /// stamp order (titles atop a listing, footnotes below) live on the type there.
 const Globals = sas.sql.Titles;
+var ods_capture: sas.proc.ods.Capture = .{};
 
 /// A top-level global statement. TITLE/FOOTNOTE update the persistent state
 /// (emitted later by the listing procs); OPTIONS applies runtime settings,
@@ -2026,17 +2028,12 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     // `ods _all_ close`) and the results/graphics/escapechar toggles are
     // accepted-as-listing no-ops — output correctly stays on stdout, and a
     // `ods pdf; … ods pdf close;` wrap around a PROC must still run and print.
-    // But SELECT/EXCLUDE filter which output objects appear, OUTPUT captures a
-    // PROC table into a dataset, and TRACE reports objects — ignoring any of
-    // those is a silent WRONG/MISSING result, so they fail LOUD by name.
+    // OUTPUT routes named typed tables through the capture registry. SELECT,
+    // EXCLUDE and TRACE still fail loud; destination rendering stays inert.
     if (eqi(kw, "ods") and toks.len >= 2 and toks[1].tag == .name) {
         const sub = toks[1].text;
         if (eqi(sub, "output")) {
-            // GAP-gapsexitingone §5d: the guard matches the documented statement
-            // itself (a typo'd sub-statement is the accepted no-op above), so
-            // only valid SAS reaches these → gap, rc 2.
-            sas.diag.markGap();
-            return diags.fail(error.ParseError, toks[1].line, "ODS OUTPUT (capture to dataset) is not supported yet", .{});
+            return ods_capture.parse(a, diags, toks);
         }
         if (eqi(sub, "select") or eqi(sub, "exclude") or eqi(sub, "trace")) {
             sas.diag.markGap(); // §5d — same shape as OUTPUT above
@@ -2833,7 +2830,7 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         return;
     }
     const proc = toks[1].text;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags };
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture };
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
@@ -2912,6 +2909,7 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         failLoud("PROC {s} is not supported", .{proc});
     }
 
+    try ods_capture.finish(lib, diags);
     if (listing and !print_bysubst) try g.emitFootnotes(a, out);
 }
 
@@ -4588,7 +4586,7 @@ test "PROC PRINT unknown sub-statement fails loud; global TITLE mid-proc is exem
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs") != null); // listing printed
 }
 
-test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pre-pass/hoist); ODS OUTPUT stays loud" {
+test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pre-pass/hoist); unsupported ODS OUTPUT stays loud" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -4627,12 +4625,12 @@ test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pr
     try std.testing.expect(!g_failed and !d3.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out.items, "1") != null); // listing printed
 
-    // ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
-    // handleGlobal arm (result-changing, unimplemented), captured diags (D-003).
+    // Unsupported ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
+    // handleGlobal arm, captured diags (D-003).
     var d4 = sas.diag.Diagnostics.init(a);
     try interpret(a, &out, &d4, mk ++ "proc print data=d noobs; ods output zzzq; run;\n", null);
     try std.testing.expect(d4.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT (capture to dataset) is not supported yet") != null);
+    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT: unsupported table") != null);
 }
 
 test "GAP-printby-low-tick274: ID∩VAR/dup VAR keep both columns; SPLIT= implies LABEL; NOBYLINE honored; N/DOUBLE/ROUND/WIDTH= stay loud" {
@@ -5365,7 +5363,7 @@ test "global statements: OPTIONS/TITLE/FOOTNOTE/FILENAME/ODS/X accepted, no DATA
     );
 }
 
-test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/OUTPUT/TRACE fail loud" {
+test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE and unknown OUTPUT names fail loud" {
     // Group A: the `ods pdf; … ods pdf close;` wrap (and every other
     // destination/toggle form) runs and still prints the listing — no error.
     try expectRun(
@@ -5383,7 +5381,7 @@ test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/OUTPUT/
     inline for (.{
         .{ "ods select MyTable;\n", "ODS select is not supported yet" },
         .{ "ods exclude MyTable;\n", "ODS exclude is not supported yet" },
-        .{ "ods output Summary=s;\n", "ODS OUTPUT (capture to dataset) is not supported yet" },
+        .{ "ods output Summary=s;\n", "ODS OUTPUT: unsupported table" },
         .{ "ods trace on;\n", "ODS trace is not supported yet" },
     }) |case| {
         var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -6688,4 +6686,51 @@ test "BUG-dropoptfalsewarn: output dataset-option drop=/keep=/rename= of a refer
         try std.testing.expect(diagHas(&diags, "The variable TYPO in the DROP, KEEP, or RENAME list has never been referenced"));
         try std.testing.expect(!diags.hasStepErrors());
     }
+}
+
+test "FEAT-odsoutput seven tables through global hoisting and typed datasets" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const source = "options obs=max firstobs=1;\n" ++
+        "data d; input b x y; datalines;\n1 1 3\n1 2 5\n1 4 4\n2 3 1\n2 5 2\n2 7 9\n;\n" ++
+        "proc corr data=d; ods output PearsonCorr=pc SimpleStats=ss; by b; var x y; run;\n" ++
+        "ods output OneWayFreqs=ow CrossTabFreqs=ct; proc freq data=d; by b; tables x x*y; run;\n" ++
+        "ods output Moments=mo Quantiles=qu BasicMeasures=bm; proc univariate data=d; by b; var x y; run;\n" ++
+        "data _null_; set pc; if b=1 and Variable='x' then put 'ODS_CORR=' y 16.12; run;\n" ++
+        "data _null_; set ss; if b=1 and Variable='x' then put 'ODS_MEAN=' Mean 16.12; run;\n" ++
+        "data _null_; set ow; if b=1 and x=2 then put 'ODS_CUM=' CumFrequency 1.; run;\n" ++
+        "data _null_; set ct; if b=1 and _TYPE_='00' then put 'ODS_TOTAL=' Frequency 1.; run;\n" ++
+        "data _null_; set mo; if b=1 and VarName='x' and Label1='Mean' then put 'ODS_MOMENT=' nValue1 16.12; run;\n" ++
+        "data _null_; set qu; if b=1 and VarName='x' and Quantile='50% Median' then put 'ODS_MEDIAN=' Estimate; run;\n" ++
+        "data _null_; set bm; if b=1 and VarName='x' and LocMeasure='Median' then put 'ODS_BASIC=' LocValue; run;\n";
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, source, &log));
+    for ([_][]const u8{ "0.327326835354", "2.333333333333", "ODS_CUM=2", "ODS_TOTAL=3", "ODS_MEDIAN=2", "ODS_BASIC=2" }) |needle| {
+        try std.testing.expect(std.mem.indexOf(u8, out.items, needle) != null);
+    }
+}
+
+test "FEAT-odsoutput missing objects warn empty noprint close and session reset" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var log: []const u8 = "";
+    const data = "data d; x=1; output; run;\n";
+    for ([_][]const u8{
+        "ods output Moments=m; proc univariate data=d noprint; var x; run;",
+        "ods output Moments=m; proc univariate data=d(where=(x>99)); var x; run;",
+        "ods output Moments=m; proc print data=d; run;",
+        "ods output Moments=m; proc corr data=d; var x; run;",
+    }) |source| {
+        try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, try std.fmt.allocPrint(a, "{s}{s}", .{ data, source }), &log));
+        try std.testing.expect(std.mem.indexOf(u8, log, "Output 'Moments' was not created") != null);
+    }
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, data ++ "ods output Moments=m; ods output close; proc print data=d; run;", &log));
+    try std.testing.expect(std.mem.indexOf(u8, log, "was not created") == null);
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "ods output Moments=m;", &log));
+    try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, data ++ "proc print data=d; run;", &log));
+    try std.testing.expect(std.mem.indexOf(u8, log, "was not created") == null);
 }

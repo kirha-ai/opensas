@@ -1,0 +1,90 @@
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 903 7.75194 9.74943 0.00000 0.00000 20.00000
+x 903 3.47287 4.47475 2.00000 0.00000 12.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 903 0.99473 0.24732 16.17735 <.0001 633.37692 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 903 7.75194 9.74943 0.00000 0.00000 20.00000
+x 903 3.47287 4.47475 2.00000 0.00000 12.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 903 0.99510 0.36559 7.40881 0.0065 633.37692 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 90 10.44444 10.04609 20.00000 0.00000 20.00000
+x 90 5.08889 5.22020 2.00000 0.00000 12.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 90 0.73358 0.08366 76.89285 <.0001 32.27411 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 95 9.45263 10.47060 3.00000 0.00000 23.00000
+x 95 3.83158 3.50274 7.00000 0.00000 7.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 95 0.80509 0.06662 146.02254 <.0001 43.90796 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 74 3.40541 2.92799 2.00000 0.00000 7.00000
+x 74 3.78378 4.11569 1.00000 0.00000 9.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 74 0.64920 0.09371 47.99652 <.0001 24.04527 <.0001
+
+The CORR Procedure
+
+1 With Variables: y
+1 Variables: x
+Freq Variable: f
+
+Simple Statistics
+Variable N Mean Std Dev Median Minimum Maximum
+y 52 7.53846 4.42126 11.00000 2.00000 11.00000
+x 52 1.23077 2.00602 3.00000 -1.00000 3.00000
+
+polychoric Correlations
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+y x 52 0.60675 0.16027 14.33313 0.0002 8.93456 0.0028
+

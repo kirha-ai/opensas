@@ -198,13 +198,19 @@ title_stmt     = "TITLE" [ digit ] [ string ] ";" ;               (* opensas *)
 footnote_stmt  = "FOOTNOTE" [ digit ] [ string ] ";" ;            (* opensas *)
                  (* FOOTNOTE1..10 likewise, printed below the listing
                    (bug_titlecancel, title_in_sql) *)
-ods_stmt       = "ODS" { any_token } ";" ;                        (* opensas: destination open/close
-                 (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5 [CLOSE], _ALL_ CLOSE) and the
-                 results/graphics/escapechar toggles are accepted as listing no-ops
-                 — opensas renders to ONE output stream (main.zig); ODS OUTPUT/
-                 SELECT/EXCLUDE/TRACE FAIL LOUD by name (audit probe: ods select
-                 all; → "ODS select is not supported yet"). NOT marked: no ODS
-                 semantics execute — the accepted forms are deliberate no-ops. *)
+ods_stmt       = ods_output_stmt | "ODS" { any_token } ";" ;
+                 (* Destination open/close (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5,
+                    _ALL_ CLOSE) and results/graphics/escapechar remain deliberate
+                    listing no-ops (D-022). SELECT/EXCLUDE/TRACE fail loud. *)
+ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
+                | ods_table_name "=" ( sas_name | two_level_name )
+                  { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
+ods_table_name  = "PearsonCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
+                | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
+                 (* Typed capture; default requests expire after next PROC.
+                    BY objects concatenate, missing objects warn without creating
+                    a dataset. Unknown tables and unimplemented OUTPUT options
+                    fail visibly. No destination rendering or selection implied. *)
 x_stmt         = "X" [ ( name | string ) { name | string } ] ";" ;  (* opensas: parsed,
                  accepted inert — the shell command is NOT executed (audit probe:
                  x "echo …"; runs clean, no command runs). Accepted-inert by
@@ -845,16 +851,29 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
                  [ "OUT" "=" dataset ] [ "NODUPKEY" | "NODUP" ] ";"
                  "BY" { [ "DESCENDING" ] var } ";" step_boundary ;
 
-(* PROC CORR core — FEAT-corr-core, Statistical Procedures pp.8–23,34–36.
-   Typed Pearson results retain pair-specific N/p, weights and centered moments.
-   OUTP=/other correlation measures and modeling options remain fail-loud. *)
+(* PROC CORR — Statistical Procedures pp.8–36.
+   Typed Pearson/rank/partial/Fisher/reliability and ordinal estimates are implemented.
+   HOEFFDING includes calibrated probabilities with tied/FREQ/small-N conventions.
+   Polychoric boundary information below numerical resolution fails explicitly.
+   OUTP=/other output data sets and plots remain fail-loud. *)
 proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
+                 | "SPEARMAN" | "KENDALL" | "HOEFFDING" | "ALPHA"
+                 | "SINGULAR" "=" number
+                 | "FISHER" [ "(" { corr_fisher_option } ")" ]
+                 | "POLYCHORIC" [ "(" { corr_poly_option } ")" ]
+                 | "POLYSERIAL" [ "(" { corr_poly_option | "ORDINAL" "=" ( "VAR" | "WITH" ) } ")" ]
                  | "EXCLNPWGT" | "EXCLNPWGTS" | "NOPRINT" | "NOSIMPLE"
-                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP" | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
-                 { "VAR" var_list ";" | "WITH" var_list ";"
+                 | "NOPROB" | "NOCORR" | "COV" | "CSSCP" | "SSCP"
+                 | "VARDEF" "=" ( "DF" | "N" | "WDF" | "WEIGHT" | "WGT" ) } ";"
+                 { "VAR" var_list ";" | "WITH" var_list ";" | "PARTIAL" var_list ";"
                  | "BY" { [ "DESCENDING" ] var } [ "NOTSORTED" ] ";"
                  | "FREQ" var ";" | "WEIGHT" var ";"
                  | "WHERE" expression ";" } step_boundary ; (* opensas *)
+corr_fisher_option = "ALPHA" "=" number | "RHO0" "=" [ "+" | "-" ] number
+                 | "BIASADJ" "=" ( "YES" | "NO" )
+                 | "TYPE" "=" ( "LOWER" | "UPPER" | "TWOSIDED" ) ; (* opensas *)
+corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
+                 | "NGROUPS" "=" ( "ALL" | integer ) ; (* opensas *)
 
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
@@ -884,7 +903,8 @@ proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
                  | "WEIGHT" var [ "/" "ZEROS" ] ";"
                  | "FORMAT" var_list format_ref ";"
                  | "WHERE" expression ";"
-                 | "TEST" { freq_test } ";" } step_boundary ;
+                 | "TEST" { freq_test } ";"
+                 | freq_exact_statement } step_boundary ;
 freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
                  | "NOPRINT" | "NLEVELS"
                  | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
@@ -927,7 +947,7 @@ table_option   = "NOCUM" | "NOPERCENT" | "NOFREQ" | "NOROW" | "NOCOL"
                     gaps; PAGE+COMPRESS is invalid SAS. Stray parentheses and
                     values attached to flag options are errors. *)
 
-freq_stat_option = "CHISQ" [ "(" { freq_chisq_option } ")" ]
+freq_stat_option = "FISHER" | "CHISQ" [ "(" { freq_chisq_option } ")" ]
                  | freq_expected | "MEASURES" [ "(" "CL" ")" ]
                  | "CL" | "ALPHA" "=" number | "NOWARN"
                  | ( "PLCORR" | "POLYCHORIC" )
@@ -945,8 +965,28 @@ freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
                  (* TEST implies MEASURES/PLCORR only with one TABLES statement.
                     CHISQ includes automatic 2x2 Fisher for integer counts.
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
-                    Standalone EXACT and OUTPUT statistics datasets
-                    remain explicit gaps; WARN=OUTPUT does not create a dataset. *)
+                    OUTPUT statistics datasets remain explicit gaps;
+                    WARN=OUTPUT does not create a dataset. *)
+
+freq_exact_statement = "EXACT" { freq_exact_stat }
+                       [ "/" { freq_exact_control } ] ";" ; (* opensas *)
+freq_exact_stat = "AGREE" | "BARNARD" | "BINOMIAL" | "BIN" | "CHISQ"
+                | "COMOR" | "EQOR" | "ZELEN" | "FISHER" | "JT" | "KAPPA"
+                | "KENTB" | "TAUB" | "LRCHI" | "MCNEM" | "MEASURES"
+                | "MHCHI" | "OR" | "ODDSRATIO" | "PCHI" | "PCORR"
+                | "SCORR" | "SMDCR" | "SMDRC" | "STUTC" | "TAUC"
+                | "SYMMETRY" | "BOWKER" | "TREND" | "WTKAPPA" | "WTKAP"
+                | ( "RELRISK" | "RISKDIFF" ) [ "(" { freq_exact_risk_option } ")" ] ;
+freq_exact_risk_option = "COLUMN" "=" ( "1" | "2" | "BOTH" )
+                      | "METHOD" "=" ( "SCORE" | "SCORE2" | "NOSCORE" ) ;
+freq_exact_control = "MC" | "POINT" | "MIDP"
+                   | ( "ALPHA" | "MAXTIME" | "N" | "SEED" ) "=" freq_risk_number
+                   | "PFORMAT" "=" ( format_ref | "EXACT" ) ;
+(* Public EXACT dispatch is implemented; full FEAT-freq-exact numerical
+   acceptance remains pending (notably retained unconditional RR boundaries).
+   EXACT requires TABLES; with multiple TABLES it selects only requested
+   families. MC is incompatible with POINT/MIDP. N/SEED/ALPHA invoke MC.
+   Resource exhaustion reports missing results, never partial enumeration. *)
 
 (* FEAT-freq-stratified: numeric kernels, independent readers/renderers and
    public execution. EXACT statement dispatch remains owned by FEAT-freq-exact. *)
@@ -991,12 +1031,14 @@ freq_risk_suboption = "COMMON" (* RISKDIFF only; opensas *) | "CL" "=" ( freq_ri
                    | "METHOD" "=" name ;
 freq_risk_number = [ "-" | "+" ] number ;
 freq_risk_cl = name [ "(" "CORRECT" [ "=" ( "NO" | "MEE" ) ] ")" ] ;
-(* Family-specific validation applies: BIN has Wald, CP/EXACT, AC, Jeffreys,
+(* Family-specific validation applies: BIN has Wald, CP/EXACT, Blaker, AC, Jeffreys,
    LR, logit, mid-p, Wilson; RISKDIFF has Wald, AC, HA, MN, Newcombe;
    OR has Wald, modified Wald, score, LR, mid-p; RELRISK has Wald, modified
    Wald, score, LR. Documented long aliases are accepted. COLUMN=BOTH is
    for RISKDIFF. Selected LEVEL uses formatted analysis-level order.
-   Blaker, CL=EXACT for RD/OR/RR, COMMON, OUTLEVEL, EXACT statement and
+   CL=EXACT for RD/OR/RR selects limits computed by the EXACT statement;
+   without its matching EXACT request a warning is issued, as in SAS.
+   COMMON, OUTLEVEL and
    statistics OUTPUT remain explicit rc2 gaps at this checkpoint.
    Risk cores import no exact module; the execution adapter owns mid-p calls. *)
 

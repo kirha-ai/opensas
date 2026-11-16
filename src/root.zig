@@ -23,12 +23,21 @@ pub const macro = @import("macro.zig");
 pub const sql = @import("sql.zig");
 
 test {
+    _ = @import("stat/univ_histogram_bins.zig");
+    _ = @import("stat/univ_histogram_output.zig");
+    _ = @import("stat/univ_kernel_output.zig");
+    _ = @import("stat/univ_endpoint_fit.zig");
+    _ = @import("stat/univ_johnson_fit.zig");
+    _ = @import("stat/univ_kernel_sjpi.zig");
+    _ = @import("stat/corr_hoeffding_probability.zig");
+    _ = @import("ods.zig");
     _ = @import("stat/freq_stratified_execute.zig");
     _ = @import("stat/freq_stratified_render.zig");
     _ = @import("stat/freq_stratified_parse.zig");
     _ = @import("stat/freq_stratified_risk.zig");
     _ = @import("stat/freq_exact_joint.zig");
     _ = @import("stat/freq_exact_execute.zig");
+    _ = @import("stat/freq_exact_public.zig");
     _ = @import("stat/freq_exact_render.zig");
     _ = @import("stat/freq_exact_parse.zig");
     _ = @import("stat/freq_stratified.zig");
@@ -69,6 +78,7 @@ test {
     _ = @import("proc.zig");
     _ = @import("stat/corr.zig");
     _ = @import("stat/normality.zig");
+    _ = @import("stat/univ_edf_inference.zig");
     _ = @import("macro.zig");
     _ = @import("sql.zig");
 }

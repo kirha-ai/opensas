@@ -57,10 +57,24 @@ const Context = struct {
         }
         const matrix = tests.CountMatrix{ .rows = m.rows, .cols = m.cols, .counts = counts, .row_scores = self.row_scores, .col_scores = self.col_scores };
         if (self.family == .pchi or self.family == .lrchi) {
-            // Existing contingency also computes automatic Fisher on 2x2;
-            // asymptotic statistics are reused rather than reimplemented.
-            const r = try tests.contingency(self.allocator, matrix, null);
-            return if (self.family == .pchi) r.pearson.statistic else r.likelihood_ratio.statistic;
+            // Only the sampled statistic is needed. contingency() additionally
+            // enumerates automatic 2x2 Fisher, which would perform an unbounded
+            // support scan inside every Monte Carlo draw without MAXTIME checks.
+            var rows = [_]f64{0} ** 256;
+            var cols = [_]f64{0} ** 256;
+            var total: f64 = 0;
+            for (counts, 0..) |v, i| {
+                rows[i / m.cols] += v;
+                cols[i % m.cols] += v;
+                total += v;
+            }
+            var statistic: f64 = 0;
+            for (counts, 0..) |v, i| {
+                const expected = rows[i / m.cols] * cols[i % m.cols] / total;
+                if (expected == 0) continue;
+                if (self.family == .pchi) statistic += (v - expected) * (v - expected) / expected else if (v > 0) statistic += 2 * v * @log(v / expected);
+            }
+            return statistic;
         }
         const r = try tests.association(self.allocator, matrix, 0.05);
         return switch (self.family) {
@@ -101,6 +115,20 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     if (m.counts.len > 256) return .exhausted;
     const integers = try dist.Matrix.fromCounts(a, m.rows, m.cols, m.counts);
     defer a.free(integers.cells);
+    // SAS sparse.sas: zero margins suppress all but AGREE statistics, even
+    // with WEIGHT / ZEROS. Preserve the full square matrix for agreement.
+    if (m.rows > 1 and f != .mcnem and f != .symmetry and f != .kappa and f != .wtkappa) {
+        for (0..m.rows) |i| {
+            var sum: u64 = 0;
+            for (integers.cells[i * m.cols ..][0..m.cols]) |v| sum += v;
+            if (sum == 0) return .not_applicable;
+        }
+        for (0..m.cols) |j| {
+            var sum: u64 = 0;
+            for (0..m.rows) |i| sum += integers.cells[i * m.cols + j];
+            if (sum == 0) return .not_applicable;
+        }
+    }
     if (f == .binomial) {
         if (c.event_index >= integers.cells.len) return error.ExecError;
         var n: u32 = 0;
@@ -132,7 +160,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         var result: Result = .{ .risk_intervals = .{} };
         for ([_]bool{ true, false }) |first| {
             if ((first and column == .second) or (!first and column == .first)) continue;
-            const interval = try unconditional.riskLimits(table, if (first) .first else .second, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget });
+            const interval = try unconditional.riskLimitsSas(table, if (first) .first else .second, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget, .allocator = a });
             if (interval == .exhausted) return .exhausted;
             if (first) result.risk_intervals.first = interval.complete else result.risk_intervals.second = interval.complete;
         }

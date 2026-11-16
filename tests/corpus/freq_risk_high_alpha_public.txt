@@ -1,0 +1,96 @@
+                                      The FREQ Procedure
+
+Binomial Proportion
+x = 1
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Proportion                        0.3500      0.1067        0.2941        0.4059
+
+Confidence Limits for the Binomial Proportion
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Clopper-Pearson (Exact)             0.2753        0.4341
+
+Equality Test for the Binomial Proportion
+Null = 0.5; Method = Wald
+
+Proportion                        0.3500
+Z                                -1.3416
+Standard Error                    0.1118
+One-sided Pr < Z                  0.0899
+Two-sided Pr > |Z|                0.1797
+
+Noninferiority Analysis for the Binomial Proportion
+Limit = 0.3; Method = Wald
+
+Proportion                        0.3500
+Z                                 0.4688
+Standard Error                    0.1067
+Pr > Z                            0.3196
+-20% Lower Conf Limit             0.3770
+-20% Upper Conf Limit             0.3230
+
+Sample Size = 20
+                        The FREQ Procedure
+
+                        Table of r by c
+
+
+Statistics for Table of r by c
+
+Column 1 Risk Estimates
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Row 1                             0.6000      0.1095        0.5426        0.6574
+Row 2                             0.1667      0.0680        0.1310        0.2023
+Total                             0.3400      0.0670        0.3049        0.3751
+Difference                        0.4333      0.1290        0.3657        0.5010
+
+Difference is (Row 1 - Row 2)
+
+Column 1 Exact Risk Confidence Limits
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Row 1                               0.5160        0.6777
+Row 2                               0.1219        0.2257
+Total                               0.2971        0.3867
+
+Column 2 Risk Estimates
+
+Statistic / Method              Estimate         ASE  40% Lower CL  40% Upper CL
+Row 1                             0.4000      0.1095        0.3426        0.4574
+Row 2                             0.8333      0.0680        0.7977        0.8690
+Total                             0.6600      0.0670        0.6249        0.6951
+Difference                       -0.4333      0.1290       -0.5010       -0.3657
+
+Difference is (Row 1 - Row 2)
+
+Column 2 Exact Risk Confidence Limits
+
+Statistic / Method            40% Lower CL  40% Upper CL
+Row 1                               0.3223        0.4840
+Row 2                               0.7743        0.8781
+Total                               0.6133        0.7029
+
+Noninferiority Analysis for the Risk Difference (Column 1)
+Limit = -0.2; Method = Newcombe
+
+Risk Difference                   0.4333
+-20% Lower Conf Limit             0.4666
+-20% Upper Conf Limit             0.4013
+
+Equivalence Analysis for the Relative Risk (Column 1)
+Equivalence Limits = 0.8, 1.25; Method = Farrington-Manning
+
+Relative Risk                     3.6000
+Lower Margin Z                    3.8010
+Lower Margin ASE (F-M)            0.1228
+Upper Margin ASE (F-M)            0.1526
+Upper Margin Z                    2.5661
+Lower Margin Pr > Z               <.0001
+Upper Margin Pr < Z               0.9949
+Overall P-Value                   0.9949
+-20% Lower Conf Limit                  .
+-20% Upper Conf Limit                  .
+
+Sample Size = 50

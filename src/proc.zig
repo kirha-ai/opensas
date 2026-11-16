@@ -45,7 +45,10 @@ const freq_stat = @import("stat/freq.zig");
 /// of `(arena, lib, diags)` threaded through all 15 run* signatures. `out` stays
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics };
+pub const ods = @import("ods.zig");
+pub const univariate_plot = @import("stat/univ_plot_data.zig");
+pub const univariate_edf = @import("stat/univ_edf_inference.zig");
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4457,6 +4460,8 @@ fn isUnivOutGapOption(kw: []const u8) bool {
 }
 
 const univ = @import("stat/univariate.zig");
+const univ_distributions = @import("stat/univ_distribution_statements.zig");
+const univ_plots = @import("stat/univ_distribution_plots.zig");
 
 pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.Error!void {
     const arena = cx.arena;
@@ -4469,6 +4474,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var mu0: f64 = 0; // MU0= reference for Tests for Location (F1); default 0
     var extra: univ.Options = .{};
     var outputs: std.ArrayList(univ.Output) = .empty;
+    var histograms: std.ArrayList(univ_distributions.Statement) = .empty;
+    var distribution_plots: std.ArrayList(univ_plots.Statement) = .empty;
     var ids: std.ArrayList([]const u8) = .empty;
     var i: usize = 2; // past `proc univariate`
     while (i < toks.len and toks[i].tag != .semicolon) {
@@ -4561,10 +4568,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             i += 1;
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
                 if (toks[i].tag == .slash) {
-                    // as MEANS (BUG-meansclassmiss): only MISSING is modeled
-                    while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
-                        if (toks[i].tag == .name and eqi(toks[i].text, "missing")) class_missing = true;
-                    }
+                    try extra.classPlotOptions(arena, diags, toks, &i, classes.items.len, &class_missing);
                     break;
                 }
                 if (toks[i].tag == .lparen) {
@@ -4576,12 +4580,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             i += 1;
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
                 if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &ids);
-        } else if (tkKw(toks[i], "histogram") or tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
-            // Plot statements produce graphics we never render; swallowing them
-            // silently no-op'd a requested plot (BUG-univplotnoop). Fail loud, as
-            // ID/OUTPUT-pctlpts beside them already do. Five named, valid SAS 9.4
-            // statements → gap (rc 2); the catch-all below keeps the typos at rc 1.
-            return failGap(diags, toks[i].line, "PROC UNIVARIATE: {s} statement is not supported yet", .{toks[i].text});
+        } else if (tkKw(toks[i], "histogram")) {
+            try histograms.append(arena, try univ_distributions.parseStatement(arena, diags, toks, &i));
+        } else if (tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
+            try distribution_plots.append(arena, try univ_plots.parse(arena, diags, toks, &i));
         } else if (tkKw(toks[i], "inset")) {
             // INSET is a valid SAS 9.4 PROC UNIVARIATE statement (the Syntax
             // block's own list, Statistical Procedures printed p. 298,
@@ -4702,6 +4704,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
+    if (wcol != null and (histograms.items.len > 0 or distribution_plots.items.len > 0)) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
     try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
     if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
@@ -4740,10 +4743,13 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         }
     }
 
+    try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
-
-    if (noprint) return; // NOPRINT suppresses the Moments/Quantiles listing
+    if (noprint) {
+        try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
+        return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
+    }
     try out.appendSlice(arena, (" " ** 33) ++ "The UNIVARIATE Procedure\n");
     // One block set PER BY GROUP (BUG-univignoresby: BY was parsed and then
     // ignored — the listing printed ONE pooled Moments block over ALL obs, the
@@ -4760,7 +4766,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (!univ.hasUsableWeight(bd.rows.items, wcol, extra)) continue;
         if (ccols.items.len == 0) {
             const analysis = try univ.analysisView(arena, bd, acols.items, wcol, extra);
-            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
+            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
@@ -4785,10 +4791,11 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 for (g.rows) |r| try gd.rows.append(arena, r);
                 if (!univ.hasUsableWeight(gd.rows.items, wcol, extra)) continue;
                 const analysis = try univ.analysisView(arena, gd, acols.items, wcol, extra);
-                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items);
+                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
             }
         }
     }
+    try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
 }
 
 /// A percentile-family statistic whose value the shared MEANS output builder
@@ -4802,7 +4809,7 @@ fn isQuantileStat(k: StatKind) bool {
 
 /// One variable's Moments + Quantiles block. `wcol` names a WEIGHT column
 /// (WEIGHT-uni-impl); null → every obs weighs 1 (identical to the unweighted case).
-fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize) !void {
+fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize, cx: ProcCtx, bycols: []const usize, classcols: []const usize) !void {
     // computeStatsV already carries the weighted N / Sum Weights (Σwᵢ) / weighted
     // Mean (Σwᵢxᵢ/Σwᵢ) / weighted Std (CSS over the VARDEF divisor, BUG-statvardef)
     // / weighted CSS (Σwᵢ(xᵢ−x̄w)²) / weighted USS (Σwᵢxᵢ²) / weighted Sum (Σwᵢxᵢ).
@@ -4919,6 +4926,11 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "Mean", s.mean, "Std Deviation", s.std);
     try momentLine(arena, out, "Median", med, "Variance", variance);
     const mi = modeInfo(vals);
+    if (cx.capture) |capture| try @import("stat/ods_univariate.zig").publish(arena, cx.diags, capture, ds, col, bycols, classcols,
+        .{ .left = .{ nf, s.mean, s.std, skew_out, s.uss, cv },
+           .right = .{ s.sumw, s.sum, variance, kurt_out, s.css, sem },
+           .quantiles = .{ s.max, p99, p95, p90, q3, med, q1, p10, p5, p1, s.min },
+           .mode = if (mi.count < 2 and pairs.len != 1) nan else mi.mode });
     try momentLine(arena, out, "Mode", if (mi.count < 2 and pairs.len != 1) nan else mi.mode, "Range", s.max - s.min);
     try out.appendSlice(arena, " " ** 34); // no fourth Location stat — blank pair
     try uPair(arena, out, "Interquartile Range", q3 - q1);
@@ -15034,7 +15046,7 @@ test "FREQ-hardening: remaining unsupported inference requests fail loud (captur
     try lib.put("d", ds);
 
     // Each stat option must ParseError naming itself, never a table without the stat.
-    for ([_][]const u8{ "exact", "fisher" }) |opt| {
+    for ([_][]const u8{"exact"}) |opt| {
         var diags = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         const src = try std.fmt.allocPrint(a, "proc freq data=d; tables g*h / {s}; run;", .{opt});
@@ -16363,7 +16375,7 @@ test "D-009: a recognized-but-unsupported PROC construct exits 2, a typo stays 1
         diag.resetGap();
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
-        const toks = try lex.tokenize(a, "proc freq data=have; exact age; run;", &d);
+        const toks = try lex.tokenize(a, "proc freq data=have; output out=statistics; run;", &d);
         try t.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks));
         try t.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
     }
@@ -17183,6 +17195,8 @@ test "NOTE-freqallmissnone: a formatted category containing missing is wholly mi
 }
 /// Shared numerical and grouping helpers for the UNIVARIATE extension (D-029).
 pub const UnivariateHelpers = struct {
+    pub const appendVarListName = @import("proc.zig").appendVarListName;
+    pub const expandVarPrefixes = @import("proc.zig").expandVarPrefixes;
     pub const VarDef = @import("proc.zig").VarDef;
     pub const XW = @import("proc.zig").XW;
     pub const Stats = @import("proc.zig").Stats;

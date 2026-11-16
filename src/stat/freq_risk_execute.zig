@@ -64,8 +64,8 @@ const Builder = struct {
         // Newcombe analysis provides confidence limits only, never a test.
         if (req.method == .newcombe) rows.shrinkRetainingCapacity(1);
         if (hypothesis != .equality) {
-            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Lower Conf Limit", .{100 * (1 - 2 * self.alpha)}), .values = .{ result.limits.lower, null, null, null, null } });
-            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Upper Conf Limit", .{100 * (1 - 2 * self.alpha)}), .values = .{ result.limits.upper, null, null, null, null } });
+            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Lower Conf Limit", .{100 - 200 * self.alpha}), .values = .{ result.limits.lower, null, null, null, null } });
+            try rows.append(self.a, .{ .label = try std.fmt.allocPrint(self.a, "{d}% Upper Conf Limit", .{100 - 200 * self.alpha}), .values = .{ result.limits.upper, null, null, null, null } });
         }
         try self.add(title, subtitle, &.{"Value"}, rows.items, if (req.correct) "Continuity correction included." else "");
     }
@@ -73,6 +73,7 @@ const Builder = struct {
 fn methodName(m: p.Method) []const u8 {
     return switch (m) {
         .ac => "Agresti",
+        .blaker => "Blaker",
         .exact => "Clopper-Pearson (Exact)",
         .jeffreys => "Jeffreys",
         .lr => "Likelihood Ratio",
@@ -101,6 +102,11 @@ fn integer(x: f64) bool {
     return std.math.isFinite(x) and x >= 0 and x <= std.math.maxInt(u32) and x == @floor(x);
 }
 fn binLimits(b: *Builder, s: k.Binomial, cl: p.CL, correct: bool) diag.Error!k.Interval {
+    if (cl.method == .blaker) {
+        if (!integer(s.success) or !integer(s.total)) return p.gap(b.d, 0, "Blaker limits for noninteger or oversized counts");
+        const result = try exact.binomialBlaker(@intFromFloat(s.success), @intFromFloat(s.total), b.alpha);
+        return .{ .lower = result.lower, .upper = result.upper };
+    }
     if (cl.method == .midp) {
         if (!integer(s.success) or !integer(s.total)) return p.gap(b.d, 0, "exact mid-p for noninteger or oversized counts");
         const result = try exact.binomial(@intFromFloat(s.success), @intFromFloat(s.total), 0.5, b.alpha, true);
@@ -143,7 +149,6 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         try names.append(b.a, "Equivalence Analysis");
     }
     for (hs.items, names.items) |h, name| {
-        if (h != .equality and b.alpha >= 0.5) return p.gap(b.d, 0, "NI/equivalence ALPHA >= .5");
         const variance = req.variance orelse (if (req.family == .binomial and h == .equality) infer.Variance.null_value else .sample);
         const result = (switch (req.family) {
             .binomial => infer.binomial(sample.?, h, variance, b.alpha, req.correct),
@@ -206,6 +211,11 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
             };
             for (cls) |cl| {
                 if (cl.method == .exact and !integer_counts) continue;
+                if (cl.method == .blaker and !integer_counts) {
+                    for (table.counts) |v| if (v > std.math.maxInt(u32)) return p.gap(d, 0, "Blaker limits for oversized counts");
+                    try d.report(.note, 0, "Blaker confidence limits for the binomial proportion cannot be computed when there are noninteger frequencies.", .{});
+                    continue;
+                }
                 try rows.append(a, ciRow(try methodLabel(a, cl, .binomial, req.correct), try binLimits(&b, s, cl, req.correct)));
             }
             if (rows.items.len > 0) try b.intervals("Confidence Limits for the Binomial Proportion", "", rows.items);
@@ -240,6 +250,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 if (req.both_columns) current.column = col_index;
                 var rows: std.ArrayList(r.Row) = .empty;
                 for (current.cls) |cl| {
+                    if (cl.method == .exact) continue; // public EXACT adapter owns unconditional limits
                     const method: k.DifferenceMethod = switch (cl.method) {
                         .wald => .wald,
                         .ac => .agresti_caffo,
@@ -274,6 +285,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
         for ([_]?p.Request{ options.odds_ratio, options.relative_risk }) |maybe| if (maybe) |req| {
             var rows: std.ArrayList(r.Row) = .empty;
             for (req.cls) |cl| {
+                if (cl.method == .exact) continue; // public EXACT adapter owns these limits
                 const ci: k.Interval = if (cl.method == .midp) blk: {
                     var cells: [4]u32 = undefined;
                     for (c, 0..) |v, i| {
@@ -401,17 +413,22 @@ test "FEAT-freq-risk SAS remaining NI SUP methods and LR equality reporting" {
     try std.testing.expect(seen_chi and seen_p);
 }
 
-test "FEAT-freq-risk high alpha pending path remains an explicit captured gap" {
-    // SAS acceptance/alpha-nonsymmetric.sas accepts .5 and .6. At .6,
-    // binomial NI Wald limits are [.3770,.3230]; RR score intervals are
-    // missing but its TOST p=.9949 remains computed. Until the numerical
-    // inference contract is extended, do not misclassify valid SAS as rc1.
+test "FEAT-freq-risk public high alpha preserves SAS reversed confidence limits" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     var d = diag.Diagnostics.init(arena.allocator());
-    diag.resetGap();
-    defer diag.resetGap();
-    try std.testing.expectError(error.ExecError, execute(arena.allocator(), &d, .{ .name = "x", .row_labels = &.{ "1", "2" }, .counts = &.{ 7, 13 }, .one_way = true }, .{ .binomial = .{ .family = .binomial, .noninf = true } }, 0.6));
-    try std.testing.expect(d.hasErrors() and diag.gapHit());
-    try std.testing.expectEqual(@as(u8, 2), diag.exitCode(diag.gapHit(), d.hasErrors()));
+    const sections = try execute(arena.allocator(), &d, .{ .name = "x", .row_labels = &.{ "1", "2" }, .counts = &.{ 7, 13 }, .one_way = true }, .{ .binomial = .{ .family = .binomial, .noninf = true } }, 0.6);
+    var found: usize = 0;
+    for (sections.sections) |section| for (section.rows) |row| {
+        if (std.mem.endsWith(u8, row.label, "% Lower Conf Limit")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 0.3770), row.values[0].?, 0.00005);
+            found += 1;
+        }
+        if (std.mem.endsWith(u8, row.label, "% Upper Conf Limit")) {
+            try std.testing.expectApproxEqAbs(@as(f64, 0.3230), row.values[0].?, 0.00005);
+            found += 1;
+        }
+    };
+    try std.testing.expectEqual(@as(usize, 2), found);
+    try std.testing.expect(!d.hasErrors());
 }
