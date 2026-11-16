@@ -104,13 +104,12 @@ these caused real regressions (see D-001).
   (a) **INERTNESS, SETTLED, NOT DEBT.** `X 'command';` parses and does NOT run
   the OS command, and an `ODS <destination>` statement is accepted as a listing
   no-op (opensas renders ONE output stream; ODS SELECT/EXCLUDE/TRACE stay LOUD
-  by name). FEAT-odsoutput implements only typed OUTPUT capture for the named
-  PearsonCorr, SimpleStats, OneWayFreqs, CrossTabFreqs, Moments, Quantiles and
-  BasicMeasures tables; other OUTPUT names remain loud. This does not change
-  destination rendering or claim FEAT-base-stat-results. Neither inert form
-  is an unimplemented gap waiting for a dev — both are
-  deliberate, and `docs/sas9.4.ebnf` deliberately withholds `(* opensas *)` from
-  `x_stmt`/`ods_stmt` to say so. Do not "finish" them.
+  by name). ODS OUTPUT is typed capture whose allowlist lives in `src/ods.zig`
+  — not in this decision — and grows with landed, SAS-aligned producers; unknown
+  names stay loud. This does not change destination rendering or claim
+  FEAT-base-stat-results. Neither inert form is an unimplemented gap waiting
+  for a dev — both are deliberate, and `docs/sas9.4.ebnf` deliberately withholds
+  `(* opensas *)` from `x_stmt`/`ods_stmt` to say so. Do not "finish" them.
   (b) **BUT INERT MUST NOT MEAN SILENT.** `isInertGlobalKw`'s doc-comment
   justifies the whole set as *"Real SAS global statements a batch interpreter
   cannot observe"*. That justification is TRUE for RUN/QUIT, GOPTIONS, SASFILE,
