@@ -1435,6 +1435,7 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
 }
 
 fn summaryOverflows(a: Allocator, view: Analysis, ci: usize, stat: h.Stats, def: u8, robust: bool) !bool {
+    if (std.math.isInf(stat.std)) return true;
     const magnitude = @max(@abs(stat.min), @abs(stat.max));
     // Bound the quartile fences by 4*max(abs(x)) and the sum of pairwise
     // distances by n*(n-1)*max(abs(x)). Ordinary groups need no re-sort.
@@ -1464,7 +1465,9 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
     // Bound a squared range by four times the squared maximum magnitude.
     // Ordinary data cannot overflow and need no extra grouping or sorting.
     const count: f64 = @floatFromInt(ds.rows.items.len);
-    const limit = 0.5 * @sqrt(std.math.floatMax(f64) / count) / @sqrt(max_weight);
+    // WDF can additionally overflow at the final division even when CSS is finite.
+    const min_divisor: f64 = if (vd == .wdf and wc != null) h.minWdf else 1;
+    const limit = 0.5 * @sqrt((std.math.floatMax(f64) / count) * min_divisor) / @sqrt(max_weight);
     possible: {
         for (source.rows.items) |row| for (acols) |ci| {
             if (@abs(h.toNum(row[ci])) >= limit) break :possible;

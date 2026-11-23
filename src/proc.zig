@@ -2046,6 +2046,8 @@ fn computeUnivStats(rows: []const []const Value, col: usize, wcol: ?usize, varde
     return computeMoments(true, rows, col, wcol, vardef, frequency_obs);
 }
 
+const univ_min_wdf = 5000 * std.math.floatEps(f64);
+
 // M9 flushes subnormal sums of squares, squared residuals, and variance
 // to zero at their individual calculation boundaries.
 fn univNormalSquare(value: f64) f64 {
@@ -2173,7 +2175,9 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         .wgt => sumw,
         .wdf => sumw - 1,
     };
-    const variance = if (divisor > 0 and usable_weight) css / divisor else nan;
+    // M9 suppresses WDF until the total weight reaches 1 + 5000 epsilons.
+    const valid_divisor = if (native_univariate and vardef == .wdf) divisor >= univ_min_wdf else divisor > 0;
+    const variance = if (valid_divisor and usable_weight) css / divisor else nan;
     var sd = @sqrt(if (native_univariate) univNormalSquare(variance) else variance);
     const small_range = native_univariate and sd > 0 and sd <= relative_tolerance * @abs(mean);
     if (small_range) {
@@ -17324,6 +17328,7 @@ pub const UnivariateHelpers = struct {
     pub const appendVarListName = @import("proc.zig").appendVarListName;
     pub const expandVarPrefixes = @import("proc.zig").expandVarPrefixes;
     pub const VarDef = @import("proc.zig").VarDef;
+    pub const minWdf = @import("proc.zig").univ_min_wdf;
     pub const XW = @import("proc.zig").XW;
     pub const Stats = @import("proc.zig").Stats;
     pub const FmtLevels = @import("proc.zig").FmtLevels;
