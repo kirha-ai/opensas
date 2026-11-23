@@ -285,6 +285,15 @@ pub fn solveInformation(matrix: []f64, rhs: []f64) ?usize {
     for (rhs) |value| if (!std.math.isFinite(value)) return null;
     return rank;
 }
+// Use a power of two for each score axis so rescaling preserves its significand.
+// Scaling before centering also keeps differences between opposite extremes finite.
+fn scoreScale(scores: ?[]const f64) f64 {
+    var largest: f64 = 0;
+    for (scores orelse return 1) |score| largest = @max(largest, @abs(score));
+    if (largest == 0) return 1;
+    return std.math.ldexp(@as(f64, 1), std.math.frexp(largest).exponent - 1);
+}
+
 pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOptions) Error!Polychoric {
     if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge <= 0 or opts.maxiter == 0) return error.ExecError;
     var m = input;
@@ -332,14 +341,18 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         if (m.row_scores) |scores| scores[0] else 0,
         if (m.col_scores) |scores| scores[0] else 0,
     };
+    const x_scale = scoreScale(m.row_scores);
+    const y_scale = scoreScale(m.col_scores);
+    const x_origin = origin[0] / x_scale;
+    const y_origin = origin[1] / y_scale;
     var sx: f64 = 0;
     var sy: f64 = 0;
     var xx: f64 = 0;
     var yy: f64 = 0;
     var xy: f64 = 0;
     for (m.counts, 0..) |n, index| {
-        const x = (if (m.row_scores) |scores| scores[index / m.cols] else @as(f64, @floatFromInt(index / m.cols))) - origin[0];
-        const y = (if (m.col_scores) |scores| scores[index % m.cols] else @as(f64, @floatFromInt(index % m.cols))) - origin[1];
+        const x = (if (m.row_scores) |scores| scores[index / m.cols] else @as(f64, @floatFromInt(index / m.cols))) / x_scale - x_origin;
+        const y = (if (m.col_scores) |scores| scores[index % m.cols] else @as(f64, @floatFromInt(index % m.cols))) / y_scale - y_origin;
         sx += n * x;
         sy += n * y;
         xx += n * x * x;

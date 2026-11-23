@@ -1754,6 +1754,34 @@ test "CORR sparse polychoric SAS scoring initialization covariance and iteration
     try std.testing.expectApproxEqAbs(@as(f64, 0.21987585371233), checked.se, 5e-6);
 }
 
+test "CORR polychoric first step preserves large power-of-two score scales" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = [_][3]f64{
+        .{ 0, 0, 3500 },   .{ 11, 0, 2500 },  .{ 12, 0, 1800 },  .{ 23, 0, 1500 },
+        .{ 23, 19, 3300 }, .{ 23, 23, 3100 }, .{ 23, 27, 1400 },
+    };
+    // SAS 9.4 M9 reports the same coefficient, ASE, and likelihood ratio
+    // bit for bit at each scale, for both the original scores and their reflection.
+    const native = [_][3]f64{
+        .{ 0.9460017945521846, 0.0055509154975335, 14570.35682193622 },
+        .{ -0.9460017945521834, 0.005550915497533486, 14570.356821936199 },
+    };
+    for ([_]f64{ 1, -1 }, native) |sign, expected| {
+        var original: [3]f64 = undefined;
+        for ([_]f64{ 1, 0x1p300 }, 0..) |scale, i| {
+            const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+            for (rows) |row| try ds.appendRow(&.{ .{ .num = sign * scale * row[0] }, .{ .num = scale * row[1] }, .{ .num = row[2] } });
+            const result = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+            try std.testing.expect(result.converged);
+            const values = [3]f64{ result.r, result.se, result.lr };
+            for (values, expected) |actual, target| try std.testing.expectApproxEqRel(target, actual, 1e-13);
+            if (i == 0) original = values else try std.testing.expectEqual(original, values);
+        }
+    }
+}
+
 test "CORR polychoric scoring starts at the first retained pair" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
