@@ -5,8 +5,8 @@ The CORR Procedure
 Freq Variable: f
 
 polychoric Correlations
-Row Column N Correlation StdError WaldChiSquare LRChiSquare
-y x 695 -0.35053 0.04529 59.90168 50.75450
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+x y 695 -0.35053 0.04529 59.90168 <.0001 50.75450 <.0001
 
 The CORR Procedure
 
@@ -15,8 +15,8 @@ The CORR Procedure
 Freq Variable: f
 
 polychoric Correlations
-Row Column N Correlation StdError WaldChiSquare LRChiSquare
-y x 1155 -0.03070 0.04237 0.52504 0.52610
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+x y 1155 -0.03070 0.04237 0.52504 0.4687 0.52610 0.4683
 
 The CORR Procedure
 
@@ -25,8 +25,8 @@ The CORR Procedure
 Freq Variable: f
 
 polychoric Correlations
-Row Column N Correlation StdError WaldChiSquare LRChiSquare
-y x 1133 -0.61158 0.03576 292.52234 250.29295
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+x y 1133 -0.61158 0.03576 292.52234 <.0001 250.29295 <.0001
 
 The CORR Procedure
 
@@ -35,6 +35,6 @@ The CORR Procedure
 Freq Variable: f
 
 polychoric Correlations
-Row Column N Correlation StdError WaldChiSquare LRChiSquare
-y x 1012 -0.59139 0.03779 244.94739 205.38319
+Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
+x y 1012 -0.59139 0.03779 244.94739 <.0001 205.38319 <.0001
 
