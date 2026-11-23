@@ -619,6 +619,14 @@ fn smallEstimate(a: std.mem.Allocator, x: f64) ![]const u8 {
 fn sixDecimals(a: std.mem.Allocator, x: f64) ![]const u8 {
     return if (std.math.isFinite(x)) std.fmt.allocPrint(a, "{d:.6}", .{x}) else ".";
 }
+// The Cronbach ODS template uses 8.6. A negative fraction can use all six
+// decimals by omitting its leading zero; a larger magnitude reduces precision.
+fn alphaStatistic(a: std.mem.Allocator, x: f64) ![]const u8 {
+    const full = try sixDecimals(a, x);
+    if (full.len <= 8) return full;
+    if (std.mem.startsWith(u8, full, "-0.")) return std.fmt.allocPrint(a, "-{s}", .{full[2..]});
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, "8.6"), " ");
+}
 /// Text is deliberately downstream of Result: output datasets/ODS can consume
 /// the full precision typed cells, never scrape this rounded listing.
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !void {
@@ -1242,11 +1250,11 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
     }
     if (g.alpha) |alpha_result| {
         var start = out.items.len;
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try sixDecimals(a, alpha_result.raw), try sixDecimals(a, alpha_result.standardized) }));
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try alphaStatistic(a, alpha_result.raw), try alphaStatistic(a, alpha_result.standardized) }));
         try tables.finish(a, out, start, "CronbachAlpha");
         start = out.items.len;
         try out.appendSlice(a, "Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n");
-        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try sixDecimals(a, d.raw_correlation), try sixDecimals(a, d.raw), try sixDecimals(a, d.standardized_correlation), try sixDecimals(a, d.standardized) }));
+        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try alphaStatistic(a, d.raw_correlation), try alphaStatistic(a, d.raw), try alphaStatistic(a, d.standardized_correlation), try alphaStatistic(a, d.standardized) }));
         try tables.finish(a, out, start, "CronbachAlphaDel");
     }
     if (s.options.fisher) |opt| {
@@ -2102,4 +2110,13 @@ test "CORR Hoeffding listing suppresses perfect self-dependence but shows distin
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "x x 1.00000 . 8") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "x clone 1.00000 <.0001 8") != null);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "tied tied 0.87667 <.0001 8") != null);
+}
+
+test "CORR reversed item uses eight columns for negative Cronbach alpha" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    try std.testing.expectEqualStrings("-.507921", try alphaStatistic(a, -0.507921));
+    try std.testing.expectEqualStrings("-5.29412", try alphaStatistic(a, -5.294117647058823));
+    try std.testing.expectEqualStrings("-5.46060", try alphaStatistic(a, -5.4606001));
 }
