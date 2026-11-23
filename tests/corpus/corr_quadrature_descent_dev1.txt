@@ -11,7 +11,7 @@ x 903 3.47287 4.47475 2.00000 0.00000 12.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 903 0.99473 0.24732 16.17735 <.0001 633.37692 <.0001
+x y 903 0.99473 0.24732 16.1773 <.0001 633.3769 <.0001
 
 The CORR Procedure
 
@@ -26,7 +26,7 @@ x 903 3.47287 4.47475 2.00000 0.00000 12.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 903 0.99510 0.36559 7.40881 0.0065 633.37692 <.0001
+x y 903 0.99510 0.36559 7.4088 0.0065 633.3769 <.0001
 
 The CORR Procedure
 
@@ -41,7 +41,7 @@ x 90 5.08889 5.22020 2.00000 0.00000 12.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 90 0.73358 0.08366 76.89285 <.0001 32.27411 <.0001
+x y 90 0.73358 0.08366 76.8928 <.0001 32.2741 <.0001
 
 The CORR Procedure
 
@@ -56,7 +56,7 @@ x 95 3.83158 3.50274 7.00000 0.00000 7.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 95 0.80509 0.06662 146.02254 <.0001 43.90796 <.0001
+x y 95 0.80509 0.06662 146.0225 <.0001 43.9080 <.0001
 
 The CORR Procedure
 
@@ -71,7 +71,7 @@ x 74 3.78378 4.11569 1.00000 0.00000 9.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 74 0.64920 0.09371 47.99652 <.0001 24.04527 <.0001
+x y 74 0.64920 0.09371 47.9965 <.0001 24.0453 <.0001
 
 The CORR Procedure
 
@@ -86,5 +86,5 @@ x 52 1.23077 2.00602 3.00000 -1.00000 3.00000
 
 polychoric Correlations
 Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP
-x y 52 0.60675 0.16027 14.33313 0.0002 8.93456 0.0028
+x y 52 0.60675 0.16027 14.3331 0.0002 8.9346 0.0028
 
