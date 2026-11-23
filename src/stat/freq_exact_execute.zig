@@ -196,6 +196,57 @@ const IntegralTrend = struct {
         return @floatFromInt(score(raw, m));
     }
 };
+const network_tolerance = @sqrt(std.math.floatEps(f64) / 2);
+
+/// At fixed margins the raw linear score has a constant mean and variance.
+/// Network near-ties are measured before normalization. For MHCHI, the
+/// nondirectional ordering is by absolute distance from the fixed null mean.
+const NetworkScore = struct {
+    row: [256]f64 = undefined,
+    col: [256]f64 = undefined,
+    mean: f64 = 0,
+    absolute: bool,
+
+    fn init(m: tests.CountMatrix, family: parse.Family) ?NetworkScore {
+        var self = NetworkScore{ .absolute = family == .mhchi };
+        var row_counts = [_]f64{0} ** 256;
+        var col_counts = [_]f64{0} ** 256;
+        var n: f64 = 0;
+        for (m.counts, 0..) |count, i| {
+            row_counts[i / m.cols] += count;
+            col_counts[i % m.cols] += count;
+            n += count;
+        }
+        var sums: [2]f64 = @splat(0);
+        var bound = n;
+        for ([_][]f64{ self.row[0..m.rows], self.col[0..m.cols] }, [_]?[]const f64{ m.row_scores, m.col_scores }, [_][]const f64{ row_counts[0..m.rows], col_counts[0..m.cols] }, 0..) |weights, scores, margins, axis| {
+            // TREND counts the first response category. When both axes are
+            // binary the columns supply the response.
+            const response = family == .trend and axis == @intFromBool(m.cols == 2);
+            var largest: f64 = 0;
+            for (weights, margins, 0..) |*w, count, i| {
+                w.* = if (response) @floatFromInt(@intFromBool(i == 0)) else if (scores) |v| v[i] else @floatFromInt(i + 1);
+                sums[axis] += count * w.*;
+                largest = @max(largest, @abs(w.*));
+            }
+            bound *= largest;
+        }
+        // Once adjacent possible binary64 values are farther apart than the
+        // tie window, raw subtraction cannot resolve its endpoints reliably.
+        // Retain the existing standardized statistic in that range.
+        if (!std.math.isFinite(bound) or std.math.nextAfter(f64, bound, std.math.inf(f64)) - bound > network_tolerance) return null;
+        self.mean = sums[0] * sums[1] / n;
+        return self;
+    }
+
+    fn evaluate(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        const self: *const NetworkScore = @ptrCast(@alignCast(raw.?));
+        var value: f64 = 0;
+        for (m.cells, 0..) |x, i| value += @as(f64, @floatFromInt(x)) * self.row[i / m.cols] * self.col[i % m.cols];
+        return if (self.absolute) @abs(value - self.mean) else value;
+    }
+};
+
 fn finish(result: dist.Enumeration) Result {
     return switch (result) {
         .complete => |p| .{ .exact_test = p },
@@ -217,9 +268,8 @@ fn applicable(f: parse.Family, m: tests.CountMatrix) bool {
 fn smallNetworkScore(scores: ?[]const f64) bool {
     // Adjacent binary64 M9 probes straddle sqrt(unit roundoff). Zero is a
     // valid score. This check belongs to the network algorithm, not simulation.
-    const minimum = @sqrt(std.math.floatEps(f64) / 2);
     for (scores orelse return false) |s| {
-        if (s != 0 and @abs(s) <= minimum) return true;
+        if (s != 0 and @abs(s) <= network_tolerance) return true;
     }
     return false;
 }
@@ -375,6 +425,19 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         .estimates = try dist.monteCarlo(a, integers, callback, simulation, c.budget),
         .table_probability = if (f == .fisher) try dist.tableProbability(integers) else null,
     } };
+    var network: ?NetworkScore = null;
+    if (f == .pcorr or f == .mhchi or (f == .trend and trend_order == null)) {
+        // Keep the statistic's usual check for zero variance and invalid scores.
+        if (!std.math.isFinite(try callback.evaluate(callback.context, integers))) return error.ExecError;
+        network = NetworkScore.init(m, f);
+        if (network) |*score| callback = .{
+            .context = score,
+            .evaluate = NetworkScore.evaluate,
+            .directional = !score.absolute,
+            .expected = if (score.absolute) 0 else score.mean,
+            .absolute_tolerance = network_tolerance,
+        };
+    }
     const enumerated = try dist.enumerate(a, integers, callback, c.budget);
     if (f == .fisher) {
         if (enumerated == .exhausted) return .exhausted;
@@ -402,6 +465,32 @@ test "network tests enforce the native score precision boundary only on their sc
     try t.expect((try run(t.allocator, response, .trend, .{})) == .exact_test);
     try t.expect((try run(t.allocator, response, .pcorr, .{})) == .score_too_small);
     try t.expect((try run(t.allocator, response, .mhchi, .{})) == .score_too_small);
+}
+
+test "conditional network ties use the raw linear score before normalization" {
+    const t = std.testing;
+    // M9 score-order-heldout.sas, h05. Fixed margins give 35 equally
+    // likely labeled draws. The response scores scale the correlation only.
+    const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 3, 0, 0, 2, 1, 1 }, .row_scores = &.{ 0.25, 0.25000000790253407, 1 }, .col_scores = &.{ 0, 0.375 } };
+    const pcorr = (try run(t.allocator, m, .pcorr, .{})).exact_test;
+    const mhchi = (try run(t.allocator, m, .mhchi, .{})).exact_test;
+    const trend = (try run(t.allocator, m, .trend, .{})).exact_test;
+    try t.expectApproxEqAbs(@as(f64, 25.0 / 35.0), pcorr.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 20.0 / 35.0), pcorr.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 1), pcorr.two_sided, 2e-15);
+    try t.expectApproxEqAbs(pcorr.point, mhchi.point, 2e-15);
+    try t.expectApproxEqAbs(pcorr.two_sided, mhchi.two_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 19.0 / 35.0), trend.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 14.0 / 35.0), trend.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 29.0 / 35.0), trend.two_sided, 2e-15);
+
+    // h03 is 2 x 3. The first row supplies the binary response, and the
+    // explanatory scores differ by less than the network tolerance.
+    const transposed = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = &.{ 4, 0, 1, 0, 3, 1 }, .row_scores = &.{ 0, 1 }, .col_scores = &.{ 0.5, 0.50000000705959713, 3 } };
+    const other = (try run(t.allocator, transposed, .trend, .{})).exact_test;
+    try t.expectApproxEqAbs(@as(f64, 47.0 / 126.0), other.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 26.0 / 126.0), other.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 82.0 / 126.0), other.two_sided, 2e-15);
 }
 
 test "2x2 Fisher matches exhaustive integer weights, ties, and both cell tails" {

@@ -33,9 +33,16 @@ pub const Statistic = struct {
     /// Null expectation for directional distance-from-null two-sided tests.
     expected: f64 = 0,
     directional: bool = false,
+    /// The conditional network compares raw linear scores in their own units.
+    absolute_tolerance: ?f64 = null,
     /// An integer numerator with a fixed positive denominator and null zero.
     /// Only its sign is needed in floating point to select the one-sided tail.
     centered_integer: ?CenteredInteger = null,
+
+    fn tied(self: Statistic, a: f64, b: f64) bool {
+        if (self.absolute_tolerance) |tolerance| return @abs(a - b) <= tolerance;
+        return close(a, b);
+    }
 
     fn observedValue(self: Statistic, m: Matrix, law: ?*const FixedLaw) Error!f64 {
         if (self.centered_integer) |integer| return @floatFromInt(integer.observed);
@@ -108,14 +115,14 @@ pub const CenteredInteger = struct {
     }
 };
 fn events(value: f64, observed: f64, s: Statistic) Events {
-    const tied = close(value, observed);
+    const tied = s.tied(value, observed);
     const distance = @abs(value - s.expected);
     const observed_distance = @abs(observed - s.expected);
     return .{
         .point = tied,
         .left = value < observed or tied,
         .right = value > observed or tied,
-        .two = if (s.directional) distance > observed_distance or close(distance, observed_distance) else value > observed or tied,
+        .two = if (s.directional) distance > observed_distance or s.tied(distance, observed_distance) else value > observed or tied,
     };
 }
 
