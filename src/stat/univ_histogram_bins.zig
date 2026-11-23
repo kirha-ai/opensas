@@ -72,13 +72,17 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     const lo = if (pooled) minimum else key[0];
     const hi = if (pooled) maximum else key[key.len - 1];
     const n = if (pooled) total else key.len;
+    // An automatic axis uses the minimum as its first tick when the
+    // entire range is below the resolution of the midpoint of the extrema.
+    const single_tick = lo == hi or (target == null and
+        hi - lo <= @sqrt(std.math.floatEps(f64) / 2) * @abs(lo / 2 + hi / 2));
     const two_endpoints = request.endpoints and target == 2 and lo != hi;
     const centered_pair = two_endpoints and lo < 0 and hi > 0;
     const zero_endpoint = two_endpoints and (lo == 0 or hi == 0);
     var width: f64 = undefined;
     if (explicit) {
         width = request.initial_endpoints[1] - request.initial_endpoints[0];
-    } else if (lo == hi) {
+    } else if (single_tick) {
         width = if (lo == 0) 1 else @abs(lo);
     } else if (centered_pair) {
         // A zero-aligned lattice needs three ticks to straddle zero. M9
@@ -103,7 +107,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     if (explicit) {
         first = request.initial_endpoints[0];
         last = request.initial_endpoints[request.initial_endpoints.len - 1];
-    } else if (lo == hi) {
+    } else if (single_tick) {
         first = if (!request.endpoints) lo - width / 2 else if (request.right) lo - width else lo;
         last = first + width;
     } else if (request.endpoints) {
@@ -305,6 +309,26 @@ pub fn cover(a: std.mem.Allocator, d: *diag.Diagnostics, sorted: []const f64, su
     if (sorted[sorted.len - 1] > last or (!right and sorted[sorted.len - 1] == last)) last += @max(@as(f64, 1), @ceil((sorted[sorted.len - 1] - last) / width)) * width;
     if (first == supplied[0] and last == supplied[supplied.len - 1]) return supplied;
     return lattice(a, d, first, last, width, 100000);
+}
+
+test "automatic histogram uses the minimum tick below relative axis resolution" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for ([_]f64{ -3, 0.3, 1, 1e7 }) |lo| {
+        const narrow = [_]f64{ lo, lo + @abs(lo) * 1.053e-8 };
+        const wide = [_]f64{ lo, lo + @abs(lo) * 1.054e-8 };
+        const single = try determine(a, &d, &.{.{ .sorted = &narrow }}, .{});
+        try std.testing.expectEqual(@abs(lo), single.width);
+        try std.testing.expectEqual(@as(usize, 2), single.endpoints.len);
+        const multiple = try determine(a, &d, &.{.{ .sorted = &wide }}, .{});
+        try std.testing.expect(multiple.width < @abs(lo) * 1e-7);
+        try std.testing.expect(multiple.endpoints.len > 2);
+
+        const right = try determine(a, &d, &.{.{ .sorted = &narrow }}, .{ .endpoints = true, .right = true });
+        try std.testing.expectEqualSlices(f64, &.{ lo - @abs(lo), lo, lo + @abs(lo) }, right.endpoints);
+    }
 }
 
 test "dev3 constant and shared bin plans preserve KEY UNIFORM counts and windows" {
