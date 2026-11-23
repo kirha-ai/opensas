@@ -83,6 +83,7 @@ fn isFreqTablesGapOption(kw: []const u8) bool {
 
 const table_model = @import("freq_table.zig");
 const stat_parse = @import("freq_tests_parse.zig");
+const stat_output = @import("freq_output.zig");
 const stat_exec = @import("freq_tests_execute.zig");
 const stat_kernel = @import("freq_tests.zig");
 const stat_render = @import("freq_tests_render.zig");
@@ -136,6 +137,7 @@ pub const Request = struct {
     scorout: bool = false,
 };
 const Options = struct {
+    output: ?stat_output.Spec = null,
     exact: ?exact_parse.Options = null,
     exact_seed: u64 = 1,
     tables_statement_count: usize = 0,
@@ -179,6 +181,34 @@ const Parser = struct {
             return std.fmt.allocPrint(self.a, "{s}.{s}", .{ first, self.toks[self.i - 1].text });
         }
         return first;
+    }
+    fn datasetOptions(self: *Parser) diag.Error![]const Token {
+        if (!self.tag(.lparen)) return &.{};
+        const end = skipParen(self.toks, self.i);
+        if (end <= self.i + 1 or self.toks[end - 1].tag != .rparen) return self.fail("unclosed OUT dataset options");
+        const tokens = self.toks[self.i + 1 .. end - 1];
+        if (tokens.len < 2 or tokens[0].tag != .name or tokens[1].tag != .eq) return self.fail("OUT dataset options require name=value");
+        self.i = end;
+        return tokens;
+    }
+    fn output(self: *Parser) diag.Error!stat_output.Spec {
+        self.i += 1;
+        var spec: stat_output.Spec = .{};
+        while (!self.tag(.semicolon) and !self.tag(.eof)) {
+            if (!self.tag(.name)) return self.fail("expected an OUTPUT statistic or OUT=");
+            const tok = self.toks[self.i];
+            self.i += 1;
+            if (tkKw(tok, "out")) {
+                try self.expect(.eq);
+                spec.name = try self.dataset();
+                spec.dataset_options = try self.datasetOptions();
+            } else {
+                const option = std.meta.stringToEnum(stat_output.Option, try std.ascii.allocLowerString(self.a, tok.text)) orelse return failGap(self.diags, tok.line, "PROC FREQ: OUTPUT statistic {s} is not supported", .{tok.text});
+                spec.requested.insert(option);
+            }
+        }
+        if (spec.requested.count() == 0) return failGap(self.diags, 0, "PROC FREQ: OUTPUT without explicit statistics is not supported", .{});
+        return spec;
     }
     fn eqValue(self: *Parser) diag.Error!Token {
         try self.expect(.eq);
@@ -338,13 +368,7 @@ const Parser = struct {
             if (eqi(name, "out")) {
                 try self.expect(.eq);
                 req.out_name = try self.dataset();
-                if (self.tag(.lparen)) {
-                    const end = skipParen(self.toks, self.i);
-                    if (end <= self.i + 1 or self.toks[end - 1].tag != .rparen) return self.fail("unclosed OUT dataset options");
-                    req.out_opts = self.toks[self.i + 1 .. end - 1];
-                    if (req.out_opts.len < 2 or req.out_opts[0].tag != .name or req.out_opts[1].tag != .eq) return self.fail("OUT dataset options require name=value");
-                    self.i = end;
-                }
+                req.out_opts = try self.datasetOptions();
             } else if (eqi(name, "scores")) {
                 const v = try self.eqValue();
                 req.scores = std.meta.stringToEnum(Score, try std.ascii.allocLowerString(self.a, v.text)) orelse return self.fail("invalid SCORES value");
@@ -486,9 +510,13 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             parser.i += 1;
             opts.exact = try exact_parse.statement(a, toks, &parser.i, cx.diags);
             continue;
-        } else if (parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
+        } else if (parser.kw("output")) {
+            if (opts.output != null) return parser.fail("Only one OUTPUT statement is allowed.");
+            opts.output = try parser.output();
+        } else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
+    if (opts.output != null and opts.tables_statement_count == 0) return parser.fail("OUTPUT requires a TABLES statement.");
     try opts.tests.finish(opts.tables_statement_count, cx.diags);
     if (opts.exact) |e| {
         if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
@@ -555,6 +583,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     const groups = if (slices.len == 0) try bySlices(a, input.rows.items, &.{}) else slices;
     const outputs = try a.alloc(?*Dataset, opts.requests.items.len);
     @memset(outputs, null);
+    const stats_writer = if (opts.output) |spec| try stat_output.create(cx, spec, opts.requests.items[opts.requests.items.len - 1], input, bc) else null;
     if (input.rows.items.len == 0) try cx.diags.report(.note, 0, "No observations in data set {s}.", .{input.name});
     for (groups) |group| {
         var view = input.*;
@@ -632,10 +661,11 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
-            if (hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
+            const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
+            if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
-                try analyzeTable(cx, out, &tab, req, opts, stratified);
+                try analyzeTable(cx, out, &tab, req, opts, stratified, writer, group.rep);
                 if (!opts.noprint) rendered = true;
             } else if (!opts.noprint and !req.noprint) {
                 if (rendered) try out.append(a, '\n');
@@ -648,6 +678,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         if (req.out_opts.len > 0) try io.applyDatasetOptions(a, ds, req.out_opts, cx.diags, false);
         try cx.lib.put(req.out_name.?, ds);
     };
+    if (stats_writer) |writer| {
+        try io.applyDatasetOptions(a, writer.ds, opts.output.?.dataset_options, cx.diags, false);
+        try cx.lib.put(writer.ds.name, writer.ds);
+    }
 }
 
 /// One-pass weighted level aggregation reused by table construction and NLEVELS.
@@ -1796,7 +1830,7 @@ fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     return ids.toOwnedSlice(a);
 }
 
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report) diag.Error!void {
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?stat_output.Writer, by_row: ?[]const Value) diag.Error!void {
     const a = cx.arena;
     const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
@@ -1811,6 +1845,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
         var body: std.ArrayList(u8) = .empty;
         const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
+        if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
@@ -1845,12 +1880,13 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (eligible) {
             const scored = (try tab.matrix(a, stratum)).?;
             if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
-                _ = try stat_exec.execute(a, cx.diags, &body, .{
+                const result = try stat_exec.execute(a, cx.diags, &body, .{
                     .suppress_fisher = req.exact.families.contains(.fisher),
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, requested_tests, .equal, opts.noprint);
+                if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
                     try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
@@ -2020,4 +2056,43 @@ test "stratified public hook computes mixed TEST requests and keeps exact gaps" 
     out.clearRetainingCapacity();
     const duplicate = "proc freq data=strata; tables r*c; test kappa; test pcorr;run;";
     try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, duplicate, &d)));
+}
+
+test "FEAT-base-stat-results last FREQ table writes independent PCHI and cell datasets" {
+    // SAS 9.4 M9 freq_table_and_output_last (2x3, weighted) and
+    // freq_output_missing_request. See also SAS/STAT example 3.6.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "r", "c", "n" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 3 }, .{ 1, 2, 1 }, .{ 1, 3, 0 }, .{ 2, 1, 0 }, .{ 2, 2, 2 }, .{ 2, 3, 2 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    const lex = @import("../lexer.zig");
+    try runFreq(cx, &listing, try lex.tokenize(a, "proc freq data=d noprint; weight n; tables r c r*c / out=cells chisq; output out=stats pchi; run;", &d));
+    const result = lib.find("stats").?;
+    try std.testing.expectEqual(@as(usize, 4), lib.find("cells").?.rowCount());
+    try std.testing.expectEqual(@as(usize, 1), result.rowCount());
+    try std.testing.expectEqual(@as(usize, 3), result.columns.items.len);
+    for ([_][]const u8{ "_PCHI_", "DF_PCHI", "P_PCHI" }, [_][]const u8{ "Chi-Square", "DF for Chi-Square", "P-value for Chi-Square" }, result.columns.items) |name, label, col| {
+        try std.testing.expectEqualStrings(name, col.name);
+        try std.testing.expectEqualStrings(label, col.label.?);
+        try std.testing.expectEqual(@as(?usize, 8), col.len);
+        try std.testing.expect(col.format == null and col.type == .num);
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 5.33333333), result.row(0)[0].num, 1e-8);
+    try std.testing.expectEqual(@as(f64, 2), result.row(0)[1].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.06948345), result.row(0)[2].num, 1e-8);
+    d.list.clearRetainingCapacity();
+    try runFreq(cx, &listing, try lex.tokenize(a, "proc freq data=d noprint; weight n; tables r*c; output out=missing_request fisher; run;", &d));
+    try std.testing.expect(lib.find("missing_request") == null);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+    try std.testing.expectEqualStrings("No OUTPUT data set is produced because no statistic options are specified in the corresponding TABLES statement.", d.list.items[0].message);
 }
