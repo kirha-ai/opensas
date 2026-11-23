@@ -107,33 +107,95 @@ pub fn jonckheereStatistic(m: Matrix) Error!f64 {
     };
     return j;
 }
+
+/// Concordant minus discordant observation pairs. On return above holds
+/// the column margins. The accumulator also determines product precision.
+pub fn concordanceSurplus(comptime Wide: type, counts: anytype, columns: usize, above: []Wide) Wide {
+    @memset(above, 0);
+    var surplus: Wide = 0;
+    var above_total: Wide = 0;
+    for (0..counts.len / columns) |i| {
+        var left: Wide = 0;
+        var row_total: Wide = 0;
+        for (counts[i * columns ..][0..columns], 0..) |x, j| {
+            const right = above_total - left - above[j];
+            surplus += @as(Wide, x) * (left - right);
+            left += above[j];
+            above[j] += x;
+            row_total += x;
+        }
+        above_total += row_total;
+    }
+    return surplus;
+}
+
+const RankMoments = struct { squares: f128, triples: f128 };
+fn rankMoments(margin: []const f128, n: f128) RankMoments {
+    var before: f128 = 0;
+    var pairs: f128 = 0;
+    var m = RankMoments{ .squares = 0, .triples = 0 };
+    for (margin) |x| {
+        const balance = 2 * before + x - n;
+        m.squares += x * balance * balance;
+        m.triples += x * pairs;
+        pairs += x * before;
+        before += x;
+    }
+    return m;
+}
+
+fn jtVariance(rows: []const f128, cols: []const f128, n: f128) f128 {
+    if (n <= 2) {
+        // The published formula omits its third-order term at these totals.
+        // Fractional frequency weights can still span several categories.
+        var a = n * (n - 1) * (2 * n + 5);
+        var products: [2]f128 = @splat(0);
+        for ([_][]const f128{ rows, cols }, &products) |margin, *sum| {
+            for (margin) |x| {
+                sum.* += x * (x - 1);
+                a -= x * (x - 1) * (2 * x + 5);
+            }
+        }
+        return a / 72 + products[0] * products[1] / (8 * n * (n - 1));
+    }
+    // The tie-corrected J variance rearranges into two nonnegative terms.
+    // Q is the sum of squared centered doubled midranks, T the number of
+    // triples drawn from three different levels of the corresponding margin.
+    const r = rankMoments(rows, n);
+    const c = rankMoments(cols, n);
+    return (r.squares * c.squares / 4 + r.triples * c.triples / (2 * (n - 2))) / (n * n * (n - 1));
+}
+
 pub fn jonckheere(a: std.mem.Allocator, m: Matrix) Error!?Normal {
-    const n = try validate(m);
-    if (n <= 1 or m.rows < 2 or m.cols < 2) return null;
-    const totals = try margins(a, m);
-    defer a.free(totals.rows);
-    defer a.free(totals.cols);
-    var aa = n * (n - 1) * (2 * n + 5);
-    var r2: f64 = 0;
-    var c2: f64 = 0;
-    var r3: f64 = 0;
-    var c3: f64 = 0;
-    var mean = n * n;
-    for (totals.rows) |x| {
-        aa -= x * (x - 1) * (2 * x + 5);
-        r2 += x * (x - 1);
-        r3 += x * (x - 1) * (x - 2);
-        mean -= x * x;
+    if (try validate(m) <= 1 or m.rows < 2 or m.cols < 2) return null;
+    const rows = try a.alloc(f128, m.rows);
+    defer a.free(rows);
+    const cols = try a.alloc(f128, m.cols);
+    defer a.free(cols);
+    @memset(rows, 0);
+    var n: f128 = 0;
+    for (m.counts, 0..) |x, k| {
+        rows[k / m.cols] += x;
+        n += x;
     }
-    for (totals.cols) |x| {
-        aa -= x * (x - 1) * (2 * x + 5);
-        c2 += x * (x - 1);
-        c3 += x * (x - 1) * (x - 2);
-    }
-    const variance = aa / 72 + r2 * c2 / (8 * n * (n - 1)) + (if (n > 2) r3 * c3 / (36 * n * (n - 1) * (n - 2)) else 0);
+    const surplus = concordanceSurplus(f128, m.counts, m.cols, cols);
+    const variance = jtVariance(rows, cols, n);
     if (variance <= 0) return null;
     const j = try jonckheereStatistic(m);
-    return normal(j, (j - mean / 4) / @sqrt(variance));
+    return normal(j, @floatCast(surplus / (2 * @sqrt(variance))));
+}
+
+test "Jonckheere statistic retains signed departures and the fixed-margin permutation variance" {
+    const t = std.testing;
+    const m = Matrix{ .rows = 2, .cols = 3, .counts = &.{ 0, 2, 0, 1_000_000_000, 999_999_998, 1_000_000_001 } };
+    // The six top-row allocations have multiplicities C(c,2) or c_i*c_j.
+    // Their weighted mean and variance give this Z without a normal approximation.
+    const pos = (try jonckheere(t.allocator, m)).?;
+    try t.expectApproxEqRel(@as(f64, 8.660254036401011e-10), pos.z, 2e-15);
+    const reverse = (try jonckheere(t.allocator, .{ .rows = 2, .cols = 3, .counts = &.{ 0, 2, 0, 1_000_000_001, 999_999_998, 1_000_000_000 } })).?;
+    try t.expectEqual(-pos.z, reverse.z);
+    const fractional = (try jonckheere(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 0.5, 0.25, 0.25, 0.5 } })).?;
+    try t.expectApproxEqRel(@as(f64, 0.09375) / @sqrt(@as(f64, 67.0 / 384.0)), fractional.z, 2e-15);
 }
 
 pub fn mcnemar(m: Matrix, null_ratio: f64) Error!?Chi {

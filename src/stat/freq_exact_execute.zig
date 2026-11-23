@@ -137,23 +137,10 @@ const Ordinal = struct {
         var sum: i128 = 0;
         if (self.spearman) {
             for (m.cells, 0..) |x, k| sum += @as(i128, x) * self.row_rank[k / m.cols] * self.col_rank[k % m.cols];
-        } else {
-            var above: [256]i64 = @splat(0);
-            var above_total: i64 = 0;
-            for (0..m.rows) |i| {
-                var left: i64 = 0;
-                var row_total: i64 = 0;
-                for (m.cells[i * m.cols ..][0..m.cols], 0..) |x, j| {
-                    const right = above_total - left - above[j];
-                    sum += @as(i128, x) * (left - right);
-                    left += above[j];
-                    above[j] += x;
-                    row_total += x;
-                }
-                above_total += row_total;
-            }
+            return sum;
         }
-        return sum;
+        var above: [256]i128 = undefined;
+        return stratified.concordanceSurplus(i128, m.cells, m.cols, above[0..m.cols]);
     }
 
     fn asFloat(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
