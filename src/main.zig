@@ -2940,11 +2940,19 @@ const PrintOpts = struct {
         return c.label orelse c.name;
     }
 
-    /// The render format for column `c`: the per-print FORMAT-statement override,
-    /// else the column's stored format (BUG-printfmtstmt).
+    fn formatMatches(name: []const u8, c: Column) bool {
+        return eqi(name, c.name) or eqi(name, "_all_") or
+            (c.type == .num and eqi(name, "_numeric_")) or
+            (c.type == .char and eqi(name, "_character_"));
+    }
+
+    /// A later FORMAT assignment overrides an earlier one for the same column.
     fn fmtFor(self: PrintOpts, c: Column) ?[]const u8 {
-        if (self.fmt_names) |names| for (names, self.fmt_specs.?) |n, f|
-            if (eqi(n, c.name)) return f;
+        var i = (self.fmt_names orelse return c.format).len;
+        while (i > 0) {
+            i -= 1;
+            if (formatMatches(self.fmt_names.?[i], c)) return self.fmt_specs.?[i];
+        }
         return c.format;
     }
 };
@@ -3154,21 +3162,21 @@ fn printProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Libra
     // compile-time type check as the DATA step's (exec.declareStmt) — a
     // numeric format on a char column (or a `$` on numeric) silently coerced
     // the cell to '.' at render (exit 0). Fail BEFORE any output is produced.
-    for (fnames.items, fspecs.items) |vn, fspec| {
-        const ci = ds.?.indexOf(vn) orelse continue; // unknown var: printTable's existing behavior stands
+    for (fnames.items, fspecs.items) |vn, fspec| for (pcols) |col| {
+        if (!PrintOpts.formatMatches(vn, col)) continue;
         if (fspec.len == 0) continue; // `format v;` disassociates — no type to conflict
-        const col_char = ds.?.columns.items[ci].type == .char;
+        const col_char = col.type == .char;
         if (col_char == sas.format.specIsChar(fspec)) continue;
         // DEC-abortrcvsD009: rc 1, matching the THREE sites already emitting this
         // byte-identical message at rc 1 (exec.zig:1515/1517 declareStmt,
         // proc.zig:2394). It is SAS's own ERROR text for a program whose FORMAT
         // statement contradicts the column's type — the user's SAS is wrong.
         if (col_char)
-            userErr(diags, "The numeric format {s} cannot be used with character variable {s}.", .{ fspec, vn })
+            userErr(diags, "The numeric format {s} cannot be used with character variable {s}.", .{ fspec, col.name })
         else
-            userErr(diags, "The character format {s} cannot be used with numeric variable {s}.", .{ fspec, vn });
+            userErr(diags, "The character format {s} cannot be used with numeric variable {s}.", .{ fspec, col.name });
         return;
-    }
+    };
     // Honour a `where <expr>;` statement or `data=NAME(where=…)` option (BUG-procwhere).
     // srcobs carries each surviving row's physical SOURCE obs number so the Obs
     // column doesn't renumber 1..n over the subset (BUG-printobsnum).
@@ -5916,6 +5924,20 @@ test "TITLE/FOOTNOTE print atop/below a proc listing and persist across procs (G
     ,
         "x\n\n1\n",
     );
+}
+
+test "PROC PRINT FORMAT special lists override stored formats and respect assignment order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var d = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d, "data d; label='case'; x=0.98771303566856; y=2.125; format x y 5.1; run;\n" ++
+        "proc print data=d noobs; format _numeric_ best32. y 5.2; run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "case") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.98771303566856") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "2.13") != null);
 }
 
 test "put with a format, and a format statement applied by PROC PRINT (F1)" {
