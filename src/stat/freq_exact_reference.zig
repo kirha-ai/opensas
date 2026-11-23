@@ -218,24 +218,52 @@ pub fn multinomialMonteCarlo(a: std.mem.Allocator, observed: []const u32, probab
     var context = MultinomialSampler{ .n = @intCast(n), .probabilities = probabilities };
     return dist.simulate(a, .{ .rows = 1, .cols = observed.len, .cells = observed }, statistic, options, budget, .{ .context = &context, .draw = MultinomialSampler.draw });
 }
+const SymmetryPair = struct { upper: usize, lower: usize, cdf: []f64 };
 const SymmetrySampler = struct {
     observed: Matrix,
+    pairs: []const SymmetryPair,
     fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *SymmetrySampler = @ptrCast(@alignCast(raw.?));
-        @memset(cells, 0);
-        const n = self.observed.rows;
-        for (self.observed.cells, 0..) |count, index| {
-            const transposed = (index % n) * n + index / n;
-            // Each original observation receives a variate, including the
-            // diagonal; swapping its row and column preserves the pair total.
-            for (0..count) |k| {
-                if (k % 1024 == 0 and budget.stopped()) return false;
-                cells[if (random.uniform() < 0.5) index else transposed] += 1;
+        @memcpy(cells, self.observed.cells);
+        for (self.pairs) |pair| {
+            if (budget.stopped()) return false;
+            const u = random.uniform();
+            var lo: usize = 0;
+            var hi = pair.cdf.len - 1;
+            while (lo < hi) {
+                const mid = lo + (hi - lo) / 2;
+                if (u <= pair.cdf[mid]) hi = mid else lo = mid + 1;
             }
+            cells[pair.upper] = @intCast(lo);
+            cells[pair.lower] = @intCast(pair.cdf.len - 1 - lo);
         }
         return true;
     }
 };
+
+/// Normalize Binomial(n,1/2) around its mode. The actual mass at zero can
+/// underflow for large pairs; centered weights never overflow.
+fn symmetricBinomialCdf(cdf: []f64, budget: Budget) bool {
+    const n = cdf.len - 1;
+    const mode = n / 2;
+    cdf[mode] = 1;
+    var i = mode;
+    while (i != 0) : (i -= 1) {
+        if (i % 1024 == 0 and budget.stopped()) return false;
+        cdf[i - 1] = cdf[i] * @as(f64, @floatFromInt(i)) / @as(f64, @floatFromInt(n - i + 1));
+    }
+    for (mode..n) |k| {
+        if (k % 1024 == 0 and budget.stopped()) return false;
+        cdf[k + 1] = cdf[k] * @as(f64, @floatFromInt(n - k)) / @as(f64, @floatFromInt(k + 1));
+    }
+    var sum: f64 = 0;
+    for (cdf) |*x| {
+        sum += x.*;
+        x.* = sum;
+    }
+    for (cdf) |*x| x.* /= sum;
+    return true;
+}
 /// MC is documented for SYMMETRY (R>2), not MCNEM. Same independent
 /// complementary-pair Binomial(D_ij,.5) law as exact symmetry enumeration.
 pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Statistic, options: dist.Simulation, budget: Budget) Error!dist.MonteCarlo {
@@ -247,7 +275,24 @@ pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Sta
         total += v;
         if (total > options.max_observations) return .exhausted;
     }
-    var context = SymmetrySampler{ .observed = observed };
+    const count = observed.rows * (observed.rows - 1) / 2;
+    const pairs = try a.alloc(SymmetryPair, count);
+    defer a.free(pairs);
+    var used: usize = 0;
+    defer for (pairs[0..used]) |pair| a.free(pair.cdf);
+    // M9 visits all upper-triangular pairs in row order. Even an empty
+    // pair advances the stream once. The diagonal remains fixed.
+    for (0..observed.rows) |i| for (i + 1..observed.cols) |j| {
+        if (budget.stopped()) return .exhausted;
+        const upper = i * observed.cols + j;
+        const lower = j * observed.cols + i;
+        const n = observed.cells[upper] + observed.cells[lower];
+        const cdf = try a.alloc(f64, @as(usize, n) + 1);
+        pairs[used] = .{ .upper = upper, .lower = lower, .cdf = cdf };
+        used += 1;
+        if (!symmetricBinomialCdf(cdf, budget)) return .exhausted;
+    };
+    var context = SymmetrySampler{ .observed = observed, .pairs = pairs };
     return dist.simulate(a, observed, statistic, options, budget, .{ .context = &context, .draw = SymmetrySampler.draw });
 }
 
@@ -264,4 +309,23 @@ test "MC multinomial and symmetry retain their distinct reference laws" {
     try t.expectEqualDeep(sym, again);
     try t.expect(@abs(sym.two_sided.p - 0.125) < 6 * @sqrt(@as(f64, 0.125 * 0.875 / 20000.0)));
     try t.expect((try symmetryMonteCarlo(t.allocator, square, callback, options, .{ .max_tables = 1 })) == .exhausted);
+}
+
+test "symmetry row-ordered binomial pair draws preserve follow-on seed even for empty pairs" {
+    const a = std.testing.allocator;
+    const Case = struct { n: usize, cells: []const u32, seed: u64, samples: u64, hits: u64, final_seed: u64 };
+    const cases = [_]Case{
+        .{ .n = 4, .cells = &.{ 2, 4, 0, 2, 2, 1, 3, 0, 3, 1, 1, 1, 0, 2, 1, 3 }, .seed = 293, .samples = 367, .hits = 82, .final_seed = 466985135 },
+        .{ .n = 4, .cells = &.{ 2, 4, 0, 0, 2, 1, 3, 0, 3, 1, 1, 1, 0, 2, 1, 3 }, .seed = 119, .samples = 389, .hits = 103, .final_seed = 1188982109 },
+        .{ .n = 3, .cells = &.{ 2, 0, 1, 0, 1, 4, 5, 2, 1 }, .seed = 39, .samples = 319, .hits = 83, .final_seed = 19471677 },
+    };
+    for (cases) |c| {
+        var counts: [16]f64 = undefined;
+        for (c.cells, 0..) |value, i| counts[i] = @floatFromInt(value);
+        const context = try adapters.Context.init(.{ .rows = c.n, .cols = c.n, .counts = counts[0..c.cells.len] }, .symmetry, null, 1);
+        const callback = adapters.Adapters(dist).statistic(&context);
+        const sampled = (try symmetryMonteCarlo(a, .{ .rows = c.n, .cols = c.n, .cells = c.cells }, callback, .{ .seed = c.seed, .samples = c.samples }, .{})).complete;
+        try std.testing.expectEqual(c.final_seed, sampled.final_seed);
+        try std.testing.expectEqual(@as(f64, @floatFromInt(c.hits)) / @as(f64, @floatFromInt(c.samples)), sampled.two_sided.p);
+    }
 }
