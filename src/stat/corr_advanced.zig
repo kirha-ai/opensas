@@ -216,28 +216,6 @@ fn serialLikelihood(ctx: Serial, params: []const f64) f64 {
     }
     return ll;
 }
-fn solve(matrix: []f64, rhs: []f64) bool {
-    const n = rhs.len;
-    for (0..n) |i| {
-        var pivot = i;
-        for (i + 1..n) |j| {
-            if (@abs(matrix[j * n + i]) > @abs(matrix[pivot * n + i])) pivot = j;
-        }
-        if (!std.math.isFinite(matrix[pivot * n + i]) or @abs(matrix[pivot * n + i]) < 1e-12) return false;
-        for (0..n) |j| std.mem.swap(f64, &matrix[i * n + j], &matrix[pivot * n + j]);
-        std.mem.swap(f64, &rhs[i], &rhs[pivot]);
-        const scale = matrix[i * n + i];
-        for (i..n) |j| matrix[i * n + j] /= scale;
-        rhs[i] /= scale;
-        for (0..n) |j| {
-            if (i == j) continue;
-            const f = matrix[j * n + i];
-            for (i..n) |k| matrix[j * n + k] -= f * matrix[i * n + k];
-            rhs[j] -= f * rhs[i];
-        }
-    }
-    return true;
-}
 // Conditional cut/rho derivatives are the leading block. Standardized
 // continuous location and scale supply the nuisance information used for SE.
 fn serialInformation(ctx: Serial, params: []const f64, info: []f64, score: []f64, gradient: []f64) void {
@@ -293,78 +271,134 @@ fn serialInformation(ctx: Serial, params: []const f64, info: []f64, score: []f64
         info[(k + 1) * dim + k + 1] += 2 * d.f;
     }
 }
-const BinaryStep = enum { ordinary, ridged, at_bound };
+const NewtonStep = enum { ordinary, ridged, at_bound };
 
-fn positiveBinaryInformation(a: f64, b: f64, c: f64) bool {
-    return a > 0 and c > 0 and @abs(b) < @sqrt(a) * @sqrt(c);
+/// Cholesky factors the free coordinates of the observed information.
+/// The final fit includes two additional marginal coordinates.
+fn factorInformation(info: []const f64, stride: usize, free: usize, ridge: f64, factor: []f64) bool {
+    for (0..free) |i| {
+        for (0..i + 1) |j| {
+            var value = info[i * stride + j];
+            if (i == j) value += ridge;
+            for (0..j) |k| value -= factor[i * free + k] * factor[j * free + k];
+            if (!std.math.isFinite(value)) return false;
+            if (i == j) {
+                if (value <= 0) return false;
+                factor[i * free + j] = @sqrt(value);
+            } else factor[i * free + j] = value / factor[j * free + j];
+        }
+    }
+    return true;
 }
 
-fn binaryNewton(information: []const f64, at_bound: bool, gradient: []f64) ?BinaryStep {
-    var a = information[0];
-    const b = information[1];
-    var c = information[5];
-    if (!std.math.isFinite(a) or !std.math.isFinite(b) or !std.math.isFinite(c)) return null;
+fn newtonStep(info: []const f64, at_bound: bool, grad: []f64, factor: []f64) ?NewtonStep {
+    const stride = grad.len + 2;
+    const free = grad.len - @intFromBool(at_bound);
+    var kind: NewtonStep = if (at_bound) .at_bound else .ordinary;
+    // Once rho is fixed, check the relative information of the remaining
+    // cuts before using their Newton decrement. A nearly unidentified cut
+    // otherwise produces a spurious converged fit. Frequency replication
+    // must not change this rank decision.
     if (at_bound) {
-        if (!(a > 0)) return null;
-        gradient[0] /= a;
-        gradient[1] = 0;
-        return .at_bound;
+        var largest: f64 = 0;
+        var smallest = std.math.inf(f64);
+        for (0..free) |i| {
+            const diagonal = info[i * stride + i];
+            largest = @max(largest, diagonal);
+            smallest = @min(smallest, diagonal);
+        }
+        if (!(smallest > largest * 1e-8)) return null;
     }
-    var kind: BinaryStep = .ordinary;
-    if (!positiveBinaryInformation(a, b, c)) {
-        // Restore positive curvature using the norm of the distinct observed
-        // information entries. Choose the first positive-definite ridge on
-        // the geometric sequence in either direction from norm/3.
-        var ridge = std.math.hypot(std.math.hypot(a, b), c) / 3;
-        if (!(ridge > 0)) return null;
-        while (!positiveBinaryInformation(a + ridge, b, c + ridge)) {
+    if (!factorInformation(info, stride, free, 0, factor)) {
+        var norm: f64 = 0;
+        for (0..free) |i| {
+            for (0..i + 1) |j| norm = std.math.hypot(norm, info[i * stride + j]);
+        }
+        var ridge = norm / (@as(f64, @floatFromInt(free * (free + 1))) / 2);
+        if (!(ridge > 0) or !std.math.isFinite(ridge)) return null;
+        while (!factorInformation(info, stride, free, ridge, factor)) {
             ridge *= 16;
             if (!std.math.isFinite(ridge)) return null;
         }
-        while (ridge / 16 > 0 and positiveBinaryInformation(a + ridge / 16, b, c + ridge / 16)) ridge /= 16;
-        a += ridge;
-        c += ridge;
-        kind = .ridged;
+        while (ridge / 16 > 0 and factorInformation(info, stride, free, ridge / 16, factor)) ridge /= 16;
+        if (!factorInformation(info, stride, free, ridge, factor)) return null;
+        if (!at_bound) kind = .ridged;
     }
-    const pivot = c - (b / a) * b;
-    if (!(pivot > 0)) return null;
-    gradient[1] = (gradient[1] - b / a * gradient[0]) / pivot;
-    gradient[0] = (gradient[0] - b * gradient[1]) / a;
+    for (0..free) |i| {
+        for (0..i) |j| grad[i] -= factor[i * free + j] * grad[j];
+        grad[i] /= factor[i * free + i];
+    }
+    for (0..free) |rev| {
+        const i = free - 1 - rev;
+        for (i + 1..free) |j| grad[i] -= factor[j * free + i] * grad[j];
+        grad[i] /= factor[i * free + i];
+    }
+    if (at_bound) grad[grad.len - 1] = 0;
     return kind;
 }
 
-fn binaryVariance(information: []const f64) ?f64 {
-    for (information) |v| if (!std.math.isFinite(v)) return null;
-    if (information[0] == 0 and information[5] == 0) return null;
-    // Sweep the marginal location, scale, correlation, then cut. A dependent
-    // or nonpositive direction contributes zero variance. Keeping rho before
-    // the cut is observable for an almost separated sample with finite SE.
-    const order = [_]usize{ 2, 3, 1, 0 };
-    var matrix: [4][4]f64 = undefined;
-    for (order, 0..) |r, i| for (order, 0..) |c, j| {
-        matrix[i][j] = information[4 * r + c];
+fn sweepIndex(i: usize, categories: usize) usize {
+    return switch (i) {
+        0 => categories,
+        1 => categories + 1,
+        2 => categories - 1,
+        else => i - 3,
     };
-    var rhs = [4]f64{ 0, 0, 1, 0 };
-    for (0..4) |i| {
-        const pivot = matrix[i][i];
+}
+
+fn correlationVariance(matrix: []f64, rhs: []f64) ?f64 {
+    const stride = rhs.len;
+    const categories = stride - 2;
+    const rho = categories - 1;
+    var has_information = false;
+    for (matrix) |v| if (!std.math.isFinite(v)) return null;
+    for (0..categories) |i| if (matrix[i * stride + i] != 0) {
+        has_information = true;
+        break;
+    };
+    if (!has_information) return null;
+    @memset(rhs, 0);
+    rhs[rho] = 1;
+    // Sweep the marginal location and scale, correlation, then thresholds.
+    for (0..stride) |row| {
+        const i = sweepIndex(row, categories);
+        const pivot = matrix[i * stride + i];
         if (pivot < 1e-8) {
-            for (0..4) |j| {
-                matrix[i][j] = 0;
-                matrix[j][i] = 0;
+            for (0..stride) |j| {
+                matrix[i * stride + j] = 0;
+                matrix[j * stride + i] = 0;
             }
             rhs[i] = 0;
             continue;
         }
-        for (i..4) |j| matrix[i][j] /= pivot;
+        for (row..stride) |col| matrix[i * stride + sweepIndex(col, categories)] /= pivot;
         rhs[i] /= pivot;
-        for (0..4) |j| {
+        for (0..stride) |j| {
             if (i == j) continue;
-            const factor = matrix[j][i];
-            for (i..4) |k| matrix[j][k] -= factor * matrix[i][k];
-            rhs[j] -= factor * rhs[i];
+            const scale = matrix[j * stride + i];
+            for (row..stride) |col| {
+                const k = sweepIndex(col, categories);
+                matrix[j * stride + k] -= scale * matrix[i * stride + k];
+            }
+            rhs[j] -= scale * rhs[i];
         }
     }
-    return if (std.math.isFinite(rhs[2])) @max(0, rhs[2]) else null;
+    return if (std.math.isFinite(rhs[rho])) @max(0, rhs[rho]) else null;
+}
+
+// If the conditional fit fails, a one-to-one order of the observed values
+// determines the sign of the limiting correlation without identifying its error.
+fn serialFallback(result: Poly, ctx: Serial, values: []f64) Poly {
+    @memset(values, nan);
+    for (ctx.data) |d| {
+        const j = std.mem.indexOfScalar(f64, ctx.categories, d.y).?;
+        if (std.math.isNan(values[j])) values[j] = d.x else if (d.x != values[j]) return result;
+    }
+    const increasing = values[1] > values[0];
+    for (values[1..], values[0 .. values.len - 1]) |right, left| {
+        if ((increasing and right <= left) or (!increasing and right >= left)) return result;
+    }
+    return .{ .n = result.n, .r = if (increasing) 1 else -1, .converged = true };
 }
 
 pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOptions) !Poly {
@@ -395,35 +429,8 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         xy += d.f * (d.x - mean) * dy;
     }
     if (!(css > 0)) return result;
-    var increasing = true;
-    var decreasing = true;
-    for (data) |d| for (data) |e| {
-        if (d.y < e.y) {
-            increasing = increasing and d.x < e.x;
-            decreasing = decreasing and d.x > e.x;
-        }
-    };
     const ctx: Serial = .{ .data = data, .categories = cats, .mean = mean, .sd = @sqrt(css / result.n) };
-    if (increasing or decreasing) {
-        var affine = true;
-        if (cats.len == 2) {
-            var level_values = [2]?f64{ null, null };
-            for (data) |d| {
-                const j = @intFromBool(d.y == cats[1]);
-                if (level_values[j]) |previous| {
-                    if (d.x != previous) {
-                        affine = false;
-                        break;
-                    }
-                } else level_values[j] = d.x;
-            }
-        }
-        if (cats.len > 2 or affine) {
-            result.r = if (increasing) 1 else -1;
-            result.converged = true;
-            return result;
-        }
-    }
+    const start_r = xy / @sqrt(css * yy);
     const dim = cats.len;
     const params = try a.alloc(f64, dim);
     defer a.free(params);
@@ -437,16 +444,17 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     params[dim - 1] = 0;
     const null_ll = serialLikelihood(ctx, params);
     // The observed Hessian at independence can be indefinite for strongly
-    // associated pairs. Initialize at the marginal Pearson correlation.
-    params[dim - 1] = xy / @sqrt(css * yy);
+    // associated pairs. Pull a large marginal Pearson correlation halfway
+    // back toward 0.9 for the initial joint fit.
+    params[dim - 1] = if (@abs(start_r) > 0.9) (start_r + std.math.copysign(@as(f64, 0.9), start_r)) / 2 else start_r;
     const information = try a.alloc(f64, (dim + 2) * (dim + 2));
     defer a.free(information);
     const score = try a.alloc(f64, dim + 2);
     defer a.free(score);
     const gradient = try a.alloc(f64, dim + 2);
     defer a.free(gradient);
-    const hess = try a.alloc(f64, dim * dim);
-    defer a.free(hess);
+    const factor = try a.alloc(f64, dim * dim);
+    defer a.free(factor);
     const grad = try a.alloc(f64, dim);
     defer a.free(grad);
     const candidate = try a.alloc(f64, dim);
@@ -457,13 +465,7 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         const base = serialLikelihood(ctx, params);
         serialInformation(ctx, params, information, score, gradient);
         @memcpy(grad, gradient[0..dim]);
-        var kind: BinaryStep = .ordinary;
-        if (dim == 2) {
-            kind = binaryNewton(information, @abs(params[1]) == bound, grad) orelse break;
-        } else {
-            for (0..dim) |j| @memcpy(hess[j * dim ..][0..dim], information[j * (dim + 2) ..][0..dim]);
-            if (!solve(hess, grad)) break;
-        }
+        const kind = newtonStep(information, @abs(params[dim - 1]) == bound, grad, factor) orelse break;
         // The decrement measures the remaining local improvement against the
         // full joint likelihood, including the scale of the continuous margin.
         var decrement: f64 = 0;
@@ -477,16 +479,17 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         const to_limit = if (dr == 0) 0 else (limit - params[dim - 1]) / dr;
         // A nearby endpoint and its midpoint bracket the ordinary Newton
         // trial. The endpoint can be selected even when it extends the step.
-        const project = dim == 2 and dr != 0 and (kind == .ridged or (to_limit > 0 and to_limit < 2));
+        const project = dr != 0 and (kind == .ridged or (to_limit > 0 and to_limit < 2));
         var scale: f64 = if (project) to_limit else 1;
         var accepted = false;
         for (0..30) |trial| {
             for (params, 0..) |p, i| candidate[i] = p - scale * grad[i];
-            if (project and trial == 0) candidate[1] = limit;
+            if (project and trial == 0) candidate[dim - 1] = limit;
             const objective = serialLikelihood(ctx, candidate);
             if (project and trial == 0) {
-                const midpoint = [2]f64{ params[0] - 0.5 * scale * grad[0], (params[1] + limit) / 2 };
-                if (serialLikelihood(ctx, &midpoint) < objective) {
+                for (params, 0..) |v, i| score[i] = v - 0.5 * scale * grad[i];
+                score[dim - 1] = (params[dim - 1] + limit) / 2;
+                if (serialLikelihood(ctx, score[0..dim]) < objective) {
                     scale /= 2;
                     continue;
                 }
@@ -515,16 +518,12 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
             break;
         }
     }
-    if (!result.converged) return result;
+    if (!result.converged) return serialFallback(result, ctx, params);
     serialInformation(ctx, params, information, score, gradient);
-    const variance: ?f64 = if (dim == 2) binaryVariance(information) else v: {
-        @memset(gradient, 0);
-        gradient[dim - 1] = 1;
-        break :v if (solve(information, gradient) and gradient[dim - 1] > 0) gradient[dim - 1] else null;
-    };
+    const variance = correlationVariance(information, gradient);
     result.se = @sqrt(variance orelse {
         result.converged = false;
-        return result;
+        return serialFallback(result, ctx, params);
     });
     result.r = params[dim - 1];
     if (result.se > 0) {
@@ -773,4 +772,65 @@ test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.995), fit.r, 1e-12);
     try std.testing.expectEqual(@as(f64, 0), fit.se);
     try std.testing.expectApproxEqAbs(@as(f64, 21.2736613123838), fit.lr, 1e-11);
+}
+
+test "CORR polyserial refines multiple thresholds at the correlation limit" {
+    const sample = [_]Observation{
+        .{ .x = 0, .y = 0, .f = 2 },  .{ .x = 1, .y = 0, .f = 3 },
+        .{ .x = 4, .y = 1, .f = 2 },  .{ .x = 5, .y = 1, .f = 1 },
+        .{ .x = 7, .y = 1, .f = 3 },  .{ .x = 11, .y = 2, .f = 1 },
+        .{ .x = 13, .y = 2, .f = 3 }, .{ .x = 17, .y = 3, .f = 3 },
+        .{ .x = 20, .y = 3, .f = 2 },
+    };
+    const Reference = struct { rows: usize, n: f64, loose_lr: f64, se: f64, lr: f64 };
+    for ([_]Reference{
+        .{ .rows = 7, .n = 15, .loose_lr = 31.0221204994084, .se = 0.01854056085855, .lr = 32.54847870752 },
+        .{ .rows = 9, .n = 20, .loose_lr = 48.8362793662018, .se = 0.00820483578153, .lr = 54.8829228418885 },
+    }) |ref| {
+        const data = sample[0..ref.rows];
+        const loose = try polyserial(std.testing.allocator, data, .{ .converge = 0.5, .maxiter = 1 });
+        try std.testing.expectApproxEqAbs(@as(f64, 0.99), loose.r, 1e-13);
+        try std.testing.expectEqual(@as(f64, 0), loose.se);
+        try std.testing.expectApproxEqAbs(ref.loose_lr, loose.lr, 1e-12);
+        const early = try polyserial(std.testing.allocator, data, .{ .converge = 0.01, .maxiter = 5 });
+        try std.testing.expect(!early.converged);
+        const fit = try polyserial(std.testing.allocator, data, .{ .converge = 0.01 });
+        try std.testing.expectApproxEqAbs(@as(f64, 0.995), fit.r, 1e-13);
+        try std.testing.expectApproxEqAbs(ref.se, fit.se, 1e-13);
+        try std.testing.expectApproxEqAbs(ref.lr, fit.lr, 1e-12);
+        const unidentified = try polyserial(std.testing.allocator, data, .{});
+        try std.testing.expect(!unidentified.converged and std.math.isNan(unidentified.r));
+        try std.testing.expectEqual(ref.n, unidentified.n);
+    }
+}
+
+test "CORR polyserial fits ordered singleton levels before inferring a perfect correlation" {
+    var data = [_]Observation{ .{ .x = 0, .y = 0, .f = 2 }, .{ .x = 1, .y = 1, .f = 3 }, .{ .x = 2, .y = 2, .f = 4 } };
+    const loose = try polyserial(std.testing.allocator, &data, .{ .converge = 0.5, .maxiter = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99), loose.r, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.04625421046509), loose.se, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 19.0711762740653), loose.lr, 1e-12);
+    const affine = try polyserial(std.testing.allocator, &data, .{ .converge = 0.01 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.995), affine.r, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 6.8828210825935), affine.se, 1e-9);
+    try std.testing.expectApproxEqAbs(@as(f64, 19.0954250461286), affine.lr, 1e-12);
+    for ([_]f64{ 1, -1 }) |sign| {
+        data[1].x = sign;
+        data[2].x = 15 * sign;
+        const first = try polyserial(std.testing.allocator, &data, .{ .converge = 0.17172, .maxiter = 1 });
+        try std.testing.expectApproxEqAbs(sign * 0.99, first.r, 1e-13);
+        try std.testing.expectApproxEqAbs(@as(f64, 15.4445465820126), first.lr, 1e-12);
+        const exhausted = try polyserial(std.testing.allocator, &data, .{ .converge = 0.17170, .maxiter = 1 });
+        try std.testing.expectEqual(sign, exhausted.r);
+        try std.testing.expect(std.math.isNan(exhausted.se) and std.math.isNan(exhausted.lr));
+    }
+    data[1].x = 1;
+    data[2].x = 13.10920;
+    const identified = try polyserial(std.testing.allocator, &data, .{ .converge = 0.1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99), identified.r, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 15.8116500170551), identified.lr, 1e-12);
+    data[2].x = 13.10923;
+    const dependent = try polyserial(std.testing.allocator, &data, .{ .converge = 0.1 });
+    try std.testing.expectEqual(@as(f64, 1), dependent.r);
+    try std.testing.expect(std.math.isNan(dependent.se) and std.math.isNan(dependent.lr));
 }
