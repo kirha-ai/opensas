@@ -370,6 +370,23 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                 output_options.clipped = plan.clipped;
                 const graphics = if (!statement.noplot and cx.univariate_plot_sink != null and cx.univariate_plot_sink.?.enabled) cx.graphics else null;
                 var panels: std.ArrayList(drawing.Panel) = .empty;
+                const wants_kernel = statement.kernels.len > 0 or statement.kernel_output != null;
+                var kernel_cells: []kernel_output.Prepared = &.{};
+                var extent: kernel_output.DisplayExtent = .{};
+                const common_endpoints = statement.endpoints.len == 0 and statement.endpoint_labels and !plan.clipped and plan.cell_order.len > 1;
+                if (wants_kernel) {
+                    kernel_cells = try a.alloc(kernel_output.Prepared, cells.len);
+                    for (plan.cell_order) |gi| {
+                        const x = cells[gi].sorted;
+                        if (x.len == 0) continue;
+                        const pairs = try a.alloc(h.XW, x.len);
+                        for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
+                        const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
+                        kernel_cells[gi] = try kernel_output.prepare(a, cx.diags, x, iqr, statement.kernels, true);
+                        if (common_endpoints) extent.include(x, kernel_cells[gi].estimates);
+                    }
+                }
+                const kernel_display = try extent.alignToBins(cx.diags, plan.endpoints, plan.width);
                 for (plan.cell_order) |gi| {
                     const x = cells[gi].sorted;
                     if (x.len == 0) continue;
@@ -380,16 +397,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const kernel_start = kd.rows.items.len;
                     var graph_curves: std.ArrayList(drawing.Curve) = .empty;
                     var inset_fits: std.ArrayList(ann.Fitted) = .empty;
-                    if (statement.kernels.len > 0 or statement.kernel_output != null) {
-                        const pairs = try a.alloc(h.XW, x.len);
-                        for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
-                        const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
+                    if (wants_kernel) {
                         var report: kernel_output.Report = .{};
                         const automatic = statement.endpoints.len == 0;
                         if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
                             plan.endpoint_phase_ambiguous)
                             return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
-                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .comparative = plan.cell_order.len > 1, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
+                        try kernel_output.appendPrepared(cx.diags, kd, ds, keys.items, rep, ci, x, kernel_cells[gi], statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .comparative = plan.cell_order.len > 1, .display = kernel_display, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
                     if (statement.midpercents) {
@@ -565,6 +579,44 @@ test "UNIVARIATE OUTKERNEL grid descriptors and values match SAS M9" {
     try std.testing.expectEqual(@as(f64, 0.015625), k.rows.items[1][3].num);
     try std.testing.expectApproxEqAbs(@as(f64, 24.777645636), k.rows.items[1][4].num, 2e-7);
     try std.testing.expectEqual(@as(f64, 20), k.rows.items[184][3].num);
+}
+
+test "comparative kernel endpoint axes span all CLASS tails on the key histogram lattice" {
+    @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Group = struct { count: usize, first: f64, increment: f64 };
+    const Case = struct { groups: [4]Group, options: []const u8, rows: [4]usize, variable_group: usize, first: f64, last: f64 };
+    for ([_]Case{
+        .{ .groups = .{ .{ .count = 38, .first = 0.98, .increment = 0.0061 }, .{ .count = 9, .first = 0.41, .increment = 0.064 }, .{ .count = 21, .first = 0.65, .increment = 0.064 }, .{ .count = 38, .first = 1.67, .increment = 0.0061 } }, .options = "quadratic c=3.29", .rows = .{ 512, 512, 358, 512 }, .variable_group = 2, .first = -0.5, .last = 3.06 },
+        .{ .groups = .{ .{ .count = 9, .first = 1.15, .increment = 0 }, .{ .count = 9, .first = 0, .increment = 0.064 }, .{ .count = 9, .first = 0.905, .increment = 0 }, .{ .count = 53, .first = -0.98, .increment = 0.014 } }, .options = "normal c=0.74 lower=-1.044 upper=1.69", .rows = .{ 405, 512, 436, 350 }, .variable_group = 0, .first = -0.85, .last = 2.3 },
+    }) |case| {
+        var lib = @import("../exec.zig").Library.init(a);
+        var ds = Dataset.init(a, "d");
+        _ = try ds.addColumn("g", .num);
+        _ = try ds.addColumn("x", .num);
+        for (case.groups, 1..) |group, g| for (0..group.count) |i| {
+            try ds.appendRow(&.{ .{ .num = @floatFromInt(g) }, .{ .num = group.first + @as(f64, @floatFromInt(i)) * group.increment } });
+        };
+        try lib.put("d", &ds);
+        var d = diag.Diagnostics.init(a);
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;class g;histogram x / endpoints rtinclude kernel(k={s}) outkernel=k noplot;run;", .{case.options});
+        const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+        var out: std.ArrayList(u8) = .empty;
+        try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+        const k = lib.find("k").?;
+        var counts = [_]usize{ 0, 0, 0, 0 };
+        for (k.rows.items) |row| {
+            const group: usize = @intFromFloat(row[0].num - 1);
+            if (group == case.variable_group) {
+                if (counts[group] == 0) try std.testing.expectApproxEqAbs(case.first, row[4].num, 2e-14);
+                if (counts[group] + 1 == case.rows[group]) try std.testing.expectApproxEqAbs(case.last, row[4].num, 2e-14);
+            }
+            counts[group] += 1;
+        }
+        try std.testing.expectEqual(case.rows, counts);
+    }
 }
 
 test "UNIVARIATE fitted numerical tables publish ODS without creating unrequested OUT datasets" {

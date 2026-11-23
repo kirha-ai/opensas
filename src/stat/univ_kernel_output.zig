@@ -7,6 +7,7 @@ const Value = @import("../value.zig").Value;
 const grid = @import("univ_kernel_grid.zig");
 pub const Options = grid.Options;
 pub const Report = grid.Report;
+pub const DisplayExtent = grid.DisplayExtent;
 
 pub fn create(a: std.mem.Allocator, source: *Dataset, keys: []const usize, variable_length: usize, scale: kernel.VScale) !*Dataset {
     const output = try a.create(Dataset);
@@ -73,9 +74,30 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
     return estimate;
 }
 
+pub const Prepared = struct { iqr: f64, estimates: []const kernel.Estimate };
+
+pub fn prepare(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, iqr: f64, requests: []const kernel.Request, defer_constant_warning: bool) diag.Error!Prepared {
+    const effective_requests: []const kernel.Request = if (requests.len == 0) &.{.{}} else requests;
+    var estimates: std.ArrayList(kernel.Estimate) = .empty;
+    for (effective_requests) |request| {
+        if (request.bandwidth == .sjpi and x.len > 0 and x[0] == x[x.len - 1] and defer_constant_warning) continue;
+        const estimate = if (request.bandwidth == .sjpi)
+            try kernel.fitSjpi(d, x, iqr, request) orelse continue
+        else
+            try fitForOutput(d, x, iqr, request);
+        try estimates.append(a, estimate);
+    }
+    return .{ .iqr = iqr, .estimates = estimates.items };
+}
+
 pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, iqr: f64, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
+    const prepared = try prepare(output.arena, d, x, iqr, requests, options.note_prefix != null);
+    return appendPrepared(d, output, source, keys, representative, ci, x, prepared, requests, endpoints, scale, options);
+}
+
+pub fn appendPrepared(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, prepared: Prepared, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
     if (options.report) |report| report.* = .{};
-    if (x.len > 0 and iqr == 0) if (options.note_prefix) |prefix| {
+    if (x.len > 0 and prepared.iqr == 0) if (options.note_prefix) |prefix| {
         const article = if (prefix.len == 0) "The" else "the";
         try d.note(0, "{s}{s} interquartile range is zero.", .{ prefix, article });
         try d.note(0, "The range will be used so that a smoothing parameter can be computed.", .{});
@@ -88,21 +110,13 @@ pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, key
             try d.note(0, "A value of one will be used so a smoothing parameter can be computed.", .{});
         }
     };
-    const effective_requests: []const kernel.Request = if (requests.len == 0) &.{.{}} else requests;
-    var estimates: std.ArrayList(kernel.Estimate) = .empty;
-    for (effective_requests) |request| {
+    for (requests) |request| {
         if (request.bandwidth == .sjpi and x.len > 0 and x[0] == x[x.len - 1]) if (options.note_prefix) |prefix| {
             const article = if (prefix.len == 0) "The" else "the";
             try d.warn(0, "{s}{s} kernel density estimate for c=SJPI could not be computed for {s} since its standard deviation is zero.", .{ prefix, article, source.columns.items[ci].name });
-            continue;
         };
-        const estimate = if (request.bandwidth == .sjpi)
-            try kernel.fitSjpi(d, x, iqr, request) orelse continue
-        else
-            try fitForOutput(d, x, iqr, request);
-        try estimates.append(output.arena, estimate);
     }
-    if (estimates.items.len > 0) try appendEstimates(d, output, source, keys, representative, ci, x, estimates.items, endpoints, scale, options);
+    if (prepared.estimates.len > 0) try appendEstimates(d, output, source, keys, representative, ci, x, prepared.estimates, endpoints, scale, options);
 }
 
 /// Allows another owned estimator (for example SJPI) to supply its fitted

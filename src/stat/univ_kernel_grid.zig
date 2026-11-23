@@ -5,12 +5,14 @@ const kernel = @import("univ_kernel.zig");
 // Retain the status field for existing adapters. The connected-component cutoff
 // is now oracle-validated; this is not a claim about other distribution fitting.
 pub const Report = struct { point_count: usize = 0, compact_cutoff_unverified: bool = false };
+const default_max_axis_steps = 1000000;
 pub const Options = struct {
     report: ?*Report = null,
     note_prefix: ?[]const u8 = null,
     automatic: bool = false,
     endpoint_labels: bool = false,
     comparative: bool = false,
+    display: ?DisplayExtent = null,
     windowed: bool = false,
     bin_width: ?f64 = null,
     right: bool = false,
@@ -19,7 +21,7 @@ pub const Options = struct {
     shared_axis_padding: ?f64 = null,
     shared_fft_padding: ?f64 = null,
     shared_fft_period: ?f64 = null,
-    max_axis_steps: usize = 1000000,
+    max_axis_steps: usize = default_max_axis_steps,
 };
 pub const Padding = struct { axis: f64 = 0, fft: f64 = 0 };
 pub fn padding(estimates: []const kernel.Estimate) Padding {
@@ -30,6 +32,63 @@ pub fn padding(estimates: []const kernel.Estimate) Padding {
     }
     return result;
 }
+fn automaticFftLength(range: f64, constant: bool, pad: f64) usize {
+    return if (pad <= (if (constant) range else range / 2)) 256 else 512;
+}
+
+// Keep one exterior lattice point available for interpolation.
+fn usablePadding(length: usize, step: f64) f64 {
+    return @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+}
+
+/// CLASS cells share histogram tick marks and retain their own Fourier grids.
+pub const DisplayExtent = struct {
+    lower: f64 = std.math.inf(f64),
+    upper: f64 = -std.math.inf(f64),
+    highest_constant: f64 = -std.math.inf(f64),
+
+    pub fn include(self: *DisplayExtent, x: []const f64, estimates: []const kernel.Estimate) void {
+        if (x.len == 0 or estimates.len == 0) return;
+        const constant = x[0] == x[x.len - 1];
+        const span = if (constant) @as(f64, 1) else x[x.len - 1] - x[0];
+        const step = span / 128;
+        const shared = padding(estimates);
+        const length = automaticFftLength(span, constant, shared.fft);
+        if (!(step > 0) or !std.math.isFinite(step) or !std.math.isFinite(shared.axis)) return;
+        const tail = @min(@ceil(shared.axis / step) * step, usablePadding(length, step));
+        if (constant) self.highest_constant = @max(self.highest_constant, x[0]);
+        for (estimates) |estimate| {
+            const lo = @max(x[0] - tail, estimate.request.lower orelse -std.math.inf(f64));
+            const hi = @min(x[x.len - 1] + tail, estimate.request.upper orelse std.math.inf(f64));
+            self.lower = @min(self.lower, lo);
+            self.upper = @max(self.upper, hi);
+        }
+    }
+
+    pub fn alignToBins(self: DisplayExtent, d: *diag.Diagnostics, endpoints: []const f64, width: f64) diag.Error!?DisplayExtent {
+        if (self.lower > self.upper or endpoints.len < 2) return null;
+        var lo = endpoints[0];
+        var hi = endpoints[endpoints.len - 1];
+        // Repeated additions match a histogram tick that falls on a tail boundary.
+        for (0..default_max_axis_steps) |_| {
+            const left = lo - width / 2 > self.lower;
+            const right = hi + width / 2 < self.upper or hi <= self.highest_constant;
+            if (!left and !right) return .{ .lower = lo, .upper = hi };
+            if (left) {
+                const next = lo - width;
+                if (!(next < lo)) break;
+                lo = next;
+            }
+            if (right) {
+                const next = hi + width;
+                if (!(next > hi)) break;
+                hi = next;
+            }
+        }
+        return d.fail(error.ParseError, 0, "UNIVARIATE: common kernel axis exceeded its stepping budget or floating-point resolution", .{});
+    }
+};
+
 pub const Plan = struct {
     points: []const f64,
     origin: f64,
@@ -143,7 +202,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         if (period == 2 * range) break :blk 256;
         if (period == 4 * range) break :blk 512;
         return d.fail(error.ParseError, 0, "UNIVARIATE: output FFT period must span two or four data ranges", .{});
-    } else if (fft_pad <= (if (constant) range else range / 2)) 256 else 512;
+    } else automaticFftLength(range, constant, fft_pad);
     // The constant-sample grid starts with a unit reference span around
     // its single distinct value, leaving two full spans for padding.
     const wrap_limit = if (constant) 2 * range else 1.5 * range;
@@ -172,11 +231,14 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     // A single constant cell is centered on its observation. Comparative
     // endpoint labels are anchored to the histogram's common bin boundaries.
     const automatic_constant = options.automatic and !options.windowed and constant and (!options.endpoint_labels or !options.comparative);
-    if (automatic_constant) {
+    if (options.display) |display| {
+        first = display.lower;
+        last = display.upper;
+    } else if (automatic_constant) {
         // Extend centers by the kernel padding on the Fourier lattice. Leave
         // the last node available for interpolation. A tail on a bin edge is
         // covered without taking an additional step.
-        const padding_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+        const padding_limit = usablePadding(length, step);
         const increments = @ceil(@min(axis_pad, padding_limit) / width - 0.5);
         var left_steps = increments;
         var right_steps = increments;
@@ -201,7 +263,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         }
     } else if (options.automatic and !options.windowed and options.endpoint_labels) {
         const raw_pad = options.shared_axis_padding orelse own.axis;
-        const constant_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+        const constant_limit = usablePadding(length, step);
         const pad = if (constant) @min(raw_pad, constant_limit) else raw_pad;
         const lower = (if (constant) x[0] else lo) - pad;
         const upper = (if (constant) x[0] else hi) + pad;
@@ -212,7 +274,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         if (lo - axis_pad < first) first -= @ceil((first - (lo - axis_pad)) / width) * width;
         if (hi + axis_pad > last) last += @ceil(((hi + axis_pad) - last) / width) * width;
     }
-    if (!(automatic_constant and options.endpoint_labels)) {
+    if (options.display == null and !(automatic_constant and options.endpoint_labels)) {
         if (options.clip_lower) if (estimate.request.lower) |bound| {
             first = @max(first, endpoints[0] + @floor((bound - endpoints[0]) / width) * width);
         };
