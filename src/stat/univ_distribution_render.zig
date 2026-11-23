@@ -3,6 +3,7 @@ const std = @import("std");
 const proc = @import("../proc.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
+const fmt = @import("../format.zig");
 const diag = @import("../diag.zig");
 const fitting = @import("univ_distribution_fit.zig");
 const dist = @import("univ_distributions.zig");
@@ -119,7 +120,7 @@ const Context = struct {
     fn classValue(self: Context, ci: usize) ![]const u8 {
         const col = self.source.columns.items[ci];
         const v = self.source.rows.items[0][ci];
-        const text = if (v == .str and col.format == null) v.str else try @import("../format.zig").apply(self.cx.arena, v, col.format orelse "BEST12.");
+        const text = if (v == .str and col.format == null) v.str else try fmt.apply(self.cx.arena, v, col.format orelse "BEST12.");
         return std.mem.trim(u8, text, " ");
     }
     fn row(self: Context, table: *b.Builder, cells: []const Value) !void {
@@ -149,7 +150,8 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     try out.print(a, "Fitted {s} Distribution for {s}\n", .{ name, variable });
     const first = out.items.len;
     var start = first;
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nParameters for {s} Distribution\nParameter Symbol Estimate\n", .{name}));
+    const prefix = if (curve.family == .sb or curve.family == .su) "Johnson " else "";
+    try out.print(a, "\nParameters for {s}{s} Distribution\nParameter Symbol Estimate\n", .{ prefix, name });
     var parameter_table = try context.createTable();
     parameter_table.ds.label = "Parameters";
     try parameter_table.char("Parameter", 9);
@@ -160,7 +162,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     parameter_table.ds.setLabel("Estimate", "Parameter Estimate");
     for (try parameters(a, curve)) |p| {
         try context.row(&parameter_table, &.{ b.s(p.name), b.s(p.symbol), b.n(p.value) });
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try h.uNum(a, p.value) }));
+        try out.print(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try fmt.bestNumW(a, p.value, 8) });
     }
     try context.publish("ParameterEstimates", &parameter_table);
     try tables.finish(a, out, start, "ParameterEstimates");
@@ -178,7 +180,8 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         if (tests.w2 != null) largest_stat = @max(largest_stat, tests.statistics.w2);
         if (tests.a2 != null) largest_stat = @max(largest_stat, tests.statistics.a2);
         const decimals: usize = 9 -| decimalDigits(largest_stat);
-        try table.num("Stat", try numberFormat(a, 10, decimals));
+        const statistic_format = try numberFormat(a, 10, decimals);
+        try table.num("Stat", statistic_format);
         try table.char("pType", 11);
         try table.char("pSign", 1);
         try table.num("pValue", "5.3");
@@ -197,7 +200,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
                 .greater => ">",
             };
             try context.row(&table, &.{ b.s(test_name), b.s(lab), b.n(statistic), b.s(ptype), b.s(sign), b.n(probability.value) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.8} {s} {s}{d:.3}\n", .{ test_name, lab, statistic, ptype, sign, probability.value }));
+            try out.print(a, "{s} {s} {s} {s} {s}{d:.3}\n", .{ test_name, lab, try displayNumber(a, b.n(statistic), statistic_format), ptype, sign, probability.value });
         }
         if (table.ds.rows.items.len > 0) try context.publish("GoodnessOfFit", &table);
     }
@@ -271,7 +274,7 @@ fn numberFormat(a: std.mem.Allocator, width: usize, decimals: usize) ![]const u8
 }
 
 fn displayNumber(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
-    return std.mem.trim(u8, try @import("../format.zig").apply(a, value, spec), " ");
+    return std.mem.trim(u8, try fmt.apply(a, value, spec), " ");
 }
 
 fn binPoint(bin: values.Bin, right: bool, midpoints: bool) f64 {

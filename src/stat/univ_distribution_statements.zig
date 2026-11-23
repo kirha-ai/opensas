@@ -538,6 +538,8 @@ test "UNIVARIATE fitted numerical tables publish ODS without creating unrequeste
     const g = lib.find("g").?;
     try std.testing.expectEqual(@as(usize, 3), g.rows.items.len);
     try std.testing.expectEqualStrings("pValue", g.columns.items[8].name);
+    try std.testing.expectEqualStrings("10.7", g.columns.items[5].format.?);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Kolmogorov-Smirnov D 0.7163447 Pr > D <0.001") != null);
 }
 
 test "UNIVARIATE WEIGHT with HISTOGRAM is a SAS error before output publication" {
@@ -589,6 +591,9 @@ test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reac
     try std.testing.expect(!d.hasErrors());
     const pe = lib.find("pe").?;
     try std.testing.expectEqual(@as(usize, 33), pe.rows.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Parameters for Johnson SB Distribution") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Parameters for Johnson SU Distribution") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Shape Delta 1.177443\n") != null);
     try std.testing.expectApproxEqAbs(@as(f64, 1.177443), pe.rows.items[2][5].num, 7e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 1.219036), pe.rows.items[11][5].num, 6e-7);
     try std.testing.expectEqual(@as(f64, 1), pe.rows.items[28][5].num);
