@@ -79,6 +79,33 @@ const Reader = struct {
         if (!std.math.isFinite(n)) return self.fail("risk option must be finite");
         return sign * n;
     }
+    fn binomialLevel(self: *Reader) diag.Error!Level {
+        if (self.at(.string)) {
+            const token = self.t[self.i];
+            self.i += 1;
+            return .{ .value = if (token.empty_quoted_literal) "" else token.text };
+        }
+        const negative = self.at(.minus);
+        if (negative or self.at(.plus)) self.i += 1;
+        const digits = if (self.at(.number)) self.t[self.i].text else "";
+        if (digits.len == 0 or std.mem.findNone(u8, digits, "0123456789") != null) {
+            try self.d.numberedError("22-322", "Syntax error, expecting one of the following: a quoted string, an integer constant.");
+            try self.d.numberedError("76-322", "Syntax error, statement will be ignored.");
+            return error.ParseError;
+        }
+        self.i += 1;
+        // SAS reads the integer spelling into a double before converting it
+        // to a signed index; half a double ULP below 2^63 already overflows.
+        const value = std.fmt.parseFloat(f64, digits) catch std.math.inf(f64);
+        if (negative or value == 0) return self.d.fail(error.ParseError, 0, "The BINOMIAL LEVEL= value must be a positive integer.", .{});
+        if (value >= 0x1p63) {
+            try self.d.report(.err, 0, "Domain error.", .{});
+            return self.d.fail(error.ExecError, 0, "Termination due to Floating Point Exception", .{});
+        }
+        const index: u64 = @intFromFloat(value);
+        return .{ .number = std.math.cast(usize, index) orelse std.math.maxInt(usize) };
+    }
+
     fn methodName(self: *Reader, family: Family, test_method: bool) diag.Error!Method {
         if (!self.at(.name)) return self.fail("expected risk method name");
         const t = self.t[self.i];
@@ -204,14 +231,7 @@ const Reader = struct {
             }
             try self.expect(.eq);
             if (kw(token, "level") and req.family == .binomial) {
-                if (self.at(.string)) {
-                    req.level = .{ .value = self.t[self.i].text };
-                    self.i += 1;
-                } else {
-                    const v = try self.number();
-                    if (v < 1 or v != @floor(v) or v > 1e9) return self.fail("LEVEL must be a positive integer or formatted value");
-                    req.level = .{ .number = @intFromFloat(v) };
-                }
+                req.level = try self.binomialLevel();
             } else if (kw(token, "column") and req.family != .binomial) {
                 if (req.family == .difference and self.is("both")) {
                     req.both_columns = true;

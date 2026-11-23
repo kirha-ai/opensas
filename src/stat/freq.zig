@@ -1904,6 +1904,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         // Existing test-family NOPRINT execution remains independent above.
         var active = req;
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.executeResolved(a, cx.diags, try riskTable(a, tab, scored, true, false), &active.risk, req.statistics.alpha);
+        if (req.risk.binomial != null and active.risk.binomial == null) active.exact.families.remove(.binomial);
         if (opts.noprint) return;
         const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, active, simulation_seed);
         if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);

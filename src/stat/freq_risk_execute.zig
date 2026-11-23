@@ -227,16 +227,28 @@ pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Opt
     if (table.one_way) {
         if (options.binomial) |*req| {
             const index: usize = switch (req.level) {
-                .number => |n| if (n > table.row_labels.len) return d.fail(error.ExecError, 0, "PROC FREQ: binomial LEVEL is outside the table", .{}) else n - 1,
+                .number => |n| if (n > table.row_labels.len) {
+                    try d.recoverableErr(0, "The BINOMIAL LEVEL= value is greater than the number of levels for variable {s}.", .{table.name});
+                    options.binomial = null;
+                    return .{};
+                } else n - 1,
                 .value => |v| blk: {
-                    for (table.row_labels, 0..) |label, i| if (std.mem.eql(u8, v, label)) break :blk i;
-                    return d.fail(error.ExecError, 0, "PROC FREQ: binomial LEVEL value not found", .{});
+                    // M9 matches the argument in the width of the longest displayed level.
+                    var width: usize = 0;
+                    for (table.row_labels) |label| width = @max(width, label.len);
+                    const shown = v[0..@min(v.len, width)];
+                    const key = std.mem.trimEnd(u8, shown, " ");
+                    for (table.row_labels, 0..) |label, i| if (std.mem.eql(u8, key, std.mem.trimEnd(u8, label, " "))) break :blk i;
+                    try d.recoverableErr(0, "BINOMIAL LEVEL='{s}' is not found for variable {s}.", .{ shown, table.name });
+                    options.binomial = null;
+                    return .{};
                 },
             };
             if (total <= 0) {
                 try d.report(.note, 0, "No statistics are computed for the table of {s} because it contains no observations with positive weights.", .{table.name});
                 return .{};
             }
+            req.level = .{ .number = index + 1 };
             try filterBinomialTests(a, d, req);
             const s = k.Binomial{ .success = table.counts[index], .total = total };
             const estimate = try k.proportion(s, alpha, req.correct);
