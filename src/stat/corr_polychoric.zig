@@ -55,7 +55,13 @@ fn margins(a: std.mem.Allocator, m: CountMatrix) Error!Margins {
     }
     return .{ .row = r, .col = c, .n = sum(r), .nr = nr, .nc = nc };
 }
-pub const PolychoricOptions = struct { adjust: bool = false, converge: f64 = 0.0001, maxiter: usize = 200, alpha: f64 = 0.05 };
+pub const PolychoricOptions = struct {
+    adjust: bool = false,
+    converge: f64 = 0.0001,
+    maxiter: usize = 200,
+    alpha: f64 = 0.05,
+    score_origin: ?[2]f64 = null,
+};
 pub const Polychoric = struct { coefficient: Measure, likelihood_ratio: ?Test, converged: bool, iterations: usize, information_unresolved: bool = false };
 /// Accurate normal upper tail; erfc avoids subtracting a CDF from one.
 pub fn normalTail(x: f64) f64 {
@@ -322,14 +328,18 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         const r: f64 = if (counts[1] == 0) 1 else -1;
         return .{ .coefficient = measure(r, 0, 0, opts.alpha), .likelihood_ratio = null, .converged = true, .iterations = 0 };
     }
+    const origin = opts.score_origin orelse [2]f64{
+        if (m.row_scores) |scores| scores[0] else 0,
+        if (m.col_scores) |scores| scores[0] else 0,
+    };
     var sx: f64 = 0;
     var sy: f64 = 0;
     var xx: f64 = 0;
     var yy: f64 = 0;
     var xy: f64 = 0;
     for (m.counts, 0..) |n, index| {
-        const x: f64 = if (m.row_scores) |scores| scores[index / m.cols] - scores[0] else @floatFromInt(index / m.cols);
-        const y: f64 = if (m.col_scores) |scores| scores[index % m.cols] - scores[0] else @floatFromInt(index % m.cols);
+        const x = (if (m.row_scores) |scores| scores[index / m.cols] else @as(f64, @floatFromInt(index / m.cols))) - origin[0];
+        const y = (if (m.col_scores) |scores| scores[index % m.cols] else @as(f64, @floatFromInt(index % m.cols))) - origin[1];
         sx += n * x;
         sy += n * y;
         xx += n * x * x;

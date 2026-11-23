@@ -1754,6 +1754,38 @@ test "CORR sparse polychoric SAS scoring initialization covariance and iteration
     try std.testing.expectApproxEqAbs(@as(f64, 0.21987585371233), checked.se, 5e-6);
 }
 
+test "CORR polychoric scoring starts at the first retained pair" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = [_][3]f64{
+        .{ 0, 0, 3500 },    .{ -11, 0, 2500 },  .{ -12, 0, 1800 },  .{ -23, 0, 1500 },
+        .{ -23, 19, 3300 }, .{ -23, 23, 3100 }, .{ -23, 27, 1400 },
+    };
+    var estimates: [3]f64 = undefined;
+    for (&estimates, 0..) |*estimate, order| {
+        const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+        // An ignored row precedes every fit. The last order emits one copy
+        // of the original first pair, then the remaining counts in reverse.
+        try ds.appendRow(&.{ .{ .num = -23 }, .{ .num = 19 }, .{ .num = 0 } });
+        if (order == 2) try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = 1 } });
+        for (0..rows.len) |i| {
+            const idx = if (order == 0) i else rows.len - i - 1;
+            const row = rows[idx];
+            const count = if (order == 2 and idx == 0) row[2] - 1 else row[2];
+            try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = count } });
+        }
+        const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        estimate.* = fit.r;
+    }
+    // M9 first-step coefficients are BFEE45A58E31E2D3 and BFEE45A58E31E2D4
+    // for this reflection. Splitting FREQ preserves the original coefficient.
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9460017945521834), estimates[0], 1e-14);
+    try std.testing.expectEqual(std.math.nextAfter(f64, estimates[0], -std.math.inf(f64)), estimates[1]);
+    try std.testing.expectEqual(estimates[0], estimates[2]);
+}
+
 test "CORR positive rectangle integration resolves near-boundary quadrants" {
     const kernel = @import("corr_polychoric.zig");
     for ([_]f64{ -0.999999, -0.99, -0.4, 0, 0.4, 0.99, 0.999999 }) |rho| {

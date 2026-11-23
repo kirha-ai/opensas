@@ -184,7 +184,12 @@ pub fn polychoric(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     defer a.free(counts);
     @memset(counts, 0);
     for (data) |d| counts[std.mem.indexOfScalar(f64, xs, d.x).? * ys.len + std.mem.indexOfScalar(f64, ys, d.y).?] += d.f;
-    const estimate = try @import("corr_polychoric.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts, .row_scores = xs, .col_scores = ys }, .{ .converge = opt.converge, .maxiter = opt.maxiter });
+    const estimate = try @import("corr_polychoric.zig").polychoric(a, .{ .rows = xs.len, .cols = ys.len, .counts = counts, .row_scores = xs, .col_scores = ys }, .{
+        // CORR centers the Pearson start at the first pair retained by FREQ and missing-value rules.
+        .score_origin = .{ data[0].x, data[0].y },
+        .converge = opt.converge,
+        .maxiter = opt.maxiter,
+    });
     result.converged = estimate.converged;
     result.unsupported_boundary = estimate.information_unresolved;
     if (!result.converged) return result;
