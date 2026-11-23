@@ -116,7 +116,13 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     }
     if (r.family == .exponential) return exponentialEstimated(s, edf_n, e);
     if (r.family == .gamma) return if (e.theta) gammaEstimatedThreshold(s, n, e, r.alpha) else gammaFixedThreshold(s, n, e, r.alpha);
-    if (r.family == .beta) return betaEstimated(s, n, r.alpha, r.beta);
+    if (r.family == .beta) {
+        if (n < 10) {
+            try d.warn(0, "A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Beta distribution is not fully specified.", .{});
+            return .{};
+        }
+        return betaEstimated(s, n, r.alpha, r.beta);
+    }
     if (r.family == .lognormal and e.theta) return lognormalEstimatedThreshold(s, n, e, r.sigma);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
@@ -528,7 +534,6 @@ const beta_surface = [3][11][11]f64{
 };
 
 fn betaEstimated(s: Statistics, n: usize, alpha: f64, beta: f64) Result {
-    if (n < 10) return .{};
     const inv = 1 / @as(f64, @floatFromInt(n));
     const ia = 1 / @min(alpha, beta);
     const ib = 1 / @max(alpha, beta);
@@ -1626,7 +1631,15 @@ test "dev5 EDF estimated beta independent M9 shapes and bound holdouts" {
     }
     try std.testing.expectEqual(@as(usize, 17628), count);
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
-    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } }, s, 9));
+    const fitted: Request = .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } };
+    const before = d.count();
+    try std.testing.expectEqual(Result{}, try tabulated(&d, fitted, s, 9));
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[before].severity);
+    try std.testing.expect((try tabulated(&d, fitted, s, 10)).a2 != null);
+    try std.testing.expect((try tabulated(&d, .{ .family = .beta }, s, 9)).a2 != null);
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true } }, s, 9));
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = fitted.estimated, .beta = 5 }, s, 9));
+    try std.testing.expectEqual(before + 1, d.count());
 }
 
 test "dev5 EDF M9 power estimation has no table despite documented alpha bound" {
