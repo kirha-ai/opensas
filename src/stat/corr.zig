@@ -1251,24 +1251,56 @@ fn median(a: std.mem.Allocator, s: Spec, rows: []const []const Value, col: usize
     }
     return nan;
 }
+fn overGroupLimit(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanced.PolyOptions, serial: bool) ![]const usize {
+    if (opt.ngroups == std.math.maxInt(usize)) return &.{};
+    var ordinal: std.ArrayList(usize) = .empty;
+    defer ordinal.deinit(cx.arena);
+    if (!serial or opt.ordinal_var) for (s.vars) |c| try addColumn(cx.arena, &ordinal, c);
+    if (!serial or !opt.ordinal_var) for (s.with) |c| try addColumn(cx.arena, &ordinal, c);
+    var excluded: std.ArrayList(usize) = .empty;
+    var levels: std.ArrayList(f64) = .empty;
+    defer levels.deinit(cx.arena);
+    for (ordinal.items) |c| {
+        levels.clearRetainingCapacity();
+        for (rows) |row| {
+            if (mass(s, row) == null or row[c].isMissing() or std.mem.indexOfScalar(f64, levels.items, row[c].num) != null) continue;
+            if (levels.items.len == opt.ngroups) {
+                try excluded.append(cx.arena, c);
+                try cx.diags.warn(0, "The number of groups for variable {s} is greater than {d}, the number in the NGROUPS= option, the affected {s} correlations are set to missing.", .{ s.ds.columns.items[c].name, opt.ngroups, if (serial) @as([]const u8, "polyserial") else "polychoric" });
+                break;
+            }
+            try levels.append(cx.arena, row[c].num);
+        }
+    }
+    return excluded.toOwnedSlice(cx.arena);
+}
 fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanced.PolyOptions, serial: bool) ![]const PolyPair {
     var results: std.ArrayList(PolyPair) = .empty;
     const rowcols = if (s.with.len > 0) s.with else s.vars;
+    const excluded = try overGroupLimit(cx, s, rows, opt, serial);
+    defer cx.arena.free(excluded);
     for (rowcols, 0..) |r, i| for (s.vars, 0..) |c, j| {
         if (s.with.len == 0 and i >= j) continue;
+        const skip = if (serial) contains(excluded, if (opt.ordinal_var) c else r) else contains(excluded, r) or contains(excluded, c);
+        var n: f64 = 0;
         var data: std.ArrayList(advanced.Observation) = .empty;
         defer data.deinit(cx.arena);
         for (rows) |row| {
             const m = mass(s, row) orelse continue;
             if (row[c].isMissing() or row[r].isMissing()) continue;
-            try data.append(cx.arena, .{ .x = row[if (serial and opt.ordinal_var) r else c].num, .y = row[if (serial and opt.ordinal_var) c else r].num, .f = m.f });
+            n += m.f;
+            if (!skip) try data.append(cx.arena, .{ .x = row[if (serial and opt.ordinal_var) r else c].num, .y = row[if (serial and opt.ordinal_var) c else r].num, .f = m.f });
         }
-        const estimate = if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
+        const estimate = if (skip) advanced.Poly{ .n = n } else if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
             return cx.diags.fail(error.ParseError, 0, "PROC CORR: polychoric boundary information is unresolved at the requested tolerance.", .{});
         }
-        if (!estimate.converged) try cx.diags.warn(0, "PROC CORR: {s} correlation for {s} and {s} unavailable (insufficient levels, NGROUPS limit, or failure to converge).", .{ if (serial) @as([]const u8, "polyserial") else "polychoric", s.ds.columns.items[c].name, s.ds.columns.items[r].name });
+        if (!skip and !estimate.converged) try cx.diags.warn(0, "The algorithm for {s} correlation between {s} and {s} did not converge.", .{
+            if (serial) @as([]const u8, "polyserial") else "polychoric",
+            s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) c else r].name,
+            s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) r else c].name,
+        });
         try results.append(cx.arena, .{ .row = r, .column = c, .estimate = estimate });
     };
     return results.items;
@@ -1483,6 +1515,29 @@ test "CORR ordinal boundaries and ORDINAL NGROUPS options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.2930), z.lr, 0.00005);
 }
 
+test "CORR group limits name each ordinal variable once and MAXITER names its pair" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "r", "c", "n" }, &.{
+        &.{ 1, 1, 2 }, &.{ 1, 2, 1 }, &.{ 1, 3, 1 }, &.{ 2, 2, 2 }, &.{ 2, 3, 1 }, &.{ 3, 1, 1 }, &.{ 3, 3, 3 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const limited = try parse(cx, try lex.tokenize(a, "proc corr polychoric(ngroups=2);var r c;freq n;run;", &d));
+    const fit = (try compute(cx, limited)).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 11), fit.n);
+    try std.testing.expect(std.math.isNan(fit.r));
+    try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+    for (d.list.items, [_][]const u8{ "r", "c" }) |msg, col|
+        try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The number of groups for variable {s} is greater than 2, the number in the NGROUPS= option, the affected polychoric correlations are set to missing.", .{col}), msg.message);
+    const iter = try parse(cx, try lex.tokenize(a, "proc corr polychoric(maxiter=1 converge=1e-10);var r c;freq n;run;", &d));
+    _ = try compute(cx, iter);
+    try std.testing.expectEqual(@as(usize, 3), d.list.items.len);
+    try std.testing.expectEqualStrings("The algorithm for polychoric correlation between c and r did not converge.", d.list.items[2].message);
+}
 test "CORR sparse polychoric boundary fails through captured diagnostics instead of spurious Wald inference" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
