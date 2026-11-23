@@ -107,11 +107,44 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     if (family == .pareto and fixed.alpha != null and fixed.sigma == null) {
         if (paretoScale(x, fixed.theta.?, fixed.alpha.?, controls)) |curve| return .{ .converged = curve };
     }
-    if (family == .pareto and fixed.alpha == null and fixed.sigma == null) return paretoProfile(x, fixed.theta.?, controls);
+    if (family == .pareto and fixed.alpha == null) {
+        if (fixed.sigma) |sigma| {
+            const theta = fixed.theta.?;
+            const n: f64 = @floatFromInt(x.len);
+            var mean: f64 = 0;
+            for (x) |v| mean += (v - theta) / n;
+            const alpha = sigma / mean - 1;
+            // For supplied sigma the first moment determines the initial
+            // shape. M9 suppresses a curve if it falls outside the support.
+            if (alpha * (x[x.len - 1] - theta) >= sigma) return fail(.initialization_failed);
+            if (alpha != 0 and alpha < 1) {
+                const p: Parameters = .{ .theta = theta, .sigma = sigma, .alpha = alpha };
+                if (paretoNewton(x, p, .shape, controls)) |curve| return .{ .converged = curve };
+            }
+        } else return paretoProfile(x, fixed.theta.?, controls);
+    }
     return optimize(family, x, fixed, controls);
 }
 
-fn paretoLogScaleScore(x: []const f64, p: Parameters) f64 {
+const ParetoAxis = enum { log_scale, shape };
+
+fn paretoScore(x: []const f64, p: Parameters, axis: ParetoAxis) f64 {
+    if (axis == .shape) {
+        var sum: f64 = 0;
+        for (x) |v| {
+            const y = (v - p.theta) / p.sigma;
+            const z = p.alpha * y;
+            if (@abs(z) < 1e-4) {
+                // Derivative of (1/alpha - 1) * log(1 - alpha*y);
+                // avoid subtracting two O(1/alpha) terms at the exponential limit.
+                sum += y * (1 + z * (1 + z * (1 + z))) -
+                    y * y * (0.5 + z * (2.0 / 3.0 + z * (0.75 + z * 0.8)));
+            } else {
+                sum -= std.math.log1p(-z) / (p.alpha * p.alpha) + (1 / p.alpha - 1) * y / (1 - z);
+            }
+        }
+        return sum;
+    }
     var sum: f64 = 0;
     for (x) |v| {
         const excess = v - p.theta;
@@ -138,37 +171,51 @@ fn paretoScale(x: []const f64, theta: f64, alpha: f64, controls: Controls) ?Curv
     // If a positive shape puts the moment estimate outside the support,
     // M9 starts one micro-unit above the physical scale boundary.
     if (p.sigma <= alpha * maximum) p.sigma = alpha * maximum + 1e-6;
-    var log_scale = @log(p.sigma);
-    // The objective receives exp(log-scale), including at the initial point.
-    p.sigma = @exp(log_scale);
+    return paretoNewton(x, p, .log_scale, controls);
+}
+
+fn paretoPoint(p: Parameters, axis: ParetoAxis, coordinate: f64) Parameters {
+    var point = p;
+    switch (axis) {
+        .log_scale => point.sigma = @exp(coordinate),
+        .shape => point.alpha = coordinate,
+    }
+    return point;
+}
+
+fn paretoNewton(x: []const f64, initial: Parameters, axis: ParetoAxis, controls: Controls) ?Curve {
+    var coordinate = if (axis == .shape) initial.alpha else @log(initial.sigma);
+    var p = paretoPoint(initial, axis, coordinate);
     var ll = logLikelihood(.pareto, x, p);
     if (!std.math.isFinite(ll)) return null;
     const first_ridge: f64 = 1.0 / 32.0;
     var ridge: f64 = 0;
     for (0..@min(controls.maxiter, 80)) |i| {
-        const score = paretoLogScaleScore(x, p);
+        const score = paretoScore(x, p, axis);
         if (@abs(score) <= 1e-5) return .{ .parameters = p, .log_likelihood = ll, .iterations = i };
-        const high = log_scale + std.math.cbrt(std.math.floatEps(f64)) * (1 + @abs(log_scale));
-        var probe = p;
-        probe.sigma = @exp(high);
-        const curvature = (paretoLogScaleScore(x, probe) - score) / (high - log_scale);
+        const high = coordinate + std.math.cbrt(std.math.floatEps(f64)) * (1 + @abs(coordinate));
+        const probe = paretoPoint(p, axis, high);
+        const curvature = (paretoScore(x, probe, axis) - score) / (high - coordinate);
         if (!std.math.isFinite(curvature)) return null;
+        // A positive shape curvature can lead to an unbounded boundary
+        // likelihood. Keep that case in the existing constrained search.
+        if (axis == .shape and curvature >= 0) return null;
         for (0..64) |_| {
             if (ridge > curvature) {
                 const delta = score / (ridge - curvature);
-                const next_log_scale = log_scale + delta;
-                probe.sigma = @exp(next_log_scale);
-                const next_ll = logLikelihood(.pareto, x, probe);
+                const next = coordinate + delta;
+                const candidate = paretoPoint(p, axis, next);
+                const next_ll = logLikelihood(.pareto, x, candidate);
                 if (std.math.isFinite(next_ll) and next_ll >= ll) {
                     const projected = score * delta;
                     if (projected <= 1e-8 * (@abs(ll) + @abs(next_ll)))
-                        return .{ .parameters = probe, .log_likelihood = next_ll, .iterations = i + 1 };
+                        return .{ .parameters = candidate, .log_likelihood = next_ll, .iterations = i + 1 };
                     if (ridge > 0) {
                         ridge /= if (next_ll - ll < 0.5 * projected) @as(f64, 2) else 4;
                         if (ridge < first_ridge) ridge = 0;
                     }
-                    log_scale = next_log_scale;
-                    p = probe;
+                    coordinate = next;
+                    p = candidate;
                     ll = next_ll;
                     break;
                 }
@@ -422,6 +469,11 @@ fn optimize(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Re
         }
     }
     if (global) |*g| {
+        // At alpha=1 and max(x-theta)<sigma the shape score is strictly
+        // positive. The transformed search can round alpha up to one even
+        // though this uniform curve is not a likelihood maximum.
+        if (family == .pareto and fixed.sigma != null and fixed.alpha == null and g.parameters.alpha == 1 and
+            g.parameters.sigma > x[x.len - 1] - g.parameters.theta) return fail(.no_local_maximum);
         g.iterations = total;
         if (any_converged and !boundary) return .{ .converged = g.* };
         // SAS emits no beta curve when endpoint estimation fails. Retain
@@ -499,6 +551,21 @@ test "specified Pareto shape follows M9 log-scale Newton steps and exponential l
         try std.testing.expectEqual(alpha, curve.parameters.alpha);
         try std.testing.expectApproxEqAbs(expected, curve.parameters.sigma, 1e-12);
     }
+}
+
+test "specified Pareto scale follows native shape Newton iterations and support checks" {
+    var gp: [40]f64 = undefined;
+    for (&gp, 0..) |*v, i| {
+        const u = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 40, 1.5);
+        v.* = (std.math.pow(f64, 1 - u, -0.3) - 1) / 0.3;
+    }
+    const curve = fit(.pareto, &gp, .{ .sigma = 1 }, .{}).converged;
+    try std.testing.expectApproxEqAbs(@as(f64, -0.2015124150754448), curve.parameters.alpha, 1e-11);
+    // The moment-based initial shape exceeds sigma / max(x).
+    const heavy = [_]f64{ 1, 1, 1, 2, 3, 8, 23 };
+    const absent = fit(.pareto, &heavy, .{ .sigma = 7.8 }, .{});
+    try std.testing.expectEqual(Reason.initialization_failed, absent.nonconverged.reason);
+    try std.testing.expect(absent.nonconverged.best == null);
 }
 
 test "endpoint heldout shifted scaled beta Pareto and power" {
