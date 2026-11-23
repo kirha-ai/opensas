@@ -67,14 +67,35 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
         estimate.c = c;
         estimate.bandwidth = h;
     }
+    // With no observed range the effective unit scale is independent of
+    // the sample size. M9 reports the reference AMISE on that unit scale.
+    if (range == 0) estimate.amise *= std.math.pow(f64, @as(f64, @floatFromInt(x.len)), 0.2);
     return estimate;
 }
 
 pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, iqr: f64, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
     if (options.report) |report| report.* = .{};
+    if (x.len > 0 and iqr == 0) if (options.note_prefix) |prefix| {
+        const article = if (prefix.len == 0) "The" else "the";
+        try d.note(0, "{s}{s} interquartile range is zero.", .{ prefix, article });
+        try d.note(0, "The range will be used so that a smoothing parameter can be computed.", .{});
+        if (x[0] == x[x.len - 1]) {
+            if (prefix.len == 0) {
+                try d.note(0, "The range of the data is zero.", .{});
+            } else {
+                try d.note(0, "{s}the interquartile range is zero.", .{prefix});
+            }
+            try d.note(0, "A value of one will be used so a smoothing parameter can be computed.", .{});
+        }
+    };
     const effective_requests: []const kernel.Request = if (requests.len == 0) &.{.{}} else requests;
     var estimates: std.ArrayList(kernel.Estimate) = .empty;
     for (effective_requests) |request| {
+        if (request.bandwidth == .sjpi and x.len > 0 and x[0] == x[x.len - 1]) if (options.note_prefix) |prefix| {
+            const article = if (prefix.len == 0) "The" else "the";
+            try d.warn(0, "{s}{s} kernel density estimate for c=SJPI could not be computed for {s} since its standard deviation is zero.", .{ prefix, article, source.columns.items[ci].name });
+            continue;
+        };
         const estimate = if (request.bandwidth == .sjpi)
             try kernel.fitSjpi(d, x, iqr, request) orelse continue
         else

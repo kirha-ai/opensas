@@ -7,6 +7,7 @@ const kernel = @import("univ_kernel.zig");
 pub const Report = struct { point_count: usize = 0, compact_cutoff_unverified: bool = false };
 pub const Options = struct {
     report: ?*Report = null,
+    note_prefix: ?[]const u8 = null,
     automatic: bool = false,
     endpoint_labels: bool = false,
     windowed: bool = false,
@@ -38,6 +39,7 @@ pub const Plan = struct {
     data_origin: f64,
     sample_min: f64,
     sample_max: f64,
+    wraps_around: bool,
 };
 
 /// M9 emits the Fourier lattice in groups of four. Rounding affects whether a
@@ -84,6 +86,28 @@ fn outputLattice(points: []f64, lo: f64, hi: f64, odd_count: bool) void {
     points[at + 1] = scalar + step;
 }
 
+fn reportEstimate(d: *diag.Diagnostics, note_prefix: ?[]const u8, estimate: kernel.Estimate, wraps_around: bool) diag.Error!void {
+    if (note_prefix == null and !wraps_around) return;
+    const fmt = @import("../format.zig");
+    const prefix = note_prefix orelse "";
+    const article = if (prefix.len == 0) "The" else "the";
+    const kind = @tagName(estimate.request.kind);
+    const c = try fmt.bestNumW(d.arena, estimate.c, 6);
+    const bandwidth = try fmt.bestNumW(d.arena, estimate.bandwidth, 6);
+    const bounded = estimate.request.lower != null or estimate.request.upper != null;
+    if (wraps_around) {
+        try d.warn(0, "{s}{s} {s} kernel estimate for c={s} has a large bandwidth of {s}, which results in the wrap-around effect at the ends of the horizontal axis.", .{ prefix, article, kind, c, bandwidth });
+        if (bounded) try d.warn(0, "{s}{s} LOWER= and UPPER= options are not used in the {s} kernel estimate for c={s} because of the wrap-around effect at the ends of the horizontal axis.", .{ prefix, article, kind, c });
+    }
+    if (note_prefix == null) return;
+    if (bounded and !wraps_around) {
+        try d.note(0, "{s}{s} bounded {s} kernel estimate for c={s} has a bandwidth of {s}.", .{ prefix, article, kind, c, bandwidth });
+    } else {
+        const amise = try fmt.bestNumW(d.arena, estimate.amise, 6);
+        try d.note(0, "{s}{s} {s} kernel estimate for c={s} has a bandwidth of {s} and an AMISE of {s}.", .{ prefix, article, kind, c, bandwidth, amise });
+    }
+}
+
 pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate: kernel.Estimate, endpoints: []const f64, options: Options) diag.Error!Plan {
     if (x.len == 0 or endpoints.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sample and histogram boundaries", .{});
     for (x, 0..) |v, i| if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sorted finite observations", .{});
@@ -104,7 +128,11 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         if (period == 4 * range) break :blk 512;
         return d.fail(error.ParseError, 0, "UNIVARIATE: output FFT period must span two or four data ranges", .{});
     } else if (fft_pad <= (if (constant) range else range / 2)) 256 else 512;
-    if (own.fft > 1.5 * range) try d.warn(0, "UNIVARIATE: kernel bandwidth produces wrap-around at the finite output grid ends", .{});
+    // The constant-sample grid starts with a unit reference span around
+    // its single distinct value, leaving two full spans for padding.
+    const wrap_limit = if (constant) 2 * range else 1.5 * range;
+    const wraps_around = own.fft > wrap_limit;
+    try reportEstimate(d, options.note_prefix, estimate, wraps_around);
     const origin = lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
     var storage: [512]f64 = undefined;
     const lattice = storage[0..length];
@@ -167,7 +195,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     if (options.report) |report| {
         report.point_count += points.items.len;
     }
-    return .{ .points = try points.toOwnedSlice(a), .origin = origin, .step = step, .length = length, .bin_width = width, .data_origin = lo, .sample_min = x[0], .sample_max = x[x.len - 1] };
+    return .{ .points = try points.toOwnedSlice(a), .origin = origin, .step = step, .length = length, .bin_width = width, .data_origin = lo, .sample_min = x[0], .sample_max = x[x.len - 1], .wraps_around = wraps_around };
 }
 
 pub const Density = struct {
@@ -278,7 +306,14 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
             first = last;
         }
     }
-    return .{ .plan = plan, .estimate = estimate, .ordinates = ordinates };
+    // Bounds still set the output extent, but a wrapped estimate uses the
+    // unreflected periodic density at every returned point.
+    var fitted = estimate;
+    if (plan.wraps_around) {
+        fitted.request.lower = null;
+        fitted.request.upper = null;
+    }
+    return .{ .plan = plan, .estimate = fitted, .ordinates = ordinates };
 }
 
 test "UNIVARIATE native Fourier coordinate rounding covers both sample parities and grid lengths" {

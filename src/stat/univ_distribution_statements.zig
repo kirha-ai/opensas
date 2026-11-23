@@ -266,6 +266,23 @@ const FittedSampleSpread = struct {
     }
 };
 
+fn classificationNotePrefix(a: std.mem.Allocator, ds: *Dataset, columns: []const usize, row: []const Value) ![]const u8 {
+    if (columns.len == 0) return "";
+    var text: std.ArrayList(u8) = .empty;
+    try text.appendSlice(a, "For classification level ");
+    for (columns, 0..) |ci, i| {
+        if (i != 0) try text.appendSlice(a, " and ");
+        const value = row[ci];
+        const label = switch (value) {
+            .num => |number_value| try @import("../format.zig").bestNum(a, number_value),
+            else => h.valStr(value),
+        };
+        try text.print(a, "{s} = {s}", .{ ds.columns.items[ci].name, label });
+    }
+    try text.appendSlice(a, ", ");
+    return text.items;
+}
+
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
     for (statements, 1..) |statement, histogram| {
@@ -357,6 +374,9 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const x = cells[gi].sorted;
                     if (x.len == 0) continue;
                     const rep = representatives[gi];
+                    const prefix = try classificationNotePrefix(a, ds, ccols, groups[gi].rep);
+                    if (statement.curves.len > 0 and !can_fit[gi])
+                        try cx.diags.note(0, "{s}{s} fitted curves were drawn on the histogram for {s} since its standard deviation is zero.", .{ prefix, if (prefix.len == 0) "No" else "no", ds.columns.items[ci].name });
                     const kernel_start = kd.rows.items.len;
                     var graph_curves: std.ArrayList(drawing.Curve) = .empty;
                     var inset_fits: std.ArrayList(ann.Fitted) = .empty;
@@ -369,7 +389,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
                             plan.endpoint_phase_ambiguous)
                             return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
-                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
+                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
                     if (statement.midpercents) {
@@ -903,6 +923,9 @@ test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes def
     const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint;histogram x / noplot normal(mu=5 sigma=1) outhistogram=h outkernel=k;run;", &d);
     var out: std.ArrayList(u8) = .empty;
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    const messages = try d.render();
+    try std.testing.expect(std.mem.indexOf(u8, messages, "No fitted curves were drawn on the histogram for x since its standard deviation is zero.") != null);
+    try std.testing.expect(std.mem.indexOf(u8, messages, "The range of the data is zero.") != null);
     const histogram = lib.find("h").?;
     try std.testing.expectEqual(@as(usize, 1), histogram.rows.items.len);
     try std.testing.expectEqualStrings("", histogram.rows.items[0][histogram.indexOf("_CURVE_").?].str);
@@ -912,6 +935,38 @@ test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes def
     try std.testing.expectEqual(@as(usize, 512), output.rows.items.len);
     try std.testing.expectEqual(@as(f64, 3), output.rows.items[0][output.indexOf("_VALUE_").?].num);
     try std.testing.expectEqual(@as(f64, 0.78520352), output.rows.items[0][output.indexOf("_C_").?].num);
+}
+
+test "UNIVARIATE kernel bandwidth notes and numerical reflection follow the M9 wrap limit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var source = Dataset.init(a, "d");
+    _ = try source.addColumn("x", .num);
+    for ([_]f64{ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 }) |x| try source.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &source);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const tokens = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; var x; " ++
+        "histogram x / kernel(c=.4 lower=0) outkernel=small noplot; " ++
+        "histogram x / kernel(c=2 lower=0) outkernel=large noplot; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+    try std.testing.expectEqual(@as(usize, 4), d.list.items.len);
+    try std.testing.expectEqualStrings("The bounded normal kernel estimate for c=0.4 has a bandwidth of 0.1056.", d.list.items[0].message);
+    try std.testing.expectEqual(.warning, d.list.items[1].severity);
+    try std.testing.expectEqualStrings("The normal kernel estimate for c=2 has a large bandwidth of 0.5278, which results in the wrap-around effect at the ends of the horizontal axis.", d.list.items[1].message);
+    try std.testing.expectEqual(.warning, d.list.items[2].severity);
+    try std.testing.expectEqualStrings("The LOWER= and UPPER= options are not used in the normal kernel estimate for c=2 because of the wrap-around effect at the ends of the horizontal axis.", d.list.items[2].message);
+    try std.testing.expectEqualStrings("The normal kernel estimate for c=2 has a bandwidth of 0.5278 and an AMISE of 1.8575.", d.list.items[3].message);
+    const small = lib.find("small").?;
+    const large = lib.find("large").?;
+    const density = large.indexOf("_DENSITY_").?;
+    try std.testing.expectEqual(@as(usize, 229), small.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 0), small.rows.items[0][density].num);
+    try std.testing.expectEqual(@as(usize, 357), large.rows.items.len);
+    for ([_]usize{ 0, 178, 356 }, [_]f64{ 0.440581028301933, 0.5306337406004219, 0.07142751159241162 }) |i, expected|
+        try std.testing.expectApproxEqAbs(expected, large.rows.items[i][density].num, 1e-13);
 }
 
 test "UNIVARIATE explicit kernel windows retain zeros outside reflection bounds" {
@@ -1200,7 +1255,7 @@ test "UNIVARIATE public SJPI uses the normal kernel and omits a constant curve" 
     }
     const messages = try d.render();
     try std.testing.expect(std.mem.indexOf(u8, messages, "normal kernel") != null);
-    try std.testing.expect(std.mem.indexOf(u8, messages, "no estimate") != null);
+    try std.testing.expect(std.mem.indexOf(u8, messages, "The kernel density estimate for c=SJPI could not be computed for y since its standard deviation is zero.") != null);
 }
 
 test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two bin denominators" {
