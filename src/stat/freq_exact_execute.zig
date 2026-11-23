@@ -164,6 +164,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
             .exhausted => .exhausted,
         };
     }
+    if (f == .mcnem) return finish(try reference.mcnemar(integers.cells[1], integers.cells[2], c.null_ratio, c.budget));
     if (f == .oddsratio) {
         const r = try exact.oddsRatioControlled(integers.cells[0..4].*, c.alpha, c.midp_limits, c.budget.max_tables, .{ .context = c.budget.context, .expired = c.budget.expired });
         return switch (r) {
@@ -208,7 +209,6 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         .kappa => .kappa,
         .wtkappa => .weighted_kappa,
         .mhchi => .mhchi,
-        .mcnem => .mcnemar,
         .symmetry => .symmetry,
         else => null,
     };
@@ -238,9 +238,9 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         if (mc) return .{ .monte_carlo = .{ .estimates = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) } };
         return finish(try reference.multinomial(a, integers.cells, probabilities, callback, c.budget));
     }
-    if (f == .symmetry or f == .mcnem) {
+    if (f == .symmetry) {
         if (mc) return .{ .monte_carlo = .{ .estimates = try reference.symmetryMonteCarlo(a, integers, callback, simulation, c.budget) } };
-        return finish(try reference.symmetry(a, integers, if (f == .mcnem) c.null_ratio else 1, callback, c.budget));
+        return finish(try reference.symmetry(a, integers, 1, callback, c.budget));
     }
     if (mc) return .{ .monte_carlo = .{
         .estimates = try dist.monteCarlo(a, integers, callback, simulation, c.budget),

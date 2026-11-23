@@ -78,7 +78,7 @@ fn binomialLogPoint(k: u32, n: u32, p: f64) f64 {
 pub fn binomialTails(k: u32, n: u32, p: f64) Error!Tails {
     return (try binomialTailsControlled(k, n, p, .{})).?;
 }
-fn binomialTailsControlled(k: u32, n: u32, p: f64, control: Control) Error!?Tails {
+pub fn binomialTailsControlled(k: u32, n: u32, p: f64, control: Control) Error!?Tails {
     if (n == 0 or k > n or !std.math.isFinite(p) or p < 0 or p > 1) return error.ExecError;
     if (control.stopped()) return null;
     if (p == 0) return .{ .point = if (k == 0) 1 else 0, .left = 1, .right = if (k == 0) 1 else 0 };

@@ -70,6 +70,56 @@ pub fn multinomial(a: std.mem.Allocator, observed: []const u32, probabilities: [
     return .{ .complete = try search.accumulator.result(search.count) };
 }
 
+/// Under discordant odds r, X has law Binomial(D,r/(1+r)) and the statistic
+/// is (X-Dp)^2/(Dp(1-p)). Its upper tail consists of two disjoint binomial
+/// tails, cut at the observation and its reflection about Dp (FREQ pp.212–213).
+pub fn mcnemar(upper: u32, lower: u32, null_ratio: f64, budget: Budget) Error!Enumeration {
+    const exact = @import("freq_exact.zig");
+    if (!std.math.isFinite(null_ratio) or null_ratio <= 0) return error.ExecError;
+    const sum = @as(u64, upper) + lower;
+    if (sum == 0 or sum > std.math.maxInt(u32)) return error.ExecError;
+    if (sum + 1 > budget.max_tables or budget.stopped()) return .exhausted;
+    // Express the law using its less likely outcome, so p cannot round to 1.
+    const ratio = if (null_ratio <= 1) null_ratio else 1 / null_ratio;
+    const p = ratio / (1 + ratio);
+    const k = if (null_ratio <= 1) upper else lower;
+    const n: u32 = @intCast(sum);
+    const control = exact.Control{ .context = budget.context, .expired = budget.expired };
+    const observed = (try exact.binomialTailsControlled(k, n, p, control)) orelse return .exhausted;
+    const total: f64 = @floatFromInt(n);
+    const x: f64 = @floatFromInt(k);
+    const delta = @mulAdd(f64, -total, p, x);
+    const mirror = @mulAdd(f64, 2 * total, p, -x);
+    const nearest = @round(mirror);
+    const other_delta = @mulAdd(f64, -total, p, nearest);
+    // Apply the reference enumerator's statistic tie tolerance. Factoring
+    // the difference of squares keeps the test accurate near an integer cut.
+    const difference = (nearest - x) * @mulAdd(f64, -2 * total, p, nearest + x);
+    const scale = @max(total * p * (1 - p), @max(delta * delta, other_delta * other_delta));
+    const tied = @abs(difference) <= dist.statistic_tolerance * scale;
+    const below = delta <= 0;
+    const cut: i64 = @intFromFloat(if (tied) nearest else if (below) @ceil(mirror) else @floor(mirror));
+    const adjacent = @as(i64, k) + @as(i64, if (below) 1 else -1);
+    const opposite = if (below) @max(cut, adjacent) else @min(cut, adjacent);
+    var point = observed.point;
+    var tail = if (below) observed.left else observed.right;
+    if (opposite >= 0 and opposite <= n) {
+        const other = (try exact.binomialTailsControlled(@intCast(opposite), n, p, control)) orelse return .exhausted;
+        tail += if (below) other.right else other.left;
+        if (tied and opposite == cut) point += other.point;
+    }
+    tail = if (opposite == adjacent) 1 else @min(1, tail);
+    point = @min(1, point);
+    return .{ .complete = .{
+        .point = point,
+        .left = @min(1, (1 - tail) + point),
+        .right = tail,
+        .two_sided = tail,
+        .one_sided = tail,
+        .tables = sum + 1,
+    } };
+}
+
 const Pair = struct { upper: usize, lower: usize, total: u32 };
 const PairSearch = struct {
     cells: []u32,
@@ -160,6 +210,70 @@ test "multinomial exact goodness of fit and budget" {
     try t.expectApproxEqAbs(@as(f64, 0.712), r.two_sided, 1e-12);
     try t.expectApproxEqAbs(@as(f64, 0.285), r.point, 1e-12);
     try t.expect((try multinomial(t.allocator, &.{ 0, 1, 3 }, &.{ 0.2, 0.3, 0.5 }, .{ .evaluate = testPearson }, .{ .max_tables = 14 })) == .exhausted);
+}
+
+test "McNemar tail and point reductions match integer enumeration at every split" {
+    const t = std.testing;
+    // Count labeled Bernoulli allocations with small integer odds a:b.
+    // The ordering uses integer distance from the rational null expectation.
+    for (1..13) |size| {
+        const n: u32 = @intCast(size);
+        for ([_][2]u32{ .{ 1, 1 }, .{ 1, 2 }, .{ 3, 2 }, .{ 2, 1 }, .{ 1, 4 } }) |odds| {
+            const a = odds[0];
+            const b = odds[1];
+            const denominator: f64 = @floatFromInt(std.math.pow(u64, a + b, n));
+            for (0..size + 1) |observation| {
+                const k: u32 = @intCast(observation);
+                const d = @abs(@as(i64, k * (a + b)) - n * a);
+                var choose: u64 = 1;
+                var point: u64 = 0;
+                var left: u64 = 0;
+                var right: u64 = 0;
+                for (0..size + 1) |i| {
+                    const x: u32 = @intCast(i);
+                    const mass = choose * std.math.pow(u64, a, x) * std.math.pow(u64, b, n - x);
+                    const distance = @abs(@as(i64, x * (a + b)) - n * a);
+                    if (distance == d) point += mass;
+                    if (distance <= d) left += mass;
+                    if (distance >= d) right += mass;
+                    if (x < n) choose = @divExact(choose * (n - x), x + 1);
+                }
+                const ratio = @as(f64, @floatFromInt(a)) / @as(f64, @floatFromInt(b));
+                const result = (try mcnemar(k, n - k, ratio, .{})).complete;
+                try t.expectEqual(size + 1, result.tables);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(point)) / denominator, result.point, 4e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(left)) / denominator, result.left, 4e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(right)) / denominator, result.right, 4e-14);
+                try t.expectEqual(result.right, result.two_sided);
+                try t.expectEqual(result.right, result.one_sided);
+            }
+        }
+    }
+}
+
+test "McNemar inverse odds, wide boundary probabilities and resources" {
+    const t = std.testing;
+    const n: u32 = 999_998;
+    // The observed zero and all X >= 2 satisfy Q(X) >= Q(0), so the
+    // tail is 1-P(1). The point is P(0). Evaluated at 90 decimal digits.
+    const r = (try mcnemar(0, n, 1e-6, .{})).complete;
+    try t.expectApproxEqRel(@as(f64, 0.63212037489001737380633), r.two_sided, 2e-15);
+    try t.expectApproxEqRel(@as(f64, 0.36788036087070436760240), r.point, 2e-15);
+    try t.expectEqual(r, (try mcnemar(n, 0, 1e6, .{})).complete);
+    try t.expect((try mcnemar(n, 0, 1, .{ .max_tables = n })) == .exhausted);
+    try t.expectError(error.ExecError, mcnemar(0, 0, 1, .{}));
+    try t.expectError(error.ExecError, mcnemar(1, 2, 0, .{}));
+    const Timer = struct {
+        calls: usize = 0,
+        fn expired(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.calls += 1;
+            return self.calls >= 16;
+        }
+    };
+    var timer = Timer{};
+    try t.expect((try mcnemar(500_000, 499_998, 1, .{ .context = &timer, .expired = Timer.expired })) == .exhausted);
+    try t.expectEqual(@as(usize, 16), timer.calls);
 }
 
 test "discordant pair laws discriminate from conditional independence" {

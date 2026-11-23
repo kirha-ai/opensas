@@ -83,10 +83,10 @@ const Shape = struct {
     }
 };
 
+// Numerical equality at the scale of the statistic (manual p.231).
+pub const statistic_tolerance = 64 * std.math.floatEps(f64);
 fn close(x: f64, y: f64) bool {
-    // 64 ulps at the scale of the statistic: only numerical equality, never
-    // rounding statistics to decimal buckets (manual p.231).
-    return @abs(x - y) <= 64 * std.math.floatEps(f64) * @max(1, @max(@abs(x), @abs(y)));
+    return @abs(x - y) <= statistic_tolerance * @max(1, @max(@abs(x), @abs(y)));
 }
 const Events = struct { point: bool, left: bool, right: bool, two: bool };
 fn events(value: f64, observed: f64, s: Statistic) Events {

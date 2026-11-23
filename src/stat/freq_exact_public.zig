@@ -440,6 +440,18 @@ test "public EXACT Fisher includes tied mass and replaces automatic Fisher once"
     try std.testing.expect(std.mem.indexOf(u8, mc, "0.0028") != null);
 }
 
+test "public exact McNemar uses the specified odds for rare discordant pairs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 0, 999_998, 1 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; weight w / zeros; tables r*c / agree(mnullratio=.000001) noprint; exact mcnem / point midp pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "0.632120374890", "0.367880360871", "0.448180194455" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+}
+
 test "explicit 2x2 Fisher stops under MAXTIME without an automatic support scan" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
