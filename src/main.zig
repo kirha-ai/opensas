@@ -7090,3 +7090,34 @@ test "FREQ grouped horizontal dots use column facets and row levels in the saved
     try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"2\" data-value=\"40\"") != null);
     try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"5\" data-value=\"83.333333") != null);
 }
+
+test "QQPLOT percentile axes use theoretical quantiles, reference units and rotated orientation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x @@;datalines;\n.8 1 1.8 2.5 4 6 10.5 14\n;run;ods graphics on;proc univariate data=d noprint;var x;" ++
+        "qqplot /lognormal(sigma=.5) square pctlaxis(grid label='Population percentile' pctlorder=25 50 75) href=.8 to 1.2 by .2 vref=2 to 6 by 2;" ++
+        "qqplot /normal rotate pctlaxis(grid pctlorder=25 50 75);probplot /lognormal(sigma=.5) href=95;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const lognormal = try dir.dir.readFileAlloc(io_, "opensas-0001-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"href\""));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"vref\""));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"percentile-grid\""));
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, ">Population percentile</text>") != null);
+    // exp(0.5 * Phi^-1(0.25)) and exp(0.5 * Phi^-1(0.5)).
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, "data-percent=\"25\" data-quantile=\"0.713734") != null);
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, "data-percent=\"50\" data-quantile=\"1\" text-anchor=\"middle\"") != null);
+    const normal = try dir.dir.readFileAlloc(io_, "opensas-0002-qq.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, normal, "data-percent=\"25\" data-quantile=\"-0.674489") != null);
+    try std.testing.expect(std.mem.indexOf(u8, normal, "data-percent=\"50\" data-quantile=\"0\" text-anchor=\"start\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, normal, "rotate(90)\">Normal percentile</text>") != null);
+    const prob = try dir.dir.readFileAlloc(io_, "opensas-0003-probability.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, prob, "class=\"href\" data-value=\"95\" data-position=\"2.2760166085") != null);
+}

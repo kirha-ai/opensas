@@ -19,6 +19,7 @@ pub const Statement = struct {
     title: @import("univ_graph_annotations.zig").Title = .default,
     inset: @import("univ_graph_annotations.zig").Inset = .{},
     square: bool = false,
+    axes: data.AxisOptions = .{},
     order: usize = 0,
     variables: [][]const u8,
     curves: parameters.Curves,
@@ -49,6 +50,34 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
             continue;
         }
         i.* += 1;
+        if (eq(option, "pctlaxis") and kind == .qq) {
+            statement.axes.percentile = true;
+            if (t[i.*].tag == .lparen) {
+                i.* += 1;
+                while (t[i.*].tag != .rparen) {
+                    if (t[i.*].tag != .name) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid PCTLAXIS option", .{});
+                    const field = t[i.*].text;
+                    i.* += 1;
+                    if (eq(field, "grid")) {
+                        statement.axes.grid = true;
+                        continue;
+                    }
+                    if (t[i.*].tag != .eq) return d.fail(error.ParseError, 0, "UNIVARIATE: expected = in PCTLAXIS option", .{});
+                    i.* += 1;
+                    if (eq(field, "label") and t[i.*].tag == .string) {
+                        statement.axes.percentile_label = t[i.*].text;
+                        i.* += 1;
+                    } else if (eq(field, "pctlorder")) {
+                        const ticks = try parameters.numberList(a, d, t, i);
+                        for (ticks, 0..) |v, j| if (v <= 0 or v >= 100 or (j > 0 and v <= ticks[j - 1]))
+                            return d.fail(error.ParseError, 0, "UNIVARIATE: PCTLORDER values must increase between 0 and 100", .{});
+                        statement.axes.percentiles = ticks;
+                    } else return proc.failGap(d, 0, "UNIVARIATE: unsupported PCTLAXIS option {s}", .{field});
+                }
+                i.* += 1;
+            }
+            continue;
+        }
         if (eq(option, "square") and kind != .cdf) {
             statement.square = true;
             continue;
@@ -62,6 +91,9 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
         if ((eq(option, "rankadj") or eq(option, "nadj")) and (kind == .qq or kind == .probability)) {
             const number = try parameters.numeric(d, t, i);
             if (eq(option, "rankadj")) statement.rankadj = number else statement.nadj = number;
+        } else if (eq(option, "href") or eq(option, "vref")) {
+            const refs = try parameters.numberList(a, d, t, i);
+            if (eq(option, "href")) statement.axes.href = refs else statement.axes.vref = refs;
         } else if (eq(option, "odstitle")) {
             statement.title = try @import("univ_graph_annotations.zig").Title.parse(d, t[i.*]);
             i.* += 1;
@@ -235,6 +267,13 @@ test "UNIVARIATE numerical plots retain graphics guard and required-shape diagno
     try std.testing.expectError(error.ParseError, parse(a, &d, t, &i));
     try std.testing.expect(!diag.gapHit());
     try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "ALPHA") != null);
+    for ([_][]const u8{ "qqplot /pctlaxis(pctlorder=0 50);", "qqplot /pctlaxis(pctlorder=50 50);", "qqplot /pctlaxis(pctlorder=100);" }) |source| {
+        var invalid = diag.Diagnostics.init(a);
+        var index: usize = 0;
+        const tokens = try lex.tokenize(a, source, &invalid);
+        try std.testing.expectError(error.ParseError, parse(a, &invalid, tokens, &index));
+        try std.testing.expect(std.mem.indexOf(u8, invalid.list.items[0].message, "PCTLORDER") != null);
+    }
 }
 
 test "UNIVARIATE QQ fixed shapes avoid unwanted location-scale fits and map SLOPE" {
@@ -334,6 +373,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
                         plot.statement_index = statement.order;
                         plot.square = statement.square;
+                        plot.axes = statement.axes;
                         plot.title = statement.title;
                         plot.global_title = cx.graph_title;
                         plot.inset = try statement.inset.box(a, cx.diags, x.items, &.{plot.distribution});

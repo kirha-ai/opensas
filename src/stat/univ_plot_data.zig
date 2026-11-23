@@ -19,7 +19,16 @@ pub const Point = struct {
 /// For QQ/PROBPLOT the reference is on the theoretical-quantile scale,
 /// including Weibull2's logarithmic scale. PP uses probability coordinates.
 pub const Reference = struct { intercept: f64, slope: f64 };
+pub const AxisOptions = struct {
+    percentile: bool = false,
+    grid: bool = false,
+    percentile_label: ?[]const u8 = null,
+    percentiles: []const f64 = &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 },
+    href: []const f64 = &.{},
+    vref: []const f64 = &.{},
+};
 pub const Plot = struct {
+    axes: AxisOptions = .{},
     kind: Kind,
     variable: Column,
     keys: []const Key,

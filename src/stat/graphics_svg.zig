@@ -186,6 +186,41 @@ fn axes(a: A, w: *W, p: Plot, b: Bounds) !void {
     }
     try w.writeAll("</g>\n");
 }
+fn extraAxes(a: A, w: *W, p: Plot, b: Bounds) !void {
+    for ([_]bool{ true, false }) |horizontal| {
+        const r = if (horizontal) b.x else b.y;
+        for (if (horizontal) p.axes.href else p.axes.vref) |v| {
+            const position = if (p.kind == .probability and horizontal != p.rotated) blk: {
+                if (v <= 0 or v >= 100) continue;
+                break :blk probabilityPosition(p, v / 100);
+            } else v;
+            if (!std.math.isFinite(position) or position < r.lo or position > r.hi) continue;
+            try w.print("<path class=\"{s}\" data-value=\"{d}\" data-position=\"{d}\" stroke=\"#9b887a\" stroke-dasharray=\"5 4\" d=\"", .{ if (horizontal) "href" else "vref", v, position });
+            if (horizontal) try w.print("M{d:.2} {d:.2}V{d:.2}", .{ b.px(position), b.top, b.bottom }) else try w.print("M{d:.2} {d:.2}H{d:.2}", .{ Bounds.left, b.py(position), Bounds.right });
+            try w.writeAll("\"/>");
+        }
+    }
+    if (!p.axes.percentile) return;
+    const horizontal = !p.rotated;
+    const r = if (horizontal) b.x else b.y;
+    try w.writeAll("<g class=\"percentiles\">");
+    for (p.axes.percentiles) |percent| {
+        const position = probabilityPosition(p, percent / 100);
+        if (!std.math.isFinite(position) or position < r.lo or position > r.hi) continue;
+        const px = if (horizontal) b.px(position) else Bounds.right;
+        const py = if (horizontal) b.top else b.py(position);
+        if (p.axes.grid) {
+            try w.print("<path class=\"percentile-grid\" data-percent=\"{d}\" stroke=\"#dee3e8\" d=\"", .{percent});
+            if (horizontal) try w.print("M{d:.2} {d:.2}V{d:.2}", .{ px, b.top, b.bottom }) else try w.print("M{d:.2} {d:.2}H{d:.2}", .{ Bounds.left, py, Bounds.right });
+            try w.writeAll("\"/>");
+        }
+        try w.print("<path stroke=\"#75808a\" d=\"M{d:.2} {d:.2}{s}\"/><text data-percent=\"{d}\" data-quantile=\"{d}\" text-anchor=\"{s}\" x=\"{d:.2}\" y=\"{d:.2}\">{s}</text>", .{ px, py, if (horizontal) "v-4" else "h4", percent, position, if (horizontal) "middle" else "start", if (horizontal) px else px + 6, if (horizontal) py - 7 else py + 3, try label(a, percent) });
+    }
+    if (horizontal) try w.print("<path d=\"M{d} {d}H{d}\" stroke=\"#75808a\"/><text text-anchor=\"middle\" x=\"374\" y=\"{d}\">", .{ Bounds.left, b.top, Bounds.right, b.top - 24 }) else try w.print("<path d=\"M{d} {d}V{d}\" stroke=\"#75808a\"/><text text-anchor=\"middle\" transform=\"translate(714 {d}) rotate(90)\">", .{ Bounds.right, b.top, b.bottom, (b.bottom + b.top) / 2 });
+    const axis_label = p.axes.percentile_label orelse try std.fmt.allocPrint(a, "{s} percentile", .{distributions.familyName(p.distribution.family)});
+    try escaped(w, axis_label);
+    try w.writeAll("</text></g>");
+}
 fn finitePoint(p: XY) bool {
     return std.math.isFinite(p.x) and std.math.isFinite(p.y);
 }
@@ -242,11 +277,13 @@ fn graph(a: A, w: *W, panels: []const Plot) !void {
     };
     const title = try first.title.value(a, first.global_title, heading, first.variable);
     const rowheight: f64 = if (first.square) Bounds.right - Bounds.left + 35 else if (panels.len == 1) 335 else 210;
-    const height = 118 + rowheight * @as(f64, @floatFromInt(panels.len));
-    try w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"690\" height=\"{d}\" viewBox=\"0 0 690 {d}\" role=\"img\" aria-labelledby=\"title\" data-kind=\"{s}\">\n<title id=\"title\">", .{ height, height, @tagName(first.kind) });
+    const axis_height: f64 = if (first.axes.percentile and !first.rotated) 40 else 0;
+    const width: f64 = if (first.axes.percentile and first.rotated) 736 else 690;
+    const height = 118 + (rowheight + axis_height) * @as(f64, @floatFromInt(panels.len));
+    try w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"{d}\" height=\"{d}\" viewBox=\"0 0 {d} {d}\" role=\"img\" aria-labelledby=\"title\" data-kind=\"{s}\">\n<title id=\"title\">", .{ width, height, width, height, @tagName(first.kind) });
     try escaped(w, title);
     try w.writeAll("</title>\n<style>text{font-family:system-ui,sans-serif;fill:#1d2935;font-size:12px}.heading{font-size:18px;font-weight:600}.facet{font-weight:600}.axes path{stroke:#75808a;fill:none}.point{stroke:#244f85;fill:white;stroke-width:1.4}.empirical{fill:none;stroke:#244f85;stroke-width:2}.fitted,.reference{fill:none;stroke:#a25032;stroke-width:1.6}</style>\n");
-    try w.print("<rect width=\"690\" height=\"{d}\" fill=\"white\"/><text x=\"345\" y=\"25\" text-anchor=\"middle\" class=\"heading\">", .{height});
+    try w.print("<rect width=\"100%\" height=\"{d}\" fill=\"white\"/><text x=\"345\" y=\"25\" text-anchor=\"middle\" class=\"heading\">", .{height});
     try escaped(w, title);
     try w.writeAll("</text>\n<text x=\"88\" y=\"46\">");
     try keyText(w, first.keys, false);
@@ -270,19 +307,20 @@ fn graph(a: A, w: *W, panels: []const Plot) !void {
     if (first.kind == .pp) x_range = .{ .lo = 0, .hi = 1 };
     if (first.kind == .cdf or first.kind == .pp) y_range = .{ .lo = 0, .hi = first.probability_scale };
     for (panels, 0..) |p, i| {
-        const top = 65 + rowheight * @as(f64, @floatFromInt(i));
+        const top = 65 + axis_height + (rowheight + axis_height) * @as(f64, @floatFromInt(i));
         const b = Bounds{ .x = x_range, .y = y_range, .top = top, .bottom = top + rowheight - 35 };
-        try w.print("<g class=\"panel\" data-panel=\"{d}\"><text class=\"facet\" x=\"88\" y=\"{d}\">", .{ i + 1, top - 4 });
+        try w.print("<g class=\"panel\" data-panel=\"{d}\"><text class=\"facet\" x=\"88\" y=\"{d}\">", .{ i + 1, top - 4 - axis_height });
         try keyText(w, p.keys, true);
         try w.writeAll("</text>\n");
         if (p.kind == .pp or p.reference != null or (p.kind == .cdf and p.cdf_overlay)) {
-            try w.print("<text class=\"fit-label\" x=\"660\" y=\"{d}\" text-anchor=\"end\">{s}", .{ top - 4, distributions.familyName(p.distribution.family) });
+            try w.print("<text class=\"fit-label\" x=\"660\" y=\"{d}\" text-anchor=\"end\">{s}", .{ top - 4 - axis_height, distributions.familyName(p.distribution.family) });
             for (try distributions.parameters(a, p.distribution)) |par| {
                 if (par.symbol.len != 0) try w.print(" {s}={s}", .{ par.symbol, try label(a, par.value) });
             }
             try w.writeAll("</text>\n");
         }
         try axes(a, w, p, b);
+        try extraAxes(a, w, p, b);
         try w.print("<clipPath id=\"clip{d}\"><rect x=\"{d}\" y=\"{d}\" width=\"{d}\" height=\"{d}\"/></clipPath><g clip-path=\"url(#clip{d})\">\n", .{ i, Bounds.left, top, Bounds.right - Bounds.left, b.bottom - top, i });
         try series(w, p, b);
         try w.writeAll("</g>");

@@ -78,7 +78,10 @@ S002      BASELINE     142      91     108
 For native UNIVARIATE distribution plots, `opensas --graphics-dir figures program.sas`
 writes numbered SVG files and reports their paths in the log. HISTOGRAM, CDF
 (CDFPLOT), PPPLOT, QQPLOT and PROBPLOT support this output. Histograms show
-observed bins, requested fitted densities and kernel estimates. INSET displays
+observed bins, requested fitted densities and kernel estimates. QQPLOT supports
+an opposite percentile axis with PCTLAXIS and grid lines. HREF/VREF accepts
+values and TO/BY ranges on distribution plot axes, including percentiles on
+probability plots. INSET displays
 sample summaries and fitted parameters. CLASS levels share axes in a single
 figure for each BY group, variable and requested curve. ODS GRAPHICS OFF
 suppresses new figures. With ODS GRAPHICS ON, LISTING GPATH supplies the

@@ -83,6 +83,19 @@ fn numericRange(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Nu
     return .{ .first = first, .step = step, .count = count + 1 };
 }
 
+/// Common value-list syntax for plot reference lines and percentile tick marks.
+pub fn numberList(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error![]const f64 {
+    var values: std.ArrayList(f64) = .empty;
+    while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus) {
+        const range = try numericRange(d, t, i);
+        if (range.count > 100000 - values.items.len) return d.fail(error.ParseError, 0, "UNIVARIATE: plot reference list is too large", .{});
+        for (0..range.count) |j| try values.append(a, range.at(j));
+        if (t[i.*].tag == .comma) i.* += 1;
+    }
+    if (values.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: expected numeric plot reference values", .{});
+    return values.items;
+}
+
 /// i starts at the family keyword; returns immediately after optional (...).
 /// null parameter values mean EST, including explicit EST in position lists.
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Curves {
