@@ -64,13 +64,13 @@ Anderson-Darling  A-Sq  0.134000  >0.2500
 Trimmed Means
 95% Confidence Limits
 Percent in Tail  Number in Tail  Mean  Std Error  Lower  Upper  DF  t  Pr > |t|
-  12.500000  1.000000  4.500000  1.000000  1.929418  7.070582  5.000000  4.500000  0.006400
-  25.000000  2.000000  4.500000  1.080123  1.062565  7.937435  3.000000  4.166190  0.025164
+  12.500000  1.000000  4.500000  1.000000  1.929418  7.070582  5.000000  4.500000  0.0064
+  25.000000  2.000000  4.500000  1.080123  1.062565  7.937435  3.000000  4.166190  0.0252
 
 Winsorized Means
 95% Confidence Limits
 Percent in Tail  Number in Tail  Mean  Std Error  Lower  Upper  DF  t  Pr > |t|
-  25.000000  2.000000  4.500000  1.166667  0.787146  8.212854  3.000000  3.857143  0.030792
+  25.000000  2.000000  4.500000  1.166667  0.787146  8.212854  3.000000  3.857143  0.0308
 
 Robust Measures of Scale
 Measure  Value  Estimate of Sigma
