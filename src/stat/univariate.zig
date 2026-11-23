@@ -71,6 +71,13 @@ const ClassLevel = struct {
     first: usize = std.math.maxInt(usize),
     count: usize = 0,
     raw: Value = .{ .num = nan },
+
+    fn less(left: ClassLevel, right: ClassLevel, mode: []const u8, labels: std.math.Order) bool {
+        if (eq(mode, "data") and left.first != right.first) return left.first < right.first;
+        if (eq(mode, "freq") and left.count != right.count) return left.count > right.count;
+        if (eq(mode, "internal")) return h.compareValue(left.raw, right.raw) == .lt;
+        return labels == .lt;
+    }
 };
 const ClassLevels = std.HashMapUnmanaged([]const Value, ClassLevel, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
 
@@ -164,39 +171,56 @@ pub const Options = struct {
             try self.by_starts.append(a, @intFromFloat(h.toNum(group.rep.?[self.obscol.?])));
         }
     }
-    /// Compute class order on the retained observations of each BY segment.
-    /// DATA/FREQ use the marginal level's first observation and occurrence
-    /// count. The raw representative depends on all preceding CLASS keys.
+    /// Select the first eligible raw observation in each CLASS prefix. For
+    /// secondary DATA/FREQ order, SAS uses each label's first observation
+    /// or count in the earliest ordered primary level containing that label.
     pub fn indexClassLevels(self: *Options, a: Allocator, ds: *Dataset, by: []const usize, cols: []const usize, wc: ?usize) !void {
         if (cols.len == 0) return;
+        const Anchors = std.HashMapUnmanaged([]const Value, []const Value, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
         for (try bySlices(a, ds.rows.items, by, self.*)) |group| {
             for (cols, 0..) |ci, j| {
-                const marginal_key = h.GroupKeyCtx{ .ccols = cols[j..][0..1] };
+                const level_key = h.GroupKeyCtx{ .ccols = cols[j..][0..1] };
                 const prefix_key = h.GroupKeyCtx{ .ccols = cols[0 .. j + 1] };
-                var marginal: ClassLevels = .empty;
-                var prefix: ClassLevels = .empty;
-                defer marginal.deinit(a);
-                defer prefix.deinit(a);
+                var cells: ClassLevels = .empty;
+                defer cells.deinit(a);
                 for (group.rows, 0..) |row, position| {
                     const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
                     const original = self.source_rows.get(obs).?;
                     if (h.weightAt(original, wc) == null) continue;
-                    const m = try marginal.getOrPutContext(a, row, marginal_key);
-                    if (!m.found_existing) m.value_ptr.* = .{ .first = position };
-                    m.value_ptr.count += 1;
-                    const p = try prefix.getOrPutContext(a, row, prefix_key);
-                    if (!p.found_existing) p.value_ptr.* = .{ .raw = original[ci] };
+                    const level = try cells.getOrPutContext(a, row, prefix_key);
+                    if (!level.found_existing) level.value_ptr.* = .{ .first = position, .raw = original[ci] };
+                    level.value_ptr.count += 1;
+                }
+                var anchors: Anchors = .empty;
+                defer anchors.deinit(a);
+                if (j == 1 and (eq(self.class_order[j], "data") or eq(self.class_order[j], "freq"))) {
+                    var iter = cells.keyIterator();
+                    while (iter.next()) |cell_key| {
+                        const row = cell_key.*;
+                        const anchor = try anchors.getOrPutContext(a, row, level_key);
+                        if (!anchor.found_existing or self.classLevel(row, 0).less(
+                            self.classLevel(anchor.value_ptr.*, 0),
+                            self.class_order[0],
+                            h.compareValue(row[cols[0]], anchor.value_ptr.*[cols[0]]),
+                        )) anchor.value_ptr.* = row;
+                    }
                 }
                 for (group.rows) |row| {
                     const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
                     const entry = try self.class_levels.getOrPut(a, obs);
                     if (!entry.found_existing) entry.value_ptr.* = .{ .{}, .{} };
-                    var info = marginal.getContext(row, marginal_key) orelse ClassLevel{};
-                    info.raw = if (prefix.getContext(row, prefix_key)) |p| p.raw else row[ci];
+                    const level = cells.getContext(row, prefix_key) orelse ClassLevel{ .raw = row[ci] };
+                    var info = if (anchors.getContext(row, level_key)) |anchor| cells.getContext(anchor, prefix_key).? else level;
+                    info.raw = level.raw;
                     entry.value_ptr.*[j] = info;
                 }
             }
         }
+    }
+
+    fn classLevel(self: Options, row: []const Value, j: usize) ClassLevel {
+        const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+        return self.class_levels.get(obs).?[j];
     }
 
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
@@ -1064,16 +1088,10 @@ pub fn orderGroups(groups: []h.MeansGroup, cols: []const usize, opt: Options) vo
         cols: []const usize,
         opt: Options,
         fn less(c: @This(), l: h.MeansGroup, r: h.MeansGroup) bool {
-            const left = c.opt.class_levels.get(@intFromFloat(h.toNum(l.rep[c.opt.obscol.?]))).?;
-            const right = c.opt.class_levels.get(@intFromFloat(h.toNum(r.rep[c.opt.obscol.?]))).?;
             for (c.cols, 0..) |ci, j| {
                 const label_order = h.compareValue(l.rep[ci], r.rep[ci]);
-                if (label_order == .eq) continue;
-                const mode = c.opt.class_order[j];
-                if (eq(mode, "data") and left[j].first != right[j].first) return left[j].first < right[j].first;
-                if (eq(mode, "freq") and left[j].count != right[j].count) return left[j].count > right[j].count;
-                if (eq(mode, "internal")) return h.compareValue(left[j].raw, right[j].raw) == .lt;
-                return label_order == .lt;
+                if (label_order != .eq)
+                    return c.opt.classLevel(l.rep, j).less(c.opt.classLevel(r.rep, j), c.opt.class_order[j], label_order);
             }
             return false;
         }
@@ -1372,9 +1390,8 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
 /// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
 /// missing weights must not supply a representative, even without EXCLNPWGT.
 pub fn classRepresentative(opt: Options, cols: []const usize, ci: usize, rep: []const Value) Value {
-    const obs: usize = @intFromFloat(h.toNum(rep[opt.obscol.?]));
     const j = std.mem.indexOfScalar(usize, cols, ci).?;
-    return opt.class_levels.get(obs).?[j].raw;
+    return opt.classLevel(rep, j).raw;
 }
 /// CLASS grouping uses formatted keys, but an explicitly selected CLASS
 /// variable is analyzed using its original numeric values, after ROUND.
