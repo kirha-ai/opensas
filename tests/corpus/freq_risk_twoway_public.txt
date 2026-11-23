@@ -112,10 +112,10 @@ Statistics for Table of r by c
 Confidence Limits for the Risk Difference
 Risk Difference = -0.4333; Column 2 (c = 2)
 
-Statistic / Method                  95% Lower CL  95% Upper CL
-Miettinen-Nurminen (Uncorrected)         -0.6512       -0.1660
-Newcombe (Corrected)                     -0.6588       -0.1318
-Wald (Corrected)                         -0.7277       -0.1389
+Statistic / Method            95% Lower CL  95% Upper CL
+Miettinen-Nurminen-Mee             -0.6512       -0.1660
+Newcombe (Corrected)               -0.6588       -0.1318
+Wald (Corrected)                   -0.7277       -0.1389
 
 Risk Estimates
 Column 2 (c = 2)
@@ -128,7 +128,7 @@ Column 2 (c = 2)
 
 Statistic / Method            95% Lower CL  95% Upper CL
 Wald Modified                       0.2896        0.8492
-Score (Uncorrected)                 0.2583        0.7753
+Score                               0.2583        0.7753
 Likelihood Ratio                    0.2450        0.7747
 
 Sample Size = 50

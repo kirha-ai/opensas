@@ -74,7 +74,7 @@ Odds Ratio                        7.5000
 Confidence Limits for the Odds Ratio
 
 Statistic / Method            95% Lower CL  95% Upper CL
-Score (Uncorrected)                 2.0737       27.0442
+Score                               2.0737       27.0442
 Likelihood Ratio                    2.1287       30.3010
 
 Sample Size = 50
@@ -88,9 +88,9 @@ Statistics for Table of r by c
 Confidence Limits for the Risk Difference
 Risk Difference = 0.4333; Column 1 (c = 1)
 
-Statistic / Method                  95% Lower CL  95% Upper CL
-Agresti-Caffo                             0.1574        0.6494
-Miettinen-Nurminen (Uncorrected)          0.1660        0.6512
+Statistic / Method            95% Lower CL  95% Upper CL
+Agresti-Caffo                       0.1574        0.6494
+Miettinen-Nurminen-Mee              0.1660        0.6512
 
 Equality Test for the Risk Difference (Column 1)
 Null = -0.01; Method = Farrington-Manning
@@ -104,9 +104,9 @@ Two-sided Pr > |Z|                0.0012
 Confidence Limits for the Risk Difference
 Risk Difference = -0.4333; Column 2 (c = 2)
 
-Statistic / Method                  95% Lower CL  95% Upper CL
-Agresti-Caffo                            -0.6494       -0.1574
-Miettinen-Nurminen (Uncorrected)         -0.6512       -0.1660
+Statistic / Method            95% Lower CL  95% Upper CL
+Agresti-Caffo                      -0.6494       -0.1574
+Miettinen-Nurminen-Mee             -0.6512       -0.1660
 
 Equality Test for the Risk Difference (Column 2)
 Null = -0.01; Method = Farrington-Manning
