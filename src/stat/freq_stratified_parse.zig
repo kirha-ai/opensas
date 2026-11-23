@@ -174,6 +174,8 @@ pub fn consumeTableOption(tokens: []const lex.Token, index: *usize, opts: *Optio
             }
             r.i += 1;
         }
+    } else if (kw(t, "printkwts")) {
+        next.agreement.print_weights = true;
     } else if (kw(t, "agree")) {
         var ag = &next.agreement;
         ag.enabled = true;

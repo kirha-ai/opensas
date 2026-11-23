@@ -76,7 +76,7 @@ fn isUnsupportedFreqStat(kw: []const u8) bool {
 
 /// Valid SAS options outside this table ticket (statistics/ODS) fail as gaps.
 fn isFreqTablesGapOption(kw: []const u8) bool {
-    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "printkwts", "contents", "nowarn", "plots" }) |opt|
+    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "contents", "nowarn", "plots" }) |opt|
         if (eqi(kw, opt)) return true;
     return false;
 }
