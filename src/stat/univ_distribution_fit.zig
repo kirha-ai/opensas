@@ -161,7 +161,7 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     for (x, 0..) |v, i| {
         if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: fit sample must be sorted and finite", .{});
     }
-    if (r.maxiter == 0 or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
+    if (r.maxiter == 0 or (r.family == .gamma and (r.maxiter < 5 or r.maxiter > 100)) or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
     if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
@@ -223,17 +223,28 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
                 // zero or below. Thom's estimate is then outside the domain
                 // of the positive-shape digamma recurrence.
                 if (!(a > 0) or !std.math.isFinite(a)) return convergence(d);
-                var converged = false;
+                var iterations: usize = 0;
                 for (0..r.maxiter) |_| {
                     const value = if (r.sigma) |s| digamma(a) + @log(s) - logmean else digamma(a) - @log(a) + gap;
                     const slope = trigamma(a) - (if (r.sigma == null) 1 / a else @as(f64, 0));
-                    var next = a - value / slope;
-                    if (next <= 0) next = a / 2;
-                    if (@abs(next - a) < r.alphadelta) converged = true;
-                    a = next;
-                    if (converged) break;
+                    const change = value / slope;
+                    const proposed = a - change;
+                    if (!std.math.isFinite(proposed)) return convergence(d);
+                    // M9 restarts a nonpositive Newton iterate at 0.05. Its
+                    // tolerance applies to the original Newton correction.
+                    a = if (proposed > 0) proposed else 0.05;
+                    iterations += 1;
+                    if (@abs(change) < r.alphadelta) break;
                 }
-                if (!converged) return convergence(d);
+                if (r.report) |report| report.iterations = iterations;
+                if (iterations == r.maxiter) {
+                    if (r.report) |report| {
+                        report.converged = false;
+                        report.reason = "iteration_limit";
+                    }
+                    try d.warn(0, "{d} iterations were used to estimate ALPHA.", .{iterations});
+                    try d.warn(0, "Estimate of ALPHA may not be valid.", .{});
+                }
                 p.alpha = a;
             }
             p.sigma = r.sigma orelse (mean - p.theta) / p.alpha;
@@ -659,14 +670,40 @@ fn digamma(value: f64) f64 {
     var result: f64 = 0;
     while (x < 12) : (x += 1) result -= 1 / x;
     const q = 1 / (x * x);
-    return result + @log(x) - 0.5 / x - q * (1.0 / 12.0 - q * (1.0 / 120.0 - q * (1.0 / 252.0 - q / 240)));
+    const tail = 1.0 / 240.0 - q * (1.0 / 132.0 - q * (691.0 / 32760.0));
+    return result + @log(x) - 0.5 / x - q * (1.0 / 12.0 - q * (1.0 / 120.0 - q * (1.0 / 252.0 - q * tail)));
 }
 fn trigamma(value: f64) f64 {
     var x = value;
     var result: f64 = 0;
     while (x < 12) : (x += 1) result += 1 / (x * x);
     const q = 1 / (x * x);
-    return result + 1 / x + q / 2 + q / x * (1.0 / 6.0 - q * (1.0 / 30.0 - q * (1.0 / 42.0 - q / 30)));
+    const tail = 1.0 / 30.0 - q * (5.0 / 66.0 - q * (691.0 / 2730.0));
+    return result + 1 / x + q / 2 + q / x * (1.0 / 6.0 - q * (1.0 / 30.0 - q * (1.0 / 42.0 - q * tail)));
+}
+
+test "gamma iteration limits preserve the last positive shape and diagnose the cap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 };
+    var report: Report = .{};
+    for ([_]f64{ 0.01, 3.5, 1000 }, [_]f64{ 0.25163117029828297, 0.2736105112020688, 0.554340262352804 }) |initial, expected| {
+        d.list.clearRetainingCapacity();
+        const result = try fit(&d, &x, .{ .family = .gamma, .alphainitial = initial, .alphadelta = 1e-7, .maxiter = 5, .report = &report });
+        try std.testing.expectApproxEqAbs(expected, result.p.alpha, 1e-12);
+        try std.testing.expect(!report.converged and !report.no_fit);
+        try std.testing.expectEqual(@as(usize, 5), report.iterations);
+        try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+        try std.testing.expectEqualStrings("5 iterations were used to estimate ALPHA.", d.list.items[0].message);
+        try std.testing.expectEqualStrings("Estimate of ALPHA may not be valid.", d.list.items[1].message);
+    }
+    d.list.clearRetainingCapacity();
+    const valid = try fit(&d, &x, .{ .family = .gamma, .alphainitial = 0.65, .alphadelta = 1, .maxiter = 5, .report = &report });
+    try std.testing.expect(report.converged);
+    try std.testing.expectEqual(@as(usize, 1), report.iterations);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0339545074071208), valid.p.alpha, 1e-12);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
 }
 
 test "gamma fitting handles a rounded log-mean gap before its positive-shape recurrence" {

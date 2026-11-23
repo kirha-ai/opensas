@@ -222,8 +222,7 @@ pub const FamilyOptions = struct {
             }
             if (eq(key, "maxiter") and (kind == .gamma or kind == .weibull)) {
                 const value = try numeric(d, t, i);
-                if (value < 1 or value > 1000000 or value != @floor(value)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid MAXITER", .{});
-                if (kind == .weibull and (value < 5 or value > 100)) return d.fail(error.ParseError, 0, "UNIVARIATE: Weibull MAXITER must be between 5 and 100", .{});
+                if (value < 5 or value > 100) return d.fail(error.ParseError, 0, "The parameter value {s} is not within the required range of 5 and 100.", .{try @import("../format.zig").bestNum(a, value)});
                 self.common.maxiter = @intFromFloat(value);
                 continue;
             }

@@ -696,6 +696,31 @@ test "UNIVARIATE public Weibull ITPRINT renders actual iteration history" {
     try std.testing.expectError(error.ParseError, parseStatement(a, &bad, invalid, &i));
 }
 
+test "gamma and Weibull MAXITER range is checked before truncating a fractional limit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const lexer = @import("../lexer.zig");
+    for ([_][]const u8{ "gamma", "weibull" }) |name| {
+        for ([_][]const u8{ "4.9", "100.1" }) |limit| {
+            d.list.clearRetainingCapacity();
+            const code = try std.fmt.allocPrint(a, "histogram x / {s}(maxiter={s}) noplot;", .{ name, limit });
+            const t = try lexer.tokenize(a, code, &d);
+            var at: usize = 0;
+            try std.testing.expectError(error.ParseError, parseStatement(a, &d, t, &at));
+            try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The parameter value {s} is not within the required range of 5 and 100.", .{limit}), d.list.items[0].message);
+        }
+        for ([_][]const u8{ "5", "5.99", "100" }, [_]usize{ 5, 5, 100 }) |limit, expected| {
+            const code = try std.fmt.allocPrint(a, "histogram x / {s}(maxiter={s}) noplot;", .{ name, limit });
+            const t = try lexer.tokenize(a, code, &d);
+            var at: usize = 0;
+            const parsed = try parseStatement(a, &d, t, &at);
+            try std.testing.expectEqual(expected, parsed.curves[0].requests[0].maxiter);
+        }
+    }
+}
+
 test "UNIVARIATE output WHERE follows the renamed descriptor for qualified outputs" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
