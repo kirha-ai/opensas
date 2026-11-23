@@ -17,6 +17,12 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
             if (c.label) |label| label_len = @max(label_len, label.len);
             name_len = @max(name_len, c.name.len);
         }
+        if (spec.options.fisher != null) {
+            if (spec.options.pearson and group.pairs.len > 0)
+                try publishFisher(a, d, capture, spec, group, group.pairs, false, name_len);
+            if (group.spearman.len > 0)
+                try publishFisher(a, d, capture, spec, group, group.spearman, true, name_len);
+        }
         if (!spec.options.nosimple and capture.wants("SimpleStats")) {
             var t = try b.Builder.init(a, spec.ds, spec.by, group.by_values);
             t.ds.label = "Simple Statistics";
@@ -67,6 +73,62 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
         }
     }
 }
+pub fn fisherTableName(spearman: bool, partial: bool) []const u8 {
+    return if (spearman) (if (partial) "FisherSpearmanPartialCorr" else "FisherSpearmanCorr") else if (partial) "FisherPearsonPartialCorr" else "FisherPearsonCorr";
+}
+
+fn publishFisher(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture, spec: corr.Spec, group: corr.Group, pairs: []const corr.Pair, spearman: bool, name_len: usize) !void {
+    const partial = spec.partial.len != 0;
+    const name = fisherTableName(spearman, partial);
+    if (!capture.wants(name)) return;
+    const opt = spec.options.fisher.?;
+    var t = try b.Builder.init(a, spec.ds, spec.by, group.by_values);
+    t.ds.label = if (spearman) "Spearman Correlation Statistics" else "Pearson Correlation Statistics";
+    for ([_][]const u8{ "Var", "WithVar" }, [_][]const u8{ "Variable", "With Variable" }) |field, label| {
+        try t.char(field, @max(8, name_len));
+        t.ds.setLabel(field, label);
+    }
+    try t.num("NObs", "8.");
+    t.ds.setLabel("NObs", "N");
+    if (partial) {
+        try t.num("NPartial", "8.");
+        t.ds.setLabel("NPartial", "N Partialled");
+    }
+    for ([_][]const u8{ "Corr", "ZVal", "BiasAdj", "CorrEst" }, [_][]const u8{ "Sample Correlation", "Fisher's z", "Bias Adjustment", "Correlation Estimate" }, 0..) |field, label, i| {
+        if (!opt.biasadj and i >= 2) break;
+        try t.num(field, "D10.");
+        t.ds.setLabel(field, label);
+    }
+    for ([_][]const u8{ "Lcl", "Ucl" }, [_][]const u8{ "Lower", "Upper" }, 0..) |field, side, i| {
+        if ((i == 0 and opt.kind == .upper) or (i == 1 and opt.kind == .lower)) continue;
+        try t.num(field, "D12.3");
+        t.ds.setLabel(field, try std.fmt.allocPrint(a, "{s} {d}% Confidence Limit", .{ side, 100 * (1 - opt.alpha) }));
+    }
+    if (opt.rho0 != 0) try t.num("Rho0", "D10.");
+    try t.num("pValue", "PVALUE6.4");
+    const relation: []const u8 = switch (opt.kind) {
+        .twosided => "=",
+        .lower => "<=",
+        .upper => ">=",
+    };
+    const p_label = if (opt.rho0 != 0) "p Value" else try std.fmt.allocPrint(a, "p Value for H0:{s}Rho{s}0", .{ if (partial) @as([]const u8, " Partial ") else "", relation });
+    t.ds.setLabel("pValue", p_label);
+    for (pairs, 0..) |p, index| {
+        if (spec.with.len == 0 and index % spec.vars.len >= index / spec.vars.len) continue;
+        var cells: std.ArrayList(Value) = .empty;
+        try cells.appendSlice(a, &.{ b.s(spec.ds.columns.items[p.column].name), b.s(spec.ds.columns.items[p.row].name), b.n(p.n) });
+        if (partial) try cells.append(a, b.n(@floatFromInt(p.controls)));
+        try cells.appendSlice(a, &.{ b.n(p.r), b.n(p.fisher.z) });
+        if (opt.biasadj) try cells.appendSlice(a, &.{ b.n(p.fisher.bias), b.n(p.fisher.estimate) });
+        if (opt.kind != .upper) try cells.append(a, b.n(p.fisher.lower));
+        if (opt.kind != .lower) try cells.append(a, b.n(p.fisher.upper));
+        if (opt.rho0 != 0) try cells.append(a, b.n(opt.rho0));
+        try cells.append(a, b.n(p.fisher.p));
+        try t.row(cells.items);
+    }
+    if (t.ds.rows.items.len > 0) try capture.publish(a, d, name, &t.ds);
+}
+
 fn publishMatrix(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture, spec: corr.Spec, group: corr.Group, matrix: []const corr.Pair, name_len: usize, label_len: usize, name: []const u8, label: []const u8) diag.Error!void {
     var t = try b.Builder.init(a, spec.ds, spec.by, group.by_values);
     t.ds.label = label;
@@ -194,4 +256,40 @@ test "PolychoricCorr captures named full-precision ordinal pairs and native desc
         try std.testing.expectApproxEqAbs(@as(f64, 183.527618505065), row[7].num, 1e-7);
         try std.testing.expectApproxEqRel(@as(f64, 8.2269409306717e-42), row[8].num, 1e-7);
     }
+}
+
+test "M9 Fisher capture uses requested limits with a BY prefix and retains probabilities under NOPROB" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lexer = @import("../lexer.zig");
+    const Dataset = @import("../dataset.zig").Dataset;
+    var library = @import("../exec.zig").Library.init(a);
+    var input = Dataset.init(a, "d");
+    for ([_][]const u8{ "group_x", "long_measurement_name", "with_y" }) |name| _ = try input.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 7 }, .{ 1, 2, 8 }, .{ 1, 3, 10 }, .{ 1, 5, 6 }, .{ 1, 6, 15 }, .{ 1, 8, 17 }, .{ 2, 1, 5 }, .{ 2, 2, 2 }, .{ 2, 3, 4 }, .{ 2, 5, 9 }, .{ 2, 7, 8 }, .{ 2, 9, 13 } }) |r| try input.appendRow(&.{ b.n(r[0]), b.n(r[1]), b.n(r[2]) });
+    try library.put(input.name, &input);
+    var capture: ods.Capture = .{};
+    var diagnostics = diag.Diagnostics.init(a);
+    const cx: @import("../proc.zig").ProcCtx = .{ .arena = a, .lib = &library, .diags = &diagnostics, .capture = &capture };
+    var listing: std.ArrayList(u8) = .empty;
+    try capture.parse(a, &diagnostics, try lexer.tokenize(a, "ods output FisherPearsonCorr=p;", &diagnostics));
+    try corr.run(cx, &listing, try lexer.tokenize(a, "proc corr data=d fisher;by group_x;var long_measurement_name;with with_y;run;", &diagnostics));
+    try capture.finish(&library, &diagnostics);
+    const result = library.find("p").?;
+    try std.testing.expectEqual(@as(usize, 2), result.rowCount());
+    try std.testing.expectEqualStrings("group_x", result.columns.items[0].name);
+    try std.testing.expectEqualStrings("long_measurement_name", result.row(0)[1].str);
+    try std.testing.expectEqualStrings("with_y", result.row(0)[2].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.78203), result.row(0)[4].num, 0.000005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.985721), result.row(1)[9].num, 0.0000005);
+    try capture.parse(a, &diagnostics, try lexer.tokenize(a, "ods output FisherPearsonCorr=v;", &diagnostics));
+    try corr.run(cx, &listing, try lexer.tokenize(a, "proc corr data=d fisher(type=twosided alpha=.025 rho0=.3 biasadj=no) noprob;var long_measurement_name;with with_y;run;", &diagnostics));
+    try capture.finish(&library, &diagnostics);
+    const variant = library.find("v").?;
+    try std.testing.expectEqual(@as(usize, 9), variant.columns.items.len);
+    try std.testing.expectEqualStrings("Lower 97.5% Confidence Limit", variant.columns.items[5].label.?);
+    try std.testing.expectEqualStrings("Rho0", variant.columns.items[7].name);
+    try std.testing.expectEqual(@as(f64, 0.3), variant.row(0)[7].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0788), variant.row(0)[8].num, 0.00005);
 }
