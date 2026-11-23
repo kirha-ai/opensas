@@ -764,6 +764,23 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
         try h.applyOutOptions(a, od, if (table) toks else spec.tokens, cx.diags, if (table) "outtable" else "out");
     }
 }
+const ext = @import("ods_univ_extremes.zig");
+const ods_cells = @import("ods_table.zig");
+
+fn displayObservation(a: Allocator, out: *std.ArrayList(u8), side: ext.Side, ids: []const usize, fc: ?usize) !void {
+    if (ids.len == 0 and fc == null) {
+        try out.appendSlice(a, try h.rjust(a, try h.uNum(a, side.value), 9));
+        try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{side.obs}), 5));
+        return;
+    }
+    try out.appendSlice(a, try h.uNum(a, side.value));
+    for (ids) |ci| {
+        try out.appendSlice(a, "  ");
+        try out.appendSlice(a, try cell(a, side.source[ci]));
+    }
+    if (fc) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d}", .{@floor(h.toNum(side.source[ci]))}));
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d}", .{side.obs}));
+}
 pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, pairs: []const h.XW, opt: Options, ids: []const usize) !void {
     if (opt.nextrobs > 0) {
         const start = out.items.len;
@@ -791,28 +808,42 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
         }.less);
         try out.appendSlice(a, "\n" ++ (" " ** 23) ++ "Extreme Observations\n\n");
         try out.appendSlice(a, (" " ** 11) ++ "----Lowest----" ++ (" " ** 8) ++ "---Highest---\n\n");
-        try out.appendSlice(a, (" " ** 11) ++ "Value      Obs" ++ (" " ** 8) ++ "Value      Obs");
-        for (ids) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s} (Low/High)", .{ds.columns.items[ci].name}));
-        if (opt.freqcol != null) try out.appendSlice(a, "  Freq (Low/High)");
+        var display_ids: std.ArrayList(usize) = .empty;
+        // The listing groups numeric ID columns before character columns.
+        // The ODS dataset retains the original ID statement order.
+        for ([_]@import("../pdv.zig").VarType{ .num, .char }) |kind| {
+            for (ids) |ci| if (ds.columns.items[ci].type == kind) { try display_ids.append(a, ci); };
+        }
+        if (ids.len == 0 and opt.freqcol == null) {
+            try out.appendSlice(a, (" " ** 11) ++ "Value      Obs" ++ (" " ** 8) ++ "Value      Obs");
+        } else {
+            for (0..2) |column| {
+                try out.appendSlice(a, if (column == 0) "           Value" else "        Value");
+                for (display_ids.items) |ci| {
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}", .{ds.columns.items[ci].name}));
+                }
+                if (opt.freqcol != null) try out.appendSlice(a, "  Freq");
+                try out.appendSlice(a, "  Obs");
+            }
+        }
         try out.appendSlice(a, "\n\n");
+        var table = try ext.observations(opt.ods, ids, opt.freqcol);
         const n = @min(opt.nextrobs, extreme.items.len);
         for (0..n) |j| {
             const low = extreme.items[j];
             const high = highest[highest.len - n + j];
+            const sides = [_]ext.Side{
+                .{ .value = low.x, .obs = low.obs, .source = sourceRow(opt.source orelse ds, opt, low.obs) },
+                .{ .value = high.x, .obs = high.obs, .source = sourceRow(opt.source orelse ds, opt, high.obs) },
+            };
             try out.appendSlice(a, " " ** 11);
-            try out.appendSlice(a, try h.rjust(a, try h.uNum(a, low.x), 9));
-            try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{low.obs}), 5));
+            try displayObservation(a, out, sides[0], display_ids.items, opt.freqcol);
             try out.appendSlice(a, " " ** 8);
-            try out.appendSlice(a, try h.rjust(a, try h.uNum(a, high.x), 9));
-            try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{high.obs}), 5));
-            for (ids) |ci| {
-                const l = sourceRow(opt.source orelse ds, opt, low.obs)[ci];
-                const r = sourceRow(opt.source orelse ds, opt, high.obs)[ci];
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s} / {s}", .{ try cell(a, l), try cell(a, r) }));
-            }
-            if (opt.freqcol) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d} / {d}", .{ @floor(h.toNum(sourceRow(ds, opt, low.obs)[ci])), @floor(h.toNum(sourceRow(ds, opt, high.obs)[ci])) }));
+            try displayObservation(a, out, sides[1], display_ids.items, opt.freqcol);
             try out.append(a, '\n');
+            if (table) |*t| try ext.observationRow(t, ids, opt.freqcol, sides);
         }
+        if (table) |*t| try t.finish();
         try opt.listing.finish(a, out, start, "ExtremeObs");
     }
     const Run = struct { x: f64, count: usize, w: f64 };
@@ -830,24 +861,38 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
     if (opt.modes) {
         const start = out.items.len;
         try out.appendSlice(a, "\nModes\nMode    Count\n");
-        if (best < 2 and runs.items.len != 1) try out.appendSlice(a, ".       .\n") else for (runs.items) |r| {
-            if (r.count == best) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}    {d}\n", .{ try h.uNum(a, r.x), r.count }));
+        var table = try ext.modes(opt.ods);
+        if (best < 2 and runs.items.len != 1) {
+            try out.appendSlice(a, ".       .\n");
+            if (table) |*t| try t.row(&.{ Value.missing, Value.missing });
+        } else for (runs.items) |r| {
+            if (r.count == best) {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}    {d}\n", .{ try h.uNum(a, r.x), r.count }));
+                if (table) |*t| try t.row(&.{ ods_cells.n(r.x), ods_cells.n(@floatFromInt(r.count)) });
+            }
         }
+        if (table) |*t| try t.finish();
         try opt.listing.finish(a, out, start, "Modes");
     }
     if (opt.nextrval > 0) {
         const start = out.items.len;
-        try out.appendSlice(a, "\nExtreme Values\nLowest Value Frequency    Highest Value Frequency\n");
-        for (0..@min(opt.nextrval, runs.items.len)) |j| {
-            const l = runs.items[j];
-            const r = runs.items[runs.items.len - @min(opt.nextrval, runs.items.len) + j];
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d}    {s} {d}\n", .{ try h.uNum(a, l.x), l.count, try h.uNum(a, r.x), r.count }));
+        try out.appendSlice(a, "\nExtreme Values\nLowest                 Highest\nOrder Value Freq    Order Value Freq\n");
+        var table = try ext.values(opt.ods);
+        const n = @min(opt.nextrval, runs.items.len);
+        for (0..n) |j| {
+            const hi = runs.items.len - n + j;
+            const low = runs.items[j];
+            const high = runs.items[hi];
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {s} {d}    {d} {s} {d}\n", .{ j + 1, try h.uNum(a, low.x), low.count, hi + 1, try h.uNum(a, high.x), high.count }));
+            if (table) |*t| try t.row(&.{ ods_cells.n(@floatFromInt(j + 1)), ods_cells.n(low.x), ods_cells.n(@floatFromInt(low.count)), ods_cells.n(@floatFromInt(hi + 1)), ods_cells.n(high.x), ods_cells.n(@floatFromInt(high.count)) });
         }
+        if (table) |*t| try t.finish();
         try opt.listing.finish(a, out, start, "ExtremeValues");
     }
     if (opt.freq) {
         const start = out.items.len;
         try out.appendSlice(a, if (wc == null) "\nFrequency Counts\nValue Count Cell Cum\n" else "\nWeighted Frequency Counts\nValue Count Weighted Count Cell Cum\n");
+        var table = try ext.frequencies(opt.ods, wc != null);
         var cum: f64 = 0;
         for (runs.items) |r| {
             const pct = 100 * r.w / total;
@@ -855,7 +900,15 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d} ", .{ try h.uNum(a, r.x), r.count }));
             if (wc != null) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} ", .{try h.uNum(a, r.w)}));
             try out.appendSlice(a, if (total > 0) try std.fmt.allocPrint(a, "{d:.1} {d:.1}\n", .{ pct, cum }) else ". .\n");
+            if (table) |*t| {
+                const value = ods_cells.n(r.x);
+                const count = ods_cells.n(@floatFromInt(r.count));
+                const percent = ods_cells.n(if (total > 0) pct else nan);
+                const cumulative = ods_cells.n(if (total > 0) cum else nan);
+                if (wc != null) try t.row(&.{ value, count, ods_cells.n(r.w), percent, cumulative }) else try t.row(&.{ value, count, percent, cumulative });
+            }
         }
+        if (table) |*t| try t.finish();
         try opt.listing.finish(a, out, start, "Frequencies");
     }
     _ = col;
@@ -885,12 +938,12 @@ test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY g
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks);
     try std.testing.expect(!d.hasErrors());
     for ([_][]const u8{
-        "1    3                1    3  B / B  2 / 2\n",
-        "1    2                9    4  A / C  3 / 2\n",
-        "9    5                9    5  D / D  3 / 3\n",
-        "2    7                2    7  F / F  3 / 3\n",
-        "2    6                8    8  E / G  2 / 3\n",
-        "8    9                8    9  H / H  2 / 2\n",
+        "1  B  2  3        1  B  2  3\n",
+        "1  A  3  2        9  C  2  4\n",
+        "9  D  3  5        9  D  3  5\n",
+        "2  F  3  7        2  F  3  7\n",
+        "2  E  2  6        8  G  3  8\n",
+        "8  H  2  9        8  H  2  9\n",
     }) |line| try std.testing.expect(std.mem.indexOf(u8, out.items, line) != null);
     out.clearRetainingCapacity();
     const zero = try @import("../lexer.zig").tokenize(a, "proc univariate data=d nextrobs=0 nextrval=2 modes freq; by g; var x; freq f; run;", &d);
@@ -900,8 +953,8 @@ test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY g
     for ([_][]const u8{
         "Modes\nMode    Count\n1    5\n9    5\n",
         "Modes\nMode    Count\n2    5\n8    5\n",
-        "Lowest Value Frequency    Highest Value Frequency\n1 5    1 5\n9 5    9 5\n",
-        "Lowest Value Frequency    Highest Value Frequency\n2 5    2 5\n8 5    8 5\n",
+        "Order Value Freq    Order Value Freq\n1 1 5    1 1 5\n2 9 5    2 9 5\n",
+        "Order Value Freq    Order Value Freq\n1 2 5    1 2 5\n2 8 5    2 8 5\n",
         "Value Count Cell Cum\n1 5 50.0 50.0\n9 5 50.0 100.0\n",
         "Value Count Cell Cum\n2 5 50.0 50.0\n8 5 50.0 100.0\n",
     }) |section| try std.testing.expect(std.mem.indexOf(u8, out.items, section) != null);

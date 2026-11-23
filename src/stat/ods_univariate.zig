@@ -153,4 +153,4 @@ pub fn locationRow(t: *Table, test_name: []const u8, symbol: []const u8, stat: f
     try t.row(&.{ b.s(test_name), b.s(symbol), b.n(stat), b.s(ptype), b.n(p), b.n(mu0) });
 }
 
-pub const inference_names = [_][]const u8{ "TestsForLocation", "TestsForNormality", "RobustScale", "BasicIntervals", "LocationCounts" };
+pub const inference_names = [_][]const u8{ "TestsForLocation", "TestsForNormality", "RobustScale", "BasicIntervals", "LocationCounts", "ExtremeObs", "ExtremeValues", "Frequencies", "Modes" };
