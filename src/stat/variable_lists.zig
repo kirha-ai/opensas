@@ -137,3 +137,8 @@ pub fn next(a: std.mem.Allocator, ds: *const Dataset, tokens: []const Token, at:
     } else try names.append(a, first.text);
     return names.items;
 }
+
+pub fn append(a: std.mem.Allocator, ds: *const Dataset, tokens: []const Token, names: *std.ArrayList([]const u8), d: *diag.Diagnostics) diag.Error!void {
+    var i: usize = 0;
+    while (i < tokens.len) try names.appendSlice(a, try next(a, ds, tokens, &i, d));
+}

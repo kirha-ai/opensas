@@ -4534,6 +4534,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     if (atTag(toks, i, .semicolon)) i += 1;
 
     var var_lists: std.ArrayList([]const Token) = .empty;
+    var id_lists: std.ArrayList([]const Token) = .empty;
     var vars: std.ArrayList([]const u8) = .empty;
     var bys: std.ArrayList([]const u8) = .empty; // BY groups -> one OUTPUT row each (BUG-meansoutputby)
     var classes: std.ArrayList([]const u8) = .empty; // CLASS: per-level stats, not pooled (BUG-univclass)
@@ -4548,11 +4549,12 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             continue;
         }
         if (tkKw(toks[i], "run") or tkKw(toks[i], "quit")) break;
-        if (tkKw(toks[i], "var")) {
+        if (tkKw(toks[i], "var") or tkKw(toks[i], "id")) {
+            const list = if (tkKw(toks[i], "var")) &var_lists else &id_lists;
             i += 1;
             const begin = i;
             while (i < toks.len and toks[i].tag != .semicolon and toks[i].tag != .eof) i += 1;
-            try var_lists.append(arena, toks[begin..i]);
+            try list.append(arena, toks[begin..i]);
         } else if (tkKw(toks[i], "by")) {
             bys.clearRetainingCapacity();
             try parseProcBy(arena, diags, toks, &i, &bys);
@@ -4573,14 +4575,13 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                     break;
                 }
                 if (toks[i].tag == .lparen) {
-                    if (classes.items.len == 0 or classes.items.len > 2) return diags.fail(error.ParseError, 0, "UNIVARIATE: invalid CLASS list", .{});
+                    if (classes.items.len == 0) return diags.fail(error.ParseError, 0, "UNIVARIATE: invalid CLASS list", .{});
                     try extra.classOptions(diags, toks, &i, classes.items.len - 1);
-                } else if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &classes);
+                } else if (toks[i].tag == .name) {
+                    try classes.append(arena, toks[i].text);
+                    if (classes.items.len > 2) return diags.fail(error.ParseError, toks[i].line, "Cannot specify more than two CLASS variables.", .{});
+                } else return diags.fail(error.ParseError, toks[i].line, "Syntax error, expecting one of the following: a name, ;, (, /.", .{});
             }
-        } else if (tkKw(toks[i], "id")) {
-            i += 1;
-            while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
-                if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &ids);
         } else if (tkKw(toks[i], "histogram")) {
             const statement = try univ_distributions.parseStatement(arena, diags, toks, &i);
             if (!statement.noplot and cx.graphics == null) return failGap(diags, 0, "PROC UNIVARIATE: histogram graphics require a plot consumer; specify NOPLOT for numerical output", .{});
@@ -4638,20 +4639,13 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         try role.add(arena, input_view.ds, entry.name, diags);
     }
     const wcol = weights.first();
-    // UNIVARIATE processes repeated VAR selections in the original order.
+    // Repeated VAR and ID selections keep their original order.
     // The input descriptor supplies the order for name ranges and prefixes.
-    for (var_lists.items) |tokens| {
-        var next: usize = 0;
-        while (next < tokens.len) {
-            const names = try var_list.next(arena, input_view.ds, tokens, &next, diags);
-            try vars.appendSlice(arena, names);
-        }
-    }
+    for (var_lists.items) |tokens| try var_list.append(arena, input_view.ds, tokens, &vars, diags);
+    for (id_lists.items) |tokens| try var_list.append(arena, input_view.ds, tokens, &ids, diags);
     if (var_lists.items.len > 0 and vars.items.len == 0) return diags.fail(error.ParseError, 0, "VAR list empty.", .{});
-    try expandVarListPrefixes(arena, input_view.ds, &classes, diags, toks[0].line, "PROC UNIVARIATE");
     for (classes.items) |cn| if (ds.indexOf(cn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: CLASS variable {s} not found", .{cn});
-    try expandVarListPrefixes(arena, input_view.ds, &ids, diags, toks[0].line, "PROC UNIVARIATE");
     const checked_by = try decodeProcBy(arena, bys.items);
     for (checked_by.names) |bn| if (ds.indexOf(bn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: BY variable {s} not found", .{bn});
@@ -4684,7 +4678,6 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // unless / MISSING (as MEANS, BUG-meansclassmiss); `cds` is the analysis view.
     var ccols: std.ArrayList(usize) = .empty;
     for (classes.items) |cn| if (ds.indexOf(cn)) |idx| try ccols.append(arena, idx);
-    if (ccols.items.len > 2) return diags.fail(error.ParseError, 0, "UNIVARIATE: CLASS accepts at most two variables", .{});
     var excluded: std.ArrayList(usize) = .empty;
     for (ccols.items, 0..) |ci, j| if (!class_missing and !extra.class_missing[j]) try excluded.append(arena, ci);
     const cds = if (excluded.items.len > 0) try dropMissingClass(arena, ds, excluded.items) else ds;

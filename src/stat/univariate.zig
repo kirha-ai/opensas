@@ -1462,6 +1462,20 @@ test "UNIVARIATE ID prefixes are excluded from default analysis" {
     try std.testing.expectEqualStrings("x", table.rows.items[0][table.indexOf("_VAR_").?].str);
 }
 
+test "UNIVARIATE ID accepts numbered ranges and CLASS requires individual names" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for (ds.columns.items, [_][]const u8{ "id1", "id3", "id2", "f", "x" }) |*col, name| col.name = name;
+    try testRun(a, lib, "proc univariate data=d noprint outtable=t;id id1-id3;freq f;run;");
+    const t = lib.find("t").?;
+    try std.testing.expectEqual(@as(usize, 1), t.rows.items.len);
+    try std.testing.expectEqualStrings("x", t.rows.items[0][t.indexOf("_VAR_").?].str);
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class id1-id3;var x;run;"));
+}
+
 test "UNIVARIATE ROUND leaves grouping keys and analysis weights unchanged" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
