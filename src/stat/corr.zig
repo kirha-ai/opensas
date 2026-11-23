@@ -608,6 +608,14 @@ fn number(a: std.mem.Allocator, x: f64, probability: bool) ![]const u8 {
     if (probability) return if (x < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{x});
     return try std.fmt.allocPrint(a, "{d:.5}", .{x});
 }
+// The D10. estimates reserve space for a sign and retain at least three
+// significant digits for small magnitudes before switching to E notation.
+fn smallEstimate(a: std.mem.Allocator, x: f64) ![]const u8 {
+    if (x == 0) return "0";
+    if (@abs(x) < 0.00001) return @import("../format.zig").bestNumW(a, x, 10);
+    if (@abs(x) < 0.001) return std.fmt.allocPrint(a, "{d:.7}", .{x});
+    return number(a, x, false);
+}
 fn sixDecimals(a: std.mem.Allocator, x: f64) ![]const u8 {
     return if (std.math.isFinite(x)) std.fmt.allocPrint(a, "{d:.6}", .{x}) else ".";
 }
@@ -1216,11 +1224,8 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[if (var_first) entry.column else entry.row].name, s.ds.columns.items[if (var_first) entry.row else entry.column].name, e.n }));
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
                     if (hide_probs and (i == 3 or i == 5)) continue;
-                    // Keep a small positive SE distinguishable from the rank-deficient zero.
-                    const value = if (i == 1 and v == 0)
-                        "0"
-                    else if (i == 1 and v > 0 and v < 0.000005)
-                        try @import("../format.zig").bestNumW(a, v, 10)
+                    const value = if (i == 1)
+                        try smallEstimate(a, v)
                     else if ((i == 2 or i == 4) and std.math.isFinite(v))
                         std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = v }, "10.4"), " ")
                     else
@@ -1262,7 +1267,7 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[c].name, s.ds.columns.items[r].name, p.n }));
                 if (partial) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d}", .{p.controls}));
                 try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.r, false), try number(a, p.fisher.z, false) }));
-                if (opt.biasadj) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.fisher.bias, false), try number(a, p.fisher.estimate, false) }));
+                if (opt.biasadj) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try smallEstimate(a, p.fisher.bias), try number(a, p.fisher.estimate, false) }));
                 for ([_]f64{ p.fisher.lower, p.fisher.upper }, 0..) |v, bound| {
                     if ((bound == 0 and opt.kind == .upper) or (bound == 1 and opt.kind == .lower)) continue;
                     try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try sixDecimals(a, v)}));
@@ -2067,4 +2072,15 @@ test "CORR nested ordinal listing respects native chi-square field width" {
     var listing: std.ArrayList(u8) = .empty;
     try render(a, &listing, g);
     try std.testing.expect(std.mem.indexOf(u8, listing.items, "8.96292E-8 1.2448E14 <.0001 48.4914") != null);
+}
+
+test "CORR small Fisher bias displays the significant digits from manual example 2.4" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const batch1 = 0.2208125944316187 / (2 * 149);
+    const batch2 = 0.3369440964259697 / (2 * 149);
+    try std.testing.expectEqualStrings("0.0007410", try smallEstimate(a, batch1));
+    try std.testing.expectEqualStrings("-0.0007410", try smallEstimate(a, -batch1));
+    try std.testing.expectEqualStrings("0.00113", try smallEstimate(a, batch2));
 }
