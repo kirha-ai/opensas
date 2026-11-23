@@ -64,6 +64,10 @@ Weighted Frequency Counts
 Value Count Weighted Count Cell Cum
 20 3 3 100.0 100.0
 
+Missing Values
+Missing Value  Count  Percent of All Obs  Percent of Missing Obs
+.  1  25.00  100.00
+
                                        g=2
 
 c=1
