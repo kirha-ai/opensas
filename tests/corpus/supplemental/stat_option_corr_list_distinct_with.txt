@@ -1,0 +1,5 @@
+# corpus assertions
+row a 0.75633~5.1e-05 0.30447~5.1e-05
+row b -0.25837~5.1e-05 -0.38191~5.1e-05
+row-count 1 a {any} {any}
+row-count 1 b {any} {any}

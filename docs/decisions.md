@@ -103,13 +103,24 @@ these caused real regressions (see D-001).
   these stop reading as debt forever). Two separate rulings, one entry:
   (a) **INERTNESS, SETTLED, NOT DEBT.** `X 'command';` parses and does NOT run
   the OS command, and an `ODS <destination>` statement is accepted as a listing
-  no-op (opensas renders ONE output stream; ODS SELECT/EXCLUDE/TRACE stay LOUD
-  by name). ODS OUTPUT is typed capture whose allowlist lives in `src/ods.zig`
-  — not in this decision — and grows with landed, SAS-aligned producers; unknown
-  names stay loud. This does not change destination rendering or claim
-  FEAT-base-stat-results. Neither inert form is an unimplemented gap waiting
-  for a dev — both are deliberate, and `docs/sas9.4.ebnf` deliberately withholds
-  `(* opensas *)` from `x_stmt`/`ods_stmt` to say so. Do not "finish" them.
+  no-op for alternate destinations (opensas renders ONE output stream).
+  ODS LISTING can be closed and reopened. Overall and LISTING-specific SELECT
+  and EXCLUDE lists route implemented, named procedure objects. TRACE ON/OFF
+  reports producer-supplied identities and BY paths for CORR and UNIVARIATE.
+  The ODS OUTPUT registry in `src/ods.zig` defines which typed datasets a
+  procedure can produce. An unmatched output name gives a warning and leaves
+  the target dataset uncreated. A documented statistical object that still
+  lacks a producer gives a gap diagnostic. The remaining output coverage is
+  tracked in FEAT-base-stat-results. The grammar in `docs/sas9.4.ebnf`
+  documents the supported ODS forms and marks the X command as parsed and inert.
+  Native statistical graphics are a separate file output. The CLI writes SVG
+  for supported plot requests when a graphics directory or ODS Graphics is
+  explicitly enabled. ODS GRAPHICS OFF suppresses that output. An explicit
+  CLI directory takes precedence over LISTING GPATH. Native graphs honor the
+  listing selection and emit their own TRACE identities, including BY and table
+  paths. Numerical ODS OUTPUT capture stays independent of graph selection.
+  Embedded interpreters supply their own plot consumer. Destination rendering
+  and SAS/GRAPH GRSEG catalogs are separate facilities.
   (b) **BUT INERT MUST NOT MEAN SILENT.** `isInertGlobalKw`'s doc-comment
   justifies the whole set as *"Real SAS global statements a batch interpreter
   cannot observe"*. That justification is TRUE for RUN/QUIT, GOPTIONS, SASFILE,

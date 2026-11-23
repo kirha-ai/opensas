@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 1 Column 1 (c = 1)
+row Confidence Limits for the Common Risk Difference
+row Newcombe 0.1114~5.1e-05 -0.0716~5.1e-05 0.2847~5.1e-05
+row-count 1 Newcombe {any} {any} {any}

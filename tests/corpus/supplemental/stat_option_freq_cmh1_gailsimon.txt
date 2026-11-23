@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Nonzero Correlation
+stdout-count 0 Row Mean Scores Differ
+stdout-count 0 General Association
+row Q+ (Positive Risk Differences) 10.0464~5.1e-05 0.0024~5.1e-05
+row-count 1 Q+ (Positive Risk Differences) {any} {any}

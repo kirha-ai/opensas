@@ -1,0 +1,12 @@
+# corpus assertions
+row Case corr_vardef_df
+row y x 8.666666666666666~5.1e-05 17.66667 5.66667 2~5.1e-05 3
+row Case corr_vardef_n
+row y x 5.777777777777778~5.1e-05 11.77778 3.77778 3~5.1e-05 3
+row Case corr_vardef_wdf
+row y x 3.466666666666667~5.1e-05 7.06667 2.26667 5~5.1e-05 3
+row Case corr_vardef_weight
+row y x 2.888888888888889~5.1e-05 5.88889 1.88889 6~5.1e-05 3
+row Case corr_vardef_wgt
+row y x 2.888888888888889~5.1e-05 5.88889 1.88889 6~5.1e-05 3
+row-count 5 y x {any} {any} {any} {any} {any}

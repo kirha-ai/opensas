@@ -1,0 +1,5 @@
+# corpus assertions
+stderr-count 1 ERROR: Floating Point Overflow.\nERROR: Termination due to Floating Point Exception
+stderr-count 1 WORK.Q may be incomplete.
+stderr-count 0 Overflow in statistic calculation for variable
+stderr-count 1 Floating Point Overflow.

@@ -1,0 +1,53 @@
+# corpus assertions
+row ODS_ROWS|6
+stdout-count 7 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Label1|char|15|||
+row ODS_COL|3|cValue1|char|10|||
+row ODS_COL|4|nValue1|num|8|D12.3||
+row ODS_COL|5|Label2|char|16|||
+row ODS_COL|6|cValue2|char|10|||
+row ODS_COL|7|nValue2|num|8|D12.3||
+stdout-count 42 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Label1|N
+row ODS_VALUE|1|cValue1|13
+row ODS_VALUE|1|nValue1|13~1.3e-07
+row ODS_VALUE|1|Label2|Sum Weights
+row ODS_VALUE|1|cValue2|13
+row ODS_VALUE|1|nValue2|13~1.3e-07
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Label1|Mean
+row ODS_VALUE|2|cValue1|4.30769231
+row ODS_VALUE|2|nValue1|4.3076923076923~4.307692308e-08
+row ODS_VALUE|2|Label2|Sum Observations
+row ODS_VALUE|2|cValue2|56
+row ODS_VALUE|2|nValue2|56~5.6e-07
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Label1|Std Deviation
+row ODS_VALUE|3|cValue1|2.39390251
+row ODS_VALUE|3|nValue1|2.39390251070699~2.393902511e-08
+row ODS_VALUE|3|Label2|Variance
+row ODS_VALUE|3|cValue2|5.73076923
+row ODS_VALUE|3|nValue2|5.73076923076923~5.730769231e-08
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Label1|Skewness
+row ODS_VALUE|4|cValue1|0.34560043
+row ODS_VALUE|4|nValue1|0.3456004312561~3.456004313e-09
+row ODS_VALUE|4|Label2|Kurtosis
+row ODS_VALUE|4|cValue2|-1.2253944
+row ODS_VALUE|4|nValue2|-1.22539443350217~1.225394434e-08
+row ODS_VALUE|5|VarName|a
+row ODS_VALUE|5|Label1|Uncorrected SS
+row ODS_VALUE|5|cValue1|310
+row ODS_VALUE|5|nValue1|310~3.1e-06
+row ODS_VALUE|5|Label2|Corrected SS
+row ODS_VALUE|5|cValue2|68.7692308
+row ODS_VALUE|5|nValue2|68.7692307692307~6.876923077e-07
+row ODS_VALUE|6|VarName|a
+row ODS_VALUE|6|Label1|Coeff Variation
+row ODS_VALUE|6|cValue1|55.5727369
+row ODS_VALUE|6|nValue1|55.572736855698~5.557273686e-07
+row ODS_VALUE|6|Label2|Std Error Mean
+row ODS_VALUE|6|cValue2|0.6639491
+row ODS_VALUE|6|nValue2|0.66394909621661~6.639490962e-09

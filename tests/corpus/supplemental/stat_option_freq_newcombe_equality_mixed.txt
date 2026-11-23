@@ -1,0 +1,16 @@
+# corpus assertions
+stdout-count 1 Null = 0.1; Method = Wald
+stdout-count 1 Limit = -0.2; Method = Newcombe
+stdout-count 1 Limit = 0.2; Method = Newcombe
+stdout-count 1 Equivalence Limits = -0.2, 0.2; Method = Newcombe
+stderr-count 1 METHOD=NEWCOMBE is not available for RISKDIFF EQUAL. By default, RISKDIFF EQUAL uses METHOD=WALD. To compute Newcombe confidence limits, specify CL=NEWCOMBE.
+row Z 2.5849~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row-count 1 Z {any}
+row-count 3 90% Lower Conf Limit {any}
+row-count 3 90% Upper Conf Limit {any}

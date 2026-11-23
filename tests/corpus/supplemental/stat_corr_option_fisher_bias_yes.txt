@@ -1,0 +1,13 @@
+# corpus assertions
+row The CORR Procedure
+row Pearson Correlation Coefficients
+row Variable x target
+row x 1.00000 0.46738
+row P - 0.2429
+row N 8 8
+row target 0.46738 1.00000
+row P 0.2429 -
+row N 8 8
+row Pearson Fisher Correlation Statistics
+row x target 8 0.46738 0.50671 0.03338 0.44088 -0.382680 0.874018 0.2572
+stderr-count 0 WARNING:

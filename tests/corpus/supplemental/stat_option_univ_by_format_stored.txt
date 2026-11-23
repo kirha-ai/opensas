@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 g=Pooled label
+stdout-count 1 g=Third
+row Mean 4~5.1e-05 Sum Observations 16~5.1e-05
+row Mean 10~5.1e-05 Sum Observations 20~5.1e-05
+row-count 2 Mean {any} Sum Observations {any}

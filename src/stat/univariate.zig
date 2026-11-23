@@ -67,7 +67,24 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     }
     return list.toOwnedSlice(a);
 }
+const ClassLevel = struct {
+    first: usize = std.math.maxInt(usize),
+    count: usize = 0,
+    raw: Value = .{ .num = nan },
+
+    fn less(left: ClassLevel, right: ClassLevel, mode: []const u8, labels: std.math.Order) bool {
+        if (eq(mode, "data") and left.first != right.first) return left.first < right.first;
+        if (eq(mode, "freq") and left.count != right.count) return left.count > right.count;
+        if (eq(mode, "internal")) return h.compareValue(left.raw, right.raw) == .lt;
+        return labels == .lt;
+    }
+};
+const ClassLevels = std.HashMapUnmanaged([]const Value, ClassLevel, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
+
 pub const Options = struct {
+    precision_reported: bool = false,
+    ods: ?@import("ods_univariate.zig").Context = null,
+    listing: @import("../ods_listing.zig").Tables = .{},
     key_levels: []const []const u8 = &.{},
     key_move: bool = true,
     inference: inference_parse.Options = .{},
@@ -78,30 +95,28 @@ pub const Options = struct {
     freqcol: ?usize = null,
     round_units: []f64 = &.{},
     by_starts: std.ArrayList(usize) = .empty,
+    class_levels: std.AutoHashMapUnmanaged(usize, [2]ClassLevel) = .empty,
     class_missing: [2]bool = .{ false, false },
     class_order: [2][]const u8 = .{ "internal", "internal" },
     freq: bool = false,
     modes: bool = false,
     idout: bool = false,
     exclnpwgt: bool = false,
+    all: bool = false,
+    explicit_nextrval: bool = false,
     nextrobs: usize = 5,
     nextrval: usize = 0,
     round: []const f64 = &.{},
     outtable: ?[]const u8 = null,
-    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize, missing: *bool) diag.Error!void {
+    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize) diag.Error!void {
         i.* += 1;
         while (!end(t, i.*)) {
-            if (kw(t[i.*], "missing")) {
-                missing.* = true;
-                i.* += 1;
-                continue;
-            }
             if (kw(t[i.*], "nokeymove")) {
                 self.key_move = false;
                 i.* += 1;
                 continue;
             }
-            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "The option or parameter is not recognized and will be ignored.", .{});
             i.* += 2;
             const tuple = t[i.*].tag == .lparen;
             if (tuple) i.* += 1;
@@ -131,6 +146,7 @@ pub const Options = struct {
     pub fn identify(self: *Options, a: Allocator, ds: *Dataset, obs: ?[]const usize) !*Dataset {
         const copy = try a.create(Dataset);
         copy.* = Dataset.init(a, ds.name);
+        copy.sortseq_linguistic = ds.sortseq_linguistic;
         try copy.columns.appendSlice(a, ds.columns.items);
         self.obscol = copy.columns.items.len;
         _ = try copy.addColumn("__UNIV_SOURCE_OBS__", .num);
@@ -145,18 +161,67 @@ pub const Options = struct {
         return copy;
     }
     /// Record BY boundaries after input filtering but before FREQ exclusion.
-    pub fn markBy(self: *Options, a: Allocator, ds: *Dataset, cols: []const usize) !void {
+    pub fn markBy(self: *Options, a: Allocator, ds: *Dataset, cols: []const usize, desc: []const bool, notsorted: bool, d: *diag.Diagnostics) diag.Error!void {
         if (cols.len == 0) return;
-        for (ds.rows.items, 0..) |row, j| {
-            var start = j == 0;
-            if (j > 0) for (cols) |ci| {
-                if (h.compareValue(row[ci], ds.rows.items[j - 1][ci]) != .eq) start = true;
-            };
-            if (start) try self.by_starts.append(a, @intFromFloat(h.toNum(row[self.obscol.?])));
+        for (try @import("by_groups.zig").checkedSlices(a, ds, cols, desc, notsorted, d)) |group| {
+            try self.by_starts.append(a, @intFromFloat(h.toNum(group.rep.?[self.obscol.?])));
         }
     }
+    /// Select the first eligible raw observation in each CLASS prefix. For
+    /// secondary DATA/FREQ order, SAS uses each label's first observation
+    /// or count in the earliest ordered primary level containing that label.
+    pub fn indexClassLevels(self: *Options, a: Allocator, ds: *Dataset, by: []const usize, cols: []const usize, wc: ?usize) !void {
+        if (cols.len == 0) return;
+        const Anchors = std.HashMapUnmanaged([]const Value, []const Value, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
+        for (try bySlices(a, ds.rows.items, by, self.*)) |group| {
+            for (cols, 0..) |ci, j| {
+                const level_key = h.GroupKeyCtx{ .ccols = cols[j..][0..1] };
+                const prefix_key = h.GroupKeyCtx{ .ccols = cols[0 .. j + 1] };
+                var cells: ClassLevels = .empty;
+                defer cells.deinit(a);
+                for (group.rows, 0..) |row, position| {
+                    const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+                    const original = self.source_rows.get(obs).?;
+                    if (h.weightAt(original, wc) == null) continue;
+                    const level = try cells.getOrPutContext(a, row, prefix_key);
+                    if (!level.found_existing) level.value_ptr.* = .{ .first = position, .raw = original[ci] };
+                    level.value_ptr.count += 1;
+                }
+                var anchors: Anchors = .empty;
+                defer anchors.deinit(a);
+                if (j == 1 and (eq(self.class_order[j], "data") or eq(self.class_order[j], "freq"))) {
+                    var iter = cells.keyIterator();
+                    while (iter.next()) |cell_key| {
+                        const row = cell_key.*;
+                        const anchor = try anchors.getOrPutContext(a, row, level_key);
+                        if (!anchor.found_existing or self.classLevel(row, 0).less(
+                            self.classLevel(anchor.value_ptr.*, 0),
+                            self.class_order[0],
+                            h.compareValue(row[cols[0]], anchor.value_ptr.*[cols[0]]),
+                        )) anchor.value_ptr.* = row;
+                    }
+                }
+                for (group.rows) |row| {
+                    const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+                    const entry = try self.class_levels.getOrPut(a, obs);
+                    if (!entry.found_existing) entry.value_ptr.* = .{ .{}, .{} };
+                    const level = cells.getContext(row, prefix_key) orelse ClassLevel{ .raw = row[ci] };
+                    var info = if (anchors.getContext(row, level_key)) |anchor| cells.getContext(anchor, prefix_key).? else level;
+                    info.raw = level.raw;
+                    entry.value_ptr.*[j] = info;
+                }
+            }
+        }
+    }
+
+    fn classLevel(self: Options, row: []const Value, j: usize) ClassLevel {
+        const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+        return self.class_levels.get(obs).?[j];
+    }
+
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
         i.* += 1;
+        if (t[i.*].tag == .rparen) return d.fail(error.ParseError, t[i.*].line, "Expecting a MISSING.", .{});
         while (!end(t, i.*) and t[i.*].tag != .rparen) {
             if (kw(t[i.*], "missing")) {
                 self.class_missing[j] = true;
@@ -164,17 +229,35 @@ pub const Options = struct {
             } else if (kw(t[i.*], "order") and option(t, i.*)) {
                 i.* += 2;
                 const v = t[i.*].text;
-                if (!eq(v, "data") and !eq(v, "freq") and !eq(v, "internal") and !eq(v, "formatted")) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid CLASS ORDER", .{});
+                if (!eq(v, "data") and !eq(v, "freq") and !eq(v, "internal") and !eq(v, "formatted")) return d.fail(error.ParseError, t[i.*].line, "Syntax error, expecting one of the following: DATA, FORMATTED, FREQ, INTERNAL.", .{});
                 self.class_order[j] = v;
                 i.* += 1;
-            } else return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            } else return d.fail(error.ParseError, t[i.*].line, "Syntax error, expecting one of the following: ), MISSING, ORDER.", .{});
         }
         if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed CLASS options", .{});
+    }
+    /// Statistical Procedures p.300. Apply defaults after all explicit options
+    /// and the WEIGHT statement are known, regardless of their source order.
+    pub fn applyAll(self: *Options, a: Allocator, weighted: bool) !void {
+        if (!self.all) return;
+        self.freq = true;
+        self.modes = true;
+        if (!self.explicit_nextrval) self.nextrval = 5;
+        const inf = &self.inference;
+        if (inf.basic == null) inf.basic = .{};
+        if (weighted) return;
+        if (inf.df == null) inf.df = .{};
+        if (inf.normal_ci == null) inf.normal_ci = .{};
+        inf.loccount = true;
+        inf.normal = true;
+        inf.robustscale = true;
+        if (!inf.explicit_trim) inf.trim = try a.dupe(f64, &.{0.25});
+        if (!inf.explicit_winsor) inf.winsor = try a.dupe(f64, &.{0.25});
     }
     pub fn parse(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!bool {
         if (try self.inference.parse(a, d, t, i)) return true;
         const key = t[i.*].text;
-        inline for (.{ "freq", "modes", "idout", "exclnpwgt" }) |f| {
+        inline for (.{ "freq", "modes", "idout", "exclnpwgt", "all" }) |f| {
             if (eq(key, f)) {
                 @field(self, f) = true;
                 i.* += 1;
@@ -202,7 +285,12 @@ pub const Options = struct {
             i.* += 2;
             const v = try number(d, t, i);
             if (v < 0 or v != @floor(v) or v > 1000000) return d.fail(error.ParseError, 0, "UNIVARIATE: extreme count must be a nonnegative integer", .{});
-            if (eq(key, "nextrobs")) self.nextrobs = @intFromFloat(v) else self.nextrval = @intFromFloat(v);
+            if (eq(key, "nextrobs")) {
+                self.nextrobs = @intFromFloat(v);
+            } else {
+                self.nextrval = @intFromFloat(v);
+                self.explicit_nextrval = true;
+            }
             return true;
         }
         if (eq(key, "outtable")) {
@@ -212,12 +300,17 @@ pub const Options = struct {
         }
         return false;
     }
-    pub fn configureRounding(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize) diag.Error!void {
+    pub fn configureRounding(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize, explicit_var: bool) diag.Error!void {
         if (self.round.len == 0) return;
-        if (self.round.len != 1 and self.round.len != cols.len) return d.fail(error.ParseError, 0, "UNIVARIATE: ROUND list must match VAR list", .{});
+        if (self.round.len > 1 and !explicit_var) return d.fail(error.ParseError, 0, "The VAR statement must be included when specifying more than one roundoff unit.", .{});
         self.round_units = try a.alloc(f64, ds.columns.items.len);
         @memset(self.round_units, 0);
-        for (cols, 0..) |ci, j| self.round_units[ci] = self.round[if (self.round.len == 1) 0 else j];
+        if (self.round.len == 1) {
+            for (cols) |ci| self.round_units[ci] = self.round[0];
+        } else {
+            const count = @min(cols.len, self.round.len);
+            for (cols[0..count], self.round[0..count]) |ci, unit| self.round_units[ci] = unit;
+        }
     }
 };
 fn roundEven(x: f64) f64 {
@@ -360,6 +453,7 @@ pub const Summary = struct {
         if (eq(key, "qrange")) return h.univPercentile(self.pairs, 75, def) - h.univPercentile(self.pairs, 25, def);
         if (eq(key, "nmiss")) return @floatFromInt(self.nmiss);
         if (eq(key, "nobs")) return @floatFromInt(self.nobs);
+        if (eq(key, "cv") and self.s.mean == 0) return nan;
         if (eq(key, "geomean")) return self.geo;
         if (eq(key, "harmean")) return self.harm;
         inline for (.{ "msign", "probm", "signrank", "probs", "normaltest", "probn", "gini", "mad", "sn", "qn", "std_sn", "std_qn" }) |f| if (eq(key, f)) return @field(self, f);
@@ -376,16 +470,16 @@ pub const Summary = struct {
         return nan;
     }
 };
-fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool, inf: inference_parse.Options) !Summary {
+fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool, opt: Options) !Summary {
+    const inf = opt.inference;
     // SAS 9.4 pp.398,408: missing weights exclude observations from NMISS.
     // Zero/negative weights still count unless EXCLNPWGT already removed them.
     var nmiss: usize = 0;
     for (ds.rows.items) |row| {
         if (std.math.isNan(h.toNum(row[col])) and h.weightAt(row, wc) != null) nmiss += 1;
     }
-    var z: Summary = .{ .s = h.computeStatsV(ds.rows.items, col, wc, vd), .pairs = try pairsFor(a, ds, col, wc), .nmiss = nmiss, .nobs = ds.rows.items.len };
+    var z: Summary = .{ .s = h.computeUnivStats(ds.rows.items, col, wc, vd, if (opt.freqcol != null) opt.obscol else null), .pairs = try pairsFor(a, ds, col, wc), .nmiss = nmiss, .nobs = ds.rows.items.len };
     if (z.pairs.len == 1) z.s.mode = z.pairs[0].x;
-    if (z.s.n > 0 and z.s.sumw == 0) z.s.css = 0;
     var logs: f64 = 0;
     var recip: f64 = 0;
     var negative = false;
@@ -401,17 +495,6 @@ fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, m
     if (z.s.sumw > 0) {
         z.geo = if (negative) nan else if (zero) 0 else @exp(logs / z.s.sumw);
         z.harm = if (zero or recip == 0) nan else z.s.sumw / recip;
-    }
-    if (vd == .n and z.s.std > 0) {
-        var m3: f64 = 0;
-        var m4: f64 = 0;
-        for (z.pairs) |p| {
-            const v = @sqrt(p.w) * (p.x - z.s.mean) / z.s.std;
-            m3 += v * v * v;
-            m4 += v * v * v * v;
-        }
-        z.s.skew = m3 / @as(f64, @floatFromInt(z.s.n));
-        z.s.kurt = m4 / @as(f64, @floatFromInt(z.s.n)) - 3;
     }
     if (wc == null) {
         const NZ = struct { x: f64, pos: bool };
@@ -466,17 +549,29 @@ fn median(x: []f64) f64 {
     std.mem.sort(f64, x, {}, std.sort.asc(f64));
     return if (x.len % 2 == 1) x[x.len / 2] else (x[x.len / 2 - 1] + x[x.len / 2]) / 2;
 }
+fn robustScaleKeyword(key: []const u8) bool {
+    return eq(key, "gini") or eq(key, "mad") or eq(key, "sn") or eq(key, "qn") or std.ascii.startsWithIgnoreCase(key, "std_");
+}
+
+/// Each gap between adjacent ordered observations contributes to i*(n-i)
+/// pairs. Accumulating differences keeps the sum independent of location.
+fn pairDifferenceSum(pairs: []const h.XW) f64 {
+    var total: f64 = 0;
+    for (1..pairs.len) |i| {
+        const lower: f64 = @floatFromInt(i);
+        const upper: f64 = @floatFromInt(pairs.len - i);
+        total += (pairs[i].x - pairs[i - 1].x) * (lower * upper);
+    }
+    return total;
+}
+
 fn robustStats(a: Allocator, z: *Summary, forceqn: bool, forcesn: bool) !void {
     const n = z.pairs.len;
     if (n == 0) return;
     const nf: f64 = @floatFromInt(n);
     const med = h.univPercentile(z.pairs, 50, 5);
     const dev = try a.alloc(f64, n);
-    var total: f64 = 0;
-    for (z.pairs, 0..) |p, j| {
-        dev[j] = @abs(p.x - med);
-        total += (2 * @as(f64, @floatFromInt(j)) + 1 - nf) * p.x;
-    }
+    for (z.pairs, dev) |p, *d| d.* = @abs(p.x - med);
     z.mad = median(dev);
     if (n < 2) {
         z.gini = 0;
@@ -486,7 +581,7 @@ fn robustStats(a: Allocator, z: *Summary, forceqn: bool, forcesn: bool) !void {
         z.std_qn = 0;
         return;
     }
-    z.gini = 2 * total / (nf * (nf - 1));
+    z.gini = pairDifferenceSum(z.pairs) / ((nf / 2) * (nf - 1));
     // SAS default limits (printed p.301); FORCEQN/FORCESN are separate options.
     if (forcesn or n <= 1_000_000) {
         const inner = try a.alloc(f64, n);
@@ -566,7 +661,23 @@ fn label(k: []const u8) []const u8 {
     return k;
 }
 
-pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token) diag.Error!void {
+pub fn warnPrecision(cx: proc.ProcCtx, ds: *Dataset, col: usize, small_mean: bool) !void {
+    const name = ds.columns.items[col].name;
+    if (small_mean) {
+        try cx.diags.warn(0, "The mean of variable {s} is too small relative to its range, numerical inaccuracies may occur. Recode if possible.", .{name});
+    } else {
+        try cx.diags.warn(0, "The range of variable {s} is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.", .{name});
+    }
+}
+
+fn reportByNote(cx: proc.ProcCtx, ds: *Dataset, by: []const usize, group: ?[]const Value, opt: Options) !void {
+    if (by.len == 0 or group == null) return;
+    const row = firstByRow(opt, group.?, by);
+    const source = opt.source orelse ds;
+    try @import("by_groups.zig").reportNote(cx.arena, cx.diags, source, row, by);
+}
+
+pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool, incomplete: ?*CalculationFailure) diag.Error!void {
     const a = cx.arena;
     var specs: std.ArrayList(Output) = .empty;
     try specs.appendSlice(a, outputs);
@@ -686,16 +797,21 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             }
             od.label = if (has_pct and wc != null) "Selected Summary Statistics (Percentile Definition=Weighted)" else if (has_pct) try std.fmt.allocPrint(a, "Selected Summary Statistics (Percentile Definition={d})", .{def}) else "Selected Summary Statistics";
         }
+        var input_offset: usize = 0;
         for (try bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+            const partial = if (incomplete) |failure| failure.partialAt(input_offset) else null;
+            if (partial != null and (!table or partial.? == 0)) break;
+            input_offset += bs.rows.len;
             const first_row = od.rows.items.len;
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
-            const groups = try h.collectGroups(a, &bd, ccols);
-            try orderGroups(a, &bd, groups, ccols, levels, wc, opt);
-            // collectGroups emits a pooled group even for an empty, unclassified input.
-            for (groups) |g| {
-                if (!hasUsableWeight(g.rows, wc, opt)) continue;
+            const groups = try analysisGroups(a, &bd, ccols, wc, opt);
+            for (groups, 0..) |g, gi| {
+                // OUTPUT finishes a whole BY group at once. OUTTABLE can retain a
+                // prefix of the analysis-variable-major CLASS summaries within it.
+                const nvars = if (partial) |cells| cells / groups.len + @intFromBool(gi < cells % groups.len) else acols.len;
+                if (partial != null and nvars == 0) continue;
 
                 var gd = Dataset.init(a, ds.name);
                 gd.columns = ds.columns;
@@ -704,11 +820,13 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 const nobs = outputNobs(g.rows, bcols, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
-                for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
+                for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or robustScaleKeyword(r.key)) {
                     robust = true;
                 };
-                for (acols, 0..) |ci, j| {
-                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt.inference);
+                for (acols[0..nvars], 0..) |ci, j| {
+                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt);
+                    if (!opt.precision_reported and noprint and oi == 0 and (summaries[j].s.small_range or summaries[j].s.small_mean))
+                        try warnPrecision(cx, ds, ci, summaries[j].s.small_mean);
                     // CLASS counts weight-eligible observations, including missing
                     // analysis values. Keep pooled/BY pre-exclusion totals separate.
                     summaries[j].nobs = if (ccols.len > 0) summaries[j].s.n + summaries[j].nmiss else nobs;
@@ -717,7 +835,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                     if (table and !opt.inference.forcesn and wc == null and summaries[j].pairs.len > 1_000_000)
                         try cx.diags.warn(0, "UNIVARIATE: Sn is not computed by default above 1000000 nonmissing observations for {s}", .{ds.columns.items[ci].name});
                 }
-                const nrows = if (table) acols.len else 1;
+                const nrows = if (table) nvars else 1;
                 for (0..nrows) |vi| {
                     const row = try a.alloc(Value, od.columns.items.len);
                     for (row) |*v| v.* = .{ .num = nan };
@@ -727,7 +845,8 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                             if (opt.idout and !table) for (ids) |id| {
                                 if (ci == id and bs.rows.len > 0) row[j] = firstByRow(opt, bs.rows[0], bcols)[ci];
                             };
-                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, wc, ccols, ci, g.rows[0]);
+                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(opt, ccols, ci, g.rows[0]);
+                            if (std.mem.indexOfScalar(usize, bcols, ci) != null) row[j] = bs.rep.?[ci];
                         } else if (od.columns.items[j].type == .char) row[j] = .{ .str = "" };
                     }
                     var at = keycols.items.len;
@@ -749,21 +868,53 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             }
             // OUTTABLE is BY-major, then analysis-variable-major, then CLASS.
             // OUTPUT remains one row per CLASS combination within each BY group.
-            if (table and acols.len > 1) {
+            if (table and acols.len > 1 and groups.len > 1) {
                 const rows = od.rows.items[first_row..];
-                const groups_count = rows.len / acols.len;
                 const original = try a.dupe([]const Value, rows);
-                for (0..acols.len) |vi| for (0..groups_count) |gi| {
-                    rows[vi * groups_count + gi] = original[gi * acols.len + vi];
-                };
+                const full_vars = rows.len / groups.len;
+                const extra_groups = rows.len % groups.len;
+                for (rows, 0..) |*row, i| {
+                    const gi = i % groups.len;
+                    row.* = original[gi * full_vars + @min(gi, extra_groups) + i / groups.len];
+                }
             }
         }
-        try cx.lib.put(name, od);
+        if (incomplete == null) try cx.lib.put(name, od);
         try h.applyOutOptions(a, od, if (table) toks else spec.tokens, cx.diags, if (table) "outtable" else "out");
+        if (incomplete) |failure| {
+            const old = cx.lib.find(name) != null;
+            const info: CalculationFailure.OutputInfo = .{
+                .name = try @import("variable_lists.zig").datasetName(a, od),
+                .variables = od.columns.items.len,
+                .observations = od.rows.items.len,
+                .preserved = old,
+            };
+            // M9 reports the OUTTABLE first, then the OUTPUT statements in source order.
+            if (table) try failure.outputs.insert(a, 0, info) else try failure.outputs.append(a, info);
+            if (!old) try cx.lib.put(name, od);
+        }
     }
+}
+const ext = @import("ods_univ_extremes.zig");
+const ods_cells = @import("ods_table.zig");
+
+fn displayObservation(a: Allocator, out: *std.ArrayList(u8), side: ext.Side, ids: []const usize, fc: ?usize) !void {
+    if (ids.len == 0 and fc == null) {
+        try out.appendSlice(a, try h.rjust(a, try h.uNum(a, side.value), 9));
+        try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{side.obs}), 5));
+        return;
+    }
+    try out.appendSlice(a, try h.uNum(a, side.value));
+    for (ids) |ci| {
+        try out.appendSlice(a, "  ");
+        try out.appendSlice(a, try cell(a, side.source[ci]));
+    }
+    if (fc) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d}", .{@floor(h.toNum(side.source[ci]))}));
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d}", .{side.obs}));
 }
 pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, pairs: []const h.XW, opt: Options, ids: []const usize) !void {
     if (opt.nextrobs > 0) {
+        const start = out.items.len;
         // Deduplicate FREQ copies by physical identity in expected O(N), then
         // retain the SAS low/high tie orders with O(U log U) sorting.
         var seen: std.AutoHashMapUnmanaged(usize, void) = .empty;
@@ -788,28 +939,43 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
         }.less);
         try out.appendSlice(a, "\n" ++ (" " ** 23) ++ "Extreme Observations\n\n");
         try out.appendSlice(a, (" " ** 11) ++ "----Lowest----" ++ (" " ** 8) ++ "---Highest---\n\n");
-        try out.appendSlice(a, (" " ** 11) ++ "Value      Obs" ++ (" " ** 8) ++ "Value      Obs");
-        for (ids) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s} (Low/High)", .{ds.columns.items[ci].name}));
-        if (opt.freqcol != null) try out.appendSlice(a, "  Freq (Low/High)");
+        var display_ids: std.ArrayList(usize) = .empty;
+        // The listing groups numeric ID columns before character columns.
+        // The ODS dataset retains the original ID statement order.
+        for ([_]@import("../pdv.zig").VarType{ .num, .char }) |kind| {
+            for (ids) |ci| if (ds.columns.items[ci].type == kind) { try display_ids.append(a, ci); };
+        }
+        if (ids.len == 0 and opt.freqcol == null) {
+            try out.appendSlice(a, (" " ** 11) ++ "Value      Obs" ++ (" " ** 8) ++ "Value      Obs");
+        } else {
+            for (0..2) |column| {
+                try out.appendSlice(a, if (column == 0) "           Value" else "        Value");
+                for (display_ids.items) |ci| {
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}", .{ds.columns.items[ci].name}));
+                }
+                if (opt.freqcol != null) try out.appendSlice(a, "  Freq");
+                try out.appendSlice(a, "  Obs");
+            }
+        }
         try out.appendSlice(a, "\n\n");
+        var table = try ext.observations(opt.ods, ids, opt.freqcol);
         const n = @min(opt.nextrobs, extreme.items.len);
         for (0..n) |j| {
             const low = extreme.items[j];
             const high = highest[highest.len - n + j];
+            const sides = [_]ext.Side{
+                .{ .value = low.x, .obs = low.obs, .source = sourceRow(opt.source orelse ds, opt, low.obs) },
+                .{ .value = high.x, .obs = high.obs, .source = sourceRow(opt.source orelse ds, opt, high.obs) },
+            };
             try out.appendSlice(a, " " ** 11);
-            try out.appendSlice(a, try h.rjust(a, try h.uNum(a, low.x), 9));
-            try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{low.obs}), 5));
+            try displayObservation(a, out, sides[0], display_ids.items, opt.freqcol);
             try out.appendSlice(a, " " ** 8);
-            try out.appendSlice(a, try h.rjust(a, try h.uNum(a, high.x), 9));
-            try out.appendSlice(a, try h.rjust(a, try std.fmt.allocPrint(a, "{d}", .{high.obs}), 5));
-            for (ids) |ci| {
-                const l = sourceRow(opt.source orelse ds, opt, low.obs)[ci];
-                const r = sourceRow(opt.source orelse ds, opt, high.obs)[ci];
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s} / {s}", .{ try cell(a, l), try cell(a, r) }));
-            }
-            if (opt.freqcol) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d} / {d}", .{ @floor(h.toNum(sourceRow(ds, opt, low.obs)[ci])), @floor(h.toNum(sourceRow(ds, opt, high.obs)[ci])) }));
+            try displayObservation(a, out, sides[1], display_ids.items, opt.freqcol);
             try out.append(a, '\n');
+            if (table) |*t| try ext.observationRow(t, ids, opt.freqcol, sides);
         }
+        if (table) |*t| try t.finish();
+        try opt.listing.finish(a, out, start, "ExtremeObs");
     }
     const Run = struct { x: f64, count: usize, w: f64 };
     var runs: std.ArrayList(Run) = .empty;
@@ -824,21 +990,40 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
         best = @max(best, runs.items[runs.items.len - 1].count);
     }
     if (opt.modes) {
+        const start = out.items.len;
         try out.appendSlice(a, "\nModes\nMode    Count\n");
-        if (best < 2 and runs.items.len != 1) try out.appendSlice(a, ".       .\n") else for (runs.items) |r| {
-            if (r.count == best) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}    {d}\n", .{ try h.uNum(a, r.x), r.count }));
+        var table = try ext.modes(opt.ods);
+        if (best < 2 and runs.items.len != 1) {
+            try out.appendSlice(a, ".       .\n");
+            if (table) |*t| try t.row(&.{ Value.missing, Value.missing });
+        } else for (runs.items) |r| {
+            if (r.count == best) {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}    {d}\n", .{ try h.uNum(a, r.x), r.count }));
+                if (table) |*t| try t.row(&.{ ods_cells.n(r.x), ods_cells.n(@floatFromInt(r.count)) });
+            }
         }
+        if (table) |*t| try t.finish();
+        try opt.listing.finish(a, out, start, "Modes");
     }
     if (opt.nextrval > 0) {
-        try out.appendSlice(a, "\nExtreme Values\nLowest Value Frequency    Highest Value Frequency\n");
-        for (0..@min(opt.nextrval, runs.items.len)) |j| {
-            const l = runs.items[j];
-            const r = runs.items[runs.items.len - @min(opt.nextrval, runs.items.len) + j];
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d}    {s} {d}\n", .{ try h.uNum(a, l.x), l.count, try h.uNum(a, r.x), r.count }));
+        const start = out.items.len;
+        try out.appendSlice(a, "\nExtreme Values\nLowest                 Highest\nOrder Value Freq    Order Value Freq\n");
+        var table = try ext.values(opt.ods);
+        const n = @min(opt.nextrval, runs.items.len);
+        for (0..n) |j| {
+            const hi = runs.items.len - n + j;
+            const low = runs.items[j];
+            const high = runs.items[hi];
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {s} {d}    {d} {s} {d}\n", .{ j + 1, try h.uNum(a, low.x), low.count, hi + 1, try h.uNum(a, high.x), high.count }));
+            if (table) |*t| try t.row(&.{ ods_cells.n(@floatFromInt(j + 1)), ods_cells.n(low.x), ods_cells.n(@floatFromInt(low.count)), ods_cells.n(@floatFromInt(hi + 1)), ods_cells.n(high.x), ods_cells.n(@floatFromInt(high.count)) });
         }
+        if (table) |*t| try t.finish();
+        try opt.listing.finish(a, out, start, "ExtremeValues");
     }
     if (opt.freq) {
+        const start = out.items.len;
         try out.appendSlice(a, if (wc == null) "\nFrequency Counts\nValue Count Cell Cum\n" else "\nWeighted Frequency Counts\nValue Count Weighted Count Cell Cum\n");
+        var table = try ext.frequencies(opt.ods, wc != null);
         var cum: f64 = 0;
         for (runs.items) |r| {
             const pct = 100 * r.w / total;
@@ -846,7 +1031,16 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d} ", .{ try h.uNum(a, r.x), r.count }));
             if (wc != null) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} ", .{try h.uNum(a, r.w)}));
             try out.appendSlice(a, if (total > 0) try std.fmt.allocPrint(a, "{d:.1} {d:.1}\n", .{ pct, cum }) else ". .\n");
+            if (table) |*t| {
+                const value = ods_cells.n(r.x);
+                const count = ods_cells.n(@floatFromInt(r.count));
+                const percent = ods_cells.n(if (total > 0) pct else nan);
+                const cumulative = ods_cells.n(if (total > 0) cum else nan);
+                if (wc != null) try t.row(&.{ value, count, ods_cells.n(r.w), percent, cumulative }) else try t.row(&.{ value, count, percent, cumulative });
+            }
         }
+        if (table) |*t| try t.finish();
+        try opt.listing.finish(a, out, start, "Frequencies");
     }
     _ = col;
 }
@@ -875,12 +1069,12 @@ test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY g
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, toks);
     try std.testing.expect(!d.hasErrors());
     for ([_][]const u8{
-        "1    3                1    3  B / B  2 / 2\n",
-        "1    2                9    4  A / C  3 / 2\n",
-        "9    5                9    5  D / D  3 / 3\n",
-        "2    7                2    7  F / F  3 / 3\n",
-        "2    6                8    8  E / G  2 / 3\n",
-        "8    9                8    9  H / H  2 / 2\n",
+        "1  B  2  3        1  B  2  3\n",
+        "1  A  3  2        9  C  2  4\n",
+        "9  D  3  5        9  D  3  5\n",
+        "2  F  3  7        2  F  3  7\n",
+        "2  E  2  6        8  G  3  8\n",
+        "8  H  2  9        8  H  2  9\n",
     }) |line| try std.testing.expect(std.mem.indexOf(u8, out.items, line) != null);
     out.clearRetainingCapacity();
     const zero = try @import("../lexer.zig").tokenize(a, "proc univariate data=d nextrobs=0 nextrval=2 modes freq; by g; var x; freq f; run;", &d);
@@ -890,8 +1084,8 @@ test "UNIVARIATE extremes preserve physical identities ties and FREQ across BY g
     for ([_][]const u8{
         "Modes\nMode    Count\n1    5\n9    5\n",
         "Modes\nMode    Count\n2    5\n8    5\n",
-        "Lowest Value Frequency    Highest Value Frequency\n1 5    1 5\n9 5    9 5\n",
-        "Lowest Value Frequency    Highest Value Frequency\n2 5    2 5\n8 5    8 5\n",
+        "Order Value Freq    Order Value Freq\n1 1 5    1 1 5\n2 9 5    2 9 5\n",
+        "Order Value Freq    Order Value Freq\n1 2 5    1 2 5\n2 8 5    2 8 5\n",
         "Value Count Cell Cum\n1 5 50.0 50.0\n9 5 50.0 100.0\n",
         "Value Count Cell Cum\n2 5 50.0 50.0\n8 5 50.0 100.0\n",
     }) |section| try std.testing.expect(std.mem.indexOf(u8, out.items, section) != null);
@@ -911,11 +1105,7 @@ test "UNIVARIATE rounding uses even multiples including negative ties" {
     try std.testing.expectEqual(@as(f64, 2), roundEven(2.5));
 }
 
-fn quantile(p: []const h.XW, q: f64, def: u8) f64 {
-    var w: f64 = 0;
-    for (p) |v| w += v.w;
-    return if (p.len == 0) nan else if (w > 0 or def != 5) h.univPercentile(p, q, def) else (p[0].x + p[p.len - 1].x) / 2;
-}
+const quantile = h.univPercentile;
 
 fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
     if (opt.source_rows.get(obs)) |row| return row;
@@ -924,52 +1114,21 @@ fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
     }
     return ds.rows.items[obs - 1];
 }
-pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []const usize, levels: []const h.FmtLevels, wc: ?usize, opt: Options) !void {
-    h.reorderGroupsFmt(groups, cols, levels);
-    const C = struct {
-        ds: *Dataset,
+pub fn orderGroups(groups: []h.MeansGroup, cols: []const usize, opt: Options) void {
+    if (cols.len == 0 or groups.len < 2) return;
+    const Context = struct {
         cols: []const usize,
-        levels: []const h.FmtLevels,
-        wc: ?usize,
         opt: Options,
         fn less(c: @This(), l: h.MeansGroup, r: h.MeansGroup) bool {
             for (c.cols, 0..) |ci, j| {
-                const lv = l.rep[ci];
-                const rv = r.rep[ci];
-                if (h.compareValue(lv, rv) == .eq) continue;
-                const mode = c.opt.class_order[j];
-                if (eq(mode, "data") or eq(mode, "freq")) {
-                    var lf: usize = 0;
-                    var rf: usize = 0;
-                    var li: usize = c.ds.rows.items.len;
-                    var ri: usize = c.ds.rows.items.len;
-                    for (c.ds.rows.items, 0..) |row, k| {
-                        // FREQ expansion and EXCLNPWGT already apply; missing
-                        // original weights cannot establish CLASS order/counts.
-                        const raw = if (c.opt.source) |source| sourceRow(source, c.opt, @intFromFloat(h.toNum(row[c.opt.obscol.?]))) else row;
-                        if (h.weightAt(raw, c.wc) == null) continue;
-                        if (h.compareValue(row[ci], lv) == .eq) {
-                            lf += 1;
-                            li = @min(li, k);
-                        }
-                        if (h.compareValue(row[ci], rv) == .eq) {
-                            rf += 1;
-                            ri = @min(ri, k);
-                        }
-                    }
-                    if (eq(mode, "data")) return li < ri;
-                    if (lf != rf) return lf > rf;
-                }
-                if (eq(mode, "internal")) {
-                    if (h.fmtLevelsFor(c.levels, ci) != null) return h.compareValue(classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, l.rep), classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, r.rep)) == .lt;
-                }
-                return h.compareValue(lv, rv) == .lt;
+                const label_order = h.compareValue(l.rep[ci], r.rep[ci]);
+                if (label_order != .eq)
+                    return c.opt.classLevel(l.rep, j).less(c.opt.classLevel(r.rep, j), c.opt.class_order[j], label_order);
             }
             return false;
         }
     };
-    std.mem.sort(h.MeansGroup, groups, C{ .ds = ds, .cols = cols, .levels = levels, .wc = wc, .opt = opt }, C.less);
-    _ = a;
+    std.mem.sort(h.MeansGroup, groups, Context{ .cols = cols, .opt = opt }, Context.less);
 }
 
 fn testData(a: Allocator) !*@import("../exec.zig").Library {
@@ -998,6 +1157,171 @@ fn testRun(a: Allocator, lib: *@import("../exec.zig").Library, source: []const u
 fn testCell(ds: *Dataset, row: usize, name: []const u8) f64 {
     return h.toNum(ds.rows.items[row][ds.indexOf(name).?]);
 }
+test "UNIVARIATE default BEST12 CLASS groups retain numeric observations and format attributes" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const values = [_]f64{ 0.123456789012355, 0.123456789045678, 0.123456789012345 };
+    for (values) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+    for ([_][]const u8{ "", "format x best12.;", "format x best16.;" }, 0..) |format_stmt, j| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint;class x(order=data);{s}var x;output out=o n=n sum=s;run;", .{format_stmt}));
+        const o = lib.find("o").?;
+        const col = o.columns.items[o.indexOf("x").?];
+        try std.testing.expectEqual(@as(usize, if (j == 2) 3 else 1), o.rows.items.len);
+        if (j == 0) try std.testing.expect(col.format == null) else try std.testing.expect(eq(col.format.?, if (j == 1) "best12." else "best16."));
+        try std.testing.expectEqual(values[0], testCell(o, 0, "x"));
+        try std.testing.expectEqual(@as(f64, if (j == 2) 1 else 3), testCell(o, 0, "n"));
+        try std.testing.expectApproxEqAbs(if (j == 2) values[0] else values[0] + values[1] + values[2], testCell(o, 0, "s"), 1e-15);
+    }
+}
+
+test "UNIVARIATE corrected sums respect original FREQ observations and small-range precision" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]f64{ 1099511627776, 70368744177664 }, 0..) |offset, scale| {
+        ds.rows.clearRetainingCapacity();
+        const obs = [_]f64{ 0, 1, 2, 4, 5, 7, 11, 11, 20 };
+        const weights = [_]f64{ 1, 0.25, 2, 3, 0, nan, 1.5, 4, 2 };
+        const frequencies = [_]f64{ 2, 1, 1, 1, 3, 4, 1, 2, 1 };
+        for (obs, weights, frequencies) |x, w, f|
+            try ds.appendRow(&.{ .{ .num = offset + x }, .{ .num = x }, .{ .num = w }, .{ .num = f }, .{ .num = 1 } });
+        for ([_][]const u8{ "", "weight w;", "freq f;" }, [_]f64{ 323.554920431262, 530.427987773906, 391.931629454631 }, [_]f64{ 9, 8, 16 }) |role, ordinary_css, n| {
+            try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint;var x;{s}output out=o n=n css=c skewness=sk kurtosis=ku;run;", .{role}));
+            const out = lib.find("o").?;
+            try std.testing.expectEqual(n, testCell(out, 0, "n"));
+            try std.testing.expectApproxEqAbs(if (scale == 0) ordinary_css else 0, testCell(out, 0, "c"), 1e-11);
+            if (scale == 1) {
+                try std.testing.expect(std.math.isNan(testCell(out, 0, "sk")));
+                try std.testing.expect(std.math.isNan(testCell(out, 0, "ku")));
+            }
+        }
+    }
+}
+
+test "UNIVARIATE minimum weight distinguishes the previous and final weight totals" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]f64{ 500, 501, 1000, 1001 }) |multiplier| {
+        ds.rows.clearRetainingCapacity();
+        const w = multiplier * @sqrt(std.math.floatMin(f64));
+        for ([_]f64{ 1, 2 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = x }, .{ .num = w }, .{ .num = 1 }, .{ .num = 1 } });
+        try testRun(a, lib, "proc univariate data=d noprint vardef=weight;var x;weight w;output out=o mean=m css=c var=v;run;");
+        const out = lib.find("o").?;
+        try std.testing.expectEqual(if (multiplier == 1001) @as(f64, 0.5) else 0.25, testCell(out, 0, "c") / w);
+        if (multiplier == 500) {
+            try std.testing.expect(std.math.isNan(testCell(out, 0, "m")));
+            try std.testing.expect(std.math.isNan(testCell(out, 0, "v")));
+        } else {
+            try std.testing.expectEqual(@as(f64, 1.5), testCell(out, 0, "m"));
+        }
+    }
+}
+
+test "UNIVARIATE suppresses a cancelled sum only after the last observation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    const large: f64 = 4503599627370496;
+    for ([_]f64{ 1, 2 }) |repeats| {
+        ds.rows.clearRetainingCapacity();
+        for ([_]f64{ large, -large, 100000 }, [_]f64{ 1, 1, repeats }) |x, f|
+            try ds.appendRow(&.{ .{ .num = x }, .{ .num = x }, .{ .num = 1 }, .{ .num = f }, .{ .num = 1 } });
+        try testRun(a, lib, "proc univariate data=d noprint;var x;freq f;output out=o sum=s mean=m;run;");
+        const out = lib.find("o").?;
+        const expected: f64 = if (repeats == 1) 0 else 200000;
+        try std.testing.expectEqual(expected, testCell(out, 0, "s"));
+        try std.testing.expectEqual(expected / (2 + repeats), testCell(out, 0, "m"));
+    }
+}
+
+test "UNIVARIATE weight overflow retains completed BY groups and discards the current CLASS group" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const weight = std.math.ldexp(@as(f64, 1), 511);
+    for ([_]f64{ 0.1, 1, 0.1 }, [_]f64{ 1, 4, 1 }, 1..) |raw, f, by| {
+        try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 }, .{ .num = raw * weight }, .{ .num = f }, .{ .num = @floatFromInt(by) } });
+    }
+    for ([_][]const u8{ "by", "class", "class" }, [_][]const u8{ "first", "empty", "first" }, [_]usize{ 1, 0, 1 }) |role, name, expected| {
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;{s} g;var x;weight w;freq f;output out={s} n=n;run;", .{ role, name });
+        var d = diag.Diagnostics.init(a);
+        var listing: std.ArrayList(u8) = .empty;
+        const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+        try proc.runUnivariate(.{ .arena = a, .lib = lib, .diags = &d }, &listing, tokens);
+        try std.testing.expect(d.hasErrors());
+        const out = lib.find(name).?;
+        try std.testing.expectEqual(expected, out.rows.items.len);
+        if (expected > 0) try std.testing.expectEqual(@as(f64, 1), testCell(out, 0, "g"));
+    }
+}
+
+test "UNIVARIATE skewness and kurtosis are invariant across ordinary, large, and small scales" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]i32{ -400, 0, 300, 508 }) |exponent| {
+        ds.rows.clearRetainingCapacity();
+        for ([_]f64{ 1, -3, 5, 6, 10 }) |x| {
+            try ds.appendRow(&.{ .{ .num = std.math.ldexp(x, exponent) }, .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+        }
+        try testRun(a, lib, "proc univariate data=d noprint;var x;output out=q skewness=s kurtosis=k;run;");
+        const out = lib.find("q").?;
+        try std.testing.expectApproxEqAbs(@as(f64, -0.29081900633708), testCell(out, 0, "s"), 1e-12);
+        try std.testing.expectApproxEqAbs(@as(f64, -0.41354554246094), testCell(out, 0, "k"), 1e-12);
+    }
+}
+
+test "UNIVARIATE treats underflow of corrected and uncorrected squares independently" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const unit = @sqrt(std.math.floatMin(f64));
+    for ([_]f64{ -0.99, -0.99, 0, 0.99, 0.99 }) |scaled| {
+        try ds.appendRow(&.{ .{ .num = scaled * unit }, .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    try testRun(a, lib, "proc univariate data=d noprint;var x;output out=o std=d css=c uss=u;run;");
+    const out = lib.find("o").?;
+    try std.testing.expectEqual(@as(f64, 0), testCell(out, 0, "d"));
+    try std.testing.expectEqual(@as(f64, 0), testCell(out, 0, "u"));
+    try std.testing.expectApproxEqAbs(@as(f64, 2.041875), testCell(out, 0, "c") / unit / unit, 1e-13);
+}
+
+test "UNIVARIATE overflowing square sums are missing to subsequent DATA steps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_]f64{ 1e155, -1e155, 3, 4 }) |x| {
+        try ds.appendRow(&.{ .{ .num = x }, .{ .num = 0 }, .{ .num = 1e-140 }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    try testRun(a, lib, "proc univariate data=d noprint;var x;weight w;output out=q sum=s mean=m css=c uss=u std=d;run;");
+    const out = lib.find("q").?;
+    for ([_][]const u8{ "c", "u", "d" }) |col| try std.testing.expect(std.math.isNan(testCell(out, 0, col)));
+    try std.testing.expectApproxEqAbs(@as(f64, 7), testCell(out, 0, "s") / 1e-140, 1e-12);
+    try std.testing.expectEqual(@as(f64, 1.75), testCell(out, 0, "m"));
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1062,24 +1386,18 @@ test "UNIVARIATE CLASS parenthesized options and IDOUT metadata" {
     try std.testing.expectEqualStrings("y", o.columns.items[0].name);
     try std.testing.expectEqualStrings("g", o.columns.items[1].name);
     try std.testing.expectEqual(@as(f64, 100), testCell(o, 1, "y"));
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class g / missing;var x;run;"));
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class g();var x;run;"));
 }
 
 /// IDOUT uses the first source observation in the BY group, including FREQ=0.
 fn firstByRow(opt: Options, row: []const Value, by: []const usize) []const Value {
     const ds = opt.source orelse return row;
-    const oi = opt.obscol orelse return row;
-    var at: usize = 0;
-    while (at < ds.rows.items.len and h.toNum(ds.rows.items[at][oi]) != h.toNum(row[oi])) at += 1;
-    if (at == ds.rows.items.len) return row;
-    while (at > 0) {
-        var same = true;
-        for (by) |ci| {
-            if (h.compareValue(ds.rows.items[at - 1][ci], ds.rows.items[at][ci]) != .eq) same = false;
-        }
-        if (!same) break;
-        at -= 1;
-    }
-    return ds.rows.items[at];
+    if (opt.obscol == null or ds.rows.items.len == 0) return row;
+    if (by.len == 0) return ds.rows.items[0];
+    const segment = bySegment(opt, row);
+    if (segment == 0) return row;
+    return opt.source_rows.get(opt.by_starts.items[segment - 1]) orelse row;
 }
 
 test "UNIVARIATE OUTTABLE weighted schema and unweighted normality" {
@@ -1111,6 +1429,203 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
     d.rows.items[0] = r;
     try testRun(a, lib, "proc univariate data=d noprint idout; by g notsorted; freq f; id y; var x; output out=o mean=m; run;");
     try std.testing.expectEqual(@as(f64, 100), testCell(lib.find("o").?, 0, "y"));
+}
+
+fn summaryOverflows(a: Allocator, view: Analysis, ci: usize, stat: h.Stats, def: u8, robust: bool) !bool {
+    if (std.math.isInf(stat.std)) return true;
+    const magnitude = @max(@abs(stat.min), @abs(stat.max));
+    // Bound the quartile fences by 4*max(abs(x)) and the sum of pairwise
+    // distances by n*(n-1)*max(abs(x)). Ordinary groups need no re-sort.
+    const check_fences = magnitude >= std.math.floatMax(f64) / 4;
+    const n: f64 = @floatFromInt(stat.n);
+    const check_distances = robust and n > 1 and magnitude >= std.math.floatMax(f64) / n / (n - 1);
+    if (!check_fences and !check_distances) return false;
+    const pairs = try pairsFor(a, view.ds, ci, view.weight);
+    if (check_fences) {
+        const q1 = quantile(pairs, 25, def);
+        const q3 = quantile(pairs, 75, def);
+        const radius = 1.5 * (q3 - q1);
+        if (std.math.isInf(q1 - radius) or std.math.isInf(q3 + radius)) return true;
+    }
+    return check_distances and std.math.isInf(pairDifferenceSum(pairs));
+}
+
+/// M9 reports each affected CLASS cell and variable on its first overflowing
+/// observation. One BY note follows all warnings from the same BY group.
+pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: *Options, outputs: []const Output, noprint: bool) !?CalculationFailure {
+    if (ds.rows.items.len == 0) return null;
+    const source = opt.source.?;
+    var max_weight: f64 = 1;
+    if (wc) |ci| for (source.rows.items) |row| {
+        max_weight = @max(max_weight, h.toNum(row[ci]));
+    };
+    // Bound a squared range by four times the squared maximum magnitude.
+    // Ordinary data cannot overflow and need no extra grouping or sorting.
+    const count: f64 = @floatFromInt(ds.rows.items.len);
+    // WDF can additionally overflow at the final division even when CSS is finite.
+    const min_divisor: f64 = if (vd == .wdf and wc != null) h.minWdf else 1;
+    const limit = 0.5 * @sqrt((std.math.floatMax(f64) / count) * min_divisor) / @sqrt(max_weight);
+    const check_weight_squares = wc != null and max_weight > 0.5 * @sqrt(std.math.floatMax(f64) / count);
+    const check_weight_ratio = wc != null and max_weight >= @sqrt(std.math.floatMax(f64) * h.minWeight) / count;
+    possible: {
+        // Grouped diagnostics follow variable-major CLASS order and share one
+        // BY note. NOPRINT also diagnoses precision without any result table.
+        if (bcols.len > 0 or ccols.len > 0 or (noprint and outputs.len == 0 and opt.outtable == null)) break :possible;
+        if (check_weight_squares or check_weight_ratio) break :possible;
+        for (source.rows.items) |row| for (acols) |ci| {
+            if (@abs(h.toNum(row[ci])) >= limit) break :possible;
+        };
+        return null;
+    }
+
+    opt.precision_reported = true;
+    const robust = try cx.arena.alloc(bool, acols.len);
+    @memset(robust, wc == null and (opt.inference.robustscale or opt.outtable != null));
+    if (wc == null) {
+        for (outputs) |output| for (output.req.items) |request| {
+            if (request.var_index < robust.len and robustScaleKeyword(request.key)) robust[request.var_index] = true;
+        };
+    }
+
+    const Event = struct {
+        observation: usize,
+        variable: usize,
+
+        fn before(_: void, lhs: @This(), rhs: @This()) bool {
+            return if (lhs.observation == rhs.observation) lhs.variable < rhs.variable else lhs.observation < rhs.observation;
+        }
+    };
+    const Precision = struct {
+        rank: usize,
+        small_mean: bool,
+
+        fn before(_: void, left: @This(), right: @This()) bool {
+            return left.rank < right.rank;
+        }
+    };
+    var completed: usize = 0;
+    for (try bySlices(cx.arena, ds.rows.items, bcols, opt.*)) |by| {
+        var events: std.ArrayList(Event) = .empty;
+        var precision: std.ArrayList(Precision) = .empty;
+        var chunk = Dataset.init(cx.arena, ds.name);
+        chunk.columns = ds.columns;
+        try chunk.rows.appendSlice(cx.arena, by.rows);
+        const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt.*);
+        var first_failure: ?usize = null;
+        var input_failure: ?WeightFailure = null;
+        for (groups, 0..) |class_group, gi| {
+            var group = Dataset.init(cx.arena, ds.name);
+            group.columns = ds.columns;
+            try group.rows.appendSlice(cx.arena, class_group.rows);
+            const view = try analysisView(cx.arena, &group, acols, wc, opt.*);
+            const disabled = if (check_weight_squares) try cx.arena.alloc(?usize, acols.len) else null;
+            for (acols, 0..) |ci, vi| {
+                const stat = h.computeUnivMomentFlags(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
+                const rank = vi * groups.len + gi;
+                if (stat.small_mean or stat.small_range) try precision.append(cx.arena, .{ .rank = rank, .small_mean = stat.small_mean });
+                if (try summaryOverflows(cx.arena, view, ci, stat, def, robust[vi])) {
+                    first_failure = @min(first_failure orelse rank, rank);
+                }
+                if (disabled) |starts| starts[vi] = stat.overflow_at;
+                if (stat.overflow_at) |at| {
+                    try events.append(cx.arena, .{ .observation = @intFromFloat(h.toNum(class_group.rows[at][opt.obscol.?])), .variable = vi });
+                }
+            }
+            if (disabled) |starts| if (try weightFailureInCell(cx.arena, view, acols, starts, opt.obscol.?)) |failure| {
+                if (input_failure == null or failure.observation < input_failure.?.observation) input_failure = failure;
+            };
+        }
+        std.mem.sort(Event, events.items, {}, Event.before);
+        for (events.items) |event| {
+            if (input_failure) |failure| if (event.observation > failure.observation) break;
+            try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
+        }
+        if (input_failure) |failure| return .{ .completed_rows = completed, .reason = if (failure.missing_only) .missing_weight else .weight_statistic, .warn_weight = failure.unnamed_warning };
+        std.mem.sort(Precision, precision.items, {}, Precision.before);
+        for (precision.items) |item| {
+            if (first_failure) |stop| if (item.rank >= stop) break;
+            try warnPrecision(cx, ds, acols[item.rank / groups.len], item.small_mean);
+        }
+        if (first_failure) |partial| return .{ .completed_rows = completed, .reason = .floating_point, .failing_rows = by.rows.len, .partial_cells = partial };
+        if (events.items.len > 0 or precision.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt.*);
+        completed += by.rows.len;
+    }
+    return null;
+}
+
+pub const CalculationFailure = struct {
+    completed_rows: usize,
+    reason: enum { weight_statistic, missing_weight, floating_point },
+    failing_rows: usize = 0,
+    partial_cells: usize = 0,
+    warn_weight: bool = true,
+    outputs: std.ArrayList(OutputInfo) = .empty,
+
+    const OutputInfo = struct { name: []const u8, variables: usize, observations: usize, preserved: bool };
+
+    pub fn partialAt(self: CalculationFailure, offset: usize) ?usize {
+        return if (self.reason == .floating_point and offset == self.completed_rows) self.partial_cells else null;
+    }
+
+    pub fn report(self: CalculationFailure, d: *diag.Diagnostics) !void {
+        switch (self.reason) {
+            .missing_weight => try d.report(.err, 0, "A WEIGHT*FREQ value is too large.", .{}),
+            .weight_statistic => {
+                if (self.warn_weight) try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
+                try d.report(.err, 0, "Overflow in statistic calculation.", .{});
+            },
+            .floating_point => {
+                try d.report(.err, 0, "Floating Point Overflow.", .{});
+                try d.report(.err, 0, "Termination due to Floating Point Exception", .{});
+            },
+        }
+        for (self.outputs.items) |out| {
+            try d.warn(0, "The data set {s} may be incomplete.  When this step was stopped there were {d} observations and {d} variables.", .{ out.name, out.observations, out.variables });
+            if (out.preserved) try d.warn(0, "Data set {s} was not replaced because this step was stopped.", .{out.name});
+        }
+    }
+};
+
+const WeightFailure = struct { observation: usize, missing_only: bool, unnamed_warning: bool };
+
+/// Evaluate squared weights in input order, separately for missing and valid
+/// values. A disabled statistic no longer raises a second squared-weight error.
+fn weightFailureInCell(a: Allocator, view: Analysis, acols: []const usize, disabled: []const ?usize, obscol: usize) !?WeightFailure {
+    const totals = try a.alloc([2]f64, acols.len);
+    @memset(totals, .{ 0, 0 });
+    for (view.ds.rows.items, 0..) |row, at| {
+        const w = h.toNum(row[view.weight.?]);
+        if (!(w > 0)) continue;
+        var failed = false;
+        var missing_only = true;
+        var unnamed = false;
+        for (acols, totals, disabled) |ci, *sums, start| {
+            const missing = std.math.isNan(h.toNum(row[ci]));
+            if (!missing) {
+                missing_only = false;
+                unnamed = start == null or at < start.?;
+                if (!unnamed) continue;
+            }
+            const sum = &sums[@intFromBool(missing)];
+            sum.* += w * w;
+            failed = failed or !std.math.isFinite(sum.*);
+        }
+        if (failed) return .{ .observation = @intFromFloat(h.toNum(row[obscol])), .missing_only = missing_only, .unnamed_warning = unnamed };
+    }
+    return null;
+}
+
+pub fn analysisGroups(a: Allocator, ds: *Dataset, ccols: []const usize, wc: ?usize, opt: Options) ![]h.MeansGroup {
+    const groups = try h.collectGroups(a, ds, ccols);
+    orderGroups(groups, ccols, opt);
+    if (wc == null) return groups;
+    var count: usize = 0;
+    for (groups) |group| {
+        if (!hasUsableWeight(group.rows, wc, opt)) continue;
+        groups[count] = group;
+        count += 1;
+    }
+    return groups[0..count];
 }
 
 pub fn hasUsableWeight(rows: []const []const Value, wc: ?usize, opt: Options) bool {
@@ -1249,19 +1764,9 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
 /// Select the first weight-eligible original value within this BY group and
 /// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
 /// missing weights must not supply a representative, even without EXCLNPWGT.
-pub fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
-    const level = rep[ci];
-    const oi = opt.obscol orelse return level;
-    rows: for (ds.rows.items) |row| {
-        for (cols) |key| {
-            if (h.compareValue(row[key], rep[key]) != .eq) continue :rows;
-            if (key == ci) break;
-        }
-        const raw = sourceRow(opt.source orelse ds, opt, @intFromFloat(h.toNum(row[oi])));
-        if (h.weightAt(raw, wc) == null) continue;
-        return raw[ci];
-    }
-    return level;
+pub fn classRepresentative(opt: Options, cols: []const usize, ci: usize, rep: []const Value) Value {
+    const j = std.mem.indexOfScalar(usize, cols, ci).?;
+    return opt.classLevel(rep, j).raw;
 }
 /// CLASS grouping uses formatted keys, but an explicitly selected CLASS
 /// variable is analyzed using its original numeric values, after ROUND.
@@ -1333,7 +1838,7 @@ pub fn bySlices(a: Allocator, rows: []const []const Value, cols: []const usize, 
         const segment = bySegment(opt, rows[start]);
         var stop = start + 1;
         while (stop < rows.len and bySegment(opt, rows[stop]) == segment) stop += 1;
-        try slices.append(a, .{ .rep = rows[start], .rows = rows[start..stop] });
+        try slices.append(a, .{ .rep = firstByRow(opt, rows[start], cols), .rows = rows[start..stop] });
         start = stop;
     }
     return slices.toOwnedSlice(a);
@@ -1377,6 +1882,20 @@ test "UNIVARIATE ID prefixes are excluded from default analysis" {
     const table = lib.find("t").?;
     try std.testing.expectEqual(@as(usize, 1), table.rows.items.len);
     try std.testing.expectEqualStrings("x", table.rows.items[0][table.indexOf("_VAR_").?].str);
+}
+
+test "UNIVARIATE ID accepts numbered ranges and CLASS requires individual names" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for (ds.columns.items, [_][]const u8{ "id1", "id3", "id2", "f", "x" }) |*col, name| col.name = name;
+    try testRun(a, lib, "proc univariate data=d noprint outtable=t;id id1-id3;freq f;run;");
+    const t = lib.find("t").?;
+    try std.testing.expectEqual(@as(usize, 1), t.rows.items.len);
+    try std.testing.expectEqualStrings("x", t.rows.items[0][t.indexOf("_VAR_").?].str);
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class id1-id3;var x;run;"));
 }
 
 test "UNIVARIATE ROUND leaves grouping keys and analysis weights unchanged" {
@@ -1440,6 +1959,30 @@ test "UNIVARIATE OUTTABLE honors the SAS default Qn sample-size limit" {
     try std.testing.expect(std.math.isNan(z.std_qn));
     try std.testing.expectApproxEqAbs(@as(f64, 19537.1732), z.sn, 1e-8);
     try std.testing.expectApproxEqAbs(@as(f64, 19537.441543), z.std_sn, 1e-6);
+}
+
+test "UNIVARIATE Sn at the million-observation cutoff and with FORCESN" {
+    const a = std.testing.allocator;
+    const pairs = try a.alloc(h.XW, 1_000_001);
+    defer a.free(pairs);
+    // Three nearly equal groups at 0, 1 and 2 have median distance 1 from
+    // every observation. Sn is therefore 1.1926 (SAS, printed pp. 301, 420).
+    for (pairs, 0..) |*p, i| p.* = .{ .x = @floatFromInt(i / 333_334), .w = 1 };
+    for ([_]usize{ 1_000_000, 1_000_001, 1_000_001 }, [_]bool{ false, false, true }) |n, force| {
+        var arena = std.heap.ArenaAllocator.init(a);
+        defer arena.deinit();
+        var z: Summary = .{ .s = h.computeStatsV(&.{}, 0, null, .df), .pairs = pairs[0..n], .nmiss = 0, .nobs = n };
+        try robustStats(arena.allocator(), &z, false, force);
+        try std.testing.expect(std.math.isNan(z.qn));
+        if (n == 1_000_000 or force) {
+            try std.testing.expectEqual(@as(f64, 1.1926), z.sn);
+            const sigma: f64 = if (n == 1_000_000) 1.1926 else 1.1926 * 1_000_001.0 / 1_000_000.1;
+            try std.testing.expectApproxEqAbs(sigma, z.std_sn, 1e-12);
+        } else {
+            try std.testing.expect(std.math.isNan(z.sn));
+            try std.testing.expect(std.math.isNan(z.std_sn));
+        }
+    }
 }
 
 test "BUG-univnobsexcl pooled NOBS preserves excluded observations without changing N" {
@@ -1730,6 +2273,9 @@ test "BUG-univclassrepweight raw-key ordering and ROUND preserve original weight
         try ds.appendRow(&.{ .{ .num = r[1] }, .{ .num = r[0] }, .{ .num = r[2] }, .{ .num = 1 }, .{ .num = 1 } });
     var diags = diag.Diagnostics.init(a);
     const toks = try @import("../lexer.zig").tokenize(a, "proc format; value band 1='A' 2='B' 3='A';run;", &diags);
+    const formats = @import("../format.zig");
+    formats.clearUserFormats();
+    defer formats.clearUserFormats();
     try proc.runFormat(.{ .arena = a, .lib = lib, .diags = &diags }, toks);
     try std.testing.expect(!diags.hasErrors());
     for ([_]bool{ false, true }) |roles| {
@@ -1816,8 +2362,8 @@ fn confidenceValue(a: Allocator, z: Summary, p: f64, ci: inference_parse.OutputC
 pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options) !void {
     const inf = opt.inference;
     if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
-    const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
-    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference);
+    const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt);
+    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference, opt.listing, opt.ods);
 }
 
 // Numerical distribution tests stay independent of rendering/ODS integration.

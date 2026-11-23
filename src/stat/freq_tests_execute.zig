@@ -7,7 +7,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const k = @import("freq_tests.zig");
 const p = @import("freq_tests_parse.zig");
 const render = @import("freq_tests_render.zig");
-pub const Table = struct { suppress_fisher: bool = false, numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
+pub const Table = struct { suppress_fisher: bool = false, numeric_table_scores_valid: bool = true, name: ?[]const u8 = null, warning_location: []const u8 = "", matrix: k.CountMatrix, one_way: bool = false, negative_weights: bool = false, score_display: ?render.ScoreDisplay = null };
 pub const Report = struct { goodness_of_fit: ?k.GoodnessOfFit = null, chi_square: ?k.ChiSquare = null, warning: ?bool = null };
 fn canonicalName(name: []const u8) []const u8 {
     return if (name.len > 5 and std.ascii.eqlIgnoreCase(name[0..5], "work.")) name[5..] else name;
@@ -55,8 +55,10 @@ pub fn resolveExpected(a: std.mem.Allocator, source: p.ExpectedSource, secondary
     }
     return if (proportions) .{ .proportions = values } else .{ .frequencies = values };
 }
-fn warn(d: *diag.Diagnostics, sparse: bool, options: p.Options, noprint: bool) diag.Error!void {
-    if (sparse and noprint and options.warn.log) try d.report(.warning, 0, "More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.", .{});
+fn warn(a: std.mem.Allocator, d: *diag.Diagnostics, table: Table, sparse: bool, percent: ?u8, options: p.Options, noprint: bool) diag.Error!void {
+    if (!sparse or !noprint or !options.warn.log) return;
+    const location = if (table.one_way and table.name != null) try std.fmt.allocPrint(a, " for the table of {s}", .{table.name.?}) else table.warning_location;
+    try d.report(.warning, 0, "{s}", .{try render.sparseWarning(a, percent, location)});
 }
 /// Called once per one-way table or two-way stratum, AFTER table construction.
 /// TABLES NOPRINT is deliberately absent: it does not suppress statistics.
@@ -89,7 +91,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         };
         report.goodness_of_fit = gof;
         if (options.warn.output) report.warning = gof.sparse;
-        try warn(d, gof.sparse, options, proc_noprint);
+        try warn(a, d, table, gof.sparse, gof.small_percent, options, proc_noprint);
         if (!proc_noprint) try render.goodnessOfFit(a, out, gof, options);
         return report;
     }
@@ -112,20 +114,16 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
     if (!table.numeric_table_scores_valid) try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
     if (!proc_noprint) if (table.score_display) |display| try render.scores(a, out, m, display, options.score_type);
     if (options.chisq) {
-        var chisq = k.contingency(a, m, options.df) catch |err| {
+        var chisq = k.contingencyWithFisher(a, m, options.df, !table.suppress_fisher) catch |err| {
             if (err == error.OutOfMemory) return err;
             return d.fail(error.ExecError, 0, "PROC FREQ: invalid counts or chi-square degrees of freedom", .{});
         };
         if (!table.numeric_table_scores_valid) chisq.mantel_haenszel = .{ .statistic = std.math.nan(f64), .df = 1, .p = std.math.nan(f64) };
         report.chi_square = chisq;
         if (options.warn.output) report.warning = chisq.sparse;
-        try warn(d, chisq.sparse, options, proc_noprint);
-        if (m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
-        if (!proc_noprint) {
-            var displayed = chisq;
-            if (table.suppress_fisher) displayed.fisher = null;
-            try render.contingency(a, out, displayed, options, m.counts[0]);
-        }
+        try warn(a, d, table, chisq.sparse, chisq.small_percent, options, proc_noprint);
+        if (!table.suppress_fisher and m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
+        if (!proc_noprint) try render.contingency(a, out, chisq, options, m.counts[0]);
     }
     if (options.measures or options.plcorr) {
         var ordinal = try k.association(a, m, options.alpha);
@@ -137,7 +135,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         const nominal = try k.nominal(a, m, options.alpha);
         const poly = if (options.plcorr) try k.polychoric(a, m, options.polychoric) else null;
         if (poly) |result| if (!result.converged) {
-            try d.report(.note, 0, "Polychoric correlation computations did not converge.", .{});
+            try d.report(.note, 0, "{s}", .{render.correlationNonconvergence(m.rows == 2 and m.cols == 2)});
         };
         if (!proc_noprint) {
             try render.measures(a, out, ordinal, nominal, poly, m.rows == 2 and m.cols == 2, options, applicable_tests);

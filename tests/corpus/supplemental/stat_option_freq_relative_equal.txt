@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 Odds Ratio and Relative Risks
+row Z 1.3143~5.1e-05
+row-count 1 Z {any}

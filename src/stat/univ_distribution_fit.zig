@@ -5,6 +5,7 @@ const diag = @import("../diag.zig");
 const functions = @import("../functions.zig");
 const johnson = @import("univ_johnson_fit.zig");
 const endpoint = @import("univ_endpoint_fit.zig");
+const gumbel_fit = @import("univ_gumbel_fit.zig");
 pub const Report = struct { converged: bool = true, no_fit: bool = false, reason: ?[]const u8 = null, iterations: usize = 0, starts: usize = 0 };
 pub const Trace = struct {
     allocator: std.mem.Allocator,
@@ -78,7 +79,7 @@ test "UNIVARIATE Weibull threshold trace records profile and selected parameters
     try std.testing.expectEqual(@FieldType(WeibullIteration, "phase").selected, last.phase);
     try std.testing.expectEqualDeep(traced.p, last.parameters);
 }
-test "UNIVARIATE endpoint landed adapter preserves candidate warning and failed initialization status" {
+test "UNIVARIATE endpoint adapter reports finite power candidates and warns on failed initialization" {
     const adapter = @import("univ_distribution_fit.zig");
     const diagnostics = @import("../diag.zig");
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
@@ -95,8 +96,13 @@ test "UNIVARIATE endpoint landed adapter preserves candidate warning and failed 
     try std.testing.expectEqualStrings("nonstationary_candidate", report.reason.?);
     try std.testing.expectApproxEqAbs(@as(f64, 0.9716969696969697), curve.p.sigma, 1e-12);
     try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
-    try std.testing.expect(d.list.items[0].severity == .warning);
-    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "retaining the finite fallback curve") != null);
+    try std.testing.expect(d.list.items[0].severity == .note);
+    try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "retained the finite fallback curve") != null);
+
+    var beta_diag = diagnostics.Diagnostics.init(arena.allocator());
+    _ = try adapter.fit(&beta_diag, &x, .{ .family = .beta, .theta = 0, .sigma = null, .beta = 0.9, .report = &report });
+    try std.testing.expect(!report.converged and !report.no_fit);
+    try std.testing.expectEqual(diagnostics.Severity.note, beta_diag.list.items[0].severity);
 
     var failed = diagnostics.Diagnostics.init(arena.allocator());
     try std.testing.expectError(error.ParseError, adapter.fit(&failed, &.{ 0.1, 0.2, 0.8 }, .{ .family = .power, .theta = 0, .sigma = null, .report = &report }));
@@ -109,6 +115,7 @@ test "UNIVARIATE endpoint landed adapter preserves candidate warning and failed 
 
 pub const Request = struct {
     family: dist.Family,
+    variable: []const u8 = "the analysis variable",
     theta: ?f64 = 0,
     sigma: ?f64 = null,
     mu: ?f64 = null,
@@ -138,6 +145,11 @@ pub const Request = struct {
     trace: ?*Trace = null,
     specified_fields: std.StaticBitSet(std.meta.fields(dist.Parameters).len) = .initEmpty(),
 
+    fn rejectCurve(self: Request, reason: []const u8) diag.Error {
+        if (self.report) |report| report.* = .{ .converged = false, .no_fit = true, .reason = reason };
+        return error.ParseError;
+    }
+
     pub fn specified(self: Request, comptime name: []const u8) bool {
         inline for (std.meta.fields(dist.Parameters), 0..) |field, i| {
             if (comptime std.mem.eql(u8, field.name, name)) return self.specified_fields.isSet(i);
@@ -156,7 +168,7 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     for (x, 0..) |v, i| {
         if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: fit sample must be sorted and finite", .{});
     }
-    if (r.maxiter == 0 or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
+    if (r.maxiter == 0 or (r.family == .gamma and (r.maxiter < 5 or r.maxiter > 100)) or !(r.alphadelta > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid iteration controls", .{});
     if (r.family == .sb or r.family == .su) return fitJohnson(d, x, r);
     if (r.family == .pareto or (r.family == .beta and (r.theta == null or r.sigma == null))) return fitEndpoint(d, x, r);
     if (r.family == .power and r.theta != null and r.sigma == null) return fitEndpoint(d, x, r);
@@ -214,17 +226,32 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
             if (r.alpha == null) {
                 const gap = @log(mean - p.theta) - logmean;
                 var a = r.alphainitial orelse (3 - gap + @sqrt((gap - 3) * (gap - 3) + 24 * gap)) / (12 * gap);
-                var converged = false;
+                // A nearly constant sample can round the log-mean gap to
+                // zero or below. Thom's estimate is then outside the domain
+                // of the positive-shape digamma recurrence.
+                if (!(a > 0) or !std.math.isFinite(a)) return convergence(d);
+                var iterations: usize = 0;
                 for (0..r.maxiter) |_| {
                     const value = if (r.sigma) |s| digamma(a) + @log(s) - logmean else digamma(a) - @log(a) + gap;
                     const slope = trigamma(a) - (if (r.sigma == null) 1 / a else @as(f64, 0));
-                    var next = a - value / slope;
-                    if (next <= 0) next = a / 2;
-                    if (@abs(next - a) < r.alphadelta) converged = true;
-                    a = next;
-                    if (converged) break;
+                    const change = value / slope;
+                    const proposed = a - change;
+                    if (!std.math.isFinite(proposed)) return convergence(d);
+                    // M9 restarts a nonpositive Newton iterate at 0.05. Its
+                    // tolerance applies to the original Newton correction.
+                    a = if (proposed > 0) proposed else 0.05;
+                    iterations += 1;
+                    if (@abs(change) < r.alphadelta) break;
                 }
-                if (!converged) return convergence(d);
+                if (r.report) |report| report.iterations = iterations;
+                if (iterations == r.maxiter) {
+                    if (r.report) |report| {
+                        report.converged = false;
+                        report.reason = "iteration_limit";
+                    }
+                    try d.warn(0, "{d} iterations were used to estimate ALPHA.", .{iterations});
+                    try d.warn(0, "Estimate of ALPHA may not be valid.", .{});
+                }
                 p.alpha = a;
             }
             p.sigma = r.sigma orelse (mean - p.theta) / p.alpha;
@@ -328,8 +355,16 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
             p.alpha = a;
             p.beta = b;
         },
-        .gumbel => {
+        .gumbel => gumbel: {
             if (r.sigma == null) {
+                const sigma = @sqrt(css / (n - 1)) * (@sqrt(@as(f64, 6)) / std.math.pi);
+                if (!(sigma > 0) or !std.math.isFinite(sigma)) return support(d);
+                const initial_mu = r.mu orelse mean - 0.57722 * sigma;
+                if (gumbel_fit.fit(x, .{ .mu = initial_mu, .sigma = sigma }, r.mu != null)) |estimate| {
+                    p.mu = estimate.mu;
+                    p.sigma = estimate.sigma;
+                    break :gumbel;
+                }
                 var lo = @sqrt(css / n) * 1e-6;
                 var hi = @sqrt(css / n) * 100 + @abs((r.mu orelse mean) - mean);
                 if (!(lo > 0)) return support(d);
@@ -369,7 +404,11 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     }
     const result: dist.Distribution = .{ .family = r.family, .p = p };
     try result.validate(d);
-    for (x) |v| if (!std.math.isFinite(result.logPdf(v))) return support(d);
+    for (x) |v| {
+        // Rayleigh accepts observations at its threshold, where the PDF is zero.
+        if (r.family == .rayleigh and v == p.theta) continue;
+        if (!std.math.isFinite(result.logPdf(v))) return support(d);
+    }
     return result;
 }
 
@@ -498,14 +537,45 @@ fn samplePercentile(x: []const f64, probability: f64) f64 {
 }
 
 fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.Distribution {
+    if (r.family == .sb and r.theta != null) {
+        const theta = r.theta.?;
+        if (x[0] <= theta) {
+            try d.report(.err, 0, "The smallest value of {s} is less than or equal to the threshold parameter (THETA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB threshold parameter (THETA) must be less than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[0])});
+            return r.rejectCurve("outside_support");
+        }
+        if (r.sigma) |sigma| if (x[x.len - 1] >= theta + sigma) {
+            try d.report(.err, 0, "The largest value of {s} is greater than or equal to the upper threshold (THETA + SIGMA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB scale parameter (SIGMA) must be greater than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[x.len - 1] - theta)});
+            return r.rejectCurve("outside_support");
+        };
+    }
+    const fixed: johnson.Fixed = .{ .theta = r.theta, .lambda = r.sigma, .delta = r.delta, .gamma = r.gamma };
+    if (r.family == .sb and !fixed.supportedSbCombination()) {
+        try d.warn(0, "Estimation for this parameter combination is not supported.", .{});
+        return r.rejectCurve("unsupported_combination");
+    }
     if (r.fitmethod != .percentiles) {
-        const result = johnson.fit(if (r.family == .sb) .sb else .su, if (r.fitmethod == .moments) .moments else .mle, x, .{ .theta = r.theta, .lambda = r.sigma, .delta = r.delta, .gamma = r.gamma }, .{ .optmaxiter = r.optmaxiter, .optmaxstarts = r.optmaxstarts, .optboundrange = r.optboundrange, .opttolerance = r.opttolerance, .optseed = try resolveSeed(d, r.optseed), .trace_context = r.trace, .trace = if (r.trace != null) Trace.record else null });
+        const result = johnson.fit(if (r.family == .sb) .sb else .su, if (r.fitmethod == .moments) .moments else .mle, x, fixed, .{ .optmaxiter = r.optmaxiter, .optmaxstarts = r.optmaxstarts, .optboundrange = r.optboundrange, .opttolerance = r.opttolerance, .optseed = try resolveSeed(d, r.optseed), .trace_context = r.trace, .trace = if (r.trace != null) Trace.record else null });
         if (r.trace) |trace| if (trace.failed) return error.OutOfMemory;
         const success = switch (result) {
             .converged => |success| success,
             .nonconverged => |failure| blk: {
                 switch (failure.reason) {
-                    .invalid_parameters, .invalid_controls, .unsupported_combination, .outside_support => return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson fit: {s}", .{@tagName(failure.reason)}),
+                    .unsupported_combination => {
+                        if (r.family == .su) {
+                            try d.warn(0, "Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all parameters are estimated.", .{});
+                        } else {
+                            const free_parameters: usize = if (r.theta == null) 4 else 3;
+                            try d.warn(0, "Maximum likelihood estimation is not available for {d}-parameter SB fits.", .{free_parameters});
+                        }
+                        return r.rejectCurve(@tagName(failure.reason));
+                    },
+                    .no_moment_solution => {
+                        try d.warn(0, "Unable to solve moments equations.", .{});
+                        return r.rejectCurve(@tagName(failure.reason));
+                    },
+                    .invalid_parameters, .invalid_controls, .outside_support => return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson fit: {s}", .{@tagName(failure.reason)}),
                     else => {},
                 }
                 if (r.report) |report| report.* = .{ .converged = false, .no_fit = failure.best == null, .reason = @tagName(failure.reason) };
@@ -524,9 +594,9 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
     }
     var p: dist.Parameters = .{};
     if (r.theta == null or r.sigma == null or r.delta == null or r.gamma == null) {
-        if (r.fitmethod != .percentiles) return d.fail(error.ParseError, 0, "UNIVARIATE: Johnson {s} estimation is not implemented", .{@tagName(r.fitmethod)});
         const z = r.fitinterval;
-        if (!(z > 0) or !std.math.isFinite(z) or !(r.fittolerance >= 0 and r.fittolerance < 1)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson percentile controls", .{});
+        if (!(z > 0) or !std.math.isFinite(z)) return d.fail(error.ParseError, 0, "FITINTERVAL= must be positive.", .{});
+        if (!(r.fittolerance > 0) or !std.math.isFinite(r.fittolerance)) return d.fail(error.ParseError, 0, "FITTOLERANCE= must be positive.", .{});
         const a = samplePercentile(x, functions.distCdf(.normal, -3 * z, &.{}).?);
         const b = samplePercentile(x, functions.distCdf(.normal, -z, &.{}).?);
         const c = samplePercentile(x, functions.distCdf(.normal, z, &.{}).?);
@@ -534,16 +604,31 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
         const n = b - a;
         const middle = c - b;
         const m = e - c;
-        if (!(n > 0 and middle > 0 and m > 0)) return convergence(d);
+        // M9 compares the central percentile spacing with sqrt(unit roundoff)
+        // before using it as the denominator of the Slifker-Shapiro criterion.
+        if (middle <= @sqrt(std.math.floatEps(f64) / 2)) {
+            try d.warn(0, "Unable to apply the method of percentiles because p is too small.", .{});
+            return r.rejectCurve("percentile_spacing");
+        }
         const ratio = n * m / (middle * middle);
+        if (if (r.family == .su) ratio <= 1 + r.fittolerance else ratio >= 1 - r.fittolerance) {
+            try d.warn(0, "Unable to fit {s} distribution based on the ratio criterion.", .{if (r.family == .su) "SU" else "SB"});
+            return r.rejectCurve("percentile_ratio");
+        }
         if (r.family == .su) {
-            if (ratio <= 1 + r.fittolerance) return d.fail(error.ParseError, 0, "UNIVARIATE: percentile ratio does not select a Johnson SU distribution", .{});
             p.delta = 2 * z / std.math.acosh((m + n) / (2 * middle));
-            p.gamma = p.delta * std.math.atanh((n - m) / (2 * middle * std.math.sinh(2 * z / p.delta)));
-            p.sigma = middle / (2 * std.math.cosh(p.gamma / p.delta) * std.math.sinh(z / p.delta));
-            p.theta = (b + c) / 2 + p.sigma * std.math.sinh(p.gamma / p.delta) * std.math.cosh(z / p.delta);
+            // The sample spacings determine GAMMA/DELTA. A fixed DELTA
+            // rescales the estimated GAMMA while preserving the percentile
+            // estimates of the location and scale.
+            const gamma_over_delta = std.math.atanh((n - m) / (2 * middle * std.math.sinh(2 * z / p.delta)));
+            p.gamma = (r.delta orelse p.delta) * gamma_over_delta;
+            p.sigma = middle / (2 * std.math.cosh(gamma_over_delta) * std.math.sinh(z / p.delta));
+            p.theta = (b + c) / 2 + p.sigma * std.math.sinh(gamma_over_delta) * std.math.cosh(z / p.delta);
         } else {
-            if (ratio >= 1 - r.fittolerance) return d.fail(error.ParseError, 0, "UNIVARIATE: percentile ratio does not select a Johnson SB distribution", .{});
+            if (n == 0 or m == 0) {
+                try d.report(.err, 0, "Floating Point Zero Divide.", .{});
+                return d.fail(error.ParseError, 0, "Termination due to Floating Point Exception", .{});
+            }
             // Inverse-logit quantiles are a fractional linear transform of
             // four geometrically spaced odds. Their cross-ratio determines r.
             const cross = (1 + middle / n) * (1 + middle / m);
@@ -568,8 +653,7 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
     return result;
 }
 
-/// Resolve the omitted clock-derived seed once per fit/simulation. Explicit
-/// seeds repeat this implementation's stream, not SAS's proprietary sequence.
+/// Resolve an omitted or zero seed once per fit or simulation.
 pub fn resolveSeed(d: *diag.Diagnostics, seed: ?f64) diag.Error!u64 {
     if (seed) |value| if (value != 0) {
         if (!std.math.isFinite(value) or value < 0 or value != @floor(value) or value >= @as(f64, @floatFromInt(std.math.maxInt(u64)))) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid random seed", .{});
@@ -596,7 +680,13 @@ fn fitEndpoint(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist
                 else => {},
             }
             if (r.report) |report| report.* = .{ .converged = false, .no_fit = failure.best == null, .reason = @tagName(failure.reason) };
-            try d.warn(0, "UNIVARIATE: {s} fit did not converge ({s}); {s}", .{ @tagName(r.family), @tagName(failure.reason), if (failure.best != null) "retaining the finite fallback curve" else "no fitted curve is available" });
+            if ((r.family == .power or r.family == .beta) and failure.best != null and failure.reason == .nonstationary_candidate) {
+                try d.note(0, "UNIVARIATE: {s} fit retained the finite fallback curve ({s}).", .{ @tagName(r.family), @tagName(failure.reason) });
+            } else if (r.family == .pareto and failure.best == null and (failure.reason == .initialization_failed or failure.reason == .no_local_maximum)) {
+                try d.warn(0, "Unable to obtain maximum likelihood estimates.", .{});
+            } else if (r.family == .beta and failure.best == null) {
+                try d.warn(0, "One or more parameters for the beta distribution cannot be estimated.", .{});
+            } else try d.warn(0, "UNIVARIATE: {s} fit did not converge ({s}); {s}", .{ @tagName(r.family), @tagName(failure.reason), if (failure.best != null) "retaining the finite fallback curve" else "no fitted curve is available" });
             break :blk failure.best orelse return error.ParseError;
         },
     };
@@ -624,6 +714,11 @@ test "UNIVARIATE Johnson percentile fitting SAS M9 fixed and estimated endpoints
     try std.testing.expectApproxEqAbs(@as(f64, 1.837628), su.p.sigma, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 1.118261), su.p.delta, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.357627), su.p.gamma, 5e-7);
+    const su_fixed_delta = try fit(&d, &u, .{ .family = .su, .theta = null, .delta = 0.8 });
+    try std.testing.expectEqual(su.p.theta, su_fixed_delta.p.theta);
+    try std.testing.expectEqual(su.p.sigma, su_fixed_delta.p.sigma);
+    try std.testing.expectEqual(@as(f64, 0.8), su_fixed_delta.p.delta);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.2558447461011039), su_fixed_delta.p.gamma, 3e-12);
     const sb = try fit(&d, &b, .{ .family = .sb, .theta = null });
     try std.testing.expectApproxEqAbs(@as(f64, -0.0390644103866), sb.p.theta, 1e-10);
     try std.testing.expectApproxEqAbs(@as(f64, 1.118077), sb.p.sigma, 5e-7);
@@ -632,6 +727,63 @@ test "UNIVARIATE Johnson percentile fitting SAS M9 fixed and estimated endpoints
     try std.testing.expectEqual(@as(f64, 1), fixed.p.sigma);
     try std.testing.expectApproxEqAbs(@as(f64, 1.35412), fixed.p.delta, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.502458), fixed.p.gamma, 5e-7);
+}
+
+test "Johnson public fit enforces native fixed-parameter combinations across methods" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var x: [101]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const z = functions.distQuantile(.normal, (@as(f64, @floatFromInt(i + 1)) - 0.375) / 101.25, &.{}).?;
+        v.* = 1 / (1 + @exp((0.4 - z) / 1.2));
+    }
+    for ([_]JohnsonMethod{ .percentiles, .moments, .mle }) |method| {
+        for (0..16) |mask| {
+            var d = diag.Diagnostics.init(arena.allocator());
+            var report: Report = .{};
+            const request: Request = .{ .family = .sb, .fitmethod = method, .theta = if (mask & 1 != 0) 0 else null, .sigma = if (mask & 2 != 0) 1 else null, .delta = if (mask & 4 != 0) 0.8 else null, .gamma = if (mask & 8 != 0) 1.2 else null, .report = &report };
+            const expected_warning: ?[]const u8 = switch (mask) {
+                0 => if (method == .mle) "Maximum likelihood estimation is not available for 4-parameter SB fits." else null,
+                1 => if (method == .mle) "Maximum likelihood estimation is not available for 3-parameter SB fits." else null,
+                3, 15 => null,
+                else => "Estimation for this parameter combination is not supported.",
+            };
+            if (expected_warning) |warning| {
+                try std.testing.expectError(error.ParseError, fit(&d, &x, request));
+                try std.testing.expect(!d.hasErrors() and report.no_fit);
+                try std.testing.expectEqualStrings(warning, d.list.items[0].message);
+            } else {
+                _ = try fit(&d, &x, request);
+                try std.testing.expect(!d.hasErrors() and report.converged);
+            }
+        }
+    }
+    var d = diag.Diagnostics.init(arena.allocator());
+    var report: Report = .{};
+    try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .su, .theta = 0, .fitmethod = .moments, .report = &report }));
+    try std.testing.expect(!d.hasErrors() and report.no_fit);
+    try std.testing.expectEqualStrings("Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all parameters are estimated.", d.list.items[0].message);
+}
+
+test "Johnson method of percentiles checks central spacing at the native binary boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const threshold = @sqrt(std.math.floatEps(f64) / 2);
+    for ([_]f64{ std.math.nextAfter(f64, threshold, 0), threshold, std.math.nextAfter(f64, threshold, 1) }) |middle| {
+        var x = [_]f64{ -0.5, -0.25, 0, 0.25, 0.375, 0.5, 1, 1.25, 1.5 };
+        for (&x) |*v| v.* *= middle;
+        var d = diag.Diagnostics.init(arena.allocator());
+        var report: Report = .{};
+        const request: Request = .{ .family = .sb, .theta = null, .report = &report };
+        if (middle <= threshold) {
+            try std.testing.expectError(error.ParseError, fit(&d, &x, request));
+            try std.testing.expect(report.no_fit and !d.hasErrors());
+            try std.testing.expectEqualStrings("Unable to apply the method of percentiles because p is too small.", d.list.items[0].message);
+        } else {
+            const result = try fit(&d, &x, request);
+            try std.testing.expect(result.p.theta < x[0] and result.p.theta + result.p.sigma > x[x.len - 1]);
+        }
+    }
 }
 
 fn support(d: *diag.Diagnostics) diag.Error {
@@ -645,14 +797,50 @@ fn digamma(value: f64) f64 {
     var result: f64 = 0;
     while (x < 12) : (x += 1) result -= 1 / x;
     const q = 1 / (x * x);
-    return result + @log(x) - 0.5 / x - q * (1.0 / 12.0 - q * (1.0 / 120.0 - q * (1.0 / 252.0 - q / 240)));
+    const tail = 1.0 / 240.0 - q * (1.0 / 132.0 - q * (691.0 / 32760.0));
+    return result + @log(x) - 0.5 / x - q * (1.0 / 12.0 - q * (1.0 / 120.0 - q * (1.0 / 252.0 - q * tail)));
 }
 fn trigamma(value: f64) f64 {
     var x = value;
     var result: f64 = 0;
     while (x < 12) : (x += 1) result += 1 / (x * x);
     const q = 1 / (x * x);
-    return result + 1 / x + q / 2 + q / x * (1.0 / 6.0 - q * (1.0 / 30.0 - q * (1.0 / 42.0 - q / 30)));
+    const tail = 1.0 / 30.0 - q * (5.0 / 66.0 - q * (691.0 / 2730.0));
+    return result + 1 / x + q / 2 + q / x * (1.0 / 6.0 - q * (1.0 / 30.0 - q * (1.0 / 42.0 - q * tail)));
+}
+
+test "gamma iteration limits preserve the last positive shape and diagnose the cap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 };
+    var report: Report = .{};
+    for ([_]f64{ 0.01, 3.5, 1000 }, [_]f64{ 0.25163117029828297, 0.2736105112020688, 0.554340262352804 }) |initial, expected| {
+        d.list.clearRetainingCapacity();
+        const result = try fit(&d, &x, .{ .family = .gamma, .alphainitial = initial, .alphadelta = 1e-7, .maxiter = 5, .report = &report });
+        try std.testing.expectApproxEqAbs(expected, result.p.alpha, 1e-12);
+        try std.testing.expect(!report.converged and !report.no_fit);
+        try std.testing.expectEqual(@as(usize, 5), report.iterations);
+        try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+        try std.testing.expectEqualStrings("5 iterations were used to estimate ALPHA.", d.list.items[0].message);
+        try std.testing.expectEqualStrings("Estimate of ALPHA may not be valid.", d.list.items[1].message);
+    }
+    d.list.clearRetainingCapacity();
+    const valid = try fit(&d, &x, .{ .family = .gamma, .alphainitial = 0.65, .alphadelta = 1, .maxiter = 5, .report = &report });
+    try std.testing.expect(report.converged);
+    try std.testing.expectEqual(@as(usize, 1), report.iterations);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0339545074071208), valid.p.alpha, 1e-12);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+}
+
+test "gamma fitting handles a rounded log-mean gap before its positive-shape recurrence" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.29999999999999993, 0.3, 0.30000000000000004 };
+    try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .gamma, .sigma = 1 }));
+    const fitted = try fit(&d, &x, .{ .family = .gamma, .sigma = 1, .alphainitial = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.7057), fitted.p.alpha, 1e-6);
 }
 
 test "UNIVARIATE fits SAS M9 fixed and estimated parameters" {
@@ -694,6 +882,38 @@ test "UNIVARIATE fits SAS M9 fixed and estimated parameters" {
     try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .lognormal, .theta = 1 }));
 }
 
+test "Gumbel ridge and direct Newton steps match fitted M9 parameters" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const sample = [_]f64{ 0.12, 0.23, 0.31, 0.48, 0.52, 0.76, 0.87, 1.03, 1.29, 1.36, 1.70, 2.28, 2.74, 3.52, 4.85, 6.21 };
+    const fitted = try fit(&d, &sample, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0452065877997954), fitted.p.mu, 2e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0840419648454998), fitted.p.sigma, 2e-12);
+    const tied = [_]f64{ 1, 1, 1, 2, 3, 8, 23 };
+    const fixed = try fit(&d, &tied, .{ .family = .gumbel, .mu = 0.5 });
+    try std.testing.expectEqual(@as(f64, 0.5), fixed.p.mu);
+    try std.testing.expectApproxEqAbs(@as(f64, 4.322225566808891), fixed.p.sigma, 2e-11);
+}
+
+test "Gumbel keeps its moment start when the raw likelihood score is small" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const base = [_]f64{ -2, -0.5, 0, 0.2, 0.8, 1.6, 2.1, 5 };
+    var large: [base.len]f64 = undefined;
+    for (&large, base) |*v, value| v.* = value * 1e6;
+    // M9 ParameterEstimates for the same physical data and each fixed mask.
+    const both = try fit(&d, &large, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, -38204.9237731), both.p.mu, 1e-6);
+    try std.testing.expectApproxEqAbs(@as(f64, 1625385.33622), both.p.sigma, 1e-5);
+    const fixed_mu = try fit(&d, &large, .{ .family = .gumbel, .mu = 5e5 });
+    try std.testing.expectEqual(@as(f64, 5e5), fixed_mu.p.mu);
+    try std.testing.expectEqual(both.p.sigma, fixed_mu.p.sigma);
+    const ordinary = try fit(&d, &base, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, 1.600730697), ordinary.p.sigma, 1e-8);
+}
+
 test "UNIVARIATE uniform Pareto endpoint has finite likelihood" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -703,4 +923,18 @@ test "UNIVARIATE uniform Pareto endpoint has finite likelihood" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.125), curve.pdf(8), 1e-15);
     const power: dist.Distribution = .{ .family = .power, .closed_upper = true, .p = .{ .theta = 1, .sigma = 4, .alpha = 2 } };
     try std.testing.expectApproxEqAbs(@as(f64, 0.5), power.pdf(5), 1e-15);
+}
+
+test "UNIVARIATE Rayleigh accepts tied threshold observations with fixed or estimated scale" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    for ([_]?f64{ 1, null }) |sigma| {
+        const request: Request = .{ .family = .rayleigh, .theta = -2, .sigma = sigma };
+        const curve = try fit(&d, &.{ -2, -2, -2, -1.5, -1, 0 }, request);
+        try std.testing.expectApproxEqAbs(sigma orelse @sqrt(@as(f64, 5.25 / 12.0)), curve.p.sigma, 1e-14);
+        try std.testing.expect(!d.hasErrors());
+        var bad = diag.Diagnostics.init(arena.allocator());
+        try std.testing.expectError(error.ParseError, fit(&bad, &.{ -2.01, -2, -1 }, request));
+    }
 }

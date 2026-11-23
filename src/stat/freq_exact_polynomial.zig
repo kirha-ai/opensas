@@ -33,7 +33,7 @@ pub const Polynomial = struct {
     }
 };
 pub const BuildResult = union(enum) { complete: Polynomial, exhausted };
-pub const Bounds = struct { lower: f64, upper: f64 };
+pub const Bounds = struct { lower: f64, upper: f64, grid_index: ?u32 = null };
 pub const MaximumResult = union(enum) { complete: Bounds, exhausted };
 
 fn blend(x: f64, y: f64, t: f64) f64 {
@@ -156,7 +156,7 @@ pub fn build(a: A, n1: usize, n2: usize, selected: []const bool, p1: Range, p2: 
     return .{ .complete = .{ .coefficients = coeff } };
 }
 
-const Node = struct { coefficients: []f64, upper: f64 };
+const Node = struct { coefficients: []f64, upper: f64, first: u32 = 0, last: u32 = 0 };
 fn push(a: A, heap: *std.ArrayList(Node), node: Node) Error!void {
     try heap.append(a, node);
     var i = heap.items.len - 1;
@@ -192,7 +192,28 @@ fn largest(coeff: []const f64) f64 {
 /// replaces recursion and fixed degree/depth arrays; caller work/deadline and
 /// allocator failures are the resource limits. No partial p-value on exhaustion.
 pub fn maximize(a: A, coefficients: []const f64, tolerance: f64, control: Control) Error!MaximumResult {
-    if (coefficients.len == 0 or !(tolerance > 0 and tolerance < 1)) return error.ExecError;
+    if (!(tolerance > 0 and tolerance < 1)) return error.ExecError;
+    return maximum(a, coefficients, tolerance, 0, null, control);
+}
+
+/// Bound the same supremum for a confidence-interval inversion. An attained
+/// lower bound above the test size or a global upper bound at or below it
+/// certifies the decision without requiring a more precise p-value.
+pub fn maximumForTest(a: A, coefficients: []const f64, tolerance: f64, size: f64, control: Control) Error!MaximumResult {
+    if (!(tolerance > 0 and tolerance < 1) or !(size >= 0 and size <= 1)) return error.ExecError;
+    return maximum(a, coefficients, tolerance, 0, size, control);
+}
+
+/// Certified maximum over q=i/divisions. Split at an actual grid point and
+/// discard a leaf when it has no unvisited grid point. Between-point values
+/// only bound the search and never become the reported value.
+pub fn maximizeGrid(a: A, coefficients: []const f64, divisions: u32, control: Control) Error!MaximumResult {
+    if (divisions == 0) return error.ExecError;
+    return maximum(a, coefficients, 0, divisions, null, control);
+}
+
+fn maximum(a: A, coefficients: []const f64, tolerance: f64, divisions: u32, test_size: ?f64, control: Control) Error!MaximumResult {
+    if (coefficients.len == 0) return error.ExecError;
     for (coefficients) |c| if (!std.math.isFinite(c) or c < 0 or c > 1) return error.ExecError;
     if (!control.take()) return .exhausted;
     var heap: std.ArrayList(Node) = .empty;
@@ -201,18 +222,23 @@ pub fn maximize(a: A, coefficients: []const f64, tolerance: f64, control: Contro
         heap.deinit(a);
     }
     const copy = try a.dupe(f64, coefficients);
-    push(a, &heap, .{ .coefficients = copy, .upper = largest(copy) }) catch |err| {
+    push(a, &heap, .{ .coefficients = copy, .upper = largest(copy), .last = divisions }) catch |err| {
         a.free(copy);
         return err;
     };
     const scratch = try a.alloc(f64, coefficients.len);
     defer a.free(scratch);
     var best = @max(coefficients[0], coefficients[coefficients.len - 1]);
+    var grid_index: ?u32 = if (divisions == 0) null else if (coefficients[0] >= coefficients[coefficients.len - 1]) 0 else divisions;
     while (heap.items.len > 0) {
         if (!control.take()) return .exhausted;
         const node = pop(&heap);
         defer a.free(node.coefficients);
-        if (node.upper - best <= tolerance) return .{ .complete = .{ .lower = best, .upper = @max(best, node.upper) } };
+        const decided = if (test_size) |size| best > size or node.upper <= size else false;
+        if (decided or node.upper - best <= tolerance) return .{ .complete = .{ .lower = best, .upper = @max(best, node.upper), .grid_index = grid_index } };
+        if (divisions != 0 and node.last - node.first <= 1) continue;
+        const mid = node.first + (node.last - node.first) / 2;
+        const fraction = if (divisions == 0) 0.5 else real(mid - node.first) / real(node.last - node.first);
         const left = try a.alloc(f64, coefficients.len);
         var left_owned = true;
         defer if (left_owned) a.free(left);
@@ -224,23 +250,26 @@ pub fn maximize(a: A, coefficients: []const f64, tolerance: f64, control: Contro
         right[right.len - 1] = scratch[scratch.len - 1];
         for (1..coefficients.len) |level| {
             if (!control.take()) return .exhausted;
-            for (0..coefficients.len - level) |i| scratch[i] = blend(scratch[i], scratch[i + 1], 0.5);
+            for (0..coefficients.len - level) |i| scratch[i] = blend(scratch[i], scratch[i + 1], fraction);
             left[level] = scratch[0];
             right[right.len - level - 1] = scratch[right.len - level - 1];
         }
-        best = @max(best, left[left.len - 1]);
+        if (left[left.len - 1] > best) {
+            best = left[left.len - 1];
+            if (divisions != 0) grid_index = mid;
+        }
         const upper_left = largest(left);
         const upper_right = largest(right);
         if (upper_left > best) {
-            try push(a, &heap, .{ .coefficients = left, .upper = upper_left });
+            try push(a, &heap, .{ .coefficients = left, .upper = upper_left, .first = node.first, .last = mid });
             left_owned = false;
         }
         if (upper_right > best) {
-            try push(a, &heap, .{ .coefficients = right, .upper = upper_right });
+            try push(a, &heap, .{ .coefficients = right, .upper = upper_right, .first = mid, .last = node.last });
             right_owned = false;
         }
     }
-    return .{ .complete = .{ .lower = best, .upper = best } };
+    return .{ .complete = .{ .lower = best, .upper = best, .grid_index = grid_index } };
 }
 
 // Test-only direct evaluation, independent of the diagonal construction.
@@ -440,4 +469,33 @@ test "exact polynomial validates shape and probability domains" {
     const result = (try maximize(a, constant.coefficients, 1e-13, .{})).complete;
     try std.testing.expectEqual(@as(f64, 1), result.lower);
     try std.testing.expectEqual(@as(f64, 1), result.upper);
+}
+
+test "discrete nuisance maximization searches only actual grid nodes" {
+    const a = std.testing.allocator;
+    const profiles = [_][]const f64{ &.{ 0, 1, 0 }, &.{ 0, 1, 0, 0.13, 0, 1, 0.01 }, &.{ 0.8, 0.1, 0.45 } };
+    for (profiles) |c| for ([_]u32{ 1, 2, 3, 20, 127 }) |n| {
+        var expected: f64 = 0;
+        for (0..n + 1) |i| expected = @max(expected, try evaluate(a, c, real(i) / real(n)));
+        const result = (try maximizeGrid(a, c, n, .{})).complete;
+        try std.testing.expectApproxEqAbs(expected, result.lower, 3e-15);
+        try std.testing.expectEqual(result.lower, result.upper);
+        try std.testing.expectApproxEqAbs(expected, try evaluate(a, c, real(result.grid_index.?) / real(n)), 3e-15);
+    };
+}
+
+test "inversion stops once Bernstein bounds decide the test at its stated size" {
+    const t = std.testing;
+    // f(q)=0.2+q-0.8q^2 reaches 0.5125 at q=5/8.
+    const coeff = [_]f64{ 0.2, 0.7, 0.4 };
+    const peak = 0.5125;
+    for ([_]f64{ 0, 0.15, 0.4, 0.50, 0.513, 0.55, 0.8, 1 }) |size| {
+        const bounds = (try maximumForTest(t.allocator, &coeff, 1e-13, size, .{})).complete;
+        try t.expect(bounds.lower <= peak + 1e-14 and bounds.upper >= peak - 1e-14);
+        if (peak > size) try t.expect(bounds.lower > size) else try t.expect(bounds.upper <= size);
+    }
+    const early = (try maximumForTest(t.allocator, &coeff, 1e-13, 0.15, .{})).complete;
+    try t.expect(early.upper - early.lower > 0.1);
+    const precise = (try maximize(t.allocator, &coeff, 1e-13, .{})).complete;
+    try t.expect(precise.upper - precise.lower <= 1e-13);
 }

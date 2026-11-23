@@ -1,0 +1,24 @@
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+
+Missing Values
+Missing Value  Count  Percent of All Obs  Percent of Missing Obs
+.  2  20.00  28.57
+A  3  30.00  42.86
+Z  2  20.00  28.57
+Total  7  70.00  100.00
+CODE . COUNT 2 ALL  20.00 MISSING  28.57
+CODE A COUNT 3 ALL  30.00 MISSING  42.86
+CODE Z COUNT 2 ALL  20.00 MISSING  28.57
+CODE 0 COUNT 7 ALL  70.00 MISSING 100.00
+                                 The UNIVARIATE Procedure
+
+Variable:  x
+
+
+Missing Values
+Missing Value  Count  Percent of All Obs  Percent of Missing Obs
+A  3  60.00  100.00
+CODE A COUNT 3 ALL  60.00 MISSING 100.00

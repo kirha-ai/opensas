@@ -1,0 +1,9 @@
+# corpus assertions
+row Threshold Theta -2~5.1e-07
+row Scale Sigma 5~5.1e-07
+row Shape Delta 0.816062~5.1e-07
+row Shape Gamma -0.71405~5.1e-07
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Delta {any}
+row-count 1 Shape Gamma {any}

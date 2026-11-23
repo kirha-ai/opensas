@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 0 Frequency
+stdout-count 0 Risk Estimates
+stdout-count 0 Equality Test
+stderr-count 1 The NULL= value for the RISKDIFF EQUAL test must be between -100 and 100.\nERROR: The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.\nERROR: The NULL= value for the RELRISK EQUAL test must be a positive number.

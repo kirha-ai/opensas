@@ -1,0 +1,3 @@
+# corpus assertions
+row RESIDUAL 0~1e-08 0.0~1e-08
+row-count 1 RESIDUAL {any} {any}

@@ -5469,7 +5469,7 @@ pub const Executor = struct {
         if (eqi(c.name, "ranuni")) { // CALL RANUNI(seed, x): x ~ U(0,1); seed updated in place
             if (c.args.len < 2) return;
             var st = seedState(toF64(try self.ev.eval(&c.args[0])));
-            const u = lehmerNext(&st);
+            const u = fns.classicUniform(&st);
             if (c.args[1] == .variable) try self.pdv.set(c.args[1].variable, .{ .num = u });
             if (c.args[0] == .variable) try self.pdv.set(c.args[0].variable, .{ .num = @floatFromInt(st) });
             return;
@@ -6107,7 +6107,7 @@ pub const Executor = struct {
         const vals = try self.gatherVals(c.args[1..]);
         var i = vals.len;
         while (i > 1) : (i -= 1) {
-            const j = @min(i - 1, @as(usize, @intFromFloat(lehmerNext(&st) * @as(f64, @floatFromInt(i)))));
+            const j = @min(i - 1, @as(usize, @intFromFloat(fns.classicUniform(&st) * @as(f64, @floatFromInt(i)))));
             std.mem.swap(Value, &vals[i - 1], &vals[j]);
         }
         try self.writeVals(c.args[1..], vals);
@@ -6124,8 +6124,8 @@ pub const Executor = struct {
         const n = vals.len;
         const kk = @min(combN(kf), n); // user k; out-of-range → 0 (BUG-combcallcrash)
         for (0..kk) |i| { // partial Fisher-Yates: choose the i-th of k
-            // lehmerNext ∈ [0,1) so this product is internally bounded [0, n-i) — no toInt guard needed.
-            const j = i + @as(usize, @intFromFloat(lehmerNext(&st) * @as(f64, @floatFromInt(n - i))));
+            // The uniform draw is in [0,1) so this product is internally bounded [0, n-i) — no toInt guard needed.
+            const j = i + @as(usize, @intFromFloat(fns.classicUniform(&st) * @as(f64, @floatFromInt(n - i))));
             std.mem.swap(Value, &vals[i], &vals[@min(j, n - 1)]);
         }
         if (comb) std.mem.sort(Value, vals[0..kk], {}, valLess);
@@ -7437,7 +7437,7 @@ pub const Executor = struct {
                         } else {
                             // explicit `put x fmt.` wins; otherwise honour the variable's
                             // associated FORMAT/ATTRIB format, else the default.
-                            try self.emitPutValue(val, ml.fmt orelse self.resolveFormat(v.name), pa.al);
+                            try self.emitListVariable(val, v.name, ml.fmt, pa.al);
                         }
                         need_space = true;
                         // LIST output: only an item with NO explicit format owes
@@ -7466,7 +7466,7 @@ pub const Executor = struct {
                         // explicit `put x= fmt.` wins; else the variable's attached
                         // FORMAT/ATTRIB format; else default (BUG-putnamedfmt).
                         const pa = peelAlign(n.fmt);
-                        try self.emitPutValue(val, pa.fmt orelse self.resolveFormat(n.name), pa.al);
+                        try self.emitListVariable(val, n.name, pa.fmt, pa.al);
                         need_space = true;
                         owe_blank = true; // named output is list-style (spaced like `x` alone)
                     }
@@ -7663,6 +7663,19 @@ pub const Executor = struct {
     /// when FILE DSD is on and the emitted text holds the delimiter or a quote,
     /// rewrap that slice in double quotes (doubling embedded quotes — CSV rules,
     /// SAS DSD semantics). Buffer-splice keeps emitField the single formatter.
+    fn emitListVariable(self: *Executor, val: Value, name: []const u8, explicit: ?[]const u8, al: PutAlign) Error!void {
+        const assigned = self.resolveFormat(name);
+        // List output strips numeric field padding from an attached format.
+        // An explicitly formatted PUT item retains the requested width.
+        if (explicit == null and al == .none and val == .num) {
+            if (assigned) |fmt| {
+                const rendered = try format.apply(self.arena, val, fmt);
+                return self.emitPutValue(.{ .str = std.mem.trim(u8, rendered, " ") }, null, .none);
+            }
+        }
+        try self.emitPutValue(val, explicit orelse assigned, al);
+    }
+
     fn emitPutValue(self: *Executor, val: Value, fmt: ?[]const u8, al: PutAlign) Error!void {
         const raw = try self.emitFieldText(val, fmt, al);
         const f = self.file orelse return self.putWriteSlice(raw);
@@ -8817,15 +8830,16 @@ fn numLessMissingFirst(_: void, a: f64, b: f64) bool {
 fn seedState(seed: f64) u64 {
     return if (seed > 0 and seed < 2147483647) @intFromFloat(@trunc(seed)) else 1;
 }
-fn lehmerNext(st: *u64) f64 {
-    st.* = (16807 * st.*) % 2147483647; // SAS Lehmer/MINSTD (BUG-ranseq)
+// These CALL transforms still use their historical approximations. Preserve
+// their reproducible outputs until native distribution algorithms replace them.
+fn approximationUniform(st: *u64) f64 {
+    st.* = (16807 * st.*) % 2147483647;
     return @as(f64, @floatFromInt(st.*)) / 2147483647.0;
 }
 
-/// One standard-normal draw (Box-Muller) from a Lehmer seed state.
-fn normalVariate(st: *u64) f64 {
-    const ua = lehmerNext(st);
-    const ub = lehmerNext(st);
+fn normalVariate(st: *u64, comptime draw: fn (*u64) f64) f64 {
+    const ua = draw(st);
+    const ub = draw(st);
     return @sqrt(-2.0 * @log(ua)) * @cos(2.0 * std.math.pi * ub);
 }
 
@@ -8834,30 +8848,30 @@ fn gammaVariate(st: *u64, a: f64) f64 {
     var boost: f64 = 1;
     var aa = a;
     if (a < 1) {
-        boost = std.math.pow(f64, lehmerNext(st), 1.0 / a);
+        boost = std.math.pow(f64, approximationUniform(st), 1.0 / a);
         aa = a + 1;
     }
     const d = aa - 1.0 / 3.0;
     const cc = 1.0 / @sqrt(9.0 * d);
     while (true) {
-        const z = normalVariate(st);
+        const z = normalVariate(st, approximationUniform);
         const v3 = 1.0 + cc * z;
         if (v3 <= 0) continue;
         const v = v3 * v3 * v3;
-        if (@log(lehmerNext(st)) < 0.5 * z * z + d - d * v + d * @log(v)) return d * v * boost;
+        if (@log(approximationUniform(st)) < 0.5 * z * z + d - d * v + d * @log(v)) return d * v * boost;
     }
 }
 
 /// The variate for a CALL RANxxx routine given its seed state and evaluated params.
-/// Mirrors the ranXXX function transforms (functions.zig) over the same Lehmer stream.
+/// The validated classical transforms use the same stream as CALL RANUNI.
 fn ranVariate(st: *u64, name: []const u8, p: []const f64) f64 {
     const eq = std.ascii.eqlIgnoreCase;
-    if (eq(name, "ranexp")) return -@log(lehmerNext(st));
-    if (eq(name, "rancau")) return @tan(std.math.pi * (lehmerNext(st) - 0.5));
-    if (eq(name, "rannor")) return normalVariate(st);
+    if (eq(name, "ranexp")) return -@log(fns.classicUniform(st));
+    if (eq(name, "rancau")) return @tan(std.math.pi * (approximationUniform(st) - 0.5));
+    if (eq(name, "rannor")) return normalVariate(st, fns.classicUniform);
     if (eq(name, "rantri")) {
         const h = if (p.len > 0) p[0] else 0.5;
-        const u = lehmerNext(st);
+        const u = fns.classicUniform(st);
         return if (u < h) @sqrt(u * h) else 1.0 - @sqrt((1.0 - u) * (1.0 - h));
     }
     if (eq(name, "ranpoi")) {
@@ -8866,7 +8880,7 @@ fn ranVariate(st: *u64, name: []const u8, p: []const f64) f64 {
         var k: f64 = 0;
         var pr: f64 = 1;
         while (true) {
-            pr *= lehmerNext(st);
+            pr *= approximationUniform(st);
             if (pr <= lim) break;
             k += 1;
         }
@@ -8877,13 +8891,13 @@ fn ranVariate(st: *u64, name: []const u8, p: []const f64) f64 {
         const pp = if (p.len > 1) p[1] else 0;
         var cnt: f64 = 0;
         var i: usize = 0;
-        while (i < n) : (i += 1) if (lehmerNext(st) < pp) {
+        while (i < n) : (i += 1) if (approximationUniform(st) < pp) {
             cnt += 1;
         };
         return cnt;
     }
     if (eq(name, "rantbl")) {
-        const u = lehmerNext(st);
+        const u = fns.classicUniform(st);
         var cum: f64 = 0;
         for (p, 1..) |pv, idx| {
             cum += pv;

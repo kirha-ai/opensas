@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 PROC CORR: unsupported option or statement blablax
+stderr-count 0 WARNING:
+stdout-count 0 The CORR Procedure

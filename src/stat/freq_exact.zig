@@ -2,7 +2,6 @@
 //! These kernels do not accept SAS syntax or render output. Counts must already
 //! reflect the table layer's ordering, missing-value, and weight policies.
 const std = @import("std");
-const math = @import("../functions.zig");
 pub const Error = @import("../diag.zig").Error;
 pub const Interval = struct { lower: f64, upper: f64 };
 pub const OddsResult = union(enum) { complete: Interval, exhausted };
@@ -29,23 +28,103 @@ pub const Control = struct {
 fn validAlpha(alpha: f64) bool {
     return std.math.isFinite(alpha) and alpha > 0 and alpha < 1;
 }
-fn choose(n: f64, k: f64) f64 {
-    return math.lgammaOf(n + 1) - math.lgammaOf(k + 1) - math.lgammaOf(n - k + 1);
+/// Stirling's remainder log(n!) - (n+1/2)log(n) + n - log(2*pi)/2.
+fn factorialRemainder(n: u32) f64 {
+    const x: f64 = @floatFromInt(n);
+    if (n < 10) {
+        var factorial: u32 = 1;
+        for (2..@as(usize, n) + 1) |i| factorial *= @intCast(i);
+        return @log(@as(f64, @floatFromInt(factorial))) - (x + 0.5) * @log(x) + x - 0.5 * @log(@as(f64, 2 * std.math.pi));
+    }
+    // The first omitted term is bounded by 7/(1092*n^13) for n >= 10.
+    const u = 1 / (x * x);
+    return (1.0 / 12.0 - u * (1.0 / 360.0 - u * (1.0 / 1260.0 - u * (1.0 / 1680.0 - u * (1.0 / 1188.0 - u * (691.0 / 360360.0)))))) / x;
 }
 
-/// Inclusive tails; exposed separately for noninferiority/equivalence callers.
-/// Compute each tail directly (never subtract a nearly-one CDF).
+/// log(n!) - n*log(n) + n, with 0*log(0) defined by continuity.
+pub fn logFactorialCorrection(n: u32) f64 {
+    if (n == 0) return 0;
+    return 0.5 * @log(@as(f64, 2 * std.math.pi) * @as(f64, @floatFromInt(n))) + factorialRemainder(n);
+}
+
+/// x*log(x/mean) - (x-mean), with its even-power expansion near the mean.
+pub fn poissonDeviance(x: f64, mean: f64, delta: f64) f64 {
+    if (x == 0) return mean;
+    if (mean == 0 or !std.math.isFinite(mean) or !std.math.isFinite(delta)) return std.math.inf(f64);
+    if (delta == 0) return 0;
+    const scale = x + mean;
+    const v = if (std.math.isFinite(scale)) delta / scale else (0.5 * delta) / (0.5 * x + 0.5 * mean);
+    if (@abs(v) > 0.125) {
+        const ratio = x / mean;
+        const log_ratio = if (ratio > 0 and std.math.isFinite(ratio)) @log(ratio) else @log(x) - @log(mean);
+        const product = x * log_ratio;
+        return if (std.math.isFinite(product)) product - delta else x * (log_ratio - delta / x);
+    }
+    const v2 = v * v;
+    var term = (2 * v) * x;
+    var sum = delta * v;
+    var denominator: f64 = 3;
+    while (true) : (denominator += 2) {
+        term *= v2;
+        const next = sum + term / denominator;
+        if (next == sum) return sum;
+        sum = next;
+    }
+}
+
+/// Log probability of k successes for 0 < p < 1, including an empty split.
+pub fn binomialLogPoint(k: u32, n: u32, p: f64) f64 {
+    const total: f64 = @floatFromInt(n);
+    if (k == 0) return total * std.math.log1p(-p);
+    if (k == n) return total * @log(p);
+    const successes: f64 = @floatFromInt(k);
+    const failures: f64 = @floatFromInt(n - k);
+    const small = @min(successes, failures);
+    const delta = @mulAdd(f64, -total, p, successes);
+    return factorialRemainder(n) - factorialRemainder(k) - factorialRemainder(n - k) -
+        poissonDeviance(successes, total * p, delta) - poissonDeviance(failures, total * (1 - p), -delta) -
+        0.5 * (@log(@as(f64, 2 * std.math.pi)) + @log(small) + std.math.log1p(-small / total));
+}
+
+/// Inclusive binomial tails. Start at the observed mass and sum away from
+/// the mode. Ratios decrease on that side, so a geometric series bounds
+/// the unvisited mass. The opposite inclusive tail excludes only strict mass.
 pub fn binomialTails(k: u32, n: u32, p: f64) Error!Tails {
+    return (try binomialTailsControlled(k, n, p, .{})).?;
+}
+pub fn binomialTailsControlled(k: u32, n: u32, p: f64, control: Control) Error!?Tails {
     if (n == 0 or k > n or !std.math.isFinite(p) or p < 0 or p > 1) return error.ExecError;
+    if (control.stopped()) return null;
     if (p == 0) return .{ .point = if (k == 0) 1 else 0, .left = 1, .right = if (k == 0) 1 else 0 };
     if (p == 1) return .{ .point = if (k == n) 1 else 0, .left = if (k == n) 1 else 0, .right = 1 };
-    const nf: f64 = @floatFromInt(n);
-    const kf: f64 = @floatFromInt(k);
-    return .{
-        .point = @min(1, @exp(choose(nf, kf) + kf * @log(p) + (nf - kf) * std.math.log1p(-p))),
-        .left = if (k == n) 1 else math.betaI(1 - p, nf - kf, kf + 1),
-        .right = if (k == 0) 1 else math.betaI(p, kf, nf - kf + 1),
-    };
+    const total: f64 = @floatFromInt(n);
+    const log_point = binomialLogPoint(k, n, p);
+    const point = @exp(log_point);
+    if (k == 0 or k == n) return .{ .point = point, .left = if (k == 0) point else 1, .right = if (k == 0) 1 else point };
+    if (p == 0.5 and k == n - k) {
+        const symmetric = (1 + point) / 2;
+        return .{ .point = point, .left = symmetric, .right = symmetric };
+    }
+    const down = @as(f64, @floatFromInt(k)) < (total + 1) * p;
+    const odds = if (down) (1 - p) / p else p / (1 - p);
+    var i = if (down) k else n - k;
+    var relative: f64 = 1;
+    var beyond: f64 = 0;
+    var compensation: f64 = 0;
+    while (i > 0) : (i -= 1) {
+        if (control.stopped()) return null;
+        const x: f64 = @floatFromInt(i);
+        const ratio = x / (total - x + 1) * odds;
+        relative *= ratio;
+        const corrected = relative - compensation;
+        const next = beyond + corrected;
+        compensation = (next - beyond) - corrected;
+        beyond = next;
+        if (relative * ratio <= std.math.floatEps(f64) * (1 - ratio) * (1 + beyond)) break;
+    }
+    const included = @min(1, @exp(log_point + std.math.log1p(beyond)));
+    const complement = if (beyond == 0) 1 else -std.math.expm1(@min(0, log_point + @log(beyond)));
+    return .{ .point = point, .left = if (down) included else complement, .right = if (down) complement else included };
 }
 
 /// SAS/STAT FREQ pp.176,179–180: equal-tail Clopper-Pearson or mid-p
@@ -58,7 +137,7 @@ pub fn binomial(k: u32, n: u32, p0: f64, alpha: f64, midp: bool) Error!Binomial 
 pub fn binomialControlled(k: u32, n: u32, p0: f64, alpha: f64, midp: bool, control: Control) Error!BinomialResult {
     if (!validAlpha(alpha)) return error.ExecError;
     if (control.stopped()) return .exhausted;
-    const tails = try binomialTails(k, n, p0);
+    const tails = (try binomialTailsControlled(k, n, p0, control)) orelse return .exhausted;
     const one = @min(tails.left, tails.right);
     var limits = Interval{ .lower = 0, .upper = 1 };
     if (k > 0) limits.lower = (try binomialLimitControlled(k, n, alpha / 2, midp, true, control)) orelse return .exhausted;
@@ -77,20 +156,21 @@ pub fn binomialOneSidedLimits(k: u32, n: u32, alpha: f64, control: Control) Erro
     return .{ .complete = limits };
 }
 
-fn binomialLimit(k: u32, n: u32, target: f64, midp: bool, lower: bool) Error!f64 {
-    return (try binomialLimitControlled(k, n, target, midp, lower, .{})).?;
-}
 fn binomialLimitControlled(k: u32, n: u32, target: f64, midp: bool, lower: bool, control: Control) Error!?f64 {
+    if (control.stopped()) return null;
+    if ((lower and k == n) or (!lower and k == 0)) {
+        const log_tail = @log(if (midp) 2 * target else target) / @as(f64, @floatFromInt(n));
+        return if (lower) @exp(log_tail) else -std.math.expm1(log_tail);
+    }
     var lo: f64 = 0;
     var hi: f64 = 1;
-    for (0..80) |_| {
-        if (control.stopped()) return null;
+    while (true) {
         const p = (lo + hi) / 2;
-        const t = try binomialTails(k, n, p);
+        if (p == lo or p == hi) return p;
+        const t = (try binomialTailsControlled(k, n, p, control)) orelse return null;
         const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
         if ((tail < target) == lower) lo = p else hi = p;
     }
-    return (lo + hi) / 2;
 }
 
 /// Noncentral hypergeometric support for a row-major 2x2 table. A maximum
@@ -118,35 +198,75 @@ pub const OddsDistribution = struct {
         if (@min(row, col) > std.math.maxInt(u32)) return error.ExecError;
         return .{ .lo = @intCast((row + col) -| total), .hi = @intCast(@min(row, col)), .observed = cells[0], .row = row, .col = col, .total = total };
     }
-    pub fn logWeight(self: OddsDistribution, x: u32, log_odds: f64) f64 {
-        const xf: f64 = @floatFromInt(x);
-        const rf: f64 = @floatFromInt(self.row);
-        const cf: f64 = @floatFromInt(self.col);
-        const nf: f64 = @floatFromInt(self.total);
-        return choose(cf, xf) + choose(nf - cf, rf - xf) + @as(f64, @floatFromInt(x - self.lo)) * log_odds;
+    // Ratio of adjacent noncentral hypergeometric weights. All four counts
+    // are positive here, including when the lower support is nonzero.
+    fn logStep(self: OddsDistribution, x: u32, log_odds: f64) f64 {
+        const right_top: f64 = @floatFromInt(self.row - x);
+        const left_bottom: f64 = @floatFromInt(self.col - x);
+        const left_top: f64 = @floatFromInt(@as(u64, x) + 1);
+        const right_bottom: f64 = @floatFromInt((self.total - self.col) - (self.row - x) + 1);
+        return @log((right_top / left_top) * (left_bottom / right_bottom)) + log_odds;
+    }
+    pub fn mode(self: OddsDistribution, log_odds: f64) u32 {
+        var lo = self.lo;
+        var hi = self.hi;
+        while (lo < hi) {
+            const x = lo + (hi - lo) / 2;
+            if (self.logStep(x, log_odds) > 0) lo = x + 1 else hi = x;
+        }
+        return lo;
+    }
+    /// Compute central log masses on a contiguous support relative to pivot.
+    /// Each stratum's constant factor cancels in both COMOR and Zelen.
+    pub fn centralLogWeights(self: OddsDistribution, lower: u32, values: []f64, pivot: u32, control: Control) bool {
+        const center: usize = pivot - lower;
+        values[center] = 0;
+        for (center + 1..values.len) |i| {
+            if (control.stopped()) return false;
+            values[i] = values[i - 1] + self.logStep(lower + @as(u32, @intCast(i - 1)), 0);
+        }
+        var i = center;
+        while (i > 0) {
+            if (control.stopped()) return false;
+            i -= 1;
+            values[i] = values[i + 1] - self.logStep(lower + @as(u32, @intCast(i)), 0);
+        }
+        return true;
     }
     pub fn tails(self: OddsDistribution, log_odds: f64, max_support: u64) Error!Tails {
         return (try self.tailsControlled(log_odds, max_support, .{})).?;
     }
     pub fn tailsControlled(self: OddsDistribution, log_odds: f64, max_support: u64, control: Control) Error!?Tails {
         if (!std.math.isFinite(log_odds) or @as(u64, self.hi) - self.lo + 1 > max_support) return error.ExecError;
-        // Normalize with log-sum-exp, retaining precision at extreme odds.
-        var peak: f64 = -std.math.inf(f64);
-        var x: u64 = self.lo;
-        while (x <= self.hi) : (x += 1) {
-            if (control.stopped()) return null;
-            peak = @max(peak, self.logWeight(@intCast(x), log_odds));
-        }
+        if (control.stopped()) return null;
+        // Starting at a mode keeps every relative weight at most one and
+        // avoids cancellation between log-gamma values of large margins.
+        const pivot = self.mode(log_odds);
         var total: f64 = 0;
         var out = Tails{ .point = 0, .left = 0, .right = 0 };
-        x = self.lo;
-        while (x <= self.hi) : (x += 1) {
-            if (control.stopped()) return null;
-            const w = @exp(self.logWeight(@intCast(x), log_odds) - peak);
-            total += w;
-            if (x == self.observed) out.point = w;
-            if (x <= self.observed) out.left += w;
-            if (x >= self.observed) out.right += w;
+        for ([_]bool{ true, false }) |right| {
+            var x = pivot;
+            var log_weight: f64 = 0;
+            while (true) {
+                if (control.stopped()) return null;
+                const w = @exp(log_weight);
+                if (w == 0) break;
+                if (right or x != pivot) {
+                    total += w;
+                    if (x == self.observed) out.point = w;
+                    if (x <= self.observed) out.left += w;
+                    if (x >= self.observed) out.right += w;
+                }
+                if (right) {
+                    if (x == self.hi) break;
+                    log_weight += self.logStep(x, log_odds);
+                    x += 1;
+                } else {
+                    if (x == self.lo) break;
+                    x -= 1;
+                    log_weight -= self.logStep(x, log_odds);
+                }
+            }
         }
         out.point /= total;
         out.left /= total;
@@ -168,18 +288,30 @@ pub fn oddsRatioControlled(cells: [4]u32, alpha: f64, midp: bool, max_support: u
     const boundary = d.observed == d.lo or d.observed == d.hi;
     const target = if (boundary) alpha else alpha / 2;
     var limits = Interval{ .lower = 0, .upper = std.math.inf(f64) };
-    if (d.observed != d.lo) limits.lower = (try oddsLimit(d, target, midp, true, max_support, control)) orelse return .exhausted;
-    if (d.observed != d.hi) limits.upper = (try oddsLimit(d, target, midp, false, max_support, control)) orelse return .exhausted;
+    if (d.observed != d.lo) limits.lower = (try invertOddsTail(d, target, midp, true, max_support, control)) orelse return .exhausted;
+    if (d.observed != d.hi) limits.upper = (try invertOddsTail(d, target, midp, false, max_support, control)) orelse return .exhausted;
     return .{ .complete = limits };
 }
 
-fn oddsLimit(d: OddsDistribution, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
-    // u32 counts imply finite nonstructural roots well inside exp(±128).
-    var lo: f64 = -128;
-    var hi: f64 = 128;
+pub fn invertOddsTail(d: anytype, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
+    var lo: f64 = -1;
+    var hi: f64 = 1;
+    // The confidence level also determines the bracket. A table with two
+    // feasible outcomes alone can have a finite upper limit of 1/alpha - 1.
+    for ([_]bool{ false, true }) |right| {
+        const edge = if (right) &hi else &lo;
+        while (true) {
+            const t = (try d.tailsControlled(edge.*, budget, control)) orelse return null;
+            const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
+            if (((tail < target) == lower) != right) break;
+            if (right and std.math.isInf(@exp(edge.*))) return std.math.inf(f64);
+            if (!right and @exp(edge.*) == 0) return 0;
+            edge.* *= 2;
+        }
+    }
     for (0..80) |_| {
-        if (control.stopped()) return null;
         const m = (lo + hi) / 2;
+        if (m == lo or m == hi) break;
         const t = (try d.tailsControlled(m, budget, control)) orelse return null;
         const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
         if ((tail < target) == lower) lo = m else hi = m;
@@ -212,6 +344,69 @@ test "exact binomial inclusive tails, boundary limits and invalid inputs" {
     try t.expectEqual(@as(f64, 1), certainty.point);
 }
 
+test "exact binomial mass and tails match independent integer sums" {
+    const t = std.testing;
+    for (1..17) |size| {
+        const n: u32 = @intCast(size);
+        for (1..4) |numerator| {
+            const p = @as(f64, @floatFromInt(numerator)) / 4;
+            var coefficients: [17]u64 = @splat(0);
+            var choose: u64 = 1;
+            for (0..size + 1) |i| {
+                coefficients[i] = choose * std.math.pow(u64, numerator, i) * std.math.pow(u64, 4 - numerator, size - i);
+                choose = choose * (size - i) / (i + 1);
+            }
+            const denominator: f64 = @floatFromInt(std.math.pow(u64, 4, size));
+            var left: u64 = 0;
+            for (coefficients[0 .. size + 1], 0..) |weight, i| {
+                const upper_numerator = @as(u64, @intFromFloat(denominator)) - left;
+                left += weight;
+                const tails = try binomialTails(@intCast(i), n, p);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(weight)) / denominator, tails.point, 2e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(left)) / denominator, tails.left, 2e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(upper_numerator)) / denominator, tails.right, 2e-14);
+            }
+        }
+    }
+}
+
+test "wide exact binomial central and rare probabilities retain both inclusive tails" {
+    const t = std.testing;
+    const n = 2_000_000_000;
+    // C(2m,m)/4^m = (1-1/(8m)+1/(128m^2)+O(m^-3))/sqrt(pi*m).
+    const middle = try binomialTails(n / 2, n, 0.5);
+    const point: f64 = 0.00001784124115929755600033808453;
+    try t.expectApproxEqRel(point, middle.point, 2e-14);
+    try t.expectApproxEqAbs((1 + point) / 2, middle.left, 2e-14);
+    try t.expectEqual(middle.left, middle.right);
+    const neighbor = try binomialTails(n / 2 - 1, n, 0.5);
+    try t.expectApproxEqAbs((1 - point) / 2, neighbor.left, 2e-14);
+    // For k=1, the two masses are (1-p)^n and n*p*(1-p)^(n-1).
+    const rare = try binomialTails(1, n, 5e-10);
+    try t.expectApproxEqRel(@as(f64, 0.36787944126341218), rare.point, 2e-14);
+    try t.expectApproxEqRel(@as(f64, 0.73575888234288464), rare.left, 2e-14);
+    try t.expectApproxEqRel(@as(f64, 0.63212055892052754), rare.right, 2e-14);
+    const boundary = try binomialTails(0, n, 1e-16);
+    try t.expectEqual(boundary.point, boundary.left);
+    try t.expectApproxEqRel(@as(f64, 0.9999998000000200), boundary.left, 2e-15);
+    const Timer = struct {
+        remaining: usize,
+        fn expired(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            if (self.remaining == 0) return true;
+            self.remaining -= 1;
+            return false;
+        }
+    };
+    var timer = Timer{ .remaining = 10 };
+    try t.expect((try binomialTailsControlled(n / 2 - 1, n, 0.5, .{ .context = &timer, .expired = Timer.expired })) == null);
+    const single = try binomial(1, 1, 0.5, 1e-100, false);
+    try t.expectApproxEqRel(@as(f64, 5e-101), single.limits.lower, 5e-14);
+    const first = try binomial(1, 2, 0.5, 1e-100, false);
+    // 1-(1-p)^2=alpha/2. The endpoint is alpha/4 at this precision.
+    try t.expectApproxEqRel(@as(f64, 2.5e-101), first.limits.lower, 5e-14);
+}
+
 test "conditional odds tails, reciprocal intervals, zero cells and resource budget" {
     const t = std.testing;
     const d = try OddsDistribution.init(.{ 1, 9, 11, 3 });
@@ -236,6 +431,34 @@ test "conditional odds tails, reciprocal intervals, zero cells and resource budg
     try t.expectApproxEqAbs(@as(f64, 0.05), (try zd.tails(@log(zero.upper), 100)).left, 1e-12);
     try t.expect((try oddsRatio(.{ 1, 9, 11, 3 }, 0.05, false, 5)) == .exhausted);
     try t.expectError(error.ExecError, OddsDistribution.init(.{ 0, 0, 1, 2 }));
+}
+
+test "conditional odds limits retain sparse wide margins and extreme confidence levels" {
+    const t = std.testing;
+    // The four possible weights at odds theta are
+    // C(A+1,x) C(3,3-x) theta^x for A=2e9 and x=0,1,2,3.
+    // Independently invert those four integer coefficients at 95-digit precision.
+    const wide = [4]u32{ 1, 2, 2_000_000_000, 1 };
+    const reversed = [4]u32{ 2, 1, 1, 2_000_000_000 };
+    for ([_]bool{ false, true }, [_]Interval{
+        .{ .lower = 4.2553788979219666e-12, .upper = 1.1283469174905303e-8 },
+        .{ .lower = 8.619148326189801e-12, .upper = 7.469988112533252e-9 },
+    }) |midp, reference| {
+        const interval = (try oddsRatio(wide, 0.05, midp, 4)).complete;
+        const flipped = (try oddsRatio(reversed, 0.05, midp, 4)).complete;
+        try t.expectApproxEqRel(reference.lower, interval.lower, 2e-14);
+        try t.expectApproxEqRel(reference.upper, interval.upper, 2e-14);
+        try t.expectApproxEqRel(1 / reference.upper, flipped.lower, 2e-14);
+        try t.expectApproxEqRel(1 / reference.lower, flipped.upper, 2e-14);
+        // For a support of two with equal central weights, the upper tail at
+        // the lower boundary is 1/(1+theta), or half that when using mid-p.
+        const alpha = 1e-100;
+        const extreme = (try oddsRatio(.{ 0, 1, 1, 0 }, alpha, midp, 2)).complete;
+        const reciprocal = (try oddsRatio(.{ 1, 0, 0, 1 }, alpha, midp, 2)).complete;
+        const upper = (if (midp) @as(f64, 0.5) else 1) / alpha - 1;
+        try t.expectApproxEqRel(upper, extreme.upper, 8e-14);
+        try t.expectApproxEqRel(1 / upper, reciprocal.lower, 8e-14);
+    }
 }
 
 test "exact public count conversion never truncates or overflows" {
@@ -288,16 +511,23 @@ pub fn binomialBlakerControlled(k: u32, n: u32, alpha: f64, control: Control) Er
     const upper = 1 - ((try blakerLower(n - k, n, alpha, control)) orelse return .exhausted);
     return .{ .complete = .{ .lower = lower, .upper = upper } };
 }
+fn beforeBlakerJump(k: u32, n: u32, opposite: u32, p: f64, control: Control) Error!?f64 {
+    const observed = (try binomialTailsControlled(k, n, p, control)) orelse return null;
+    if (opposite == 0) return observed.right;
+    const other = (try binomialTailsControlled(opposite - 1, n, p, control)) orelse return null;
+    return observed.right + other.left;
+}
 fn blakerLower(k: u32, n: u32, alpha: f64, control: Control) Error!?f64 {
     if (k == 0) return 0;
     const cp = (try binomialLimitControlled(k, n, alpha / 2, false, true, control)) orelse return null;
-    const gamma = (try binomialTails(k, n, cp)).right;
+    const at_cp = (try binomialTailsControlled(k, n, cp, control)) orelse return null;
     var first: u64 = 0;
     var end: u64 = k;
     while (first < end) {
         if (control.stopped()) return null;
         const mid = (first + end) / 2;
-        if ((try binomialTails(@intCast(mid), n, cp)).left <= gamma) first = mid + 1 else end = mid;
+        const opposite = (try binomialTailsControlled(@intCast(mid), n, cp, control)) orelse return null;
+        if (opposite.left <= at_cp.right) first = mid + 1 else end = mid;
     }
     // first is the next left-tail count to enter the acceptability sum.
     const next: u32 = @intCast(first);
@@ -306,17 +536,19 @@ fn blakerLower(k: u32, n: u32, alpha: f64, control: Control) Error!?f64 {
     for (0..80) |_| {
         if (control.stopped()) return null;
         const mid = (lo + hi) / 2;
-        if ((try binomialTails(next, n, mid)).left > (try binomialTails(k, n, mid)).right) lo = mid else hi = mid;
+        const opposite = (try binomialTailsControlled(next, n, mid, control)) orelse return null;
+        const observed = (try binomialTailsControlled(k, n, mid, control)) orelse return null;
+        if (opposite.left > observed.right) lo = mid else hi = mid;
     }
     const jump = (lo + hi) / 2;
-    const before = (try binomialTails(k, n, jump)).right + (if (next == 0) @as(f64, 0) else (try binomialTails(next - 1, n, jump)).left);
+    const before = (try beforeBlakerJump(k, n, next, jump, control)) orelse return null;
     if (before <= alpha) return jump;
     lo = cp;
     hi = jump;
     for (0..80) |_| {
         if (control.stopped()) return null;
         const mid = (lo + hi) / 2;
-        const probability = (try binomialTails(k, n, mid)).right + (if (next == 0) @as(f64, 0) else (try binomialTails(next - 1, n, mid)).left);
+        const probability = (try beforeBlakerJump(k, n, next, mid, control)) orelse return null;
         if (probability <= alpha) lo = mid else hi = mid;
     }
     return (lo + hi) / 2;

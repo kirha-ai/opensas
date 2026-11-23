@@ -1,0 +1,12 @@
+# corpus assertions
+row Case univ_vardef_df
+row VAR 5.666666666666667~5.1e-05
+row Case univ_vardef_n
+row VAR 3.7777777777777777~5.1e-05
+row Case univ_vardef_wdf
+row VAR 2.2666666666666666~5.1e-05
+row Case univ_vardef_weight
+row VAR 1.8888888888888888~5.1e-05
+row Case univ_vardef_wgt
+row VAR 1.8888888888888888~5.1e-05
+row-count 5 VAR {any}

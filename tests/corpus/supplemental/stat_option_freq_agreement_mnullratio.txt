@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 Null Ratio                     2.0000
+row McNemar's Test
+row 0.0313~5.1e-05 1~5.1e-05 0.8597~5.1e-05

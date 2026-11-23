@@ -1,0 +1,23 @@
+# corpus assertions
+row Case univ_class_special_plain_missing_formatted
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 2~5.1e-05 68~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row GROUP 1~5.1e-05 32~5.1e-05
+row Case univ_class_special_plain_missing_freq
+row GROUP 2~5.1e-05 68~5.1e-05
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row GROUP 1~5.1e-05 32~5.1e-05
+row Case univ_class_special_plain_missing_internal
+row GROUP 1~5.1e-05 32~5.1e-05
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row GROUP 2~5.1e-05 68~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row-count 18 GROUP {any} {any}

@@ -1,0 +1,3 @@
+# corpus assertions
+row Exact Pr >= Statistic 1.0000
+row-count 1 Exact Pr >= Statistic {any}

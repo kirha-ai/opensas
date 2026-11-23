@@ -7,6 +7,7 @@ const Value = @import("../value.zig").Value;
 const grid = @import("univ_kernel_grid.zig");
 pub const Options = grid.Options;
 pub const Report = grid.Report;
+pub const DisplayExtent = grid.DisplayExtent;
 
 pub fn create(a: std.mem.Allocator, source: *Dataset, keys: []const usize, variable_length: usize, scale: kernel.VScale) !*Dataset {
     const output = try a.create(Dataset);
@@ -48,11 +49,12 @@ pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []
 /// Keep this separate from the mathematical estimator's stricter input API.
 pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: kernel.Request) diag.Error!kernel.Estimate {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty kernel output sample", .{});
+    if (request.bandwidth == .sjpi) return kernel.fit(d, x, iqr, request);
     const range = x[x.len - 1] - x[0];
     const effective = if (iqr > 0) iqr else if (range > 0) range else 1;
     var estimate = if (x.len > 1) try kernel.fit(d, x, effective, request) else try kernel.fit(d, &.{ x[0], x[0] }, effective, request);
     if (x.len == 1) {
-        estimate.bandwidth *= std.math.pow(f64, 2, 0.2);
+        estimate.bandwidth = estimate.c * effective;
         estimate.amise *= std.math.pow(f64, 2, 0.8);
     }
     if (request.bandwidth == .mise) {
@@ -60,21 +62,61 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
         // both the output descriptor and the evaluated kernel bandwidth.
         const factor = std.math.pow(f64, 10, 7 - @floor(@log10(estimate.c)));
         const c = @round(estimate.c * factor) / factor;
-        const h = c * effective * std.math.pow(f64, @as(f64, @floatFromInt(x.len)), -0.2);
+        const h = c * kernel.bandwidthScale(effective, @floatFromInt(x.len));
         const ratio = h / estimate.bandwidth;
         estimate.amise *= (std.math.pow(f64, ratio, 4) + 4 / ratio) / 5;
         estimate.c = c;
         estimate.bandwidth = h;
     }
+    // With no observed range the effective unit scale is independent of
+    // the sample size. M9 reports the reference AMISE on that unit scale.
+    if (range == 0) estimate.amise *= std.math.pow(f64, @as(f64, @floatFromInt(x.len)), 0.2);
     return estimate;
 }
 
-pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, iqr: f64, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
-    if (options.report) |report| report.* = .{};
+pub const Prepared = struct { iqr: f64, estimates: []const kernel.Estimate };
+
+pub fn prepare(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, iqr: f64, requests: []const kernel.Request, defer_constant_warning: bool) diag.Error!Prepared {
     const effective_requests: []const kernel.Request = if (requests.len == 0) &.{.{}} else requests;
-    const estimates = try output.arena.alloc(kernel.Estimate, effective_requests.len);
-    for (effective_requests, estimates) |request, *estimate| estimate.* = try fitForOutput(d, x, iqr, request);
-    return appendEstimates(d, output, source, keys, representative, ci, x, estimates, endpoints, scale, options);
+    var estimates: std.ArrayList(kernel.Estimate) = .empty;
+    for (effective_requests) |request| {
+        if (request.bandwidth == .sjpi and x.len > 0 and x[0] == x[x.len - 1] and defer_constant_warning) continue;
+        const estimate = if (request.bandwidth == .sjpi)
+            try kernel.fitSjpi(d, x, iqr, request) orelse continue
+        else
+            try fitForOutput(d, x, iqr, request);
+        try estimates.append(a, estimate);
+    }
+    return .{ .iqr = iqr, .estimates = estimates.items };
+}
+
+pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, iqr: f64, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
+    const prepared = try prepare(output.arena, d, x, iqr, requests, options.note_prefix != null);
+    return appendPrepared(d, output, source, keys, representative, ci, x, prepared, requests, endpoints, scale, options);
+}
+
+pub fn appendPrepared(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, prepared: Prepared, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
+    if (options.report) |report| report.* = .{};
+    if (x.len > 0 and prepared.iqr == 0) if (options.note_prefix) |prefix| {
+        const article = if (prefix.len == 0) "The" else "the";
+        try d.note(0, "{s}{s} interquartile range is zero.", .{ prefix, article });
+        try d.note(0, "The range will be used so that a smoothing parameter can be computed.", .{});
+        if (x[0] == x[x.len - 1]) {
+            if (prefix.len == 0) {
+                try d.note(0, "The range of the data is zero.", .{});
+            } else {
+                try d.note(0, "{s}the interquartile range is zero.", .{prefix});
+            }
+            try d.note(0, "A value of one will be used so a smoothing parameter can be computed.", .{});
+        }
+    };
+    for (requests) |request| {
+        if (request.bandwidth == .sjpi and x.len > 0 and x[0] == x[x.len - 1]) if (options.note_prefix) |prefix| {
+            const article = if (prefix.len == 0) "The" else "the";
+            try d.warn(0, "{s}{s} kernel density estimate for c=SJPI could not be computed for {s} since its standard deviation is zero.", .{ prefix, article, source.columns.items[ci].name });
+        };
+    }
+    if (prepared.estimates.len > 0) try appendEstimates(d, output, source, keys, representative, ci, x, prepared.estimates, endpoints, scale, options);
 }
 
 /// Allows another owned estimator (for example SJPI) to supply its fitted
@@ -122,6 +164,33 @@ fn row(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const u
     values[at + 4] = .{ .num = kernel.scaleDensity(density, width, x.len, scale) };
     values[at + 5] = .{ .num = density };
     try output.appendRow(values);
+}
+
+test "OUTKERNEL bandwidths reproduce M9 INSET HEX16 values" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const Case = struct { n: usize, iqr: f64, c: f64, bits: u64, mise_bits: ?u64 = null };
+    for ([_]Case{
+        .{ .n = 1, .iqr = 0, .c = 0.47, .bits = 0x3fde147ae147ae14, .mise_bits = 0x3fe9206321e354a4 },
+        .{ .n = 7, .iqr = 0, .c = 0.39, .bits = 0x3fd0e9c5677731f4, .mise_bits = 0x3fe106a7e1de3969 },
+        .{ .n = 137, .iqr = 1, .c = 0.76, .bits = 0x3fd22eacf3924098, .mise_bits = 0x3fd2c9095113f357 },
+        .{ .n = 240, .iqr = 1, .c = 0.64, .bits = 0x3fcb5fe56d79283c },
+        .{ .n = 6, .iqr = 0.345, .c = 1.1037, .bits = 0x3fd107bb7a6e5f2b },
+        .{ .n = 444, .iqr = 9.073, .c = 3.1, .bits = 0x40209f10120cfb41 },
+    }) |case| {
+        const sample = try a.alloc(f64, case.n);
+        @memset(sample[0 .. case.n / 2], 0);
+        @memset(sample[case.n / 2 ..], case.iqr);
+        const estimate = try fitForOutput(&d, sample, case.iqr, .{ .bandwidth = .{ .numeric = case.c } });
+        try std.testing.expectEqual(case.c, estimate.c);
+        try std.testing.expectEqual(case.bits, @as(u64, @bitCast(estimate.bandwidth)));
+        if (case.mise_bits) |bits| {
+            const mise = try fitForOutput(&d, sample, case.iqr, .{});
+            try std.testing.expectEqual(bits, @as(u64, @bitCast(mise.bandwidth)));
+        }
+    }
 }
 
 test "dev3 OUTKERNEL grids and compact cutoff oracle comparisons" {

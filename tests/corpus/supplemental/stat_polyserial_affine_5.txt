@@ -1,0 +1,9 @@
+# corpus assertions
+row SERIAL affine-t5_x_4 .
+row SERIAL affine-t5_x_200 0.5819182118544~6e-12
+row SERIAL affine-t5_xt_4 0.581920272592~6e-12
+row SERIAL affine-t5_xt_200 0.581920272592~6e-12
+row SERIAL affine-t5_xs_4 0.581920272592~6e-12
+row SERIAL affine-t5_xs_200 0.581920272592~6e-12
+stdout-count 6 SERIAL
+stderr-count 1 did not converge

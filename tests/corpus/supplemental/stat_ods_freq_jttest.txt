@@ -1,0 +1,29 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|5|||
+row ODS_COL|3|Label1|char|18|||
+row ODS_COL|4|cValue1|char|7|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 20 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|Name1|_JT_
+row ODS_VALUE|1|Label1|Statistic
+row ODS_VALUE|1|cValue1|87.5000
+row ODS_VALUE|1|nValue1|87.5~8.75e-07
+row ODS_VALUE|2|Table|Table r * c
+row ODS_VALUE|2|Name1|Z_JT
+row ODS_VALUE|2|Label1|Z
+row ODS_VALUE|2|cValue1|0.1215
+row ODS_VALUE|2|nValue1|0.12151046428287~1.215104643e-09
+row ODS_VALUE|3|Table|Table r * c
+row ODS_VALUE|3|Name1|PR_JT
+row ODS_VALUE|3|Label1|One-sided Pr >  Z
+row ODS_VALUE|3|cValue1|0.4516
+row ODS_VALUE|3|nValue1|0.45164336341~4.516433634e-09
+row ODS_VALUE|4|Table|Table r * c
+row ODS_VALUE|4|Name1|P2_JT
+row ODS_VALUE|4|Label1|Two-sided Pr > |Z|
+row ODS_VALUE|4|cValue1|0.9033
+row ODS_VALUE|4|nValue1|0.90328672682001~9.032867268e-09

@@ -1,0 +1,11 @@
+# corpus assertions
+row . 2~5.1e-05 1~5.1e-05 14.29 1~5.1e-05 14.29
+row A 1~5.1e-05 1~5.1e-05 14.29 2~5.1e-05 28.57
+row A 2~5.1e-05 1~5.1e-05 14.29 3~5.1e-05 42.86
+row Z 1~5.1e-05 1~5.1e-05 14.29 4~5.1e-05 57.14
+row _ 2~5.1e-05 1~5.1e-05 14.29 5~5.1e-05 71.43
+row 1 1~5.1e-05 1~5.1e-05 14.29 6~5.1e-05 85.71
+row 2 1~5.1e-05 1~5.1e-05 14.29 7~5.1e-05 100.00
+row-count 2 A {any} {any} {any} {any} {any}
+row-count 1 Z {any} {any} {any} {any} {any}
+row-count 1 _ {any} {any} {any} {any} {any}

@@ -1,0 +1,3 @@
+# corpus assertions
+row One-sided Pr >= Statistic 0.0429
+row Two-sided Pr >= | Statistic | 0.0857

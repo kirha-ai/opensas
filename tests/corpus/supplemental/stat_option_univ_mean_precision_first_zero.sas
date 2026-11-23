@@ -1,0 +1,1 @@
+data d;w=(281474976*16777216+11922829+(-4))*2**34;do x=0,2;output;end;run;proc univariate data=d noprint vardef=n;var x;weight w;output out=q mean=m std=d;run;data _null_;set q;file print;put 'HEX ' d hex16.;put 'MEAN ' m 1.;run;

@@ -1,0 +1,9 @@
+# corpus assertions
+row Shapiro-Wilk W 0.974858 0.9332
+row Kolmogorov-Smirnov D 0.104854 >0.1500
+row Cramer-von Mises W-Sq 0.017355 >0.2500
+row Anderson-Darling A-Sq 0.134~0 >0.2500
+row-count 1 Shapiro-Wilk W {any} {any}
+row-count 1 Kolmogorov-Smirnov D {any} >0.1500
+row-count 1 Cramer-von Mises W-Sq {any} >0.2500
+row-count 1 Anderson-Darling A-Sq {any} >0.2500

@@ -1,0 +1,24 @@
+# corpus assertions
+row Case freq_relrisk_equiv_fm
+row Overall P-Value 0.2336~5.1e-05
+row 90% Lower Conf Limit 1.7774~5.1e-05
+row 90% Upper Conf Limit 7.6072~5.1e-05
+row Case freq_relrisk_equiv_lr
+row Overall P-Value 0.242~5.1e-05
+row 90% Lower Conf Limit 1.8283~5.1e-05
+row 90% Upper Conf Limit 8.2652~5.1e-05
+row Case freq_relrisk_equiv_score
+row Overall P-Value 0.2336~5.1e-05
+row 90% Lower Conf Limit 1.7774~5.1e-05
+row 90% Upper Conf Limit 7.6072~5.1e-05
+row Case freq_relrisk_equiv_wald
+row Overall P-Value 0.2313~5.1e-05
+row 90% Lower Conf Limit 1.7252~5.1e-05
+row 90% Upper Conf Limit 7.5122~5.1e-05
+row Case freq_relrisk_equiv_waldmodified
+row Overall P-Value 0.1784~5.1e-05
+row 90% Lower Conf Limit 1.6819~5.1e-05
+row 90% Upper Conf Limit 6.7979~5.1e-05
+row-count 5 Overall P-Value {any}
+row-count 5 90% Lower Conf Limit {any}
+row-count 5 90% Upper Conf Limit {any}

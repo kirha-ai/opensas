@@ -1,0 +1,8 @@
+# corpus assertions
+row ODS_ROWS|6
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|12|||
+row ODS_COL|3|Label1|char|20|||
+row ODS_COL|4|cValue1|char|6|||
+row ODS_COL|5|nValue1|num|8|D12.3||

@@ -1,0 +1,4 @@
+# corpus assertions
+row N 9 Sum Weights 9
+stderr-count 1 WARNING: The ENDPOINTS= list was extended to accommodate the data.
+row-count 1 N {any} Sum Weights {any}

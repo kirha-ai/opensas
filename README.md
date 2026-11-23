@@ -75,6 +75,24 @@ S002      BASELINE     142      91     108
 `opensas --sasautos ./macros program.sas` adds an autocall macro library. A
 `libname` points to a directory; members resolve as `.sas7bdat`, `.xpt` or
 `.csv`, and datasets the program writes land there in the same formats.
+For native UNIVARIATE distribution plots, `opensas --graphics-dir figures program.sas`
+writes numbered SVG files and reports their paths in the log. HISTOGRAM, CDF
+(CDFPLOT), PPPLOT, QQPLOT and PROBPLOT support this output. Histograms show
+observed bins, requested fitted densities and kernel estimates. QQPLOT supports
+an opposite percentile axis with PCTLAXIS and grid lines. HREF/VREF accepts
+values and TO/BY ranges on distribution plot axes, including percentiles on
+probability plots. INSET displays
+sample summaries and fitted parameters. CLASS levels share axes in a single
+figure for each BY group, variable and requested curve. ODS GRAPHICS OFF
+suppresses new figures. With ODS GRAPHICS ON, LISTING GPATH supplies the
+directory and defaults to the current directory. A CLI directory takes precedence.
+Existing files are preserved. PROC CORR produces scatter plots, confidence or
+prediction ellipses, partial residual plots and scatter matrices through the same
+directory. PLOTS=NONE and the PLOTS(MAXPOINTS=) cutoff suppress CORR output.
+PROC FREQ draws frequency, cumulative frequency, relative deviation, mosaic and
+agreement plots from its ordered, weighted tables. PLOTS(ONLY)= limits the graphs
+to the requested kinds.
+
 [`tests/programs/dm`](tests/programs/dm) is a complete example: a raw
 demographics dataset mapped to the SDTM DM domain, with the expected output.
 
@@ -105,13 +123,39 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 Three suites run in CI on every push and before every release.
 
-- **Unit tests.** `zig build test` runs 1,377 tests defined next to the code they cover.
-- **Conformance corpus.** 2,059 one-feature programs in [`tests/corpus/`](tests/corpus). Each program runs and its listing is diffed against the expected output.
-- **End-to-end programs.** Whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
+- **Unit tests.** `zig build test` runs 1,588 tests across four Zig test suites.
+- **Conformance corpus.** `zig build corpus` runs the 2,301 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
+- **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
 The `.sas7bdat` and `.xpt` readers and writers are round-tripped against files
 written by SAS® 9.4. Fixtures use invented data or published samples such as the
 CDISC pilot study.
+
+### Running statistical tests
+
+Run these commands from the repository root. Build the CLI once with `zig build install`.
+The corpus runner runs the programs directly in the directory you give it.
+Two statistical suites are available on demand outside the default gate.
+
+```sh
+# Run all 1,113 supplemental programs.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental
+
+# Replay the 9 known differences against their SAS 9.4 M9 expectations.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending
+```
+
+To run one case, append its `.sas` filename to the command for its directory.
+The runner checks the result against the matching `.txt` file.
+
+```sh
+# One default, supplemental, or pending case, respectively.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus stat_univ_fit_pareto_mle_seeded.sas
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental stat_stratified_near_closehi.sas
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending stat_freq_rr_antidiagonal_score2.sas
+```
+
+The runner exits with status 1 when a case fails. This is expected when replaying pending cases that still differ from SAS.
 
 ## What's supported
 

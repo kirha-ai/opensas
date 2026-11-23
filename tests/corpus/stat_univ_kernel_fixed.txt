@@ -1,0 +1,6 @@
+# corpus assertions
+row Mean 4.5 Sum Observations 36
+stderr-count 1 NOTE: The normal kernel estimate for c=1 has a bandwidth of 2.639 and an AMISE of 0.0246.
+svg-count 1
+svg-has 1 data-kind="histogram"
+row-count 1 Mean {any} Sum Observations {any}

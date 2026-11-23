@@ -1,0 +1,1 @@
+data d;w=2**100;do z=1,2;x=z+0;output;end;run;proc univariate data=d noprint vardef=wdf;var x;weight w;output out=q mean=m sum=s sumwgt=w cv=cv;run;data _null_;set q;raw=s/w;mc=missing(cv);file print;put 'MEAN ' m best24. ' ' raw best24. ' ' mc 1.;run;

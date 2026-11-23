@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 Variable s in list does not match type prescribed for this list.

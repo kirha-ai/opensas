@@ -1,0 +1,28 @@
+# corpus assertions
+row Fitted Exponential Distribution for x
+row Parameters for Exponential Distribution
+row Threshold Theta 0
+row Scale Sigma 4.5
+row Mean 4.5
+row Std Dev 4.5
+row Goodness-of-Fit Tests for Exponential Distribution
+row Kolmogorov-Smirnov D 0.23658288 Pr > D >0.250
+row Cramer-von Mises W-Sq 0.13771680 Pr > W-Sq 0.178
+row Anderson-Darling A-Sq 0.76850480 Pr > A-Sq 0.210
+row Quantiles for Exponential Distribution
+row 1.0 1.00000 0.04523
+row 5.0 1.00000 0.23082
+row 10.0 1.00000 0.47412
+row 25.0 2.50000 1.29457
+row 50.0 4.50000 3.11916
+row 75.0 6.50000 6.23832
+row 90.0 8.00000 10.36163
+row 95.0 8.00000 13.48080
+row 99.0 8.00000 20.72327
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D >0.250
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq {any}
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

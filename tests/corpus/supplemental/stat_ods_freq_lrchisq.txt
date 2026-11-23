@@ -1,0 +1,29 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|8|||
+row ODS_COL|3|Label1|char|22|||
+row ODS_COL|4|cValue1|char|10|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 20 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|Name1|_LRCHI_
+row ODS_VALUE|1|Label1|Chi-Square
+row ODS_VALUE|1|cValue1|1.0988
+row ODS_VALUE|1|nValue1|1.09880862372941~1.098808624e-08
+row ODS_VALUE|2|Table|Table r * c
+row ODS_VALUE|2|Name1|DF_LRCHI
+row ODS_VALUE|2|Label1|DF
+row ODS_VALUE|2|cValue1|1
+row ODS_VALUE|2|nValue1|1~1e-08
+row ODS_VALUE|3|Table|Table r * c
+row ODS_VALUE|3|Name1|P_LRCHI
+row ODS_VALUE|3|Label1|Asymptotic Pr >  ChiSq
+row ODS_VALUE|3|cValue1|0.2945
+row ODS_VALUE|3|nValue1|0.2945277103135~2.945277103e-09
+row ODS_VALUE|4|Table|Table r * c
+row ODS_VALUE|4|Name1|XP_LRCHI
+row ODS_VALUE|4|Label1|Exact      Pr >= ChiSq
+row ODS_VALUE|4|cValue1|0.5455
+row ODS_VALUE|4|nValue1|0.54545454545454~5.454545455e-09

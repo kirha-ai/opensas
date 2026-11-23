@@ -1,0 +1,12 @@
+# corpus assertions
+row SERIAL final-blind-c4_0_2 .
+row SERIAL final-blind-c4_0_3 .
+row SERIAL final-blind-c4_0_200 -0.67737127046598~6e-12
+row SERIAL final-blind-c4_1_2 .
+row SERIAL final-blind-c4_1_3 .
+row SERIAL final-blind-c4_1_200 -0.67737127046598~6e-12
+row SERIAL final-blind-c4_2_2 .
+row SERIAL final-blind-c4_2_3 .
+row SERIAL final-blind-c4_2_200 -0.67737127046598~6e-12
+stdout-count 9 SERIAL
+stderr-count 6 did not converge

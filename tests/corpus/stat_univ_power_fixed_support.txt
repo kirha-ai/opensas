@@ -1,0 +1,23 @@
+# corpus assertions
+row Fitted Power Function Distribution for x
+row Parameters for Power Function Distribution
+row Threshold Theta 0
+row Scale Sigma 8
+row Shape Alpha 0.496652
+row Mean 2.654735
+row Std Dev 2.384055
+row Quantiles for Power Function Distribution
+row 1.0 0.12000 0.00075
+row 5.0 0.12000 0.01921
+row 10.0 0.23000 0.07755
+row 25.0 0.50000 0.49074
+row 50.0 1.16000 1.98140
+row 75.0 2.51000 4.48258
+row 90.0 4.85000 6.47080
+row 95.0 6.21000 7.21501
+row 99.0 6.21000 7.83974
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Alpha {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}

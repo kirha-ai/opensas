@@ -1,0 +1,9 @@
+# corpus assertions
+stdout-count 2 Fisher's Exact Test
+stdout-count 9 Chi-Square
+stdout-count 3 Odds Ratio and Relative Risks
+stdout-count 1 General Association
+stdout-count 1 Breslow-Day Test for Homogeneity of Odds Ratios
+row Gamma 0.7067~5.1e-05 0.159~5.1e-05
+row Gamma -0.3412~5.1e-05 0.2581~5.1e-05
+row-count 2 Gamma {any} {any}

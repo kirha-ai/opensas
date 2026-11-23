@@ -1,0 +1,8 @@
+# corpus assertions
+row . 1~5.1e-05 . . .
+row A 2~5.1e-05 . . .
+row Z 1~5.1e-05 . . .
+row _ 1~5.1e-05 . . .
+row-count 1 A {any} {any} {any} {any}
+row-count 1 Z {any} {any} {any} {any}
+row-count 1 _ {any} {any} {any} {any}

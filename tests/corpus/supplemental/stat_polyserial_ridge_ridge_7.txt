@@ -1,0 +1,13 @@
+# corpus assertions
+row x y {any} {any} 0.01003059981683~5e-06 {any} {any} 25.9677107597145~5e-05 {any}
+row SERIAL ridge-7-c0.999-m1 -0.99~6e-12
+row x y {any} {any} 0.00917333231347~5e-06 {any} {any} 27.2056470349114~5e-05 {any}
+row SERIAL ridge-7-c0.2-m2 -0.99~6e-12
+row x y {any} {any} 0.00917333231347~5e-06 {any} {any} 27.2056470349114~5e-05 {any}
+row SERIAL ridge-7-c0.1-m2 -0.99~6e-12
+row x y {any} {any} 0.00917177735939~5e-06 {any} {any} 27.2056495246984~5e-05 {any}
+row SERIAL ridge-7-c0.05-m3 -0.99~6e-12
+row x y {any} {any} 0.02404594247376~5e-06 {any} {any} 27.8786552569544~5e-05 {any}
+row SERIAL ridge-7-c0.01-m200 -0.97652920115824~6e-12
+stdout-count 5 SERIAL
+stderr-count 0 did not converge

@@ -1,0 +1,8 @@
+# corpus assertions
+row Kendall's Tau-b 0.442~5.1e-05 0.1002~5.1e-05 0.2457~5.1e-05 0.6384~5.1e-05
+rewind
+row ASE under H0 0.102~5.1e-05
+row Z 4.3327~5.1e-05
+row-count 1 Kendall's Tau-b {any} {any} {any} {any}
+row-count 1 ASE under H0 {any}
+row-count 1 Z {any}

@@ -1,0 +1,8 @@
+# corpus assertions
+row Tetrachoric Correlation -0.9827~5.1e-05 0~5.1e-05 -0.9827~5.1e-05 -0.9827~5.1e-05
+rewind
+row LR Chi-Square 3.398~5.1e-05
+row Pr > ChiSq 0.0653~5.1e-05
+row-count 1 Tetrachoric Correlation {any} {any} {any} {any}
+row-count 1 LR Chi-Square {any}
+row-count 1 Pr > ChiSq {any}

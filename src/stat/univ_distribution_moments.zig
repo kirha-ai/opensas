@@ -27,7 +27,8 @@ pub fn compute(d: dist.Distribution) Moments {
         },
         .rayleigh => .{ .mean = p.theta + p.sigma * @sqrt(std.math.pi / 2.0), .sd = p.sigma * @sqrt((4.0 - std.math.pi) / 2.0) },
         .pareto => .{ .mean = if (p.alpha > -1) p.theta + p.sigma / (1 + p.alpha) else nan, .sd = if (p.alpha > -0.5) p.sigma / ((1 + p.alpha) * @sqrt(1 + 2 * p.alpha)) else nan },
-        .gumbel => .{ .mean = p.mu + 0.5772156649015329 * p.sigma, .sd = p.sigma * std.math.pi / @sqrt(@as(f64, 6)) },
+        // M9 uses this five-decimal Euler constant in the reported mean.
+        .gumbel => .{ .mean = @mulAdd(f64, 0.57722, p.sigma, p.mu), .sd = p.sigma * std.math.pi / @sqrt(@as(f64, 6)) },
         .igauss => .{ .mean = p.mu, .sd = @sqrt(p.mu * p.mu * p.mu / p.lambda) },
         .sb, .su => johnson(d),
     };
@@ -120,4 +121,11 @@ test "UNIVARIATE Johnson reported moments SAS M9" {
     try std.testing.expectApproxEqAbs(@as(f64, 2.029824), su.mean, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 2.764539), su.sd, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 2.591597), su.mode, 5e-7);
+}
+
+test "UNIVARIATE Gumbel reported mean uses the M9 table constant" {
+    for ([_]f64{ 0, 2, -4 }, [_]f64{ 1, 3.125, 17 }, [_]u64{ 0x3fe2789613d31b9b, 0x400e6e353f7ced91, 0x4017403eea209aa9 }) |mu, sigma, expected| {
+        const reported = compute(.{ .family = .gumbel, .p = .{ .mu = mu, .sigma = sigma } });
+        try std.testing.expectEqual(expected, @as(u64, @bitCast(reported.mean)));
+    }
 }

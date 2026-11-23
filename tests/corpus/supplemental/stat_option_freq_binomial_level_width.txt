@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 x = ccc
+row Proportion 0.4737~5.1e-05 0.1145 0.2492 0.6982
+row-count 1 Proportion {any} {any} {any} {any}

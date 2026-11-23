@@ -5,6 +5,7 @@ const dist = @import("freq_exact_distribution.zig");
 const reference = @import("freq_exact_reference.zig");
 const exact = @import("freq_exact.zig");
 const unconditional = @import("freq_exact_unconditional.zig");
+const risk = @import("freq_risk.zig");
 const parse = @import("freq_exact_parse.zig");
 const tests = @import("freq_tests.zig");
 const stratified = @import("freq_stratified.zig");
@@ -25,15 +26,46 @@ pub const Config = struct {
     kappa_weight: stratified.KappaWeight = .cicchetti_allison,
     norisks: bool = false,
 };
+pub const Barnard = struct {
+    difference: f64,
+    se: f64,
+    z: f64,
+    tails: unconditional.BarnardTails,
+
+    pub fn oneSided(self: Barnard) ?f64 {
+        return switch (self.tails) {
+            .exhausted => null,
+            .complete => |v| if (v.profile) |profile| profile.one else v.one.upper,
+        };
+    }
+    pub fn twoSided(self: Barnard) ?f64 {
+        return switch (self.tails) {
+            .exhausted => null,
+            .complete => |v| if (v.profile) |profile| profile.two else v.two.upper,
+        };
+    }
+
+    /// M9 reports the observed score one square root of unit roundoff closer
+    /// to zero. Preserve the analytical score and independently enumerated tails.
+    pub fn reportedZ(self: Barnard) f64 {
+        const tolerance = @sqrt(std.math.floatEps(f64) / 2);
+        return std.math.copysign(@max(0, @abs(self.z) - tolerance), self.z);
+    }
+};
+pub const RiskIntervals = struct {
+    columns: [2]?risk.Interval = @splat(null),
+    timed_out: [2]bool = @splat(false),
+};
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
-    fisher: struct { table_probability: f64, first_cell: ?u32, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
-    monte_carlo: dist.MonteCarlo,
+    fisher: struct { table_probability: f64, first_cell: ?f64, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
+    monte_carlo: struct { estimates: dist.MonteCarlo, table_probability: ?f64 = null },
     binomial: exact.Binomial,
     interval: exact.Interval,
-    risk_intervals: struct { first: ?exact.Interval = null, second: ?exact.Interval = null },
-    barnard: struct { one: unconditional.Bounds, two: unconditional.Bounds },
+    risk_intervals: RiskIntervals,
+    barnard: Barnard,
     exhausted,
+    score_too_small: bool, // sign of the observed directional statistic
     /// Valid family, but not defined for this table's dimensions/zero variance.
     not_applicable,
     /// Joint strata must be dispatched through their dedicated adapter.
@@ -70,24 +102,168 @@ const Context = struct {
             }
             var statistic: f64 = 0;
             for (counts, 0..) |v, i| {
-                const expected = rows[i / m.cols] * cols[i % m.cols] / total;
-                if (expected == 0) continue;
-                if (self.family == .pchi) statistic += (v - expected) * (v - expected) / expected else if (v > 0) statistic += 2 * v * @log(v / expected);
+                const cell = tests.independenceCell(v, rows[i / m.cols], cols[i % m.cols], total);
+                if (cell.mean == 0) continue;
+                statistic += if (self.family == .pchi)
+                    cell.delta * cell.delta / cell.mean
+                else
+                    2 * exact.poissonDeviance(v, cell.mean, cell.delta);
             }
             return statistic;
         }
+        if (self.family != .pcorr) return error.ExecError;
         const r = try tests.association(self.allocator, matrix, 0.05);
-        return switch (self.family) {
-            .pcorr => r.pearson.estimate,
-            .scorr => r.spearman.estimate,
-            .kentb => r.tau_b.estimate,
-            .stutc => r.tau_c.estimate,
-            .smdcr => r.somers_cr.estimate,
-            .smdrc => r.somers_rc.estimate,
-            else => null,
-        } orelse error.ExecError;
+        return r.pearson.estimate orelse error.ExecError;
     }
 };
+
+/// A fixed-margin permutation changes neither the normalizing denominator of
+/// a rank coefficient nor the null mean of J. C-D orders the four concordance
+/// coefficients and is twice the centered Jonckheere-Terpstra statistic.
+const Ordinal = struct {
+    spearman: bool,
+    row_rank: [256]i64 = undefined,
+    col_rank: [256]i64 = undefined,
+
+    fn init(m: dist.Matrix, spearman: bool) Ordinal {
+        var self = Ordinal{ .spearman = spearman };
+        if (!spearman) return self;
+        const rows = self.row_rank[0..m.rows];
+        const cols = self.col_rank[0..m.cols];
+        @memset(rows, 0);
+        @memset(cols, 0);
+        var n: i64 = 0;
+        for (m.cells, 0..) |x, k| {
+            rows[k / m.cols] += x;
+            cols[k % m.cols] += x;
+            n += x;
+        }
+        // Twice the centered midrank is integral, even with ties.
+        for ([_][]i64{ rows, cols }) |ranks| {
+            var preceding: i64 = 0;
+            for (ranks) |*rank| {
+                const count = rank.*;
+                rank.* = 2 * preceding + count - n;
+                preceding += count;
+            }
+        }
+        return self;
+    }
+
+    fn score(raw: ?*const anyopaque, m: dist.Matrix) i128 {
+        const self: *const Ordinal = @ptrCast(@alignCast(raw.?));
+        var sum: i128 = 0;
+        if (self.spearman) {
+            for (m.cells, 0..) |x, k| sum += @as(i128, x) * self.row_rank[k / m.cols] * self.col_rank[k % m.cols];
+            return sum;
+        }
+        var above: [256]i128 = undefined;
+        return stratified.concordanceSurplus(i128, m.cells, m.cols, above[0..m.cols]);
+    }
+
+    fn asFloat(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        return @floatFromInt(score(raw, m));
+    }
+};
+
+/// The trend statistic has fixed variance in its permutation distribution.
+/// For integral explanatory scores the centered numerator can be ordered
+/// exactly, including when the scores all share a large offset.
+const IntegralTrend = struct {
+    scores: [256]i128 = undefined,
+    total: i128 = 0,
+    successes: i128 = 0,
+    marginal_score: i128 = 0,
+
+    fn init(m: dist.Matrix, scores: ?[]const f64) ?IntegralTrend {
+        const by_row = m.cols == 2;
+        const len = if (by_row) m.rows else m.cols;
+        var self = IntegralTrend{};
+        for (m.cells) |x| self.total += x;
+        // Both terms in N*sum(x*s) - D*sum(margin*s) are bounded by
+        // N squared times the largest translated absolute score.
+        const bound = @divTrunc(std.math.maxInt(i128), 2 * self.total * self.total);
+        var origin: i128 = 0;
+        for (0..len) |i| {
+            const supplied = if (scores) |s| s[i] else @as(f64, @floatFromInt(i + 1));
+            if (supplied != @trunc(supplied) or @abs(supplied) >= 0x1p127) return null;
+            const value: i128 = @intFromFloat(supplied);
+            if (i == 0) origin = value;
+            const translated = std.math.sub(i128, value, origin) catch return null;
+            if (@abs(translated) > @as(u128, @intCast(bound))) return null;
+            self.scores[i] = translated;
+            const x = if (by_row) m.cells[i * 2] else m.cells[i];
+            const y = if (by_row) m.cells[i * 2 + 1] else m.cells[m.cols + i];
+            self.successes += x;
+            self.marginal_score += (@as(i128, x) + y) * translated;
+        }
+        return self;
+    }
+
+    fn score(raw: ?*const anyopaque, m: dist.Matrix) i128 {
+        const self: *const IntegralTrend = @ptrCast(@alignCast(raw.?));
+        const by_row = m.cols == 2;
+        const len = if (by_row) m.rows else m.cols;
+        var weighted: i128 = 0;
+        for (self.scores[0..len], 0..) |s, i| weighted += s * @as(i128, if (by_row) m.cells[i * 2] else m.cells[i]);
+        return self.total * weighted - self.successes * self.marginal_score;
+    }
+
+    fn asFloat(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        return @floatFromInt(score(raw, m));
+    }
+};
+const network_tolerance = @sqrt(std.math.floatEps(f64) / 2);
+
+/// At fixed margins the raw linear score has a constant mean and variance.
+/// Network near-ties are measured before normalization. For MHCHI, the
+/// nondirectional ordering is by absolute distance from the fixed null mean.
+const NetworkScore = struct {
+    row: [256]f64 = undefined,
+    col: [256]f64 = undefined,
+    mean: f64 = 0,
+    absolute: bool,
+
+    fn init(m: tests.CountMatrix, family: parse.Family) ?NetworkScore {
+        var self = NetworkScore{ .absolute = family == .mhchi };
+        var row_counts = [_]f64{0} ** 256;
+        var col_counts = [_]f64{0} ** 256;
+        var n: f64 = 0;
+        for (m.counts, 0..) |count, i| {
+            row_counts[i / m.cols] += count;
+            col_counts[i % m.cols] += count;
+            n += count;
+        }
+        var sums: [2]f64 = @splat(0);
+        var bound = n;
+        for ([_][]f64{ self.row[0..m.rows], self.col[0..m.cols] }, [_]?[]const f64{ m.row_scores, m.col_scores }, [_][]const f64{ row_counts[0..m.rows], col_counts[0..m.cols] }, 0..) |weights, scores, margins, axis| {
+            // TREND counts the first response category. When both axes are
+            // binary the columns supply the response.
+            const response = family == .trend and axis == @intFromBool(m.cols == 2);
+            var largest: f64 = 0;
+            for (weights, margins, 0..) |*w, count, i| {
+                w.* = if (response) @floatFromInt(@intFromBool(i == 0)) else if (scores) |v| v[i] else @floatFromInt(i + 1);
+                sums[axis] += count * w.*;
+                largest = @max(largest, @abs(w.*));
+            }
+            bound *= largest;
+        }
+        // Once adjacent possible binary64 values are farther apart than the
+        // tie window, raw subtraction cannot resolve its endpoints reliably.
+        // Retain the existing standardized statistic in that range.
+        if (!std.math.isFinite(bound) or std.math.nextAfter(f64, bound, std.math.inf(f64)) - bound > network_tolerance) return null;
+        self.mean = sums[0] * sums[1] / n;
+        return self;
+    }
+
+    fn evaluate(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        const self: *const NetworkScore = @ptrCast(@alignCast(raw.?));
+        var value: f64 = 0;
+        for (m.cells, 0..) |x, i| value += @as(f64, @floatFromInt(x)) * self.row[i / m.cols] * self.col[i % m.cols];
+        return if (self.absolute) @abs(value - self.mean) else value;
+    }
+};
+
 fn finish(result: dist.Enumeration) Result {
     return switch (result) {
         .complete => |p| .{ .exact_test = p },
@@ -105,6 +281,15 @@ fn applicable(f: parse.Family, m: tests.CountMatrix) bool {
         else => m.rows > 1 and m.cols > 1,
     };
 }
+
+fn smallNetworkScore(scores: ?[]const f64) bool {
+    // Adjacent binary64 M9 probes straddle sqrt(unit roundoff). Zero is a
+    // valid score. This check belongs to the network algorithm, not simulation.
+    for (scores orelse return false) |s| {
+        if (s != 0 and @abs(s) <= network_tolerance) return true;
+    }
+    return false;
+}
 /// Group options must be expanded by Options.expanded before calling this.
 pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Config) Error!Result {
     if (f == .comor or f == .eqor) return .requires_strata;
@@ -113,6 +298,17 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     if (!applicable(f, m)) return .not_applicable;
     if (f == .mcnem and m.counts.len == 4 and m.counts[1] + m.counts[2] == 0) return .not_applicable;
     if (m.counts.len > 256) return .exhausted;
+    if (f == .fisher and m.rows == 2 and m.cols == 2 and m.counts.len == 4) {
+        const result = (try tests.fisherWithAllocator(a, m.counts, c.budget)) orelse return .exhausted;
+        if (result.tables == 1) return .not_applicable;
+        const cell = result.cell;
+        return .{ .fisher = .{
+            .table_probability = cell.probability,
+            .first_cell = m.counts[0],
+            .cell_tails = .{ .point = cell.probability, .left = cell.left, .right = cell.right },
+            .probabilities = .{ .point = result.point, .left = result.more_likely, .right = cell.two_sided, .two_sided = cell.two_sided, .one_sided = cell.two_sided, .tables = result.tables },
+        } };
+    }
     const integers = try dist.Matrix.fromCounts(a, m.rows, m.cols, m.counts);
     defer a.free(integers.cells);
     // SAS sparse.sas: zero margins suppress all but AGREE statistics, even
@@ -139,6 +335,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
             .exhausted => .exhausted,
         };
     }
+    if (f == .mcnem) return finish(try reference.mcnemar(integers.cells[1], integers.cells[2], c.null_ratio, c.budget));
     if (f == .oddsratio) {
         const r = try exact.oddsRatioControlled(integers.cells[0..4].*, c.alpha, c.midp_limits, c.budget.max_tables, .{ .context = c.budget.context, .expired = c.budget.expired });
         return switch (r) {
@@ -147,40 +344,71 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         };
     }
     if (f == .riskdiff or f == .relrisk or f == .barnard) {
-        const table = @import("freq_risk.zig").Table2x2{ .cells = m.counts[0..4].* };
+        const table = risk.Table2x2{ .cells = m.counts[0..4].* };
         if (f == .barnard) {
-            const delta = m.counts[0] / (m.counts[0] + m.counts[1]) - m.counts[2] / (m.counts[2] + m.counts[3]);
-            const one = try unconditional.riskTail(table, .first, .difference, .score, 0, if (delta > 0) .right else .left, .{ .budget = c.budget });
-            const two = try unconditional.riskTail(table, .first, .difference, .score, 0, .two_sided, .{ .budget = c.budget });
-            if (one == .exhausted or two == .exhausted) return .exhausted;
-            return .{ .barnard = .{ .one = one.complete, .two = two.complete } };
+            const n1 = m.counts[0] + m.counts[1];
+            const n2 = m.counts[2] + m.counts[3];
+            const delta = m.counts[0] / n1 - m.counts[2] / n2;
+            const tails = try unconditional.barnardTails(table, if (delta > 0) .right else .left, .{ .budget = c.budget, .allocator = a });
+            if (tails == .exhausted and !c.budget.stopped()) return .exhausted;
+            const p = (m.counts[0] + m.counts[2]) / (n1 + n2);
+            const q = (m.counts[1] + m.counts[3]) / (n1 + n2);
+            const se = @sqrt(p * q * (1 / n1 + 1 / n2));
+            return .{ .barnard = .{ .difference = delta, .se = se, .z = delta / se, .tails = tails } };
         }
         const options = if (f == .riskdiff) c.options.riskdiff else c.options.relrisk;
         const column = options.column orelse if (f == .riskdiff and !c.norisks) parse.Column.both else .first;
         var result: Result = .{ .risk_intervals = .{} };
-        for ([_]bool{ true, false }) |first| {
-            if ((first and column == .second) or (!first and column == .first)) continue;
-            const interval = try unconditional.riskLimitsSas(table, if (first) .first else .second, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget, .allocator = a });
-            if (interval == .exhausted) return .exhausted;
-            if (first) result.risk_intervals.first = interval.complete else result.risk_intervals.second = interval.complete;
+        for ([_]risk.Column{ .first, .second }, 0..) |col, i| {
+            if ((i == 0 and column == .second) or (i == 1 and column == .first)) continue;
+            if (f == .riskdiff and i == 1 and column == .both) {
+                // Complementing the two response probabilities negates RD and
+                // reverses both its test ordering and its confidence limits.
+                const first = result.risk_intervals.columns[0].?;
+                result.risk_intervals.columns[1] = .{
+                    .lower = if (first.upper) |v| -v else null,
+                    .upper = if (first.lower) |v| -v else null,
+                };
+                result.risk_intervals.timed_out[1] = result.risk_intervals.timed_out[0];
+                continue;
+            }
+            var completed: risk.Interval = .{};
+            const interval = try unconditional.riskLimitsSas(table, col, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget, .allocator = a, .completed_limits = &completed });
+            if (interval == .complete) {
+                result.risk_intervals.columns[i] = .{ .lower = interval.complete.lower, .upper = interval.complete.upper };
+                continue;
+            }
+            if (!c.budget.stopped()) return .exhausted;
+            result.risk_intervals.timed_out[i] = true;
+            const zero_first = table.cells[i] == 0 and table.cells[3 - i] == 0;
+            const full_first = table.cells[1 - i] == 0 and table.cells[2 + i] == 0;
+            // M9 retains structural bounds immediately at opposite corners.
+            // A single zero cell alone does not produce a timed-out RR object.
+            if (zero_first) completed.lower = if (f == .riskdiff) -1 else 0;
+            if (full_first) {
+                if (f == .riskdiff) completed.upper = 1 else if (options.method == .noscore) {
+                    completed.upper = std.math.inf(f64);
+                }
+            }
+            if (f == .riskdiff or completed.lower != null or completed.upper != null) result.risk_intervals.columns[i] = completed;
         }
         return result;
     }
     var context = Context{ .allocator = a, .family = f, .row_scores = m.row_scores, .col_scores = m.col_scores, .expected = c.expected };
     var callback = dist.Statistic{ .context = &context, .evaluate = Context.evaluate, .directional = switch (f) {
-        .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc => true,
+        .pcorr => true,
         else => false,
     } };
     var sc: adapters.Context = undefined;
+    var ordinal: Ordinal = undefined;
+    var trend_order: ?IntegralTrend = null;
     var weights: ?[]f64 = null;
     defer if (weights) |w| a.free(w);
     const sf: ?adapters.Family = switch (f) {
-        .jt => .jonckheere,
         .trend => .trend,
         .kappa => .kappa,
         .wtkappa => .weighted_kappa,
         .mhchi => .mhchi,
-        .mcnem => .mcnemar,
         .symmetry => .symmetry,
         else => null,
     };
@@ -189,9 +417,37 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         if (f == .wtkappa) weights = try stratified.kappaWeights(a, sm, c.kappa_weight);
         sc = try adapters.Context.init(sm, family, weights, c.null_ratio);
         callback = adapters.Adapters(dist).statistic(&sc);
-    } else if (f == .fisher) callback = .{ .evaluate = dist.fisherStatistic };
-    const simulation = dist.Simulation{ .seed = c.effective_seed, .samples = c.options.samples, .alpha = c.options.alpha };
+        if (f == .trend) {
+            trend_order = IntegralTrend.init(integers, if (m.cols == 2) m.row_scores else m.col_scores);
+            if (trend_order) |*order| callback = .{ .context = order, .evaluate = IntegralTrend.asFloat, .directional = true, .centered_integer = .{ .observed = IntegralTrend.score(order, integers), .score = IntegralTrend.score } };
+        }
+    } else switch (f) {
+        .fisher => callback = .{ .evaluate = dist.fisherStatistic },
+        .jt, .kentb, .stutc, .smdcr, .smdrc, .scorr => {
+            ordinal = Ordinal.init(integers, f == .scorr);
+            callback = .{ .context = &ordinal, .evaluate = Ordinal.asFloat, .directional = true, .centered_integer = .{ .observed = Ordinal.score(&ordinal, integers), .score = Ordinal.score } };
+        },
+        else => {},
+    }
+    const simulation = dist.Simulation{
+        .seed = c.effective_seed,
+        .samples = c.options.samples,
+        .alpha = c.options.alpha,
+        .binary_response = if (f != .trend) .none else if (m.cols == 2) .columns else .rows,
+    };
     const mc = c.options.mc and parse.supportsMonteCarlo(f, m.rows, m.cols);
+    if (!mc and switch (f) {
+        .mhchi, .pcorr => smallNetworkScore(m.row_scores) or smallNetworkScore(m.col_scores),
+        .trend => smallNetworkScore(if (m.cols == 2) m.row_scores else m.col_scores),
+        else => false,
+    }) {
+        const value = callback.evaluate(callback.context, integers) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return .not_applicable;
+        };
+        if (!std.math.isFinite(value)) return .not_applicable;
+        return .{ .score_too_small = value > callback.expected };
+    }
     if (m.rows == 1) {
         var total: f64 = 0;
         for (m.counts) |v| total += v;
@@ -200,23 +456,182 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         defer a.free(probabilities);
         for (probabilities, 0..) |*p, i| p.* = switch (c.expected) {
             .equal => 1 / @as(f64, @floatFromInt(m.cols)),
-            .proportions, .frequencies => |v| v[i] * factor / total,
+            .proportions => |v| if (factor == total) v[i] else v[i] / 100,
+            .frequencies => |v| v[i] / total,
         };
-        if (mc) return .{ .monte_carlo = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) };
+        if (mc) return .{ .monte_carlo = .{ .estimates = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) } };
         return finish(try reference.multinomial(a, integers.cells, probabilities, callback, c.budget));
     }
-    if (f == .symmetry or f == .mcnem) {
-        if (mc) return .{ .monte_carlo = try reference.symmetryMonteCarlo(a, integers, callback, simulation, c.budget) };
-        return finish(try reference.symmetry(a, integers, if (f == .mcnem) c.null_ratio else 1, callback, c.budget));
+    if (f == .symmetry) {
+        if (mc) return .{ .monte_carlo = .{ .estimates = try reference.symmetryMonteCarlo(a, integers, callback, simulation, c.budget) } };
+        return finish(try reference.symmetry(a, integers, 1, callback, c.budget));
     }
-    if (mc) return .{ .monte_carlo = try dist.monteCarlo(a, integers, callback, simulation, c.budget) };
+    if (mc) return .{ .monte_carlo = .{
+        .estimates = try dist.monteCarlo(a, integers, callback, simulation, c.budget),
+        .table_probability = if (f == .fisher) try dist.tableProbability(integers) else null,
+    } };
+    var network: ?NetworkScore = null;
+    if (f == .pcorr or f == .mhchi or (f == .trend and trend_order == null)) {
+        // Keep the statistic's usual check for zero variance and invalid scores.
+        if (!std.math.isFinite(try callback.evaluate(callback.context, integers))) return error.ExecError;
+        network = NetworkScore.init(m, f);
+        if (network) |*score| callback = .{
+            .context = score,
+            .evaluate = NetworkScore.evaluate,
+            .directional = !score.absolute,
+            .expected = if (score.absolute) 0 else score.mean,
+            .absolute_tolerance = network_tolerance,
+        };
+    }
     const enumerated = try dist.enumerate(a, integers, callback, c.budget);
     if (f == .fisher) {
         if (enumerated == .exhausted) return .exhausted;
-        const two = m.rows == 2 and m.cols == 2;
-        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = if (two) integers.cells[0] else null, .cell_tails = if (two) try (try exact.OddsDistribution.init(integers.cells[0..4].*)).tails(0, c.budget.max_tables) else null, .probabilities = enumerated.complete } };
+        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = null, .cell_tails = null, .probabilities = enumerated.complete } };
     }
     return finish(enumerated);
+}
+
+test "network tests enforce the native score precision boundary only on their scoring axes" {
+    const t = std.testing;
+    // M9 score-floor-m9.sas: hexadecimal BCC and BCD report missing exact
+    // rows; BCE proceeds. The Monte Carlo estimators remain available.
+    const last: f64 = @bitCast(@as(u64, 0x3e46a09e667f3bcd));
+    const first: f64 = @bitCast(@as(u64, 0x3e46a09e667f3bce));
+    for ([_]f64{ std.math.nextAfter(f64, last, 0), last, -last, first, 0 }) |s| {
+        const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 1, 5, 3, 2, 2, 4 }, .row_scores = &.{ 0, s, 1 }, .col_scores = &.{ 1, 2 } };
+        for ([_]parse.Family{ .trend, .pcorr, .mhchi }) |f| {
+            const r = try run(t.allocator, m, f, .{});
+            try t.expect((r == .score_too_small) == (s != 0 and @abs(s) <= last));
+            const mc = try run(t.allocator, m, f, .{ .options = .{ .mc = true, .samples = 31 }, .effective_seed = 71 });
+            try t.expect(mc.monte_carlo.estimates == .complete);
+        }
+    }
+    const response = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 1, 5, 3, 2, 2, 4 }, .row_scores = &.{ 1, 2, 3 }, .col_scores = &.{ last, 1 } };
+    try t.expect((try run(t.allocator, response, .trend, .{})) == .exact_test);
+    try t.expect((try run(t.allocator, response, .pcorr, .{})) == .score_too_small);
+    try t.expect((try run(t.allocator, response, .mhchi, .{})) == .score_too_small);
+}
+
+test "conditional network ties use the raw linear score before normalization" {
+    const t = std.testing;
+    // M9 score-order-heldout.sas, h05. Fixed margins give 35 equally
+    // likely labeled draws. The response scores scale the correlation only.
+    const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 3, 0, 0, 2, 1, 1 }, .row_scores = &.{ 0.25, 0.25000000790253407, 1 }, .col_scores = &.{ 0, 0.375 } };
+    const pcorr = (try run(t.allocator, m, .pcorr, .{})).exact_test;
+    const mhchi = (try run(t.allocator, m, .mhchi, .{})).exact_test;
+    const trend = (try run(t.allocator, m, .trend, .{})).exact_test;
+    try t.expectApproxEqAbs(@as(f64, 25.0 / 35.0), pcorr.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 20.0 / 35.0), pcorr.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 1), pcorr.two_sided, 2e-15);
+    try t.expectApproxEqAbs(pcorr.point, mhchi.point, 2e-15);
+    try t.expectApproxEqAbs(pcorr.two_sided, mhchi.two_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 19.0 / 35.0), trend.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 14.0 / 35.0), trend.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 29.0 / 35.0), trend.two_sided, 2e-15);
+
+    // h03 is 2 x 3. The first row supplies the binary response, and the
+    // explanatory scores differ by less than the network tolerance.
+    const transposed = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = &.{ 4, 0, 1, 0, 3, 1 }, .row_scores = &.{ 0, 1 }, .col_scores = &.{ 0.5, 0.50000000705959713, 3 } };
+    const other = (try run(t.allocator, transposed, .trend, .{})).exact_test;
+    try t.expectApproxEqAbs(@as(f64, 47.0 / 126.0), other.one_sided, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 26.0 / 126.0), other.point, 2e-15);
+    try t.expectApproxEqAbs(@as(f64, 82.0 / 126.0), other.two_sided, 2e-15);
+}
+
+test "2x2 Fisher matches exhaustive integer weights, ties, and both cell tails" {
+    const choose = struct {
+        fn small(n: u64, k: u64) u64 {
+            var result: u64 = 1;
+            for (0..@min(k, n - k)) |j| result = result * (n - j) / (j + 1);
+            return result;
+        }
+    }.small;
+    for (1..8) |r1| for (1..8) |r2| for (1..r1 + r2) |c1| {
+        const lo = c1 -| r2;
+        const hi = @min(r1, c1);
+        const den: f64 = @floatFromInt(choose(r1 + r2, c1));
+        for (lo..hi + 1) |a| {
+            const observed = choose(r1, a) * choose(r2, c1 - a);
+            var totals = [_]u64{0} ** 4;
+            for (lo..hi + 1) |x| {
+                const w = choose(r1, x) * choose(r2, c1 - x);
+                if (w == observed) totals[0] += w;
+                if (x <= a) totals[1] += w;
+                if (x >= a) totals[2] += w;
+                if (w <= observed) totals[3] += w;
+            }
+            const counts = [_]f64{ @floatFromInt(a), @floatFromInt(r1 - a), @floatFromInt(c1 - a), @floatFromInt(r2 - (c1 - a)) };
+            const result = (try run(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .fisher, .{})).fisher;
+            try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(observed)) / den, result.table_probability, 2e-15);
+            for (totals, [_]f64{ result.probabilities.point, result.cell_tails.?.left, result.cell_tails.?.right, result.probabilities.two_sided }) |total, actual| {
+                try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(total)) / den, actual, 2e-15);
+            }
+        }
+    };
+}
+
+test "wide 2x2 counts retain exact representable tail probabilities independent of orientation" {
+    // For A=2^32 the opposing margins both equal 3. The denominator is
+    // C(A+4,3); the observed mass is 3*(A+1)/C(A+4,3), and one still
+    // rarer table contributes 1/C(A+4,3). These rational values distinguish
+    // cancellation in log-gamma subtraction from SAS's own wide P_TABLE.
+    const a: f64 = 4_294_967_296;
+    const denominator = (a + 4) * (a + 3) * (a + 2) / 6;
+    const observed = 3 * (a + 1) / denominator;
+    const tail = (3 * (a + 1) + 1) / denominator;
+    for ([_][4]f64{ .{ a, 1, 1, 2 }, .{ 1, a, 2, 1 }, .{ 1, 2, a, 1 }, .{ 2, 1, 1, a } }, [_]bool{ false, true, true, false }) |counts, reversed| {
+        const m = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &counts };
+        const f = (try run(std.testing.allocator, m, .fisher, .{})).fisher;
+        try std.testing.expectApproxEqRel(observed, f.table_probability, 1e-14);
+        try std.testing.expectApproxEqRel(observed, f.probabilities.point, 1e-14);
+        try std.testing.expectApproxEqRel(tail, f.probabilities.two_sided, 1e-14);
+        try std.testing.expectApproxEqRel(tail, if (reversed) f.cell_tails.?.left else f.cell_tails.?.right, 1e-14);
+        try std.testing.expectEqual(@as(f64, 1), if (reversed) f.cell_tails.?.right else f.cell_tails.?.left);
+        try std.testing.expectEqual(@as(u64, 4), f.probabilities.tables);
+    }
+}
+
+test "two adjacent Fisher modes with unequal labeled multiplicity keep separate point probabilities" {
+    const t = std.testing;
+    // For the first pair (R+1)(C+1) mod (N+2) = 1. The adjacent
+    // probability ratio differs from 1 by only 8.215e-15. Independent
+    // 70-digit hypergeometric recurrence gives each mass and ordered tail.
+    const n: u32 = 2_000_000_001;
+    const r: u32 = 600_000;
+    const c: u32 = 1_770_793_717;
+    for ([_]u32{ 531_238, 531_239 }, [_]f64{ 0.99838292021760708595, 1.0 }, [_]f64{ 0.0016170797823929007618, 0.0016170797823929140463 }) |k, tail, mass| {
+        const counts = [4]f64{ @floatFromInt(k), @floatFromInt(r - k), @floatFromInt(c - k), @floatFromInt(n - r - c + k) };
+        const swapped = [4]f64{ counts[1], counts[0], counts[3], counts[2] };
+        for ([_][]const f64{ &counts, &swapped }) |cells| {
+            const result = (try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = cells }, .fisher, .{})).fisher;
+            try t.expectApproxEqRel(mass, result.probabilities.point, 2e-14);
+            try t.expectApproxEqAbs(tail, result.probabilities.two_sided, 2e-14);
+        }
+    }
+    // Each raw frequency is exactly representable as binary64. A feasible
+    // neighbor moves it by one, far below an ulp of the large counts.
+    for ([_]i32{ 85, 970 }) |exponent| {
+        const m = std.math.ldexp(@as(f64, 1), exponent);
+        const next = std.math.nextAfter(f64, m, std.math.inf(f64));
+        const result = (try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 2, 1, m, next } }, .fisher, .{})).fisher;
+        try t.expectApproxEqRel(@as(f64, 0.375), result.probabilities.point, 2e-15);
+        try t.expectApproxEqRel(@as(f64, 0.625), result.probabilities.two_sided, 2e-15);
+    }
+}
+
+test "exact conditional likelihood ratio includes all tables with the same cell multiset" {
+    const t = std.testing;
+    const counts = [_]f64{ 1, 0, 2, 1_000_001, 1_000_000, 999_999 };
+    const other = [_]f64{ 2, 1, 0, 1_000_000, 999_999, 1_000_001 };
+    for ([_][]const f64{ &counts, &other }) |cells| {
+        const m = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = cells };
+        const result = (try run(t.allocator, m, .lrchi, .{})).exact_test;
+        // Both tables have identical sum(X*log(X)) at fixed margins.
+        // Three labeled draws give ten allocations and two tied tables.
+        try t.expectEqual(@as(u64, 10), result.tables);
+        try t.expectApproxEqRel(@as(f64, 0.22222244444417284), result.point, 3e-14);
+        try t.expectApproxEqRel(@as(f64, 0.66666622222251852), result.two_sided, 3e-14);
+    }
 }
 
 test "EXACT family dispatch binds actual callbacks to correct null distributions" {
@@ -285,7 +700,7 @@ pub fn runStrata(a: std.mem.Allocator, strata: []const tests.CountMatrix, f: par
     }
     const kernel = @import("freq_exact_strata.zig");
     if (f == .comor) {
-        const result = try kernel.commonOdds(a, cells, c.alpha, c.budget);
+        const result = try kernel.commonOddsSas(a, cells, c.alpha, c.budget);
         return switch (result) {
             .complete => |v| .{ .common_odds = v },
             .exhausted => .exhausted,
@@ -320,4 +735,59 @@ test "exact adapter retains numeric score validity and undefined discordant test
     try t.expectApproxEqAbs(@as(f64, 1), rank.two_sided, 1e-12);
     // SAS degenerate-agreement.sas: missing McNemar, not p=1 or rc2.
     try t.expect((try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 5, 0, 0, 5 } }, .mcnem, .{})) == .not_applicable);
+}
+
+test "Barnard maximizes the opposing tail above the stack cutoff and keeps ordinary table budgets" {
+    const m = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 0, 1, 129, 0 } };
+    const result = try run(std.testing.allocator, m, .barnard, .{});
+    // The one-sided event contains only the observed table. Its likelihood is
+    // (1-p)*p^129, with an interior maximum at p=129/130.
+    const one = 0.002840774943588005242286090151658295;
+    try std.testing.expectApproxEqRel(@as(f64, one), result.barnard.tails.complete.one.upper, 2e-14);
+    // M9 BY capture under full separation: the maximum on its grid is at
+    // q=.0077. The continuous maximum is retained above.
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00284077351313), result.barnard.oneSided().?, 1e-14);
+    try std.testing.expect(result.barnard.twoSided().? >= result.barnard.oneSided().?);
+    try std.testing.expect((try run(std.testing.allocator, m, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .barnard);
+    const near = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 0, 2, 128, 1 } };
+    try std.testing.expect((try run(std.testing.allocator, near, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .exhausted);
+}
+
+test "native fixed-margin multinomial and symmetry MC use the same seeded uniform stream" {
+    const a = std.testing.allocator;
+    const m = tests.CountMatrix{ .rows = 3, .cols = 3, .counts = &.{ 1, 3, 1, 4, 3, 2, 3, 3, 3 } };
+    const c = Config{ .effective_seed = 12, .options = .{ .mc = true, .samples = 500 } };
+    const cases = [_]struct { family: parse.Family, table: tests.CountMatrix, hits: u64, final_seed: u64 }{
+        .{ .family = .fisher, .table = m, .hits = 417, .final_seed = 534628942 },
+        .{ .family = .symmetry, .table = m, .hits = 440, .final_seed = 1647258914 },
+        .{ .family = .pchi, .table = .{ .rows = 1, .cols = 3, .counts = &.{ 5, 9, 9 } }, .hits = 274, .final_seed = 534628942 },
+        .{ .family = .pchi, .table = .{ .rows = 2, .cols = 2, .counts = &.{ 1, 3, 4, 3 } }, .hits = 283, .final_seed = 1671574333 },
+    };
+    for (cases) |case| {
+        const estimates = (try run(a, case.table, case.family, c)).monte_carlo.estimates.complete;
+        try std.testing.expectEqual(@as(f64, @floatFromInt(case.hits)) / 500, estimates.two_sided.p);
+        try std.testing.expectEqual(case.final_seed, estimates.final_seed);
+    }
+}
+
+test "Barnard reported score respects equal risks and signed near-null row/column permutations" {
+    // M9 null and permutation capture: [30,31;31,32] and its row, column,
+    // and double swaps. The elementary pooled score also stays accessible.
+    for ([_]f64{ 0, -0.002897613511751, 0.002897613511751 }, [_]f64{ 0, -0.00289760297503, 0.00289760297503 }) |z, native| {
+        const r: Barnard = .{ .difference = z, .se = 1, .z = z, .tails = .exhausted };
+        try std.testing.expectApproxEqAbs(native, r.reportedZ(), 1e-14);
+    }
+}
+
+test "trend simulation sorts the binary response in either table dimension" {
+    const a = std.testing.allocator;
+    const config = Config{ .effective_seed = 51, .options = .{ .mc = true, .samples = 431 } };
+    for ([_]tests.CountMatrix{
+        .{ .rows = 2, .cols = 3, .counts = &.{ 1, 2, 0, 2, 1, 4 } },
+        .{ .rows = 3, .cols = 2, .counts = &.{ 1, 2, 2, 1, 0, 4 } },
+    }, [_]u64{ 113, 101 }, [_]u64{ 194, 179 }) |m, one, two| {
+        const r = (try run(a, m, .trend, config)).monte_carlo.estimates.complete;
+        try std.testing.expectEqual(@as(f64, @floatFromInt(one)) / 431, r.one_sided.p);
+        try std.testing.expectEqual(@as(f64, @floatFromInt(two)) / 431, r.two_sided.p);
+    }
 }

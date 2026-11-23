@@ -1,0 +1,1 @@
+data d;x=1;w=1e-100;output;w=1.4e104;output;run;proc univariate data=d noprint;var x;weight w;output out=q n=n mean=m sum=s uss=u css=c std=d;run;data _null_;set q;sn=s/1.4e104;un=u/1.4e104;nm=nmiss(u,c,d);file print;put 'UPD ' n 2. ' ' m best24. ' ' sn best24. ' ' un best24. ' ' nm 2.;run;

@@ -1,4 +1,4 @@
-//! Numerical HISTOGRAM statement execution. Plot rendering is a separate scope.
+//! Histogram planning, numerical outputs, fitted tables and optional graph delivery.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const univ = @import("univariate.zig");
@@ -18,8 +18,17 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const h = proc.UnivariateHelpers;
 const eq = std.ascii.eqlIgnoreCase;
+const drawing = @import("univ_histogram_svg.zig");
+const ann = @import("univ_graph_annotations.zig");
 pub const Statement = struct {
     variables: [][]const u8,
+    order: usize = 0,
+    noplot: bool = false,
+    midpercents: bool = false,
+    title: ann.Title = .default,
+    barlabel: ?kernel.VScale = null,
+    layout: drawing.Layout = .{},
+    inset: ann.Inset = .{},
     curves: []parse.Curves,
     kernels: []kernel.Request,
     kernel_output: ?[]const u8,
@@ -74,13 +83,17 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     const start = i.*;
     i.* += 1;
     const vars = try plot_variables.parse(a, t, i);
-    if (t[i.*].tag != .slash) return proc.failGap(d, 0, "PROC UNIVARIATE: histogram statement requires supported numerical options and NOPLOT", .{});
-    i.* += 1;
-    var curves: std.ArrayList(parse.Curves) = .empty;
+    if (t[i.*].tag == .slash) i.* += 1 else if (t[i.*].tag != .semicolon and t[i.*].tag != .eof)
+        return d.fail(error.ParseError, 0, "UNIVARIATE: expected histogram variables or slash", .{});
+    var title: ann.Title = .default;
+    var barlabel: ?kernel.VScale = null;
+    var layout = drawing.Layout{};
+    var curve_families = std.EnumArray(@import("univ_distributions.zig").Family, ?parse.FamilyOptions).initFill(null);
     var endpoints: std.ArrayList(f64) = .empty;
     var midpoints: std.ArrayList(f64) = .empty;
     var endpoint_labels = false;
     var noplot = false;
+    var midpercents = false;
     var right = false;
     var output: ?[]const u8 = null;
     var outkernel: ?[]const u8 = null;
@@ -101,15 +114,23 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             kernels = try kernel_parse.parse(a, d, t, i);
             continue;
         }
-        if (parse.family(key) != null) {
-            const c = try parse.parse(a, d, t, i);
-            for (curves.items) |old| if (old.requests[0].family == c.requests[0].family) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated distribution family {s}", .{key});
-            try curves.append(a, c);
+        if (parse.family(key)) |family| {
+            const entry = curve_families.getPtr(family);
+            if (entry.* == null) entry.* = .init(family);
+            try entry.*.?.read(a, d, t, i, .histogram);
             continue;
         }
         i.* += 1;
         if (eq(key, "noplot") or eq(key, "nochart")) {
             noplot = true;
+            continue;
+        }
+        if (eq(key, "midpercents")) {
+            midpercents = true;
+            continue;
+        }
+        if (eq(key, "cprop") and t[i.*].tag != .eq) {
+            layout.proportions = true;
             continue;
         }
         if (eq(key, "rtinclude")) {
@@ -126,9 +147,39 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             output = try outputName(a, d, t, i, &output_options);
         } else if (eq(key, "outkernel")) {
             outkernel = try outputName(a, d, t, i, &kernel_output_options);
-        } else if (eq(key, "vscale")) {
+        } else if (eq(key, "odstitle")) {
+            title = try ann.Title.parse(d, t[i.*]);
+            i.* += 1;
+        } else if (eq(key, "nrows") or eq(key, "nrow") or eq(key, "ncols") or eq(key, "ncol")) {
+            const n = try parse.numeric(d, t, i);
+            if (n < 1 or n >= @as(f64, @floatFromInt(std.math.maxInt(usize))) or n != @floor(n)) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} requires a positive integer", .{key});
+            if (eq(key, "nrows") or eq(key, "nrow")) layout.rows = @intFromFloat(n) else layout.columns = @intFromFloat(n);
+        } else if (eq(key, "href") or eq(key, "vref")) {
+            const refs = if (eq(key, "href")) &layout.href else &layout.vref;
+            refs.values = try parse.numberList(a, d, t, i);
+        } else if (eq(key, "hreflabel") or eq(key, "hreflabels") or eq(key, "vreflabel") or eq(key, "vreflabels")) {
+            const refs = if (std.ascii.toLower(key[0]) == 'h') &layout.href else &layout.vref;
+            var labels: std.ArrayList([]const u8) = .empty;
+            while (t[i.*].tag == .string) {
+                try labels.append(a, t[i.*].text);
+                i.* += 1;
+            }
+            if (labels.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram reference labels require strings", .{});
+            refs.labels = labels.items;
+        } else if (eq(key, "vaxis")) {
+            if (t[i.*].tag == .name) return proc.failGap(d, 0, "UNIVARIATE: named AXIS statements are unsupported", .{});
+            layout.ticks = try parse.numberList(a, d, t, i);
+            for (layout.ticks, 0..) |tick, j| if (j > 0 and tick <= layout.ticks[j - 1]) return d.fail(error.ParseError, 0, "UNIVARIATE: VAXIS ticks must increase", .{});
+            if (layout.ticks.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: VAXIS needs at least two tick values", .{});
+        } else if (eq(key, "intertile")) {
+            // The common-options dictionary marks INTERTILE as traditional graphics only.
+            const n = try parse.numeric(d, t, i);
+            if (n < 0) return d.fail(error.ParseError, 0, "UNIVARIATE: INTERTILE cannot be negative", .{});
+            layout.traditional_spacing = n;
+        } else if (eq(key, "vscale") or eq(key, "barlabel")) {
             const name = t[i.*].text;
-            vscale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid VSCALE", .{});
+            const scale: kernel.VScale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid {s}", .{key});
+            if (eq(key, "vscale")) vscale = scale else barlabel = scale;
             i.* += 1;
         } else if (eq(key, "endpoints") or eq(key, "midpoints")) {
             if (t[i.*].tag == .name) {
@@ -169,7 +220,8 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             if (!(max_sigmas.? > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXSIGMAS must be positive", .{});
         } else return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported HISTOGRAM option {s}", .{key});
     }
-    if (!noplot) return proc.failGap(d, 0, "PROC UNIVARIATE: histogram graphics are not supported; specify NOPLOT for numerical output", .{});
+    for ([_]drawing.References{ layout.href, layout.vref }) |refs| if (refs.labels.len > 0 and refs.labels.len != refs.values.len)
+        return d.fail(error.ParseError, 0, "UNIVARIATE: histogram reference labels must match reference lines", .{});
     if (endpoints.items.len == 1 or midpoints.items.len == 1) return d.fail(error.ParseError, 0, "UNIVARIATE: explicit bin lists need at least two values", .{});
     if (endpoint_labels and midpoints.items.len > 0) try d.warn(0, "UNIVARIATE: ENDPOINTS takes precedence over MIDPOINTS", .{});
     if (!endpoint_labels and midpoints.items.len > 0) {
@@ -181,13 +233,62 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     if (max_nbin != null and max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (max_nbin != null and max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (endpoints.items.len > 0) _ = try binning.cover(a, d, &.{}, endpoints.items, right);
-    return .{ .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
+    var curves: std.ArrayList(parse.Curves) = .empty;
+    for (&curve_families.values) |*entry| if (entry.*) |*options| try curves.append(a, try options.expand(a, d));
+    return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .layout = layout, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
+}
+
+// UNIVARIATE accumulates frequency-weighted moments in input order. It
+// drops residuals at the precision of the updated mean, then applies the
+// same relative tolerance to the final standard deviation before fitting.
+const FittedSampleSpread = struct {
+    const tolerance = 500 * std.math.floatEps(f64);
+    count: f64 = 0,
+    mean: f64 = 0,
+    css: f64 = 0,
+
+    fn add(self: *FittedSampleSpread, x: f64, frequency: usize) void {
+        const weight: f64 = @floatFromInt(frequency);
+        self.count += weight;
+        if (self.count == weight) {
+            self.mean = x;
+            return;
+        }
+        const difference = x - self.mean;
+        self.mean += weight / self.count * difference;
+        const residual = x - self.mean;
+        if (@abs(residual) > tolerance * @abs(self.mean))
+            self.css += weight * difference * residual;
+    }
+
+    fn canFit(self: FittedSampleSpread) bool {
+        return self.count > 1 and @sqrt(self.css / (self.count - 1)) > tolerance * @abs(self.mean);
+    }
+};
+
+fn classificationNotePrefix(a: std.mem.Allocator, ds: *Dataset, columns: []const usize, row: []const Value) ![]const u8 {
+    if (columns.len == 0) return "";
+    var text: std.ArrayList(u8) = .empty;
+    try text.appendSlice(a, "For classification level ");
+    for (columns, 0..) |ci, i| {
+        if (i != 0) try text.appendSlice(a, " and ");
+        const value = row[ci];
+        const label = switch (value) {
+            .num => |number_value| try @import("../format.zig").bestNum(a, number_value),
+            else => h.valStr(value),
+        };
+        try text.print(a, "{s} = {s}", .{ ds.columns.items[ci].name, label });
+    }
+    try text.appendSlice(a, ", ");
+    return text.items;
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
     for (statements, 1..) |statement, histogram| {
         if (wc != null) return cx.diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
+        if (ccols.len == 0 and (statement.layout.rows != null or statement.layout.columns != null or statement.layout.proportions or statement.layout.traditional_spacing != null))
+            return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: comparative histogram layout options require CLASS", .{});
         if (ccols.len == 0 and (statement.max_nbin != null or statement.max_sigmas != null)) return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: histogram window controls require CLASS", .{});
         const cols = try plot_variables.resolve(a, cx.diags, opt.source orelse ds, acols, statement.variables, has_var);
         var keys: std.ArrayList(usize) = .empty;
@@ -205,12 +306,12 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
         const output = try histogram_output.create(a, &descriptors, keys.items, schema);
         output.name = statement.output orelse "";
         const kd = try kernel_output.create(a, &descriptors, keys.items, variable_length, statement.vscale);
-        for (try univ.bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+        for (try univ.bySlices(a, ds.rows.items, bcols, opt), 1..) |bs, by_number| {
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const collected = try h.collectGroups(a, &bd, ccols);
-            try univ.orderGroups(a, &bd, collected, ccols, levels, wc, opt);
+            univ.orderGroups(collected, ccols, opt);
             const resolved = try plot_groups.resolve(a, cx.diags, &bd, collected, ccols, opt);
             const groups = resolved.groups;
             const analyses = try a.alloc(univ.Analysis, groups.len);
@@ -218,7 +319,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             for (groups, 0..) |g, gi| {
                 const rep = try a.dupe(Value, g.rep);
                 if (g.rows.len > 0) for (ccols) |ci| if (h.fmtLevelsFor(levels, ci) != null) {
-                    rep[ci] = univ.classRepresentative(&bd, opt, wc, ccols, ci, g.rep);
+                    rep[ci] = univ.classRepresentative(opt, ccols, ci, g.rep);
                 };
                 representatives[gi] = rep;
                 const gd = try a.create(Dataset);
@@ -231,53 +332,99 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             // cells share one bin plan, including empty-key resolution.
             for (cols) |ci| {
                 const cells = try a.alloc(binning.Cell, groups.len);
+                const can_fit = try a.alloc(bool, groups.len);
                 var pooled: std.ArrayList(f64) = .empty;
-                for (analyses, cells) |analysis, *cell| {
+                for (analyses, cells, can_fit) |analysis, *cell, *fit_available| {
                     var x: std.ArrayList(f64) = .empty;
-                    for (analysis.ds.rows.items) |row| {
-                        const value = h.toNum(row[ci]);
-                        if (!std.math.isNan(value)) try x.append(a, value);
+                    var spread: FittedSampleSpread = .{};
+                    const rows = analysis.ds.rows.items;
+                    var first: usize = 0;
+                    while (first < rows.len) {
+                        var next = first + 1;
+                        if (opt.freqcol != null) if (opt.obscol) |obs| {
+                            while (next < rows.len and rows[next][obs].num == rows[first][obs].num) next += 1;
+                        };
+                        const value = h.toNum(rows[first][ci]);
+                        if (!std.math.isNan(value)) {
+                            spread.add(value, next - first);
+                            try x.appendNTimes(a, value, next - first);
+                        }
+                        first = next;
                     }
+                    fit_available.* = spread.canFit();
                     std.mem.sort(f64, x.items, {}, std.sort.asc(f64));
                     cell.* = .{ .sorted = x.items };
                     try pooled.appendSlice(a, x.items);
                 }
-                if (pooled.items.len == 0) continue;
+                if (pooled.items.len == 0) {
+                    for (statement.kernels) |request| if (request.bandwidth == .sjpi) {
+                        _ = try kernel.fitSjpi(cx.diags, &.{}, 0, request);
+                        break;
+                    };
+                    continue;
+                }
                 std.mem.sort(f64, pooled.items, {}, std.sort.asc(f64));
                 const plan = try binning.determine(a, cx.diags, cells, .{ .endpoints = statement.endpoint_labels, .right = statement.right, .mode = statement.mode, .key_index = resolved.key_index, .key_move = opt.key_move, .target_count = statement.target_count, .max_nbin = statement.max_nbin, .max_sigmas = statement.max_sigmas, .initial_endpoints = statement.endpoints });
                 var output_options = schema;
                 output_options.bin_width = plan.width;
                 output_options.clipped = plan.clipped;
+                const graphics = if (!statement.noplot and cx.univariate_plot_sink != null and cx.univariate_plot_sink.?.enabled) cx.graphics else null;
+                var panels: std.ArrayList(drawing.Panel) = .empty;
+                const wants_kernel = statement.kernels.len > 0 or statement.kernel_output != null;
+                var kernel_cells: []kernel_output.Prepared = &.{};
+                var extent: kernel_output.DisplayExtent = .{};
+                const common_endpoints = statement.endpoints.len == 0 and statement.endpoint_labels and !plan.clipped and plan.cell_order.len > 1;
+                if (wants_kernel) {
+                    kernel_cells = try a.alloc(kernel_output.Prepared, cells.len);
+                    for (plan.cell_order) |gi| {
+                        const x = cells[gi].sorted;
+                        if (x.len == 0) continue;
+                        const pairs = try a.alloc(h.XW, x.len);
+                        for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
+                        const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
+                        kernel_cells[gi] = try kernel_output.prepare(a, cx.diags, x, iqr, statement.kernels, true);
+                        if (common_endpoints) extent.include(x, kernel_cells[gi].estimates);
+                    }
+                }
+                const kernel_display = try extent.alignToBins(cx.diags, plan.endpoints, plan.width);
                 for (plan.cell_order) |gi| {
                     const x = cells[gi].sorted;
                     if (x.len == 0) continue;
                     const rep = representatives[gi];
-                    if (statement.kernels.len > 0 or statement.kernel_output != null) {
-                        const pairs = try a.alloc(h.XW, x.len);
-                        for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
-                        const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
+                    const prefix = try classificationNotePrefix(a, ds, ccols, groups[gi].rep);
+                    if (statement.curves.len > 0 and !can_fit[gi])
+                        try cx.diags.note(0, "{s}{s} fitted curves were drawn on the histogram for {s} since its standard deviation is zero.", .{ prefix, if (prefix.len == 0) "No" else "no", ds.columns.items[ci].name });
+                    const kernel_start = kd.rows.items.len;
+                    var graph_curves: std.ArrayList(drawing.Curve) = .empty;
+                    var inset_fits: std.ArrayList(ann.Fitted) = .empty;
+                    if (wants_kernel) {
                         var report: kernel_output.Report = .{};
                         const automatic = statement.endpoints.len == 0;
-                        // Retained translated negative-data controls expose an unresolved
-                        // automatic endpoint phase. Explicit lattices remain available.
-                        if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1]) return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel phase for negative nonconstant data is not verified; supply explicit endpoints", .{});
-                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
+                        if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
+                            plan.endpoint_phase_ambiguous)
+                            return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
+                        try kernel_output.appendPrepared(cx.diags, kd, ds, keys.items, rep, ci, x, kernel_cells[gi], statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .comparative = plan.cell_order.len > 1, .display = kernel_display, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
-                    const constant = x[0] == x[x.len - 1];
-                    if (statement.curves.len == 0 or constant) {
-                        try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
-                        continue;
+                    if (statement.midpercents) {
+                        const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null);
+                        try rendering.histogramBins(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, bins, statement.right, !statement.endpoint_labels, by_number);
                     }
-                    for (statement.curves) |curves| for (curves.requests) |request| {
+                    if (statement.curves.len == 0 or !can_fit[gi]) {
+                        try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
+                    } else for (statement.curves) |curves| for (curves.requests, 1..) |request, curve_number| {
+                        output_options.curve_number = curve_number;
                         var report: fitting.Report = .{};
                         var trace: fitting.Trace = .{ .allocator = a };
                         var actual_request = request;
                         actual_request.report = &report;
+                        actual_request.variable = ds.columns.items[ci].name;
                         if (request.optprint or request.itprint) actual_request.trace = &trace;
                         const curve = fitting.fit(cx.diags, x, actual_request) catch |err| {
                             if (request.itprint and trace.weibull.items.len > 0) try rendering.renderTrace(a, out, trace, report);
                             if (report.no_fit) {
+                                if (request.family == .sb or request.family == .su)
+                                    try cx.diags.note(0, "{s}{s} {s} curve was not drawn because estimates could not be computed for all parameters.", .{ prefix, if (prefix.len == 0) "The" else "the", if (request.family == .su) "SU" else "SB" });
                                 if (request.optprint) try rendering.renderTrace(a, out, trace, report);
                                 try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
                                 continue;
@@ -286,12 +433,40 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         };
                         if (request.optprint or (request.itprint and trace.weibull.items.len > 0)) try rendering.renderTrace(a, out, trace, report);
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, curve);
+                        const tests = if (graphics != null and statement.inset.needsTests(curve.family) and curve.family != .sb and curve.family != .su)
+                            try @import("univ_distribution_gof.zig").computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler)
+                        else
+                            null;
+                        if (graphics != null) {
+                            try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
+                            try inset_fits.append(a, .{ .curve = curve, .tests = tests });
+                        }
                         if (!curves.noprint) {
                             const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, curve);
-                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels);
+                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels, by_number, tests);
                         }
                     };
+                    if (graphics != null) {
+                        const graph_keys = try a.alloc(@import("univ_plot_data.zig").Key, keys.items.len);
+                        for (graph_keys, keys.items, 0..) |*key, idx, j| {
+                            const display = if (rep[idx] == .str) rep[idx].str else try @import("../format.zig").apply(a, rep[idx], descriptors.columns.items[idx].format orelse "BEST12.");
+                            key.* = .{ .column = descriptors.columns.items[idx], .value = rep[idx], .display = std.mem.trim(u8, display, " "), .class = j >= bcols.len };
+                        }
+                        try panels.append(a, .{ .keys = graph_keys, .bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null), .curves = graph_curves.items, .kernel_rows = if (statement.kernels.len == 0) &.{} else try a.dupe([]const Value, kd.rows.items[kernel_start..]), .inset = try statement.inset.box(a, cx.diags, x, inset_fits.items), .n = x.len });
+                    }
                 }
+                if (graphics) |session| if (panels.items.len > 0) {
+                    const column = descriptors.columns.items[ci];
+                    const title = try statement.title.value(a, cx.graph_title, "Distribution", column);
+                    const pages = try drawing.paginate(a, panels.items, ccols.len, statement.layout);
+                    const drawing_options: drawing.Options = .{ .variable = column, .title = title, .scale = statement.vscale, .barlabel = statement.barlabel, .endpoint_labels = statement.endpoint_labels, .endpoints = plan.endpoints, .bin_width = plan.width, .layout = statement.layout };
+                    const axes = drawing.measure(panels.items, drawing_options);
+                    for (pages, 1..) |page, number_| {
+                        const bytes = try drawing.render(a, panels.items, page, drawing_options, axes);
+                        const object = try @import("graph_ods.zig").univariate(a, .Histogram, if (bcols.len > 0) by_number else null, column.name, number_);
+                        try session.queue(statement.order, "histogram", bytes, object);
+                    }
+                };
             }
         }
         if (statement.output) |name| {
@@ -391,7 +566,7 @@ test "UNIVARIATE OUTKERNEL grid descriptors and values match SAS M9" {
     try lib.put("d", &ds);
     var d = diag.Diagnostics.init(a);
     var out: std.ArrayList(u8) = .empty;
-    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; histogram x / noplot kernel(k=n q t c=.5) endpoints=0 to 20 by 5 outkernel=k; run;", &d);
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; histogram x / noplot kernel(k=n q t c=.5 noprint) endpoints=0 to 20 by 5 outkernel=k; run;", &d);
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
     const k = lib.find("k").?;
     try std.testing.expectEqual(@as(usize, 555), k.rows.items.len);
@@ -404,6 +579,44 @@ test "UNIVARIATE OUTKERNEL grid descriptors and values match SAS M9" {
     try std.testing.expectEqual(@as(f64, 0.015625), k.rows.items[1][3].num);
     try std.testing.expectApproxEqAbs(@as(f64, 24.777645636), k.rows.items[1][4].num, 2e-7);
     try std.testing.expectEqual(@as(f64, 20), k.rows.items[184][3].num);
+}
+
+test "comparative kernel endpoint axes span all CLASS tails on the key histogram lattice" {
+    @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Group = struct { count: usize, first: f64, increment: f64 };
+    const Case = struct { groups: [4]Group, options: []const u8, rows: [4]usize, variable_group: usize, first: f64, last: f64 };
+    for ([_]Case{
+        .{ .groups = .{ .{ .count = 38, .first = 0.98, .increment = 0.0061 }, .{ .count = 9, .first = 0.41, .increment = 0.064 }, .{ .count = 21, .first = 0.65, .increment = 0.064 }, .{ .count = 38, .first = 1.67, .increment = 0.0061 } }, .options = "quadratic c=3.29", .rows = .{ 512, 512, 358, 512 }, .variable_group = 2, .first = -0.5, .last = 3.06 },
+        .{ .groups = .{ .{ .count = 9, .first = 1.15, .increment = 0 }, .{ .count = 9, .first = 0, .increment = 0.064 }, .{ .count = 9, .first = 0.905, .increment = 0 }, .{ .count = 53, .first = -0.98, .increment = 0.014 } }, .options = "normal c=0.74 lower=-1.044 upper=1.69", .rows = .{ 405, 512, 436, 350 }, .variable_group = 0, .first = -0.85, .last = 2.3 },
+    }) |case| {
+        var lib = @import("../exec.zig").Library.init(a);
+        var ds = Dataset.init(a, "d");
+        _ = try ds.addColumn("g", .num);
+        _ = try ds.addColumn("x", .num);
+        for (case.groups, 1..) |group, g| for (0..group.count) |i| {
+            try ds.appendRow(&.{ .{ .num = @floatFromInt(g) }, .{ .num = group.first + @as(f64, @floatFromInt(i)) * group.increment } });
+        };
+        try lib.put("d", &ds);
+        var d = diag.Diagnostics.init(a);
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;class g;histogram x / endpoints rtinclude kernel(k={s}) outkernel=k noplot;run;", .{case.options});
+        const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+        var out: std.ArrayList(u8) = .empty;
+        try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+        const k = lib.find("k").?;
+        var counts = [_]usize{ 0, 0, 0, 0 };
+        for (k.rows.items) |row| {
+            const group: usize = @intFromFloat(row[0].num - 1);
+            if (group == case.variable_group) {
+                if (counts[group] == 0) try std.testing.expectApproxEqAbs(case.first, row[4].num, 2e-14);
+                if (counts[group] + 1 == case.rows[group]) try std.testing.expectApproxEqAbs(case.last, row[4].num, 2e-14);
+            }
+            counts[group] += 1;
+        }
+        try std.testing.expectEqual(case.rows, counts);
+    }
 }
 
 test "UNIVARIATE fitted numerical tables publish ODS without creating unrequested OUT datasets" {
@@ -442,6 +655,8 @@ test "UNIVARIATE fitted numerical tables publish ODS without creating unrequeste
     const g = lib.find("g").?;
     try std.testing.expectEqual(@as(usize, 3), g.rows.items.len);
     try std.testing.expectEqualStrings("pValue", g.columns.items[8].name);
+    try std.testing.expectEqualStrings("10.7", g.columns.items[5].format.?);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Kolmogorov-Smirnov D 0.7163447 Pr > D <0.001") != null);
 }
 
 test "UNIVARIATE WEIGHT with HISTOGRAM is a SAS error before output publication" {
@@ -493,6 +708,9 @@ test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reac
     try std.testing.expect(!d.hasErrors());
     const pe = lib.find("pe").?;
     try std.testing.expectEqual(@as(usize, 33), pe.rows.items.len);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Parameters for Johnson SB Distribution") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Parameters for Johnson SU Distribution") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Shape Delta 1.177443\n") != null);
     try std.testing.expectApproxEqAbs(@as(f64, 1.177443), pe.rows.items[2][5].num, 7e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 1.219036), pe.rows.items[11][5].num, 6e-7);
     try std.testing.expectEqual(@as(f64, 1), pe.rows.items[28][5].num);
@@ -504,6 +722,69 @@ test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reac
         warned = true;
     };
     try std.testing.expect(warned);
+}
+
+test "Johnson percentile rejection preserves sibling fits and CLASS histogram rows" {
+    @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("g", .num);
+    _ = try ds.addColumn("x", .num);
+    for (1..4) |g| for (1..32) |i| {
+        const z = @import("../functions.zig").distQuantile(.normal, (@as(f64, @floatFromInt(i)) - 0.5) / 31, &.{}).?;
+        const x = switch (g) {
+            1 => 1 / (1 + @exp(-z)),
+            2 => std.math.sinh(z),
+            else => z,
+        };
+        try ds.appendRow(&.{ .{ .num = @floatFromInt(g) }, .{ .num = x } });
+    };
+    try lib.put("d", &ds);
+    for ([_][]const u8{ "su", "sb" }) |family| {
+        const su = std.mem.eql(u8, family, "su");
+        var d = diag.Diagnostics.init(a);
+        const lex = @import("../lexer.zig");
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;class g;histogram x / {s}(fitinterval=.68 fittolerance=.95) normal outhistogram=h noplot;run;", .{family});
+        const tokens = try lex.tokenize(a, source, &d);
+        var out: std.ArrayList(u8) = .empty;
+        try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+        const name = if (su) "SU" else "SB";
+        const warning = try std.fmt.allocPrint(a, "Unable to fit {s} distribution based on the ratio criterion.", .{name});
+        const group_note = try std.fmt.allocPrint(a, "For classification level g = 1, the {s} curve was not drawn because estimates could not be computed for all parameters.", .{name});
+        var warnings: usize = 0;
+        var support_errors: usize = 0;
+        var group_notes: usize = 0;
+        for (d.list.items) |message| {
+            if (message.severity == .warning and std.mem.eql(u8, message.message, warning)) warnings += 1;
+            if (message.severity == .err and std.mem.startsWith(u8, message.message, "The smallest value of x")) support_errors += 1;
+            if (message.severity == .note and std.mem.eql(u8, message.message, group_note)) group_notes += 1;
+        }
+        try std.testing.expectEqual(@as(usize, if (su) 2 else 1), warnings);
+        try std.testing.expectEqual(@as(usize, if (su) 0 else 2), support_errors);
+        try std.testing.expectEqual(@as(usize, 1), group_notes);
+        const hdata = lib.find("h").?;
+        var normal_counts = [_]usize{ 0, 0, 0 };
+        var other_counts = [_]usize{ 0, 0, 0 };
+        for (hdata.rows.items) |row| {
+            const gi: usize = @intFromFloat(row[0].num - 1);
+            if (std.mem.eql(u8, row[5].str, "NORMAL")) {
+                normal_counts[gi] += 1;
+            } else {
+                other_counts[gi] += 1;
+                if (su and gi == 1) {
+                    try std.testing.expectEqualStrings("SU", row[5].str);
+                    try std.testing.expect(row[6] == .num);
+                } else {
+                    try std.testing.expectEqualStrings("", row[5].str);
+                    try std.testing.expect(row[6].isMissing());
+                }
+            }
+        }
+        for (normal_counts, other_counts) |normal, other| try std.testing.expect(normal > 0 and normal == other);
+    }
 }
 
 test "UNIVARIATE public Weibull ITPRINT renders actual iteration history" {
@@ -531,6 +812,31 @@ test "UNIVARIATE public Weibull ITPRINT renders actual iteration history" {
     const invalid = try lexer.tokenize(a, "histogram x / noplot weibull(maxiter=1);", &bad);
     var i: usize = 0;
     try std.testing.expectError(error.ParseError, parseStatement(a, &bad, invalid, &i));
+}
+
+test "gamma and Weibull MAXITER range is checked before truncating a fractional limit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const lexer = @import("../lexer.zig");
+    for ([_][]const u8{ "gamma", "weibull" }) |name| {
+        for ([_][]const u8{ "4.9", "100.1" }) |limit| {
+            d.list.clearRetainingCapacity();
+            const code = try std.fmt.allocPrint(a, "histogram x / {s}(maxiter={s}) noplot;", .{ name, limit });
+            const t = try lexer.tokenize(a, code, &d);
+            var at: usize = 0;
+            try std.testing.expectError(error.ParseError, parseStatement(a, &d, t, &at));
+            try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The parameter value {s} is not within the required range of 5 and 100.", .{limit}), d.list.items[0].message);
+        }
+        for ([_][]const u8{ "5", "5.99", "100" }, [_]usize{ 5, 5, 100 }) |limit, expected| {
+            const code = try std.fmt.allocPrint(a, "histogram x / {s}(maxiter={s}) noplot;", .{ name, limit });
+            const t = try lexer.tokenize(a, code, &d);
+            var at: usize = 0;
+            const parsed = try parseStatement(a, &d, t, &at);
+            try std.testing.expectEqual(expected, parsed.curves[0].requests[0].maxiter);
+        }
+    }
 }
 
 test "UNIVARIATE output WHERE follows the renamed descriptor for qualified outputs" {
@@ -664,7 +970,7 @@ test "UNIVARIATE public ODS uses valid MC denominator and omits no-valid probabi
             try std.testing.expect(!d.hasErrors());
         }
         var counted = false;
-        for (d.list.items) |entry| if (entry.severity == .warning and std.mem.indexOf(u8, entry.message, "attempted=5") != null) {
+        for (d.list.items) |entry| if (entry.severity == (if (all_fail) @as(diag.Severity, .err) else .note) and std.mem.indexOf(u8, entry.message, "attempted=5") != null) {
             counted = true;
         };
         try std.testing.expect(counted);
@@ -710,6 +1016,43 @@ test "UNIVARIATE shared KEY and UNIFORM bins are variable-first and honor NOKEYM
     try std.testing.expect(!d.hasErrors());
 }
 
+test "histogram fit follows near-constant variance in source order and original FREQ groups" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "x", "f" }) |name| _ = try ds.addColumn(name, .num);
+
+    // M9 preserves the fit for four individual copies after the first
+    // observation, and suppresses it for the same value entered with FREQ=4.
+    for ([_]f64{ 0, 1 }) |group| {
+        try ds.appendRow(&.{ .{ .num = group }, .{ .num = -0.9999999999996209 }, .{ .num = 1 } });
+        const copies: usize = if (group == 0) 1 else 4;
+        for (0..copies) |_| try ds.appendRow(&.{ .{ .num = group }, .{ .num = -1 }, .{ .num = 4 / @as(f64, @floatFromInt(copies)) } });
+    }
+    // Reversing these nine unit-frequency observations also changes the fit.
+    const low: f64 = 0.9999999999998943;
+    const high: f64 = 1.0000000000001057;
+    for ([_]f64{ 2, 3 }) |group| for (0..9) |i| {
+        const first = if (group == 2) i < 4 else i >= 5;
+        try ds.appendRow(&.{ .{ .num = group }, .{ .num = if (first) low else high }, .{ .num = 1 } });
+    };
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; by g; freq f; var x; histogram x / noplot endpoints=-2 to 2 by 1 normal(mu=0 sigma=1) outhistogram=h; run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    const hist = lib.find("h").?;
+    var seen: [4]bool = @splat(false);
+    for (hist.rows.items) |row| {
+        const group: usize = @intFromFloat(row[hist.indexOf("g").?].num);
+        seen[group] = true;
+        try std.testing.expectEqualStrings(if (group % 2 == 1) "NORMAL" else "", row[hist.indexOf("_CURVE_").?].str);
+    }
+    try std.testing.expectEqual([_]bool{ true, true, true, true }, seen);
+}
+
 test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes default estimate" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -723,6 +1066,9 @@ test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes def
     const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint;histogram x / noplot normal(mu=5 sigma=1) outhistogram=h outkernel=k;run;", &d);
     var out: std.ArrayList(u8) = .empty;
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    const messages = try d.render();
+    try std.testing.expect(std.mem.indexOf(u8, messages, "No fitted curves were drawn on the histogram for x since its standard deviation is zero.") != null);
+    try std.testing.expect(std.mem.indexOf(u8, messages, "The range of the data is zero.") != null);
     const histogram = lib.find("h").?;
     try std.testing.expectEqual(@as(usize, 1), histogram.rows.items.len);
     try std.testing.expectEqualStrings("", histogram.rows.items[0][histogram.indexOf("_CURVE_").?].str);
@@ -732,6 +1078,38 @@ test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes def
     try std.testing.expectEqual(@as(usize, 512), output.rows.items.len);
     try std.testing.expectEqual(@as(f64, 3), output.rows.items[0][output.indexOf("_VALUE_").?].num);
     try std.testing.expectEqual(@as(f64, 0.78520352), output.rows.items[0][output.indexOf("_C_").?].num);
+}
+
+test "UNIVARIATE kernel bandwidth notes and numerical reflection follow the M9 wrap limit" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var source = Dataset.init(a, "d");
+    _ = try source.addColumn("x", .num);
+    for ([_]f64{ 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8 }) |x| try source.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &source);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const tokens = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; var x; " ++
+        "histogram x / kernel(c=.4 lower=0) outkernel=small noplot; " ++
+        "histogram x / kernel(c=2 lower=0) outkernel=large noplot; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+    try std.testing.expectEqual(@as(usize, 4), d.list.items.len);
+    try std.testing.expectEqualStrings("The bounded normal kernel estimate for c=0.4 has a bandwidth of 0.1056.", d.list.items[0].message);
+    try std.testing.expectEqual(.warning, d.list.items[1].severity);
+    try std.testing.expectEqualStrings("The normal kernel estimate for c=2 has a large bandwidth of 0.5278, which results in the wrap-around effect at the ends of the horizontal axis.", d.list.items[1].message);
+    try std.testing.expectEqual(.warning, d.list.items[2].severity);
+    try std.testing.expectEqualStrings("The LOWER= and UPPER= options are not used in the normal kernel estimate for c=2 because of the wrap-around effect at the ends of the horizontal axis.", d.list.items[2].message);
+    try std.testing.expectEqualStrings("The normal kernel estimate for c=2 has a bandwidth of 0.5278 and an AMISE of 1.8575.", d.list.items[3].message);
+    const small = lib.find("small").?;
+    const large = lib.find("large").?;
+    const density = large.indexOf("_DENSITY_").?;
+    try std.testing.expectEqual(@as(usize, 229), small.rows.items.len);
+    try std.testing.expectEqual(@as(f64, 0), small.rows.items[0][density].num);
+    try std.testing.expectEqual(@as(usize, 357), large.rows.items.len);
+    for ([_]usize{ 0, 178, 356 }, [_]f64{ 0.440581028301933, 0.5306337406004219, 0.07142751159241162 }) |i, expected|
+        try std.testing.expectApproxEqAbs(expected, large.rows.items[i][density].num, 1e-13);
 }
 
 test "UNIVARIATE explicit kernel windows retain zeros outside reflection bounds" {
@@ -854,7 +1232,6 @@ test "UNIVARIATE public endpoint axes match every SAS M9 coordinate and density"
     }
 }
 
-
 test "UNIVARIATE public supplied lattices preserve budgets clipped rows and percentages" {
     for ([_][]const u8{ "endpoints", "midpoints" }) |kind| {
         for ([_][]const u8{ "maxnbin=2", "maxnbin=6", "maxnbin=10", "maxsigmas=1", "maxsigmas=3" }) |control| {
@@ -909,14 +1286,6 @@ test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact ke
                 const text = try std.fmt.allocPrint(a, "proc univariate data=d noprint;histogram x / noplot endpoints kernel(k={s} c={s}) outkernel=k;run;", .{ kind, c });
                 const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
                 var out: std.ArrayList(u8) = .empty;
-                if (std.mem.eql(u8, name, "negative")) {
-                    diag.resetGap();
-                    defer diag.resetGap();
-                    try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens));
-                    try std.testing.expect(diag.gapHit());
-                    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "negative nonconstant") != null);
-                    continue;
-                }
                 try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
                 const rows = lib.find("k").?.rows.items;
                 const key = try std.fmt.allocPrint(a, "{s}_{s}_{s}", .{ name, kind, c });
@@ -939,7 +1308,7 @@ test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact ke
     }
 }
 
-test "UNIVARIATE public power location publishes only oracle curves with nonstationary warnings" {
+test "UNIVARIATE public power location warns only when no curve can be published" {
     var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_power_location_dev5.txt"), '\n');
     var curves: usize = 0;
     var absent: usize = 0;
@@ -970,12 +1339,12 @@ test "UNIVARIATE public power location publishes only oracle curves with nonstat
         var out: std.ArrayList(u8) = .empty;
         try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, tokens);
         const no_fit = std.mem.eql(u8, theta, "none");
-        var warned = false;
+        var reported = false;
         for (d.list.items) |message| {
-            try std.testing.expect(message.severity == .warning);
-            if (std.mem.indexOf(u8, message.message, if (no_fit) "initialization_failed" else "nonstationary_candidate") != null) warned = true;
+            try std.testing.expect(message.severity == (if (no_fit) @as(diag.Severity, .warning) else .note));
+            if (std.mem.indexOf(u8, message.message, if (no_fit) "initialization_failed" else "nonstationary_candidate") != null) reported = true;
         }
-        try std.testing.expect(warned);
+        try std.testing.expect(reported);
         try capture.finish(&lib, &d);
         if (no_fit) {
             absent += 1;
@@ -996,4 +1365,208 @@ test "UNIVARIATE public power location publishes only oracle curves with nonstat
     }
     try std.testing.expectEqual(@as(usize, 93), curves);
     try std.testing.expectEqual(@as(usize, 41), absent);
+}
+
+test "UNIVARIATE public SJPI uses the normal kernel and omits a constant curve" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 10 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 2.75 } });
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; " ++
+        "histogram x / kernel(k=q c=sjpi) outkernel=k noplot; " ++
+        "histogram y / kernel(c=sjpi) outkernel=empty noplot; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 0), lib.find("empty").?.rows.items.len);
+    const k = lib.find("k").?;
+    try std.testing.expectEqual(@as(usize, 249), k.rows.items.len);
+    // M9 kde_sjpi_ties: first, center and last grid ordinates.
+    for ([_]usize{ 0, 124, 248 }, [_]f64{ -3, 5.7109375, 14.4296875 }, [_]f64{ 0.00246106157244, 2.34204123863303, 0.00022758796908 }, [_]f64{ 8.20353857482e-6, 0.00780680412878, 7.58626563587e-7 }) |i, point, percent, density| {
+        const row = k.rows.items[i];
+        try std.testing.expectEqualStrings("Normal", row[1].str);
+        try std.testing.expectApproxEqAbs(@as(f64, 1.0053107939231), row[2].num, 1e-12);
+        try std.testing.expectEqual(point, row[3].num);
+        try std.testing.expectApproxEqAbs(percent, row[4].num, 1e-11);
+        try std.testing.expectApproxEqAbs(density, row[5].num, 1e-13);
+    }
+    const messages = try d.render();
+    try std.testing.expect(std.mem.indexOf(u8, messages, "normal kernel") != null);
+    try std.testing.expect(std.mem.indexOf(u8, messages, "The kernel density estimate for c=SJPI could not be computed for y since its standard deviation is zero.") != null);
+}
+
+test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two bin denominators" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var source = Dataset.init(a, "sample");
+    _ = try source.addColumn("g", .char);
+    source.setLen("g", 12);
+    _ = try source.addColumn("x", .num);
+    for ([_][]const u8{ "Red", "Blue team" }, 1..) |label, group| {
+        try source.appendRow(&.{ .{ .str = label }, Value.missing });
+        for (1..7) |i| try source.appendRow(&.{ .{ .str = label }, .{ .num = @floatFromInt(i + group) } });
+    }
+    try lib.put("sample", &source);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output GoodnessOfFit=gof FitQuantiles=q Bins=fitbins HistogramBins=h;", &d));
+    var out: std.ArrayList(u8) = .empty;
+    var listing: @import("../ods_listing.zig").Listing = .{ .trace = &d };
+    _ = try listing.parse(a, &d, try lex.tokenize(a, "ods select 'Blue team'n.HistogramBins;", &d));
+    const program = "proc univariate data=sample noprint;class g;var x;" ++
+        "histogram x / midpercents normal(midpercents percents=10 50 90) noplot;run;";
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture, .listing = &listing }, &out, try lex.tokenize(a, program, &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Histogram Bins for x") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "g = Red") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Distribution") == null);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Template:   base.univariate.Bins\nPath:       Univariate.x.Histogram.'Blue team'n.HistogramBins") != null);
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const gof = lib.find("gof").?;
+    try std.testing.expectEqualStrings("Goodness of Fit", gof.label.?);
+    try std.testing.expectEqualStrings("10.8", gof.columns.items[gof.indexOf("Stat").?].format.?);
+    const q = lib.find("q").?;
+    try std.testing.expectEqualStrings("Histogram", q.columns.items[1].name);
+    try std.testing.expectEqualStrings("g", q.columns.items[2].name);
+    try std.testing.expectEqual(@as(?usize, 9), q.columns.items[2].len);
+    try std.testing.expectEqualStrings("Blue team", q.row(0)[2].str);
+    try std.testing.expectEqual(@as(usize, 6), q.rowCount());
+    try std.testing.expectEqual(@as(f64, 5.5), q.row(1)[q.indexOf("ObsQuantile").?].num);
+    const bins = lib.find("fitbins").?;
+    const hist = lib.find("h").?;
+    try std.testing.expectEqualStrings("4.1", bins.columns.items[bins.indexOf("Midpoint").?].format.?);
+    try std.testing.expectEqualStrings("Midpoint", hist.columns.items[3].name);
+    try std.testing.expect(hist.indexOf("Distribution") == null);
+    try std.testing.expectEqual(@as(f64, 3), hist.row(0)[3].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 7.0), hist.row(0)[4].num, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 6.0), bins.row(0)[bins.indexOf("ObsPercent").?].num, 1e-12);
+}
+
+test "UNIVARIATE fitted quantiles retain small measured values in the listing" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var sample = Dataset.init(a, "series");
+    _ = try sample.addColumn("x", .num);
+    for (1..20) |i| try sample.appendRow(&.{.{ .num = @as(f64, @floatFromInt(i)) * 1e-6 }});
+    try lib.put("series", &sample);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const program = "proc univariate data=series noprint;var x; histogram x / normal(midpercents) noplot;run;";
+    const t = try @import("../lexer.zig").tokenize(a, program, &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "1.0 0.000001 -0.0000031\n") != null);
+}
+
+test "UNIVARIATE two-endpoint kernel keeps a regular row immediately above its lower boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ -0.28, -0.09, 0.14, 0.24, 0.41, 1 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const text = "proc univariate data=d noprint; histogram x / nendpoints=2 rtinclude kernel(k=n c=.7) outkernel=k noplot; run;";
+    const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+    const rows = lib.find("k").?.rows.items;
+    try std.testing.expectEqual(@as(usize, 202), rows.len);
+    try std.testing.expectEqual(@as(f64, -1), rows[0][3].num);
+    try std.testing.expectEqual(@as(f64, -0.9999999999999992), rows[1][3].num);
+    try std.testing.expectEqual(@as(f64, 1), rows[201][3].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.8607353479640445), rows[101][5].num, 1e-12);
+}
+
+test "UNIVARIATE invalid fitted percent list warns per printed curve and restores default quantiles" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 0.15, 0.23, 0.29, 0.35, 0.41, 0.62, 0.78, 0.84, 0.92 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    const lex = @import("../lexer.zig");
+    var d = diag.Diagnostics.init(a);
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output FitQuantiles=q;", &d));
+    const text = "proc univariate data=d noprint;histogram x / normal(mu=.4 .6 sigma=.2 percents=90 percent=-5 10) beta(alpha=2 beta=3 percents=30 30) noplot;run;";
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, text, &d));
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, try d.render(), "The list of percents specified for the Normal density must be greater than 0 and less than 100."));
+    const q = lib.find("q").?;
+    const p = q.indexOf("Percent").?;
+    const expected = [_]f64{ 1, 5, 10, 25, 50, 75, 90, 95, 99, 1, 5, 10, 25, 50, 75, 90, 95, 99, 30, 30 };
+    try std.testing.expectEqual(expected.len, q.rowCount());
+    for (expected, q.rows.items) |value, row| try std.testing.expectEqual(value, row[p].num);
+}
+
+test "UNIVARIATE orders fitted ODS families and numbers curves in OUTHISTOGRAM" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var data = Dataset.init(a, "d");
+    _ = try data.addColumn("x", .num);
+    for ([_]f64{ 0.1, 0.2, 0.23, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }) |x| try data.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &data);
+    const lex = @import("../lexer.zig");
+    var d = diag.Diagnostics.init(a);
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output FitQuantiles=q;", &d));
+    const program = "proc univariate data=d noprint; histogram x / igauss(mu=1 lambda=1 edfnsamples=1 percents=50) " ++
+        "power(theta=0 sigma=1 alpha=2 percents=50) normal(mu=.3 .6 sigma=.2 percents=50) outhistogram=h noplot;run;";
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, program, &d));
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const q = lib.find("q").?;
+    const family = q.indexOf("Distribution").?;
+    const expected = [_][]const u8{ "Normal", "Normal", "PowerFunction", "InverseGaussian" };
+    try std.testing.expectEqual(expected.len, q.rowCount());
+    try std.testing.expectEqual(@as(usize, "InverseGaussian".len), q.columns.items[family].len.?);
+    for (expected, q.rows.items) |name, row| try std.testing.expectEqualStrings(name, row[family].str);
+    const histogram = lib.find("h").?;
+    const name_col = histogram.indexOf("_CURVE_").?;
+    const names = [_][]const u8{ "NORMAL", "NORMAL2", "POWER", "IGAUSS" };
+    const bins_per_curve = histogram.rowCount() / names.len;
+    try std.testing.expect(bins_per_curve > 0);
+    for (histogram.rows.items, 0..) |row, index| try std.testing.expectEqualStrings(names[index / bins_per_curve], row[name_col].str);
+}
+
+test "UNIVARIATE repeated family blocks append options before expanding fitted curves" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lex = @import("../lexer.zig");
+    var d = diag.Diagnostics.init(a);
+    var i: usize = 0;
+    const text = "histogram x / norm(mu=.3 .5 sigma=.2 percents=30) beta(alpha=2 beta=3) normal(mu= mu=.7 sigma=.4 midpercents percent=70);";
+    const stmt = try parseStatement(a, &d, try lex.tokenize(a, text, &d), &i);
+    try std.testing.expectEqual(@as(usize, 2), stmt.curves.len);
+    const normal = stmt.curves[0];
+    try std.testing.expect(normal.midpercents);
+    try std.testing.expectEqualSlices(f64, &.{ 30, 70 }, normal.percents);
+    try std.testing.expectEqual(@as(usize, 3), normal.requests.len);
+    for (normal.requests, [_]f64{ 0.3, 0.5, 0.7 }, [_]f64{ 0.2, 0.4, 0.4 }) |r, mu, sigma| {
+        try std.testing.expectEqual(mu, r.mu.?);
+        try std.testing.expectEqual(sigma, r.sigma.?);
+    }
+    i = 0;
+    try std.testing.expectError(error.ParseError, parseStatement(a, &d, try lex.tokenize(a, "histogram / normal();", &d), &i));
 }

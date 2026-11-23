@@ -1,10 +1,7 @@
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Confidence Limits for the Risk Difference
 Risk Difference = -0.3926; Column 2 (c = 2)
@@ -14,13 +11,9 @@ Newcombe                           -0.5894       -0.1262
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Confidence Limits for the Risk Difference
 Risk Difference = -0.1593; Column 2 (c = 2)
@@ -44,11 +37,8 @@ Column 2 (c = 2)
 Total Sample Size = 106
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Confidence Limits for the Risk Difference
 Risk Difference = 0.3926; Column 1 (c = 1)
@@ -58,13 +48,9 @@ Newcombe                            0.1262        0.5894
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Confidence Limits for the Risk Difference
 Risk Difference = 0.1593; Column 1 (c = 1)
@@ -99,11 +85,8 @@ Column 1 (c = 1)
 Total Sample Size = 106
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Confidence Limits for the Risk Difference
 Risk Difference = 0.3926; Column 1 (c = 1)
@@ -113,13 +96,9 @@ Newcombe                            0.1262        0.5894
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Confidence Limits for the Risk Difference
 Risk Difference = 0.1593; Column 1 (c = 1)

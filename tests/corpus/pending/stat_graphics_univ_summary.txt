@@ -1,0 +1,4 @@
+# corpus assertions
+svg-count 1
+svg-has 1 data-kind="summary"
+svg-has 1 class="panel"

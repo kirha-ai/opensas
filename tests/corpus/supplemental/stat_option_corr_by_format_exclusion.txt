@@ -1,0 +1,4 @@
+# corpus assertions
+row KEY 1~5.1e-05|25~5.1e-05
+row KEY 3~5.1e-05|40~5.1e-05
+row-count 2 KEY {any} | {any}

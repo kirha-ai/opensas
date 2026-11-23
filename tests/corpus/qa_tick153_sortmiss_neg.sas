@@ -1,6 +1,6 @@
-/* QA tick153 BUG-sortspecialmiss regression lock: special missings sort BELOW
-   negatives, in ._ < . < .A .. .Z order, across SORT / DESCENDING / NODUPKEY /
-   FREQ simultaneously (shared cmpNum + Value.missingRank). */
+/* QA tick153 BUG-sortspecialmiss: SORT, DESCENDING and NODUPKEY preserve
+   numeric missing ranks. FREQ / MISSING orders missing display values first
+   (. A M Z _), followed by the ascending nonmissing numbers. */
 data d; input x @@; datalines;
 5 -3 .Z 0 . ._ .A -100 .M 2 .A 5 -3
 ;

@@ -1,0 +1,7 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 n 1 8 number of nonmissing values, x
+next 2 m 1 8 the mean, x
+next rows
+next 0
+end-listing

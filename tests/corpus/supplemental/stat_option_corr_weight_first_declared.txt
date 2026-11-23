@@ -1,0 +1,3 @@
+# corpus assertions
+row x 3~5.1e-05 3.5~5.1e-05 3.08221~5.1e-05 14~5.1e-05 1~5.1e-05 7~5.1e-05
+row-count 1 x {any} {any} {any} {any} {any} {any}

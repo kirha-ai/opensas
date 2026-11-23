@@ -1723,7 +1723,7 @@ pub fn comb2(n: f64, r_in: f64) f64 {
 /// The digamma function ψ(x): raise the argument with ψ(x)=ψ(x+1)−1/x until it's
 /// large enough for the asymptotic series. ponytail: accurate for x>0; no negative
 /// reflection (integer poles are rejected by the caller).
-fn digammaOf(x_in: f64) f64 {
+pub fn digammaOf(x_in: f64) f64 {
     var x = x_in;
     var result: f64 = 0;
     while (x < 10) : (x += 1) result -= 1.0 / x;
@@ -1905,7 +1905,7 @@ pub fn compgedCost(ev: *eval.Evaluator, out: []const u8, inp: []const u8, icase:
 
 /// Trigamma ψ′(x) = Σ 1/(x+k)²: recurrence up to x≥6, then the asymptotic series.
 /// ponytail: accurate for x>0 (the distribution helpers never call it below).
-fn trigammaOf(x_in: f64) f64 {
+pub fn trigammaOf(x_in: f64) f64 {
     var x = x_in;
     var r: f64 = 0;
     while (x < 6) : (x += 1) r += 1.0 / (x * x);
@@ -2352,13 +2352,13 @@ pub fn distPdf(d: Dist, x: f64, args: []const Value) ?f64 {
     };
 }
 
-/// log Q(z) = log(1−Φ(z)) for z deep in the upper tail, via the Mills-ratio
-/// continued fraction Q(z) = φ(z)·r(z), r(z) = 1/(z + 1/(z + 2/(z + 3/(z+⋯)))).
-/// BUG-logxdftail (doc LOGCDF p.1169: the log family exists for tail accuracy):
-/// the direct CDF underflows f64 at |z|≳38 (and our gammaP Φ collapses to 0/1
-/// near |z|≈8 — OBS-probnormtail), so callers reach here only with |z| large;
-/// the CF converges fast there. Modified Lentz (Numerical Recipes §5.2).
+/// Log of the standard normal upper tail. Near zero use the direct erfc
+/// approximation. In the upper tail the Mills continued fraction converges
+/// quickly and keeps the result in log space even after the CDF underflows.
 pub fn logStdNormTail(z: f64) f64 {
+    if (z == 0) return -@log(@as(f64, 2));
+    if (z < 0) return std.math.log1p(-0.5 * erfcOf(-z / @sqrt(@as(f64, 2))));
+    if (z < 8) return @log(0.5 * erfcOf(z / @sqrt(@as(f64, 2))));
     const tiny = 1e-300;
     var f = z; // evaluates B = z + 1/(z + 2/(z + 3/(z+⋯))); r = 1/B
     var c = z;
@@ -3578,7 +3578,7 @@ fn queueDepth(name: []const u8, prefix: []const u8) ?usize {
 /// is built once, so the same site presents the same pointer every iteration;
 /// a fresh DATA step re-parses (new pointers) and gets a fresh Evaluator.
 /// SAS's classic uniform RNG (Fishman & Moore 1982, prime-modulus multiplicative:
-/// x←16807·x mod 2³¹−1, value = x/(2³¹−1)). One stream per data step, held in
+/// x←397204094·x mod 2³¹−1, value = x/(2³¹−1)). One stream per data step, held in
 /// `ev.lag` under a fixed key: the FIRST positive seed initializes it and every
 /// subsequent random draw (any generator) advances the same stream, so sequential
 /// draws differ and a fixed seed is reproducible — matching SAS's shared-stream model.
@@ -3593,10 +3593,17 @@ pub fn nextUniform(ev: *eval.Evaluator, seed: f64) f64 {
         gop.value_ptr.append(ev.stateArena(), .{ .num = @floatFromInt(s0) }) catch {}; // the shared FIFO holds Value now
     }
     const state = gop.value_ptr;
-    const x: u64 = @intFromFloat(state.items[0].num);
-    const nxt: u64 = (16807 * x) % 2147483647;
-    state.items[0] = .{ .num = @floatFromInt(nxt) };
-    return @as(f64, @floatFromInt(nxt)) / 2147483647.0;
+    var x: u64 = @intFromFloat(state.items[0].num);
+    const u = classicUniform(&x);
+    state.items[0] = .{ .num = @floatFromInt(x) };
+    return u;
+}
+
+/// SAS 9.4 M9 CALL RANUNI(1) returns successive states 397204094,
+/// 2083249653 and 858616159. The implicit legacy stream uses the same update.
+pub fn classicUniform(state: *u64) f64 {
+    state.* = (397204094 * state.*) % 2147483647;
+    return @as(f64, @floatFromInt(state.*)) / 2147483647.0;
 }
 
 // ── MT19937 (Mersenne-Twister) for RAND / CALL STREAMINIT ────────────────────
@@ -7390,18 +7397,18 @@ test "random-variate generators: reproducible stream + distributions (Phase F ba
     }.f;
 
     // RANUNI: the first draw of a fresh stream seeded 1 is the documented
-    // 16807/(2^31−1); UNIFORM is an alias; both draw from the SAME stream.
-    try near((try dispatch(&e, "ranuni", &.{numV(1)})).num, 16807.0 / 2147483647.0, 1e-9);
+    // 397204094/(2^31−1); UNIFORM is an alias; both draw from the SAME stream.
+    try near((try dispatch(&e, "ranuni", &.{numV(1)})).num, 397204094.0 / 2147483647.0, 1e-9);
     // subsequent draws advance the stream (differ from the first)
     const ud = (try dispatch(&e, "uniform", &.{numV(1)})).num;
-    try t.expect(ud != 16807.0 / 2147483647.0 and ud > 0 and ud < 1);
+    try near(ud, 2083249653.0 / 2147483647.0, 1e-14);
 
     // a fresh evaluator re-seeded 1 reproduces the first value (reproducibility)
     var h2 = harness();
     defer h2.deinit();
     h2.prime();
     var e2 = h2.ev();
-    try near((try dispatch(&e2, "ranuni", &.{numV(1)})).num, 16807.0 / 2147483647.0, 1e-12);
+    try near((try dispatch(&e2, "ranuni", &.{numV(1)})).num, 397204094.0 / 2147483647.0, 1e-12);
 
     // uniform mean over many draws ≈ 0.5; all in (0,1)
     var su: f64 = 0;

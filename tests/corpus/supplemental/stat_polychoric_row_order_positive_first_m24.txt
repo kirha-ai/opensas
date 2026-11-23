@@ -1,0 +1,9 @@
+# corpus assertions
+row CORRFIT positive-first-m24 17100~0 . . . .
+row CORRFIT positive-rotated-m24 17100~0 . . . .
+row CORRFIT reflect-x-first-m24 17100~0 . . . .
+row CORRFIT reflect-x-rotated-m24 17100~0 . . . .
+row CORRFIT reflect-y-first-m24 17100~0 . . . .
+row CORRFIT reflect-y-rotated-m24 17100~0 . . . .
+stdout-count 6 CORRFIT
+stderr-count 6 did not converge

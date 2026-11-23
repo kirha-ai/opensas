@@ -1,0 +1,9 @@
+# corpus assertions
+row Sensitivity 0.7059~5.1e-05 0.1105~5.1e-05 0.4893~5.1e-05 0.9225~5.1e-05
+row Specificity 0.7576~5.1e-05 0.0746~5.1e-05 0.6114~5.1e-05 0.9038~5.1e-05
+row Positive Predictive Value 0.6~5.1e-05 0.1095~5.1e-05 0.3853~5.1e-05 0.8147~5.1e-05
+row Negative Predictive Value 0.8333~5.1e-05 0.068~5.1e-05 0.7~5.1e-05 0.9667~5.1e-05
+row-count 1 Sensitivity {any} {any} {any} {any}
+row-count 1 Specificity {any} {any} {any} {any}
+row-count 1 Positive Predictive Value {any} {any} {any} {any}
+row-count 1 Negative Predictive Value {any} {any} {any} {any}

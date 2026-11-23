@@ -1,0 +1,3 @@
+# corpus assertions
+row SHAPE -0.79742605597942~1e-11 -0.04014167650531~1e-11
+row-count 1 SHAPE {any} {any}

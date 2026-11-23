@@ -1,0 +1,3 @@
+# corpus assertions
+row Polychoric Correlation 0.5906~5.1e-05 0.1049~5.1e-05 0.3849~5.1e-05 0.7963~5.1e-05
+row-count 1 Polychoric Correlation {any} {any} {any} {any}

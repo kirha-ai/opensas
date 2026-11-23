@@ -1,0 +1,3 @@
+# corpus assertions
+row MID 0.925~1e-13 0.975~1e-13 1.025~1e-13
+row-count 1 MID {any} {any} {any}

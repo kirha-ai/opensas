@@ -1,0 +1,5 @@
+# corpus assertions
+row A 1~5.1e-05 50~5.1e-05 1~5.1e-05 50~5.1e-05
+row B 1~5.1e-05 50~5.1e-05 2~5.1e-05 100~5.1e-05
+row-count 1 A {any} {any} {any} {any}
+row-count 1 B {any} {any} {any} {any}

@@ -1,0 +1,5 @@
+# corpus assertions
+row Mean 1.5~5.1e-05 Sum Observations 3
+row Mean 2.5~5.1e-05 Sum Observations 5
+row Mean 3.5~5.1e-05 Sum Observations 7
+row-count 3 Mean {any} Sum Observations {any}

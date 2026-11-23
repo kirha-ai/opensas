@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 UNIVARIATE: unsupported HISTOGRAM option blablax

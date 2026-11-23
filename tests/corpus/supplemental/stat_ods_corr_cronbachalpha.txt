@@ -1,0 +1,10 @@
+# corpus assertions
+row ODS_ROWS|2
+stdout-count 2 ODS_COL|
+row ODS_COL|1|Variables|char|12|||
+row ODS_COL|2|Alpha|num|8|8.6||
+stdout-count 4 ODS_VALUE|
+row ODS_VALUE|1|Variables|Raw
+row ODS_VALUE|1|Alpha|0.52143439887265~5.214343989e-09
+row ODS_VALUE|2|Variables|Standardized
+row ODS_VALUE|2|Alpha|0.5111401718867~5.111401719e-09

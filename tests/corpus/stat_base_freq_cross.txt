@@ -1,0 +1,21 @@
+# corpus assertions
+row Table of g by h
+row Frequency |
+row Percent |
+row Row Pct |
+row Col Pct | 0 | 1 | Total
+row 0 | 2 | 2 | 4
+row | 25.00 | 25.00 | 50.00
+row | 50.00 | 50.00 |
+row | 50.00 | 50.00 |
+row 1 | 2 | 2 | 4
+row | 25.00 | 25.00 | 50.00
+row | 50.00 | 50.00 |
+row | 50.00 | 50.00 |
+row Total 4 4 8
+row 50.00 50.00 100.00
+row-count 1 Col Pct | {any} | {any} | Total
+row-count 2 {any} | {any} | {any} | {any}
+row-count 2 | {any} | {any} | {any}
+row-count 4 | {any} | {any} |
+row-count 1 Total {any} {any} {any}

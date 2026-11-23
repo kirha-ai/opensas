@@ -1,0 +1,5 @@
+# corpus assertions
+row Z 5.6278~5.1e-05
+row LR Chi-Square 18.2978~5.1e-05
+row-count 1 Z {any}
+row-count 1 LR Chi-Square {any}

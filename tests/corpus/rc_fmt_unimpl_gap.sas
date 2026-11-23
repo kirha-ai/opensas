@@ -1,6 +1,6 @@
 /* GAP-gapsexitingone §5f — the gap arm of the write-side format SPLIT:
-   PVALUEw.d is a documented SAS 9.4 format (Formats & Informats Reference
-   printed p.449 — the NLPCTN entry's own See Also points at it) that opensas
+   NLPVALUEw.d is a documented SAS 9.4 format (Formats & Informats Reference
+   printed p.421, the locale-sensitive p-value format) that opensas
    does not implement, so the refusal is an opensas gap → rc 2 ("file an
    opensas issue"), never rc 1 ("fix your SAS" about valid SAS). The message
    is byte-identical to the pre-split one; only the rc signal moved. The PROC
@@ -14,5 +14,5 @@ proc print data=b;
 run;
 data _null_;
   x = 0.5;
-  put x pvalue8.3;  /* documented, unimplemented → gap, raw fallback on stdout */
+  put x nlpvalue8.3;  /* documented, unimplemented → gap, raw fallback on stdout */
 run;

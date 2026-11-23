@@ -1,0 +1,5 @@
+# corpus assertions
+empty-listing
+stderr-count 1 The value of RHO0= must be between -1.0 and 1.0.
+stderr-count 0 WARNING:
+stdout-count 0 The CORR Procedure

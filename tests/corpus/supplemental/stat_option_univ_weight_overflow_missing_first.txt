@@ -1,0 +1,8 @@
+# corpus assertions
+stdout-count 0 SURVIVED 2
+stdout-count 0 SURVIVED 3
+stdout-count 0 SURVIVED 1
+stderr-count 1 A WEIGHT*FREQ value is too large.
+stderr-count 0 Overflow in statistic calculation for variable .
+stderr-count 0 Overflow in statistic calculation.
+stderr-count 1 A WEIGHT*FREQ value is too large.

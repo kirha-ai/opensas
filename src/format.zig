@@ -1748,13 +1748,17 @@ fn checkWidthRange(spec_text: []const u8, w: usize, lo: usize, hi: usize) void {
 /// narrower `.d` range than ordinary numeric formats. SAS reports this as
 /// ERROR 30-185; keep it in the user-program error class, twin to width errors.
 fn checkDecimalRange(spec_text: []const u8, d: usize, hi: usize) void {
-    if (d <= hi) return;
+    checkDecimalRangeMin(spec_text, d, 0, hi);
+}
+
+fn checkDecimalRangeMin(spec_text: []const u8, d: usize, lo: usize, hi: usize) void {
+    if (d >= lo and d <= hi) return;
     if (g_nofmterr) return;
     g_fmt_error = true;
     if (@import("builtin").is_test) {
-        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Decimal specified for format {s} is invalid (valid 0-{d}).", .{ spec_text, hi }) catch "invalid-format-decimal";
+        g_test_last_err = std.fmt.bufPrint(&g_test_err_buf, "Decimal specified for format {s} is invalid (valid {d}-{d}).", .{ spec_text, lo, hi }) catch "invalid-format-decimal";
     } else {
-        std.debug.print("ERROR: Decimal specified for format {s} is invalid (valid 0-{d}).\n", .{ spec_text, hi });
+        std.debug.print("ERROR: Decimal specified for format {s} is invalid (valid {d}-{d}).\n", .{ spec_text, lo, hi });
     }
 }
 
@@ -2056,6 +2060,36 @@ fn applyNest(arena: std.mem.Allocator, v: Value, spec_text: []const u8, depth: u
     if (eqi(spec.name, "tod")) return renderTod(arena, valToNum(v), spec.w, spec.d);
     if (eqi(spec.name, "z"))
         return renderNum(arena, valToNum(v), spec.w, spec.d, false, false, true); // zero-padded
+    if (eqi(spec.name, "pvalue")) {
+        // SAS Formats and Informats: Reference, PVALUEw.d, pp.449–450.
+        const w = if (spec.w == 0) 6 else spec.w;
+        checkWidthRange(spec_text, w, 3, 32);
+        if (w < 3) return stars(arena, w);
+        const explicit_d = std.mem.indexOfScalar(u8, spec_text, '.') orelse spec_text.len;
+        const d = if (explicit_d + 1 < spec_text.len) spec.d else @min(4, w - 2);
+        if (d == 0 or d > @min(30, w - 1)) {
+            checkDecimalRangeMin(spec_text, d, 1, @min(30, w - 1));
+            return stars(arena, w);
+        }
+        const x = valToNum(v);
+        if (std.math.isNan(x)) return justRight(arena, &.{@import("io.zig").global_missing}, w);
+        if (x >= 0 and x < pow10f(-@as(i32, @intCast(d)))) {
+            if (d + 2 > w) {
+                // The full probability bound does not fit. Keep this case
+                // explicit until M9's narrow-field convention is verified.
+                reportUnknownFormat(spec.name, false);
+                return stars(arena, w);
+            }
+            const field = try arena.alloc(u8, w);
+            @memset(field, ' ');
+            const bound = field[w - d - 2 ..];
+            @memcpy(bound[0..2], "<.");
+            @memset(bound[2 .. bound.len - 1], '0');
+            bound[bound.len - 1] = '1';
+            return field;
+        }
+        return renderNum(arena, x, w, d, false, false, false);
+    }
     if (eqi(spec.name, "percent"))
         return renderPercent(arena, valToNum(v), spec.w, spec.d);
     if (eqi(spec.name, "e"))
@@ -5310,6 +5344,19 @@ test "D-009 §5f (read side): a documented-but-unimplemented informat marks the 
     try t.expect(!isDocumentedInformat("negparen", false)); // format-only name (doc excludes it as an informat)
     try t.expect(!isDocumentedInformat("date", true)); // $DATE informat is "not found" in real SAS
     try t.expect(!isDocumentedInformat("charzb", false)); // $CHARZB only (CB exists BOTH ways — not a probe)
+}
+
+test "PVALUE displays finite probabilities and strict lower bounds at SAS precision" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    for ([_]f64{ 0.05, 0.000001, 0, 0.0123456, 0.0001 }, [_][]const u8{ "0.0500", "<.0001", "<.0001", "0.0123", "0.0001" }) |x, expected| {
+        try std.testing.expectEqualStrings(expected, try apply(a, .{ .num = x }, "pvalue6.4"));
+    }
+    try std.testing.expectEqualStrings("  <.0001", try apply(a, .{ .num = 1e-42 }, "PVALUE8.4"));
+    try std.testing.expectEqualStrings("0.1000", try apply(a, .{ .num = 0.1 }, "PVALUE."));
+    try std.testing.expectEqualStrings("<.1", try apply(a, .{ .num = 0.09 }, "PVALUE3."));
+    try std.testing.expectEqualStrings("     .", try apply(a, Value.missing, "PVALUE6.4"));
 }
 
 test "GAP-fmtwrite-unimpl: P/ORDINAL/YEN + locale-driven NL* fail loud (no silent BEST/raw fallback)" {

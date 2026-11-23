@@ -1,0 +1,21 @@
+# corpus assertions
+row CORRFIT control3-c1e-06-m20 53~0 . . . .
+row CORRFIT control3-c1e-06-m200 53~0 0.999~5e-06 0.0~0 . 53.57405257062118~2.06e-07
+row CORRFIT control3-rev-c1e-06-m20 53~0 . . . .
+row CORRFIT control3-rev-c1e-06-m200 53~0 -0.999~5e-06 0.0~0 . 53.57405257062118~2.06e-07
+row CORRFIT by34-c1e-06-m20 58~0 . . . .
+row CORRFIT by34-c1e-06-m200 58~0 0.999~5e-06 0.0~0 . 59.90259194253218~2.16e-07
+row CORRFIT by34-rev-c1e-06-m20 58~0 . . . .
+row CORRFIT by34-rev-c1e-06-m200 58~0 -0.999~5e-06 0.0~0 . 59.90259194253218~2.16e-07
+row CORRFIT by43-c1e-06-m20 58~0 . . . .
+row CORRFIT by43-c1e-06-m200 58~0 0.999~5e-06 0.0~0 . 65.7394229783834~2.16e-07
+row CORRFIT by43-rev-c1e-06-m20 58~0 . . . .
+row CORRFIT by43-rev-c1e-06-m200 58~0 -0.999~5e-06 0.0~0 . 65.73942297838346~2.16e-07
+row CORRFIT control4-c1e-06-m20 69~0 . . . .
+row CORRFIT control4-c1e-06-m200 69~0 0.9999~5e-06 0.0~0 . 106.40627140208858~2.38e-07
+row CORRFIT control4-rev-c1e-06-m20 69~0 . . . .
+row CORRFIT control4-rev-c1e-06-m200 69~0 -0.9999~5e-06 0.0~0 . 106.40627140208858~2.38e-07
+row CORRFIT by45-c1e-06-m20 76~0 . . . .
+row CORRFIT by45-c1e-06-m200 76~0 0.9999~5e-06 0.0~0 . 124.86114667012117~2.52e-07
+stdout-count 18 CORRFIT
+stderr-count 9 did not converge

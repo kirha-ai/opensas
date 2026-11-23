@@ -1,0 +1,4 @@
+# corpus assertions
+row g=3
+row g=2
+row g=1

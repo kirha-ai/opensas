@@ -55,7 +55,13 @@ fn margins(a: std.mem.Allocator, m: CountMatrix) Error!Margins {
     }
     return .{ .row = r, .col = c, .n = sum(r), .nr = nr, .nc = nc };
 }
-pub const PolychoricOptions = struct { adjust: bool = false, converge: f64 = 0.0001, maxiter: usize = 200, alpha: f64 = 0.05 };
+pub const PolychoricOptions = struct {
+    adjust: bool = false,
+    converge: f64 = 0.0001,
+    maxiter: usize = 200,
+    alpha: f64 = 0.05,
+    score_origin: ?[2]f64 = null,
+};
 pub const Polychoric = struct { coefficient: Measure, likelihood_ratio: ?Test, converged: bool, iterations: usize, information_unresolved: bool = false };
 /// Accurate normal upper tail; erfc avoids subtracting a CDF from one.
 pub fn normalTail(x: f64) f64 {
@@ -92,6 +98,14 @@ fn erfccheb(z: f64) f64 {
     return tc * @exp(-z * z + 0.5 * (cof[0] + ty * d) - dd);
 }
 
+fn conditionalVariance(rho: f64) f64 {
+    return @mulAdd(f64, -rho, rho, 1);
+}
+
+fn conditionalCut(bound: f64, given: f64, rho: f64, sd: f64) f64 {
+    return @mulAdd(f64, -rho, given, bound) / sd;
+}
+
 // Positive conditional-normal integration avoids subtracting four nearly equal
 // bivariate CDFs. Split at every conditional transition before adaptive quadrature.
 const Rectangle = struct {
@@ -100,7 +114,7 @@ const Rectangle = struct {
     rho: f64,
     sd: f64,
     fn value(self: @This(), x: f64) f64 {
-        return normalPdf(x) * normalInterval((self.yl - self.rho * x) / self.sd, (self.yu - self.rho * x) / self.sd);
+        return normalPdf(x) * normalInterval(conditionalCut(self.yl, x, self.rho, self.sd), conditionalCut(self.yu, x, self.rho, self.sd));
     }
 };
 fn normalInterval(lo: f64, hi: f64) f64 {
@@ -143,6 +157,8 @@ fn rectanglePanel(f: Rectangle, a: f64, b: f64) QuadraturePanel {
     return .{ .lo = a, .hi = b, .value = kronrod * half, .err = err };
 }
 
+const rectangle_relative_error = 1e-10;
+const rectangle_absolute_error = 1e-300;
 fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
     var panels: [4096]QuadraturePanel = undefined;
     panels[0] = rectanglePanel(f, a, b);
@@ -159,7 +175,7 @@ fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
         }
         // Recompute the relative budget from the current estimate, rather than
         // permanently dividing a potentially underestimated first-panel budget.
-        if (err <= @max(@abs(value) * 1e-10, 1e-300)) return value;
+        if (err <= @max(@abs(value) * rectangle_relative_error, rectangle_absolute_error)) return value;
         if (len == panels.len) return std.math.nan(f64);
         const previous = panels[worst];
         const middle = (previous.lo + previous.hi) / 2;
@@ -171,7 +187,17 @@ fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
 }
 pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     if (rho == 0) return normalInterval(xl, xu) * normalInterval(yl, yu);
-    const f: Rectangle = .{ .yl = yl, .yu = yu, .rho = rho, .sd = @sqrt((1 - rho) * (1 + rho)) };
+    // The derivative of a normal rectangle probability at independence is
+    // the product of the two endpoint density differences (Mehler's expansion).
+    // Retain the linear term when the remaining terms are below roundoff.
+    const x_bound = @max(1, @abs(xl), @abs(xu));
+    const y_bound = @max(1, @abs(yl), @abs(yu));
+    if (@abs(rho) * x_bound * y_bound <= @sqrt(std.math.floatEps(f64))) {
+        const independent = normalInterval(xl, xu) * normalInterval(yl, yu);
+        const derivative = (normalPdf(xl) - normalPdf(xu)) * (normalPdf(yl) - normalPdf(yu));
+        return @max(0, @mulAdd(f64, rho, derivative, independent));
+    }
+    const f: Rectangle = .{ .yl = yl, .yu = yu, .rho = rho, .sd = @sqrt(conditionalVariance(rho)) };
     var cuts: [23]f64 = undefined;
     cuts[0] = xl;
     cuts[1] = xu;
@@ -199,31 +225,92 @@ pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     }
     return @max(0, total);
 }
-fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize) f64 {
+const NormalMargins = struct { lower: f64, upper: f64 };
+
+fn positiveNormalMargins(x: f64) NormalMargins {
+    const z: f128 = @as(f64, x * @sqrt(@as(f64, 0.5)));
+    const z2 = z * z;
+    // erf(z) is 2z/sqrt(pi) times the ratio of these positive series.
+    // Sum both in extended precision so that rounding erf and erfc separately
+    // also retains the small upper margin when the lower margin is near one.
+    var numerator: f128 = 1;
+    var denominator: f128 = 1;
+    var numerator_term: f128 = 1;
+    var denominator_term: f128 = 1;
+    var k: f128 = 1;
+    while (true) : (k += 1) {
+        numerator_term *= z2 / (k + 0.5);
+        denominator_term *= z2 / k;
+        numerator += numerator_term;
+        const next = denominator + denominator_term;
+        if (next == denominator) break;
+        denominator = next;
+    }
+    const value = (2 * z / @sqrt(@as(f128, std.math.pi))) * (numerator / denominator);
+    const erf: f64 = @floatCast(value);
+    const erfc: f64 = @floatCast(1 - value);
+    return .{ .lower = 0.5 * (1 + erf), .upper = 0.5 * erfc };
+}
+
+const ProbabilityUse = enum { fit, likelihood_gap };
+fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize, use: ProbabilityUse) f64 {
     const xl = if (i == 0) -40 else params[i - 1];
     const xu = if (i + 1 == m.rows) 40 else params[i];
     const yl = if (j == 0) -40 else params[m.rows + j - 2];
     const yu = if (j + 1 == m.cols) 40 else params[m.rows + j - 1];
-    return rectangleProbability(xl, xu, yl, yu, params[params.len - 1]);
+    const rho = params[params.len - 1];
+    const q = rectangleProbability(xl, xu, yl, yu, rho);
+    if (use == .likelihood_gap or rho == 0 or !(q > 0)) return q;
+
+    if (rho < 0 and i + 1 == m.rows and j + 1 == m.cols and xl > 0 and yl > 0) {
+        // A probability far below the shared fitting floor has the same
+        // likelihood and score denominator after the corner subtractions.
+        if (q + 4 * std.math.floatEps(f64) < minimum_cell_probability) return q;
+        const x = positiveNormalMargins(xl);
+        const y = positiveNormalMargins(yl);
+        // PROBBNRM constructs the lower-left CDF from the two upper margins.
+        // The rectangle then uses the independently rounded lower margins.
+        const lower_left = 1 - ((x.upper + y.upper) - q);
+        return @max(0, ((1 - y.lower) - x.lower) + lower_left);
+    }
+
+    // CORR obtains a mixed outer corner by subtracting its bivariate CDF
+    // from a marginal CDF. Reconstruct the CDF from the integrated tail:
+    // when it has the marginal's exponent, their difference rounds the
+    // tail to the marginal's spacing. The gap estimate needs the unrounded mass.
+    const margin = if (i == 0 and j + 1 == m.cols)
+        normalTail(-xu)
+    else if (j == 0 and i + 1 == m.rows)
+        normalTail(-yu)
+    else
+        return q;
+    const complement = margin - q;
+    if (complement > 0 and std.math.frexp(margin).exponent == std.math.frexp(complement).exponent)
+        return margin - complement;
+    return q;
 }
 fn bivariateDensity(x: f64, y: f64, rho: f64) f64 {
-    const variance = (1 - rho) * (1 + rho);
-    return @exp(-((x - rho * y) * (x - rho * y) / variance + y * y) / 2) / (2 * std.math.pi * @sqrt(variance));
+    const variance = conditionalVariance(rho);
+    const dx = @mulAdd(f64, -rho, y, x);
+    const exponent = @mulAdd(f64, dx / variance, dx, y * y);
+    return @exp(-exponent / 2) / (2 * std.math.pi * @sqrt(variance));
 }
 fn cellGradient(m: CountMatrix, params: []const f64, i: usize, j: usize, out: []f64) void {
     @memset(out, 0);
     const rho = params[params.len - 1];
-    const sd = @sqrt((1 - rho) * (1 + rho));
+    const sd = @sqrt(conditionalVariance(rho));
     const xl = if (i == 0) -40 else params[i - 1];
     const xu = if (i + 1 == m.rows) 40 else params[i];
     const yl = if (j == 0) -40 else params[m.rows + j - 2];
     const yu = if (j + 1 == m.cols) 40 else params[m.rows + j - 1];
-    if (i > 0) out[i - 1] = -normalPdf(xl) * normalInterval((yl - rho * xl) / sd, (yu - rho * xl) / sd);
-    if (i + 1 < m.rows) out[i] = normalPdf(xu) * normalInterval((yl - rho * xu) / sd, (yu - rho * xu) / sd);
-    if (j > 0) out[m.rows + j - 2] = -normalPdf(yl) * normalInterval((xl - rho * yl) / sd, (xu - rho * yl) / sd);
-    if (j + 1 < m.cols) out[m.rows + j - 1] = normalPdf(yu) * normalInterval((xl - rho * yu) / sd, (xu - rho * yu) / sd);
+    if (i > 0) out[i - 1] = -normalPdf(xl) * normalInterval(conditionalCut(yl, xl, rho, sd), conditionalCut(yu, xl, rho, sd));
+    if (i + 1 < m.rows) out[i] = normalPdf(xu) * normalInterval(conditionalCut(yl, xu, rho, sd), conditionalCut(yu, xu, rho, sd));
+    if (j > 0) out[m.rows + j - 2] = -normalPdf(yl) * normalInterval(conditionalCut(xl, yl, rho, sd), conditionalCut(xu, yl, rho, sd));
+    if (j + 1 < m.cols) out[m.rows + j - 1] = normalPdf(yu) * normalInterval(conditionalCut(xl, yu, rho, sd), conditionalCut(xu, yu, rho, sd));
     out[params.len - 1] = bivariateDensity(xu, yu, rho) - bivariateDensity(xl, yu, rho) - bivariateDensity(xu, yl, rho) + bivariateDensity(xl, yl, rho);
 }
+const minimum_cell_probability = 1e-12;
+
 fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     if (@abs(params[params.len - 1]) >= 1) return std.math.inf(f64);
     for (1..m.rows - 1) |i| if (params[i] <= params[i - 1]) return std.math.inf(f64);
@@ -231,11 +318,67 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     var result: f64 = 0;
     for (m.counts, 0..) |n, k| {
         if (n == 0) continue;
-        const p = cellProbability(m, params, k / m.cols, k % m.cols);
-        if (!std.math.isFinite(p) or p <= 0) return std.math.inf(f64);
-        result -= n * @log(p);
+        const p = cellProbability(m, params, k / m.cols, k % m.cols, .fit);
+        if (!std.math.isFinite(p) or p < 0) return std.math.inf(f64);
+        result -= n * @log(@max(p, minimum_cell_probability));
     }
     return result;
+}
+fn ulp(value: f64) f64 {
+    const magnitude = @abs(value);
+    return std.math.nextAfter(f64, magnitude, std.math.inf(f64)) - magnitude;
+}
+
+const LikelihoodGap = struct { lower: f64, upper: f64 };
+
+// Near saturation, two large likelihoods may round to the same value.
+// With p = count / N and e = q/p - 1 on occupied cells, the gap is
+// N * sum(q on empty cells) + sum(count * (e - log1p(e))).
+// The remainder lies between 0 and e²/(2*(1-|e|)) for |e| < 1.
+// The computed interval estimates quadrature and binary64 evaluation error.
+// A native four-corner subtraction can round a cell differently from our
+// positive integral. Native endpoint and held-out tests cover this distinction.
+fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64, terms: []f64) ?LikelihoodGap {
+    var used: usize = 0;
+    var empty: f64 = 0;
+    var empty_error: f64 = 0;
+    var remainder: f64 = 0;
+    var rounding: f64 = 0;
+    for (m.counts, 0..) |count, k| {
+        const q = cellProbability(m, params, k / m.cols, k % m.cols, .likelihood_gap);
+        if (!std.math.isFinite(q) or q < 0 or q > 1) return null;
+        if (count == 0) {
+            empty += q;
+            empty_error += q * rectangle_relative_error + rectangle_absolute_error;
+            continue;
+        }
+        const empirical = count / total;
+        // The gap identity requires the untruncated occupied probabilities.
+        if (q < minimum_cell_probability or empirical < minimum_cell_probability) return null;
+        const ratio = q / empirical;
+        const e = @abs((q - empirical) / empirical) + ratio * rectangle_relative_error;
+        if (e < 1) {
+            remainder += count * e * e / (2 * (1 - e));
+        } else {
+            remainder = std.math.inf(f64);
+        }
+        const log_q = -@log(q);
+        const term = count * log_q;
+        terms[used] = term;
+        used += 1;
+        rounding += count * (ulp(log_q) + 0.5 * ulp(q) / q) + 0.5 * ulp(term);
+    }
+    // Largest terms first bound the partial sums in either traversal order.
+    std.mem.sort(f64, terms[0..used], {}, std.sort.desc(f64));
+    var partial = terms[0];
+    for (terms[1..used]) |term| {
+        partial += term;
+        rounding += 0.5 * ulp(partial);
+    }
+    return .{
+        .lower = total * (empty - empty_error) - rounding,
+        .upper = total * (empty + empty_error) + remainder + rounding,
+    };
 }
 /// Rank-aware information solve. The absolute 1e-8 pivot decision is pinned
 /// by native CORR frequency transitions; SINGULAR= governs PARTIAL instead.
@@ -279,8 +422,87 @@ pub fn solveInformation(matrix: []f64, rhs: []f64) ?usize {
     for (rhs) |value| if (!std.math.isFinite(value)) return null;
     return rank;
 }
+// Use a power of two for each score axis so rescaling preserves its significand.
+// Scaling before centering also keeps differences between opposite extremes finite.
+fn scoreScale(scores: ?[]const f64) f64 {
+    var largest: f64 = 0;
+    for (scores orelse return 1) |score| largest = @max(largest, @abs(score));
+    if (largest == 0) return 1;
+    return std.math.ldexp(@as(f64, 1), std.math.frexp(largest).exponent - 1);
+}
+
+// When both binary margins are balanced the thresholds remain zero by
+// symmetry. Each diagonal has probability 1/4 + asin(rho)/(2*pi).
+fn quadrantProbability(rho: f64) f64 {
+    const angle: f64 = @floatCast(std.math.asin(@as(f128, rho)));
+    return @mulAdd(f64, angle, 0.5 / std.math.pi, 0.25);
+}
+
+fn balancedLogLikelihood(counts: []const f64, diagonal: f64, null_model: bool) f64 {
+    const off = 0.5 - diagonal;
+    var ll: f64 = 0;
+    for (counts, [_]f64{ diagonal, off, off, diagonal }) |n, p| {
+        const log_p = @log(@max(p, minimum_cell_probability));
+        ll = if (null_model) @mulAdd(f64, n, log_p, ll) else ll + n * log_p;
+    }
+    return ll;
+}
+
+fn balancedPolychoric(counts: []const f64, total: f64, initial: f64, opts: PolychoricOptions) Polychoric {
+    const null_ll = balancedLogLikelihood(counts, 0.25, true);
+    var rho = initial;
+    var diagonal = quadrantProbability(rho);
+    var ll = balancedLogLikelihood(counts, diagonal, false);
+    var iterations: usize = 0;
+    var retraction: f64 = 0.001;
+    while (iterations < opts.maxiter) {
+        iterations += 1;
+        const off = 0.5 - diagonal;
+        const d = 1 / (2 * std.math.pi * @sqrt(conditionalVariance(rho)));
+        var score: f64 = 0;
+        var information: f64 = 0;
+        for (counts, [_]f64{ diagonal, off, off, diagonal }, [_]f64{ d, -d, -d, d }) |n, probability, derivative| {
+            const ratio = derivative / @max(probability, minimum_cell_probability);
+            score += n * ratio;
+            information += ratio * derivative;
+        }
+        const variance = 1 / (total * information);
+        const step = variance * score;
+        var scale: f64 = 1;
+        var candidate = rho;
+        var projected = false;
+        const accepted = for (0..30) |_| {
+            candidate = rho + scale * step;
+            projected = @abs(candidate) >= 1;
+            if (projected) {
+                candidate = std.math.copysign(1 - retraction, candidate);
+                retraction *= 0.1;
+                if (@abs(candidate) == 1) break false;
+            }
+            diagonal = quadrantProbability(candidate);
+            const trial = balancedLogLikelihood(counts, diagonal, false);
+            if (trial >= ll) {
+                ll = trial;
+                break true;
+            }
+            scale /= 2;
+        } else false;
+        if (!accepted) break;
+        const delta = if (projected) scale * step else candidate - rho;
+        const change = @abs(delta) / (if (@abs(candidate) < 0.01) 1 else @abs(candidate));
+        rho = candidate;
+        if (change == 0 or change < opts.converge) return .{
+            .coefficient = measure(rho, variance, variance, opts.alpha),
+            .likelihood_ratio = chi(2 * (ll - null_ll), 1),
+            .converged = true,
+            .iterations = iterations,
+        };
+    }
+    return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
+}
+
 pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOptions) Error!Polychoric {
-    if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge <= 0 or opts.maxiter == 0) return error.ExecError;
+    if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge < 0 or opts.maxiter == 0) return error.ExecError;
     var m = input;
     const counts = try a.dupe(f64, input.counts);
     defer a.free(counts);
@@ -306,15 +528,18 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     const dim = m.rows + m.cols - 1;
     const params = try a.alloc(f64, dim);
     defer a.free(params);
+    // Both margins use the same reciprocal of the total frequency. Apply it
+    // after summing counts so small rounding errors do not build up by level.
+    const inverse_n = 1 / t.n;
     var cum: f64 = 0;
     for (t.row[0 .. m.rows - 1], 0..) |v, i| {
-        cum += v / t.n;
-        params[i] = fns.distQuantile(.normal, cum, &.{}).?;
+        cum += v;
+        params[i] = fns.distQuantile(.normal, cum * inverse_n, &.{}).?;
     }
     cum = 0;
     for (t.col[0 .. m.cols - 1], 0..) |v, j| {
-        cum += v / t.n;
-        params[m.rows + j - 1] = fns.distQuantile(.normal, cum, &.{}).?;
+        cum += v;
+        params[m.rows + j - 1] = fns.distQuantile(.normal, cum * inverse_n, &.{}).?;
     }
     params[dim - 1] = 0;
     const null_ll = negativeLogLikelihood(m, params);
@@ -322,40 +547,35 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         const r: f64 = if (counts[1] == 0) 1 else -1;
         return .{ .coefficient = measure(r, 0, 0, opts.alpha), .likelihood_ratio = null, .converged = true, .iterations = 0 };
     }
-    // SAS reports the constrained tetrachoric boundary as +/-0.999 for
-    // exactly one zero cell without ADJUST; the likelihood is saturated.
-    // Oracle boundary.sas: rho=-0.9990, ASE=0, LR=17.2930 for [0,9;11,3].
-    if (m.rows == 2 and m.cols == 2 and !opts.adjust) {
-        var zero_count: usize = 0;
-        var zero_index: usize = 0;
-        for (counts, 0..) |v, i| if (v == 0) {
-            zero_count += 1;
-            zero_index = i;
-        };
-        if (zero_count == 1) {
-            var saturated: f64 = 0;
-            for (counts) |v| if (v > 0) {
-                saturated -= v * @log(v / t.n);
-            };
-            const rho: f64 = if (zero_index == 0 or zero_index == 3) -0.999 else 0.999;
-            return .{ .coefficient = measure(rho, 0, 0, opts.alpha), .likelihood_ratio = chi(2 * (null_ll - saturated), 1), .converged = true, .iterations = 0 };
-        }
-    }
+    const origin = opts.score_origin orelse [2]f64{
+        if (m.row_scores) |scores| scores[0] else 0,
+        if (m.col_scores) |scores| scores[0] else 0,
+    };
+    const x_scale = scoreScale(m.row_scores);
+    const y_scale = scoreScale(m.col_scores);
+    const x_origin = origin[0] / x_scale;
+    const y_origin = origin[1] / y_scale;
     var sx: f64 = 0;
     var sy: f64 = 0;
     var xx: f64 = 0;
     var yy: f64 = 0;
     var xy: f64 = 0;
     for (m.counts, 0..) |n, index| {
-        const x: f64 = if (m.row_scores) |scores| scores[index / m.cols] - scores[0] else @floatFromInt(index / m.cols);
-        const y: f64 = if (m.col_scores) |scores| scores[index % m.cols] - scores[0] else @floatFromInt(index % m.cols);
+        const x = (if (m.row_scores) |scores| scores[index / m.cols] else @as(f64, @floatFromInt(index / m.cols))) / x_scale - x_origin;
+        const y = (if (m.col_scores) |scores| scores[index % m.cols] else @as(f64, @floatFromInt(index % m.cols))) / y_scale - y_origin;
         sx += n * x;
         sy += n * y;
         xx += n * x * x;
         yy += n * y * y;
         xy += n * x * y;
     }
-    params[dim - 1] = (xy - sx * sy / t.n) / @sqrt((xx - sx * sx / t.n) * (yy - sy * sy / t.n));
+    const x_sd = @sqrt(xx - sx * sx / t.n);
+    const y_sd = @sqrt(yy - sy * sy / t.n);
+    // CORR takes the reciprocal column deviation first. The two divisions
+    // preserve the ordering observed in native VAR and WITH first-step fits.
+    params[dim - 1] = (xy - sx * sy / t.n) * ((1 / y_sd) / x_sd);
+    if (m.rows == 2 and m.cols == 2 and counts[0] == counts[3] and counts[1] == counts[2] and @abs(params[dim - 1]) < 1)
+        return balancedPolychoric(counts, t.n, params[dim - 1], opts);
     const hessian = try a.alloc(f64, dim * dim);
     defer a.free(hessian);
     const gradient = try a.alloc(f64, dim);
@@ -369,8 +589,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     var concordant = false;
     var discordant = false;
     var saturated: f64 = 0;
+    var occupied: usize = 0;
     for (m.counts, 0..) |n, i| {
         if (n == 0) continue;
+        occupied += 1;
         saturated -= n * @log(n / t.n);
         for (m.counts, 0..) |other, j| {
             if (other == 0) continue;
@@ -381,7 +603,17 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
     }
     const boundary = !(concordant and discordant);
+    // Higher-dimensional separated fits can lose the ordering of successive
+    // projections at saturation. The two-level and 3-by-3 retractions use
+    // the ordinary likelihood comparison throughout.
+    const check_projection_gap = boundary and @min(m.rows, m.cols) >= 3 and @max(m.rows, m.cols) >= 4;
+    // Rounding uncertainty in the two sums of occupied-cell log likelihoods.
+    // Each term involves a logarithm and multiplication before summation.
+    const ku = @as(f64, @floatFromInt(occupied + 2)) * std.math.floatEps(f64) / 2;
+    const accumulated_roundoff = ku / (1 - ku);
+    var boundary_distance: f64 = 0.001;
     var converged = false;
+    var unresolved_projection = false;
     var iterations: usize = 0;
     while (iterations < opts.maxiter) {
         iterations += 1;
@@ -391,30 +623,55 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         for (m.counts, 0..) |n, cell| {
             const i = cell / m.cols;
             const j = cell % m.cols;
-            const probability = cellProbability(m, params, i, j);
-            if (!std.math.isFinite(probability) or (probability <= 0 and n > 0))
+            const probability = cellProbability(m, params, i, j, .fit);
+            if (!std.math.isFinite(probability) or probability < 0)
                 return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
-            if (!(probability > 0)) continue;
+            if (probability == 0 and n == 0) continue;
             cellGradient(m, params, i, j, derivatives);
-            // SAS's information denominator safeguard is distinct from the
-            // actual likelihood probability. The bounded case-2 oracle also
-            // discriminates this at finite, nonzero standard errors.
-            const information_probability = @max(probability, 1e-12);
+            // M9 uses the same lower bound for an occupied cell in the
+            // likelihood, score, and expected information.
+            const denominator = @max(probability, minimum_cell_probability);
             for (0..dim) |r| {
-                gradient[r] -= n * derivatives[r] / probability;
-                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / information_probability;
+                gradient[r] -= n * derivatives[r] / denominator;
+                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / denominator;
             }
         }
         @memcpy(saved_information, hessian);
         if (solveInformation(hessian, gradient) == null) break;
         var scale: f64 = 1;
         var accepted = false;
+        var projected = false;
+        var base_gap: ?LikelihoodGap = null;
         for (0..30) |_| {
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
             // SAS first-step oracle: an overshoot is restarted at +/-0.999,
             // rather than halving all coordinates solely to force |rho|<1.
-            if (@abs(candidate[dim - 1]) >= 1) candidate[dim - 1] = if (candidate[dim - 1] > 0) 0.999 else -0.999;
-            if (negativeLogLikelihood(m, candidate) <= base + 1e-10) {
+            // Each further overshoot moves the projection one decimal place
+            // closer to the boundary, including for interior contingency tables.
+            projected = @abs(candidate[dim - 1]) >= 1;
+            if (projected) {
+                const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
+                if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
+                candidate[dim - 1] = rho;
+                boundary_distance *= 0.1;
+            }
+            const trial_likelihood = negativeLogLikelihood(m, candidate);
+            var improves = trial_likelihood <= base + 1e-10;
+            const worsened = improves and trial_likelihood > base;
+            const near_saturation = !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated);
+            if (projected and check_projection_gap and (near_saturation or worsened)) {
+                if (base_gap == null) base_gap = projectedLikelihoodGap(m, params, t.n, hessian[0..occupied]);
+                const candidate_gap = projectedLikelihoodGap(m, candidate, t.n, hessian[0..occupied]);
+                if (base_gap != null and candidate_gap != null) {
+                    const better = candidate_gap.?.upper < base_gap.?.lower;
+                    const worse = candidate_gap.?.lower > base_gap.?.upper;
+                    // A small increase in the direct sum may still be large
+                    // compared with the available precision of the two gaps.
+                    if (worsened and worse) improves = false;
+                    if (near_saturation) unresolved_projection = !(if (improves) better else worse);
+                } else if (near_saturation) unresolved_projection = true;
+            }
+            if (improves) {
                 accepted = true;
                 break;
             }
@@ -425,20 +682,29 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         // SAS uses the updated estimate for both the relative denominator and
         // the near-zero decision. Fresh crossing controls pin both directions
         // across .01; equality retains relative scaling (stopping-fix evidence).
-        for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(c) < 0.01) 1 else @abs(c)));
-        @memcpy(params, candidate);
-        if (boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
-            // The likelihood gap is below the quadrature error budget. A
-            // validated rank decision alone does not establish the remaining
-            // SAS boundary-step convention, so preserve this public guard.
-            return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
+        for (params, candidate, gradient) |p, c, step| {
+            // Projecting rho shortens its apparent move. M9 tests the
+            // scoring increment before projection, including when all cells
+            // are occupied and the solution is interior.
+            const delta = if (boundary or projected) scale * step else c - p;
+            change = @max(change, @abs(delta) / (if (@abs(c) < 0.01) 1 else @abs(c)));
         }
-        if (change < opts.converge) {
+        @memcpy(params, candidate);
+        if (change == 0 or change < opts.converge) {
             converged = true;
             break;
         }
     }
-    if (!converged) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
+    // When the specified limit is reached before convergence, CORR reports
+    // ordinary nonconvergence. An unresolved likelihood retraction prevents
+    // publishing an estimate or diagnosing an earlier numerical failure.
+    if (!converged or unresolved_projection) return .{
+        .coefficient = .{},
+        .likelihood_ratio = null,
+        .converged = false,
+        .iterations = iterations,
+        .information_unresolved = unresolved_projection and (converged or iterations < opts.maxiter),
+    };
     // SAS uses the information matrix from the final scoring linearization.
     // Re-evaluating at the updated rho materially changes sparse-boundary SEs.
     @memcpy(hessian, saved_information);
@@ -471,6 +737,133 @@ fn chiTail(x: f64, df: f64) f64 {
         if (@abs(delta - 1) < 1e-15) break;
     }
     return @max(0, @min(1, @exp(-z + a * @log(z) - fns.lgammaOf(a)) * h));
+}
+
+test "CORR limits tiny occupied probabilities in the independence likelihood" {
+    // At N=2,000,000 the independent (0,0) probability is exactly 1e-12.
+    const cases = [_]struct { last: f64, rho: f64, lr: f64 }{
+        .{ .last = 800000, .rho = 0.9607104663828177, .lr = 23.63956531881088 },
+        .{ .last = 1999997, .rho = 0.9634949539264885, .lr = 25.4721385328007 },
+        .{ .last = 8000000, .rho = 0.9670390368242384, .lr = 22.699548685896232 },
+    };
+    for (cases) |case| {
+        const counts = [_]f64{ 1, 1, 1, case.last };
+        const fit = try polychoric(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .{ .converge = 1e-6 });
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(case.rho, fit.coefficient.estimate.?, 1e-9);
+        try std.testing.expectApproxEqAbs(case.lr, fit.likelihood_ratio.?.statistic, 5e-9);
+    }
+}
+
+test "CORR checks a projected scoring step before declaring convergence on an interior table" {
+    const counts = [_]f64{ 1, 1, 1, 8000000 };
+    const m: CountMatrix = .{ .rows = 2, .cols = 2, .counts = &counts };
+    const first = try polychoric(std.testing.allocator, m, .{ .converge = 0.99, .maxiter = 1 });
+    try std.testing.expect(!first.converged and !first.information_unresolved);
+    try std.testing.expectEqual(@as(usize, 1), first.iterations);
+    const fit = try polychoric(std.testing.allocator, m, .{ .converge = 0.99 });
+    try std.testing.expect(fit.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9901885526706987), fit.coefficient.estimate.?, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.003272224080075647), fit.coefficient.ase.?, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 22.0305722324334), fit.likelihood_ratio.?.statistic, 5e-8);
+}
+
+test "CORR single-zero tetrachoric tables use the requested iteration limit" {
+    const cases = [_]struct { counts: [4]f64, rho: f64, lr: f64, converges_by_20: bool }{
+        .{ .counts = .{ 0, 5, 5, 10 }, .rho = -0.98265, .lr = 3.3980, .converges_by_20 = false },
+        .{ .counts = .{ 5, 0, 10, 5 }, .rho = 0.98265, .lr = 3.3980, .converges_by_20 = false },
+        .{ .counts = .{ 0, 4, 8, 12 }, .rho = -0.98187, .lr = 3.6322, .converges_by_20 = false },
+        .{ .counts = .{ 0, 9, 11, 3 }, .rho = -0.99900, .lr = 17.2930, .converges_by_20 = true },
+    };
+    for (cases) |c| {
+        const matrix: CountMatrix = .{ .rows = 2, .cols = 2, .counts = &c.counts };
+        for ([_]usize{ 20, 200 }) |maxiter| {
+            const result = try polychoric(std.testing.allocator, matrix, .{ .converge = 0.0001, .maxiter = maxiter });
+            try std.testing.expectEqual(maxiter == 200 or c.converges_by_20, result.converged);
+            if (!result.converged) {
+                try std.testing.expectEqual(maxiter, result.iterations);
+                try std.testing.expect(result.coefficient.estimate == null);
+                continue;
+            }
+            try std.testing.expectApproxEqAbs(c.rho, result.coefficient.estimate.?, 0.000005);
+            try std.testing.expectEqual(@as(f64, 0), result.coefficient.ase.?);
+            try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 0.00005);
+        }
+    }
+}
+
+test "CORR four-level ordinal boundaries with a distinguishable projected step" {
+    const cases = [_]struct { counts: [16]f64, lr: f64 }{
+        .{ .counts = .{ 35, 0, 0, 0, 17, 30, 0, 0, 0, 21, 9, 0, 0, 0, 16, 7 }, .lr = 197.83030675715 },
+        .{ .counts = .{ 2240, 0, 0, 0, 1344, 0, 0, 0, 3008, 0, 0, 0, 960, 2176, 1792, 832 }, .lr = 11314.7268426884 },
+    };
+    for (cases) |c| {
+        const m: CountMatrix = .{ .rows = 4, .cols = 4, .counts = &c.counts, .row_scores = &.{ -9, 0, 11, 31 }, .col_scores = &.{ -17, -4, 8, 13 } };
+        const early = try polychoric(std.testing.allocator, m, .{ .converge = 1e-6, .maxiter = 20 });
+        try std.testing.expect(!early.converged and !early.information_unresolved);
+        const fit = try polychoric(std.testing.allocator, m, .{ .converge = 1e-6 });
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.9999), fit.coefficient.estimate.?, 1e-12);
+        try std.testing.expectEqual(@as(f64, 0), fit.coefficient.ase.?);
+        try std.testing.expectApproxEqAbs(c.lr, fit.likelihood_ratio.?.statistic, 1e-7);
+    }
+}
+
+test "CORR normalizes cumulative polychoric margins using a shared reciprocal" {
+    // On these independent tables, SAS 9.4 M9's first-step SE changes in
+    // opposite directions after removing the theoretical 1/sqrt(FREQ) factor.
+    const cases = [_]struct { counts: [4]f64, scale: f64, native_se: [2]f64 }{
+        .{ .counts = .{ 3250, 350, 1820, 196 }, .scale = 43, .native_se = .{ 0.029514289368863387, 0.0045008869331344585 } },
+        .{ .counts = .{ 10260, 972, 7695, 729 }, .scale = 5, .native_se = .{ 0.016030816097741426, 0.007169198905869558 } },
+    };
+    for (cases) |case| {
+        var normalized: [2]f64 = undefined;
+        for ([_]f64{ 1, case.scale }, 0..) |scale, i| {
+            var counts = case.counts;
+            for (&counts) |*n| n.* *= scale;
+            const fit = try polychoric(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .{ .converge = 0.99, .maxiter = 1 });
+            try std.testing.expect(fit.converged);
+            const se = fit.coefficient.ase.?;
+            try std.testing.expectApproxEqAbs(case.native_se[i], se, 5e-17);
+            normalized[i] = se * @sqrt(scale);
+        }
+        const expected = std.math.order(case.native_se[0], case.native_se[1] * @sqrt(case.scale));
+        try std.testing.expectEqual(expected, std.math.order(normalized[0], normalized[1]));
+    }
+}
+
+test "CORR binary-margin polychoric boundary uses the native information rank at both frequency scales" {
+    const xs = [_]f64{ 0, 10, 20 };
+    const ys = [_]f64{ 0, 1 };
+    // Same ordinal margins and association. Only the information scale changes.
+    for ([_]f64{ 11, 12 }, [_]f64{ 0.98771303566856, 0.999 }, [_]f64{ 183.527618505065, 200.211947460075 }, [_]f64{ 8.2269409306717e-42, 1.8775016946271e-45 }) |scale, rho, lr, p| {
+        var counts = [_]f64{ 10, 32, 0, 38, 0, 10 };
+        for (&counts) |*n| n.* *= scale;
+        const matrix: CountMatrix = .{ .rows = 3, .cols = 2, .counts = &counts, .row_scores = &xs, .col_scores = &ys };
+        const result = try polychoric(std.testing.allocator, matrix, .{ .converge = 1e-6 });
+        try std.testing.expect(result.converged);
+        try std.testing.expectApproxEqAbs(rho, result.coefficient.estimate.?, 5e-8);
+        try std.testing.expectEqual(@as(f64, 0), result.coefficient.ase.?);
+        try std.testing.expectApproxEqAbs(lr, result.likelihood_ratio.?.statistic, 1e-7);
+        try std.testing.expectApproxEqRel(p, result.likelihood_ratio.?.p, 1e-7);
+    }
+}
+
+test "CORR binary-margin nested thresholds retain finite SE and stop on the unprojected increment" {
+    const cases = [_]struct { matrix: CountMatrix, rho: f64, se: f64, lr: f64 }{
+        .{ .matrix = .{ .rows = 2, .cols = 3, .counts = &.{ 7, 11, 0, 0, 0, 17 }, .row_scores = &.{ 0, 1 }, .col_scores = &.{ 0, 1, 3 } }, .rho = 0.99999999, .se = 2.8341430859619e-6, .lr = 48.488578142682 },
+        .{ .matrix = .{ .rows = 3, .cols = 2, .counts = &.{ 0, 9, 0, 13, 21, 0 }, .row_scores = &.{ 0, 2, 7 }, .col_scores = &.{ -1, 0 } }, .rho = -0.99999999, .se = 2.5566692489271e-6, .lr = 59.5835297853088 },
+    };
+    for (cases) |c| {
+        const early = try polychoric(std.testing.allocator, c.matrix, .{ .converge = 3.7e-7, .maxiter = 5 });
+        try std.testing.expect(!early.converged);
+        const result = try polychoric(std.testing.allocator, c.matrix, .{ .converge = 3.7e-7, .maxiter = 6 });
+        try std.testing.expect(result.converged);
+        try std.testing.expectEqual(@as(usize, 6), result.iterations);
+        try std.testing.expectApproxEqAbs(c.rho, result.coefficient.estimate.?, 1e-12);
+        try std.testing.expectApproxEqRel(c.se, result.coefficient.ase.?, 1e-4);
+        try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 1e-7);
+    }
 }
 
 test "CORR stopping normalization uses updated estimates across the near-zero threshold" {

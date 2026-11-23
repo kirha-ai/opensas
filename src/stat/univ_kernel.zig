@@ -119,6 +119,24 @@ pub fn kernel(kind: Kind, value: f64) f64 {
 }
 
 pub fn fit(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: Request) diag.Error!Estimate {
+    if (request.bandwidth == .sjpi) return try fitSjpi(d, x, iqr, request) orelse error.ParseError;
+    return fitReference(d, x, iqr, request);
+}
+
+/// M9 computes C * (IQR / n**0.2). The rounding order is visible at a
+/// reflected boundary. Refine the fifth root before applying the difference
+/// between the binary64 exponent 0.2 and the rational one fifth.
+pub fn bandwidthScale(iqr: f64, n: f64) f64 {
+    const estimate: f128 = std.math.pow(f64, n, 0.2);
+    const square = estimate * estimate;
+    const residual = square * square * estimate / @as(f128, n) - 1;
+    const root = estimate * (1 - residual / 5);
+    const exponent_correction = @as(f128, @as(f64, 0.2)) - @as(f128, 1) / 5;
+    const divisor: f64 = @floatCast(root * (1 + exponent_correction * @as(f128, @log(n))));
+    return iqr / divisor;
+}
+
+fn fitReference(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: Request) diag.Error!Estimate {
     if (x.len < 2 or !(iqr > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel requires a positive interquartile range and at least two observations", .{});
     for (x, 0..) |v, i| {
         if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel sample must be sorted and finite", .{});
@@ -141,14 +159,38 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: Request) dia
         .triangular => 1.0 / 6.0,
     };
     const roughness = 3 / (8 * @sqrt(std.math.pi) * std.math.pow(f64, sd, 5));
-    const scale = iqr * std.math.pow(f64, n, -0.2);
+    const scale = bandwidthScale(iqr, n);
     const h = switch (request.bandwidth) {
         .numeric => |c| c * scale,
         .mise => std.math.pow(f64, r / (m2 * m2 * roughness * n), 0.2),
-        .sjpi => return d.fail(error.ParseError, 0, "UNIVARIATE: SJPI bandwidth selection is not implemented", .{}),
+        .sjpi => unreachable,
     };
     if (!(h > 0) or !std.math.isFinite(h)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel bandwidth must be finite and positive", .{});
-    return .{ .request = request, .c = h / scale, .bandwidth = h, .amise = std.math.pow(f64, h, 4) * m2 * m2 * roughness / 4 + r / (n * h) };
+    return .{ .request = request, .c = if (request.bandwidth == .numeric) request.bandwidth.numeric else h / scale, .bandwidth = h, .amise = std.math.pow(f64, h, 4) * m2 * m2 * roughness / 4 + r / (n * h) };
+}
+
+/// A missing SJPI estimate suppresses this curve while other bandwidths in
+/// the statement can still produce rows. It never uses the MISE scale fallback.
+pub fn fitSjpi(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: Request) diag.Error!?Estimate {
+    const range = if (x.len > 1) x[x.len - 1] - x[0] else 0;
+    var mean: f64 = 0;
+    var ss: f64 = 0;
+    if (range > 0) for (x, 1..) |v, i| {
+        const scaled = (v - x[0]) / range;
+        const delta = scaled - mean;
+        mean += delta / @as(f64, @floatFromInt(i));
+        ss += delta * (scaled - mean);
+    };
+    const sd = if (x.len > 1) range * @sqrt(ss / @as(f64, @floatFromInt(x.len - 1))) else 0;
+    const selected = try @import("univ_kernel_sjpi.zig").fromRaw(d, .{ .sorted = x, .sample_stddev = sd, .iqr = iqr }) orelse return null;
+    var normal = request;
+    normal.kind = .normal;
+    normal.bandwidth = .{ .numeric = selected.c };
+    var estimate = try fitReference(d, x, iqr, normal);
+    estimate.request.bandwidth = .sjpi;
+    estimate.bandwidth = selected.bandwidth;
+    estimate.c = selected.c;
+    return estimate;
 }
 
 pub const VScale = enum { percent, proportion, count };
@@ -179,7 +221,8 @@ test "UNIVARIATE kernel MISE bandwidth and binned OUTKERNEL SAS M9" {
     try std.testing.expectApproxEqAbs(2 * normal.density(&x, 0), bounded.density(&x, 0), 1e-14);
     try std.testing.expectApproxEqAbs(@as(f64, 0.084391), try bounded.binnedDensity(&x, 0, &d), 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.098456), try bounded.binnedDensity(&x, 0.015625, &d), 5e-7);
-    try std.testing.expectError(error.ParseError, fit(&d, &x, 6.5, .{ .bandwidth = .sjpi }));
+    const sjpi = try fit(&d, &x, 6.5, .{ .bandwidth = .sjpi });
+    try std.testing.expectApproxEqAbs(@as(f64, 3.0655), sjpi.bandwidth, 0.00005);
 }
 
 test "UNIVARIATE normal FFT periodic density matches independent M9 bandwidth heldouts" {

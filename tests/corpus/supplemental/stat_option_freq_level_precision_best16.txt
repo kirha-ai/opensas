@@ -1,0 +1,11 @@
+# corpus assertions
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row COUNT 1~5.1e-05
+row-count 9 COUNT {any}

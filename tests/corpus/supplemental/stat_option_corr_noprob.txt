@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 1 Pearson Correlation Coefficients
+stdout-count 1 N 3
+stdout-count 0 Prob > |r|
+stdout-count 0 P 0.3331
+row y 0.86619~5.1e-05
+row-count 1 y {any}

@@ -48,6 +48,18 @@ pub const Options = struct {
         return f;
     }
 };
+/// The statistic printed beside the directional exact and Monte Carlo tails.
+pub fn directionalSymbol(f: Family) ?[]const u8 {
+    return switch (f) {
+        .jt => "JT",
+        .trend => "Z",
+        .pcorr, .scorr => "r",
+        .kentb, .stutc => "t",
+        .smdcr, .smdrc => "D",
+        .kappa, .wtkappa => "K",
+        else => null,
+    };
+}
 pub fn supportsMonteCarlo(f: Family, rows: usize, cols: usize) bool {
     return switch (f) {
         .binomial, .barnard, .comor, .eqor, .mcnem, .oddsratio, .relrisk, .riskdiff => false,

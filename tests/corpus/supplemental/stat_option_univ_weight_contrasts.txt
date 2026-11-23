@@ -1,0 +1,8 @@
+# corpus assertions
+row Case univ_weight_default
+row WEIGHTS 4~5.1e-05 1.75~5.1e-05
+row Case univ_weight_exclnpwgt
+row WEIGHTS 2~5.1e-05 1.75~5.1e-05
+row Case univ_weight_exclnpwgts
+row WEIGHTS 2~5.1e-05 1.75~5.1e-05
+row-count 3 WEIGHTS {any} {any}

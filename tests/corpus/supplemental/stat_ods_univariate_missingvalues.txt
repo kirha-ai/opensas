@@ -1,0 +1,14 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 5 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|MissValue|num|8|5.||Missing Value
+row ODS_COL|3|Count|num|8|8.||Frequency of Missing Value
+row ODS_COL|4|CountNobs|num|8|8.2||Percent of Total Observations
+row ODS_COL|5|CountNMiss|num|8|8.2||Percent of Missing Observations
+stdout-count 5 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|MissValue|.
+row ODS_VALUE|1|Count|1~1e-08
+row ODS_VALUE|1|CountNobs|7.14285714285714~7.142857143e-08
+row ODS_VALUE|1|CountNMiss|100~1e-06

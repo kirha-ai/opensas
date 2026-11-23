@@ -1,0 +1,7 @@
+# corpus assertions
+row FREQHAND|near-swaphi|S_COMOR|600000.0~1e-12
+row FREQHAND|near-swaphi|M0_COMOR|600000.0~1e-12
+row FREQHAND|near-swaphi|XPT_COMOR|0.5090900000007069~1e-12
+row FREQHAND|near-swaphi|XP2A_COMOR|1.0~1e-12
+row FREQHAND|near-swaphi|XP2B_COMOR|0.9999999999999998~1e-12
+row FREQHAND|near-swaphi|XP2C_COMOR|1.0~1e-12

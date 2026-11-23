@@ -39,10 +39,10 @@ pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribu
 pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request, sampler: ?inference.AccountedSimulator) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
     if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
-    // Fit on every original observation. M9 removes all fitted exponential
-    // threshold equalities only from EDF, including supplied-threshold cases.
+    // The fit uses every observation. For EDF, M9 excludes exponential
+    // offsets no greater than unit roundoff, measured in original data units.
     var boundary_count: usize = 0;
-    if (request.family == .exponential) while (boundary_count < x.len and x[boundary_count] == distribution.p.theta) : (boundary_count += 1) {};
+    if (request.family == .exponential) while (boundary_count < x.len and x[boundary_count] - distribution.p.theta <= std.math.floatEps(f64) / 2) : (boundary_count += 1) {};
     if (boundary_count == x.len) return .{ .statistics = .{ .d = std.math.nan(f64), .w2 = std.math.nan(f64), .a2 = std.math.nan(f64) }, .d = null, .w2 = null, .a2 = null };
     const raw = dist.edf(distribution, x[boundary_count..]).?;
     const stats: inference.Statistics = .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
@@ -59,21 +59,62 @@ pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: di
         .gumbel, .igauss, .pareto, .rayleigh => {
             const sample = try d.arena.alloc(f64, x.len);
             defer d.arena.free(sample);
-            var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request };
-            const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = try fitting.resolveSeed(d, request.edfseed), .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
+            const seed = try fitting.resolveSeed(d, request.edfseed);
+            var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request, .uniforms = .init(seed) };
+            const result = try inference.simulateAccounted(d, r, stats, x.len, .{
+                .seed = seed,
+                .samples = request.edfnsamples,
+                .require_probabilities = request.family != .pareto,
+            }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
             const probabilities = result.probabilities orelse inference.Result{};
-            return .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result };
+            return checkAndersonDarling(d, .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result });
         },
         else => {},
     }
     const result = try inference.tabulated(d, r, stats, x.len);
-    return .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 };
+    return checkAndersonDarling(d, .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 });
+}
+
+fn checkAndersonDarling(d: *diag.Diagnostics, calculated: Result) !Result {
+    if (std.math.isFinite(calculated.statistics.a2) or (calculated.d == null and calculated.w2 == null and calculated.a2 == null)) return calculated;
+    try d.warn(0, "Overflow or underflow occurred computing the Anderson-Darling statistic.  The Anderson-Darling EDF statistic and p-value will be set to missing.", .{});
+    var result = calculated;
+    result.statistics.a2 = std.math.nan(f64);
+    result.a2 = null;
+    if (result.simulation) |*simulation| {
+        if (simulation.probabilities) |*probabilities| probabilities.a2 = null;
+        if (simulation.standard_errors) |*errors| errors[2] = std.math.nan(f64);
+    }
+    return result;
+}
+
+const Uniforms = @import("freq_exact_distribution.zig").Generator;
+
+/// Native EDF resampling uses the SAS RANUNI stream. The inverse Gaussian
+/// uses the Michael–Schucany–Haas normal-mixture generator.
+fn sampleDistribution(distribution: dist.Distribution, stream: *Uniforms) f64 {
+    const u = stream.uniform();
+    return switch (distribution.family) {
+        .gumbel => distribution.quantile(u),
+        .rayleigh, .pareto => distribution.quantile(1 - u),
+        .igauss => blk: {
+            const mu = distribution.p.mu;
+            const lambda = distribution.p.lambda;
+            const z = @sqrt(-2 * @log(u)) * @cos(2 * std.math.pi * stream.uniform());
+            const t = mu * z * z / (2 * lambda);
+            const ratio = 1 / (1 + t + @sqrt(t * (2 + t)));
+            break :blk if (stream.uniform() <= 1 / (1 + ratio)) mu * ratio else mu / ratio;
+        },
+        else => unreachable,
+    };
 }
 
 const Bootstrap = struct {
     sample: []f64,
     distribution: dist.Distribution,
     request: fitting.Request,
+    // Direct callback tests can supply their own stream, including degenerate draws.
+    uniforms: ?Uniforms = null,
     const Attempt = union(enum) {
         statistics: inference.Statistics,
         numerical_fit_failure: struct { reason: []const u8, retained_candidate: bool },
@@ -104,9 +145,10 @@ const Bootstrap = struct {
     fn attempt(self: *Bootstrap, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!Attempt {
         std.debug.assert(self.sample.len == n);
         for (self.sample) |*value| {
-            // Open (0,1), with exactly representable half-unit endpoints.
-            const u = (@as(f64, @floatFromInt(random.int(u64) >> 12)) + 0.5) / 4503599627370496.0;
-            value.* = self.distribution.quantile(u);
+            value.* = if (self.uniforms) |*stream| sampleDistribution(self.distribution, stream) else blk: {
+                const u = (@as(f64, @floatFromInt(random.int(u64) >> 12)) + 0.5) / 4503599627370496.0;
+                break :blk self.distribution.quantile(u);
+            };
             if (!std.math.isFinite(value.*)) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF generation failed; no replication was discarded", .{});
         }
         std.mem.sort(f64, self.sample, {}, std.sort.asc(f64));
@@ -268,6 +310,20 @@ test "UNIVARIATE estimated-family MC callbacks agree with independent M9 probes"
             try std.testing.expectApproxEqAbs(reference, actual, tolerance);
         }
     }
+}
+
+test "Pareto single failed EDF refit preserves the observed curve without probabilities" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.04, 0.36, 0.68, 1.32, 1.64, 1.96 };
+    const request: fitting.Request = .{ .family = .pareto, .sigma = 0.95, .edfseed = 19, .edfnsamples = 1 };
+    const fitted = try fitting.fit(&d, &x, request);
+    const result = try compute(&d, &x, fitted, request);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.2576900490249301), fitted.p.alpha, 1e-11);
+    try std.testing.expectEqual(inference.SimulationStatus.no_valid, result.simulation.?.status);
+    try std.testing.expect(result.d == null and result.w2 == null and result.a2 == null);
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "UNIVARIATE conditional Pareto callback preserves counts and matches independent SAS references" {
@@ -459,4 +515,71 @@ test "UNIVARIATE accounted adapter reports controlled exclusions and zero valid 
     var fatal_diag = diag.Diagnostics.init(arena.allocator());
     try std.testing.expectError(error.ExecError, computeWithSampler(&fatal_diag, &.{ 0.5, 1, 2, 3 }, .{ .family = .rayleigh, .p = .{} }, request, .{ .context = &sampler, .draw = Controlled.draw }));
     try std.testing.expectEqual(@as(usize, 2), sampler.calls);
+}
+
+test "UNIVARIATE seeded EDF reproduces M9 family-specific sampling and refitting" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.12, 0.23, 0.31, 0.48, 0.52, 0.76, 0.87, 1.03, 1.29, 1.36, 1.70, 2.28, 2.74, 3.52, 4.85, 6.21 };
+    for ([_]dist.Family{ .gumbel, .igauss, .rayleigh }, [_][3]usize{ .{ 116, 57, 39 }, .{ 194, 158, 173 }, .{ 0, 0, 0 } }) |family, native| {
+        const request: fitting.Request = .{ .family = family, .edfseed = 817, .edfnsamples = 250 };
+        const curve = try fitting.fit(&d, &x, request);
+        const result = try compute(&d, &x, curve, request);
+        try std.testing.expectEqual(@as(usize, 250), result.simulation.?.valid);
+        try std.testing.expectEqual(native, result.simulation.?.exceedances);
+    }
+    var y: [16]f64 = undefined;
+    for (&y, 0..) |*v, i| v.* = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 16, 1.37);
+    const request: fitting.Request = .{ .family = .pareto, .theta = 0, .sigma = 1, .alpha = 1, .edfseed = 17, .edfnsamples = 32 };
+    const curve = try fitting.fit(&d, &y, request);
+    const result = try compute(&d, &y, curve, request);
+    try std.testing.expectEqual([3]usize{ 25, 13, 13 }, result.simulation.?.exceedances);
+}
+
+test "UNIVARIATE exponential EDF excludes unit roundoff in original observation units" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const tiny = std.math.floatEps(f64) / 2;
+    for ([_]f64{ 0.1, 1, 10 }) |sigma| {
+        const request: fitting.Request = .{ .family = .exponential, .theta = 0, .sigma = sigma };
+        const curve: dist.Distribution = .{ .family = .exponential, .p = .{ .sigma = sigma } };
+        const cutoff = try compute(&d, &.{ tiny, 0.25, 0.5, 0.75, 1, 1.25 }, curve, request);
+        const equal = try compute(&d, &.{ 0, 0.25, 0.5, 0.75, 1, 1.25 }, curve, request);
+        try std.testing.expectEqualDeep(equal, cutoff);
+        const above = [_]f64{ std.math.nextAfter(f64, tiny, 1), 0.25, 0.5, 0.75, 1, 1.25 };
+        const included = try compute(&d, &above, curve, request);
+        try std.testing.expectEqualDeep(dist.edf(curve, &above).?, included.statistics);
+        try std.testing.expect(included.statistics.a2 != cutoff.statistics.a2);
+    }
+}
+
+test "UNIVARIATE Anderson-Darling overflow omits only its own statistic and probability" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const tiny = 1e-18;
+    for ([_]fitting.Request{
+        .{ .family = .rayleigh, .sigma = 1, .edfseed = 12, .edfnsamples = 3 },
+        .{ .family = .pareto, .sigma = 1, .alpha = 0.1, .edfseed = 12, .edfnsamples = 3 },
+        .{ .family = .igauss, .mu = 1, .lambda = 1, .edfseed = 12, .edfnsamples = 3 },
+    }) |request| {
+        var d = diag.Diagnostics.init(a);
+        const curve: dist.Distribution = .{ .family = request.family, .p = .{ .mu = 1, .alpha = 0.1 } };
+        const result = try compute(&d, &.{ tiny, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 }, curve, request);
+        try std.testing.expect(result.d != null and result.w2 != null and result.a2 == null);
+        try std.testing.expect(std.math.isNan(result.statistics.a2) and result.simulation.?.probabilities.?.a2 == null);
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "Overflow or underflow occurred computing the Anderson-Darling statistic") != null);
+    }
+    var d = diag.Diagnostics.init(a);
+    const beta: dist.Distribution = .{ .family = .beta, .p = .{ .alpha = 2, .beta = 3 } };
+    const suppressed = try compute(&d, &.{ 1e-300, 0.2, 0.4, 0.6, 0.8 }, beta, .{ .family = .beta, .sigma = 1, .alpha = null, .beta = 3 });
+    try std.testing.expect(suppressed.d == null and suppressed.w2 == null and suppressed.a2 == null);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+    const weibull: dist.Distribution = .{ .family = .weibull, .p = .{ .c = 2 } };
+    const stable = try compute(&d, &.{ 1e-306, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95 }, weibull, .{ .family = .weibull, .sigma = 1, .c = 2 });
+    try std.testing.expect(stable.a2 != null);
+    try std.testing.expectApproxEqAbs(@as(f64, 144.41676874796798), stable.statistics.a2, 1e-10);
 }

@@ -46,11 +46,11 @@ Signed Rank    S      10.5    Pr >= |S| 0.0313
 
            ----Lowest----        ---Highest---
 
-           Value      Obs        Value      Obs  Freq (Low/High)
+           Value  Freq  Obs        Value  Freq  Obs
 
-                   1    1                1    1  2 / 2
-                   2    2                2    2  3 / 3
-                   3    3                3    3  1 / 1
+           1  2  1        1  2  1
+           2  3  2        2  3  2
+           3  1  3        3  1  3
                                  The UNIVARIATE Procedure
 
 Variable:  y

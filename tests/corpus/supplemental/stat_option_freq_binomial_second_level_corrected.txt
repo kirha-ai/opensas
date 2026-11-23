@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 1 x = 2
+stdout-count 1 Continuity correction included.
+row Wald (Corrected) 0.416~5.1e-05 0.884~5.1e-05
+row Wilson (Corrected) 0.4095~5.1e-05 0.8369~5.1e-05
+row-count 1 Wald (Corrected) {any} {any}
+row-count 1 Wilson (Corrected) {any} {any}

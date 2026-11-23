@@ -81,9 +81,13 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     if (!(r.alpha > 0) or !(r.beta > 0) or !(r.sigma > 0) or !(r.c > 0) or
         !std.math.isFinite(r.alpha) or !std.math.isFinite(r.beta) or !std.math.isFinite(r.sigma) or !std.math.isFinite(r.c))
         return d.fail(error.ParseError, 0, "UNIVARIATE: invalid EDF inference shape", .{});
+    const e = r.estimated;
+    if (r.family == .gamma and n < 10 and (e.theta or e.sigma or e.alpha)) {
+        try d.warn(0, "A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Gamma distribution is not fully specified.", .{});
+        return .{};
+    }
     const available = availability(r);
     if (!available.a2) return .{};
-    const e = r.estimated;
     var edf_n = n;
     if (r.family == .exponential) {
         const excluded = r.exponential_boundary_count orelse (if (e.theta and !e.sigma) @as(usize, 1) else 0);
@@ -112,16 +116,28 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     }
     if (r.family == .exponential) return exponentialEstimated(s, edf_n, e);
     if (r.family == .gamma) return if (e.theta) gammaEstimatedThreshold(s, n, e, r.alpha) else gammaFixedThreshold(s, n, e, r.alpha);
-    if (r.family == .beta) return betaEstimated(s, n, r.alpha, r.beta);
+    if (r.family == .beta) {
+        if (n < 10) {
+            try d.warn(0, "A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Beta distribution is not fully specified.", .{});
+            return .{};
+        }
+        return betaEstimated(s, n, r.alpha, r.beta);
+    }
     if (r.family == .lognormal and e.theta) return lognormalEstimatedThreshold(s, n, e, r.sigma);
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
         if (location and e.sigma) {
-            const levels = [_]f64{ 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005 };
+            // The log transform preserves the EDF statistics. SAS reports the
+            // median knot for the fitted lognormal W² and A² tables, whereas
+            // the fitted normal table starts at its upper quartile.
+            const levels = [_]f64{ 0.50, 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005 };
+            const w2 = [_]f64{ 0.051, 0.074, 0.091, 0.104, 0.126, 0.148, 0.178, 0.201 };
+            const a2 = [_]f64{ 0.341, 0.470, 0.561, 0.631, 0.752, 0.873, 1.035, 1.159 };
+            const first: usize = if (r.family == .lognormal) 0 else 1;
             return .{
                 .d = interpolate(s.d * (@sqrt(nf) - 0.01 + 0.85 / @sqrt(nf)), &.{ 0.775, 0.819, 0.895, 0.955, 1.035 }, &.{ 0.15, 0.10, 0.05, 0.025, 0.01 }),
-                .w2 = interpolate(s.w2 * (1 + 0.5 / nf), &.{ 0.074, 0.091, 0.104, 0.126, 0.148, 0.178, 0.201 }, &levels),
-                .a2 = interpolate(s.a2 * (1 + 0.75 / nf + 2.25 / (nf * nf)), &.{ 0.470, 0.561, 0.631, 0.752, 0.873, 1.035, 1.159 }, &levels),
+                .w2 = interpolate(s.w2 * (1 + 0.5 / nf), w2[first..], levels[first..]),
+                .a2 = interpolate(s.a2 * (1 + 0.75 / nf + 2.25 / (nf * nf)), a2[first..], levels[first..]),
             };
         }
         const levels = [_]f64{ 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005, 0.0025 };
@@ -518,7 +534,6 @@ const beta_surface = [3][11][11]f64{
 };
 
 fn betaEstimated(s: Statistics, n: usize, alpha: f64, beta: f64) Result {
-    if (n < 10) return .{};
     const inv = 1 / @as(f64, @floatFromInt(n));
     const ia = 1 / @min(alpha, beta);
     const ib = 1 / @max(alpha, beta);
@@ -1232,6 +1247,8 @@ pub const SimulationOptions = struct {
     /// Caller resolves omitted/time-of-day seed once, and can retain it in ODS.
     seed: u64,
     samples: usize = 500,
+    /// A Pareto histogram can omit an unavailable EDF table and keep its fit.
+    require_probabilities: bool = true,
 };
 pub const SimulationResult = struct {
     probabilities: Result,
@@ -1314,7 +1331,7 @@ pub const AccountedSimulationResult = struct {
 /// This is additive: strict simulate and its callback contract stay unchanged.
 /// Fatal errors abort immediately, even after earlier counted failures. The
 /// failure payload is consumed synchronously, not retained in the aggregate.
-/// no_valid returns counts/status and an ERROR diagnostic, without numbers.
+/// no_valid returns counts/status with no probabilities or standard errors.
 pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics, n: usize, options: SimulationOptions, sampler: AccountedSimulator) diag.Error!AccountedSimulationResult {
     try validate(d, observed, n);
     switch (r.family) {
@@ -1338,11 +1355,12 @@ pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics,
             },
         }
     }
-    if (result.failed > 0) try d.warn(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });
     if (result.valid == 0) {
-        try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
+        if (options.require_probabilities)
+            try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
         return result;
     }
+    if (result.failed > 0) try d.note(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });
     result.status = if (result.failed == 0) .all_valid else .conditional;
     const m: f64 = @floatFromInt(result.valid);
     var p: [3]Probability = undefined;
@@ -1575,7 +1593,10 @@ test "dev5 EDF fixed-threshold gamma three estimation masks independent M9 holdo
     }
     try std.testing.expectEqual(@as(usize, 23184), count);
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    const before = d.count();
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 2 }, s, 9));
+    try std.testing.expectEqual(before + 1, d.count());
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[before].severity);
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 1 }, s, 20));
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .alpha = true }, .alpha = 0.99 }, s, 20));
 }
@@ -1613,7 +1634,15 @@ test "dev5 EDF estimated beta independent M9 shapes and bound holdouts" {
     }
     try std.testing.expectEqual(@as(usize, 17628), count);
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
-    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } }, s, 9));
+    const fitted: Request = .{ .family = .beta, .estimated = .{ .alpha = true, .beta = true } };
+    const before = d.count();
+    try std.testing.expectEqual(Result{}, try tabulated(&d, fitted, s, 9));
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[before].severity);
+    try std.testing.expect((try tabulated(&d, fitted, s, 10)).a2 != null);
+    try std.testing.expect((try tabulated(&d, .{ .family = .beta }, s, 9)).a2 != null);
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = .{ .alpha = true } }, s, 9));
+    try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .beta, .estimated = fitted.estimated, .beta = 5 }, s, 9));
+    try std.testing.expectEqual(before + 1, d.count());
 }
 
 test "dev5 EDF M9 power estimation has no table despite documented alpha bound" {
@@ -2027,7 +2056,7 @@ test "dev5 EDF accounted mixed attempts use valid denominator and exact budget" 
         try std.testing.expectEqual(Sign.exact, p.sign);
         try std.testing.expectEqual(@sqrt(expected * (1 - expected) / 3), se);
     }
-    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=5, valid=3, failed=2; probabilities are conditional on successful/converged refits\n", try d.render());
+    try std.testing.expectEqualStrings("NOTE: UNIVARIATE: EDF simulation attempted=5, valid=3, failed=2; probabilities are conditional on successful/converged refits\n", try d.render());
 }
 
 test "dev5 EDF accounted zero valid remains bounded and returns no fake probabilities" {
@@ -2045,7 +2074,7 @@ test "dev5 EDF accounted zero valid remains bounded and returns no fake probabil
     try std.testing.expect(got.probabilities == null and got.standard_errors == null);
     try std.testing.expectEqualDeep([3]usize{ 0, 0, 0 }, got.exceedances);
     try std.testing.expect(d.hasErrors());
-    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; probabilities are conditional on successful/converged refits\nERROR: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; no probabilities or standard errors are available\n", try d.render());
+    try std.testing.expectEqualStrings("ERROR: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; no probabilities or standard errors are available\n", try d.render());
 }
 
 test "dev5 EDF accounted fatal and malformed outcomes abort without exclusion" {
@@ -2109,4 +2138,29 @@ test "dev5 EDF accounted seeded replay and all-valid strict compatibility" {
     try std.testing.expectEqual(a.samples, a.valid + a.failed);
     const c = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 24680, .samples = 997 }, callback);
     try std.testing.expect(!std.meta.eql(a.exceedances, c.exceedances));
+}
+
+test "fixed threshold lognormal fitted EDF uses the median knots on both sides" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const r: Request = .{ .family = .lognormal, .estimated = .{ .zeta = true, .sigma = true } };
+    const normal: Request = .{ .family = .normal, .estimated = .{ .mu = true, .sigma = true } };
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_edf_lognormal_fixed_threshold.txt"), '\n');
+    while (lines.next()) |line| {
+        if (line[0] == '#') continue;
+        var parts = std.mem.splitScalar(u8, line, '|');
+        const n = try std.fmt.parseInt(usize, parts.next().?, 10);
+        const is_w2 = std.mem.eql(u8, parts.next().?, "1");
+        for ([_]Sign{ .greater, .exact }) |sign| {
+            const value = try std.fmt.parseFloat(f64, parts.next().?);
+            const stats: Statistics = .{ .d = 0.1, .w2 = value, .a2 = value };
+            const log_p = try tabulated(&d, r, stats, n);
+            const p = if (is_w2) log_p.w2.? else log_p.a2.?;
+            try std.testing.expectEqual(sign, p.sign);
+            try std.testing.expectApproxEqAbs(@as(f64, 0.5), p.value, 1e-9);
+            const normal_p = try tabulated(&d, normal, stats, n);
+            try std.testing.expectEqual(Probability{ .value = 0.25, .sign = .greater }, if (is_w2) normal_p.w2.? else normal_p.a2.?);
+        }
+    }
 }

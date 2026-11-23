@@ -1,0 +1,4 @@
+# corpus assertions
+row FREQHAND|exact-distance-crt-c0m2r|S_COMOR|2.0~1e-12
+row FREQHAND|exact-distance-crt-c0m2r|M0_COMOR|1.4999999999999991~1e-12
+row FREQHAND|exact-distance-crt-c0m2r|XPT_COMOR|0.3652930768381369~1e-12

@@ -1,0 +1,81 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row x 6 1.00000 0~0 6.00000 1.00000 1.00000
+row y 6 3.00000 0.89443 18.00000 2.00000 4.00000
+row x . .
+row y . 1.00000
+row The FREQ Procedure
+row Table of g by h
+row Frequency |
+row Percent |
+row Row Pct |
+row Col Pct | 0 | 1 | Total
+row 0 | 2 | 2 | 4
+row | 33.33 | 33.33 | 66.67
+row | 50.00 | 50.00 |
+row | 50.00 | 100.00 |
+row 1 | 2 | 0 | 2
+row | 33.33 | 0.00 | 33.33
+row | 100.00 | 0.00 |
+row | 50.00 | 0.00 |
+row Total 4 2 6
+row 66.67 33.33 100.00
+row The UNIVARIATE Procedure
+row N 6 Sum Weights 6
+row Mean 1 Sum Observations 6
+row Std Deviation 0 Variance 0
+row Skewness . Kurtosis .
+row Uncorrected SS 6 Corrected SS 0
+row Coeff Variation 0 Std Error Mean 0
+row Mean 1 Std Deviation 0
+row Median 1 Variance 0
+row Mode 1 Range 0
+row Interquartile Range 0
+row Student's t t . Pr > | t | .
+row Sign M 3 Pr >= | M | 0.0313
+row Signed Rank S 10.5 Pr >= | S | 0.0313
+row 100% Max 1
+row 99% 1
+row 95% 1
+row 90% 1
+row 75% Q3 1
+row 50% Median 1
+row 25% Q1 1
+row 10% 1
+row 5% 1
+row 1% 1
+row 0% Min 1
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any}
+row-count 1 y {any} {any}
+row-count 1 Col Pct | {any} | {any} | Total
+row-count 2 {any} | {any} | {any} | {any}
+row-count 2 | {any} | {any} | {any}
+row-count 4 | {any} | {any} |
+row-count 1 Total {any} {any} {any}
+row-count 1 N {any} Sum Weights {any}
+row-count 1 Mean {any} Sum Observations {any}
+row-count 1 Std Deviation {any} Variance {any}
+row-count 1 Skewness {any} Kurtosis {any}
+row-count 1 Uncorrected SS {any} Corrected SS {any}
+row-count 1 Coeff Variation {any} Std Error Mean {any}
+row-count 1 Mean {any} Std Deviation {any}
+row-count 1 Median {any} Variance {any}
+row-count 1 Mode {any} Range {any}
+row-count 1 Interquartile Range {any}
+row-count 1 Student's t t {any} Pr > | t | {any}
+row-count 1 Sign M {any} Pr >= | M | {any}
+row-count 1 Signed Rank S {any} Pr >= | S | {any}
+row-count 1 100% Max {any}
+row-count 1 99% {any}
+row-count 1 95% {any}
+row-count 1 90% {any}
+row-count 1 75% Q3 {any}
+row-count 1 50% Median {any}
+row-count 1 25% Q1 {any}
+row-count 1 10% {any}
+row-count 1 5% {any}
+row-count 1 1% {any}
+row-count 1 0% Min {any}

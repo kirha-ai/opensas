@@ -1,0 +1,39 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 7 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Test|char|18|||Goodness-of-Fit Test
+row ODS_COL|3|TestLab|char|4|||Label for Goodness-of-Fit Statistic
+row ODS_COL|4|Stat|num|8|BEST8.||Value of Goodness-of-Fit Statistic
+row ODS_COL|5|pType|char|9|||p-value Label
+row ODS_COL|6|pSign|char|1|||Sign of p-value
+row ODS_COL|7|pValue|num|8|PVALUE6.4||p-value
+stdout-count 28 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Test|Shapiro-Wilk
+row ODS_VALUE|1|TestLab|W
+row ODS_VALUE|1|Stat|0.92197923794946~9.219792379e-09
+row ODS_VALUE|1|pType|Pr < W
+row ODS_VALUE|1|pSign|
+row ODS_VALUE|1|pValue|0.26673131572387~2.667313157e-09
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Test|Kolmogorov-Smirnov
+row ODS_VALUE|2|TestLab|D
+row ODS_VALUE|2|Stat|0.16909472164748~1.690947216e-09
+row ODS_VALUE|2|pType|Pr > D
+row ODS_VALUE|2|pSign|>
+row ODS_VALUE|2|pValue|0.15~1.5e-09
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Test|Cramer-von Mises
+row ODS_VALUE|3|TestLab|W-Sq
+row ODS_VALUE|3|Stat|0.05578363933872~5.578363934e-10
+row ODS_VALUE|3|pType|Pr > W-Sq
+row ODS_VALUE|3|pSign|>
+row ODS_VALUE|3|pValue|0.25~2.5e-09
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Test|Anderson-Darling
+row ODS_VALUE|4|TestLab|A-Sq
+row ODS_VALUE|4|Stat|0.38504697911053~3.850469791e-09
+row ODS_VALUE|4|pType|Pr > A-Sq
+row ODS_VALUE|4|pSign|>
+row ODS_VALUE|4|pValue|0.25~2.5e-09

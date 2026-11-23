@@ -46,9 +46,9 @@ Signed Rank    S       0.5    Pr >= |S| 1.0000
 
            ----Lowest----        ---Highest---
 
-           Value      Obs        Value      Obs  x (Low/High)
+           Value  x  Obs        Value  x  Obs
 
-                   1    1                1    1  1 / 1
+           1  1  1        1  1  1
 Obs   x
 
   1   1

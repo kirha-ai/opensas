@@ -1,0 +1,13 @@
+# corpus assertions
+row Cochran-Armitage Trend Test
+row Statistic (Z) -2.8827~5.1e-05
+row One-sided Pr < Z 0.002~5.1e-05
+row Two-sided Pr > |Z| 0.0039~5.1e-05
+rewind
+stdout-count 1 Frequency|
+stdout-count 1 Row Pct
+stdout-count 1 Col Pct
+row Cochran-Armitage Trend Test
+row Statistic (Z) -2.8827~5.1e-05
+row-count 1 One-sided Pr < Z {any}
+row-count 1 Two-sided Pr > | Z | {any}

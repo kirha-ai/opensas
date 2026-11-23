@@ -1,0 +1,34 @@
+# corpus assertions
+row Case freq_agreement_ac1
+row Chance-Corrected AC1
+row 0.5683~5.1e-05 0.0943~5.1e-05 0.3835~5.1e-05 0.7532~5.1e-05
+row Case freq_agreement_details
+row Kappa Details
+row Observed Agreement 0.7115~5.1e-05
+row Chance-Expected Agreement 0.3343~5.1e-05
+row Maximum Kappa 0.8844~5.1e-05
+row B_N Measure 0.5188~5.1e-05
+row Case freq_agreement_dfsym
+row Symmetry Test
+row 0.4762~5.1e-05 2~5.1e-05 0.7881~5.1e-05
+row Case freq_agreement_kappadetails
+row Kappa Details
+row Observed Agreement 0.7115~5.1e-05
+row Chance-Expected Agreement 0.3343~5.1e-05
+row Maximum Kappa 0.8844~5.1e-05
+row B_N Measure 0.5188~5.1e-05
+row Case freq_agreement_pabak
+row P-B Adjusted Kappa
+row 0.5673~5.1e-05 0.0942~5.1e-05 0.3826~5.1e-05 0.752~5.1e-05
+row Case freq_agreement_restore
+row Symmetry Test
+row Chi-Square 2.2762~5.1e-05
+row DF 3~5.1e-05
+row Pr > ChiSq 0.5171~5.1e-05
+row-count 2 Observed Agreement {any}
+row-count 2 Chance-Expected Agreement {any}
+row-count 2 Maximum Kappa {any}
+row-count 2 B_N Measure {any}
+row-count 1 Chi-Square {any}
+row-count 1 DF {any}
+row-count 1 Pr > ChiSq {any}

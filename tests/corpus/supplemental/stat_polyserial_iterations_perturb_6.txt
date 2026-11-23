@@ -1,0 +1,24 @@
+# corpus assertions
+row SERIAL perturb-6-sweep-1 .
+row SERIAL perturb-6-sweep-2 .
+row SERIAL perturb-6-sweep-3 0.9991165403692316~6e-12
+row SERIAL perturb-6-sweep-4 0.9990674592786334~6e-12
+row SERIAL perturb-6-sweep-5 0.9990380106242744~6e-12
+row SERIAL perturb-6-sweep-6 0.9990281944061548~6e-12
+row SERIAL perturb-6-sweep-7 0.999019359809847~6e-12
+row SERIAL perturb-6-sweep-8 0.9990183781880351~6e-12
+row SERIAL perturb-6-sweep-9 0.9990173965662231~6e-12
+row SERIAL perturb-6-sweep-10 0.9990085619699155~6e-12
+row SERIAL perturb-6-sweep-11 0.9989987457517958~6e-12
+row SERIAL perturb-6-sweep-12 0.9989692970974369~6e-12
+row SERIAL perturb-6-sweep-13 0.9989202160068387~6e-12
+row SERIAL perturb-6-sweep-14 0.9988220538256422~6e-12
+row SERIAL perturb-6-sweep-15 0.9985275672820526~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-6-first-m16 .
+row x y {any} {any} 0.0~0 {any} {any} 22.2977746816064~5e-05 {any}
+row SERIAL perturb-6-first-m17 0.99911654036923~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-6-first-step .
+stdout-count 18 SERIAL
+stderr-count 4 did not converge

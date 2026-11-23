@@ -1,0 +1,5 @@
+# corpus assertions
+svg-count 1
+svg-has 1 data-kind="histogram"
+svg-has 1 class="bar"
+stdout-count 1 GRSEG

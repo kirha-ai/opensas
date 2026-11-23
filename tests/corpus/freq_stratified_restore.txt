@@ -93,11 +93,8 @@ Total Sample Size = 106
 DF
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 McNemar's Test
 Chi-Square                     2.2500
@@ -112,13 +109,9 @@ ASE                            0.1239
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 McNemar's Test
 Chi-Square                     3.5217

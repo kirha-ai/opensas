@@ -1,0 +1,3 @@
+# corpus assertions
+row Wilson 0.4181~5.1e-05 0.4773~5.1e-05
+row-count 1 Wilson {any} {any}

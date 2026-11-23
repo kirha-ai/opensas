@@ -1,0 +1,24 @@
+# corpus assertions
+row SERIAL perturb-3-sweep-1 .
+row SERIAL perturb-3-sweep-2 .
+row SERIAL perturb-3-sweep-3 .
+row SERIAL perturb-3-sweep-4 .
+row SERIAL perturb-3-sweep-5 .
+row SERIAL perturb-3-sweep-6 .
+row SERIAL perturb-3-sweep-7 .
+row SERIAL perturb-3-sweep-8 .
+row SERIAL perturb-3-sweep-9 .
+row SERIAL perturb-3-sweep-10 .
+row SERIAL perturb-3-sweep-11 .
+row SERIAL perturb-3-sweep-12 .
+row SERIAL perturb-3-sweep-13 .
+row SERIAL perturb-3-sweep-14 .
+row SERIAL perturb-3-sweep-15 0.9989271599615183~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-3-first-m14 .
+row x y {any} {any} 0.0~0 {any} {any} 23.1858536194932~5e-05 {any}
+row SERIAL perturb-3-first-m15 0.99892715996152~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-3-first-step .
+stdout-count 18 SERIAL
+stderr-count 16 did not converge

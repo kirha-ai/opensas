@@ -1,0 +1,3 @@
+# corpus assertions
+row 25.000000 2.000000 4.5~5.1e-05 1.779513~5.1e-05 1.585613~5.1e-05 3.000000 2.528782~5.1e-05 0.0855~5.1e-05
+row-count 1 {any} {any} {any} {any} {any} {any} {any} {any}

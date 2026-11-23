@@ -7,17 +7,22 @@ const parser = @import("../parser.zig");
 const diag = @import("../diag.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
-const io = @import("../io.zig");
 const nan = std.math.nan(f64);
 const eq = std.ascii.eqlIgnoreCase;
+const output = @import("corr_output.zig");
 const advanced = @import("corr_advanced.zig");
 
 pub const VarDef = enum { df, n, wdf, weight };
+const graphics = @import("corr_plots.zig");
+const var_lists = @import("variable_lists.zig");
+const by_groups = @import("by_groups.zig");
 pub const Options = struct {
+    plots: graphics.Options = .{},
     pearson: bool = false,
     spearman: bool = false,
     kendall: bool = false,
     hoeffding: bool = false,
+    simple_median: bool = false,
     alpha: bool = false,
     polychoric: ?advanced.PolyOptions = null,
     polyserial: ?advanced.PolyOptions = null,
@@ -31,11 +36,14 @@ pub const Options = struct {
     nosimple: bool = false,
     noprob: bool = false,
     nocorr: bool = false,
+    ranked: bool = false,
+    best: usize = std.math.maxInt(usize),
     cov: bool = false,
     csscp: bool = false,
     sscp: bool = false,
 };
 pub const Spec = struct {
+    outputs: []const output.Spec = &.{},
     ds: *Dataset,
     vars: []const usize,
     with: []const usize,
@@ -85,6 +93,9 @@ pub const Pair = struct {
     controls: usize = 0,
 };
 pub const Group = struct {
+    rows: []const []const Value = &.{},
+    n: f64 = 0,
+    sum_weights: f64 = 0,
     by_values: ?[]const Value,
     simple: []const Simple,
     /// Row-major: WITH (or VAR if absent) by VAR, with source column indices.
@@ -113,11 +124,8 @@ fn fail(cx: proc.ProcCtx, t: lex.Token) diag.Error {
     }
     return cx.diags.fail(error.ParseError, t.line, "PROC CORR: unsupported option or statement {s}", .{t.text});
 }
-fn column(cx: proc.ProcCtx, ds: *Dataset, name: []const u8, numeric: bool) diag.Error!usize {
-    const c = ds.indexOf(name) orelse return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{name});
-    if (numeric and ds.columns.items[c].type != .num)
-        return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable {s} must be numeric.", .{name});
-    return c;
+fn column(cx: proc.ProcCtx, ds: *Dataset, name: []const u8) diag.Error!usize {
+    return ds.indexOf(name) orelse cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{name});
 }
 fn contains(cols: []const usize, c: usize) bool {
     return std.mem.indexOfScalar(usize, cols, c) != null;
@@ -126,53 +134,19 @@ fn addColumn(a: std.mem.Allocator, cols: *std.ArrayList(usize), c: usize) !void 
     if (!contains(cols.items, c)) try cols.append(a, c);
 }
 
-fn numberedSuffix(name: []const u8) ?struct { prefix: []const u8, number: usize } {
-    var i = name.len;
-    while (i > 0 and std.ascii.isDigit(name[i - 1])) i -= 1;
-    if (i == name.len) return null;
-    return .{ .prefix = name[0..i], .number = std.fmt.parseInt(usize, name[i..], 10) catch return null };
-}
-
-/// Resolve SAS variable lists in source order, including numbered/name ranges,
-/// prefixes, and _NUMERIC_. Explicit character variables fail visibly.
-fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token) diag.Error![]const usize {
+fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token, statement: []const u8, prior: []const usize) diag.Error![]const usize {
     var cols: std.ArrayList(usize) = .empty;
+    try cols.appendSlice(cx.arena, prior);
     var i: usize = 0;
     while (i < toks.len) {
-        if (toks[i].tag != .name) return fail(cx, toks[i]);
-        const name = toks[i].text;
-        if (at(toks, i + 1, .colon) or eq(name, "_numeric_") or eq(name, "_all_")) {
-            var matched = false;
-            for (ds.columns.items, 0..) |c, j| {
-                if (eq(name, "_numeric_") or eq(name, "_all_") or (c.name.len >= name.len and eq(c.name[0..name.len], name))) {
-                    matched = true;
-                    if (c.type == .num) try addColumn(cx.arena, &cols, j) else if (!eq(name, "_numeric_"))
-                        return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable {s} must be numeric.", .{c.name});
-                }
-            }
-            if (!matched) return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable list {s} matched no variables.", .{name});
-            i += if (at(toks, i + 1, .colon)) @as(usize, 2) else 1;
-        } else if (at(toks, i + 1, .minus) and at(toks, i + 2, .minus) and at(toks, i + 3, .name)) {
-            const first = try column(cx, ds, name, true);
-            const last = try column(cx, ds, toks[i + 3].text, true);
-            if (last < first) return fail(cx, toks[i]);
-            for (first..last + 1) |j| {
-                _ = try column(cx, ds, ds.columns.items[j].name, true);
-                try addColumn(cx.arena, &cols, j);
-            }
-            i += 4;
-        } else if (at(toks, i + 1, .minus) and at(toks, i + 2, .name)) {
-            const first = numberedSuffix(name);
-            const last = numberedSuffix(toks[i + 2].text);
-            if (first == null or last == null or !eq(first.?.prefix, last.?.prefix) or first.?.number > last.?.number)
-                return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: invalid numbered variable range.", .{});
-            var names: std.ArrayList([]const u8) = .empty;
-            try parser.expandRange(cx.arena, &names, name, toks[i + 2].text);
-            for (names.items) |n| try addColumn(cx.arena, &cols, try column(cx, ds, n, true));
-            i += 3;
-        } else {
-            try addColumn(cx.arena, &cols, try column(cx, ds, name, true));
-            i += 1;
+        const names = try var_lists.next(cx.arena, ds, toks, &i, cx.diags);
+        for (names) |name| {
+            const ci = try column(cx, ds, name);
+            if (ds.columns.items[ci].type != .num)
+                return cx.diags.fail(error.ParseError, 0, "Variable {s} in list does not match type prescribed for this list.", .{name});
+            if (contains(cols.items, ci))
+                return cx.diags.fail(error.ParseError, 0, "Duplicate variable name in the {s} statement.", .{statement});
+            try cols.append(cx.arena, ci);
         }
     }
     return cols.items;
@@ -180,6 +154,7 @@ fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token) diag.Error![
 
 pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     var opts: Options = .{};
+    var outputs: std.ArrayList(output.Spec) = .empty;
     var name: ?[]const u8 = null;
     var i: usize = 2;
     while (i < toks.len and toks[i].tag != .semicolon) {
@@ -187,6 +162,42 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             name = toks[i + 2].text;
             i += 3;
             if (at(toks, i, .lparen)) i = proc.skipParen(toks, i);
+        } else if (kw(toks, i, "plots")) {
+            opts.plots = try graphics.parse(cx, toks, &i);
+            if (opts.plots.requests.len > 0) opts.pearson = true;
+        } else if (output.kindOf(toks[i].text)) |kind| {
+            if (!at(toks, i + 1, .eq) or !at(toks, i + 2, .name)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: expected an output dataset name", .{});
+            var dest: output.Spec = .{ .kind = kind, .name = toks[i + 2].text };
+            i += 3;
+            if (at(toks, i, .dot)) {
+                if (!at(toks, i + 1, .name)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: expected a member name", .{});
+                dest.name = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ dest.name, toks[i + 1].text });
+                i += 2;
+            }
+            if (at(toks, i, .lparen)) {
+                const end = proc.skipParen(toks, i);
+                if (end <= i + 1 or !at(toks, end - 1, .rparen)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: unclosed output dataset options", .{});
+                dest.options = toks[i + 1 .. end - 1];
+                i = end;
+            }
+            for (outputs.items) |*old| {
+                if (old.kind == kind) {
+                    old.* = dest;
+                    break;
+                }
+            } else try outputs.append(cx.arena, dest);
+            switch (kind) {
+                .outp => opts.pearson = true,
+                .outs => opts.spearman = true,
+                .outk => opts.kendall = true,
+                .outh => opts.hoeffding = true,
+                .outplc => if (opts.polychoric == null) {
+                    opts.polychoric = .{};
+                },
+                .outpls => if (opts.polyserial == null) {
+                    opts.polyserial = .{};
+                },
+            }
         } else if (kw(toks, i, "polychoric") or kw(toks, i, "polyserial")) {
             const serial = kw(toks, i, "polyserial");
             var opt: advanced.PolyOptions = .{};
@@ -206,7 +217,14 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         i += 1;
                     } else {
                         const value = try numericOption(cx, toks, &i);
-                        if (eq(key.text, "converge") and value > 0 and value < 1) opt.converge = value else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) opt.maxiter = @intFromFloat(value) else if (eq(key.text, "ngroups") and value > 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) opt.ngroups = @intFromFloat(value) else return fail(cx, key);
+                        if (eq(key.text, "converge")) {
+                            if (value < 0 or value > 1) return cx.diags.fail(error.ParseError, key.line, "The parameter value {d} is not within the required range of 0 and 1.", .{value});
+                            opt.converge = value;
+                        } else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
+                            opt.maxiter = @intFromFloat(value);
+                        } else if (eq(key.text, "ngroups") and value > 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
+                            opt.ngroups = @intFromFloat(value);
+                        } else return fail(cx, key);
                     }
                 }
                 i += 1;
@@ -230,7 +248,10 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         i += 1;
                     } else {
                         const value = try numericOption(cx, toks, &i);
-                        if (eq(key.text, "alpha") and value > 0 and value < 1) opts.fisher.?.alpha = value else if (eq(key.text, "rho0") and @abs(value) < 1) opts.fisher.?.rho0 = value else return fail(cx, key);
+                        if (eq(key.text, "rho0")) {
+                            if (!(@abs(value) < 1)) return cx.diags.fail(error.ParseError, key.line, "The value of RHO0= must be between -1.0 and 1.0.", .{});
+                            opts.fisher.?.rho0 = value;
+                        } else if (eq(key.text, "alpha") and value > 0 and value < 1) opts.fisher.?.alpha = value else return fail(cx, key);
                     }
                 }
                 i += 1;
@@ -240,6 +261,16 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             opts.singular = try numericOption(cx, toks, &i);
             opts.singular_specified = true;
             if (!(opts.singular >= 0 and opts.singular <= 1)) return fail(cx, toks[i - 1]);
+        } else if (kw(toks, i, "rank")) {
+            opts.ranked = true;
+            i += 1;
+        } else if (kw(toks, i, "best") and at(toks, i + 1, .eq)) {
+            opts.ranked = true;
+            i += 2;
+            const v = try numericOption(cx, toks, &i);
+            if (!std.math.isFinite(v) or v != @trunc(v)) return cx.diags.fail(error.ParseError, toks[i - 1].line, "PROC CORR: BEST= requires an integer.", .{});
+            if (v < 1) try cx.diags.warn(toks[i - 1].line, "The number specified in BEST= option is less than 1; BEST=1 will be used.", .{});
+            opts.best = if (v >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) std.math.maxInt(usize) else @intFromFloat(@max(1, v));
         } else if (kw(toks, i, "vardef") and at(toks, i + 1, .eq) and at(toks, i + 2, .name)) {
             const v = toks[i + 2].text;
             opts.vardef = if (eq(v, "df")) .df else if (eq(v, "n")) .n else if (eq(v, "wdf")) .wdf else if (eq(v, "weight") or eq(v, "wgt")) .weight else return fail(cx, toks[i + 2]);
@@ -251,13 +282,14 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     }
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse
         return cx.diags.fail(error.ParseError, 0, "File {s} does not exist.", .{name orelse "_last_"});
-    const ds = try proc.procInput(cx.arena, raw, toks, cx.diags);
+    var ds = try proc.procInput(cx.arena, raw, toks, cx.diags);
+    var formats: std.ArrayList(proc.VarSpec) = .empty;
     var vars: ?[]const usize = null;
     var with: []const usize = &.{};
     var partial: []const usize = &.{};
-    var by_names: std.ArrayList([]const u8) = .empty;
-    var freq: ?usize = null;
-    var weight: ?usize = null;
+    var by_statements: by_groups.Statements = .{};
+    var frequencies: var_lists.NumericRole = .{};
+    var weights: var_lists.NumericRole = .{};
     i += 1;
     while (i < toks.len and toks[i].tag != .eof) {
         if (toks[i].tag == .semicolon) {
@@ -267,53 +299,69 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         const start = i;
         var end = i + 1;
         while (end < toks.len and toks[end].tag != .semicolon and toks[end].tag != .eof) end += 1;
-        if (kw(toks, i, "var") or kw(toks, i, "with")) {
-            const cs = try columns(cx, ds, toks[i + 1 .. end]);
-            if (cs.len == 0) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: empty variable list.", .{});
-            var combined: std.ArrayList(usize) = .empty;
-            const old = if (kw(toks, i, "var")) vars orelse &.{} else with;
-            for (old) |c| try addColumn(cx.arena, &combined, c);
-            for (cs) |c| try addColumn(cx.arena, &combined, c);
-            if (kw(toks, i, "var")) vars = combined.items else with = combined.items;
+        if (kw(toks, i, "var")) {
+            vars = try columns(cx, ds, toks[i + 1 .. end], "VAR", vars orelse &.{});
+        } else if (kw(toks, i, "with")) {
+            with = try columns(cx, ds, toks[i + 1 .. end], "WITH", with);
         } else if (kw(toks, i, "partial")) {
-            partial = try columns(cx, ds, toks[i + 1 .. end]);
-            if (partial.len == 0) return fail(cx, toks[i]);
-            opts.nomiss = true;
+            partial = try columns(cx, ds, toks[i + 1 .. end], "PARTIAL", partial);
+            if (partial.len > 0) opts.nomiss = true;
+        } else if (kw(toks, i, "format")) {
+            try proc.parseProcFormat(cx.arena, toks, &i, &formats);
         } else if (kw(toks, i, "by")) {
-            by_names.clearRetainingCapacity();
-            try proc.parseProcBy(cx.arena, cx.diags, toks, &i, &by_names);
+            try by_statements.read(cx.arena, toks, &i);
         } else if (kw(toks, i, "freq") or kw(toks, i, "weight")) {
-            if (end != i + 2 or !at(toks, i + 1, .name)) return fail(cx, toks[i]);
-            const c = try column(cx, ds, toks[i + 1].text, true);
-            if (kw(toks, i, "freq")) freq = c else weight = c;
+            const role = if (kw(toks, i, "freq")) &frequencies else &weights;
+            try role.add(cx.arena, ds, try var_lists.roleVariable(toks[0..end], i + 1, false, cx.diags), cx.diags);
         } else if (!kw(toks, i, "where") and !kw(toks, i, "run") and !kw(toks, i, "quit") and !(toks[i].tag == .name and parser.isMidStepSkippable(toks[i].text))) return fail(cx, toks[start]);
         i = end;
     }
-    const by = try proc.decodeProcBy(cx.arena, by_names.items);
+    for (formats.items) |spec| _ = try column(cx, ds, spec.name);
+    ds = try by_groups.withFormats(cx.arena, ds, formats.items);
+    const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     var bcols: std.ArrayList(usize) = .empty;
-    for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n, false));
+    for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n));
     if (vars == null) {
         var cs: std.ArrayList(usize) = .empty;
         for (ds.columns.items, 0..) |c, j| {
-            if (c.type == .num and !contains(with, j) and !contains(partial, j) and !contains(bcols.items, j) and freq != j and weight != j) try cs.append(cx.arena, j);
+            if (c.type == .num and !contains(with, j) and !contains(partial, j) and !contains(bcols.items, j) and !frequencies.contains(j) and !weights.contains(j)) try cs.append(cx.arena, j);
         }
         vars = cs.items;
     }
-    if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: no analysis variables.", .{});
+    const freq = frequencies.first();
+    const weight = weights.first();
+    if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "Variable list empty.", .{});
     for (vars.?) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: analysis variables cannot also be PARTIAL variables.", .{});
     for (with) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: WITH variables cannot also be PARTIAL variables.", .{});
-    if (weight != null and (opts.spearman or opts.kendall or opts.hoeffding or opts.polychoric != null or opts.polyserial != null)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: rank correlations are invalid with WEIGHT.", .{});
-    if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null or opts.hoeffding)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
+    if (weight != null and (opts.spearman or opts.kendall or opts.hoeffding)) {
+        try cx.diags.warn(0, "Nonparametric options not allowed with WEIGHT statement.", .{});
+        opts.spearman = false;
+        opts.kendall = false;
+        opts.hoeffding = false;
+    }
+    if (weight != null and (opts.polychoric != null or opts.polyserial != null))
+        return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations are invalid with WEIGHT.", .{});
+    if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
     if (opts.polyserial != null and with.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: POLYSERIAL requires WITH.", .{});
-    if (opts.alpha and with.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ALPHA is invalid with WITH.", .{});
+    // M9 selects the simple-statistics columns and default Pearson table before
+    // dropping HOEFFDING with PARTIAL or ALPHA with WITH.
+    opts.simple_median = opts.spearman or opts.kendall or opts.hoeffding or opts.polychoric != null or opts.polyserial != null;
+    if (opts.alpha or opts.cov or opts.csscp or opts.sscp or !opts.simple_median) opts.pearson = true;
+    if (partial.len > 0 and opts.hoeffding) {
+        try cx.diags.warn(0, "HOEFFDING option not allowed with PARTIAL statement.", .{});
+        opts.hoeffding = false;
+    }
+    if (opts.alpha and with.len > 0) {
+        try cx.diags.warn(0, "ALPHA option not allowed with WITH statement.", .{});
+        opts.alpha = false;
+    }
     if (opts.singular_specified and partial.len == 0)
         try cx.diags.warn(0, "SINGULAR= option is allowed only when a PARTIAL statement is also specified.", .{});
-    if (opts.alpha or opts.cov or opts.csscp or opts.sscp or (!opts.spearman and !opts.kendall and !opts.hoeffding and opts.polychoric == null and opts.polyserial == null)) opts.pearson = true;
-    return .{ .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
+    return .{ .outputs = outputs.items, .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
 }
 
 const Mass = struct { f: f64, w: f64 };
-fn mass(s: Spec, row: []const Value) ?Mass {
+pub fn mass(s: Spec, row: []const Value) ?Mass {
     const f = if (s.freq) |c| @trunc(row[c].num) else 1;
     const w = if (s.weight) |c| row[c].num else 1;
     if (!std.math.isFinite(f) or f < 1 or !std.math.isFinite(w) or (s.options.exclnpwgt and w <= 0)) return null;
@@ -422,20 +470,14 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
         try cx.diags.report(.note, 0, "No observations were selected from data set {s}.", .{s.ds.name});
         return .{ .spec = s, .groups = &.{} };
     }
-    const slices = try proc.bySlices(cx.arena, s.ds.rows.items, s.by);
-    if (!s.notsorted) {
-        for (slices, 0..) |bs, j| {
-            if (j == 0) continue;
-            if (proc.byOrderViolation(bs.rep.?, slices[j - 1].rep.?, s.by, s.by_desc, s.ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
-                return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ s.ds.name, if (s.by_desc[k]) @as([]const u8, "descending") else "ascending" });
-        }
-    }
+    const slices = try by_groups.checkedSlices(cx.arena, s.ds, s.by, s.by_desc, s.notsorted, cx.diags);
     var groups: std.ArrayList(Group) = .empty;
     const rowcols = if (s.with.len > 0) s.with else s.vars;
     for (slices) |bs| {
         var total_weight: f64 = 0;
         var total_freq: f64 = 0;
         var total_n: f64 = 0;
+        var included_weight: f64 = 0;
         for (bs.rows) |row| {
             const f = if (s.freq) |c| @trunc(row[c].num) else 1;
             if (std.math.isFinite(f) and f >= 1) {
@@ -443,7 +485,10 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                 const w = if (s.weight) |c| row[c].num else 1;
                 if (std.math.isFinite(w)) total_weight += @max(0, w) * f;
             }
-            if (mass(s, row)) |m| total_n += m.f;
+            if (mass(s, row)) |m| {
+                total_n += m.f;
+                included_weight += m.w;
+            }
         }
         // A bad BY group must not discard earlier results or prevent later
         // analyses (Statistical Procedures, CORR BY statement, p.16). Keep
@@ -475,21 +520,25 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
             try pairs.append(cx.arena, computePair(s, bs.rows, c, r));
         };
         const unpartial_pairs = if (s.partial.len > 0) try cx.arena.dupe(Pair, pairs.items) else &.{};
-        if (s.partial.len > 0) try partialPairs(cx.arena, s, bs.rows, pairs.items, .pearson);
+        if (s.partial.len > 0) try partialPairs(cx, s, bs.rows, pairs.items, .pearson);
         for (simple.items) |*v| {
-            if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) v.median = try median(cx.arena, s, bs.rows, v.column);
+            if (s.options.simple_median) v.median = try median(cx.arena, s, bs.rows, v.column);
             if (s.partial.len > 0) for (pairs.items) |p| {
                 if (p.column == v.column) {
                     v.partial_variance = p.variance_x;
+                    break;
+                }
+                if (p.row == v.column) {
+                    v.partial_variance = p.variance_y;
                     break;
                 }
             };
         }
         const polychoric = if (s.options.polychoric) |opt| try polyPairs(cx, s, bs.rows, opt, false) else &.{};
         const polyserial = if (s.options.polyserial) |opt| try polyPairs(cx, s, bs.rows, opt, true) else &.{};
-        const spearman: []Pair = if (s.options.spearman) try rankPairs(cx.arena, s, bs.rows, .spearman) else &.{};
-        const hoeffding: []Pair = if (s.options.hoeffding) try rankPairs(cx.arena, s, bs.rows, .hoeffding) else &.{};
-        const kendall: []Pair = if (s.options.kendall) try rankPairs(cx.arena, s, bs.rows, .kendall) else &.{};
+        const spearman: []Pair = if (s.options.spearman) try rankPairs(cx, s, bs.rows, .spearman) else &.{};
+        const hoeffding: []Pair = if (s.options.hoeffding) try rankPairs(cx, s, bs.rows, .hoeffding) else &.{};
+        const kendall: []Pair = if (s.options.kendall) try rankPairs(cx, s, bs.rows, .kendall) else &.{};
         if (s.options.fisher) |f| {
             for (pairs.items) |*p| p.fisher = advanced.fisher(p.r, p.n, p.controls, false, f);
             for (spearman) |*p| p.fisher = advanced.fisher(p.r, p.n, p.controls, true, f);
@@ -513,7 +562,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                 }
             }
         }
-        try groups.append(cx.arena, .{ .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
+        try groups.append(cx.arena, .{ .rows = bs.rows, .n = total_n, .sum_weights = included_weight, .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
     }
     return .{ .spec = s, .groups = groups.items };
 }
@@ -523,14 +572,41 @@ fn number(a: std.mem.Allocator, x: f64, probability: bool) ![]const u8 {
     if (probability) return if (x < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{x});
     return try std.fmt.allocPrint(a, "{d:.5}", .{x});
 }
+// The D10. estimates reserve space for a sign and retain at least three
+// significant digits for small magnitudes before switching to E notation.
+fn smallEstimate(a: std.mem.Allocator, x: f64) ![]const u8 {
+    if (x == 0) return "0";
+    if (@abs(x) < 0.00001) return @import("../format.zig").bestNumW(a, x, 10);
+    if (@abs(x) < 0.001) return std.fmt.allocPrint(a, "{d:.7}", .{x});
+    return number(a, x, false);
+}
+fn sixDecimals(a: std.mem.Allocator, x: f64) ![]const u8 {
+    return if (std.math.isFinite(x)) std.fmt.allocPrint(a, "{d:.6}", .{x}) else ".";
+}
+// The Cronbach ODS template uses 8.6. A negative fraction can use all six
+// decimals by omitting its leading zero; a larger magnitude reduces precision.
+fn alphaStatistic(a: std.mem.Allocator, x: f64) ![]const u8 {
+    const full = try sixDecimals(a, x);
+    if (full.len <= 8) return full;
+    if (std.mem.startsWith(u8, full, "-0.")) return std.fmt.allocPrint(a, "-{s}", .{full[2..]});
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = x }, "8.6"), " ");
+}
 /// Text is deliberately downstream of Result: output datasets/ODS can consume
 /// the full precision typed cells, never scrape this rounded listing.
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !void {
+    return renderListing(a, out, result, null);
+}
+
+fn renderListing(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result, selection: ?*const proc.OdsListing) !void {
     const s = result.spec;
     if (s.options.noprint) return;
-    for (result.groups) |g| {
-        if (g.by_values) |row| try proc.appendByLine(a, out, s.ds, row, s.by);
+    for (result.groups, 1..) |g, by_group| {
+        const tables: @import("../ods_listing.zig").Tables = .{ .selection = selection, .prefix = if (g.by_values != null and selection != null) try std.fmt.allocPrint(a, "Corr.ByGroup{d}", .{by_group}) else "Corr" };
+        const header_start = out.items.len;
+        if (g.by_values) |row| try by_groups.appendLine(a, out, s.ds, row, s.by);
         try out.appendSlice(a, "The CORR Procedure\n\n");
+        const header_end = out.items.len;
+        var start = header_end;
         if (s.with.len > 0) {
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} With Variables:", .{s.with.len}));
             for (s.with) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
@@ -541,23 +617,30 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
         try out.append(a, '\n');
         if (s.freq) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, "Freq Variable: {s}\n", .{s.ds.columns.items[c].name}));
         if (s.weight) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, "Weight Variable: {s}\n", .{s.ds.columns.items[c].name}));
+        try tables.finish(a, out, start, "VarInformation");
         inline for (.{ "sscp", "csscp", "cov" }) |kind| {
             if (@field(s.options, kind)) {
+                start = out.items.len;
+                const normal_name = if (eq(kind, "csscp")) "Csscp" else if (eq(kind, "sscp")) "Sscp" else "Cov";
                 if (eq(kind, "csscp") and g.unpartial_pairs.len > 0) {
                     var original = g;
                     original.pairs = g.unpartial_pairs;
                     try out.appendSlice(a, "\nUnpartial");
                     try renderMoments(a, out, s, original, kind);
+                    try tables.finish(a, out, start, normal_name);
+                    start = out.items.len;
                     try out.appendSlice(a, "\nPartial");
                 }
                 try renderMoments(a, out, s, g, kind);
+                try tables.finish(a, out, start, if (s.partial.len > 0 and eq(kind, "csscp")) "PartialCsscp" else if (s.partial.len > 0 and eq(kind, "cov")) "PartialCov" else normal_name);
             }
         }
+        start = out.items.len;
         if (!s.options.nosimple) {
-            try out.appendSlice(a, if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) "\nSimple Statistics\nVariable N Mean Std Dev Median Minimum Maximum\n" else "\nSimple Statistics\nVariable N Mean Std Dev Sum Minimum Maximum\n");
+            try out.appendSlice(a, if (s.options.simple_median) "\nSimple Statistics\nVariable N Mean Std Dev Median Minimum Maximum\n" else "\nSimple Statistics\nVariable N Mean Std Dev Sum Minimum Maximum\n");
             for (g.simple) |v| {
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d:.0}", .{ s.ds.columns.items[v.column].name, v.n }));
-                for ([_]f64{ v.mean, v.stddev, if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) v.median else v.sum, v.minimum, v.maximum }) |x| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, x, false)}));
+                for ([_]f64{ v.mean, v.stddev, if (s.options.simple_median) v.median else v.sum, v.minimum, v.maximum }) |x| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, x, false)}));
                 if (s.ds.columns.items[v.column].label) |label| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}", .{label}));
                 try out.append(a, '\n');
             }
@@ -569,27 +652,69 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ s.ds.columns.items[v.column].name, try number(a, v.partial_variance, false), try number(a, @sqrt(v.partial_variance), false) }));
             }
         }
+        try tables.finish(a, out, start, "SimpleStats");
+        start = out.items.len;
         if (!s.options.nocorr and s.options.pearson) {
             try out.appendSlice(a, if (s.partial.len > 0) "\nPearson Partial Correlation Coefficients\n" else "\nPearson Correlation Coefficients\n");
             if (!s.options.noprob) try out.appendSlice(a, "Prob > |r| under H0: Rho=0\n");
-            try out.appendSlice(a, "Number of Observations\nVariable");
-            for (s.vars) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
-            try out.append(a, '\n');
-            const rowcols = if (s.with.len > 0) s.with else s.vars;
-            for (rowcols, 0..) |c, j| {
-                const ps = g.pairs[j * s.vars.len ..][0..s.vars.len];
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}", .{s.ds.columns.items[c].name}));
-                for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.r, false)}));
-                if (!s.options.noprob) {
-                    try out.appendSlice(a, "\nP");
-                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (p.row == p.column and p.n > 2 and !std.math.isNan(p.r)) "-" else try number(a, p.p, true)}));
-                }
-                try out.appendSlice(a, "\nN");
-                for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{p.n}));
+            if (s.options.ranked) {
+                try renderRanked(a, out, s, g.pairs, false, !s.options.noprob);
+            } else {
+                try out.appendSlice(a, "Number of Observations\nVariable");
+                for (s.vars) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
                 try out.append(a, '\n');
+                const rowcols = if (s.with.len > 0) s.with else s.vars;
+                for (rowcols, 0..) |c, j| {
+                    const ps = g.pairs[j * s.vars.len ..][0..s.vars.len];
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}", .{s.ds.columns.items[c].name}));
+                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.r, false)}));
+                    if (!s.options.noprob) {
+                        try out.appendSlice(a, "\nP");
+                        for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (p.row == p.column and p.n > 2 and !std.math.isNan(p.r)) "-" else try number(a, p.p, true)}));
+                    }
+                    try out.appendSlice(a, "\nN");
+                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{p.n}));
+                    try out.append(a, '\n');
+                }
             }
         }
-        try renderAdvanced(a, out, s, g);
+        try tables.finish(a, out, start, if (s.partial.len > 0) "PartialPearsonCorr" else "PearsonCorr");
+        try renderAdvanced(a, out, s, g, tables);
+        if (out.items.len == header_end) {
+            out.shrinkRetainingCapacity(header_start);
+            continue;
+        }
+        try out.append(a, '\n');
+    }
+}
+/// BEST=/RANK change the listing for each response separately. OUTP/OUTS
+/// still consume the complete coefficient matrix in variable order.
+fn renderRanked(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, pairs: []const Pair, hoeffding: bool, probabilities: bool) !void {
+    const row = try a.alloc(Pair, s.vars.len);
+    defer a.free(row);
+    var rows = std.mem.window(Pair, pairs, row.len, row.len);
+    while (rows.next()) |source| {
+        @memcpy(row, source);
+        // SAS orders tied coefficients by reverse VAR position.
+        std.mem.reverse(Pair, row);
+        std.mem.sort(Pair, row, hoeffding, struct {
+            fn greater(raw: bool, l: Pair, r: Pair) bool {
+                if (std.math.isNan(l.r)) return false;
+                if (std.math.isNan(r.r)) return true;
+                return if (raw) l.r > r.r else @abs(l.r) > @abs(r.r);
+            }
+        }.greater);
+        const top = row[0..@min(s.options.best, row.len)];
+        try out.appendSlice(a, s.ds.columns.items[source[0].row].name);
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[v.column].name}));
+        try out.appendSlice(a, "\nr");
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v.r, false)}));
+        if (probabilities) {
+            try out.appendSlice(a, "\nP");
+            for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (v.row == v.column and std.math.isFinite(v.r)) "-" else try number(a, v.p, true)}));
+        }
+        try out.appendSlice(a, "\nN");
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{v.n}));
         try out.append(a, '\n');
     }
 }
@@ -613,8 +738,10 @@ fn renderMoments(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Grou
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
     const s = try parse(cx, toks);
     const result = try compute(cx, s);
+    try output.write(cx, result);
     if (cx.capture) |capture| try @import("ods_corr.zig").publish(cx.arena, cx.diags, capture, result);
-    try render(cx.arena, out, result);
+    try graphics.execute(cx, result);
+    try renderListing(cx.arena, out, result, cx.listing);
 }
 
 const Testing = struct {
@@ -764,9 +891,22 @@ test "CORR variable lists and variance divisors" {
         try std.testing.expectApproxEqAbs(@as(f64, 0.98287), r.groups[0].pairs[1].r, 0.000005);
         try std.testing.expectApproxEqAbs(@as(f64, 0.1180), r.groups[0].pairs[1].p, 0.00005);
     }
-    for ([_][]const u8{ "var x:;", "var x1--x2;", "var x2 x1 x2;" }) |list| {
+    for ([_][]const u8{ "var x:;", "var x1--x2;", "var x2-x1;" }) |list| {
         const r = try Testing.analyze(a, ds, try std.fmt.allocPrint(a, "proc corr; {s} weight w; run;", .{list}));
         try std.testing.expectEqual(@as(usize, 2), r.spec.vars.len);
+    }
+    // M9 rejects a repeated named variable within or across VAR statements.
+    try std.testing.expectError(error.ParseError, Testing.analyze(a, ds, "proc corr;var x2 x1 x2;run;"));
+}
+test "CORR repeated frequency or weight uses first and excludes both from implicit VAR" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "w1", "w2" }, &.{ &.{ 1, 1, 3 }, &.{ 3, 2, 1 }, &.{ 7, 1, 2 } });
+    for ([_][]const u8{ "freq w1;freq w2;", "weight w1;weight w2;" }) |statements| {
+        const result = try Testing.analyze(a, ds, try std.fmt.allocPrint(a, "proc corr;{s}run;", .{statements}));
+        try std.testing.expectEqualSlices(usize, &.{0}, result.spec.vars);
+        try Testing.near(3.5, result.groups[0].simple[0].mean);
     }
 }
 test "CORR invalid inputs fail through captured diagnostics" {
@@ -949,18 +1089,20 @@ fn rankPair(a: std.mem.Allocator, s: Spec, rows: []const []const Value, x: usize
     const e = try advanced.rank(a, data.items, method);
     return .{ .row = y, .column = x, .n = e.n, .r = e.r, .p = if (x == y and method != .hoeffding) nan else e.p };
 }
-fn rankPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, method: advanced.Method) ![]Pair {
+fn rankPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, method: advanced.Method) ![]Pair {
     const rowcols = if (s.with.len > 0) s.with else s.vars;
+    const a = cx.arena;
     const pairs = try a.alloc(Pair, rowcols.len * s.vars.len);
     for (rowcols, 0..) |r, i| for (s.vars, 0..) |c, j| {
         pairs[i * s.vars.len + j] = try rankPair(a, s, rows, c, r, method);
     };
-    if (s.partial.len > 0) try partialPairs(a, s, rows, pairs, method);
+    if (s.partial.len > 0) try partialPairs(cx, s, rows, pairs, method);
     return pairs;
 }
 /// Sequential symmetric Schur complements, with singularity judged against
 /// each original diagonal. Redundant controls do not consume residual df.
-fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pairs: []Pair, method: advanced.Method) !void {
+fn partialPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, pairs: []Pair, method: advanced.Method) !void {
+    const a = cx.arena;
     var cols: std.ArrayList(usize) = .empty;
     defer cols.deinit(a);
     for (s.partial) |c| try addColumn(a, &cols, c);
@@ -980,7 +1122,10 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
     var used: usize = 0;
     for (0..k) |c| {
         const pivot = matrix[c * n + c];
-        if (!(pivot > 0) or pivot < s.options.singular * original[c]) continue;
+        if (!(pivot > 0) or pivot < s.options.singular * original[c]) {
+            try warnPartialSingular(cx, s, cols.items[c], method);
+            continue;
+        }
         used += 1;
         for (c + 1..n) |i| for (c + 1..n) |j| {
             matrix[i * n + j] -= matrix[i * n + c] * matrix[c * n + j] / pivot;
@@ -988,6 +1133,7 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
     }
     for (k..n) |i| {
         if (!(matrix[i * n + i] > 0) or matrix[i * n + i] < s.options.singular * original[i]) {
+            try warnPartialSingular(cx, s, cols.items[i], method);
             for (0..n) |j| {
                 matrix[i * n + j] = 0;
                 matrix[j * n + i] = 0;
@@ -1018,52 +1164,107 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
         }
     }
 }
-fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Group) !void {
+fn warnPartialSingular(cx: proc.ProcCtx, s: Spec, col: usize, method: advanced.Method) !void {
+    const name: []const u8 = switch (method) {
+        .pearson => if (s.options.pearson) "PEARSON" else return,
+        .spearman => "SPEARMAN",
+        .kendall => "KENDALL",
+        .hoeffding => unreachable,
+    };
+    try cx.diags.warn(0, "The variable {s} is singular in calculating the partial {s} correlations.", .{ s.ds.columns.items[col].name, name });
+}
+fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Group, tables: @import("../ods_listing.zig").Tables) !void {
     inline for (.{ "spearman", "kendall", "hoeffding" }) |name| {
         const pairs = @field(g, name);
         if (pairs.len > 0) {
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\nRow Column Correlation", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
-            if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, " P");
-            try out.appendSlice(a, " N\n");
-            for (pairs) |p| {
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, try number(a, p.r, false) }));
-                if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
-                try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
+            const start = out.items.len;
+            if (s.options.ranked) {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\n", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
+                try renderRanked(a, out, s, pairs, eq(name, "hoeffding"), !s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0));
+            } else {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\nRow Column Correlation", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
+                if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, " P");
+                try out.appendSlice(a, " N\n");
+                for (pairs) |p| {
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, try number(a, p.r, false) }));
+                    if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) {
+                        const prob = if (eq(name, "hoeffding") and p.row == p.column and p.r == 1) nan else p.p;
+                        try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, prob, true)}));
+                    }
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
+                }
             }
+            const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
+            try tables.finish(a, out, start, object);
         }
     }
-    inline for (.{ "polychoric", "polyserial" }) |kind| {
+    inline for (.{ "polyserial", "polychoric" }) |kind| {
         const estimates = @field(g, kind);
         if (estimates.len > 0) {
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s}", .{ kind, if (s.options.noprob) @as([]const u8, "Row Column N Correlation StdError WaldChiSquare LRChiSquare\n") else "Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP\n" }));
+            const start = out.items.len;
+            const polychoric = eq(kind, "polychoric");
+            const hide_probs = s.options.noprob and !polychoric;
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s} N Correlation StdError WaldChiSquare", .{ kind, if (polychoric) @as([]const u8, "Row Column") else "ContinuousVariable OrdinalVariable" }));
+            try out.appendSlice(a, if (hide_probs) " LRChiSquare\n" else " WaldP LRChiSquare LRP\n");
             for (estimates) |entry| {
                 const e = entry.estimate;
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[entry.row].name, s.ds.columns.items[entry.column].name, e.n }));
+                const var_first = if (polychoric) s.with.len != 0 else !s.options.polyserial.?.ordinal_var;
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[if (var_first) entry.column else entry.row].name, s.ds.columns.items[if (var_first) entry.row else entry.column].name, e.n }));
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
-                    if (s.options.noprob and (i == 3 or i == 5)) continue;
-                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v, i == 3 or i == 5)}));
+                    if (hide_probs and (i == 3 or i == 5)) continue;
+                    const value = if (i == 1)
+                        try smallEstimate(a, v)
+                    else if ((i == 2 or i == 4) and std.math.isFinite(v))
+                        std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = v }, "10.4"), " ")
+                    else
+                        try number(a, v, i == 3 or i == 5);
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{value}));
                 }
                 try out.append(a, '\n');
             }
+            try tables.finish(a, out, start, if (polychoric) "PolychoricCorr" else "PolyserialCorr");
         }
     }
     if (g.alpha) |alpha_result| {
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\nDeleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n", .{ try number(a, alpha_result.raw, false), try number(a, alpha_result.standardized, false) }));
-        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try number(a, d.raw_correlation, false), try number(a, d.raw, false), try number(a, d.standardized_correlation, false), try number(a, d.standardized, false) }));
+        var start = out.items.len;
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try alphaStatistic(a, alpha_result.raw), try alphaStatistic(a, alpha_result.standardized) }));
+        try tables.finish(a, out, start, "CronbachAlpha");
+        start = out.items.len;
+        try out.appendSlice(a, "Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n");
+        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try alphaStatistic(a, d.raw_correlation), try alphaStatistic(a, d.raw), try alphaStatistic(a, d.standardized_correlation), try alphaStatistic(a, d.standardized) }));
+        try tables.finish(a, out, start, "CronbachAlphaDel");
     }
-    if (s.options.fisher != null) {
+    if (s.options.fisher) |opt| {
         for ([_][]const Pair{ if (s.options.pearson) g.pairs else &.{}, g.spearman }, [_][]const u8{ "Pearson", "Spearman" }) |pairs, title| {
             if (pairs.len == 0) continue;
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Fisher Correlation Statistics\nRow Column N Z Bias Estimate Lower Upper", .{title}));
+            const start = out.items.len;
+            const partial = s.partial.len != 0;
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Fisher Correlation Statistics\nVariable WithVariable N", .{ title, if (partial) @as([]const u8, " Partial") else "" }));
+            if (partial) try out.appendSlice(a, " NPartialled");
+            try out.appendSlice(a, " Correlation Z");
+            if (opt.biasadj) try out.appendSlice(a, " Bias Estimate");
+            if (opt.kind != .upper) try out.appendSlice(a, " Lower");
+            if (opt.kind != .lower) try out.appendSlice(a, " Upper");
+            if (opt.rho0 != 0) try out.appendSlice(a, " Rho0");
             if (!s.options.noprob) try out.appendSlice(a, " P");
             try out.append(a, '\n');
-            for (pairs) |p| {
-                if (p.row == p.column or (s.with.len == 0 and p.row < p.column)) continue;
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, p.n }));
-                for ([_]f64{ p.fisher.z, p.fisher.bias, p.fisher.estimate, p.fisher.lower, p.fisher.upper }) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v, false)}));
+            const with = if (s.with.len != 0) s.with else s.vars;
+            for (s.vars, 0..) |c, j| for (with, 0..) |r, i| {
+                if (s.with.len == 0 and i <= j) continue;
+                const p = pairs[i * s.vars.len + j];
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[c].name, s.ds.columns.items[r].name, p.n }));
+                if (partial) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d}", .{p.controls}));
+                try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.r, false), try number(a, p.fisher.z, false) }));
+                if (opt.biasadj) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try smallEstimate(a, p.fisher.bias), try number(a, p.fisher.estimate, false) }));
+                for ([_]f64{ p.fisher.lower, p.fisher.upper }, 0..) |v, bound| {
+                    if ((bound == 0 and opt.kind == .upper) or (bound == 1 and opt.kind == .lower)) continue;
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try sixDecimals(a, v)}));
+                }
+                if (opt.rho0 != 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, opt.rho0, false)}));
                 if (!s.options.noprob) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.fisher.p, true)}));
                 try out.append(a, '\n');
-            }
+            };
+            try tables.finish(a, out, start, @import("ods_corr.zig").fisherTableName(eq(title, "Spearman"), s.partial.len != 0));
         }
     }
 }
@@ -1082,6 +1283,10 @@ test "CORR advanced SAS tied ranks partial Fisher and alpha reference" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.976693), g.alpha.?.standardized, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.946398), g.alpha.?.deleted[0].raw_correlation, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.772856), g.pairs[1].fisher.lower, 0.0000005);
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, r);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Raw 0.869050\nStandardized 0.976693") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x 0.946398") != null);
     const p = (try Testing.analyze(a, ds, "proc corr pearson spearman kendall fisher; var x y; partial z; run;")).groups[0];
     try std.testing.expectApproxEqAbs(@as(f64, 0.93350), p.pairs[1].r, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.91539), p.spearman[1].r, 0.000005);
@@ -1122,24 +1327,81 @@ fn median(a: std.mem.Allocator, s: Spec, rows: []const []const Value, col: usize
     }
     return nan;
 }
+fn overGroupLimit(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanced.PolyOptions, serial: bool) ![]const usize {
+    if (opt.ngroups == std.math.maxInt(usize)) return &.{};
+    var ordinal: std.ArrayList(usize) = .empty;
+    defer ordinal.deinit(cx.arena);
+    if (!serial or opt.ordinal_var) for (s.vars) |c| try addColumn(cx.arena, &ordinal, c);
+    if (!serial or !opt.ordinal_var) for (s.with) |c| try addColumn(cx.arena, &ordinal, c);
+    var excluded: std.ArrayList(usize) = .empty;
+    var levels: std.ArrayList(f64) = .empty;
+    defer levels.deinit(cx.arena);
+    for (ordinal.items) |c| {
+        levels.clearRetainingCapacity();
+        for (rows) |row| {
+            if (mass(s, row) == null or row[c].isMissing() or std.mem.indexOfScalar(f64, levels.items, row[c].num) != null) continue;
+            if (levels.items.len == opt.ngroups) {
+                try excluded.append(cx.arena, c);
+                try cx.diags.warn(0, "The number of groups for variable {s} is greater than {d}, the number in the NGROUPS= option, the affected {s} correlations are set to missing.", .{ s.ds.columns.items[c].name, opt.ngroups, if (serial) @as([]const u8, "polyserial") else "polychoric" });
+                break;
+            }
+            try levels.append(cx.arena, row[c].num);
+        }
+    }
+    return excluded.toOwnedSlice(cx.arena);
+}
 fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanced.PolyOptions, serial: bool) ![]const PolyPair {
     var results: std.ArrayList(PolyPair) = .empty;
+    var constant_columns: std.ArrayList(usize) = .empty;
+    defer constant_columns.deinit(cx.arena);
     const rowcols = if (s.with.len > 0) s.with else s.vars;
+    const excluded = try overGroupLimit(cx, s, rows, opt, serial);
+    defer cx.arena.free(excluded);
     for (rowcols, 0..) |r, i| for (s.vars, 0..) |c, j| {
         if (s.with.len == 0 and i >= j) continue;
+        const skip = if (serial) contains(excluded, if (opt.ordinal_var) c else r) else contains(excluded, r) or contains(excluded, c);
+        // The first VAR is the first polychoric score in a square request,
+        // as it is in the equivalent VAR/WITH request.
+        const first_is_row = if (serial) opt.ordinal_var else s.with.len == 0;
+        const x_column = if (first_is_row) r else c;
+        const y_column = if (first_is_row) c else r;
+        var n: f64 = 0;
         var data: std.ArrayList(advanced.Observation) = .empty;
         defer data.deinit(cx.arena);
         for (rows) |row| {
             const m = mass(s, row) orelse continue;
             if (row[c].isMissing() or row[r].isMissing()) continue;
-            try data.append(cx.arena, .{ .x = row[if (serial and opt.ordinal_var) r else c].num, .y = row[if (serial and opt.ordinal_var) c else r].num, .f = m.f });
+            n += m.f;
+            if (!skip) try data.append(cx.arena, .{ .x = row[x_column].num, .y = row[y_column].num, .f = m.f });
         }
-        const estimate = if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
+        // A rejected polyserial pair has no fit sample. Polychoric still
+        // reports the pairwise count when either ordinal variable is excluded.
+        const estimate = if (skip)
+            advanced.Poly{ .n = if (serial) 0 else n }
+        else if (serial)
+            advanced.polyserial(cx.arena, data.items, opt) catch |err| switch (err) {
+                error.SerialZeroDivide => {
+                    try cx.diags.report(.err, 0, "Floating Point Zero Divide.", .{});
+                    return cx.diags.fail(error.ExecError, 0, "Termination due to Floating Point Exception", .{});
+                },
+                else => |e| return e,
+            }
+        else
+            try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
-            return cx.diags.fail(error.ParseError, 0, "PROC CORR: polychoric boundary information is unresolved at the requested tolerance.", .{});
+            return cx.diags.fail(error.ParseError, 0, "PROC CORR: {s} boundary information is unresolved at the requested tolerance.", .{if (serial) @as([]const u8, "polyserial") else "polychoric"});
         }
-        if (!estimate.converged) try cx.diags.warn(0, "PROC CORR: {s} correlation for {s} and {s} unavailable (insufficient levels, NGROUPS limit, or failure to converge).", .{ if (serial) @as([]const u8, "polyserial") else "polychoric", s.ds.columns.items[c].name, s.ds.columns.items[r].name });
+        if (estimate.constant_continuous) {
+            if (!contains(constant_columns.items, x_column)) {
+                try constant_columns.append(cx.arena, x_column);
+                try cx.diags.warn(0, "The standard error for variable {s} is either zero or missing. The affected polyserial correlation are set to missing.", .{s.ds.columns.items[x_column].name});
+            }
+        } else if (!skip and !estimate.converged) try cx.diags.warn(0, "The algorithm for {s} correlation between {s} and {s} did not converge.", .{
+            if (serial) @as([]const u8, "polyserial") else "polychoric",
+            s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) c else r].name,
+            s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) r else c].name,
+        });
         try results.append(cx.arena, .{ .row = r, .column = c, .estimate = estimate });
     };
     return results.items;
@@ -1163,6 +1425,84 @@ test "CORR ordinal SAS joint MLE and convergence options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.9375), s.lr, 0.00005);
     const fail_result = (try Testing.analyze(a, ds, "proc corr polychoric(maxiter=1); var x y; freq f; run;")).groups[0].polychoric[0].estimate;
     try std.testing.expect(!fail_result.converged and std.math.isNan(fail_result.r));
+}
+
+test "CORR polyserial checks usable pairs and constant inputs before zero tolerance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const overlapping = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 3, 1 }, &.{ 2, 2 }, &.{ 4, 2 } });
+    const no_pair = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ nan, 1 }, &.{ 1, nan } });
+    const constant = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 1, 2 }, &.{ 1, 3 } });
+    for ([_]*Dataset{ overlapping, no_pair, no_pair, constant }, [_][]const u8{ "0", "0", "1e-4", "0" }) |ds, tol| {
+        var lib = @import("../exec.zig").Library.init(a);
+        try lib.put("d", ds);
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const src = try std.fmt.allocPrint(a, "proc corr polyserial(converge={s});var x;with g;run;", .{tol});
+        const spec = try parse(cx, try lex.tokenize(a, src, &d));
+        if (ds == constant) {
+            const fit = (try compute(cx, spec)).groups[0].polyserial[0].estimate;
+            try std.testing.expectEqual(@as(f64, 3), fit.n);
+            try std.testing.expect(std.math.isNan(fit.r) and std.math.isNan(fit.se));
+            try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+            try std.testing.expectEqualStrings("The standard error for variable x is either zero or missing. The affected polyserial correlation are set to missing.", d.list.items[0].message);
+        } else {
+            try std.testing.expectError(error.ExecError, compute(cx, spec));
+            try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+            try std.testing.expectEqualStrings("Floating Point Zero Divide.", d.list.items[0].message);
+            try std.testing.expectEqualStrings("Termination due to Floating Point Exception", d.list.items[1].message);
+        }
+    }
+}
+
+test "CORR zero tolerance requires an unchanged polychoric scoring iterate" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 3 }, &.{ 0, 1, 2 }, &.{ 1, 0, 2 }, &.{ 1, 1, 3 } });
+    const limited = (try Testing.analyze(a, rows, "proc corr polychoric(converge=0 maxiter=6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(!limited.converged and std.math.isNan(limited.r));
+    const fit = (try Testing.analyze(a, rows, "proc corr polychoric(converge=0 maxiter=12);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 0x1.3c6ef372fe94dp-2), fit.r);
+    try std.testing.expectEqual(@as(f64, 0x1.d9fb5f1991926p-2), fit.se);
+    const independent = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 5 }, &.{ 0, 1, 5 }, &.{ 1, 0, 5 }, &.{ 1, 1, 5 } });
+    const first = (try Testing.analyze(a, independent, "proc corr polychoric(converge=0 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectEqual(@as(f64, 0), first.r);
+    try std.testing.expectEqual(@as(f64, 0), first.lr);
+}
+
+test "CORR ordinal convergence accepts one and diagnoses values outside the unit interval" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "g", "h", "f" }, &.{
+        &.{ 1, 0, 0, 1 }, &.{ 2, 0, 1, 1 }, &.{ 3, 0, 0, 2 }, &.{ 4, 0, 1, 1 },
+        &.{ 5, 1, 0, 1 }, &.{ 6, 1, 1, 2 }, &.{ 7, 1, 0, 1 }, &.{ 8, 1, 1, 1 },
+    });
+    for ([_][]const u8{ ".9999999999999999", "1", "1.0" }) |value| {
+        const chor_src = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s} maxiter=50);var g;with h;freq f;run;", .{value});
+        const serial_src = try std.fmt.allocPrint(a, "proc corr polyserial(converge={s} maxiter=50);var x;with g;freq f;run;", .{value});
+        const c = (try Testing.analyze(a, ds, chor_src)).groups[0].polychoric[0].estimate;
+        const sfit = (try Testing.analyze(a, ds, serial_src)).groups[0].polyserial[0].estimate;
+        try Testing.near(0.31052229459722, c.r);
+        try Testing.near(0.48267813752924, c.se);
+        try Testing.near(0.99, sfit.r);
+        try std.testing.expectEqual(@as(f64, 0), sfit.se);
+    }
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    for ([_][]const u8{ "polychoric", "polyserial" }) |method| {
+        for ([_][]const u8{ "-0.00001", "1.000001", "2" }) |value| {
+            var d = diag.Diagnostics.init(a);
+            const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+            const source = try std.fmt.allocPrint(a, "proc corr {s}(converge={s}); var x;with g;run;", .{ method, value });
+            try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
+            const expected = try std.fmt.allocPrint(a, "The parameter value {s} is not within the required range of 0 and 1.", .{value});
+            try std.testing.expectEqualStrings(expected, d.list.items[0].message);
+        }
+    }
 }
 
 test "CORR Hoeffding SAS tied coefficients and probability integration" {
@@ -1219,6 +1559,36 @@ test "CORR advanced singular controls Fisher tails constants and missing ranks" 
     try std.testing.expect(std.math.isNan(t.kendall[1].p));
     try std.testing.expect(std.math.isNan(t.hoeffding[1].r));
 }
+test "CORR partial singular warnings identify every affected variable and method" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "g", "h" }, &.{
+        &.{ 1, 2, 0, 0 }, &.{ 1, 2, 0, 0 }, &.{ 1, 3, 0, 1 },
+        &.{ 1, 3, 0, 1 }, &.{ 1, 4, 1, 0 }, &.{ 1, 4, 1, 0 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const s = try parse(cx, try lex.tokenize(a, "proc corr; var x; with y; partial g h; run;", &d));
+    const g = (try compute(cx, s)).groups[0];
+    try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+    for (d.list.items, [_][]const u8{ "x", "y" }) |message, col|
+        try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The variable {s} is singular in calculating the partial PEARSON correlations.", .{col}), message.message);
+    try std.testing.expectEqual(@as(f64, 0), g.simple[2].partial_variance);
+    try std.testing.expectEqual(@as(f64, 0), g.simple[3].partial_variance);
+}
+test "CORR Fisher listing uses VAR order and only the requested limits and bias statistics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y" }, &.{ &.{ 1, 1 }, &.{ 2, 3 }, &.{ 3, 2 } });
+    const r = try Testing.analyze(a, ds, "proc corr fisher(type=lower biasadj=no rho0=-.3); var y x; run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, r);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Variable WithVariable N Correlation Z Lower Rho0 P\ny x 3 0.50000 0.54931 . -0.30000 .") != null);
+}
 test "CORR alpha pairwise missing uses Pearson matrix for standardized reliability" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1235,6 +1605,36 @@ test "CORR alpha pairwise missing uses Pearson matrix for standardized reliabili
     try std.testing.expectApproxEqAbs(@as(f64, 0.985782), n.raw, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.974036), n.standardized, 0.0000005);
 }
+test "CORR incompatible rank and ALPHA requests retain the SAS M9 listing and warnings" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z", "n" }, &.{
+        &.{ 1, 8, 4, 1 }, &.{ 2, 6, 1, 2 }, &.{ 2, 6, 5, 1 },
+        &.{ 3, 2, 2, 1 }, &.{ 4, 5, 6, 3 }, &.{ 5, 3, 2, 1 },
+        &.{ 6, 1, 5, 2 }, &.{ 8, 4, 8, 1 }, &.{ 9, 1, 3, 1 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    const cases = [_]struct { source: []const u8, warning: []const u8, output: []const u8, pearson: bool }{
+        .{ .source = "proc corr spearman; var x y; weight n;", .warning = "Nonparametric options not allowed with WEIGHT statement.", .output = "-0.75389", .pearson = true },
+        .{ .source = "proc corr hoeffding; var x y; partial z;", .warning = "HOEFFDING option not allowed with PARTIAL statement.", .output = "Median Minimum Maximum", .pearson = false },
+        .{ .source = "proc corr alpha; var x y; with z;", .warning = "ALPHA option not allowed with WITH statement.", .output = "0.34076 0.09129", .pearson = true },
+    };
+    for (cases) |case| {
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        var listing: std.ArrayList(u8) = .empty;
+        try run(cx, &listing, try lex.tokenize(a, case.source, &d));
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expectEqual(.warning, d.list.items[0].severity);
+        try std.testing.expectEqualStrings(case.warning, d.list.items[0].message);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, case.output) != null);
+        try std.testing.expectEqual(case.pearson, std.mem.indexOf(u8, listing.items, "Pearson") != null);
+        for ([_][]const u8{ "spearman", "hoeffding", "Cronbach" }) |ignored| try std.testing.expect(std.mem.indexOf(u8, listing.items, ignored) == null);
+    }
+}
+
 test "CORR advanced invalid combinations and options fail through captured diagnostics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1242,7 +1642,7 @@ test "CORR advanced invalid combinations and options fail through captured diagn
     const ds = try Testing.dataset(a, &.{ "x", "y", "w" }, &.{ &.{ 1, 2, 1 }, &.{ 2, 4, 1 } });
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("d", ds);
-    for ([_][]const u8{ "proc corr spearman; var x y; weight w;", "proc corr hoeffding; var x y; partial w;", "proc corr alpha; var x; with y;", "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=0); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
+    for ([_][]const u8{ "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=2); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
         var d = diag.Diagnostics.init(a);
         const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
         try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
@@ -1304,16 +1704,276 @@ test "CORR ordinal boundaries and ORDINAL NGROUPS options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.2930), z.lr, 0.00005);
 }
 
-test "CORR sparse polychoric boundary fails through captured diagnostics instead of spurious Wald inference" {
+test "CORR polyserial listing always shows the continuous variable first" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 10 }, &.{ 1, 2, 4 }, &.{ 2, 2, 8 }, &.{ 2, 3, 2 }, &.{ 3, 3, 7 } });
+    const ds = try Testing.dataset(a, &.{ "x", "g" }, &.{
+        &.{ 1, 1 }, &.{ 3, 1 }, &.{ 5, 1 }, &.{ 2, 2 }, &.{ 4, 2 }, &.{ 6, 2 }, &.{ 3, 3 }, &.{ 5, 3 }, &.{ 8, 3 },
+    });
+    for ([_][]const u8{ "proc corr polyserial;var x;with g;run;", "proc corr polyserial(ordinal=var);var g;with x;run;" }) |source| {
+        const g = try Testing.analyze(a, ds, source);
+        var listing: std.ArrayList(u8) = .empty;
+        try render(a, &listing, g);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "ContinuousVariable OrdinalVariable") != null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "x g 9 0.53480 0.27980") != null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "0.0560 2.2910 0.1301") != null);
+        // The M9 Wald listing rounds to 3.6534. At the fitted maximum,
+        // independent analytic observed information gives 3.6533474922.
+        try std.testing.expectApproxEqAbs(@as(f64, 3.6534), g.groups[0].polyserial[0].estimate.wald, 0.00005);
+    }
+}
+test "CORR group limits name each ordinal variable once and MAXITER names its pair" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "r", "c", "n" }, &.{
+        &.{ 1, 1, 2 }, &.{ 1, 2, 1 }, &.{ 1, 3, 1 }, &.{ 2, 2, 2 }, &.{ 2, 3, 1 }, &.{ 3, 1, 1 }, &.{ 3, 3, 3 },
+    });
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("d", ds);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-5); var x y; freq f; run;", &d));
+    const limited = try parse(cx, try lex.tokenize(a, "proc corr polychoric(ngroups=2);var r c;freq n;run;", &d));
+    const fit = (try compute(cx, limited)).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 11), fit.n);
+    try std.testing.expect(std.math.isNan(fit.r));
+    try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+    for (d.list.items, [_][]const u8{ "r", "c" }) |msg, col|
+        try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The number of groups for variable {s} is greater than 2, the number in the NGROUPS= option, the affected polychoric correlations are set to missing.", .{col}), msg.message);
+    const iter = try parse(cx, try lex.tokenize(a, "proc corr polychoric(maxiter=1 converge=1e-10);var r c;freq n;run;", &d));
+    _ = try compute(cx, iter);
+    try std.testing.expectEqual(@as(usize, 3), d.list.items.len);
+    try std.testing.expectEqualStrings("The algorithm for polychoric correlation between c and r did not converge.", d.list.items[2].message);
+}
+test "CORR NGROUPS rejects the polyserial fit before counting its observations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "g", "h", "f" }, &.{
+        &.{ 1, 1, 1, 2 }, &.{ 2, 2, 2, 3 }, &.{ 3, 3, 1, 4 },
+    });
+    for ([_][]const u8{
+        "proc corr polyserial(ngroups=2); var x; with g h; freq f; run;",
+        "proc corr polyserial(ordinal=var ngroups=2); var g h; with x; freq f; run;",
+    }) |source| {
+        const pairs = (try Testing.analyze(a, ds, source)).groups[0].polyserial;
+        try Testing.near(0, pairs[0].estimate.n);
+        try std.testing.expect(std.math.isNan(pairs[0].estimate.r));
+        try Testing.near(9, pairs[1].estimate.n);
+    }
+}
+
+test "CORR polychoric returns a finite first step for an independent frequency table" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 0, 0, 357280 }, &.{ 0, 1, 263088 }, &.{ 1, 0, 274340 }, &.{ 1, 1, 202014 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 1096722), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0), fit.r, 1e-15);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.001517487395931303), fit.se, 1e-16);
+    try std.testing.expectApproxEqAbs(@as(f64, 0), fit.lr, 1e-9);
+}
+
+test "CORR uses the occupied cell probability floor in fitted likelihood and score" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -72, -88, 101 }, &.{ 43, 119, 2121 }, &.{ -72, 119, 7171 }, &.{ 0, 119, 1616 },
+        &.{ 43, -88, 1414 }, &.{ 43, 91, 6666 },  &.{ 43, 68, 606 },    &.{ -48, 119, 1010 },
+    });
+    // The first fit assigns probability 4.35e-13 to an occupied cell.
+    // Its LR checks the logarithm, and later fits check the scoring step.
+    const cases = [_]struct { tol: []const u8, rho: f64, se: f64, lr: f64 }{
+        .{ .tol = "1", .rho = -0.96106981353344, .se = 0.0086265455138, .lr = 12009.7483795129 },
+        .{ .tol = ".1", .rho = -0.89437947232223, .se = 0.00294875255757, .lr = 13612.6341753773 },
+        .{ .tol = "1e-6", .rho = -0.8999899142733, .se = 0.00316562143193, .lr = 13622.2627583379 },
+    };
+    for (cases) |case| {
+        const src = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s});var x;with y;freq f;run;", .{case.tol});
+        const fit = (try Testing.analyze(a, ds, src)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectEqual(@as(f64, 20705), fit.n);
+        try std.testing.expectApproxEqAbs(case.rho, fit.r, 1e-12);
+        try std.testing.expectApproxEqAbs(case.se, fit.se, 1e-13);
+        try std.testing.expectApproxEqAbs(case.lr, fit.lr, 1e-9);
+    }
+}
+
+test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 10 }, &.{ 1, 2, 4 }, &.{ 2, 2, 8 }, &.{ 2, 3, 2 }, &.{ 3, 3, 7 } });
+    for ([_][]const u8{ "1e-5", "1e-6" }) |tol| {
+        const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s}); var x y; freq f; run;", .{tol});
+        const fit = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.99985326007584), fit.r, 5e-8);
+        try std.testing.expectEqual(@as(f64, 0), fit.se);
+        try std.testing.expect(std.math.isNan(fit.wald) and std.math.isNan(fit.p));
+        try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
+    }
+}
+test "CORR reconstructs a rare occupied mixed corner at marginal precision" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 117, -67, 128 }, &.{ 117, -129, 46 }, &.{ -40, -129, 74 }, &.{ 117, 102, 86 },
+        &.{ 117, 123, 28 },  &.{ -14, -129, 144 }, &.{ -73, 123, 2 }, &.{ -73, -129, 16 },
+    });
+    const first = (try Testing.analyze(a, ds, "proc corr polychoric(converge=0.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectEqual(@as(f64, 524), first.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.870175704588988), first.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.04058518125371422), first.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 317.7604429794285), first.lr, 1e-9);
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.8493614123476747), fit.r, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 321.12005493364404), fit.lr, 1e-7);
+}
+
+test "CORR retains upper-corner precision in the likelihood and next scoring step" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -54, -70, 5256 },  &.{ -54, -31, 3796 },  &.{ 119, -31, 73 },    &.{ 109, -139, 4015 },
+        &.{ -54, -136, 1898 }, &.{ -40, -139, 5183 }, &.{ -54, -139, 1168 }, &.{ 119, -139, 2336 },
+    });
+    const first = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9394343879823328), first.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.006855375898700553), first.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 19291.138813428144), first.lr, 1e-6);
+
+    const second = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.3 maxiter=2);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(second.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9045864059529483), second.r, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 19361.447810602287), second.lr, 1e-5);
+}
+
+test "CORR retracts a projected ordinal step when its likelihood loss is distinguishable" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 262255, -32857, 147 }, &.{ 262160, -32724, 105 }, &.{ 262209, -32724, 126 }, &.{ 262255, -32847, 140 },
+        &.{ 262128, -32724, 252 }, &.{ 262255, -32821, 91 }, &.{ 262255, -32724, 112 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6 maxiter=25);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 973), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9997288349756279), fit.r, 1e-12);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expect(std.math.isNan(fit.wald));
+    try std.testing.expectApproxEqAbs(@as(f64, 773.2658152221902), fit.lr, 1e-9);
+}
+
+test "CORR rectangular separated margins honor the cap and refine the boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 1, -2, 9 }, &.{ 3, -2, 7 }, &.{ 3, 1, 10 }, &.{ 5, 1, 13 },
+        &.{ 5, 4, 14 }, &.{ 7, 4, 5 }, &.{ 7, 7, 11 }, &.{ 7, 10, 7 },
+    });
+    const early = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6 maxiter=20);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(!early.converged and !early.unsupported_boundary);
+    try std.testing.expectEqual(@as(f64, 76), early.n);
+    try std.testing.expect(std.math.isNan(early.r) and std.math.isNan(early.lr));
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9999), fit.r, 1e-14);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expect(std.math.isNan(fit.wald));
+    try std.testing.expectApproxEqAbs(@as(f64, 124.86114667012117), fit.lr, 1e-9);
+}
+
+test "CORR refines repeated polychoric projections with occupied crossing cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 111, -2, 2871 }, &.{ -78, -79, 4257 }, &.{ 111, -79, 792 }, &.{ -78, 58, 99 },
+        &.{ -19, -79, 7227 }, &.{ 111, -67, 6633 }, &.{ 111, 58, 2772 }, &.{ 105, -79, 2574 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 27225), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99999), fit.r, 1e-14);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expect(std.math.isNan(fit.wald));
+    try std.testing.expectApproxEqAbs(@as(f64, 26726.787288762935), fit.lr, 1e-7);
+}
+
+test "CORR resolves separated four-level projections with distinguishable likelihood gaps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const first = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -21, 14, 4224 }, &.{ 17, 9, 2432 }, &.{ 17, 12, 3328 }, &.{ 4, 14, 4480 },
+        &.{ 17, 14, 11264 }, &.{ 17, -4, 768 }, &.{ -2, 14, 2688 },
+    });
+    const second = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 14, 6, 2560 }, &.{ -14, 28, 2048 }, &.{ 14, 28, 1920 },  &.{ 14, 2, 6016 },
+        &.{ 1, 28, 3200 }, &.{ 14, 18, 768 },   &.{ -24, 28, 3840 },
+    });
+    for ([_]*Dataset{ first, second }, [_]f64{ 29184, 20352 }, [_]f64{ -0.999, -0.9999 }, [_]f64{ 7635.472308469951, 17791.23558852251 }) |ds, n, r, lr| {
+        const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectEqual(n, fit.n);
+        try std.testing.expectApproxEqAbs(r, fit.r, 1e-14);
+        try std.testing.expectEqual(@as(f64, 0), fit.se);
+        try std.testing.expect(std.math.isNan(fit.wald) and std.math.isNan(fit.p));
+        try std.testing.expectApproxEqAbs(lr, fit.lr, 1e-9);
+    }
+}
+
+test "CORR keeps a separated four-level projection unresolved when likelihood gaps overlap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 25, 12, 256 },  &.{ 25, -2, 800 },  &.{ -25, 15, 496 }, &.{ 25, 15, 1120 },
+        &.{ -13, 15, 128 }, &.{ 25, -18, 368 }, &.{ 10, 15, 624 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;", &d));
+    // M9 returns -0.99999. Accepting the first projection would report -0.999.
+    try std.testing.expectError(error.ParseError, compute(cx, spec));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
+}
+
+test "CORR four-level staircase keeps a captured diagnostic for its unresolved boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 0, 0, 3500 },   &.{ 11, 0, 2500 },  &.{ 12, 0, 1800 },  &.{ 23, 0, 1500 },
+        &.{ 23, 19, 3300 }, &.{ 23, 23, 3100 }, &.{ 23, 27, 1400 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const capped = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6 maxiter=24); var x; with y; freq f; run;", &d));
+    const fit = (try compute(cx, capped)).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 17100), fit.n);
+    try std.testing.expect(!fit.converged and std.math.isNan(fit.r) and std.math.isNan(fit.se) and std.math.isNan(fit.lr));
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqualStrings("The algorithm for polychoric correlation between y and x did not converge.", d.list.items[0].message);
+    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6); var x y; freq f; run;", &d));
     try std.testing.expectError(error.ParseError, compute(cx, s));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
 }
@@ -1378,6 +2038,70 @@ test "CORR sparse polychoric SAS scoring initialization covariance and iteration
     try std.testing.expectApproxEqAbs(@as(f64, 0.21987585371233), checked.se, 5e-6);
 }
 
+test "CORR polychoric first step preserves native score scaling and variable order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = [_][3]f64{
+        .{ 0, 0, 3500 },   .{ 11, 0, 2500 },  .{ 12, 0, 1800 },  .{ 23, 0, 1500 },
+        .{ 23, 19, 3300 }, .{ 23, 23, 3100 }, .{ 23, 27, 1400 },
+    };
+    // These scale pairs share all three first-step fields in SAS 9.4 M9.
+    // The unequal integer scales distinguish the order of the two reciprocal roots.
+    const cases = [_]struct { scales: [2][2]f64, expected: [3]f64 }{
+        .{ .scales = .{ .{ 1, 1 }, .{ 0x1p300, 0x1p300 } }, .expected = .{ 0.9460017945521846, 0.0055509154975335, 14570.35682193622 } },
+        .{ .scales = .{ .{ -1, 1 }, .{ -0x1p300, 0x1p300 } }, .expected = .{ -0.9460017945521834, 0.005550915497533486, 14570.356821936199 } },
+        .{ .scales = .{ .{ 2, 3 }, .{ 3, 5 } }, .expected = .{ 0.9460017945521842, 0.005550915497533494, 14570.356821936213 } },
+    };
+    for (cases) |case| {
+        var first: ?[3]f64 = null;
+        for (case.scales) |scale| {
+            const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+            for (rows) |row| try ds.appendRow(&.{ .{ .num = scale[0] * row[0] }, .{ .num = scale[1] * row[1] }, .{ .num = row[2] } });
+            for ([_][]const u8{ "var x;with y;", "var x y;" }) |vars| {
+                const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge=.99 maxiter=1);{s}freq f;run;", .{vars});
+                const result = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+                try std.testing.expect(result.converged);
+                const values = [3]f64{ result.r, result.se, result.lr };
+                for (values, case.expected) |actual, target| try std.testing.expectApproxEqRel(target, actual, 1e-13);
+                if (first) |original| try std.testing.expectEqual(original, values) else first = values;
+            }
+        }
+    }
+}
+
+test "CORR polychoric scoring starts at the first retained pair" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = [_][3]f64{
+        .{ 0, 0, 3500 },    .{ -11, 0, 2500 },  .{ -12, 0, 1800 },  .{ -23, 0, 1500 },
+        .{ -23, 19, 3300 }, .{ -23, 23, 3100 }, .{ -23, 27, 1400 },
+    };
+    var estimates: [3]f64 = undefined;
+    for (&estimates, 0..) |*estimate, order| {
+        const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
+        // An ignored row precedes every fit. The last order emits one copy
+        // of the original first pair, then the remaining counts in reverse.
+        try ds.appendRow(&.{ .{ .num = -23 }, .{ .num = 19 }, .{ .num = 0 } });
+        if (order == 2) try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = 1 } });
+        for (0..rows.len) |i| {
+            const idx = if (order == 0) i else rows.len - i - 1;
+            const row = rows[idx];
+            const count = if (order == 2 and idx == 0) row[2] - 1 else row[2];
+            try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = count } });
+        }
+        const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        estimate.* = fit.r;
+    }
+    // M9 first-step coefficients are BFEE45A58E31E2D3 and BFEE45A58E31E2D4
+    // for this reflection. Splitting FREQ preserves the original coefficient.
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9460017945521834), estimates[0], 1e-14);
+    try std.testing.expectEqual(std.math.nextAfter(f64, estimates[0], -std.math.inf(f64)), estimates[1]);
+    try std.testing.expectEqual(estimates[0], estimates[2]);
+}
+
 test "CORR positive rectangle integration resolves near-boundary quadrants" {
     const kernel = @import("corr_polychoric.zig");
     for ([_]f64{ -0.999999, -0.99, -0.4, 0, 0.4, 0.99, 0.999999 }) |rho| {
@@ -1419,7 +2143,7 @@ test "CORR public Hoeffding small N fractional FREQ exclusions and NOPROB" {
     try Testing.near(0, complete_pair.r);
     try std.testing.expectApproxEqAbs(@as(f64, 0.36426667551153), complete_pair.p, 5e-13);
 }
-test "CORR public Hoeffding preserves ODS advanced capture rejection" {
+test "CORR public Hoeffding captures median SimpleStats and expires unmatched PearsonCorr" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -1431,9 +2155,15 @@ test "CORR public Hoeffding preserves ODS advanced capture rejection" {
     try capture.parse(a, &diagnostics, try lex.tokenize(a, "ods output PearsonCorr=p SimpleStats=s;", &diagnostics));
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics, .capture = &capture };
     var listing: std.ArrayList(u8) = .empty;
-    try std.testing.expectError(error.ParseError, run(cx, &listing, try lex.tokenize(a, "proc corr hoeffding;var x y;run;", &diagnostics)));
-    try std.testing.expect(diagnostics.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ODS OUTPUT") != null);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr hoeffding;var x y;run;", &diagnostics));
+    try capture.finish(&lib, &diagnostics);
+    try std.testing.expect(!diagnostics.hasErrors());
+    try std.testing.expect(lib.find("p") == null);
+    const stats = lib.find("s").?;
+    try std.testing.expectEqual(@as(usize, 2), stats.rowCount());
+    try std.testing.expectEqual(@as(f64, 3.5), stats.row(0)[stats.indexOf("Median").?].num);
+    try std.testing.expect(stats.indexOf("Sum") == null);
+    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "Output 'PearsonCorr' was not created") != null);
 }
 
 test "CORR rectangle quadrature preserves partition mass and likelihood descent" {
@@ -1570,4 +2300,167 @@ test "CORR SINGULAR without PARTIAL warns rather than implying an information-ra
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
     _ = try parse(cx, try lex.tokenize(a, "proc corr singular=.5;var x y;partial z;run;", &diagnostics));
     try std.testing.expectEqual(@as(usize, 0), diagnostics.count());
+}
+
+test "FEAT-base-stat-results six matrix destinations use their own coefficient and metadata" {
+    // Saved SAS M9 corr_outp, corr_outs, corr_outk, corr_outh, corr_outplc,
+    // corr_outpls_schema. OUT* implies the method even without a display option.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "g", "h" }, &.{ &.{ 1, 2, 0, 0 }, &.{ 2, 5, 0, 1 }, &.{ 3, 5, 0, 0 }, &.{ 4, 9, 0, 1 }, &.{ 5, 8, 1, 0 }, &.{ 6, 13, 1, 1 }, &.{ 7, 12, 1, 0 }, &.{ 8, 17, 1, 1 } });
+    ds.setLabel("x", "Baseline");
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint out=linear outs=s outk=k outh=h; var x y; run;", &d));
+    for ([_][]const u8{ "linear", "s", "k", "h" }, [_]f64{ 0.96204, 0.94612, 0.83650, 0.38839 }) |name, r| {
+        const result = lib.find(name).?;
+        try std.testing.expectEqual(@as(usize, 4), result.columns.items.len);
+        try std.testing.expectEqual(@as(usize, 5), result.rowCount());
+        try std.testing.expectEqual(@as(?usize, 8), result.columns.items[1].len);
+        try std.testing.expectEqualStrings("Baseline", result.columns.items[2].label.?);
+        try std.testing.expectEqualStrings("MEAN", result.row(0)[0].str);
+        try std.testing.expectEqual(@as(f64, 4.5), result.row(0)[2].num);
+        try std.testing.expectApproxEqAbs(@as(f64, 4.94072), result.row(1)[3].num, 0.000005);
+        try std.testing.expectEqualStrings("N", result.row(2)[0].str);
+        try std.testing.expectEqualStrings("x", result.row(3)[1].str);
+        try std.testing.expectEqualStrings("CORR", result.row(4)[0].str);
+        try std.testing.expectApproxEqAbs(r, result.row(3)[3].num, 0.000005);
+        try std.testing.expectApproxEqAbs(r, result.row(4)[2].num, 0.000005);
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 0.87667), lib.find("h").?.row(4)[3].num, 0.000005);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outplc=p; var g h; run;", &d));
+    try std.testing.expectApproxEqAbs(@as(f64, 0), lib.find("p").?.row(3)[3].num, 0.000005);
+    const serial = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 3, 1 }, &.{ 5, 1 }, &.{ 2, 2 }, &.{ 4, 2 }, &.{ 6, 2 }, &.{ 3, 3 }, &.{ 5, 3 }, &.{ 8, 3 } });
+    try lib.put("d", serial);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outpls=work.serial; var x; with g; run;", &d));
+    const pls = lib.find("serial").?;
+    try std.testing.expectEqual(@as(usize, 4), pls.rowCount());
+    try std.testing.expectEqualStrings("g", pls.row(3)[1].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.53480), pls.row(3)[2].num, 0.000005);
+    try std.testing.expectEqual(@as(usize, 0), listing.items.len);
+}
+
+test "FEAT-base-stat-results SSCP intercept alpha blocks and BY row descriptors" {
+    // SAS M9 corr_outp_matrix_types and corr_outp_by_metadata.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{ &.{ 1, 8, 4 }, &.{ 2, 6, 1 }, &.{ 2, 6, 5 }, &.{ 3, 2, 2 }, &.{ 4, 5, 6 }, &.{ 5, 3, 2 }, &.{ 6, 1, 5 }, &.{ 8, 4, 8 }, &.{ 9, 1, 3 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d cov csscp sscp alpha noprint outp=m;var x y z;run;", &d));
+    const m = lib.find("m").?;
+    try std.testing.expectEqual(@as(usize, 22), m.rowCount());
+    try std.testing.expectEqualStrings("Intercept", m.columns.items[2].name);
+    try std.testing.expectEqualStrings("Intercept", m.row(0)[1].str);
+    try std.testing.expectEqual(@as(f64, 9), m.row(0)[2].num);
+    try std.testing.expectEqual(@as(f64, 40), m.row(0)[3].num);
+    try std.testing.expectEqual(@as(f64, 177), m.row(3)[3].num);
+    try std.testing.expectEqualStrings("CSSCP", m.row(4)[0].str);
+    try std.testing.expect(m.row(4)[2].isMissing());
+    try std.testing.expectApproxEqAbs(@as(f64, 2.125), m.row(7)[5].num, 1e-10);
+    try std.testing.expectEqualStrings("RAWALPHA", m.row(13)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.508), m.row(13)[3].num, 0.0005);
+    try std.testing.expectEqualStrings("STDCTDEL", m.row(18)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.590), m.row(18)[5].num, 0.0005);
+    const by = try a.create(Dataset);
+    by.* = Dataset.init(a, "d");
+    _ = try by.addColumn("site", .char);
+    by.setLen("site", 8);
+    by.setLabel("site", "Study site");
+    for ([_][]const u8{ "x", "y" }) |v| _ = try by.addColumn(v, .num);
+    for ([_][2]f64{ .{ 1, 3 }, .{ 2, 1 }, .{ 5, 4 }, .{ 3, 2 }, .{ 4, 6 }, .{ 7, 5 } }, 0..) |xy, i|
+        try by.appendRow(&.{ .{ .str = if (i < 3) "A" else "B" }, .{ .num = xy[0] }, .{ .num = xy[1] } });
+    try lib.put("d", by);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outp=b;by site;var y x;run;", &d));
+    const b = lib.find("b").?;
+    try std.testing.expectEqual(@as(usize, 10), b.rowCount());
+    try std.testing.expectEqualStrings("Study site", b.columns.items[0].label.?);
+    try std.testing.expectEqual(@as(?usize, 8), b.columns.items[0].len);
+    try std.testing.expectEqualStrings("y", b.columns.items[3].name);
+    try std.testing.expectEqualStrings("B", b.row(9)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5), b.row(9)[3].num, 1e-12);
+}
+
+test "CORR BEST selects absolute correlations and RANK preserves source matrices" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{
+        &.{ 1, 8, 4 }, &.{ 2, 6, 1 }, &.{ 2, 6, 5 }, &.{ 3, 2, 2 }, &.{ 4, 5, 6 },
+        &.{ 5, 3, 2 }, &.{ 6, 1, 5 }, &.{ 8, 4, 8 }, &.{ 9, 1, 3 },
+    });
+    const result = try Testing.analyze(a, ds, "proc corr data=d best=2 nosimple; var x y z; run;");
+    var out: std.ArrayList(u8) = .empty;
+    try render(a, &out, result);
+    for ([_][]const u8{ "x x y\nr 1.00000 -0.73193", "y y x\nr 1.00000 -0.73193", "z z x\nr 1.00000 0.34076" }) |line|
+        try std.testing.expect(std.mem.indexOf(u8, out.items, line) != null);
+    try std.testing.expectEqual(@as(usize, 9), result.groups[0].pairs.len);
+
+    out.clearRetainingCapacity();
+    const rectangular = try Testing.analyze(a, ds, "proc corr data=d rank noprob nosimple; with x; var z y; run;");
+    try render(a, &out, rectangular);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "x y z\nr -0.73193 0.34076\nN 9 9") != null);
+    try std.testing.expectEqual(@as(usize, 2), rectangular.groups[0].pairs[0].column);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const spec = try parse(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, "proc corr data=d best=0; var x y; run;", &d));
+    try std.testing.expectEqual(@as(usize, 1), spec.options.best);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqual(.warning, d.list.items[0].severity);
+}
+
+test "CORR nested ordinal listing respects native chi-square field width" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "r", "c", "f" }, &.{ &.{ 0, 0, 7 }, &.{ 0, 1, 11 }, &.{ 1, 3, 17 } });
+    const g = try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-8);var r c;freq f;run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, g);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "8.96292E-8 1.2448E14 <.0001 48.4914") != null);
+}
+
+test "CORR small Fisher bias displays the significant digits from manual example 2.4" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const batch1 = @as(f64, 0.2208125944316187) / (2 * 149);
+    const batch2 = @as(f64, 0.3369440964259697) / (2 * 149);
+    try std.testing.expectEqualStrings("0.0007410", try smallEstimate(a, batch1));
+    try std.testing.expectEqualStrings("-0.0007410", try smallEstimate(a, -batch1));
+    try std.testing.expectEqualStrings("0.00113", try smallEstimate(a, batch2));
+}
+
+test "CORR Hoeffding listing suppresses perfect self-dependence but shows distinct variables and tied diagonals" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "clone", "tied" }, &.{
+        &.{ 1, 1, 2 }, &.{ 2, 2, 5 },  &.{ 3, 3, 5 },  &.{ 4, 4, 9 },
+        &.{ 5, 5, 8 }, &.{ 6, 6, 13 }, &.{ 7, 7, 12 }, &.{ 8, 8, 17 },
+    });
+    const g = try Testing.analyze(a, ds, "proc corr hoeffding;var x clone tied;run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, g);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x x 1.00000 . 8") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x clone 1.00000 <.0001 8") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "tied tied 0.87667 <.0001 8") != null);
+}
+
+test "CORR reversed item uses eight columns for negative Cronbach alpha" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    try std.testing.expectEqualStrings("-.507921", try alphaStatistic(a, -0.507921));
+    try std.testing.expectEqualStrings("-5.29412", try alphaStatistic(a, -5.294117647058823));
+    try std.testing.expectEqualStrings("-5.46060", try alphaStatistic(a, -5.4606001));
 }

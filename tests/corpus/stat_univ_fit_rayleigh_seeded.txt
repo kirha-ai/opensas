@@ -1,0 +1,28 @@
+# corpus assertions
+row Fitted Rayleigh Distribution for x
+row Parameters for Rayleigh Distribution
+row Threshold Theta 0
+row Scale Sigma 1.737871
+row Mean 2.178099
+row Std Dev 1.138543
+row Goodness-of-Fit Tests for Rayleigh Distribution
+row Kolmogorov-Smirnov D 0.36123553 Pr > D 0.000
+row Cramer-von Mises W-Sq 0.66532881 Pr > W-Sq 0.000
+row Anderson-Darling A-Sq 5.08218002 Pr > A-Sq 0.000
+row Quantiles for Rayleigh Distribution
+row 1.0 0.12000 0.24639
+row 5.0 0.12000 0.55663
+row 10.0 0.23000 0.79776
+row 25.0 0.50000 1.31822
+row 50.0 1.16000 2.04619
+row 75.0 2.51000 2.89375
+row 90.0 4.85000 3.72941
+row 95.0 6.21000 4.25387
+row 99.0 6.21000 5.27419
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D {any}
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq {any}
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

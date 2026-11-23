@@ -3,6 +3,7 @@ const std = @import("std");
 const proc = @import("../proc.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
+const fmt = @import("../format.zig");
 const diag = @import("../diag.zig");
 const fitting = @import("univ_distribution_fit.zig");
 const dist = @import("univ_distributions.zig");
@@ -12,6 +13,7 @@ const moments = @import("univ_distribution_moments.zig");
 const gof = @import("univ_distribution_gof.zig");
 const b = @import("ods_table.zig");
 const h = proc.UnivariateHelpers;
+const listing = @import("../ods_listing.zig");
 const Parameter = struct { name: []const u8, symbol: []const u8, value: f64 };
 
 pub fn renderTrace(a: std.mem.Allocator, out: *std.ArrayList(u8), trace: fitting.Trace, report: fitting.Report) !void {
@@ -50,7 +52,15 @@ pub fn familyName(family: dist.Family) []const u8 {
     };
 }
 
-fn parameters(a: std.mem.Allocator, curve: dist.Distribution) ![]Parameter {
+fn odsFamilyName(family: dist.Family) []const u8 {
+    return switch (family) {
+        .power => "PowerFunction",
+        .igauss => "InverseGaussian",
+        else => familyName(family),
+    };
+}
+
+pub fn parameters(a: std.mem.Allocator, curve: dist.Distribution) ![]Parameter {
     var rows: std.ArrayList(Parameter) = .empty;
     const p = curve.p;
     if (curve.family == .normal) {
@@ -87,25 +97,41 @@ const Context = struct {
     by: []const usize,
     classes: []const usize,
     histogram: usize,
-    distribution: []const u8,
+    distribution: ?dist.Family,
+    fn listingTables(self: Context, by_number: usize) !listing.Tables {
+        const a = self.cx.arena;
+        const variable = try listing.pathPart(a, self.source.columns.items[self.col].name);
+        var path: std.ArrayList(u8) = .empty;
+        try path.appendSlice(a, "Univariate.");
+        if (self.by.len != 0) try path.print(a, "ByGroup{d}.", .{by_number});
+        try path.print(a, "{s}.Histogram", .{variable});
+        for (self.classes) |ci| try path.print(a, ".{s}", .{try listing.pathPart(a, try self.classValue(ci))});
+        if (self.distribution) |family| try path.print(a, ".{s}", .{odsFamilyName(family)});
+        return .{ .selection = self.cx.listing, .prefix = path.items };
+    }
+    fn classHeading(self: Context, out: *std.ArrayList(u8)) !void {
+        for (self.classes) |ci| try out.print(self.cx.arena, "{s} = {s}\n", .{ self.source.columns.items[ci].name, try self.classValue(ci) });
+    }
     fn createTable(self: Context) !b.Builder {
         var table = try b.Builder.init(self.cx.arena, self.source, self.by, self.source.rows.items[0]);
         try table.char("VarName", self.source.columns.items[self.col].name.len);
-        for (self.classes) |ci| try table.char(self.source.columns.items[ci].name, 16);
         try table.num("Histogram", null);
-        try table.char("Distribution", self.distribution.len);
+        for (self.classes) |ci| try table.char(self.source.columns.items[ci].name, (try self.classValue(ci)).len);
+        if (self.distribution) |family| try table.char("Distribution", odsFamilyName(family).len);
         return table;
+    }
+    fn classValue(self: Context, ci: usize) ![]const u8 {
+        const col = self.source.columns.items[ci];
+        const v = self.source.rows.items[0][ci];
+        const text = if (v == .str and col.format == null) v.str else try fmt.apply(self.cx.arena, v, col.format orelse "BEST12.");
+        return std.mem.trim(u8, text, " ");
     }
     fn row(self: Context, table: *b.Builder, cells: []const Value) !void {
         var values_: std.ArrayList(Value) = .empty;
         try values_.append(self.cx.arena, b.s(self.source.columns.items[self.col].name));
-        for (self.classes) |ci| {
-            const col = self.source.columns.items[ci];
-            const value = self.source.rows.items[0][ci];
-            const text = if (value == .str) value.str else try @import("../format.zig").apply(self.cx.arena, value, col.format orelse "BEST12.");
-            try values_.append(self.cx.arena, b.s(std.mem.trim(u8, text, " ")));
-        }
-        try values_.appendSlice(self.cx.arena, &.{ b.n(@floatFromInt(self.histogram)), b.s(self.distribution) });
+        try values_.append(self.cx.arena, b.n(@floatFromInt(self.histogram)));
+        for (self.classes) |ci| try values_.append(self.cx.arena, b.s(try self.classValue(ci)));
+        if (self.distribution) |family| try values_.append(self.cx.arena, b.s(odsFamilyName(family)));
         try values_.appendSlice(self.cx.arena, cells);
         try table.row(values_.items);
     }
@@ -114,13 +140,22 @@ const Context = struct {
     }
 };
 
-pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool) diag.Error!void {
+pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize, supplied_tests: ?gof.Result) diag.Error!void {
     if (options.noprint) return;
     const a = cx.arena;
     const name = familyName(curve.family);
-    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
+    if (options.invalid_percents) try cx.diags.warn(0, "The list of percents specified for the {s} density must be greater than 0 and less than 100.", .{name});
+    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = curve.family };
     const variable = source.columns.items[col].name;
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nThe UNIVARIATE Procedure\nFitted {s} Distribution for {s}\n\nParameters for {s} Distribution\nParameter Symbol Estimate\n", .{ name, variable, name }));
+    const tables = try context.listingTables(by_number);
+    const head = out.items.len;
+    try out.appendSlice(a, "\nThe UNIVARIATE Procedure\n");
+    try context.classHeading(out);
+    try out.print(a, "Fitted {s} Distribution for {s}\n", .{ name, variable });
+    const first = out.items.len;
+    var start = first;
+    const prefix = if (curve.family == .sb or curve.family == .su) "Johnson " else "";
+    try out.print(a, "\nParameters for {s}{s} Distribution\nParameter Symbol Estimate\n", .{ prefix, name });
     var parameter_table = try context.createTable();
     parameter_table.ds.label = "Parameters";
     try parameter_table.char("Parameter", 9);
@@ -131,18 +166,26 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     parameter_table.ds.setLabel("Estimate", "Parameter Estimate");
     for (try parameters(a, curve)) |p| {
         try context.row(&parameter_table, &.{ b.s(p.name), b.s(p.symbol), b.n(p.value) });
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try h.uNum(a, p.value) }));
+        try out.print(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try fmt.bestNumW(a, p.value, 8) });
     }
     try context.publish("ParameterEstimates", &parameter_table);
+    try tables.finish(a, out, start, "ParameterEstimates");
+    start = out.items.len;
     // The inference helper owns parameter- and sample-dependent availability;
     // a blanket small-gamma guard would suppress valid all-known D/W2 tests.
     if (curve.family != .sb and curve.family != .su) {
-        const tests = try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
+        const tests = supplied_tests orelse try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
         var table = try context.createTable();
-        table.ds.label = "Goodness-of-Fit Tests";
+        table.ds.label = "Goodness of Fit";
         try table.char("Test", 18);
         try table.char("TestLab", 6);
-        try table.num("Stat", "D10.3");
+        var largest_stat: f64 = 0;
+        if (tests.d != null) largest_stat = @max(largest_stat, tests.statistics.d);
+        if (tests.w2 != null) largest_stat = @max(largest_stat, tests.statistics.w2);
+        if (tests.a2 != null) largest_stat = @max(largest_stat, tests.statistics.a2);
+        const decimals: usize = 9 -| decimalDigits(largest_stat);
+        const statistic_format = try numberFormat(a, 10, decimals);
+        try table.num("Stat", statistic_format);
         try table.char("pType", 11);
         try table.char("pSign", 1);
         try table.num("pValue", "5.3");
@@ -161,15 +204,24 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
                 .greater => ">",
             };
             try context.row(&table, &.{ b.s(test_name), b.s(lab), b.n(statistic), b.s(ptype), b.s(sign), b.n(probability.value) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.8} {s} {s}{d:.3}\n", .{ test_name, lab, statistic, ptype, sign, probability.value }));
+            try out.print(a, "{s} {s} {s} {s} {s}{d:.3}\n", .{ test_name, lab, try displayNumber(a, b.n(statistic), statistic_format), ptype, sign, probability.value });
         }
         if (table.ds.rows.items.len > 0) try context.publish("GoodnessOfFit", &table);
+    }
+    try tables.finish(a, out, start, "GoodnessOfFit");
+    start = out.items.len;
+    if (options.midpercents) {
+        try renderBins(context, out, bins, right, midpoints);
+        try tables.finish(a, out, start, "Bins");
+        start = out.items.len;
     }
     var quantiles = try context.createTable();
     quantiles.ds.label = "Quantiles";
     try quantiles.num("Percent", "4.1");
-    try quantiles.num("ObsQuantile", "9.5");
-    try quantiles.num("EstQuantile", "8.5");
+    try quantiles.num("ObsQuantile", null);
+    try quantiles.num("EstQuantile", null);
+    var observed_range: QuantileRange = .{};
+    var estimated_range: QuantileRange = .{};
     quantiles.ds.setLabel("ObsQuantile", "Observed Quantile");
     quantiles.ds.setLabel("EstQuantile", "Estimated Quantile");
     const pairs = try a.alloc(h.XW, x.len);
@@ -178,26 +230,168 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     for (options.percents) |percent| {
         const observed = h.univPercentile(pairs, percent, def);
         const estimated = curve.quantile(percent / 100);
+        observed_range.add(observed);
+        estimated_range.add(estimated);
         try context.row(&quantiles, &.{ b.n(percent), b.n(observed), b.n(estimated) });
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "{d:.1} {d:.5} {d:.5}\n", .{ percent, observed, estimated }));
+    }
+    const observed_format = try observed_range.format(a);
+    const estimated_format = try estimated_range.format(a);
+    quantiles.ds.setFormat("ObsQuantile", observed_format);
+    quantiles.ds.setFormat("EstQuantile", estimated_format);
+    const pct = quantiles.ds.indexOf("Percent").?;
+    for (quantiles.ds.rows.items) |row| {
+        try out.print(a, "{d:.1} {s} {s}\n", .{ row[pct].num, try displayQuantile(a, row[pct + 1], observed_format), try displayQuantile(a, row[pct + 2], estimated_format) });
     }
     try context.publish("FitQuantiles", &quantiles);
-    if (options.midpercents) {
-        var table = try context.createTable();
-        table.ds.label = "Histogram Bin Percentages";
-        const loc = if (midpoints) "MidPoint" else if (right) "MaxPoint" else "MinPoint";
-        try table.num(loc, "3.");
-        try table.num("ObsPercent", "6.3");
-        try table.num("EstPercent", "6.3");
-        table.ds.setLabel(loc, if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point");
-        table.ds.setLabel("ObsPercent", "Observed Percent");
-        table.ds.setLabel("EstPercent", "Estimated Percent");
-        try out.appendSlice(a, "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n");
-        for (bins) |bin| {
-            const point = if (midpoints) bin.midpoint else if (right) bin.upper else bin.lower;
-            try context.row(&table, &.{ b.n(point), b.n(bin.observed_percent), b.n(bin.expected_percent.?) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3} {d:.3}\n", .{ point, bin.observed_percent, bin.expected_percent.? }));
-        }
-        try context.publish("Bins", &table);
+    try tables.finish(a, out, start, "FitQuantiles");
+    if (out.items.len == first) out.shrinkRetainingCapacity(head);
+}
+
+const QuantileRange = struct {
+    smallest: f64 = std.math.inf(f64),
+    largest: f64 = 0,
+
+    fn add(self: *QuantileRange, value: f64) void {
+        if (!std.math.isFinite(value) or value == 0) return;
+        self.smallest = @min(self.smallest, @abs(value));
+        self.largest = @max(self.largest, @abs(value));
     }
+
+    fn format(self: QuantileRange, a: std.mem.Allocator) ![]const u8 {
+        if (self.largest == 0) return "8.5";
+        const exponent: i32 = @intFromFloat(@floor(@log10(self.smallest)));
+        const decimals: usize = @intCast(if (exponent < 0) @max(5, -exponent) else @max(0, 5 - exponent));
+        const width = 1 + decimalDigits(self.largest) + decimals + @intFromBool(decimals != 0);
+        if (width > 16) return "E15.8";
+        return numberFormat(a, width, decimals);
+    }
+};
+
+fn decimalDigits(magnitude: f64) usize {
+    if (magnitude < 1 or !std.math.isFinite(magnitude)) return 1;
+    return @intFromFloat(1 + @floor(@log10(magnitude)));
+}
+
+fn numberFormat(a: std.mem.Allocator, width: usize, decimals: usize) ![]const u8 {
+    if (decimals == 0) return std.fmt.allocPrint(a, "{d}.", .{width});
+    return std.fmt.allocPrint(a, "{d}.{d}", .{ width, decimals });
+}
+
+fn displayNumber(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
+    return std.mem.trim(u8, try fmt.apply(a, value, spec), " ");
+}
+
+/// M9 FitQuantiles uses the COMPATIBLE conversion for its fixed-point fields.
+/// It adds half a decimal unit, rounds the biased magnitude in binary64, then
+/// truncates its decimal digits. Keep the unrounded value in the ODS table.
+fn displayQuantile(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
+    const field = fmt.parseSpec(spec);
+    if (value != .num or !std.math.isFinite(value.num) or field.name.len != 0 or field.w > 16 or field.d > 15)
+        return displayNumber(a, value, spec);
+    const negative = value.num < 0;
+    var places = field.d;
+    while (true) : (places -= 1) {
+        const scale = std.math.pow(u64, 10, places);
+        const unit: f64 = @floatFromInt(scale);
+        const biased = (@abs(value.num) + 0.5 / unit) * (1 + std.math.floatEps(f64));
+        const scaled = @as(f128, biased) * @as(f128, unit);
+        if (!(scaled < @as(f128, 1 << 53))) return displayNumber(a, value, spec);
+        const digits: u64 = @intFromFloat(scaled);
+        const sign: []const u8 = if (negative) "-" else "";
+        const text = if (places == 0)
+            try std.fmt.allocPrint(a, "{s}{d}", .{ sign, digits })
+        else
+            try std.fmt.allocPrint(a, "{[s]s}{[whole]d}.{[fraction]d:0>[places]}", .{ .s = sign, .whole = digits / scale, .fraction = digits % scale, .places = places });
+        if (text.len <= field.w) return text;
+        if (places == 0) return displayNumber(a, value, spec);
+    }
+}
+
+test "FitQuantiles fixed fields round both sides of M9 decimal boundaries" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Case = struct { bits: u64, format: []const u8, printed: []const u8 };
+    for ([_]Case{
+        .{ .bits = 0x3ff0c22bbecaab89, .format = "8.5", .printed = "1.04740" },
+        .{ .bits = 0x3ff0c22bbecaab8a, .format = "8.5", .printed = "1.04741" },
+        .{ .bits = 0x4001800d1b71758e, .format = "8.5", .printed = "2.18753" },
+        .{ .bits = 0x403226324c83664f, .format = "9.5", .printed = "18.14920" },
+        .{ .bits = 0x403226324c836650, .format = "9.5", .printed = "18.14921" },
+        .{ .bits = 0xc03226324c836650, .format = "9.5", .printed = "-18.14921" },
+        .{ .bits = @bitCast(@as(f64, -9.999995)), .format = "8.5", .printed = "-10.0000" },
+        .{ .bits = @bitCast(@as(f64, -0.00000499)), .format = "8.5", .printed = "-0.00000" },
+        .{ .bits = @bitCast(@as(f64, -0.0)), .format = "8.5", .printed = "0.00000" },
+    }) |case| {
+        const v = Value{ .num = @bitCast(case.bits) };
+        try std.testing.expectEqualStrings(case.printed, try displayQuantile(a, v, case.format));
+    }
+}
+
+fn binPoint(bin: values.Bin, right: bool, midpoints: bool) f64 {
+    return if (midpoints) bin.midpoint else if (right) bin.upper else bin.lower;
+}
+
+fn pointFormat(a: std.mem.Allocator, bins: []const values.Bin, right: bool, midpoints: bool) ![]const u8 {
+    var largest: f64 = 0;
+    var precision: usize = 0;
+    for (bins) |bin| {
+        const point = @abs(binPoint(bin, right, midpoints));
+        largest = @max(largest, point);
+        var scaled = point;
+        for (0..6) |places| {
+            if (@abs(scaled - @round(scaled)) <= 32 * std.math.floatEps(f64) * @max(1, scaled)) {
+                precision = @max(precision, places);
+                break;
+            }
+            scaled *= 10;
+        } else return "E15.8";
+    }
+    return numberFormat(a, 1 + decimalDigits(largest) + precision + @intFromBool(precision != 0), precision);
+}
+
+pub fn histogramBins(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize) !void {
+    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = null };
+    const tables = try context.listingTables(by_number);
+    const start = out.items.len;
+    try out.appendSlice(cx.arena, "\nThe UNIVARIATE Procedure\n");
+    try context.classHeading(out);
+    try out.print(cx.arena, "\nHistogram Bins for {s}\n", .{source.columns.items[col].name});
+    try renderBins(context, out, bins, right, midpoints);
+    try tables.finish(cx.arena, out, start, "HistogramBins");
+}
+
+fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bin, right: bool, midpoints: bool) !void {
+    const a = context.cx.arena;
+    const fitted = context.distribution != null;
+    var table = try context.createTable();
+    table.ds.label = if (fitted) "Histogram Bins" else "Bin Midpoints";
+    const loc = if (midpoints) "Midpoint" else if (right) "MaxPoint" else "MinPoint";
+    const point_format = try pointFormat(a, bins, right, midpoints);
+    try table.num(loc, point_format);
+    try table.num("ObsPercent", "6.3");
+    table.ds.setLabel(loc, if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point");
+    table.ds.setLabel("ObsPercent", "Observed Percent");
+    if (fitted) {
+        try table.num("EstPercent", "6.3");
+        table.ds.setLabel("EstPercent", "Estimated Percent");
+    }
+    const bin_label = if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point";
+    if (context.distribution) |family| {
+        try out.print(a, "\nHistogram Bin Percents for {s} Distribution\n{s}  Observed Percent  Estimated Percent\n", .{ familyName(family), bin_label });
+    } else try out.print(a, "{s}  Observed Percent\n", .{bin_label});
+    for (bins) |bin| {
+        const point = binPoint(bin, right, midpoints);
+        // Standalone MIDPERCENTS includes the group's missing analysis values
+        // in its denominator. Fitted Bins uses the sample that was fitted.
+        const observed = if (fitted) bin.observed_percent else 100 * @as(f64, @floatFromInt(bin.count)) / @as(f64, @floatFromInt(context.source.rows.items.len));
+        if (fitted) {
+            try context.row(&table, &.{ b.n(point), b.n(observed), b.n(bin.expected_percent.?) });
+            try out.print(a, "{s} {d:.3} {d:.3}\n", .{ try displayNumber(a, b.n(point), point_format), observed, bin.expected_percent.? });
+        } else {
+            try context.row(&table, &.{ b.n(point), b.n(observed) });
+            try out.print(a, "{s} {d:.3}\n", .{ try displayNumber(a, b.n(point), point_format), observed });
+        }
+    }
+    try context.publish(if (fitted) "Bins" else "HistogramBins", &table);
 }

@@ -5,7 +5,8 @@ const std = @import("std");
 const f = @import("../functions.zig");
 const diag = @import("../diag.zig");
 const inf = std.math.inf(f64);
-pub const Family = enum { normal, lognormal, exponential, gamma, weibull, beta, power, rayleigh, pareto, gumbel, igauss, sb, su };
+/// Family order used in HISTOGRAM tables and output datasets.
+pub const Family = enum { normal, lognormal, exponential, weibull, gamma, beta, sb, su, rayleigh, pareto, gumbel, power, igauss };
 
 pub const Parameters = struct {
     theta: f64 = 0,
@@ -57,7 +58,7 @@ pub const Distribution = struct {
                 if (x <= 0) break :blk 0;
                 const r = @sqrt(p.lambda / x);
                 const z = -r * (x / p.mu + 1);
-                break :blk @min(1, normal(r * (x / p.mu - 1)) + @exp(2 * p.lambda / p.mu + logNormalTail(-z)));
+                break :blk @min(1, normal(r * (x / p.mu - 1)) + @exp(2 * p.lambda / p.mu + f.logStdNormTail(-z)));
             },
             .sb => if (y <= 0) 0 else if (y >= 1) 1 else normal(p.gamma + p.delta * @log(y / (1 - y))),
             .su => normal(p.gamma + p.delta * std.math.asinh(y)),
@@ -120,31 +121,48 @@ pub const Distribution = struct {
         return @exp(self.logPdf(x));
     }
 
-    fn logProbability(self: Distribution, x: f64, upper: bool) f64 {
+    fn edfProbability(self: Distribution, x: f64) f64 {
+        const p = self.p;
+        const y = (x - p.theta) / p.sigma;
+        // The simulated families take logarithms of the rounded CDF, including
+        // the subtraction when a survival probability is close to one.
+        return switch (self.family) {
+            .rayleigh => if (y <= 0) 0 else 1 - expNearZero(-y * y / 2),
+            .pareto => if (y <= 0) 0 else if (p.alpha == 0) 1 - expNearZero(-y) else if (p.alpha > 0 and y >= 1 / p.alpha) 1 else 1 - std.math.pow(f64, 1 - p.alpha * y, 1 / p.alpha),
+            .gumbel => expNearZero(-@exp(-(x - p.mu) / p.sigma)),
+            .igauss => blk: {
+                if (x <= 0) break :blk 0;
+                const r = @sqrt(p.lambda / x);
+                const lower = roundedNormal(r * (x / p.mu - 1));
+                const second = roundedNormal(-r * (x / p.mu + 1));
+                if (second == 0) break :blk lower;
+                const coefficient = 2 * p.lambda / p.mu;
+                break :blk @min(1, lower + (if (coefficient <= @log(std.math.floatMax(f64))) @exp(coefficient) * second else @exp(coefficient + @log(second))));
+            },
+            else => self.cdf(x),
+        };
+    }
+
+    fn logProbability(self: Distribution, x: f64, upper: bool, u: f64) f64 {
         const p = self.p;
         if (self.family == .normal) {
             const z = (x - p.mu) / p.sigma;
-            return logNormalTail(if (upper) z else -z);
+            return f.logStdNormTail(if (upper) z else -z);
         }
         if (self.family == .lognormal and x > p.theta) {
             const z = (@log(x - p.theta) - p.zeta) / p.sigma;
-            return logNormalTail(if (upper) z else -z);
+            return f.logStdNormTail(if (upper) z else -z);
         }
         const y = (x - p.theta) / p.sigma;
+        if (!upper and self.family == .weibull and y > 0) {
+            const log_hazard = p.c * @log(y);
+            if (log_hazard < @log(std.math.floatEps(f64))) return log_hazard;
+        }
         if (upper and y > 0) switch (self.family) {
             .exponential => return -y,
             .weibull => return -std.math.pow(f64, y, p.c),
-            .rayleigh => return -y * y / 2,
-            .pareto => return if (p.alpha == 0) -y else if (p.alpha > 0 and y >= 1 / p.alpha) -inf else std.math.log1p(-p.alpha * y) / p.alpha,
             else => {},
         };
-        if (self.family == .gumbel) {
-            const z = -(x - p.mu) / p.sigma;
-            if (!upper) return -@exp(z);
-            if (z < -36) return z;
-            return @log(-std.math.expm1(-@exp(z)));
-        }
-        const u = self.cdf(x);
         return if (upper) std.math.log1p(-u) else @log(u);
     }
 
@@ -189,9 +207,14 @@ fn normal(z: f64) f64 {
     return f.distCdf(.normal, z, &.{}).?;
 }
 
-fn logNormalTail(z: f64) f64 {
-    if (z > 8) return f.logStdNormTail(z);
-    return @log(normal(-z));
+fn expNearZero(z: f64) f64 {
+    return if (@abs(z) < 0.5) 1 + std.math.expm1(z) else @exp(z);
+}
+
+fn roundedNormal(z: f64) f64 {
+    const tail = @exp(f.logStdNormTail(@abs(z)));
+    if (z >= 0) return 0.5 + (0.5 - tail);
+    return if (tail < std.math.floatMin(f64)) 0 else tail;
 }
 
 pub const Edf = struct { d: f64, w2: f64, a2: f64 };
@@ -203,10 +226,11 @@ pub fn edf(dist: Distribution, sorted: []const f64) ?Edf {
     var result: Edf = .{ .d = 0, .w2 = 1 / (12 * n), .a2 = -n };
     for (sorted, 0..) |v, i| {
         const j: f64 = @floatFromInt(i);
-        const u = dist.cdf(v);
+        const probability = dist.edfProbability(v);
+        const u = if (probability < std.math.floatMin(f64)) 0 else probability;
         result.d = @max(result.d, @max(u - j / n, (j + 1) / n - u));
         result.w2 += std.math.pow(f64, u - (j + 0.5) / n, 2);
-        result.a2 -= ((2 * j + 1) * dist.logProbability(v, false) + (2 * n - 2 * j - 1) * dist.logProbability(v, true)) / n;
+        result.a2 -= ((2 * j + 1) * dist.logProbability(v, false, u) + (2 * n - 2 * j - 1) * dist.logProbability(v, true, u)) / n;
     }
     return result;
 }
@@ -218,6 +242,12 @@ test "UNIVARIATE EDF SAS normal fitted statistics and stable tails" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.38811470), result.a2, 5e-9);
     const extreme = edf(.{ .family = .normal, .p = .{} }, &.{ -40, 0, 40 }).?;
     try std.testing.expect(std.math.isFinite(extreme.a2));
+    // Normal EDF uses log probabilities on both sides, including immediately
+    // below the asymptotic branch of the normal tail calculation.
+    const left = edf(.{ .family = .normal, .p = .{} }, &.{ -8, -0.25, 0, 0.25, 0.5, 1, 1.25 }).?;
+    const right = edf(.{ .family = .normal, .p = .{} }, &.{ -0.25, 0, 0.25, 0.5, 1, 1.25, 8 }).?;
+    try std.testing.expectApproxEqAbs(@as(f64, 4.9149198843498585), left.a2, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 6.232405901787631), right.a2, 1e-12);
 }
 
 pub fn rankProbability(index: usize, n: usize, rankadj: f64, nadj: f64) f64 {

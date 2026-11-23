@@ -1,0 +1,8 @@
+# corpus assertions
+row Gamma 0.621~5.1e-05 0.1234~5.1e-05 0.379~5.1e-05 0.8629~5.1e-05
+rewind
+row ASE under H0 0.1433~5.1e-05
+row Z 4.3327~5.1e-05
+row-count 1 Gamma {any} {any} {any} {any}
+row-count 1 ASE under H0 {any}
+row-count 1 Z {any}

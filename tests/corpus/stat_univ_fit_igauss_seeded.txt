@@ -1,0 +1,28 @@
+# corpus assertions
+row Fitted Inverse Gaussian Distribution for x
+row Parameters for Inverse Gaussian Distribution
+row Threshold Mu 1.766875
+row Shape Lambda 0.896483
+row Mean 1.766875
+row Std Dev 2.480491
+row Goodness-of-Fit Tests for Inverse Gaussian Distribution
+row Kolmogorov-Smirnov D 0.12150829 Pr > D 0.776
+row Cramer-von Mises W-Sq 0.04654372 Pr > W-Sq 0.632
+row Anderson-Darling A-Sq 0.27894581 Pr > A-Sq 0.692
+row Quantiles for Inverse Gaussian Distribution
+row 1.0 0.12000 0.11924
+row 5.0 0.12000 0.19209
+row 10.0 0.23000 0.25707
+row 25.0 0.50000 0.44719
+row 50.0 1.16000 0.91491
+row 75.0 2.51000 2.02354
+row 90.0 4.85000 4.16072
+row 95.0 6.21000 6.25315
+row 99.0 6.21000 12.37020
+row-count 1 Threshold Mu {any}
+row-count 1 Shape Lambda {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D {any}
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq {any}
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

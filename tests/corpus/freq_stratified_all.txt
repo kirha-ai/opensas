@@ -1,10 +1,7 @@
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Statistic                     DF       Value      Prob
 ------------------------------------------------------
@@ -50,13 +47,9 @@ Relative Risk (Column 2)        0.5093        0.3103        0.8357
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Statistic                     DF       Value      Prob
 ------------------------------------------------------

@@ -1,0 +1,31 @@
+# corpus assertions
+row Fitted SB Distribution for x
+row Parameters for Johnson SB Distribution
+row Threshold Theta 0
+row Scale Sigma 1
+row Shape Delta 1.387884
+row Shape Gamma 0~5e-13
+row Mean 0.5
+row Std Dev 0.161776
+row Skewness 1.11E-14~5e-13
+row Kurtosis -0.60549
+row Mode 0.5
+row Quantiles for SB Distribution
+row 1.0 0.10516 0.15760
+row 5.0 0.15967 0.23413
+row 10.0 0.22948 0.28427
+row 25.0 0.33179 0.38084
+row 50.0 0.50000 0.50000
+row 75.0 0.66821 0.61916
+row 90.0 0.77052 0.71573
+row 95.0 0.84033 0.76587
+row 99.0 0.89484 0.84240
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Delta {any}
+row-count 1 Shape Gamma {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Skewness {any}
+row-count 1 Kurtosis {any}
+row-count 1 Mode {any}

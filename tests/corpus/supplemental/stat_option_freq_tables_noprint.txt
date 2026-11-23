@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 0 Frequency|
+stdout-count 0 Row Pct
+stdout-count 0 Col Pct
+row Cochran-Armitage Trend Test
+row Statistic (Z) -2.8827~5.1e-05
+row-count 1 Statistic (Z) {any}

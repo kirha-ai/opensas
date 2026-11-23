@@ -1,0 +1,6 @@
+# corpus assertions
+svg-count 1
+svg-has 1 xmlns="http://www.w3.org/2000/svg"
+svg-has 1 data-kind="scatter"
+svg-has 1 class="point"
+svg-count-text 1 0 class="ellipse"

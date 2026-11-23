@@ -1,0 +1,7 @@
+# corpus assertions
+stderr-count 0 expected counts less than 5
+row COUNT 1~5.1e-05
+row COUNT 4~5.1e-05
+row COUNT 4~5.1e-05
+row COUNT 1~5.1e-05
+row-count 4 COUNT {any}

@@ -1,0 +1,17 @@
+# corpus assertions
+row Case freq_common_printwts_mh
+row Stratum Risk Differences and Weights
+row 1 1 0.3926 52 0.4906 0.4905~5.1e-05
+row 2 2 -0.1593 54 0.5094 0.5095~5.1e-05
+row Case freq_common_printwts_minrisk
+row Stratum Risk Differences and Weights
+row 1 1 0.3926 52 0.4906 0.4929~5.1e-05
+row 2 2 -0.1593 54 0.5094 0.5071~5.1e-05
+row Case freq_common_printwts_mr
+row Stratum Risk Differences and Weights
+row 1 1 0.3926 52 0.4906 0.4929~5.1e-05
+row 2 2 -0.1593 54 0.5094 0.5071~5.1e-05
+row Case freq_common_printwts_score
+row Stratum Risk Differences and Weights
+row 1 1 0.3926 52 0.4906 0.3663~5.1e-05 0.5159~5.1e-05
+row 2 2 -0.1593 54 0.5094 -0.1489~5.1e-05 0.4841~5.1e-05

@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 5 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Parameter|char|13|||
+row ODS_COL|3|Estimate|num|8|D10.||
+row ODS_COL|4|LowerCL|num|8|D10.||Lower 95% Confidence Limit
+row ODS_COL|5|UpperCL|num|8|D10.||Upper 95% Confidence Limit
+stdout-count 15 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Parameter|Mean
+row ODS_VALUE|1|Estimate|4.3076923076923~4.307692308e-08
+row ODS_VALUE|1|LowerCL|2.86107149860957~2.861071499e-08
+row ODS_VALUE|1|UpperCL|5.75431311677503~5.754313117e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Parameter|Std Deviation
+row ODS_VALUE|2|Estimate|2.39390251070699~2.393902511e-08
+row ODS_VALUE|2|LowerCL|1.71663394117244~1.716633941e-08
+row ODS_VALUE|2|UpperCL|3.95169899389019~3.951698994e-08
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Parameter|Variance
+row ODS_VALUE|3|Estimate|5.73076923076923~5.730769231e-08
+row ODS_VALUE|3|LowerCL|2.94683208798522~2.946832088e-08
+row ODS_VALUE|3|UpperCL|15.6159249383127~1.561592494e-07

@@ -1,0 +1,31 @@
+data probe;do i=1 to 8;x=16*(10-i); y=(i>4); w=1;output;end;run;
+
+%macro fit(id,scale,freq,converge,iter);
+data sample; set probe; x=x*&scale; w=w*&freq; run;
+proc corr data=sample outpls=fit polyserial(converge=&converge maxiter=&iter) nosimple;
+var x; with y; freq w; run;
+data _null_; set fit; file print;
+if _TYPE_='CORR' then put "SERIAL &id " x best32.; run;
+
+%mend;
+%fit(separated-2-C.01M1,1,1,0.01,1);
+%fit(separated-2-C.01M2,1,1,0.01,2);
+%fit(separated-2-C.01M4,1,1,0.01,4);
+%fit(separated-2-C.01M8,1,1,0.01,8);
+%fit(separated-2-C.01M16,1,1,0.01,16);
+%fit(separated-2-C.01M32,1,1,0.01,32);
+%fit(separated-2-C.01M200,1,1,0.01,200);
+%fit(separated-2-C.0001M1,1,1,0.0001,1);
+%fit(separated-2-C.0001M2,1,1,0.0001,2);
+%fit(separated-2-C.0001M4,1,1,0.0001,4);
+%fit(separated-2-C.0001M8,1,1,0.0001,8);
+%fit(separated-2-C.0001M16,1,1,0.0001,16);
+%fit(separated-2-C.0001M32,1,1,0.0001,32);
+%fit(separated-2-C.0001M200,1,1,0.0001,200);
+%fit(separated-2-C.000001M1,1,1,1e-06,1);
+%fit(separated-2-C.000001M2,1,1,1e-06,2);
+%fit(separated-2-C.000001M4,1,1,1e-06,4);
+%fit(separated-2-C.000001M8,1,1,1e-06,8);
+%fit(separated-2-C.000001M16,1,1,1e-06,16);
+%fit(separated-2-C.000001M32,1,1,1e-06,32);
+%fit(separated-2-C.000001M200,1,1,1e-06,200);

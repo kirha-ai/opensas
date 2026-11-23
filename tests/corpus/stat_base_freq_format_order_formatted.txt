@@ -1,0 +1,8 @@
+# corpus assertions
+row . 1 9.09 1 9.09
+row Alpha 1 9.09 2 18.18
+row Middle 4 36.36 6 54.55
+row Zulu 5 45.45 11 100.00
+row-count 1 Alpha {any} {any} {any} {any}
+row-count 1 Middle {any} {any} {any} {any}
+row-count 1 Zulu {any} {any} {any} {any}

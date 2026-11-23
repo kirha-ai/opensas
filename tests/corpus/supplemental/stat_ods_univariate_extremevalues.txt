@@ -1,0 +1,32 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 7 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|LowOrder|num|8|6.||Order of Lowest Value
+row ODS_COL|3|Low|num|8|2.||Lowest Value
+row ODS_COL|4|LowFreq|num|8|6.||Frequency of Lowest Value
+row ODS_COL|5|HighOrder|num|8|6.||Order of Highest Value
+row ODS_COL|6|High|num|8|2.||Highest Value
+row ODS_COL|7|HighFreq|num|8|6.||Frequency of Highest Value
+stdout-count 21 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|LowOrder|1~1e-08
+row ODS_VALUE|1|Low|1~1e-08
+row ODS_VALUE|1|LowFreq|1~1e-08
+row ODS_VALUE|1|HighOrder|6~6e-08
+row ODS_VALUE|1|High|6~6e-08
+row ODS_VALUE|1|HighFreq|1~1e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|LowOrder|2~2e-08
+row ODS_VALUE|2|Low|2~2e-08
+row ODS_VALUE|2|LowFreq|3~3e-08
+row ODS_VALUE|2|HighOrder|7~7e-08
+row ODS_VALUE|2|High|7~7e-08
+row ODS_VALUE|2|HighFreq|1~1e-08
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|LowOrder|3~3e-08
+row ODS_VALUE|3|Low|3~3e-08
+row ODS_VALUE|3|LowFreq|2~2e-08
+row ODS_VALUE|3|HighOrder|8~8e-08
+row ODS_VALUE|3|High|8~8e-08
+row ODS_VALUE|3|HighFreq|2~2e-08

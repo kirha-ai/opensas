@@ -31,6 +31,17 @@ pub fn probability(a: A, value: ?f64, style: parse.ProbabilityFormat) Error![]co
         },
     };
 }
+/// Barnard's default PVALUE column distinguishes a representable value below
+/// a four-decimal half tie from the tie itself. Explicit PFORMAT uses the
+/// same named number formats as other EXACT tables.
+pub fn barnardProbability(a: A, value: ?f64, style: parse.ProbabilityFormat) Error![]const u8 {
+    const p = value orelse return ".";
+    if (style != .default or p < 0.0001 or !std.math.isFinite(p)) return probability(a, p, style);
+    const whole = @floor(p * 10000);
+    const digit = if (@mulAdd(f64, p, 10000, -whole) >= 0.5) whole + 1 else whole;
+    return std.fmt.allocPrint(a, "{d:.4}", .{digit / 10000});
+}
+
 fn line(a: A, out: *Out, label: []const u8, value: []const u8) Error!void {
     try out.appendSlice(a, label);
     try out.appendNTimes(a, ' ', @max(1, 34 -| label.len));
@@ -45,13 +56,15 @@ fn nLine(a: A, out: *Out, label: []const u8, value: f64) Error!void {
 }
 
 pub const Test = struct { statistic: ?f64 = null, probabilities: dist.Probabilities, directional: bool = false, right_sided: bool = false, two_doubled: bool = false };
-pub const Result = union(enum) { complete: Test, exhausted, not_defined };
+pub const Result = union(enum) { complete: Test, exhausted, not_defined: ?bool };
 pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: parse.Options) Error!void {
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n\n", .{title}));
     if (result == .not_defined) {
-        try pLine(a, out, "Exact Pr >= Statistic", null, options);
+        const side = result.not_defined;
+        try pLine(a, out, if (side) |right| (if (right) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic") else "Exact Pr >= Statistic", null, options);
         if (options.point) try pLine(a, out, "Point Pr = Statistic", null, options);
         if (options.midp) try pLine(a, out, "Mid p-Value", null, options);
+        if (side != null) try pLine(a, out, "Two-sided Pr >= |Statistic|", null, options);
         return;
     }
     if (result == .exhausted) {
@@ -61,17 +74,30 @@ pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: p
     }
     const r = result.complete;
     if (r.statistic) |value| try nLine(a, out, "Statistic", value);
-    if (r.directional) try pLine(a, out, if (r.right_sided) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic", r.probabilities.one_sided, options) else try pLine(a, out, "Exact Pr >= Statistic", r.probabilities.two_sided, options);
+    if (r.two_doubled) {
+        try pLine(a, out, if (r.right_sided) "One-sided Pr >=  P" else "One-sided Pr <=  P", r.probabilities.one_sided, options);
+    } else if (r.directional) {
+        try pLine(a, out, if (r.right_sided) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic", r.probabilities.one_sided, options);
+    } else try pLine(a, out, "Exact Pr >= Statistic", r.probabilities.two_sided, options);
     if (options.point) try pLine(a, out, "Point Pr = Statistic", r.probabilities.point, options);
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, (if (r.directional) r.probabilities.one_sided else r.probabilities.two_sided) - r.probabilities.point / 2), options);
     if (r.directional) try pLine(a, out, if (r.two_doubled) "Two-sided = 2 * One-sided" else "Two-sided Pr >= |Statistic|", r.probabilities.two_sided, options);
 }
 
-pub const Fisher = struct { first_cell: ?u32 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
+pub fn barnard(a: A, out: *Out, r: @import("freq_exact_execute.zig").Barnard, options: parse.Options) Error!void {
+    try out.appendSlice(a, "\nBarnard's Exact Test\nRisk Difference\nH0: P1 - P2 = 0\n\n");
+    try nLine(a, out, "Risk Difference", r.difference);
+    try nLine(a, out, "ASE (H0)", r.se);
+    try nLine(a, out, "Z", r.reportedZ());
+    try line(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", try barnardProbability(a, r.oneSided(), options.pformat));
+    try line(a, out, "Two-sided Pr >= |Z|", try barnardProbability(a, r.twoSided(), options.pformat));
+}
+
+pub const Fisher = struct { first_cell: ?f64 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
 pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     try out.appendSlice(a, "\nFisher's Exact Test\n----------------------------------\n");
     if (r.first_cell) |cell| {
-        try line(a, out, "Cell (1,1) Frequency (F)", try std.fmt.allocPrint(a, "{d}", .{cell}));
+        try line(a, out, "Cell (1,1) Frequency (F)", try std.fmt.allocPrint(a, "{d:.0}", .{cell}));
         try pLine(a, out, "Left-sided Pr <= F", r.left, options);
         try pLine(a, out, "Right-sided Pr >= F", r.right, options);
     }
@@ -81,15 +107,57 @@ pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.p - r.point / 2), options);
 }
 
-pub fn monteCarlo(a: A, out: *Out, title: []const u8, estimate: ?dist.Estimate, samples: u64, seed: u64, options: parse.Options) Error!void {
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nMonte Carlo Estimate for the Exact Test\n\n", .{title}));
-    try pLine(a, out, "Estimated p-Value", if (estimate) |v| v.p else null, options);
-    const level = (1 - options.alpha) * 100;
-    try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Lower Conf Limit", .{level}), if (estimate) |v| v.lower else null, options);
-    try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Upper Conf Limit", .{level}), if (estimate) |v| v.upper else null, options);
-    try line(a, out, "Number of Samples", try std.fmt.allocPrint(a, "{d}", .{samples}));
+const Sample = dist.SampleReport;
+
+fn simulationInterval(a: A, out: *Out, label: []const u8, est: ?dist.Estimate, level: []const u8, opt: parse.Options) Error!void {
+    try pLine(a, out, label, if (est) |v| v.p else null, opt);
+    try pLine(a, out, try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{level}), if (est) |v| v.lower else null, opt);
+    try pLine(a, out, try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{level}), if (est) |v| v.upper else null, opt);
+}
+
+fn agreementSimulation(a: A, out: *Out, family: parse.Family, sample: Sample, seed: u64, level: []const u8, opt: parse.Options) Error!void {
+    const symmetry = family == .symmetry;
+    const name = switch (family) {
+        .kappa => "Kappa",
+        .wtkappa => "Weighted Kappa",
+        .symmetry => "Symmetry",
+        else => unreachable,
+    };
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nMonte Carlo Exact {s} Test\n\nProbability    Estimate    {s}% Confidence Limits     Samples          Seed\n\n", .{ name, level }));
+    for ([_]?dist.Estimate{ sample.one_sided, sample.two_sided }, 0..) |est, i| {
+        if (symmetry and i == 0) continue;
+        const label = if (symmetry) "Pr >= ChiSq" else if (i == 1) "Pr >= |K|" else if (sample.right_sided) "Pr >=  K" else "Pr <=  K";
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s:<12} {s:>10} {s:>10} {s:>14}", .{ label, try probability(a, if (est) |v| v.p else null, opt.pformat), try probability(a, if (est) |v| v.lower else null, opt.pformat), try probability(a, if (est) |v| v.upper else null, opt.pformat) }));
+        if (symmetry or i == 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:>11} {d:>13}", .{ sample.samples, seed }));
+        try out.append(a, '\n');
+    }
+}
+
+pub fn monteCarlo(a: A, out: *Out, family: parse.Family, title: []const u8, table_probability: ?f64, sample: ?Sample, seed: u64, opt: parse.Options, restore: bool) Error!void {
+    const level = try @import("freq_risk_render.zig").confidence(a, opt.alpha);
+    if (sample) |s| {
+        if (!restore and (family == .kappa or family == .wtkappa or family == .symmetry))
+            return agreementSimulation(a, out, family, s, seed, level, opt);
+    }
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n", .{title}));
+    if (table_probability) |p| try pLine(a, out, "Table Probability (P)", p, opt);
+    const symbol_for_sample = if (sample != null) parse.directionalSymbol(family) else null;
+    if (symbol_for_sample) |symbol| {
+        const completed = sample.?;
+        try out.appendSlice(a, "Monte Carlo Estimates for the Exact Test\n\n");
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "One-sided Pr {s}  {s}\n", .{ if (completed.right_sided) ">=" else "<=", symbol }));
+        try simulationInterval(a, out, "Estimate", completed.one_sided, level, opt);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nTwo-sided Pr >= |{s}|\n", .{symbol}));
+        try simulationInterval(a, out, "Estimate", completed.two_sided, level, opt);
+    } else {
+        try out.appendSlice(a, "Monte Carlo Estimate for the Exact Test\n\n");
+        const label = if (sample == null) "Estimated p-Value" else if (family == .fisher) "Pr <= P" else if (family == .symmetry) "Pr >= S" else "Pr >= ChiSq";
+        try simulationInterval(a, out, label, if (sample) |s| s.two_sided else null, level, opt);
+    }
+    try out.append(a, '\n');
+    try line(a, out, "Number of Samples", try std.fmt.allocPrint(a, "{d}", .{if (sample) |s| s.samples else 0}));
     try line(a, out, "Initial Seed", try std.fmt.allocPrint(a, "{d}", .{seed}));
-    if (estimate == null) try out.appendSlice(a, "NOTE: Monte Carlo computation did not complete within the resource limit.\n");
+    if (sample == null) try out.appendSlice(a, "NOTE: Monte Carlo computation did not complete within the resource limit.\n");
 }
 
 pub fn commonOdds(a: A, out: *Out, r: strata.Common, alpha: f64, options: parse.Options) Error!void {
@@ -99,8 +167,8 @@ pub fn commonOdds(a: A, out: *Out, r: strata.Common, alpha: f64, options: parse.
     try out.appendSlice(a, "\nExact Test of H0: Common Odds Ratio = 1\n\n");
     try nLine(a, out, "Cell (1,1) Sum (S)", @floatFromInt(r.observed));
     try nLine(a, out, "Mean of S under H0", r.expected);
-    try pLine(a, out, if (@as(f64, @floatFromInt(r.observed)) > r.expected) "One-sided Pr >= S" else "One-sided Pr <= S", r.one_sided, options);
-    if (options.point) try pLine(a, out, "Point Pr = S", r.point, options);
+    try pLine(a, out, if (r.right_sided) "One-sided Pr >= S" else "One-sided Pr <= S", r.one_sided, options);
+    try pLine(a, out, "Point Pr = S", r.point, options);
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.one_sided - r.point / 2), options);
     try out.appendSlice(a, "\nTwo-sided P-values\n");
     try pLine(a, out, "2 * One-sided", r.two_doubled, options);

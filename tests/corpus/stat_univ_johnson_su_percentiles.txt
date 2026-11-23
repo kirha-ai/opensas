@@ -1,0 +1,31 @@
+# corpus assertions
+row Fitted SU Distribution for x
+row Parameters for Johnson SU Distribution
+row Location Theta 0~5e-13
+row Scale Sigma 0.785523
+row Shape Delta 0.832411
+row Shape Gamma 0~5e-13
+row Mean 5.83E-18~5e-13
+row Std Dev 2.285347
+row Skewness 5.83E-18~5e-13
+row Kurtosis 177.1423
+row Mode 0~5e-13
+row Quantiles for SU Distribution
+row 1.0 -4.19606 -6.40074~5e-06
+row 5.0 -2.53649 -2.77890~5e-06
+row 10.0 -1.52989 -1.74704~5e-06
+row 25.0 -0.75870 -0.70847~5e-06
+row 50.0 0.00000 5.83E-18~5e-13
+row 75.0 0.75870 0.70847~5e-06
+row 90.0 1.52989 1.74704~5e-06
+row 95.0 2.53649 2.77890~5e-06
+row 99.0 4.19606 6.40074~5e-06
+row-count 1 Location Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Delta {any}
+row-count 1 Shape Gamma {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Skewness {any}
+row-count 1 Kurtosis {any}
+row-count 1 Mode {any}

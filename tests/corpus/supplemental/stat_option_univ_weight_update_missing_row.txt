@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 COUNT
+stderr-count 1 WARNING: Overflow in statistic calculation for variable x. The affected statistics will be set to missing.\nERROR: A WEIGHT*FREQ value is too large.
+stderr-count 1 A WEIGHT*FREQ value is too large.

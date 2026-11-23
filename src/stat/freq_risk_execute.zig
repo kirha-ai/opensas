@@ -18,7 +18,7 @@ const Builder = struct {
         try self.sections.append(self.a, .{ .title = title, .subtitle = subtitle, .columns = columns, .rows = try self.a.dupe(r.Row, rows), .note = note });
     }
     fn level(self: *Builder, label: []const u8) diag.Error![]const u8 {
-        return std.fmt.allocPrint(self.a, "{d}% {s}", .{ 100 * (1 - self.alpha), label });
+        return std.fmt.allocPrint(self.a, "{s}% {s}", .{ try r.confidence(self.a, self.alpha), label });
     }
     fn intervals(self: *Builder, title: []const u8, subtitle: []const u8, rows: []const r.Row) diag.Error!void {
         const columns = try self.a.alloc([]const u8, 2);
@@ -78,7 +78,7 @@ fn methodName(m: p.Method) []const u8 {
         .jeffreys => "Jeffreys",
         .lr => "Likelihood Ratio",
         .logit => "Logit",
-        .midp => "Exact Mid-p",
+        .midp => "Mid-p",
         .wald => "Wald",
         .wilson => "Wilson",
         .ha => "Hauck-Anderson",
@@ -89,8 +89,9 @@ fn methodName(m: p.Method) []const u8 {
     };
 }
 fn methodLabel(a: A, cl: p.CL, family: p.Family, correct: bool) ![]const u8 {
+    if (cl.method == .mn and family == .difference and !cl.bias) return "Miettinen-Nurminen-Mee";
     const name = if (cl.method == .ac) (if (family == .binomial) "Agresti-Coull" else "Agresti-Caffo") else if (cl.method == .mn and family != .difference) "Score" else methodName(cl.method);
-    return if (cl.correct or (correct and (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe))) std.fmt.allocPrint(a, "{s} (Corrected)", .{name}) else if (cl.method == .mn and !cl.bias) std.fmt.allocPrint(a, "{s} (Uncorrected)", .{name}) else name;
+    return if (cl.correct or (correct and (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe))) std.fmt.allocPrint(a, "{s} (Corrected)", .{name}) else name;
 }
 fn ciRow(label: []const u8, ci: k.Interval) r.Row {
     return .{ .label = label, .values = .{ ci.lower, ci.upper, null, null, null } };
@@ -149,10 +150,12 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         try names.append(b.a, "Equivalence Analysis");
     }
     for (hs.items, names.items) |h, name| {
+        var test_request = req;
+        if (h == .equality and req.method == .newcombe) test_request.method = .wald;
         const variance = req.variance orelse (if (req.family == .binomial and h == .equality) infer.Variance.null_value else .sample);
         const result = (switch (req.family) {
             .binomial => infer.binomial(sample.?, h, variance, b.alpha, req.correct),
-            .difference => infer.difference(table.?, if (req.column == 0) .first else .second, h, switch (req.method) {
+            .difference => infer.difference(table.?, if (req.column == 0) .first else .second, h, switch (test_request.method) {
                 .wald => .wald,
                 .ha => .hauck_anderson,
                 .fm => .farrington_manning,
@@ -169,7 +172,7 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         const point: ?f64 = if (sample) |s| s.proportion() else if (req.family == .difference) (try k.difference(table.?, if (req.column == 0) .first else .second, b.alpha, false)).estimate else (try k.ratio(table.?, if (req.column == 0) .first else .second, .relative_risk, b.alpha, .wald, true)).estimate;
         const modified: ?f64 = if (req.method == .waldmodified) (try k.ratio(table.?, if (req.column == 0) .first else .second, .relative_risk, b.alpha, .wald_modified, true)).estimate else null;
         const title = if (req.family == .binomial) try std.fmt.allocPrint(b.a, "{s} for the {s}", .{ name, family_name }) else try std.fmt.allocPrint(b.a, "{s} for the {s} (Column {d})", .{ name, family_name, req.column + 1 });
-        try b.inference(req, h, result, title, point, modified);
+        try b.inference(test_request, h, result, title, point, modified);
     }
 }
 fn ratioMethod(m: p.Method) k.RatioMethod {
@@ -181,24 +184,74 @@ fn ratioMethod(m: p.Method) k.RatioMethod {
         else => unreachable,
     };
 }
+fn validProportion(value: f64) bool {
+    return value > 0 and value < 1;
+}
+
+fn filterBinomialTests(a: A, d: *diag.Diagnostics, request: *p.Request) !void {
+    const m = request.margin orelse [2]f64{ 0.2, 0.2 };
+    const ni = request.p - m[0];
+    const sup = request.p + m[0];
+    const lower = if (request.paired_margin) sup else ni;
+    const upper = request.p + m[1];
+    const bad_ni = request.noninf and !validProportion(ni);
+    const bad_sup = request.sup and !validProportion(sup);
+    const bad_eq = request.equiv and (!validProportion(lower) or !validProportion(upper));
+    if (!bad_ni and !bad_sup and !bad_eq) return;
+    try d.recoverableErr(0, "For binomial noninferiority, superiority, and equivalence tests, the limits determined by the MARGIN and null P values must be between 0 and 1.", .{});
+    const format = @import("../format.zig");
+    if (bad_ni) {
+        try d.recoverableErr(0, "The binomial noninferiority limit is {s}. A noninferiority test cannot be computed.", .{try format.bestNumW(a, ni, 12)});
+        request.noninf = false;
+    }
+    if (bad_sup) {
+        try d.recoverableErr(0, "The binomial superiority limit is {s}. A superiority test cannot be computed.", .{try format.bestNumW(a, sup, 12)});
+        request.sup = false;
+    }
+    if (bad_eq) {
+        try d.recoverableErr(0, "The binomial equivalence limits are {s} and {s}. An equivalence test cannot be computed.", .{ try format.bestNumW(a, lower, 12), try format.bestNumW(a, upper, 12) });
+        request.equiv = false;
+    }
+}
+
 pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alpha: f64) diag.Error!r.Report {
+    var resolved = options;
+    return executeResolved(a, d, table, &resolved, alpha);
+}
+
+/// The one-way caller shares the resolved event and valid tests with EXACT.
+pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Options, alpha: f64) diag.Error!r.Report {
     if (!options.any()) return .{};
     var b = Builder{ .a = a, .d = d, .alpha = alpha };
+    var risk_columns: [2]?r.RiskColumn = @splat(null);
     var total: f64 = 0;
     for (table.counts) |v| total += v;
     if (table.one_way) {
-        if (options.binomial) |req| {
+        if (options.binomial) |*req| {
             const index: usize = switch (req.level) {
-                .number => |n| if (n > table.row_labels.len) return d.fail(error.ExecError, 0, "PROC FREQ: binomial LEVEL is outside the table", .{}) else n - 1,
+                .number => |n| if (n > table.row_labels.len) {
+                    try d.recoverableErr(0, "The BINOMIAL LEVEL= value is greater than the number of levels for variable {s}.", .{table.name});
+                    options.binomial = null;
+                    return .{};
+                } else n - 1,
                 .value => |v| blk: {
-                    for (table.row_labels, 0..) |label, i| if (std.mem.eql(u8, v, label)) break :blk i;
-                    return d.fail(error.ExecError, 0, "PROC FREQ: binomial LEVEL value not found", .{});
+                    // M9 matches the argument in the width of the longest displayed level.
+                    var width: usize = 0;
+                    for (table.row_labels) |label| width = @max(width, label.len);
+                    const shown = v[0..@min(v.len, width)];
+                    const key = std.mem.trimEnd(u8, shown, " ");
+                    for (table.row_labels, 0..) |label, i| if (std.mem.eql(u8, key, std.mem.trimEnd(u8, label, " "))) break :blk i;
+                    try d.recoverableErr(0, "BINOMIAL LEVEL='{s}' is not found for variable {s}.", .{ shown, table.name });
+                    options.binomial = null;
+                    return .{};
                 },
             };
             if (total <= 0) {
                 try d.report(.note, 0, "No statistics are computed for the table of {s} because it contains no observations with positive weights.", .{table.name});
                 return .{};
             }
+            req.level = .{ .number = index + 1 };
+            try filterBinomialTests(a, d, req);
             const s = k.Binomial{ .success = table.counts[index], .total = total };
             const estimate = try k.proportion(s, alpha, req.correct);
             const subtitle = try std.fmt.allocPrint(a, "{s} = {s}", .{ table.name, table.row_labels[index] });
@@ -219,7 +272,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 try rows.append(a, ciRow(try methodLabel(a, cl, .binomial, req.correct), try binLimits(&b, s, cl, req.correct)));
             }
             if (rows.items.len > 0) try b.intervals("Confidence Limits for the Binomial Proportion", "", rows.items);
-            var test_req = req;
+            var test_req = req.*;
             for (req.cls) |cl| if (cl.method == .wald and cl.correct) {
                 test_req.correct = true;
             };
@@ -238,12 +291,21 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 const s = t.samples(if (col == 0) .first else .second);
                 const all = k.Binomial{ .success = s[0].success + s[1].success, .total = total };
                 const title = try std.fmt.allocPrint(a, "Column {d} Risk Estimates", .{col + 1});
-                try b.estimates(title, "", &.{ estRow("Row 1", try k.proportion(s[0], alpha, req.correct)), estRow("Row 2", try k.proportion(s[1], alpha, req.correct)), estRow("Total", try k.proportion(all, alpha, req.correct)), estRow("Difference", try k.difference(t, if (col == 0) .first else .second, alpha, req.correct)) }, "Difference is (Row 1 - Row 2)");
+                var column = r.RiskColumn{ .estimates = .{
+                    try k.proportion(s[0], alpha, req.correct), try k.proportion(s[1], alpha, req.correct),
+                    try k.proportion(all, alpha, req.correct),  try k.difference(t, if (col == 0) .first else .second, alpha, req.correct),
+                } };
+                try b.estimates(title, "", &.{ estRow("Row 1", column.estimates[0]), estRow("Row 2", column.estimates[1]), estRow("Total", column.estimates[2]), estRow("Difference", column.estimates[3]) }, "Difference is (Row 1 - Row 2)");
                 var exact_counts = true;
                 for (c) |v| if (!integer(v)) {
                     exact_counts = false;
                 };
-                if (exact_counts) try b.intervals(try std.fmt.allocPrint(a, "Column {d} Exact Risk Confidence Limits", .{col + 1}), "", &.{ ciRow("Row 1", try k.binomialLimits(s[0], alpha, .clopper_pearson, false)), ciRow("Row 2", try k.binomialLimits(s[1], alpha, .clopper_pearson, false)), ciRow("Total", try k.binomialLimits(all, alpha, .clopper_pearson, false)) });
+                if (exact_counts) {
+                    for ([_]k.Binomial{ s[0], s[1], all }, &column.binomial_limits) |sample, *limit|
+                        limit.* = try k.binomialLimits(sample, alpha, .clopper_pearson, false);
+                    try b.intervals(try std.fmt.allocPrint(a, "Column {d} Exact Risk Confidence Limits", .{col + 1}), "", &.{ ciRow("Row 1", column.binomial_limits[0].?), ciRow("Row 2", column.binomial_limits[1].?), ciRow("Total", column.binomial_limits[2].?) });
+                }
+                risk_columns[col] = column;
             };
             for (0..@as(usize, if (req.both_columns) 2 else 1)) |col_index| {
                 var current = req;
@@ -319,7 +381,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
         };
     }
     const sample_size: ?f64 = if (b.sections.items.len > 0) total else null;
-    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size };
+    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size, .risk_columns = risk_columns };
 }
 
 test "FEAT-freq-risk public adapter corrected Wald test and fractional exact omission" {
@@ -431,4 +493,29 @@ test "FEAT-freq-risk public high alpha preserves SAS reversed confidence limits"
     };
     try std.testing.expectEqual(@as(usize, 2), found);
     try std.testing.expect(!d.hasErrors());
+}
+
+test "FREQ binomial keeps native table-width event and the valid margin tests" {
+    // M9 BINOMIAL LEVEL='cccX' selects the observed ccc on counts 3,7,9.
+    // P=.1 and MARGIN=.2 suppress NI and equivalence; superiority survives.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const table = Table{ .name = "x", .row_labels = &.{ "a", "bb", "ccc" }, .counts = &.{ 3, 7, 9 }, .one_way = true };
+    var opts = p.Options{ .binomial = .{ .family = .binomial, .level = .{ .value = "cccX" }, .p = 0.1, .margin = .{ 0.2, 0.2 }, .noninf = true, .sup = true, .equiv = true } };
+    const report = try executeResolved(a, &d, table, &opts, 0.05);
+    try std.testing.expectEqual(@as(usize, 3), opts.binomial.?.level.number);
+    try std.testing.expect(!opts.binomial.?.noninf and opts.binomial.?.sup and !opts.binomial.?.equiv);
+    try std.testing.expectEqualStrings("x = ccc", report.sections[0].subtitle);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.4737), report.sections[0].rows[0].values[0].?, 0.00005);
+    try std.testing.expectEqualStrings("Superiority Analysis for the Binomial Proportion", report.sections[report.sections.len - 1].title);
+    try std.testing.expectEqual(@as(usize, 3), d.count());
+    try std.testing.expectEqualStrings("The binomial noninferiority limit is -0.1. A noninferiority test cannot be computed.", d.list.items[1].message);
+
+    opts.binomial.?.level = .{ .value = "long-name" };
+    d = diag.Diagnostics.init(a);
+    const missing = try executeResolved(a, &d, table, &opts, 0.05);
+    try std.testing.expect(opts.binomial == null and missing.sections.len == 0);
+    try std.testing.expectEqualStrings("BINOMIAL LEVEL='lon' is not found for variable x.", d.list.items[0].message);
 }

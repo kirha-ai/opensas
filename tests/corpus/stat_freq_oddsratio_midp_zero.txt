@@ -1,0 +1,3 @@
+# corpus assertions
+row Mid-p 0.0000 4.3485
+row-count 1 Mid-p {any} {any}

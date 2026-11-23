@@ -7,7 +7,17 @@ pub const Method = enum { moments, mle };
 pub const Parameters = struct { theta: f64, lambda: f64, delta: f64, gamma: f64 };
 /// Null means estimated. Caller applies SAS family defaults (SB: theta=0,
 /// lambda=1; SU: all estimated) before calling. Fixed values are never starts.
-pub const Fixed = struct { theta: ?f64 = null, lambda: ?f64 = null, delta: ?f64 = null, gamma: ?f64 = null };
+pub const Fixed = struct {
+    theta: ?f64 = null,
+    lambda: ?f64 = null,
+    delta: ?f64 = null,
+    gamma: ?f64 = null,
+
+    pub fn supportedSbCombination(self: Fixed) bool {
+        if (self.theta != null and self.lambda != null and self.delta != null and self.gamma != null) return true;
+        return self.delta == null and self.gamma == null and (self.theta != null or self.lambda == null);
+    }
+};
 pub const Iteration = struct { start: usize, iteration: usize, parameters: Parameters, log_likelihood: f64 };
 pub const Controls = struct {
     trace_context: ?*anyopaque = null,
@@ -195,7 +205,7 @@ pub fn fit(family: Family, method: Method, x: []const f64, fixed: Fixed, control
     }
     if (x[0] == x[x.len - 1]) return .{ .nonconverged = .{ .reason = .invalid_sample } };
     if (family == .sb) {
-        if (fixed.delta != null or fixed.gamma != null or (fixed.theta == null and fixed.lambda != null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
+        if (!fixed.supportedSbCombination()) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
         if (method == .mle and (fixed.theta == null or fixed.lambda == null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };
     }
     if (family == .su and method == .moments and (fixed.theta != null or fixed.lambda != null or fixed.delta != null or fixed.gamma != null)) return .{ .nonconverged = .{ .reason = .unsupported_combination } };

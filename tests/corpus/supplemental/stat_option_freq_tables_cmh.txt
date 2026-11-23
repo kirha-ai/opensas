@@ -1,0 +1,11 @@
+# corpus assertions
+stdout-count 1 Nonzero Correlation
+stdout-count 1 Row Mean Scores Differ
+stdout-count 1 General Association
+row Cochran-Mantel-Haenszel Statistics (Based on Table Scores)
+row 1 Nonzero Correlation 1~5.1e-05 1.3753~5.1e-05 0.2409~5.1e-05
+row 2 Row Mean Scores Differ 1~5.1e-05 1.3753~5.1e-05 0.2409~5.1e-05
+row 3 General Association 1~5.1e-05 1.3753~5.1e-05 0.2409~5.1e-05
+row-count 1 {any} Nonzero Correlation {any} {any} {any}
+row-count 1 {any} Row Mean Scores Differ {any} {any} {any}
+row-count 1 {any} General Association {any} {any} {any}

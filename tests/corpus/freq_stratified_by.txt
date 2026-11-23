@@ -2,11 +2,8 @@
                                      site=A
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for stratum=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for stratum=1
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -19,13 +16,9 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 4
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for stratum=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for stratum=2
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -72,8 +65,8 @@ Column 1 (c = 1)
 
 Common Risk Difference Tests
 Method           Risk Difference           Z    Pr > |Z|
-Mantel-Haenszel           0.0000      0.0000           .
-Summary Score             0.0000      0.0000           .
+Mantel-Haenszel           0.0000      0.0000      1.0000
+Summary Score             0.0000      0.0000      1.0000
 
 Column 1 (c = 1)
 
@@ -91,11 +84,8 @@ Total Sample Size = 8
                                      site=B
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for stratum=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for stratum=1
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -107,13 +97,9 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 52
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for stratum=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for stratum=2
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq

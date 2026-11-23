@@ -1,0 +1,12 @@
+# corpus assertions
+row Robust Measures of Scale
+row Interquartile Range 2.00000~0 1.48260~5e-06
+row Gini's Mean Difference 18.33333~5e-06 16.24749~5e-06
+row MAD 1.00000~0 1.48260~0
+row Sn 2.38520~0 2.69766~5e-06
+row Qn 2.22190~0 1.93750~5e-06
+row-count 1 Interquartile Range {any} {any}
+row-count 1 Gini's Mean Difference {any} {any}
+row-count 1 MAD {any} {any}
+row-count 1 Sn {any} {any}
+row-count 1 Qn {any} {any}

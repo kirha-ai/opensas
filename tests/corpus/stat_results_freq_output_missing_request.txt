@@ -1,0 +1,4 @@
+# corpus assertions
+next OUTPUT data set exists=0
+stderr-count 1 WARNING: No OUTPUT data set is produced because no statistic options are specified in the corresponding TABLES statement.
+end-listing

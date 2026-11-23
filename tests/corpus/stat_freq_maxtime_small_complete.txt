@@ -1,0 +1,5 @@
+# corpus assertions
+row Table Probability (P) 0.0429
+row Pr <= P 0.2286
+row-count 1 Table Probability (P) {any}
+row-count 1 Pr <= P {any}

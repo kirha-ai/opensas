@@ -5,20 +5,17 @@
 //! fixes each n_ij+n_ji and uses independent Binomial(D_ij,1/2) splits.
 //! Diagonals stay observed; neither symmetry law fixes row/column margins.
 const std = @import("std");
-const math = @import("../functions.zig");
 const dist = @import("freq_exact_distribution.zig");
 pub const Error = dist.Error;
 const Matrix = dist.Matrix;
 const Statistic = dist.Statistic;
 const Budget = dist.Budget;
 const Enumeration = dist.Enumeration;
-fn lf(x: u32) f64 {
-    return math.lgammaOf(@as(f64, @floatFromInt(x)) + 1);
-}
 
 const MultinomialSearch = struct {
     counts: []u32,
     probabilities: []const f64,
+    total: f64,
     statistic: Statistic,
     accumulator: dist.Accumulator,
     budget: Budget,
@@ -42,8 +39,13 @@ const MultinomialSearch = struct {
         }
         var x: u64 = if (k + 1 == self.counts.len) remaining else 0;
         while (x <= remaining) : (x += 1) {
+            const exact = @import("freq_exact.zig");
+            const observed: f64 = @floatFromInt(x);
+            const p = self.probabilities[k];
+            const delta = @mulAdd(f64, -self.total, p, observed);
+            const deviance = exact.poissonDeviance(observed, self.total * p, delta);
             self.counts[k] = @intCast(x);
-            try self.visit(k + 1, remaining - @as(u32, @intCast(x)), log_weight + @as(f64, @floatFromInt(x)) * @log(self.probabilities[k]) - lf(@intCast(x)));
+            try self.visit(k + 1, remaining - @as(u32, @intCast(x)), log_weight - (exact.logFactorialCorrection(@intCast(x)) + deviance));
             if (self.stopped) return;
         }
     }
@@ -62,12 +64,74 @@ pub fn multinomial(a: std.mem.Allocator, observed: []const u32, probabilities: [
     if (n == 0 or @abs(p - 1) > 1e-12) return error.ExecError;
     const value = try statistic.evaluate(statistic.context, .{ .rows = 1, .cols = observed.len, .cells = observed });
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    if (budget.max_tables == 0 or budget.stopped()) return .exhausted;
+    // Distributing N observations among k categories has C(N+k-1,k-1)
+    // outcomes. The previous product is bounded by max_tables (u64) and
+    // N by u32, so the next numerator fits in u128 even at the largest budget.
+    var outcomes: u128 = 1;
+    for (1..observed.len) |j| {
+        outcomes = @divExact(outcomes * (@as(u128, n) + j), j);
+        if (outcomes > budget.max_tables) return .exhausted;
+    }
     const cells = try a.alloc(u32, observed.len);
     defer a.free(cells);
-    var search = MultinomialSearch{ .counts = cells, .probabilities = probabilities, .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
-    try search.visit(0, @intCast(n), 0); // N! is constant and cancels in normalization.
+    var search = MultinomialSearch{ .counts = cells, .probabilities = probabilities, .total = @floatFromInt(n), .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
+    // Combine the multinomial factorial ratio and its cell weights as
+    // log-factorial corrections minus deviances about N*p. Any residual
+    // from a rounded sum(p) is identical for all allocations.
+    try search.visit(0, @intCast(n), @import("freq_exact.zig").logFactorialCorrection(@intCast(n)));
     if (search.stopped) return .exhausted;
     return .{ .complete = try search.accumulator.result(search.count) };
+}
+
+/// Under discordant odds r, X has law Binomial(D,r/(1+r)) and the statistic
+/// is (X-Dp)^2/(Dp(1-p)). Its upper tail consists of two disjoint binomial
+/// tails, cut at the observation and its reflection about Dp (FREQ pp.212–213).
+pub fn mcnemar(upper: u32, lower: u32, null_ratio: f64, budget: Budget) Error!Enumeration {
+    const exact = @import("freq_exact.zig");
+    if (!std.math.isFinite(null_ratio) or null_ratio <= 0) return error.ExecError;
+    const sum = @as(u64, upper) + lower;
+    if (sum == 0 or sum > std.math.maxInt(u32)) return error.ExecError;
+    if (sum + 1 > budget.max_tables or budget.stopped()) return .exhausted;
+    // Express the law using its less likely outcome, so p cannot round to 1.
+    const ratio = if (null_ratio <= 1) null_ratio else 1 / null_ratio;
+    const p = ratio / (1 + ratio);
+    const k = if (null_ratio <= 1) upper else lower;
+    const n: u32 = @intCast(sum);
+    const control = exact.Control{ .context = budget.context, .expired = budget.expired };
+    const observed = (try exact.binomialTailsControlled(k, n, p, control)) orelse return .exhausted;
+    const total: f64 = @floatFromInt(n);
+    const x: f64 = @floatFromInt(k);
+    const delta = @mulAdd(f64, -total, p, x);
+    const mirror = @mulAdd(f64, 2 * total, p, -x);
+    const nearest = @round(mirror);
+    const other_delta = @mulAdd(f64, -total, p, nearest);
+    // Apply the reference enumerator's statistic tie tolerance. Factoring
+    // the difference of squares keeps the test accurate near an integer cut.
+    const difference = (nearest - x) * @mulAdd(f64, -2 * total, p, nearest + x);
+    const scale = @max(total * p * (1 - p), @max(delta * delta, other_delta * other_delta));
+    const tied = @abs(difference) <= dist.statistic_tolerance * scale;
+    const below = delta <= 0;
+    const cut: i64 = @intFromFloat(if (tied) nearest else if (below) @ceil(mirror) else @floor(mirror));
+    const adjacent = @as(i64, k) + @as(i64, if (below) 1 else -1);
+    const opposite = if (below) @max(cut, adjacent) else @min(cut, adjacent);
+    var point = observed.point;
+    var tail = if (below) observed.left else observed.right;
+    if (opposite >= 0 and opposite <= n) {
+        const other = (try exact.binomialTailsControlled(@intCast(opposite), n, p, control)) orelse return .exhausted;
+        tail += if (below) other.right else other.left;
+        if (tied and opposite == cut) point += other.point;
+    }
+    tail = if (opposite == adjacent) 1 else @min(1, tail);
+    point = @min(1, point);
+    return .{ .complete = .{
+        .point = point,
+        .left = @min(1, (1 - tail) + point),
+        .right = tail,
+        .two_sided = tail,
+        .one_sided = tail,
+        .tables = sum + 1,
+    } };
 }
 
 const Pair = struct { upper: usize, lower: usize, total: u32 };
@@ -75,8 +139,8 @@ const PairSearch = struct {
     cells: []u32,
     dimension: usize,
     pairs: []const Pair,
-    log_p: f64,
-    log_q: f64,
+    rare_p: f64,
+    lower_is_rare: bool,
     statistic: Statistic,
     accumulator: dist.Accumulator,
     budget: Budget,
@@ -105,7 +169,8 @@ const PairSearch = struct {
             const down = pair.total - up;
             self.cells[pair.upper] = up;
             self.cells[pair.lower] = down;
-            const log_mass = lf(pair.total) - lf(up) - lf(down) + @as(f64, @floatFromInt(up)) * self.log_p + @as(f64, @floatFromInt(down)) * self.log_q;
+            const rare = if (self.lower_is_rare) down else up;
+            const log_mass = @import("freq_exact.zig").binomialLogPoint(rare, pair.total, self.rare_p);
             try self.visit(k + 1, log_weight + log_mass);
             if (self.stopped) return;
         }
@@ -131,11 +196,19 @@ pub fn symmetry(a: std.mem.Allocator, observed: Matrix, null_ratio: f64, statist
     };
     const value = try statistic.evaluate(statistic.context, observed);
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    if (budget.stopped()) return .exhausted;
+    // Each reflected cell pair independently admits total+1 splits.
+    var outcomes: u64 = 1;
+    for (pairs) |pair| {
+        const splits = @as(u64, pair.total) + 1;
+        if (outcomes > budget.max_tables / splits) return .exhausted;
+        outcomes *= splits;
+    }
     const cells = try a.dupe(u32, observed.cells);
     defer a.free(cells);
-    // Avoid rounding p to 1 for a large but finite discordant odds ratio.
-    const log_p = if (null_ratio < 1) @log(null_ratio) - std.math.log1p(null_ratio) else -std.math.log1p(1 / null_ratio);
-    var search = PairSearch{ .cells = cells, .dimension = observed.rows, .pairs = pairs, .log_p = log_p, .log_q = -std.math.log1p(null_ratio), .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
+    // The less likely split always has representable probability <= 1/2.
+    const odds = if (null_ratio <= 1) null_ratio else 1 / null_ratio;
+    var search = PairSearch{ .cells = cells, .dimension = observed.rows, .pairs = pairs, .rare_p = odds / (1 + odds), .lower_is_rare = null_ratio > 1, .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
     try search.visit(0, 0);
     if (search.stopped) return .exhausted;
     return .{ .complete = try search.accumulator.result(search.count) };
@@ -162,6 +235,93 @@ test "multinomial exact goodness of fit and budget" {
     try t.expect((try multinomial(t.allocator, &.{ 0, 1, 3 }, &.{ 0.2, 0.3, 0.5 }, .{ .evaluate = testPearson }, .{ .max_tables = 14 })) == .exhausted);
 }
 
+test "known reference sizes reject oversized enumerations before evaluating sampled tables" {
+    const t = std.testing;
+    const Calls = struct {
+        n: usize = 0,
+        fn evaluate(raw: ?*const anyopaque, m: Matrix) Error!f64 {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.n += 1;
+            return @floatFromInt(m.cells[0]);
+        }
+    };
+    var calls = Calls{};
+    const statistic = Statistic{ .context = &calls, .evaluate = Calls.evaluate };
+    const ps = [_]f64{ 0.25, 0.25, 0.5 };
+    try t.expect((try multinomial(t.allocator, &.{ 1, 1, 1 }, &ps, statistic, .{ .max_tables = 9 })) == .exhausted);
+    try t.expectEqual(@as(usize, 1), calls.n);
+    try t.expectEqual(@as(u64, 10), (try multinomial(t.allocator, &.{ 1, 1, 1 }, &ps, statistic, .{ .max_tables = 10 })).complete.tables);
+    const m = Matrix{ .rows = 3, .cols = 3, .cells = &.{ 1, 1, 2, 1, 1, 0, 1, 1, 1 } };
+    calls.n = 0;
+    try t.expect((try symmetry(t.allocator, m, 1, statistic, .{ .max_tables = 23 })) == .exhausted);
+    try t.expectEqual(@as(usize, 1), calls.n);
+    try t.expectEqual(@as(u64, 24), (try symmetry(t.allocator, m, 1, statistic, .{ .max_tables = 24 })).complete.tables);
+}
+
+test "McNemar tail and point reductions match integer enumeration at every split" {
+    const t = std.testing;
+    // Count labeled Bernoulli allocations with small integer odds a:b.
+    // The ordering uses integer distance from the rational null expectation.
+    for (1..13) |size| {
+        const n: u32 = @intCast(size);
+        for ([_][2]u32{ .{ 1, 1 }, .{ 1, 2 }, .{ 3, 2 }, .{ 2, 1 }, .{ 1, 4 } }) |odds| {
+            const a = odds[0];
+            const b = odds[1];
+            const denominator: f64 = @floatFromInt(std.math.pow(u64, a + b, n));
+            for (0..size + 1) |observation| {
+                const k: u32 = @intCast(observation);
+                const d = @abs(@as(i64, k * (a + b)) - n * a);
+                var choose: u64 = 1;
+                var point: u64 = 0;
+                var left: u64 = 0;
+                var right: u64 = 0;
+                for (0..size + 1) |i| {
+                    const x: u32 = @intCast(i);
+                    const mass = choose * std.math.pow(u64, a, x) * std.math.pow(u64, b, n - x);
+                    const distance = @abs(@as(i64, x * (a + b)) - n * a);
+                    if (distance == d) point += mass;
+                    if (distance <= d) left += mass;
+                    if (distance >= d) right += mass;
+                    if (x < n) choose = @divExact(choose * (n - x), x + 1);
+                }
+                const ratio = @as(f64, @floatFromInt(a)) / @as(f64, @floatFromInt(b));
+                const result = (try mcnemar(k, n - k, ratio, .{})).complete;
+                try t.expectEqual(size + 1, result.tables);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(point)) / denominator, result.point, 4e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(left)) / denominator, result.left, 4e-14);
+                try t.expectApproxEqRel(@as(f64, @floatFromInt(right)) / denominator, result.right, 4e-14);
+                try t.expectEqual(result.right, result.two_sided);
+                try t.expectEqual(result.right, result.one_sided);
+            }
+        }
+    }
+}
+
+test "McNemar inverse odds, wide boundary probabilities and resources" {
+    const t = std.testing;
+    const n: u32 = 999_998;
+    // The observed zero and all X >= 2 satisfy Q(X) >= Q(0), so the
+    // tail is 1-P(1). The point is P(0). Evaluated at 90 decimal digits.
+    const r = (try mcnemar(0, n, 1e-6, .{})).complete;
+    try t.expectApproxEqRel(@as(f64, 0.63212037489001737380633), r.two_sided, 2e-15);
+    try t.expectApproxEqRel(@as(f64, 0.36788036087070436760240), r.point, 2e-15);
+    try t.expectEqual(r, (try mcnemar(n, 0, 1e6, .{})).complete);
+    try t.expect((try mcnemar(n, 0, 1, .{ .max_tables = n })) == .exhausted);
+    try t.expectError(error.ExecError, mcnemar(0, 0, 1, .{}));
+    try t.expectError(error.ExecError, mcnemar(1, 2, 0, .{}));
+    const Timer = struct {
+        calls: usize = 0,
+        fn expired(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.calls += 1;
+            return self.calls >= 16;
+        }
+    };
+    var timer = Timer{};
+    try t.expect((try mcnemar(500_000, 499_998, 1, .{ .context = &timer, .expired = Timer.expired })) == .exhausted);
+    try t.expectEqual(@as(usize, 16), timer.calls);
+}
+
 test "discordant pair laws discriminate from conditional independence" {
     const t = std.testing;
     const paired = Matrix{ .rows = 2, .cols = 2, .cells = &.{ 4, 0, 3, 1 } };
@@ -186,12 +346,12 @@ test "discordant pair laws discriminate from conditional independence" {
 const MultinomialSampler = struct {
     n: u32,
     probabilities: []const f64,
-    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+    fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *MultinomialSampler = @ptrCast(@alignCast(raw.?));
         @memset(cells, 0);
         for (0..self.n) |i| {
             if (i % 1024 == 0 and budget.stopped()) return false;
-            const u = random.float(f64);
+            const u = random.uniform();
             var cumulative: f64 = 0;
             for (self.probabilities, 0..) |p, j| {
                 cumulative += p;
@@ -218,27 +378,52 @@ pub fn multinomialMonteCarlo(a: std.mem.Allocator, observed: []const u32, probab
     var context = MultinomialSampler{ .n = @intCast(n), .probabilities = probabilities };
     return dist.simulate(a, .{ .rows = 1, .cols = observed.len, .cells = observed }, statistic, options, budget, .{ .context = &context, .draw = MultinomialSampler.draw });
 }
+const SymmetryPair = struct { upper: usize, lower: usize, cdf: []f64 };
 const SymmetrySampler = struct {
     observed: Matrix,
-    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+    pairs: []const SymmetryPair,
+    fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *SymmetrySampler = @ptrCast(@alignCast(raw.?));
         @memcpy(cells, self.observed.cells);
-        const n = self.observed.rows;
-        for (0..n) |i| for (i + 1..n) |j| {
-            const up = i * n + j;
-            const down = j * n + i;
-            const total = cells[up] + cells[down];
-            var successes: u32 = 0;
-            for (0..total) |trial| {
-                if (trial % 1024 == 0 and budget.stopped()) return false;
-                if (random.boolean()) successes += 1;
+        for (self.pairs) |pair| {
+            if (budget.stopped()) return false;
+            const u = random.uniform();
+            var lo: usize = 0;
+            var hi = pair.cdf.len - 1;
+            while (lo < hi) {
+                const mid = lo + (hi - lo) / 2;
+                if (u <= pair.cdf[mid]) hi = mid else lo = mid + 1;
             }
-            cells[up] = successes;
-            cells[down] = total - successes;
-        };
+            cells[pair.upper] = @intCast(lo);
+            cells[pair.lower] = @intCast(pair.cdf.len - 1 - lo);
+        }
         return true;
     }
 };
+
+/// Normalize Binomial(n,1/2) around its mode. The actual mass at zero can
+/// underflow for large pairs; centered weights never overflow.
+fn symmetricBinomialCdf(cdf: []f64, budget: Budget) bool {
+    const n = cdf.len - 1;
+    const mode = n / 2;
+    cdf[mode] = 1;
+    var i = mode;
+    while (i != 0) : (i -= 1) {
+        if (i % 1024 == 0 and budget.stopped()) return false;
+        cdf[i - 1] = cdf[i] * @as(f64, @floatFromInt(i)) / @as(f64, @floatFromInt(n - i + 1));
+    }
+    for (mode..n) |k| {
+        if (k % 1024 == 0 and budget.stopped()) return false;
+        cdf[k + 1] = cdf[k] * @as(f64, @floatFromInt(n - k)) / @as(f64, @floatFromInt(k + 1));
+    }
+    var sum: f64 = 0;
+    for (cdf) |*x| {
+        sum += x.*;
+        x.* = sum;
+    }
+    for (cdf) |*x| x.* /= sum;
+    return true;
+}
 /// MC is documented for SYMMETRY (R>2), not MCNEM. Same independent
 /// complementary-pair Binomial(D_ij,.5) law as exact symmetry enumeration.
 pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Statistic, options: dist.Simulation, budget: Budget) Error!dist.MonteCarlo {
@@ -250,7 +435,25 @@ pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Sta
         total += v;
         if (total > options.max_observations) return .exhausted;
     }
-    var context = SymmetrySampler{ .observed = observed };
+    const count = observed.rows * (observed.rows - 1) / 2;
+    const pairs = try a.alloc(SymmetryPair, count);
+    defer a.free(pairs);
+    var used: usize = 0;
+    defer for (pairs[0..used]) |pair| a.free(pair.cdf);
+    // M9 visits all upper-triangular pairs in row order. Even an empty
+    // pair advances the stream once. The diagonal remains fixed.
+    const timed_out: dist.MonteCarlo = .{ .timed_out = .{ .right_sided = true, .final_seed = dist.Generator.init(options.seed).state } };
+    for (0..observed.rows) |i| for (i + 1..observed.cols) |j| {
+        if (budget.stopped()) return timed_out;
+        const upper = i * observed.cols + j;
+        const lower = j * observed.cols + i;
+        const n = observed.cells[upper] + observed.cells[lower];
+        const cdf = try a.alloc(f64, @as(usize, n) + 1);
+        pairs[used] = .{ .upper = upper, .lower = lower, .cdf = cdf };
+        used += 1;
+        if (!symmetricBinomialCdf(cdf, budget)) return timed_out;
+    };
+    var context = SymmetrySampler{ .observed = observed, .pairs = pairs };
     return dist.simulate(a, observed, statistic, options, budget, .{ .context = &context, .draw = SymmetrySampler.draw });
 }
 
@@ -267,4 +470,23 @@ test "MC multinomial and symmetry retain their distinct reference laws" {
     try t.expectEqualDeep(sym, again);
     try t.expect(@abs(sym.two_sided.p - 0.125) < 6 * @sqrt(@as(f64, 0.125 * 0.875 / 20000.0)));
     try t.expect((try symmetryMonteCarlo(t.allocator, square, callback, options, .{ .max_tables = 1 })) == .exhausted);
+}
+
+test "symmetry row-ordered binomial pair draws preserve follow-on seed even for empty pairs" {
+    const a = std.testing.allocator;
+    const Case = struct { n: usize, cells: []const u32, seed: u64, samples: u64, hits: u64, final_seed: u64 };
+    const cases = [_]Case{
+        .{ .n = 4, .cells = &.{ 2, 4, 0, 2, 2, 1, 3, 0, 3, 1, 1, 1, 0, 2, 1, 3 }, .seed = 293, .samples = 367, .hits = 82, .final_seed = 466985135 },
+        .{ .n = 4, .cells = &.{ 2, 4, 0, 0, 2, 1, 3, 0, 3, 1, 1, 1, 0, 2, 1, 3 }, .seed = 119, .samples = 389, .hits = 103, .final_seed = 1188982109 },
+        .{ .n = 3, .cells = &.{ 2, 0, 1, 0, 1, 4, 5, 2, 1 }, .seed = 39, .samples = 319, .hits = 83, .final_seed = 19471677 },
+    };
+    for (cases) |c| {
+        var counts: [16]f64 = undefined;
+        for (c.cells, 0..) |value, i| counts[i] = @floatFromInt(value);
+        const context = try adapters.Context.init(.{ .rows = c.n, .cols = c.n, .counts = counts[0..c.cells.len] }, .symmetry, null, 1);
+        const callback = adapters.Adapters(dist).statistic(&context);
+        const sampled = (try symmetryMonteCarlo(a, .{ .rows = c.n, .cols = c.n, .cells = c.cells }, callback, .{ .seed = c.seed, .samples = c.samples }, .{})).complete;
+        try std.testing.expectEqual(c.final_seed, sampled.final_seed);
+        try std.testing.expectEqual(@as(f64, @floatFromInt(c.hits)) / @as(f64, @floatFromInt(c.samples)), sampled.two_sided.p);
+    }
 }

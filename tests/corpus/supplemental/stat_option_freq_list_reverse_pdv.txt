@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 Starting variable after ending variable in data set.

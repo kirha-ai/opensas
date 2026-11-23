@@ -1,0 +1,13 @@
+# corpus assertions
+next r c COUNT PERCENT
+next 1 1 3 37.5
+next 1 2 1 12.5
+next 2 2 2 25.0~0
+next 2 3 2 25.0~0
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 _PCHI_ 1 8 Chi-Square
+next 2 DF_PCHI 1 8 DF for Chi-Square
+next 3 P_PCHI 1 8 P-value for Chi-Square
+next _PCHI_ DF_PCHI P_PCHI
+next 5.33333~5e-06 2 0.069483~5e-07
+end-listing

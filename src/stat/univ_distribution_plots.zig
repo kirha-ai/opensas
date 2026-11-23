@@ -16,9 +16,15 @@ const h = proc.UnivariateHelpers;
 const eq = std.ascii.eqlIgnoreCase;
 pub const Statement = struct {
     kind: data.Kind,
+    title: @import("univ_graph_annotations.zig").Title = .default,
+    inset: @import("univ_graph_annotations.zig").Inset = .{},
+    square: bool = false,
+    axes: data.AxisOptions = .{},
+    order: usize = 0,
     variables: [][]const u8,
     curves: parameters.Curves,
     weibull2: bool = false,
+    cdf_overlay: bool = false,
     rankadj: f64 = -0.375,
     nadj: f64 = 0.25,
     rotated: bool = false,
@@ -27,21 +33,55 @@ pub const Statement = struct {
 
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Statement {
     const key = t[i.*].text;
-    const kind: data.Kind = if (eq(key, "cdfplot")) .cdf else if (eq(key, "ppplot")) .pp else if (eq(key, "qqplot")) .qq else if (eq(key, "probplot")) .probability else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid plot statement", .{});
+    const order = i.*;
+    const kind: data.Kind = if (eq(key, "cdfplot") or eq(key, "cdf")) .cdf else if (eq(key, "ppplot")) .pp else if (eq(key, "qqplot")) .qq else if (eq(key, "probplot")) .probability else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid plot statement", .{});
     i.* += 1;
     const names = try variables.parse(a, t, i);
-    var statement: Statement = .{ .kind = kind, .variables = names, .curves = .{ .requests = &.{}, .percents = &.{}, .noprint = true, .midpercents = false }, .probability_scale = if (kind == .cdf or kind == .probability) 100 else 1 };
+    var statement: Statement = .{ .kind = kind, .order = order, .variables = names, .curves = .{ .requests = &.{}, .percents = &.{}, .noprint = true, .midpercents = false }, .probability_scale = if (kind == .cdf or kind == .probability) 100 else 1 };
     if (t[i.*].tag == .slash) i.* += 1 else if (t[i.*].tag != .semicolon and t[i.*].tag != .eof) return d.fail(error.ParseError, 0, "UNIVARIATE: expected plot variable list or slash", .{});
     while (t[i.*].tag != .semicolon and t[i.*].tag != .eof) {
         const option = t[i.*].text;
         if (parameters.family(option) != null or eq(option, "weibull2") or eq(option, "w2")) {
             if (statement.curves.requests.len != 0) return d.fail(error.ParseError, 0, "UNIVARIATE: a plot statement accepts only one distribution family", .{});
+            statement.cdf_overlay = true;
             statement.weibull2 = eq(option, "weibull2") or eq(option, "w2");
             if (statement.weibull2 and (kind == .cdf or kind == .pp)) return d.fail(error.ParseError, 0, "UNIVARIATE: WEIBULL2 is a QQPLOT/PROBPLOT option", .{});
             statement.curves = try parameters.parsePlot(a, d, t, i);
             continue;
         }
         i.* += 1;
+        if (eq(option, "pctlaxis") and kind == .qq) {
+            statement.axes.percentile = true;
+            if (t[i.*].tag == .lparen) {
+                i.* += 1;
+                while (t[i.*].tag != .rparen) {
+                    if (t[i.*].tag != .name) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid PCTLAXIS option", .{});
+                    const field = t[i.*].text;
+                    i.* += 1;
+                    if (eq(field, "grid")) {
+                        statement.axes.grid = true;
+                        continue;
+                    }
+                    if (t[i.*].tag != .eq) return d.fail(error.ParseError, 0, "UNIVARIATE: expected = in PCTLAXIS option", .{});
+                    i.* += 1;
+                    if (eq(field, "label") and t[i.*].tag == .string) {
+                        statement.axes.percentile_label = t[i.*].text;
+                        i.* += 1;
+                    } else if (eq(field, "pctlorder")) {
+                        const ticks = try parameters.numberList(a, d, t, i);
+                        for (ticks, 0..) |v, j| if (v <= 0 or v >= 100 or (j > 0 and v <= ticks[j - 1]))
+                            return d.fail(error.ParseError, 0, "UNIVARIATE: PCTLORDER values must increase between 0 and 100", .{});
+                        statement.axes.percentiles = ticks;
+                    } else return proc.failGap(d, 0, "UNIVARIATE: unsupported PCTLAXIS option {s}", .{field});
+                }
+                i.* += 1;
+            }
+            continue;
+        }
+        if (eq(option, "square") and kind != .cdf) {
+            statement.square = true;
+            continue;
+        }
         if (eq(option, "rotate") and (kind == .qq or kind == .probability)) {
             statement.rotated = true;
             continue;
@@ -51,6 +91,12 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
         if ((eq(option, "rankadj") or eq(option, "nadj")) and (kind == .qq or kind == .probability)) {
             const number = try parameters.numeric(d, t, i);
             if (eq(option, "rankadj")) statement.rankadj = number else statement.nadj = number;
+        } else if (eq(option, "href") or eq(option, "vref")) {
+            const refs = try parameters.numberList(a, d, t, i);
+            if (eq(option, "href")) statement.axes.href = refs else statement.axes.vref = refs;
+        } else if (eq(option, "odstitle")) {
+            statement.title = try @import("univ_graph_annotations.zig").Title.parse(d, t[i.*]);
+            i.* += 1;
         } else if (eq(option, "vscale") and kind == .cdf) {
             if (eq(t[i.*].text, "percent")) statement.probability_scale = 100 else if (eq(t[i.*].text, "proportion")) statement.probability_scale = 1 else return d.fail(error.ParseError, 0, "UNIVARIATE: CDFPLOT VSCALE requires PERCENT or PROPORTION", .{});
             i.* += 1;
@@ -97,7 +143,7 @@ fn curve(d: *diag.Diagnostics, x: []const f64, request: fitting.Request, quantil
 /// Sorted finite values after FREQ expansion, without graphical side effects.
 pub fn calculate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, statement: Statement, request: fitting.Request, variable: @import("../dataset.zig").Column, keys: []const data.Key) diag.Error!data.Plot {
     const quantile = statement.kind == .qq or statement.kind == .probability;
-    const fitted = try curve(d, x, request, quantile);
+    const fitted = if (statement.kind == .cdf and !statement.cdf_overlay) dist.Distribution{ .family = .normal, .p = .{} } else try curve(d, x, request, quantile);
     const points = try a.alloc(data.Point, x.len);
     var reference: ?data.Reference = null;
     if (quantile) {
@@ -126,13 +172,13 @@ pub fn calculate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, sta
                 while (tie_end < x.len and x[tie_end] == v) tie_end += 1;
             }
             const empirical = @as(f64, @floatFromInt(if (statement.kind == .cdf) tie_end else j + 1)) / n;
-            const theoretical = fitted.cdf(v);
+            const theoretical = if (statement.kind == .cdf and !statement.cdf_overlay) std.math.nan(f64) else fitted.cdf(v);
             point.* = .{ .x = if (statement.kind == .cdf) v else theoretical, .y = empirical * statement.probability_scale, .observed = v, .empirical_probability = empirical, .theoretical_probability = theoretical };
         }
         if (statement.kind == .pp and !statement.curves.noline) reference = .{ .intercept = 0, .slope = 1 };
     }
     if (statement.rotated) for (points) |*point| std.mem.swap(f64, &point.x, &point.y);
-    return .{ .kind = statement.kind, .variable = variable, .keys = keys, .distribution = fitted, .points = points, .reference = reference, .rotated = statement.rotated, .probability_scale = statement.probability_scale, .weibull2 = statement.weibull2 };
+    return .{ .kind = statement.kind, .variable = variable, .keys = keys, .distribution = fitted, .points = points, .reference = reference, .rotated = statement.rotated, .probability_scale = statement.probability_scale, .weibull2 = statement.weibull2, .cdf_overlay = statement.cdf_overlay };
 }
 
 const Collector = struct {
@@ -221,6 +267,13 @@ test "UNIVARIATE numerical plots retain graphics guard and required-shape diagno
     try std.testing.expectError(error.ParseError, parse(a, &d, t, &i));
     try std.testing.expect(!diag.gapHit());
     try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "ALPHA") != null);
+    for ([_][]const u8{ "qqplot /pctlaxis(pctlorder=0 50);", "qqplot /pctlaxis(pctlorder=50 50);", "qqplot /pctlaxis(pctlorder=100);" }) |source| {
+        var invalid = diag.Diagnostics.init(a);
+        var index: usize = 0;
+        const tokens = try lex.tokenize(a, source, &invalid);
+        try std.testing.expectError(error.ParseError, parse(a, &invalid, tokens, &index));
+        try std.testing.expect(std.mem.indexOf(u8, invalid.list.items[0].message, "PCTLORDER") != null);
+    }
 }
 
 test "UNIVARIATE QQ fixed shapes avoid unwanted location-scale fits and map SLOPE" {
@@ -274,12 +327,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
         const source = opt.source orelse ds;
         const cols = try variables.resolve(a, cx.diags, source, acols, statement.variables, has_var);
         const sink = cx.univariate_plot_sink orelse return proc.failGap(cx.diags, 0, "UNIVARIATE: {s} graphics require a plot consumer; graphics rendering is not supported", .{@tagName(statement.kind)});
-        for (try univ.bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+        if (!sink.enabled) continue;
+        for (try univ.bySlices(a, ds.rows.items, bcols, opt), 0..) |bs, by_index| {
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const groups = try h.collectGroups(a, &bd, ccols);
-            try univ.orderGroups(a, &bd, groups, ccols, levels, null, opt);
+            univ.orderGroups(groups, ccols, opt);
             const resolved = try @import("univ_plot_groups.zig").resolve(a, cx.diags, &bd, groups, ccols, opt);
             for (try @import("univ_plot_groups.zig").order(a, resolved, opt.key_move)) |index| {
                 const group = resolved.groups[index];
@@ -293,7 +347,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const is_class = j >= bcols.len;
                     const ci = if (is_class) ccols[j - bcols.len] else bcols[j];
                     var column = source.columns.items[ci];
-                    const value = if (is_class) univ.classRepresentative(&bd, opt, null, ccols, ci, group.rep) else group.rep[ci];
+                    const value = if (is_class) univ.classRepresentative(opt, ccols, ci, group.rep) else group.rep[ci];
                     if (h.fmtLevelsFor(levels, ci)) |fl| column.format = fl.spec;
                     const text = if (value == .str) value.str else try @import("../format.zig").apply(a, value, column.format orelse "BEST12.");
                     key.* = .{ .column = column, .value = value, .display = std.mem.trim(u8, text, " "), .class = is_class };
@@ -306,21 +360,56 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     }
                     if (x.items.len == 0) continue;
                     std.mem.sort(f64, x.items, {}, std.sort.asc(f64));
-                    for (statement.curves.requests) |request| {
+                    for (statement.curves.requests, 0..) |request, curve_index| {
                         var actual_request = request;
                         var report: fitting.Report = .{};
                         var trace: fitting.Trace = .{ .allocator = a };
                         actual_request.report = &report;
                         if (request.itprint) actual_request.trace = &trace;
-                        const plot = calculate(a, cx.diags, x.items, statement, actual_request, source.columns.items[ci], keys) catch |err| {
+                        var plot = calculate(a, cx.diags, x.items, statement, actual_request, source.columns.items[ci], keys) catch |err| {
                             if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
                             return err;
                         };
                         if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
+                        plot.statement_index = statement.order;
+                        plot.square = statement.square;
+                        plot.axes = statement.axes;
+                        plot.title = statement.title;
+                        plot.global_title = cx.graph_title;
+                        plot.inset = try statement.inset.box(a, cx.diags, x.items, &.{.{ .curve = plot.distribution }});
+                        plot.by_index = by_index;
+                        plot.curve_index = curve_index;
                         try sink.emit(sink.context, plot);
+                        if (cx.capture) |capture| try publishPoints(a, cx.diags, capture, plot);
                     }
                 }
             }
         }
     }
+}
+
+fn publishPoints(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *@import("../ods.zig").Capture, plot: data.Plot) diag.Error!void {
+    const name: []const u8 = switch (plot.kind) {
+        .pp => "PPPlot",
+        .qq => "QQPlot",
+        else => return,
+    };
+    if (!capture.wants(name)) return;
+    const b = @import("ods_table.zig");
+    var table = b.Builder{ .ds = Dataset.init(a, ""), .prefix = &.{} };
+    const prefix = try a.alloc(Value, plot.keys.len);
+    for (plot.keys, prefix) |key, *cell| {
+        _ = try table.ds.addColumnLike(key.column.name, key.column);
+        cell.* = key.value;
+    }
+    table.prefix = prefix;
+    try table.char("VarName", @max(8, plot.variable.name.len));
+    try table.num(name, null);
+    try table.num(if (plot.kind == .pp) "Theoretical" else "Quantile", "8.5");
+    try table.num(if (plot.kind == .pp) "Empirical" else "Data", null);
+    for (plot.points, 0..) |point, i| {
+        if (!data.visiblePoint(plot, i)) continue;
+        try table.row(&.{ b.s(plot.variable.name), b.n(@floatFromInt(plot.curve_index + 1)), b.n(if (plot.kind == .pp) point.theoretical_probability else point.theoretical_quantile.?), b.n(if (plot.kind == .pp) point.empirical_probability else point.observed) });
+    }
+    try capture.publish(a, d, name, &table.ds);
 }

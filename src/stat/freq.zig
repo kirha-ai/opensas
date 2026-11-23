@@ -11,19 +11,16 @@ const Token = @import("../lexer.zig").Token;
 const ProcCtx = p.ProcCtx;
 const procInput = p.procInput;
 const cmpValue = p.cmpValue;
-const resolveWeightCol = p.resolveWeightCol;
-const byOrderViolation = p.byOrderViolation;
+const var_lists = @import("variable_lists.zig");
+const by_groups = @import("by_groups.zig");
 const bySlices = p.bySlices;
-const appendByLine = p.appendByLine;
 const cellText = p.cellText;
 const VarSpec = p.VarSpec;
 const parseProcFormat = p.parseProcFormat;
 const groupFormats = p.groupFormats;
 const FmtLevels = p.FmtLevels;
 const fmtLevelsFor = p.fmtLevelsFor;
-const fmtRank = p.fmtRank;
 const fmtRawFor = p.fmtRawFor;
-const valStr = p.valStr;
 const pctText = p.pctText;
 const line = p.line;
 const putLeft = p.putLeft;
@@ -32,8 +29,6 @@ const flush = p.flush;
 const skipParen = p.skipParen;
 const tkKw = p.tkKw;
 const atTag = p.atTag;
-const parseProcBy = p.parseProcBy;
-const decodeProcBy = p.decodeProcBy;
 const lastDataset = p.lastDataset;
 const eqi = p.eqi;
 const failGap = p.failGap;
@@ -76,13 +71,14 @@ fn isUnsupportedFreqStat(kw: []const u8) bool {
 
 /// Valid SAS options outside this table ticket (statistics/ODS) fail as gaps.
 fn isFreqTablesGapOption(kw: []const u8) bool {
-    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "printkwts", "contents", "nowarn", "plots" }) |opt|
+    inline for (.{ "alpha", "bin", "cl", "commonriskdiff", "or", "senspec", "contents", "nowarn", "plots" }) |opt|
         if (eqi(kw, opt)) return true;
     return false;
 }
 
 const table_model = @import("freq_table.zig");
 const stat_parse = @import("freq_tests_parse.zig");
+const stat_output = @import("freq_output.zig");
 const stat_exec = @import("freq_tests_execute.zig");
 const stat_kernel = @import("freq_tests.zig");
 const stat_render = @import("freq_tests_render.zig");
@@ -96,7 +92,9 @@ const exact_parse = @import("freq_exact_parse.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
+const graph = @import("freq_plots.zig");
 pub const Request = struct {
+    plots: graph.Options = .{},
     exact: exact_parse.Options = .{},
     fisher: bool = false,
     statistics: stat_parse.Options = .{},
@@ -136,19 +134,18 @@ pub const Request = struct {
     scorout: bool = false,
 };
 const Options = struct {
+    output: ?stat_output.Spec = null,
     exact: ?exact_parse.Options = null,
-    exact_seed: u64 = 1,
     tables_statement_count: usize = 0,
     tests: stat_parse.TestStatement = .{},
     agreement_tests: strat_parse.Tests = .{},
     order: FreqOrder = .internal,
     noprint: bool = false,
     nlevels: bool = false,
-    weight: ?[]const u8 = null,
+    weights: var_lists.NumericRole = .{},
     zeros: bool = false,
     formchar: [3]u8 = .{ '|', '-', '+' },
-    bys: std.ArrayList([]const u8) = .empty,
-    by_seen: bool = false,
+    bys: by_groups.Statements = .{},
     formats: std.ArrayList(VarSpec) = .empty,
     requests: std.ArrayList(Request) = .empty,
 };
@@ -180,6 +177,34 @@ const Parser = struct {
         }
         return first;
     }
+    fn datasetOptions(self: *Parser) diag.Error![]const Token {
+        if (!self.tag(.lparen)) return &.{};
+        const end = skipParen(self.toks, self.i);
+        if (end <= self.i + 1 or self.toks[end - 1].tag != .rparen) return self.fail("unclosed OUT dataset options");
+        const tokens = self.toks[self.i + 1 .. end - 1];
+        if (tokens.len < 2 or tokens[0].tag != .name or tokens[1].tag != .eq) return self.fail("OUT dataset options require name=value");
+        self.i = end;
+        return tokens;
+    }
+    fn output(self: *Parser) diag.Error!stat_output.Spec {
+        self.i += 1;
+        var spec: stat_output.Spec = .{};
+        while (!self.tag(.semicolon) and !self.tag(.eof)) {
+            if (!self.tag(.name)) return self.fail("expected an OUTPUT statistic or OUT=");
+            const tok = self.toks[self.i];
+            self.i += 1;
+            if (tkKw(tok, "out")) {
+                try self.expect(.eq);
+                spec.name = try self.dataset();
+                spec.dataset_options = try self.datasetOptions();
+            } else {
+                const option = std.meta.stringToEnum(stat_output.Option, try std.ascii.allocLowerString(self.a, tok.text)) orelse return failGap(self.diags, tok.line, "PROC FREQ: OUTPUT statistic {s} is not supported", .{tok.text});
+                spec.requested.insert(option);
+            }
+        }
+        if (spec.requested.count() == 0) return failGap(self.diags, 0, "PROC FREQ: OUTPUT without explicit statistics is not supported", .{});
+        return spec;
+    }
     fn eqValue(self: *Parser) diag.Error!Token {
         try self.expect(.eq);
         if (!self.tag(.name) and !self.tag(.number) and !self.tag(.string)) return self.fail("expected an option value");
@@ -188,57 +213,12 @@ const Parser = struct {
         return tok;
     }
     fn variable(self: *Parser, ds: *Dataset) diag.Error![][]const u8 {
-        if (!self.tag(.name)) return self.fail("expected a TABLES variable");
-        const first = self.toks[self.i].text;
-        self.i += 1;
-        var result: std.ArrayList([]const u8) = .empty;
-        if (self.tag(.minus)) {
-            self.i += 1;
-            const descriptor = self.tag(.minus);
-            if (descriptor) self.i += 1;
-            if (!self.tag(.name)) return self.fail("expected end of variable range");
-            const last = self.toks[self.i].text;
-            self.i += 1;
-            if (descriptor) {
-                const start = ds.indexOf(first) orelse return self.fail("range variable not found");
-                const end = ds.indexOf(last) orelse return self.fail("range variable not found");
-                if (end < start) return self.fail("variable range is reversed");
-                for (ds.columns.items[start .. end + 1]) |col| try result.append(self.a, col.name);
-            } else {
-                var split = first.len;
-                while (split > 0 and std.ascii.isDigit(first[split - 1])) split -= 1;
-                var endsplit = last.len;
-                while (endsplit > 0 and std.ascii.isDigit(last[endsplit - 1])) endsplit -= 1;
-                if (split == first.len or endsplit == last.len or !eqi(first[0..split], last[0..endsplit])) return self.fail("numbered ranges require the same variable prefix");
-                const lo = std.fmt.parseInt(usize, first[split..], 10) catch return self.fail("invalid variable range");
-                const hi = std.fmt.parseInt(usize, last[endsplit..], 10) catch return self.fail("invalid variable range");
-                if (hi < lo or hi - lo > ds.columns.items.len) return self.fail("invalid variable range");
-                for (lo..hi + 1) |n| {
-                    const digits = try std.fmt.allocPrint(self.a, "{d}", .{n});
-                    const width = if (first[split] == '0') @max(digits.len, first.len - split) else digits.len;
-                    const suffix = try self.a.alloc(u8, width);
-                    @memset(suffix, '0');
-                    @memcpy(suffix[width - digits.len ..], digits);
-                    const name = try std.fmt.allocPrint(self.a, "{s}{s}", .{ first[0..split], suffix });
-                    const ci = ds.indexOf(name) orelse return self.fail("range variable not found");
-                    try result.append(self.a, ds.columns.items[ci].name);
-                }
-            }
-        } else if (self.tag(.colon)) {
-            self.i += 1;
-            for (ds.columns.items) |col| if (col.name.len >= first.len and eqi(col.name[0..first.len], first)) {
-                try result.append(self.a, col.name);
-            };
-        } else if (eqi(first, "_all_") or eqi(first, "_numeric_") or (eqi(first, "_character_") or eqi(first, "_char_"))) {
-            for (ds.columns.items) |col| if (eqi(first, "_all_") or (eqi(first, "_numeric_") and col.type == .num) or ((eqi(first, "_character_") or eqi(first, "_char_")) and col.type == .char)) {
-                try result.append(self.a, col.name);
-            };
-        } else {
-            const ci = ds.indexOf(first) orelse return self.diags.fail(error.ParseError, self.toks[self.i - 1].line, "PROC FREQ: TABLES variable {s} not found", .{first});
-            try result.append(self.a, ds.columns.items[ci].name);
+        const names = try var_lists.next(self.a, ds, self.toks, &self.i, self.diags);
+        for (names) |*name| {
+            const ci = ds.indexOf(name.*) orelse return self.diags.fail(error.ParseError, self.toks[self.i - 1].line, "PROC FREQ: TABLES variable {s} not found", .{name.*});
+            name.* = ds.columns.items[ci].name;
         }
-        if (result.items.len == 0) return self.fail("variable list matches no columns");
-        return result.items;
+        return names;
     }
     fn factor(self: *Parser, ds: *Dataset) diag.Error![][]const u8 {
         if (!self.tag(.lparen)) return self.variable(ds);
@@ -249,7 +229,6 @@ const Parser = struct {
             try names.appendSlice(self.a, try self.variable(ds));
         }
         self.i += 1;
-        if (names.items.len == 0) return self.fail("empty TABLES variable list");
         return names.items;
     }
     fn tables(self: *Parser, ds: *Dataset, opts: *Options) diag.Error!void {
@@ -261,6 +240,10 @@ const Parser = struct {
             try expanded.append(self.a, &.{});
             while (true) {
                 const names = try self.factor(ds);
+                if (names.len == 0) {
+                    if (combos.items.len > 0) return self.diags.fail(error.ParseError, 0, "Variable number 0 is not on file {s}.", .{try var_lists.datasetName(self.a, ds)});
+                    return self.diags.fail(error.ParseError, 0, "A specification in the TABLES statement produces an empty variable list.", .{});
+                }
                 var next: std.ArrayList([]const []const u8) = .empty;
                 // SAS varies the first parenthesized factor fastest (Table 3.8).
                 for (names) |name| for (expanded.items) |previous| {
@@ -309,6 +292,10 @@ const Parser = struct {
                 if (req.stratified.cmh == 0) req.stratified.cmh = 3;
                 continue;
             }
+            if (self.kw("plots")) {
+                req.plots = try graph.parse(self.a, self.diags, self.toks, &self.i);
+                continue;
+            }
             if (try risk_parse.consumeTableOption(self.a, self.toks, &self.i, &req.risk, self.diags)) continue;
             if (try stat_parse.consumeTableOption(self.a, self.toks, &self.i, &req.statistics, self.diags)) continue;
             if (!self.tag(.name)) return self.fail("unexpected token in TABLES options");
@@ -338,13 +325,7 @@ const Parser = struct {
             if (eqi(name, "out")) {
                 try self.expect(.eq);
                 req.out_name = try self.dataset();
-                if (self.tag(.lparen)) {
-                    const end = skipParen(self.toks, self.i);
-                    if (end <= self.i + 1 or self.toks[end - 1].tag != .rparen) return self.fail("unclosed OUT dataset options");
-                    req.out_opts = self.toks[self.i + 1 .. end - 1];
-                    if (req.out_opts.len < 2 or req.out_opts[0].tag != .name or req.out_opts[1].tag != .eq) return self.fail("OUT dataset options require name=value");
-                    self.i = end;
-                }
+                req.out_opts = try self.datasetOptions();
             } else if (eqi(name, "scores")) {
                 const v = try self.eqValue();
                 req.scores = std.meta.stringToEnum(Score, try std.ascii.allocLowerString(self.a, v.text)) orelse return self.fail("invalid SCORES value");
@@ -441,7 +422,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         try cx.diags.report(.err, 0, "File {s} does not exist", .{input_name orelse "_last_"});
         return;
     };
-    const input = try procInput(a, raw, toks, cx.diags);
+    var input = try procInput(a, raw, toks, cx.diags);
     while (!parser.tag(.eof) and !parser.kw("run")) {
         if (parser.tag(.semicolon)) {
             parser.i += 1; // Null statement: no request or TEST implication.
@@ -452,15 +433,12 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             continue;
         }
         if (parser.kw("by")) {
-            opts.by_seen = true;
-            opts.bys.clearRetainingCapacity();
-            try parseProcBy(a, cx.diags, toks, &parser.i, &opts.bys);
+            try opts.bys.read(a, toks, &parser.i);
         } else if (parser.kw("weight")) {
             parser.i += 1;
-            if (!parser.tag(.name)) return parser.fail("WEIGHT requires a variable");
-            opts.weight = toks[parser.i].text;
+            const name = try var_lists.roleVariable(toks, parser.i, true, cx.diags);
+            try opts.weights.add(a, input, name, cx.diags);
             parser.i += 1;
-            opts.zeros = false;
             if (parser.tag(.slash)) {
                 parser.i += 1;
                 if (!parser.kw("zeros")) return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ: WEIGHT option {s} is not supported — expected ZEROS", .{toks[parser.i].text});
@@ -486,19 +464,29 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             parser.i += 1;
             opts.exact = try exact_parse.statement(a, toks, &parser.i, cx.diags);
             continue;
-        } else if (parser.kw("output")) return failGap(cx.diags, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text}) else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
+        } else if (parser.kw("output")) {
+            if (opts.output != null) return parser.fail("Only one OUTPUT statement is allowed.");
+            opts.output = try parser.output();
+        } else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
+    // A TABLES statement can expand to several requests. SAS diagnoses each
+    // final specification, including all invalid RISKDIFF/RELRISK nulls.
+    const risk_messages = cx.diags.count();
+    for (opts.requests.items) |req| try req.risk.validateTests(cx.diags);
+    if (cx.diags.errSince(risk_messages)) return error.ParseError;
+    if (opts.output != null and opts.tables_statement_count == 0) return parser.fail("OUTPUT requires a TABLES statement.");
     try opts.tests.finish(opts.tables_statement_count, cx.diags);
+    var analysis = AnalysisState{};
     if (opts.exact) |e| {
         if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
-        opts.exact_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
+        analysis.simulation_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
     }
-    if (opts.requests.items.len == 0) for (input.columns.items) |col| {
-        if (opts.weight) |w| if (eqi(w, col.name)) continue;
-        const bylist = try decodeProcBy(a, opts.bys.items);
+    const pb = try opts.bys.resolve(a, input, cx.diags);
+    if (opts.requests.items.len == 0) for (input.columns.items, 0..) |col, ci| {
+        if (opts.weights.contains(ci)) continue;
         var isby = false;
-        for (bylist.names) |bn| if (eqi(bn, col.name)) {
+        for (pb.names) |bn| if (eqi(bn, col.name)) {
             isby = true;
             break;
         };
@@ -542,21 +530,29 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             _ = stat_kernel.expectedFactor(values.len, 1, .{ .proportions = values }) catch return cx.diags.fail(error.ExecError, 0, "PROC FREQ: the sum of the TESTP probabilities must equal one or 100 percent", .{});
         }
     }
-    const wc = try resolveWeightCol(input, opts.weight, cx.diags, 0);
-    if (wc) |ci| if (input.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, 0, "PROC FREQ: WEIGHT variable {s} must be numeric", .{input.columns.items[ci].name});
-    const pb = try decodeProcBy(a, opts.bys.items);
-    if (opts.by_seen and pb.names.len == 0) return parser.fail("BY requires at least one variable");
+    const wc = opts.weights.first();
     const bc = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |bn, k| bc[k] = input.indexOf(bn) orelse return cx.diags.fail(error.ParseError, 0, "PROC FREQ: BY variable {s} not in {s}", .{ bn, input.name });
-    if (!pb.notsorted) for (1..@max(1, input.rows.items.len)) |i| {
-        if (byOrderViolation(input.rows.items[i], input.rows.items[i - 1], bc, pb.desc, input.sortseq_linguistic orelse io.global_sortseq_linguistic)) |j| return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ input.name, if (pb.desc[j]) "descending" else "ascending" });
-    };
-    const slices = try bySlices(a, input.rows.items, bc);
+    if (opts.requests.items.len == 0)
+        return cx.diags.fail(error.ParseError, 0, "No variables available for analysis after specification of BY variables and WEIGHT variable.", .{});
+    if (opts.noprint and opts.output == null) {
+        for (opts.requests.items) |req| {
+            if (req.out_name != null) break;
+        } else {
+            try cx.diags.report(.note, 0, "Processing will terminate because there are no valid requests for displayed output or output data sets.", .{});
+            return;
+        }
+    }
+    input = try by_groups.withFormats(a, input, opts.formats.items);
+    const slices = try by_groups.checkedSlices(a, input, bc, pb.desc, pb.notsorted, cx.diags);
     const groups = if (slices.len == 0) try bySlices(a, input.rows.items, &.{}) else slices;
     const outputs = try a.alloc(?*Dataset, opts.requests.items.len);
     @memset(outputs, null);
+    const stats_writer = if (opts.output) |spec| try stat_output.create(cx, spec, opts.requests.items[opts.requests.items.len - 1], input, bc) else null;
     if (input.rows.items.len == 0) try cx.diags.report(.note, 0, "No observations in data set {s}.", .{input.name});
-    for (groups) |group| {
+    for (groups, 1..) |group, by_number| {
+        const messages = cx.diags.count();
+        const noted_newcombe = analysis.noted_newcombe;
         var view = input.*;
         view.rows = .empty;
         for (group.rows) |row| if (weightKeepsRow(row, wc, opts.zeros)) {
@@ -568,9 +564,6 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         var vars: std.ArrayList([]const u8) = .empty;
         for (opts.requests.items) |req| for (req.vars) |vn| try vars.append(a, vn);
         view.columns = .{ .items = try a.dupe(@import("../dataset.zig").Column, input.columns.items), .capacity = input.columns.items.len };
-        for (opts.formats.items) |spec| if (view.indexOf(spec.name)) |ci| {
-            view.columns.items[ci].format = if (spec.spec.len == 0) null else spec.spec;
-        };
         var analysis_wc = wc;
         if (wc) |ci| if (view.columns.items[ci].format != null) {
             var selected = false;
@@ -588,15 +581,15 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
         };
-        const ds = try groupFormats(a, &view, vars.items, &.{}, &fl, cx.diags, true);
+        const ds = try groupFormats(a, &view, vars.items, &.{}, &fl, cx.diags, .freq);
         var negative = false;
         for (view.rows.items) |row| if (rowWeight(row, wc) < 0) {
             negative = true;
             break;
         };
         if (negative) try cx.diags.report(.note, 0, "Percentages and other statistics are not computed because there are negative weights. Plots are not produced.", .{});
-        if (any and !opts.noprint) if (group.rep) |row| try formattedByLine(a, out, &view, row, bc);
-        if (any and opts.nlevels and !opts.noprint) try renderLevels(a, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items);
+        if (any and !opts.noprint) if (group.rep) |row| try by_groups.appendLine(a, out, &view, row, bc);
+        if (any and opts.nlevels and !opts.noprint) try renderLevels(cx, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items, &view, bc, group.rep);
         var rendered = any and opts.nlevels and !opts.noprint;
         for (opts.requests.items, 0..) |req, k| {
             const cols = try a.alloc(usize, req.vars.len);
@@ -605,7 +598,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             var tab = try computeTable(a, ds, cols, analysis_wc, opts.zeros, req.missing, opts.order, fl.items);
             tab.score_kind = req.scores;
             if (any and !opts.noprint and !req.noprint) if (cx.capture) |capture|
-                try @import("ods_freq.zig").publish(a, cx.diags, capture, &view, bc, group.rep, &tab, req);
+                try @import("ods_freq.zig").publish(a, cx.diags, capture, &view, bc, group.rep, &tab, req, opts.zeros);
             if (req.out_name) |name| {
                 if (outputs[k] == null) for (cols, 0..) |ci, j| if (std.mem.indexOfScalar(usize, cols[0..j], ci) != null) try cx.diags.report(.warning, 0, "Variable {s} already exists on file {s}.", .{ ds.columns.items[ci].name, name });
                 const part = try tableOutput(a, &view, ds, cols, fl.items, &tab, req, opts.zeros);
@@ -632,10 +625,19 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
-            if (hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
+            if (!opts.noprint and (cx.graphics != null or req.plots.plots.len != 0)) {
+                var by_text: std.ArrayList(u8) = .empty;
+                if (bc.len > 0) if (group.rep) |row| try by_groups.appendLine(a, &by_text, &view, row, bc);
+                try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"), if (bc.len > 0) by_number else null, k + 1);
+            }
+            const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
+            if (opts.noprint and writer == null) continue;
+            const requested = hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0;
+            const sufficient_levels = !requested or tab.negative or try hasInferenceLevels(&tab, cx.diags);
+            if ((writer != null or requested) and sufficient_levels) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
-                try analyzeTable(cx, out, &tab, req, opts, stratified);
+                try analyzeTable(cx, out, &tab, req, opts, &analysis, stratified, writer, &view, bc, group.rep);
                 if (!opts.noprint) rendered = true;
             } else if (!opts.noprint and !req.noprint) {
                 if (rendered) try out.append(a, '\n');
@@ -643,15 +645,19 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 rendered = true;
             }
         }
+        if (bc.len > 0 and (cx.diags.errSince(messages) or noted_newcombe != analysis.noted_newcombe)) if (group.rep) |row|
+            try by_groups.reportNote(a, cx.diags, &view, row, bc);
     }
     for (opts.requests.items, 0..) |req, k| if (outputs[k]) |ds| {
         if (req.out_opts.len > 0) try io.applyDatasetOptions(a, ds, req.out_opts, cx.diags, false);
         try cx.lib.put(req.out_name.?, ds);
     };
+    if (stats_writer) |writer| {
+        try writer.finish();
+        try io.applyDatasetOptions(a, writer.ds, opts.output.?.dataset_options, cx.diags, false);
+        try cx.lib.put(writer.ds.name, writer.ds);
+    }
 }
-
-/// One-pass weighted level aggregation reused by table construction and NLEVELS.
-const LevelCount = struct { v: Value, w: f64 };
 
 /// Hash/eql on a single FREQ cell, kept consistent with `cmpValue == .eq`:
 /// chars hash right-trimmed (cmpStr blank-pads), numerics canonicalize -0/+0
@@ -678,51 +684,95 @@ const LevelValueCtx = struct {
     }
 };
 
-/// PERF-freqoneway: ONE pass over the rows — each kept cell is hashed once, a
-/// new level appended on first sight, its weighted count accumulated (the sum
-/// catWeight used to rescan the whole table for). The old distinctSorted
-/// (linear dedup scan per row) + per-level catWeight (full rescan per level)
-/// was O(N·L) — measured 5.2× time per 2× N. The count for a level adds the
-/// same row weights in the same row order as catWeight did, and the sorts are
-/// the old comparators verbatim, so output (totals/cumulatives included) is
-/// byte-identical.
-fn oneWayLevels(arena: std.mem.Allocator, ds: *Dataset, col: usize, keep_missing: bool, order: FreqOrder, wcol: ?usize, zeros: bool, fl: ?FmtLevels) ![]LevelCount {
-    var list: std.ArrayList(LevelCount) = .empty;
-    var idx: std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage) = .empty;
-    for (ds.rows.items) |r| {
-        const v = r[col];
-        if (!keep_missing and freqLevelMissing(v, fl)) continue; // missing is not a category (unless `/ missing`)
-        if (!weightKeepsRow(r, wcol, zeros)) continue; // zero-weight obs form no level by default (BUG-freqweightorder F2)
-        const gop = try idx.getOrPut(arena, v);
-        if (!gop.found_existing) {
-            gop.value_ptr.* = list.items.len;
-            try list.append(arena, .{ .v = v, .w = 0 });
+const LevelIndex = std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage);
+
+const CountedLevel = struct {
+    level: table_model.Level,
+    display: Value,
+    original_index: usize,
+
+    fn less(order: FreqOrder, left: CountedLevel, right: CountedLevel) bool {
+        const l = left.level;
+        const r = right.level;
+        if (l.missing != r.missing) return l.missing;
+        if (l.missing) {
+            if (l.value == .num and r.value == .num)
+                return Value.missingChar(l.value.num) < Value.missingChar(r.value.num);
+            return cmpValue(l.value, r.value) == .lt;
         }
-        list.items[gop.value_ptr.*].w += rowWeight(r, wcol);
+        return switch (order) {
+            .data => left.original_index < right.original_index,
+            .internal => cmpValue(l.raw, r.raw) == .lt,
+            .formatted => cmpValue(left.display, right.display) == .lt,
+            .freq => if (l.frequency != r.frequency) l.frequency > r.frequency else cmpValue(left.display, right.display) == .lt,
+        };
     }
-    const cats = list.items;
-    switch (order) {
-        .data => {}, // keep first-appearance order — no sort
-        .internal, .formatted => std.mem.sort(LevelCount, cats, {}, struct {
-            fn less(_: void, l: LevelCount, r: LevelCount) bool {
-                return cmpValue(l.v, r.v) == .lt;
+};
+
+const ColumnLevels = struct {
+    levels: []table_model.Level,
+    by_value: LevelIndex,
+};
+
+fn needsDefaultLevelFormat(ds: *Dataset, col: usize, order: FreqOrder) bool {
+    if (ds.columns.items[col].type != .num) return false;
+    if (order == .formatted or order == .freq) return true;
+    // Small whole numbers have distinct BEST12. fields. Internal and input
+    // order need no formatted keys when the entire column has this property.
+    for (ds.rows.items) |row| {
+        const x = row[col].num;
+        if (!std.math.isNan(x) and (x != @trunc(x) or @abs(x) >= 1e11)) return true;
+    }
+    return false;
+}
+
+/// Accumulate weights in input order. A numerical column with no assigned
+/// format uses BEST12. for level identity and displayed order in SAS 9.4M9.
+/// Keep the lowest observed raw value for scores and output. Cache every raw
+/// key so repeated observations need neither formatting nor another scan.
+fn columnLevels(a: std.mem.Allocator, ds: *Dataset, col: usize, order: FreqOrder, wc: ?usize, zeros: bool, fl: ?FmtLevels) !ColumnLevels {
+    var counts: std.ArrayList(CountedLevel) = .empty;
+    var by_value: LevelIndex = .empty;
+    var by_default_display: std.StringHashMapUnmanaged(usize) = .empty;
+    const default_format = needsDefaultLevelFormat(ds, col, order);
+    for (ds.rows.items) |row| {
+        if (!weightKeepsRow(row, wc, zeros)) continue;
+        const value = row[col];
+        const entry = try by_value.getOrPut(a, value);
+        if (!entry.found_existing) {
+            const raw = if (fl) |f| fmtRawFor(f, value.str) orelse value else value;
+            var display = value;
+            var index = counts.items.len;
+            if (default_format and !isMissing(value)) {
+                display = .{ .str = try format.apply(a, value, "BEST12.") };
+                const formatted = try by_default_display.getOrPut(a, display.str);
+                if (formatted.found_existing) {
+                    index = formatted.value_ptr.*;
+                    if (cmpValue(raw, counts.items[index].level.raw) == .lt) {
+                        counts.items[index].level.value = value;
+                        counts.items[index].level.raw = raw;
+                    }
+                } else formatted.value_ptr.* = index;
             }
-        }.less),
-        .freq => {
-            // descending weighted count; ties break by ascending value (SAS), or
-            // by raw-value rank for a VALUE.-format group (BUG-freqfmtorderfreqtie).
-            const FreqCtx = struct {
-                fl: ?FmtLevels,
-                fn less(self: @This(), l: LevelCount, r: LevelCount) bool {
-                    if (l.w != r.w) return l.w > r.w;
-                    if (self.fl) |f| return fmtRank(f, valStr(l.v)) < fmtRank(f, valStr(r.v));
-                    return cmpValue(l.v, r.v) == .lt;
-                }
-            };
-            std.mem.sort(LevelCount, cats, FreqCtx{ .fl = fl }, FreqCtx.less);
-        },
+            if (index == counts.items.len) try counts.append(a, .{
+                .level = .{ .value = value, .raw = raw, .missing = isMissing(raw), .frequency = 0 },
+                .display = display,
+                .original_index = index,
+            });
+            entry.value_ptr.* = index;
+        }
+        counts.items[entry.value_ptr.*].level.frequency += rowWeight(row, wc);
     }
-    return cats;
+    std.mem.sort(CountedLevel, counts.items, order, CountedLevel.less);
+    const levels = try a.alloc(table_model.Level, counts.items.len);
+    const sorted_index = try a.alloc(usize, counts.items.len);
+    for (counts.items, 0..) |counted, i| {
+        levels[i] = counted.level;
+        sorted_index[counted.original_index] = i;
+    }
+    var iter = by_value.valueIterator();
+    while (iter.next()) |index| index.* = sorted_index[index.*];
+    return .{ .levels = levels, .by_value = by_value };
 }
 
 /// Signed FREQ weight; missing weights are removed before counting.
@@ -755,22 +805,7 @@ fn appendFreqMissing(arena: std.mem.Allocator, out: *std.ArrayList(u8), miss: f6
 
 // ── freq helpers ────────────────────────────────────────────────────────────
 
-fn freqLevelMissing(v: Value, fl: ?FmtLevels) bool {
-    if (fl) |f| if (v == .str) {
-        return isMissing(fmtRawFor(f, v.str) orelse v);
-    };
-    return isMissing(v);
-}
-
-/// PROC FREQ level ordering (ORDER= option). INTERNAL → ascending value (the
-/// default); FORMATTED → ascending FORMATTED (decode) value — for a
-/// format-grouped col the cells already hold the label text, so the ascending
-/// sort IS the label order (BUG-freqweightorder F1); FREQ → descending count;
-/// DATA → first-appearance order.
-/// ponytail: FORMATTED on an ungrouped (no-format) numeric col sorts by value,
-/// not by right-justified BEST12 text — differs from SAS only for negative or
-/// fractional values with no format; switch the comparator if a golden needs
-/// the text sort.
+/// ORDER=FREQ uses descending weighted counts and formatted values for ties.
 pub const FreqOrder = enum { internal, freq, data, formatted };
 
 /// FREQ level membership under a WEIGHT: SAS drops an obs whose weight is
@@ -787,33 +822,13 @@ fn weightKeepsRow(r: []const Value, wcol: ?usize, zeros: bool) bool {
 // ── Table computation and output datasets ───────────────────────────────────
 pub fn computeTable(a: std.mem.Allocator, ds: *Dataset, cols: []const usize, wc: ?usize, zeros: bool, missing: bool, order: FreqOrder, formats: []const FmtLevels) !Table {
     const dims = try a.alloc(table_model.Dimension, cols.len);
-    const maps = try a.alloc(std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage), cols.len);
+    const maps = try a.alloc(LevelIndex, cols.len);
     @memset(maps, .empty);
     for (cols, 0..) |ci, d| {
         const fl = fmtLevelsFor(formats, ci);
-        const cats = try oneWayLevels(a, ds, ci, true, order, wc, zeros, fl);
-        const Ctx = struct {
-            order: FreqOrder,
-            fl: ?FmtLevels,
-            fn less(c: @This(), l: LevelCount, r: LevelCount) bool {
-                const lm = freqLevelMissing(l.v, c.fl);
-                const rm = freqLevelMissing(r.v, c.fl);
-                if (lm != rm) return lm;
-                const lv = if (c.fl) |f| fmtRawFor(f, l.v.str) orelse l.v else l.v;
-                const rv = if (c.fl) |f| fmtRawFor(f, r.v.str) orelse r.v else r.v;
-                if (lm) return cmpValue(lv, rv) == .lt;
-                if (c.order == .data) return false;
-                if (c.order == .freq and l.w != r.w) return l.w > r.w;
-                return cmpValue(if (c.order == .formatted) l.v else lv, if (c.order == .formatted) r.v else rv) == .lt;
-            }
-        };
-        std.mem.sort(LevelCount, cats, Ctx{ .order = order, .fl = fl }, Ctx.less);
-        const levels = try a.alloc(table_model.Level, cats.len);
-        for (cats, 0..) |cat, k| {
-            levels[k] = .{ .value = cat.v, .raw = if (fl) |f| fmtRawFor(f, cat.v.str) orelse cat.v else cat.v, .missing = freqLevelMissing(cat.v, fl), .frequency = cat.w };
-            try maps[d].put(a, cat.v, k);
-        }
-        dims[d] = .{ .name = ds.columns.items[ci].name, .label = ds.columns.items[ci].label, .levels = levels };
+        const counted = try columnLevels(a, ds, ci, order, wc, zeros, fl);
+        maps[d] = counted.by_value;
+        dims[d] = .{ .name = ds.columns.items[ci].name, .label = ds.columns.items[ci].label, .levels = counted.levels };
     }
     var tab = try Table.init(a, dims, missing);
     for (ds.rows.items) |row| {
@@ -823,13 +838,6 @@ pub fn computeTable(a: std.mem.Allocator, ds: *Dataset, cols: []const usize, wc:
         try tab.add(a, key, rowWeight(row, wc));
     }
     return tab;
-}
-fn formattedByLine(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, cols: []const usize) !void {
-    const display = try a.dupe(Value, row);
-    for (cols) |ci| if (ds.columns.items[ci].format) |fmt| {
-        display[ci] = .{ .str = std.mem.trim(u8, try format.apply(a, row[ci], fmt), " ") };
-    };
-    try appendByLine(a, out, ds, display, cols);
 }
 fn uniqueColumns(a: std.mem.Allocator, cols: []const usize) ![]usize {
     var result: std.ArrayList(usize) = .empty;
@@ -911,7 +919,8 @@ fn tableOutput(a: std.mem.Allocator, raw: *Dataset, ds: *Dataset, cols: []const 
 }
 
 // ── Listing rendering ──────────────────────────────────────────────────────
-fn renderLevels(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, order: FreqOrder, wc: ?usize, zeros: bool, formats: []const FmtLevels) !void {
+fn renderLevels(cx: ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, order: FreqOrder, wc: ?usize, zeros: bool, formats: []const FmtLevels, source: *const Dataset, by: []const usize, rep: ?[]const Value) !void {
+    const a = cx.arena;
     var names: std.ArrayList([]const u8) = .empty;
     var totals: std.ArrayList(usize) = .empty;
     var misses: std.ArrayList(usize) = .empty;
@@ -929,9 +938,9 @@ fn renderLevels(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, var
         if (seen) continue;
         const ci = ds.indexOf(vn).?;
         const fl = fmtLevelsFor(formats, ci);
-        const levels = try oneWayLevels(a, ds, ci, true, order, wc, zeros, fl);
+        const levels = (try columnLevels(a, ds, ci, order, wc, zeros, fl)).levels;
         var nmiss: usize = 0;
-        for (levels) |level_| if (freqLevelMissing(level_.v, fl)) {
+        for (levels) |level| if (level.missing) {
             nmiss += 1;
         };
         try names.append(a, vn);
@@ -939,6 +948,7 @@ fn renderLevels(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, var
         try misses.append(a, nmiss);
         any_missing = any_missing or nmiss > 0;
     }
+    if (cx.capture) |capture| try @import("ods_freq_tests.zig").levels(a, cx.diags, capture, source, by, rep, names.items, totals.items, misses.items);
     try out.appendSlice(a, NLEVELS_TITLE);
     try out.append(a, '\n');
     const title = try line(a, 64);
@@ -990,7 +1000,7 @@ fn renderTable(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: 
         number += 1;
         if (number > 1) try out.append(a, '\n');
         const slice = try tab.slice(a, stratum);
-        if (req.crosslist) try renderCross(a, out, slice, req, number) else try renderGrid(a, out, slice, req, opts.formchar, if (n > 2) number else 0);
+        if (req.crosslist) try renderCross(a, out, slice, req, number, opts.zeros) else try renderGrid(a, out, slice, req, opts.formchar, if (n > 2) number else 0, opts.zeros);
     }
 }
 fn shown(l: table_model.Level, req: Request) bool {
@@ -1208,6 +1218,25 @@ fn statText(a: std.mem.Allocator, v: f64, s: CellStat, req: Request, cross: bool
     };
     return std.mem.trim(u8, text, " ");
 }
+fn warningLocation(a: std.mem.Allocator, sl: table_model.Slice, number: usize) ![]const u8 {
+    const dims = sl.table.dimensions;
+    const n = dims.len;
+    const r = dims[n - 2].name;
+    const c = dims[n - 1].name;
+    if (n == 2) return std.fmt.allocPrint(a, " for the table of {s} by {s}", .{ r, c });
+    var location: std.ArrayList(u8) = .empty;
+    try location.appendSlice(a, try std.fmt.allocPrint(a, " for Table {d} of {s} by {s}, controlling for", .{ number, r, c }));
+    try appendControlValues(a, &location, sl);
+    return location.items;
+}
+fn appendControlValues(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice) !void {
+    const dims = sl.table.dimensions;
+    const offset = sl.stratum * sl.rows().len * sl.cols().len;
+    for (dims[0 .. dims.len - 2], 0..) |dim, i| {
+        const value = try cellText(a, sl.table.level(offset, i).value);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dim.name, value }));
+    }
+}
 fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, number: usize, cross: bool) !void {
     const dims = sl.table.dimensions;
     const n = dims.len;
@@ -1220,7 +1249,7 @@ fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.S
     if (n > 2) {
         var control: std.ArrayList(u8) = .empty;
         try control.appendSlice(a, "Controlling for");
-        for (0..n - 2) |d| try control.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dims[d].name, try cellText(a, sl.table.level(sl.stratum * sl.rows().len * sl.cols().len, d).value) }));
+        try appendControlValues(a, &control, sl);
         const cb = try line(a, @max(60, 25 + control.items.len));
         putLeft(cb, 25, control.items);
         try flush(a, out, cb);
@@ -1245,7 +1274,7 @@ fn gridRule(a: std.mem.Allocator, out: *std.ArrayList(u8), nc: usize, labelwidth
     b[14 + labelwidth + nc * colwidth] = chars[2];
     try flush(a, out, b);
 }
-fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, chars: [3]u8, number: usize) !void {
+fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, chars: [3]u8, number: usize, zeros: bool) !void {
     const rows = try selectedLevels(a, sl.rows(), req);
     const cols = try selectedLevels(a, sl.cols(), req);
     if (rows.len == 0 or cols.len == 0) {
@@ -1253,14 +1282,14 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nFor {s} * {s}\nall data are missing because\nall levels of variable {s} are missing.\n", .{ sl.table.dimensions[sl.table.dimensions.len - 2].name, sl.table.dimensions[sl.table.dimensions.len - 1].name, if (rows.len == 0) sl.table.dimensions[sl.table.dimensions.len - 2].name else sl.table.dimensions[sl.table.dimensions.len - 1].name }));
         return;
     }
-    if (sl.table.dimensions.len == 2 and !req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative) {
+    if (!zeros and sl.table.dimensions.len == 2 and !req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative) {
         try out.appendSlice(a, TWOWAY_TITLE);
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nTable of {s} by {s}\n\nSample Size = 0\n", .{ sl.table.dimensions[0].name, sl.table.dimensions[1].name }));
         try appendFreqMissing(a, out, sl.missing);
         return;
     }
     try tableHeading(a, out, sl, number, false);
-    if (!sl.observed or (!req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative)) {
+    if (!zeros and (!sl.observed or (!req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative))) {
         try out.appendSlice(a, "Sample Size = 0\n");
         try appendFreqMissing(a, out, sl.missing);
         return;
@@ -1355,9 +1384,10 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     }
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
 }
-fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, number: usize) !void {
-    try tableHeading(a, out, sl, if (sl.table.dimensions.len > 2) number else 0, sl.observed);
-    if (!sl.observed) {
+fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, number: usize, zeros: bool) !void {
+    const show_cells = sl.observed or zeros;
+    try tableHeading(a, out, sl, if (sl.table.dimensions.len > 2) number else 0, show_cells);
+    if (!show_cells) {
         try out.appendSlice(a, "Sample Size = 0\n");
         return;
     }
@@ -1439,7 +1469,6 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     var first = true;
     for (cols) |c| {
         if (!req.missing and sl.cols()[c].missing) continue;
-        if (req.nosparse and sl.col_totals[c] == 0) continue;
         const b = try line(a, width);
         if (first) putLeft(b, 15, "Total");
         first = false;
@@ -1475,6 +1504,47 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     try flush(a, out, total);
     try flush(a, out, rule);
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+}
+
+test "FREQ default BEST12 levels combine raw values and break frequency ties by display" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    const minimum = 0.123456789012345;
+    for ([_]f64{ 0.123456789045678, -10, 2, 12, minimum, -2, 0.123456789012355 }) |raw| {
+        try ds.appendRow(&.{.{ .num = raw }});
+    }
+    const orders = [_]struct { mode: FreqOrder, values: [5]f64 }{
+        .{ .mode = .data, .values = .{ minimum, -10, 2, 12, -2 } },
+        .{ .mode = .internal, .values = .{ -10, -2, minimum, 2, 12 } },
+        .{ .mode = .formatted, .values = .{ 2, -2, 12, -10, minimum } },
+        .{ .mode = .freq, .values = .{ minimum, 2, -2, 12, -10 } },
+    };
+    for (orders) |order| {
+        const table = try computeTable(a, &ds, &.{0}, null, false, false, order.mode, &.{});
+        try std.testing.expectEqual(order.values.len, table.dimensions[0].levels.len);
+        for (table.dimensions[0].levels, order.values, 0..) |level, expected, i| {
+            try std.testing.expectEqual(expected, level.raw.num);
+            try std.testing.expectEqual(@as(f64, if (expected == minimum) 3 else 1), table.count(i));
+        }
+    }
+}
+
+test "FREQ table puts missing levels in display order for every sort mode" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("g", .num);
+    for ("_AZ.A") |symbol| try ds.appendRow(&.{Value.specialMissing(symbol)});
+    for ([_]FreqOrder{ .data, .internal, .formatted, .freq }) |mode| {
+        const table = try computeTable(a, &ds, &.{0}, null, false, true, mode, &.{});
+        for (table.dimensions[0].levels, ".AZ_") |level, expected| {
+            try std.testing.expectEqual(expected, Value.missingChar(level.raw.num));
+        }
+    }
 }
 
 test "TABLES FORMAT named decimals preserve weighted counts and width boundaries" {
@@ -1554,7 +1624,7 @@ test "table syntax rejects invalid SAS and keeps destination gaps explicit" {
     _ = try ds.addColumn("y", .num);
     try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 } });
     try lib.put("d", ds);
-    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", "by;tables x;", ";;tablse x;;", ";;tables;;", ";;weight;;" }) |statement| {
+    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", ";;tablse x;;", ";;tables;;", ";;weight;;" }) |statement| {
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         diag.resetGap();
@@ -1757,6 +1827,30 @@ test "MISSPRINT controlling missing: conditional TOTPCT differs from OUT PERCENT
 fn hasStatistics(opts: stat_parse.Options) bool {
     return opts.chisq or opts.measures or opts.plcorr;
 }
+/// Level eligibility is shared by the strata of this table. A retained zero
+/// marginal count in a full-size table is checked separately for each stratum.
+fn hasInferenceLevels(tab: *const Table, d: *diag.Diagnostics) !bool {
+    const n = tab.dimensions.len;
+    if (n < 2) return true;
+    const dims = tab.dimensions[n - 2 ..][0..2];
+    var counts = [2]usize{ 0, 0 };
+    for (dims, 0..) |dim, i| {
+        for (dim.levels) |level| {
+            if (tab.include_missing or !level.missing) counts[i] += 1;
+            if (counts[i] == 2) break;
+        }
+    }
+    if (counts[0] == 0 or counts[1] == 0) {
+        try d.report(.note, 0, "No statistics are computed for {s} * {s} because all data are missing.", .{ dims[0].name, dims[1].name });
+        return false;
+    }
+    for (counts, dims) |count, dim| if (count == 1) {
+        try d.report(.note, 0, "No statistics are computed for {s} * {s} because {s} has fewer than 2 nonmissing levels.", .{ dims[0].name, dims[1].name, dim.name });
+        return false;
+    };
+    return true;
+}
+
 fn inferenceMatrix(m: CountMatrix) stat_kernel.CountMatrix {
     return .{ .rows = m.rows, .cols = m.cols, .counts = m.counts, .row_scores = m.row_scores, .col_scores = m.col_scores };
 }
@@ -1785,7 +1879,7 @@ fn stratScope(req: Request, opts: Options) strat_exec.Scope {
     tests.weighted_kappa = tests.weighted_kappa or req.exact.families.contains(.wtkappa);
     return .{ .alpha = req.statistics.alpha, .tests = tests, .inherited_risk_column = if (req.risk.difference != null and req.risk.difference.?.column == 1 and !req.risk.difference.?.both_columns) .second else .first };
 }
-fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
+pub fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     const n = table.dimensions.len;
     const size = table.dimensions[n - 2].levels.len * table.dimensions[n - 1].levels.len;
     var ids: std.ArrayList(usize) = .empty;
@@ -1796,7 +1890,11 @@ fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     return ids.toOwnedSlice(a);
 }
 
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report) diag.Error!void {
+const AnalysisState = struct {
+    simulation_seed: u64 = 1,
+    noted_newcombe: bool = false,
+};
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, analysis: *AnalysisState, stratified: strat_exec.Report, writer: ?*stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
     const a = cx.arena;
     const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
@@ -1811,11 +1909,16 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
         var body: std.ArrayList(u8) = .empty;
         const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
+        if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result, false);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
-        const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
+        var active = req;
+        const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.executeResolved(a, cx.diags, try riskTable(a, tab, scored, true, false), &active.risk, req.statistics.alpha);
+        if (req.risk.binomial != null and active.risk.binomial == null) active.exact.families.remove(.binomial);
         if (opts.noprint) return;
-        try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
+        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, active, &analysis.simulation_seed);
+        if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);
+        if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
@@ -1831,8 +1934,12 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
     const nc = tab.dimensions[n - 1].levels.len;
     if (nr == 0 or nc == 0) return;
     var number: usize = 0;
-    const ids = try analysisStrata(a, tab);
-    for (ids) |stratum| {
+    // Displayed statistics include combinations without input observations.
+    // The output-only path retains its existing sparse stratum enumeration.
+    const observed_ids = if (opts.noprint) try analysisStrata(a, tab) else null;
+    const count = if (observed_ids) |ids| ids.len else tab.cell_count / (nr * nc);
+    for (0..count) |i| {
+        const stratum = if (observed_ids) |ids| ids[i] else i;
         var missing_control = false;
         for (0..n - 2) |d| if (tab.level(stratum * nr * nc, d).missing) {
             missing_control = true;
@@ -1840,22 +1947,42 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (missing_control and !req.missing and !req.missprint) continue;
         number += 1;
         const sl = try tab.slice(a, stratum);
-        const eligible = sl.observed and !(missing_control and !req.missing) and !(sl.total == 0 and sl.missing != 0 and !req.missing);
+        const excluded_control = missing_control and !req.missing;
+        const eligible = sl.observed and !excluded_control and (sl.total != 0 or sl.missing == 0 or req.missing);
         var body: std.ArrayList(u8) = .empty;
         if (eligible) {
             const scored = (try tab.matrix(a, stratum)).?;
             if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
-                _ = try stat_exec.execute(a, cx.diags, &body, .{
+                const result = try stat_exec.execute(a, cx.diags, &body, .{
                     .suppress_fisher = req.exact.families.contains(.fisher),
+                    .warning_location = if (opts.noprint and req.statistics.chisq and req.statistics.warn.log) try warningLocation(a, sl, number) else "",
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, requested_tests, .equal, opts.noprint);
+                if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result, scored.matrix.rows == 2 and scored.matrix.cols == 2);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
+                if (!analysis.noted_newcombe and risk_report.sections.len > 0) {
+                    if (req.risk.difference) |rd| if (rd.equal and rd.method == .newcombe) {
+                        try cx.diags.note(0, "METHOD=NEWCOMBE is not available for RISKDIFF EQUAL. By default, RISKDIFF EQUAL uses METHOD=WALD. To compute Newcombe confidence limits, specify CL=NEWCOMBE.", .{});
+                        analysis.noted_newcombe = true;
+                    };
+                }
                 if (!opts.noprint) {
-                    try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
+                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, &analysis.simulation_seed);
+                    if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, req, result);
+                    if (cx.capture) |capture| {
+                        const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
+                        try @import("ods_freq_exact_tests.zig").publish(a, cx.diags, capture, source, by, by_row, table_name, scored.matrix, result.chi_square, limits, req.exact);
+                        try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, req.exact.pformat, risk_report, limits);
+                        try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, limits.simulations.items, req.exact, req.stratified.agreement.restore);
+                    }
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {
+                        if (cx.capture) |capture| {
+                            const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
+                            try @import("ods_freq_agreement.zig").publish(a, cx.diags, capture, source, by, by_row, table_name, s, req.stratified, stratScope(req, opts), req.exact, limits);
+                        }
                         try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));
                         break;
                     };
@@ -1863,19 +1990,43 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             }
         }
         if (opts.noprint) continue;
+        if (excluded_control or sl.total == 0) {
+            // A missing controlling variable or an empty table replaces every
+            // requested statistic with one explanation for this stratum.
+            body.clearRetainingCapacity();
+            try body.appendSlice(a, if (excluded_control)
+                "\nThese data are missing because one or more control variables are missing.\n"
+            else
+                "\nTable is empty. No statistics are computed.\n");
+        }
         if (number > 1) try out.append(a, '\n');
         if (!req.noprint) {
-            if (req.crosslist) try renderCross(a, out, sl, req, number) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0);
+            if (req.crosslist) try renderCross(a, out, sl, req, number, opts.zeros) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0, opts.zeros);
         }
         if (body.items.len > 0) {
-            if (req.noprint) try tableHeading(a, out, sl, if (n > 2) number else 0, false);
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
+            const row_name = tab.dimensions[n - 2].name;
+            const col_name = tab.dimensions[n - 1].name;
+            if (n > 2) {
+                if (req.noprint and number == 1) try out.appendSlice(a, TWOWAY_TITLE);
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table {d} of {s} by {s}\nControlling for", .{ number, row_name, col_name }));
+                try appendControlValues(a, out, sl);
+                try out.append(a, '\n');
+            } else {
+                if (req.noprint) try tableHeading(a, out, sl, 0, false);
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ row_name, col_name }));
+            }
             try out.appendSlice(a, body.items);
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, sl.total)}));
-            if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, if (excluded_control) 0 else sl.total)}));
+            if (!req.missing) try appendFreqMissing(a, out, if (excluded_control) sl.missing + sl.total else sl.missing);
         }
     }
-    if (!opts.noprint) try exact_public.renderStrata(a, cx.diags, out, tab, req, opts.exact_seed);
+    if (!opts.noprint) {
+        const exact_strata = try exact_public.renderStrata(a, cx.diags, out, tab, req, analysis.simulation_seed);
+        if (exact_strata.common != null or exact_strata.zelen != null) if (cx.capture) |capture| {
+            const title = try std.fmt.allocPrint(a, "Summary for {s} * {s}", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name });
+            try @import("ods_freq_exact_strata.zig").publish(a, cx.diags, capture, source, by, by_row, title, stratified, exact_strata, req.statistics.alpha, req.exact);
+        };
+    }
     if (!opts.noprint and hasStratified(req.stratified)) {
         var summary: std.ArrayList(u8) = .empty;
         try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);
@@ -2020,4 +2171,96 @@ test "stratified public hook computes mixed TEST requests and keeps exact gaps" 
     out.clearRetainingCapacity();
     const duplicate = "proc freq data=strata; tables r*c; test kappa; test pcorr;run;";
     try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, duplicate, &d)));
+}
+
+test "FEAT-base-stat-results last FREQ table writes independent PCHI and cell datasets" {
+    // SAS 9.4 M9 freq_table_and_output_last (2x3, weighted) and
+    // freq_output_missing_request. See also SAS/STAT example 3.6.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "r", "c", "n" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 1, 1, 3 }, .{ 1, 2, 1 }, .{ 1, 3, 0 }, .{ 2, 1, 0 }, .{ 2, 2, 2 }, .{ 2, 3, 2 } }) |row|
+        try ds.appendRow(&.{ .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    const lex = @import("../lexer.zig");
+    try runFreq(cx, &listing, try lex.tokenize(a, "proc freq data=d noprint; weight n; tables r c r*c / out=cells chisq; output out=stats pchi; run;", &d));
+    const result = lib.find("stats").?;
+    try std.testing.expectEqual(@as(usize, 4), lib.find("cells").?.rowCount());
+    try std.testing.expectEqual(@as(usize, 1), result.rowCount());
+    try std.testing.expectEqual(@as(usize, 3), result.columns.items.len);
+    for ([_][]const u8{ "_PCHI_", "DF_PCHI", "P_PCHI" }, [_][]const u8{ "Chi-Square", "DF for Chi-Square", "P-value for Chi-Square" }, result.columns.items) |name, label, col| {
+        try std.testing.expectEqualStrings(name, col.name);
+        try std.testing.expectEqualStrings(label, col.label.?);
+        try std.testing.expectEqual(@as(?usize, 8), col.len);
+        try std.testing.expect(col.format == null and col.type == .num);
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 5.33333333), result.row(0)[0].num, 1e-8);
+    try std.testing.expectEqual(@as(f64, 2), result.row(0)[1].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.06948345), result.row(0)[2].num, 1e-8);
+    d.list.clearRetainingCapacity();
+    try runFreq(cx, &listing, try lex.tokenize(a, "proc freq data=d noprint; weight n; tables r*c; output out=missing_request fisher; run;", &d));
+    try std.testing.expect(lib.find("missing_request") == null);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
+    try std.testing.expectEqualStrings("No OUTPUT data set is produced because no statistic options are specified in the corresponding TABLES statement.", d.list.items[0].message);
+}
+
+test "FREQ native comparative EQUAL methods, request margins and ordered diagnostics" {
+    // SAS 9.4 M9 on cells (12,8;5,25). For the public procedure inputs, see
+    // tests/corpus/supplemental/stat_option_freq_newcombe_equality_*.sas.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_]f64{ 1, 2 }) |group| {
+        for ([_][3]f64{ .{ 1, 1, 12 }, .{ 1, 2, 8 }, .{ 2, 1, 5 }, .{ 2, 2, 25 } }) |row|
+            try ds.appendRow(&.{ .{ .num = group }, .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    }
+    try lib.put("d", ds);
+    const source = "proc freq data=d;by g;weight w;" ++
+        "tables r*c / noprint riskdiff(equal(null=100)) riskdiff(equal(null=.1) noninf sup equiv method=wilson);" ++
+        "tables r*c / noprint relrisk(equal(null=2) noninf sup equiv method=log margin=(.75,1.4));" ++
+        "tables r*c / noprint riskdiff(equal method=mn);run;";
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, source, &d));
+    try std.testing.expectEqual(@as(usize, 2), d.count());
+    try std.testing.expect(std.mem.startsWith(u8, d.list.items[0].message, "METHOD=NEWCOMBE is not available for RISKDIFF EQUAL."));
+    try std.testing.expectEqualStrings("The above message was for the following BY group:\n      g=1", d.list.items[1].message);
+    // The equality test stays Wald, while the three Newcombe analyses keep
+    // their native interval and supply no test statistic. MN selects F-M.
+    var values: std.ArrayList(f64) = .empty;
+    var lines = std.mem.tokenizeScalar(u8, out.items, '\n');
+    while (lines.next()) |row_text| {
+        var words = std.mem.tokenizeAny(u8, row_text, " \t");
+        const label = words.next() orelse continue;
+        if (eqi(label, "Z")) try values.append(a, try std.fmt.parseFloat(f64, words.next().?));
+    }
+    const expected = [_]f64{ 2.5849, 1.3143, 3.5075, 3.5075, 3.1688 };
+    try std.testing.expectEqual(2 * expected.len, values.items.len);
+    for (values.items, 0..) |actual, i| try std.testing.expectApproxEqAbs(expected[i % expected.len], actual, 0.00005);
+    for ([_][]const u8{ "0.2052", "0.6115" }) |bound| try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, out.items, bound));
+
+    const invalid = "proc freq data=d;weight w;tables r*c c*r / relrisk(equal(null=0) equiv margin=1) riskdiff(equal(null=-100));run;";
+    d = diag.Diagnostics.init(a);
+    out.clearRetainingCapacity();
+    try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, invalid, &d)));
+    const errors = [_][]const u8{
+        "The NULL= value for the RISKDIFF EQUAL test must be between -100 and 100.",
+        "The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.",
+        "The NULL= value for the RELRISK EQUAL test must be a positive number.",
+    };
+    try std.testing.expectEqual(2 * errors.len, d.count());
+    for (d.list.items, 0..) |entry, i| try std.testing.expectEqualStrings(errors[i % errors.len], entry.message);
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
 }

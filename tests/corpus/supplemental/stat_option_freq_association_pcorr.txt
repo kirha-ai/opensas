@@ -1,0 +1,8 @@
+# corpus assertions
+row Pearson Correlation 0.3997~5.1e-05 0.1143~5.1e-05 0.1757~5.1e-05 0.6238~5.1e-05
+rewind
+row ASE under H0 0.1218~5.1e-05
+row Z 3.2821~5.1e-05
+row-count 1 Pearson Correlation {any} {any} {any} {any}
+row-count 1 ASE under H0 {any}
+row-count 1 Z {any}

@@ -1,0 +1,3 @@
+# corpus assertions
+empty-listing
+stderr-count 1 UNIVARIATE: PCTLPTS and PCTLPRE must be specified together

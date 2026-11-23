@@ -1,0 +1,12 @@
+# corpus assertions
+row x x y
+row r 1.00000 -0.73193
+row P - 0.0250
+row y y x
+row r 1.00000 -0.73193
+row P - 0.0250
+row z z x
+row r 1.00000 0.34076
+row P - 0.3695
+row-count 3 r {any} {any}
+row-count 3 P - {any}

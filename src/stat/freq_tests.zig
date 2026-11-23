@@ -16,7 +16,7 @@ pub const CountMatrix = struct {
 };
 pub const Test = struct { statistic: f64, df: f64, p: f64 };
 pub const Expected = union(enum) { equal, proportions: []const f64, frequencies: []const f64 };
-pub const GoodnessOfFit = struct { pearson: Test, likelihood_ratio: Test, sparse: bool, total: f64 };
+pub const GoodnessOfFit = struct { pearson: Test, likelihood_ratio: Test, sparse: bool, small_percent: ?u8, total: f64 };
 pub const Fisher = struct { probability: f64, left: f64, right: f64, two_sided: f64 };
 pub const ChiSquare = struct {
     pearson: Test,
@@ -28,6 +28,7 @@ pub const ChiSquare = struct {
     contingency: f64,
     cramer_v: f64,
     sparse: bool,
+    small_percent: u8,
     total: f64,
 };
 
@@ -76,6 +77,23 @@ pub fn expectedFactor(level_count: usize, n: f64, expected: Expected) Error!f64 
     return factor;
 }
 
+fn smallPercentage(small: usize, cells: usize) u8 {
+    return @intFromFloat(@round(100 * @as(f64, @floatFromInt(small)) / @as(f64, @floatFromInt(cells))));
+}
+
+// Keep the residual of an accepted TESTP/TESTF total without losing it
+// to rounding at the scale of the supplied total.
+fn expectedResidual(target: f64, values: []const f64) f64 {
+    var remainder = target;
+    var correction: f64 = 0;
+    for (values) |value| {
+        const next = remainder - value;
+        correction += if (@abs(remainder) >= value) (remainder - next) - value else (-value - next) + remainder;
+        remainder = next;
+    }
+    return remainder + correction;
+}
+
 pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
     if (counts.len == 0 or !countValid(counts)) return error.ExecError;
     const n = sum(counts);
@@ -83,19 +101,34 @@ pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64)
     // An explicit DF still goes through the ordinary validation path.
     const df = if (counts.len == 1 and df_override == null) 0 else try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
     const factor = try expectedFactor(counts.len, n, expected);
+    const levels: f64 = @floatFromInt(counts.len);
     var pearson: f64 = 0;
-    var lr: f64 = 0;
+    // Sum x*log(x/e)-(x-e) near H0; its linear terms cancel when the
+    // expected total equals N. Keep a supplied TESTF/TESTP total correction
+    // independent of which multinomial allocation is being tested.
+    var lr_half: f64 = switch (expected) {
+        .equal => 0,
+        .proportions => |v| if (factor == n) n * expectedResidual(1, v) else factor * expectedResidual(100, v),
+        .frequencies => |v| expectedResidual(n, v),
+    };
     var small: usize = 0;
     for (counts, 0..) |o, i| {
         const e = switch (expected) {
-            .equal => n / @as(f64, @floatFromInt(counts.len)),
+            .equal => n / levels,
             .proportions, .frequencies => |v| v[i] * factor,
         };
-        pearson += sq(o - e) / e;
-        if (o > 0) lr += 2 * o * @log(o / e);
+        const delta = switch (expected) {
+            .equal => blk: {
+                const numerator = @mulAdd(f64, o, levels, -n);
+                break :blk if (std.math.isFinite(numerator)) numerator / levels else o - e;
+            },
+            .proportions, .frequencies => |v| @mulAdd(f64, -factor, v[i], o),
+        };
+        pearson += sq(delta) / e;
+        lr_half += @import("freq_exact.zig").poissonDeviance(o, e, delta);
         if (e < 5) small += 1;
     }
-    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = df > 0 and small * 5 > counts.len, .total = n };
+    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(2 * lr_half, df), .sparse = df > 0 and small * 5 > counts.len, .small_percent = if (expected == .equal) null else smallPercentage(small, counts.len), .total = n };
 }
 
 const Margins = struct { row: []f64, col: []f64, n: f64, nr: usize, nc: usize };
@@ -131,7 +164,25 @@ fn score(s: ?[]const f64, i: usize) f64 {
     return if (s) |v| v[i] else @floatFromInt(i + 1);
 }
 
+/// E=R*C/N and O-E. A compensated product difference evaluates the
+/// residual accurately when both margin products exceed double precision.
+pub fn independenceCell(o: f64, row: f64, column: f64, total: f64) struct { mean: f64, delta: f64 } {
+    const product = row * column;
+    const scaled = o * total;
+    if (std.math.isFinite(product) and std.math.isFinite(scaled) and product >= std.math.floatMin(f64)) {
+        const difference = @mulAdd(f64, -row, column, scaled) + @mulAdd(f64, o, total, -scaled);
+        return .{ .mean = product / total, .delta = difference / total };
+    }
+    const fraction = row / total;
+    return .{ .mean = fraction * column, .delta = @mulAdd(f64, -fraction, column, o) };
+}
+
 pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Error!ChiSquare {
+    return contingencyWithFisher(a, m, df_override, true);
+}
+
+/// An explicit EXACT FISHER request supplies its own controlled enumeration.
+pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64, automatic_fisher: bool) Error!ChiSquare {
     const t = try margins(a, m);
     defer a.free(t.row);
     defer a.free(t.col);
@@ -142,12 +193,15 @@ pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Erro
     var cc: f64 = 0;
     var small: usize = 0;
     for (m.counts, 0..) |o, k| {
-        const e = t.row[k / m.cols] * t.col[k % m.cols] / t.n;
-        if (e == 0) continue;
-        p += sq(o - e) / e;
-        cc += sq(@max(0, @abs(o - e) - 0.5)) / e;
-        if (o > 0) lr += 2 * o * @log(o / e);
-        if (e < 5) small += 1;
+        const cell = independenceCell(o, t.row[k / m.cols], t.col[k % m.cols], t.n);
+        if (cell.mean == 0) continue;
+        p += sq(cell.delta) / cell.mean;
+        // M9 subtracts the rounded expected count before Yates' half-cell
+        // adjustment. The uncompensated difference also determines exact
+        // half-way listing values such as 0.09375 for [[2,2],[2,0]].
+        cc += sq(@max(0, @abs(o - cell.mean) - 0.5)) / cell.mean;
+        lr += 2 * @import("freq_exact.zig").poissonDeviance(o, cell.mean, cell.delta);
+        if (cell.mean < 5) small += 1;
     }
     const two = m.rows == 2 and m.cols == 2;
     const phi = if (two) (m.counts[0] * m.counts[3] - m.counts[1] * m.counts[2]) / @sqrt(t.row[0] * t.row[1] * t.col[0] * t.col[1]) else @sqrt(p / t.n);
@@ -157,43 +211,143 @@ pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Erro
         .likelihood_ratio = chi(lr, df),
         .mantel_haenszel = if (corr.estimate) |r| chi((t.n - 1) * r * r, 1) else null,
         .continuity = if (two) chi(cc, df) else null,
-        .fisher = if (two and integerCounts(m.counts)) try fisherExact(m.counts) else null,
+        .fisher = if (automatic_fisher and two and integerCounts(m.counts)) (try fisherWithAllocator(a, m.counts, .{ .max_tables = std.math.maxInt(u64) })).?.cell else null,
         .phi = phi,
         .contingency = @sqrt(p / (p + t.n)),
         .cramer_v = if (two) phi else @sqrt(p / t.n / @as(f64, @floatFromInt(@min(t.nr, t.nc) - 1))),
         .sparse = small * 5 > t.nr * t.nc,
+        .small_percent = smallPercentage(small, t.nr * t.nc),
         .total = t.n,
     };
 }
 
-fn logChoose(n: f64, k: f64) f64 {
-    return fns.lgammaOf(n + 1) - fns.lgammaOf(k + 1) - fns.lgammaOf(n - k + 1);
+// Normalize adjacent hypergeometric masses at a mode. Reorient the smallest
+// observed cell into the top left so the lower support is zero. A single row
+// or column reversal interchanges the original left and right cell-count tests.
+const Hypergeometric2x2 = struct {
+    source: [4]u1024,
+    row: f64,
+    column: f64,
+    offset: f64,
+    reversed: bool,
+    observed: u64,
+    mode: u64,
+    upper: u64,
+
+    fn init(cells: []const f64) Error!Hypergeometric2x2 {
+        if (cells.len != 4 or !countValid(cells) or !integerCounts(cells)) return error.ExecError;
+        const corner = std.mem.findMin(f64, cells);
+        const observed = cells[corner];
+        const row = observed + cells[corner ^ 1];
+        const column = observed + cells[corner ^ 2];
+        const total = row + cells[corner ^ 2] + cells[corner ^ 3];
+        if (!std.math.isFinite(total)) return error.ExecError;
+        const source = [4]u1024{ representedCount(observed), representedCount(cells[corner ^ 1]), representedCount(cells[corner ^ 2]), representedCount(cells[corner ^ 3]) };
+        const support_end = @min(source[0] + source[1], source[0] + source[2]);
+        if (support_end >= std.math.maxInt(u64)) return error.ExecError;
+        const upper: u64 = @intCast(support_end);
+        const mode = @floor((row + 1) / (total + 2) * (column + 1));
+        return .{
+            .source = source,
+            .row = row,
+            .column = column,
+            .offset = cells[corner ^ 3] - observed,
+            .reversed = corner == 1 or corner == 2,
+            .observed = @intFromFloat(observed),
+            .mode = if (mode >= @as(f64, @floatFromInt(upper))) upper else @intFromFloat(mode),
+            .upper = upper,
+        };
+    }
+
+    // All finite, nonnegative integer binary64 values fit in u1024, even
+    // when individual margins exceed u64 but conditional support is small.
+    fn representedCount(value: f64) u1024 {
+        if (value < 0x1p64) return @as(u64, @intFromFloat(value));
+        const parts = std.math.frexp(value);
+        const mantissa: u64 = @intFromFloat(parts.significand * 0x1p53);
+        return @as(u1024, mantissa) << @intCast(parts.exponent - 53);
+    }
+    fn compareMass(self: *const Hypergeometric2x2, a: std.mem.Allocator, x: u64, budget: @import("freq_exact_distribution.zig").Budget) Error!?std.math.Order {
+        if (x == self.observed) return .eq;
+        const d = @max(x, self.observed) - @min(x, self.observed);
+        var sampled = self.source;
+        for (&sampled, 0..) |*v, i| {
+            if ((i == 0 or i == 3) == (x > self.observed)) v.* += d else v.* -= d;
+        }
+        const denominators = (try @import("freq_exact_distribution.zig").fisherFactorialOrder(u1024, 4, a, &sampled, &self.source, budget)) orelse return null;
+        return denominators.invert();
+    }
+
+    // Ratio of the next mass to the current mass when moving away from a mode.
+    fn step(self: Hypergeometric2x2, from: u64, right: bool) f64 {
+        const x: f64 = @floatFromInt(from);
+        if (right) return (self.row - x) / (x + 1) * ((self.column - x) / (self.offset + x + 1));
+        return x / (self.row - x + 1) * ((self.offset + x) / (self.column - x + 1));
+    }
+};
+
+pub const FisherEnumeration = struct { cell: Fisher, point: f64, more_likely: f64, tables: u64 };
+pub fn fisherControlled(cells: []const f64, budget: @import("freq_exact_distribution.zig").Budget) Error!?FisherEnumeration {
+    return fisherWithAllocator(std.heap.page_allocator, cells, budget);
+}
+pub fn fisherWithAllocator(a: std.mem.Allocator, cells: []const f64, budget: @import("freq_exact_distribution.zig").Budget) Error!?FisherEnumeration {
+    const m = try Hypergeometric2x2.init(cells);
+    if (budget.stopped() or m.upper >= budget.max_tables) return null;
+    var log_observed: f64 = 0;
+    var i = m.mode;
+    const toward_right = m.observed > i;
+    while (i != m.observed and @exp(log_observed) > 0) {
+        if (budget.stopped()) return null;
+        log_observed += @log(m.step(i, toward_right));
+        if (toward_right) i += 1 else i -= 1;
+    }
+    const observed_weight = @exp(log_observed);
+    var more_likely: f64 = 0;
+    var total: f64 = 0;
+    var left: f64 = 0;
+    var right: f64 = 0;
+    var included: f64 = 0;
+    var tied: f64 = 0;
+    for ([_]bool{ true, false }) |up| {
+        var log_weight: f64 = 0;
+        i = m.mode;
+        while (true) {
+            if (budget.stopped()) return null;
+            const weight = @exp(log_weight);
+            if (weight == 0) break;
+            if (up or i != m.mode) {
+                total += weight;
+                if (i <= m.observed) left += weight;
+                if (i >= m.observed) right += weight;
+                // Log-ratio accumulation can leave both adjacent modes within
+                // roundoff. Classify an overlapping pair by factorial products.
+                const steps = @as(f64, @floatFromInt(@max(m.mode, i) - @min(m.mode, i))) + @as(f64, @floatFromInt(@max(m.mode, m.observed) - @min(m.mode, m.observed)));
+                const tolerance = std.math.floatEps(f64) * (64 + steps) * (1 + @abs(log_weight) + @abs(log_observed));
+                const order = if (observed_weight == 0)
+                    std.math.Order.gt
+                else if (@abs(log_weight - log_observed) <= tolerance)
+                    (try m.compareMass(a, i, budget)) orelse return null
+                else
+                    std.math.order(log_weight, log_observed);
+                if (order == .eq) tied += weight;
+                if (order != .gt) included += weight;
+                if (order != .lt) more_likely += weight;
+            }
+            if (i == (if (up) m.upper else 0)) break;
+            log_weight += @log(m.step(i, up));
+            if (up) i += 1 else i -= 1;
+        }
+    }
+    if (m.reversed) std.mem.swap(f64, &left, &right);
+    return .{
+        .cell = .{ .probability = observed_weight / total, .left = left / total, .right = right / total, .two_sided = included / total },
+        .point = tied / total,
+        .more_likely = more_likely / total,
+        .tables = m.upper + 1,
+    };
 }
 pub fn fisherExact(cells: []const f64) Error!Fisher {
-    if (cells.len != 4 or !countValid(cells)) return error.ExecError;
-    // SAS suppresses exact tests for noninteger cell frequencies (oracle edges).
-    if (!integerCounts(cells)) return error.ExecError;
-    var v: [4]f64 = undefined;
-    for (cells, 0..) |x, i| v[i] = x;
-    const n = sum(&v);
-    const r = v[0] + v[1];
-    const c = v[0] + v[2];
-    const lo = @max(0, r + c - n);
-    const hi = @min(r, c);
-    const lp = logChoose(c, v[0]) + logChoose(n - c, r - v[0]) - logChoose(n, r);
-    var out = Fisher{ .probability = @exp(lp), .left = 0, .right = 0, .two_sided = 0 };
-    var x = lo;
-    while (x <= hi) : (x += 1) {
-        const l = logChoose(c, x) + logChoose(n - c, r - x) - logChoose(n, r);
-        const p = @exp(l);
-        if (x <= v[0]) out.left += p;
-        if (x >= v[0]) out.right += p;
-        if (l <= lp + 1e-10) out.two_sided += p;
-    }
-    out.left = @min(1, out.left);
-    out.right = @min(1, out.right);
-    out.two_sided = @min(1, out.two_sided);
-    return out;
+    return (try fisherControlled(cells, .{ .max_tables = std.math.maxInt(u64) }) orelse return error.ExecError).cell;
 }
 
 pub const Measure = struct {
@@ -369,6 +523,26 @@ fn spearman(m: CountMatrix, t: Margins, rs: []const f64, cs: []const f64, alpha:
         v2 += x * vij * vij;
     }
     return measure(v / w, (z2 - zs * zs / t.n) / (sq(t.n) * sq(sq(w))), (v2 - vs * vs / t.n) / (sq(t.n) * sq(w)), alpha);
+}
+
+test "one-way likelihood deviance retains small departures and supplied null totals" {
+    const t = std.testing;
+    const p = [_]f64{ 0.500000000001, 0.499999999999 };
+    const upper = try goodnessOfFit(&.{ 250_001, 249_999 }, .{ .proportions = &p }, null);
+    const lower = try goodnessOfFit(&.{ 249_999, 250_001 }, .{ .proportions = &p }, null);
+    // Evaluated from 2*sum(O*log(O/E)) at 80 decimal digits.
+    try t.expectApproxEqRel(@as(f64, 7.999992000200307006e-6), upper.likelihood_ratio.statistic, 4e-15);
+    try t.expectApproxEqRel(@as(f64, 8.000007999846359484e-6), lower.likelihood_ratio.statistic, 4e-15);
+    const deviance = @import("freq_exact.zig").poissonDeviance;
+    try t.expectEqual(@as(f64, 0), deviance(1e308, 1e308, 0));
+    try t.expectApproxEqRel(@as(f64, 1e308), deviance(1e-200, 1e308, -1e308), 2e-15);
+    const huge = deviance(1.6e308, 4e307, 1.2e308);
+    try t.expectApproxEqRel(@as(f64, 1.6e308) * (@log(@as(f64, 4)) - 0.75), huge, 2e-15);
+    const f = [_]f64{ 2, 8 - 5e-8 };
+    const accepted = try goodnessOfFit(&.{ 2, 8 }, .{ .frequencies = &f }, null);
+    try t.expectApproxEqRel(-16 * std.math.log1p((f[1] - 8) / 8), accepted.likelihood_ratio.statistic, 3e-15);
+    const near = try goodnessOfFit(&.{ 50_000, 50_000 }, .{ .proportions = &.{ 0.5000000000000001, 0.4999999999999999 } }, null);
+    try t.expectApproxEqRel(@as(f64, 4.930380657631323784e-27), near.likelihood_ratio.statistic, 4e-15);
 }
 
 test "FEAT-freq-tests exact tails and signed 2x2 association" {
@@ -635,7 +809,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     const counts = try a.dupe(f64, input.counts);
     defer a.free(counts);
     m.counts = counts;
-    if (opts.adjust and m.rows == 2 and m.cols == 2 and counts.len == 4) {
+    if (m.rows == 2 and m.cols == 2 and counts.len == 4) {
         var zeros: usize = 0;
         var zero: usize = 0;
         for (counts, 0..) |v, k| if (v == 0) {
@@ -643,6 +817,12 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             zero = k;
         };
         if (zeros == 1) {
+            if (!opts.adjust) {
+                const fit = try @import("corr_polychoric.zig").polychoric(a, m, .{ .alpha = opts.alpha, .converge = opts.converge, .maxiter = opts.maxiter });
+                const se = fit.coefficient.ase orelse std.math.nan(f64);
+                const coefficient = if (fit.coefficient.estimate) |rho| measure(rho, se * se, se * se, opts.alpha) else Measure{};
+                return .{ .coefficient = coefficient, .likelihood_ratio = fit.likelihood_ratio, .converged = fit.converged, .iterations = fit.iterations };
+            }
             counts[zero] += 0.5;
             counts[3 - zero] += 0.5;
             counts[zero ^ 1] -= 0.5;
@@ -671,25 +851,6 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     if (m.rows == 2 and m.cols == 2 and ((counts[1] == 0 and counts[2] == 0) or (counts[0] == 0 and counts[3] == 0))) {
         const r: f64 = if (counts[1] == 0) 1 else -1;
         return .{ .coefficient = measure(r, 0, 0, opts.alpha), .likelihood_ratio = null, .converged = true, .iterations = 0 };
-    }
-    // SAS reports the constrained tetrachoric boundary as +/-0.999 for
-    // exactly one zero cell without ADJUST; the likelihood is saturated.
-    // Oracle boundary.sas: rho=-0.9990, ASE=0, LR=17.2930 for [0,9;11,3].
-    if (m.rows == 2 and m.cols == 2 and !opts.adjust) {
-        var zero_count: usize = 0;
-        var zero_index: usize = 0;
-        for (counts, 0..) |v, i| if (v == 0) {
-            zero_count += 1;
-            zero_index = i;
-        };
-        if (zero_count == 1) {
-            var saturated: f64 = 0;
-            for (counts) |v| if (v > 0) {
-                saturated -= v * @log(v / t.n);
-            };
-            const rho: f64 = if (zero_index == 0 or zero_index == 3) -0.999 else 0.999;
-            return .{ .coefficient = measure(rho, 0, 0, opts.alpha), .likelihood_ratio = chi(2 * (null_ll - saturated), 1), .converged = true, .iterations = 0 };
-        }
     }
     const hessian = try a.alloc(f64, dim * dim);
     defer a.free(hessian);

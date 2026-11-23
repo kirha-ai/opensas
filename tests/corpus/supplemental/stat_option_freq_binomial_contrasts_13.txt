@@ -1,0 +1,6 @@
+# corpus assertions
+row Case freq_binomial_sup
+row Pr > Z 0.3128~5.1e-05
+row Case freq_binomial_superiority
+row Pr > Z 0.3128~5.1e-05
+row-count 2 Pr > Z {any}

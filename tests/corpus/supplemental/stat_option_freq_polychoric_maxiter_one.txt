@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 Polychoric correlation computations did not converge.
+row Polychoric Correlation . .
+row-count 1 Polychoric Correlation {any} {any}

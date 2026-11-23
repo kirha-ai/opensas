@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 2 Equality Test for the Risk Difference
+row Z 2.4183~5.1e-05
+row Z -3.9826~5.1e-05
+row-count 2 Z {any}

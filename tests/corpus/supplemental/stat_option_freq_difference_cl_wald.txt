@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 1 Confidence Limits for the Risk Difference
+stdout-count 0 Column 1 Risk Estimates
+row Wald 0.1806~5.1e-05 0.6861~5.1e-05
+row-count 1 Wald {any} {any}

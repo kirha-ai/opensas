@@ -1,0 +1,5 @@
+# corpus assertions
+row The CORR Procedure
+row polyserial Correlations
+row x g 8 0.99500 0.01874 2819.9029 <.0001 11.0305 0.0009
+stderr-count 0 WARNING:

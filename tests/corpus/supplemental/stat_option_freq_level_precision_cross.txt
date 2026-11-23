@@ -1,0 +1,13 @@
+# corpus assertions
+stdout-count 1 Number of Variable Levels
+stdout-count 1 x                7
+stdout-count 1 y                2
+row CELL 1~5.1e-05
+row CELL 1~5.1e-05
+row CELL 1~5.1e-05
+row CELL 1~5.1e-05
+row CELL 1~5.1e-05
+row CELL 2~5.1e-05
+row CELL 1~5.1e-05
+row CELL 1~5.1e-05
+row-count 8 CELL {any}

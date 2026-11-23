@@ -182,8 +182,10 @@ missing_stmt   = "MISSING" letter { letter } ";" ;
 options_stmt   = "OPTIONS" { name [ "=" value ] } ";" ;           (* opensas *)
                  (* honored: FMERR/NOFMERR, NOTES/NONOTES, YEARCUTOFF=, OBS=/FIRSTOBS=
                    (global read bound — fixture global_obs_firstobs, BUG-globalobs),
-                   MISSING=, LINESIZE=/PAGESIZE= (LS=/PS=), DKRICOND=/DKROCOND=,
-                   BYLINE/NOBYLINE, VALIDVARNAME=; a ~70-name allowlist of genuinely
+                   MISSING=, DKRICOND=/DKROCOND=,
+                   BYLINE/NOBYLINE, VALIDVARNAME=; numeric LINESIZE=/PAGESIZE=
+                   (LS=/PS=) and PAGESIZE=MIN/MAX are captured for unpaginated
+                   listings; a ~70-name allowlist of genuinely
                    unobservable display/log/session options is accepted inert
                    (main.zig isInertOption, BUG-optionsstmtswallow); MINOPERATOR/
                    MINDELIMITER= act at macro scan time (BUG-minoperatoropt, fixture
@@ -198,19 +200,17 @@ title_stmt     = "TITLE" [ digit ] [ string ] ";" ;               (* opensas *)
 footnote_stmt  = "FOOTNOTE" [ digit ] [ string ] ";" ;            (* opensas *)
                  (* FOOTNOTE1..10 likewise, printed below the listing
                    (bug_titlecancel, title_in_sql) *)
-ods_stmt       = ods_output_stmt | "ODS" { any_token } ";" ;
-                 (* Destination open/close (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5,
-                    _ALL_ CLOSE) and results/graphics/escapechar remain deliberate
-                    listing no-ops (D-022). SELECT/EXCLUDE/TRACE fail loud. *)
+ods_stmt       = ods_output_stmt | ods_listing_select | ods_trace | "ODS" { any_token } ";" ;
+                 (* D-022 covers destination handling. The named listing
+                    selection and trace productions appear with PROC UNIVARIATE. *)
 ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
                 | ods_table_name "=" ( sas_name | two_level_name )
                   { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
-ods_table_name  = "PearsonCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
-                | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
-                 (* Typed capture; default requests expire after next PROC.
-                    BY objects concatenate, missing objects warn without creating
-                    a dataset. Unknown tables and unimplemented OUTPUT options
-                    fail visibly. No destination rendering or selection implied. *)
+ods_table_name  = name ; (* opensas *)
+                 (* src/ods.zig registers the implemented typed producers.
+                    BY objects concatenate; requests expire after the next PROC.
+                    An unmatched name warns and creates no dataset. Documented
+                    statistical objects lacking producers give a gap diagnostic. *)
 x_stmt         = "X" [ ( name | string ) { name | string } ] ";" ;  (* opensas: parsed,
                  accepted inert — the shell command is NOT executed (audit probe:
                  x "echo …"; runs clean, no command runs). Accepted-inert by
@@ -844,6 +844,8 @@ proc_print     = "PROC" "PRINT" [ "DATA" "=" dataset ]            (* opensas *)
                  | "BY" var_list ";"
                  | "SUM" var_list ";"
                  | "ID" var_list ";"
+                 | "FORMAT" ( var | special_var_list ) { var | special_var_list } format_ref
+                   { ( var | special_var_list ) { var | special_var_list } format_ref } ";"
                  | "WHERE" expression ";" } step_boundary ;
 
 (* 5.2 PROC SORT *)
@@ -854,7 +856,8 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
 (* PROC CORR — Statistical Procedures pp.8–36.
    Typed Pearson/rank/partial/Fisher/reliability and ordinal estimates are implemented.
    HOEFFDING includes calibrated probabilities with tied/FREQ/small-N conventions.
-   Polychoric boundary information below numerical resolution fails explicitly.
+   Binary-margin polychoric fits refine successive boundary projections.
+   Unresolved higher-dimensional boundary information fails explicitly.
    OUTP=/other output data sets and plots remain fail-loud. *)
 proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
                  | "SPEARMAN" | "KENDALL" | "HOEFFDING" | "ALPHA"
@@ -874,6 +877,29 @@ corr_fisher_option = "ALPHA" "=" number | "RHO0" "=" [ "+" | "-" ] number
                  | "TYPE" "=" ( "LOWER" | "UPPER" | "TWOSIDED" ) ; (* opensas *)
 corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
                  | "NGROUPS" "=" ( "ALL" | integer ) ; (* opensas *)
+
+(* Named listing selections expire after the procedure. ALL and NONE persist. *)
+ods_listing_select = "ODS" [ "LISTING" ] ( "SELECT" | "EXCLUDE" )
+                     ( "ALL" | "NONE" | ods_object { ods_object } ) ";" ; (* opensas *)
+ods_object = name { "." name } ; (* opensas *)
+ods_trace = "ODS" "TRACE" ( "ON" | "OFF" ) ";" ; (* opensas *)
+
+(* UNIVARIATE HISTOGRAM fitted distribution parameters (pp.330-341).
+   The longest positional parameter list gives the number of curves. Shorter
+   lists repeat their last entry. PERCENT(S)= selects the quantiles of each
+   curve. Kernel bandwidth and bound lists have their own syntax. *)
+univ_curve_parameter_list = ( "EST" | univ_curve_numeric_range )
+                         { [ "," ] ( "EST" | univ_curve_numeric_range ) } ; (* opensas *)
+univ_curve_percents = ( "PERCENTS" | "PERCENT" ) "=" univ_curve_numeric_range
+                         { [ "," ] univ_curve_numeric_range } ; (* opensas *)
+univ_curve_numeric_range = univ_curve_number [ "TO" univ_curve_number [ "BY" univ_curve_number ] ] ; (* opensas *)
+univ_curve_number = [ "+" | "-" ] number ; (* opensas *)
+univ_kernel = "KERNEL" [ "(" { "NOPRINT" | "K" "=" univ_kernel_kind { [ "," ] univ_kernel_kind }
+                  | "C" "=" univ_bandwidth { [ "," ] univ_bandwidth }
+                  | ( "LOWER" | "UPPER" ) "=" univ_kernel_bound { [ "," ] univ_kernel_bound } } ")" ] ; (* opensas *)
+univ_kernel_kind = "NORMAL" | "N" | "QUADRATIC" | "Q" | "TRIANGULAR" | "T" ; (* opensas *)
+univ_bandwidth = univ_curve_number | "MISE" | "SJPI" ; (* opensas *)
+univ_kernel_bound = univ_curve_number | "." ; (* opensas *)
 
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
@@ -904,7 +930,9 @@ proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
                  | "FORMAT" var_list format_ref ";"
                  | "WHERE" expression ";"
                  | "TEST" { freq_test } ";"
-                 | freq_exact_statement } step_boundary ;
+                 | freq_exact_statement
+                 | "OUTPUT" { "OUT" "=" dataset | freq_output_stat } ";" } step_boundary ;
+freq_output_stat = "N" | "NMISS" | "PCHI" | "LRCHI" | "CHISQ" ; (* opensas *)
 freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
                  | "NOPRINT" | "NLEVELS"
                  | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
@@ -965,8 +993,11 @@ freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
                  (* TEST implies MEASURES/PLCORR only with one TABLES statement.
                     CHISQ includes automatic 2x2 Fisher for integer counts.
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
-                    OUTPUT statistics datasets remain explicit gaps;
-                    WARN=OUTPUT does not create a dataset. *)
+                    OUTPUT uses the last TABLES request. CHISQ writes the eligible
+                    test statistics, coefficients and integer 2x2 Fisher tails.
+                    An unmatched TABLES statistics request warns and produces
+                    no dataset. An OUTPUT statement requires a TABLES statement.
+                    WARN=OUTPUT adds a warning flag when PCHI is captured. *)
 
 freq_exact_statement = "EXACT" { freq_exact_stat }
                        [ "/" { freq_exact_control } ] ";" ; (* opensas *)
@@ -1301,7 +1332,7 @@ format_ref     = [ "$" ] name [ number ] "." [ number ] ;   (* opensas *)
    engine actually renders/reads — each carries a fixture (tests/corpus/gfmt_*).
    Names not listed (COMMAX/DOLLARX/NEGPAREN, B8601DT) parse but don't render
    SAS-correctly yet, so they are deliberately NOT marked. *)
-numeric_format = ( "F" | "COMMA" | "DOLLAR" ) [ number [ "." number ] ] "." ; (* opensas *)
+numeric_format = ( "F" | "COMMA" | "DOLLAR" | "PVALUE" ) [ number [ "." number ] ] "." ; (* opensas *)
 sci_format     = ( "Z" | "E" | "BEST" | "PERCENT" ) [ number [ "." number ] ] "." ; (* opensas *)
 date_format    = ( "DATE" | "MMDDYY" | "DDMMYY" | "YYMMDD" ) [ number ] "." ; (* opensas *)
 julqtr_format  = ( "JULIAN" | "YYMMN" | "QTR" | "QTRR" | "YYQ" | "YYQC" )

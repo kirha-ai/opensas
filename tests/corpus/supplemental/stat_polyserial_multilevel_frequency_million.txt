@@ -1,0 +1,5 @@
+# corpus assertions
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL frequency-million-c0.1-m200 1.0~6e-12
+stdout-count 1 SERIAL
+stderr-count 0 did not converge

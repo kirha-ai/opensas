@@ -1,0 +1,103 @@
+# corpus assertions
+row ODS_ROWS|8
+stdout-count 11 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|F_g|char|1|||g
+row ODS_COL|3|g|num|8|||
+row ODS_COL|4|F_r|char|1|||r
+row ODS_COL|5|r|num|8|||
+row ODS_COL|6|F_c|char|1|||c
+row ODS_COL|7|c|num|8|||
+row ODS_COL|8|Frequency|num|8|BEST8.||
+row ODS_COL|9|Percent|num|8|6.2||
+row ODS_COL|10|CumFrequency|num|8|BEST8.||Cumulative Frequency
+row ODS_COL|11|CumPercent|num|8|6.2||Cumulative Percent
+stdout-count 88 ODS_VALUE|
+row ODS_VALUE|1|Table|Table g * r * c
+row ODS_VALUE|1|F_g|1
+row ODS_VALUE|1|g|1~1e-08
+row ODS_VALUE|1|F_r|1
+row ODS_VALUE|1|r|1~1e-08
+row ODS_VALUE|1|F_c|1
+row ODS_VALUE|1|c|1~1e-08
+row ODS_VALUE|1|Frequency|1~1e-08
+row ODS_VALUE|1|Percent|5.26315789473684~5.263157895e-08
+row ODS_VALUE|1|CumFrequency|1~1e-08
+row ODS_VALUE|1|CumPercent|5.26315789473684~5.263157895e-08
+row ODS_VALUE|2|Table|Table g * r * c
+row ODS_VALUE|2|F_g|1
+row ODS_VALUE|2|g|1~1e-08
+row ODS_VALUE|2|F_r|1
+row ODS_VALUE|2|r|1~1e-08
+row ODS_VALUE|2|F_c|2
+row ODS_VALUE|2|c|2~2e-08
+row ODS_VALUE|2|Frequency|3~3e-08
+row ODS_VALUE|2|Percent|15.7894736842105~1.578947368e-07
+row ODS_VALUE|2|CumFrequency|4~4e-08
+row ODS_VALUE|2|CumPercent|21.0526315789473~2.105263158e-07
+row ODS_VALUE|3|Table|Table g * r * c
+row ODS_VALUE|3|F_g|1
+row ODS_VALUE|3|g|1~1e-08
+row ODS_VALUE|3|F_r|2
+row ODS_VALUE|3|r|2~2e-08
+row ODS_VALUE|3|F_c|1
+row ODS_VALUE|3|c|1~1e-08
+row ODS_VALUE|3|Frequency|4~4e-08
+row ODS_VALUE|3|Percent|21.0526315789473~2.105263158e-07
+row ODS_VALUE|3|CumFrequency|8~8e-08
+row ODS_VALUE|3|CumPercent|42.1052631578947~4.210526316e-07
+row ODS_VALUE|4|Table|Table g * r * c
+row ODS_VALUE|4|F_g|1
+row ODS_VALUE|4|g|1~1e-08
+row ODS_VALUE|4|F_r|2
+row ODS_VALUE|4|r|2~2e-08
+row ODS_VALUE|4|F_c|2
+row ODS_VALUE|4|c|2~2e-08
+row ODS_VALUE|4|Frequency|3~3e-08
+row ODS_VALUE|4|Percent|15.7894736842105~1.578947368e-07
+row ODS_VALUE|4|CumFrequency|11~1.1e-07
+row ODS_VALUE|4|CumPercent|57.8947368421052~5.789473684e-07
+row ODS_VALUE|5|Table|Table g * r * c
+row ODS_VALUE|5|F_g|2
+row ODS_VALUE|5|g|2~2e-08
+row ODS_VALUE|5|F_r|1
+row ODS_VALUE|5|r|1~1e-08
+row ODS_VALUE|5|F_c|1
+row ODS_VALUE|5|c|1~1e-08
+row ODS_VALUE|5|Frequency|2~2e-08
+row ODS_VALUE|5|Percent|10.5263157894736~1.052631579e-07
+row ODS_VALUE|5|CumFrequency|13~1.3e-07
+row ODS_VALUE|5|CumPercent|68.4210526315789~6.842105263e-07
+row ODS_VALUE|6|Table|Table g * r * c
+row ODS_VALUE|6|F_g|2
+row ODS_VALUE|6|g|2~2e-08
+row ODS_VALUE|6|F_r|1
+row ODS_VALUE|6|r|1~1e-08
+row ODS_VALUE|6|F_c|2
+row ODS_VALUE|6|c|2~2e-08
+row ODS_VALUE|6|Frequency|1~1e-08
+row ODS_VALUE|6|Percent|5.26315789473684~5.263157895e-08
+row ODS_VALUE|6|CumFrequency|14~1.4e-07
+row ODS_VALUE|6|CumPercent|73.6842105263158~7.368421053e-07
+row ODS_VALUE|7|Table|Table g * r * c
+row ODS_VALUE|7|F_g|2
+row ODS_VALUE|7|g|2~2e-08
+row ODS_VALUE|7|F_r|2
+row ODS_VALUE|7|r|2~2e-08
+row ODS_VALUE|7|F_c|1
+row ODS_VALUE|7|c|1~1e-08
+row ODS_VALUE|7|Frequency|2~2e-08
+row ODS_VALUE|7|Percent|10.5263157894736~1.052631579e-07
+row ODS_VALUE|7|CumFrequency|16~1.6e-07
+row ODS_VALUE|7|CumPercent|84.2105263157895~8.421052632e-07
+row ODS_VALUE|8|Table|Table g * r * c
+row ODS_VALUE|8|F_g|2
+row ODS_VALUE|8|g|2~2e-08
+row ODS_VALUE|8|F_r|2
+row ODS_VALUE|8|r|2~2e-08
+row ODS_VALUE|8|F_c|2
+row ODS_VALUE|8|c|2~2e-08
+row ODS_VALUE|8|Frequency|3~3e-08
+row ODS_VALUE|8|Percent|15.7894736842105~1.578947368e-07
+row ODS_VALUE|8|CumFrequency|19~1.9e-07
+row ODS_VALUE|8|CumPercent|100~1e-06

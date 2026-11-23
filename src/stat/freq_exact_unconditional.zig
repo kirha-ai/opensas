@@ -21,6 +21,9 @@ pub const Options = struct {
     /// the original stack path. A missing allocator returns exhausted when
     /// dynamic workspace is required; no implicit global allocator is used.
     allocator: ?std.mem.Allocator = null,
+    /// Expose endpoints whose numerical inversions have already completed
+    /// if the caller's deadline interrupts the remaining search.
+    completed_limits: ?*risk.Interval = null,
     budget: dist.Budget = .{},
     /// Absolute bound width for the nuisance supremum (floating roundoff aside).
     tolerance: f64 = 1e-10,
@@ -35,6 +38,11 @@ const Work = struct {
     options: Options,
     used: u64 = 0,
     stopped: bool = false,
+    /// Used only for inversion decisions. Public p-values retain their
+    /// full absolute error bounds.
+    test_size: ?f64 = null,
+    /// Raw absolute Z adjustment used for a separately reported M9 SCORE2 limit.
+    reported_score2: bool = false,
     fn tick(self: *Work) bool {
         if (self.stopped) return false;
         if (self.used == self.options.budget.max_tables or self.options.budget.stopped()) {
@@ -111,6 +119,10 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
     var upper: f64 = 0;
     for (coeff) |v| upper = @max(upper, v);
     best.* = @max(best.*, @max(coeff[0], coeff[coeff.len - 1]));
+    if (work.test_size) |size| {
+        if (best.* > size) return 1;
+        if (upper <= size) return upper;
+    }
     if (upper - best.* <= work.options.tolerance) return upper;
     if (depth == 64) {
         work.stopped = true;
@@ -130,6 +142,7 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
     best.* = @max(best.*, left[coeff.len - 1]);
     const lu = maximize(left[0..coeff.len], best, work, depth + 1);
     if (work.stopped) return 1;
+    if (work.test_size) |size| if (best.* > size) return 1;
     const ru = maximize(right[0..coeff.len], best, work, depth + 1);
     return @max(lu, ru);
 }
@@ -143,12 +156,27 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     if (n1 == 0 or n2 == 0) return error.ExecError;
     if (!std.math.isFinite(null_value) or (family == .difference and @abs(null_value) > 1) or (family == .relative_risk and null_value <= 0)) return error.ExecError;
     if (!std.math.isFinite(work.options.tolerance) or work.options.tolerance <= 0 or work.options.tolerance >= 1) return error.ExecError;
+    if (family == .relative_risk and method == .score2 and side == .two_sided) {
+        // At (0,n2) and r <= 1/(2*n1), p2=1 puts all mass on (x,n2).
+        // For each such x the constrained MLE is min(1,(x+n2)/(r*N))=1.
+        // The score denominator is common, and |x/n1-r| >= r for every x.
+        // Interchanging rows gives the reciprocal plateau at the other corner.
+        // The wider product compares a binary64 null with the rational cutoff
+        // exactly, including immediately adjacent representable null values.
+        const zero_first = c[0] == 0 and c[3] == 0 and @as(f128, null_value) * @as(f128, @floatFromInt(2 * n1wide)) <= 1;
+        const zero_second = c[1] == 0 and c[2] == 0 and null_value >= @as(f64, @floatFromInt(2 * n2wide));
+        if (zero_first or zero_second) {
+            if (!work.tick()) return .exhausted;
+            return .{ .complete = pointBounds(1) };
+        }
+    }
     const p2lo = if (family == .difference) @max(0, -null_value) else 0;
     const p2hi = if (family == .difference) @min(1, 1 - null_value) else @min(1, 1 / null_value);
     const p1lo = if (family == .difference) p2lo + null_value else p2lo * null_value;
     const p1hi = if (family == .difference) p2hi + null_value else p2hi * null_value;
-    const observed = try statistic(c, family, method, null_value);
-    if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, work);
+    const raw_observed = try statistic(c, family, method, null_value);
+    const observed = if (work.reported_score2) reportedScore2Threshold(raw_observed) else raw_observed;
+    if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, null, work);
     const n = n1 + n2;
     var sum: [stack_degree + 1]f64 = @splat(0);
     for (0..n1 + 1) |xx| for (0..n2 + 1) |yy| {
@@ -169,6 +197,10 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
             d += 1;
         }
         for (0..n + 1) |i| sum[i] += coeff[i];
+        if (work.test_size) |size| {
+            const mass = @min(1, @max(sum[0], sum[n]));
+            if (mass > size) return .{ .complete = .{ .lower = mass, .upper = 1 } };
+        }
     };
     var best: f64 = 0;
     const upper = maximize(sum[0 .. n + 1], &best, work, 0);
@@ -179,7 +211,9 @@ fn polynomialTick(context: ?*anyopaque) bool {
     const work: *Work = @ptrCast(@alignCast(context.?));
     return work.tick();
 }
-fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f64, side: Side, observed: f64, p1: polynomial.Range, p2: polynomial.Range, work: *Work) Error!TailResult {
+const GridValue = struct { index: u32, reported: f64 };
+
+fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f64, side: Side, observed: f64, p1: polynomial.Range, p2: polynomial.Range, grid: ?*GridValue, work: *Work) Error!TailResult {
     const rows = std.math.add(usize, n1, 1) catch return .exhausted;
     const cols = std.math.add(usize, n2, 1) catch return .exhausted;
     const count = std.math.mul(usize, rows, cols) catch return .exhausted;
@@ -201,11 +235,46 @@ fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f
     const built = try polynomial.build(a, n1, n2, events, p1, p2, control);
     if (built == .exhausted) return .exhausted;
     defer built.complete.deinit(a);
-    const maximum = try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
-    return switch (maximum) {
-        .exhausted => .exhausted,
-        .complete => |bounds| .{ .complete = .{ .lower = bounds.lower, .upper = bounds.upper } },
-    };
+    const maximum = if (grid != null)
+        try polynomial.maximizeGrid(a, built.complete.coefficients, nuisance_divisions, control)
+    else if (work.test_size) |size|
+        try polynomial.maximumForTest(a, built.complete.coefficients, work.options.tolerance, size, control)
+    else
+        try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
+    if (maximum == .exhausted) return .exhausted;
+    const bounds = maximum.complete;
+    if (grid) |point| {
+        point.index = bounds.grid_index.?;
+        point.reported = bounds.lower;
+        if (point.index > 1 and point.index < nuisance_divisions - 1 and 1 - bounds.lower != 1) {
+            const q = @as(f64, @floatFromInt(point.index)) / @as(f64, @floatFromInt(nuisance_divisions));
+            point.reported = (try barnardComplement(a, n1, n2, events, q, bounds.lower, work)) orelse return .exhausted;
+        }
+    }
+    return .{ .complete = .{ .lower = bounds.lower, .upper = bounds.upper } };
+}
+
+/// M9's raw small-tail probabilities are multiples of the spacing produced
+/// by subtracting the probability of the omitted tables from one.
+/// Retain the separately computed stable probability for a subtraction
+/// outside the supplied numerical tolerance or outside the probability domain.
+fn barnardComplement(a: std.mem.Allocator, n1: u32, n2: u32, events: []const bool, q: f64, stable: f64, work: *Work) Error!?f64 {
+    const columns = try a.alloc(f64, @as(usize, n2) + 1);
+    defer a.free(columns);
+    for (columns, 0..) |*mass, y| {
+        if (!work.tick()) return null;
+        mass.* = @exp(exact.binomialLogPoint(@intCast(y), n2, q));
+    }
+    var inside: f64 = 0;
+    for (0..@as(usize, n1) + 1) |x| {
+        if (!work.tick()) return null;
+        const row = @exp(exact.binomialLogPoint(@intCast(x), n1, q));
+        for (columns, 0..) |mass, y| {
+            if (!events[x * columns.len + y]) inside += row * mass;
+        }
+    }
+    const p = 1 - inside;
+    return if (p > 0 and p <= 1 and @abs(p - stable) <= work.options.tolerance) p else stable;
 }
 
 pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, null_value: f64, side: Side, options: Options) Error!TailResult {
@@ -213,17 +282,215 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
+const nuisance_divisions: u32 = 10_000;
+const BarnardProfile = struct { one: f64, two: f64 };
+pub const BarnardTails = union(enum) {
+    complete: struct { one: Bounds, two: Bounds, profile: ?BarnardProfile = null },
+    exhausted,
+};
+
+/// Under H0 the Barnard score is the signed square root of Pearson X².
+/// |Z|=sqrt(N) only under perfect association: a directional tail contains
+/// the observed extreme allocation, and the absolute tail also its reverse.
+pub fn barnardTails(table: risk.Table2x2, side: Side, options: Options) Error!BarnardTails {
+    const c = try canonical(table, .first);
+    var work = Work{ .options = options };
+    if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
+    if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
+    // With equal observed risks, every absolute score is at least zero.
+    // Either inclusive directional tail has mass one at nuisance p=0.
+    // Integer cross-products distinguish equality from a one-count
+    // determinant that rounds away when subtracting two row proportions.
+    if (@as(u64, c[0]) * c[3] == @as(u64, c[1]) * c[2]) {
+        if (!work.tick()) return .exhausted;
+        return .{ .complete = .{ .one = pointBounds(1), .two = pointBounds(1) } };
+    }
+    const negative = c[0] == 0 and c[3] == 0;
+    const positive = c[1] == 0 and c[2] == 0;
+    if ((negative and side == .left) or (positive and side == .right)) {
+        const n1 = if (negative) c[1] else c[0];
+        const n2 = if (negative) c[2] else c[3];
+        return opposingBarnard(@min(n1, n2), @max(n1, n2), &work);
+    }
+    const one = try tail(c, .difference, .score, 0, side, &work);
+    if (one == .exhausted) return .exhausted;
+    work = .{ .options = options };
+    const two = try tail(c, .difference, .score, 0, .two_sided, &work);
+    if (two == .exhausted) return .exhausted;
+    var result = BarnardTails{ .complete = .{ .one = one.complete, .two = two.complete } };
+    if (options.allocator == null) return result;
+    const n1 = c[0] + c[1];
+    const n2 = c[2] + c[3];
+    const observed = try statistic(c, .difference, .score, 0);
+    const range = polynomial.Range{ .lower = 0, .upper = 1 };
+    var reported: BarnardProfile = undefined;
+    for ([_]Side{ side, .two_sided }, [_]*f64{ &reported.one, &reported.two }) |tail_side, p| {
+        work = .{ .options = options };
+        var point: GridValue = undefined;
+        const fit = try allocatedTail(n1, n2, .difference, .score, 0, tail_side, observed, range, range, &point, &work);
+        if (fit == .exhausted) {
+            if (options.budget.stopped()) return .exhausted;
+            return result;
+        }
+        const index = point.index;
+        // The first/last interior grid point cannot bracket a peak with
+        // positive mass on both sides. Observed native searches can skip
+        // one of the two reflected maxima in that unresolved boundary cell.
+        if (index == 1 or index == nuisance_divisions - 1 or
+            1 - fit.complete.lower == 1) return result;
+        p.* = point.reported;
+    }
+    result.complete.profile = reported;
+    return result;
+}
+
+fn pointBounds(value: f64) Bounds {
+    return .{ .lower = value, .upper = value };
+}
+
+// Independent M9 raw cells recover the nuisance grid at increments of
+// .0001. At a resolved peak, unimodality restricts the discrete maximum
+// to the two enclosing grid points. When the peak falls inside the very
+// first cell, M9 can miss an entire reflected tail; retain the continuous
+// bounds for this numerically unresolved profile.
+fn opposingBarnardProfile(a: f64, b: f64, two_mode: f64) ?BarnardProfile {
+    const divisions: f64 = @floatFromInt(nuisance_divisions);
+    const one_mode = a / (a + b);
+    if (one_mode * divisions < 1) return null;
+    var profile: BarnardProfile = undefined;
+    for ([_]f64{ one_mode, two_mode }, [_]*f64{ &profile.one, &profile.two }, [_]bool{ false, true }) |mode, field, two| {
+        const lo = @floor(mode * divisions);
+        var high: f64 = 0;
+        for ([_]f64{ lo, @min(divisions / 2, lo + 1) }) |index| {
+            const q = index / divisions;
+            if (q == 0.5) {
+                const exponent = if (two) 1 - (a + b) else -(a + b);
+                high = @max(high, @exp2(exponent));
+                continue;
+            }
+            const log_q = @log(q);
+            const log_complement = std.math.log1p(-q);
+            const log_mass = a * log_q + b * log_complement;
+            const log_ratio = (b - a) * (log_q - log_complement);
+            high = @max(high, @exp(if (two) log_mass + std.math.log1p(@exp(log_ratio)) else log_mass));
+        }
+        field.* = high;
+    }
+    return profile;
+}
+
+/// For ordered row totals a<=b, g(q)=q^a(1-q)^b has its peak at a/N.
+/// Its reflected sum g(q)+g(1-q) is symmetric. With u=log((1-q)/q)/2
+/// its log derivative is d*tanh(d*u)-N*tanh(u), d=b-a. On u>0 with
+/// d>1, tanh(d*u)/tanh(u) decreases from d to 1, since its log derivative
+/// is 2*d/sinh(2*d*u)-2/sinh(2*u)<0. The maximum is at 1/2 when d²<=N.
+/// Otherwise there is one maximum on [a/N,1/2] and its reflection.
+fn opposingBarnard(small: u32, large: u32, work: *Work) BarnardTails {
+    if (!work.tick()) return .exhausted;
+    const a: f64 = @floatFromInt(small);
+    const b: f64 = @floatFromInt(large);
+    const n = a + b;
+    const one = pointBounds(@exp(a * logRowShare(a, b) + b * logRowShare(b, a)));
+    const d: u64 = large - small;
+    if (d * d <= @as(u64, small) + large) {
+        return .{ .complete = .{ .one = one, .two = pointBounds(@exp2(1 - n)), .profile = opposingBarnardProfile(a, b, 0.5) } };
+    }
+
+    var lo = a / n;
+    var hi: f64 = 0.5;
+    while (true) {
+        if (!work.tick()) return .exhausted;
+        const q = (lo + hi) / 2;
+        if (q == lo or q == hi) break;
+        // The sign of the derivative after factoring out g(q)/(q*(1-q)).
+        const ratio = std.math.pow(f64, q / (1 - q), @floatFromInt(d));
+        const derivative = @mulAdd(f64, -n, q, a) + ratio * @mulAdd(f64, -n, q, b);
+        if (derivative > 0) lo = q else hi = q;
+    }
+    // Within the final bracket g(q) decreases and g(1-q) increases. Form
+    // the sum in log space in case each probability underflows separately.
+    const large_log = a * @log(lo) + b * std.math.log1p(-lo);
+    const small_log = b * @log(hi) + a * std.math.log1p(-hi);
+    const upper = @max(one.upper, @exp(large_log + std.math.log1p(@exp(small_log - large_log))));
+    const at_hi = a * @log(hi) + b * std.math.log1p(-hi);
+    const lower = @exp(at_hi + std.math.log1p(@exp(small_log - at_hi)));
+    return .{ .complete = .{ .one = one, .two = .{ .lower = @max(one.lower, @min(lower, upper)), .upper = upper }, .profile = opposingBarnardProfile(a, b, (lo + hi) / 2) } };
+}
+
+/// At (0,n2), both NOSCORE and the directional score have a singleton left
+/// tail. For the score, write the constrained null as p=a+b*q, b>0,
+/// V=p*(1-p), W=q*(1-q), and t=x-n1*p. At an interior MLE, y-n2*q
+/// equals -b*t*W/V. For t<0, the count bounds therefore give
+/// -t <= min(n1*p, n2*V/(b*q)). The squared score is
+/// t^2*(1/(n1*V) + b^2*W/(n2*V^2)).
+/// Put A=n1*b/n2. On the first branch, A*q<=1-p and the derivative of
+/// the squared bound has the sign of (1-p)*(1+A*(1-2*q))+2*A*b*q*(1-q),
+/// which is positive. On the second branch, A*q>=1-p and the derivative
+/// has the sign of -1+(1-2*p)/A-2*V/(A*b*q), which is negative.
+/// Their meeting point, clipped to the legal nuisance range, is the fit
+/// at (0,n2). At a clipped boundary the remaining count is monotone.
+/// Absolute score ordering in SCORE2 also includes the opposite tail.
+///
+/// For the risk difference write A=1-p1 and B=p2, so A+B=1-d. The interior
+/// maximum of A^n1 B^n2 assigns A:B=n1:n2. When the larger factor reaches 1 the
+/// probability becomes (-d)^min(n1,n2). Invert the two regions at alpha/2.
+fn opposingDifferenceUpper(n1: f64, n2: f64, alpha: f64) f64 {
+    const small = @min(n1, n2);
+    const large = @max(n1, n2);
+    const log_target = @log(alpha) - @log(@as(f64, 2));
+    const boundary = small * @log(small / large);
+    if (log_target >= boundary) return -@exp(log_target / small);
+    const n = small + large;
+    const p = small / n;
+    const entropy = -p * @log(p) - (large / n) * std.math.log1p(-p);
+    return -std.math.expm1(log_target / n + entropy);
+}
+
+/// For (0,n2), the RR tail is (1-r)^n1 up to r=n2/N; above that point
+/// it is (n1/N)^n1 * (n2/(N*r))^n2. Return the log upper root so row
+/// reversal can yield a representable lower endpoint even for large ratios.
+fn opposingRatioLogUpper(n1: f64, n2: f64, alpha: f64) f64 {
+    const log_target = @log(alpha) - @log(@as(f64, 2));
+    const at_transition = n1 * logRowShare(n1, n2);
+    if (log_target >= at_transition) return @log(-std.math.expm1(log_target / n1));
+    return logRowShare(n2, n1) + (at_transition - log_target) / n2;
+}
+
+fn logRowShare(row: f64, other: f64) f64 {
+    const total = row + other;
+    return if (row >= other) std.math.log1p(-other / total) else @log(row / total);
+}
+
 /// Equal-tailed NOSCORE/SCORE inversion or absolute-score SCORE2 inversion.
 /// Returns bracketed numerical endpoints; no fixed-margin shortcut is valid.
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
+    return invertRiskLimits(table, column, family, method, alpha, options, false);
+}
+
+fn invertRiskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options, report_score2: bool) Error!LimitsResult {
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
     const c = try canonical(table, column);
     if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
     const s = tableOf(c).samples(.first);
     const estimate = if (family == .difference) s[0].proportion() - s[1].proportion() else if (c[2] == 0) std.math.inf(f64) else s[0].proportion() / s[1].proportion();
+    const opposing = (c[0] == 0 and c[3] == 0) or (c[1] == 0 and c[2] == 0);
+    if (opposing and (method == .score or (method == .noscore and family == .difference))) {
+        if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
+        if (options.budget.max_tables == 0 or options.budget.stopped()) return .exhausted;
+        if (family == .difference) {
+            const upper = opposingDifferenceUpper(s[0].total, s[1].total, alpha);
+            return .{ .complete = if (c[0] == 0) .{ .lower = -1, .upper = upper } else .{ .lower = -upper, .upper = 1 } };
+        }
+        const zero_first = c[0] == 0;
+        const zero_row: usize = @intFromBool(!zero_first);
+        const log_upper = opposingRatioLogUpper(s[zero_row].total, s[1 - zero_row].total, alpha);
+        const finite = @exp(if (zero_first) log_upper else -log_upper);
+        if (finite == 0 or !std.math.isFinite(finite)) return .exhausted;
+        return .{ .complete = if (zero_first) .{ .lower = 0, .upper = finite } else .{ .lower = finite, .upper = std.math.inf(f64) } };
+    }
     const target = if (method == .score2) alpha else alpha / 2;
     var out = exact.Interval{ .lower = if (family == .difference) -1 else 0, .upper = if (family == .difference) 1 else std.math.inf(f64) };
-    var work = Work{ .options = options };
+    var work = Work{ .options = options, .test_size = target };
     for ([_]bool{ true, false }) |lower| {
         // RR structural endpoints; all-zero event rows require their own
         // modified-statistic inversion and are not silently declared [0,inf].
@@ -276,15 +543,72 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
             if (accepted == lower) hi = mid else lo = mid;
         }
         if (hi - lo > options.inversion_tolerance) return .exhausted;
-        const endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
+        var endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
+        if (report_score2 and lower and c[1] == 0 and c[2] == 0) {
+            const log_plateau = @log(2 * @as(f64, @floatFromInt(c[3])));
+            if (lo <= log_plateau and log_plateau <= hi) {
+                if (try reportedPlateauLower(c, alpha, &work)) |reported| endpoint = @min(endpoint, reported);
+            }
+        }
         if (lower) out.lower = endpoint else out.upper = endpoint;
+        if (options.completed_limits) |completed| {
+            if (lower) completed.lower = endpoint else completed.upper = endpoint;
+        }
     }
     return .{ .complete = out };
 }
 
+fn reportedScore2Threshold(z: f64) f64 {
+    return @max(0, @abs(z) - @sqrt(std.math.floatEps(f64) / 2));
+}
+
+/// M9's lower limit at the probability-one SCORE2 ordering jump, with an
+/// all-event first row and a zero-event second row. The modified RR is
+/// 2*b+1. Its half supplies the first lower trial when the Wald limit is
+/// undefined. Once the linear bracket is at most 1e-6 wide, M9 reports its
+/// first rejected midpoint. The raw observed Z uses the same absolute
+/// square-root-of-unit-roundoff adjustment as the reported Barnard Z.
+/// Each accepted/rejected trial is decided from certified nuisance bounds.
+/// A smooth p-stop or a decision the budget cannot establish falls back to
+/// the already-computed reference endpoint.
+fn reportedPlateauLower(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
+    const a: f64 = @floatFromInt(c[0]);
+    const b: f64 = @floatFromInt(c[3]);
+    var inside = 2 * b + 1;
+    var outside = inside / 2;
+    work.reported_score2 = true;
+    defer work.reported_score2 = false;
+    const seed = try tail(c, .relative_risk, .score2, outside, .two_sided, work);
+    if (seed == .exhausted or seed.complete.upper > alpha) return null;
+    while (true) {
+        const mid = (inside + outside) / 2;
+        if (mid == inside or mid == outside) return null;
+        const trial = try tail(c, .relative_risk, .score2, mid, .two_sided, work);
+        if (trial == .exhausted) return null;
+        if (trial.complete.lower > alpha) {
+            inside = mid;
+        } else if (trial.complete.upper < alpha - 1e-6) {
+            if (inside - outside <= 1e-6) {
+                // At p1=1 the first-row count is fixed. When all row-two
+                // counts share the fitted nuisance endpoint, |Z| increases
+                // for y>=1. Check the closest alternative to certify that
+                // the accepted side contains this actual probability-one jump.
+                if (inside < b or (b > 1 and inside < 1 + b / a)) return null;
+                const event = try statistic(c, .relative_risk, .score2, inside);
+                const next = try statistic(.{ c[0], 0, 1, c[3] - 1 }, .relative_risk, .score2, inside);
+                return if (selected(next, reportedScore2Threshold(event), .two_sided)) mid else null;
+            }
+            outside = mid;
+        } else {
+            return null;
+        }
+    }
+}
+
 /// SAS-compatible OUTER search profile for RR NOSCORE. The certified
 /// mathematical inversion above remains the independent reference and default.
-/// Other families/methods retain that implementation unchanged.
+/// The separate SCORE2 lower-bound profile applies only at its certified
+/// opposing-row ordering jump.
 ///
 /// Verified with transition-b0..b3.sas under /tmp/opensas-stat-batch2/EXACT-RR-support:
 /// start at modified RR, seed with UNMODIFIED Wald upper, double its distance
@@ -300,6 +624,7 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
 /// nominal-coverage guarantee (see the complete sample-space counterexample).
 /// Do not claim full NOSCORE SAS parity from this profile alone.
 pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
+    if (family == .relative_risk and method == .score2) return invertRiskLimits(table, column, family, method, alpha, options, true);
     if (family != .relative_risk or method != .noscore) return riskLimits(table, column, family, method, alpha, options);
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or
         !std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1 or
@@ -321,9 +646,35 @@ pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, 
     work.options.tolerance = @min(options.tolerance, 1e-12);
     const upper = try sasNoscoreUpper(c, alpha, &work);
     if (upper == null) return .exhausted;
+    if (options.completed_limits) |completed| {
+        if (std.math.isFinite(upper.?)) completed.upper = upper.?;
+    }
     const reciprocal = try sasNoscoreUpper(.{ c[2], c[3], c[0], c[1] }, alpha, &work);
     if (reciprocal == null) return .exhausted;
     return .{ .complete = .{ .lower = 1 / reciprocal.?, .upper = upper.? } };
+}
+
+/// At fixed row totals the modified RR increases strictly in first-row
+/// successes and decreases strictly in second-row successes. At its minimum,
+/// the left tail contains just the observed (0, n2) allocation. Its probability
+/// is (1-r*q)^n1 * q^n2, maximized at q=min(1, n2/(r*(n1+n2))).
+fn noscoreUpperTail(c: [4]u32, r: f64, work: *Work) Error!TailResult {
+    if (c[0] != 0 or c[3] != 0) return tail(c, .relative_risk, .noscore, r, .left, work);
+    if (!work.tick()) return .exhausted;
+    const n1: f64 = @floatFromInt(c[1]);
+    const n2: f64 = @floatFromInt(c[2]);
+    const n = n1 + n2;
+    const share = n2 / n;
+    const log_mass = if (r <= share) n1 * std.math.log1p(-r) else blk: {
+        const q = share / r;
+        // Avoid subtracting nearly equal values before multiplying their
+        // logarithms by a potentially large row total.
+        const log_failure = logRowShare(n1, n2);
+        const log_success = if (q > 0.5) std.math.log1p(@mulAdd(f64, -r, n, n2) / (r * n)) else @log(q);
+        break :blk n1 * log_failure + n2 * log_success;
+    };
+    const p = @exp(log_mass);
+    return .{ .complete = .{ .lower = p, .upper = p } };
 }
 
 /// Null is a numerical/resource stop, never an approximate partial result.
@@ -347,7 +698,7 @@ fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     const target = alpha / 2;
     while (true) {
         if (!std.math.isFinite(hi)) return null;
-        const bound = try tail(c, .relative_risk, .noscore, hi, .left, work);
+        const bound = try noscoreUpperTail(c, hi, work);
         if (bound == .exhausted) return null;
         if (bound.complete.upper <= target) break;
         const next = point + 2 * (hi - point);
@@ -357,7 +708,7 @@ fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     for (0..256) |_| {
         const mid = lo + (hi - lo) / 2;
         if (mid == lo or mid == hi) return null;
-        const value = try tail(c, .relative_risk, .noscore, mid, .left, work);
+        const value = try noscoreUpperTail(c, mid, work);
         if (value == .exhausted) return null;
         // One-sided residual: an equally close accepted point is not returned.
         if (value.complete.upper <= target and target - value.complete.lower <= 1e-6) return mid;
@@ -546,6 +897,137 @@ test "SAS RR NOSCORE outer profile predicts transitions and held-out reversals" 
     // or weakened to accommodate a SAS runtime initialization rule.
     const certified = (try riskLimits(.{ .cells = .{ 1, 1, 2, 1 } }, .first, .relative_risk, .noscore, 0.95, .{})).complete;
     try t.expectApproxEqAbs(@as(f64, 0.9884657555036446), certified.upper, 1e-9);
+}
+
+test "NOSCORE opposing outcomes have a single-allocation tail on either side of the nuisance maximum" {
+    const t = std.testing;
+    for (1..6) |i| for (1..6) |j| {
+        const cells = [4]u32{ 0, @intCast(i), @intCast(j), 0 };
+        for ([_]f64{ 0.125, 0.5, 0.75, 1, 3, 12 }) |r| {
+            var work = Work{ .options = .{} };
+            const direct = (try noscoreUpperTail(cells, r, &work)).complete;
+            const reference = (try riskTail(tableOf(cells), .first, .relative_risk, .noscore, r, .left, .{ .tolerance = 1e-13 })).complete;
+            try t.expect(direct.lower >= reference.lower - 3e-14 and direct.upper <= reference.upper + 3e-14);
+        }
+    };
+    // At r=1 either orientation has maximum (1/(N+1))*(N/(N+1))^N.
+    // An 85-digit evaluation with N=4e9 distinguishes cancellation of 1-q.
+    for ([_][4]u32{ .{ 0, 1, 4_000_000_000, 0 }, .{ 0, 4_000_000_000, 1, 0 } }) |cells| {
+        var work = Work{ .options = .{} };
+        const mass = (try noscoreUpperTail(cells, 1, &work)).complete.lower;
+        try t.expectApproxEqRel(@as(f64, 9.19698602813643478639499e-11), mass, 1e-14);
+    }
+    // Four million candidate tables exceed the enumeration budget. The finite
+    // endpoint lies in the q=1 regime, where (1-r)^2000=alpha/2.
+    const table = risk.Table2x2{ .cells = .{ 0, 2000, 2000, 0 } };
+    const upper = -std.math.expm1(@log(@as(f64, 0.025)) / 2000);
+    const options = Options{ .budget = .{ .max_tables = 100 } };
+    const first = (try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.05, options)).complete;
+    const second = (try riskLimitsSas(table, .second, .relative_risk, .noscore, 0.05, options)).complete;
+    try t.expectEqual(@as(f64, 0), first.lower);
+    try t.expectApproxEqAbs(upper, first.upper, 3e-8);
+    try t.expectEqual(1 / first.upper, second.lower);
+    try t.expectEqual(std.math.inf(f64), second.upper);
+    var stopped = Work{ .options = .{ .budget = .{ .max_tables = 0 } } };
+    try t.expect((try noscoreUpperTail(.{ 0, 2000, 2000, 0 }, 1, &stopped)) == .exhausted);
+}
+
+test "NOSCORE boundary risk differences invert the constrained maximum for both response columns" {
+    const t = std.testing;
+    for (1..6) |i| for (1..6) |j| {
+        const c = [4]u32{ 0, @intCast(i), @intCast(j), 0 };
+        for ([_]f64{ 0.01, 0.1, 0.48, 0.95 }) |alpha| {
+            const first = (try riskLimits(tableOf(c), .first, .difference, .noscore, alpha, .{})).complete;
+            const second = (try riskLimits(tableOf(c), .second, .difference, .noscore, alpha, .{})).complete;
+            try t.expectEqual(@as(f64, -1), first.lower);
+            try t.expectEqual(@as(f64, 1), second.upper);
+            try t.expectEqual(-first.upper, second.lower);
+            const bounds = (try riskTail(tableOf(c), .first, .difference, .noscore, first.upper, .left, .{ .tolerance = 1e-13 })).complete;
+            try t.expect(bounds.lower <= alpha / 2 + 2e-14 and bounds.upper >= alpha / 2 - 2e-14);
+        }
+    };
+    const table = risk.Table2x2{ .cells = .{ 0, 2_000_000_000, 2_000_000_000, 0 } };
+    const interval = (try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 1 } })).complete;
+    const reference = -1 - 2 * std.math.expm1(@log(@as(f64, 0.025)) / 4_000_000_000);
+    try t.expectApproxEqAbs(reference, interval.upper, 5e-16);
+    try t.expect((try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+}
+
+test "Barnard opposing limits match elementary polynomial extrema and exhaustive unsigned score tails" {
+    const t = std.testing;
+    for (1..9) |i| for (1..10) |j| {
+        const corner = tableOf(.{ 0, @intCast(i), @intCast(j), 0 });
+        const actual = (try barnardTails(corner, .left, .{})).complete;
+        const one = (try riskTail(corner, .first, .difference, .score, 0, .left, .{ .tolerance = 1e-13 })).complete;
+        const two = (try riskTail(corner, .first, .difference, .score, 0, .two_sided, .{ .tolerance = 1e-13 })).complete;
+        try t.expect(actual.one.lower >= one.lower - 2e-14 and actual.one.upper <= one.upper + 2e-14);
+        try t.expect(actual.two.lower >= two.lower - 2e-14 and actual.two.upper <= two.upper + 2e-14);
+    };
+    // At (1,3) the central mode is flat; at (1,4), putting s=q*(1-q)
+    // gives s*(1-3*s) with a maximum of 1/12 at either off-center root.
+    inline for (.{ .{ 3, 0.125 }, .{ 4, 1.0 / 12.0 } }) |pair| {
+        const x = (try barnardTails(tableOf(.{ 0, 1, pair[0], 0 }), .left, .{})).complete;
+        try t.expectApproxEqAbs(@as(f64, pair[1]), x.two.upper, 1e-15);
+    }
+    const rare = tableOf(.{ 4_000_000_000, 0, 0, 1 });
+    const x = (try barnardTails(rare, .right, .{})).complete;
+    try t.expectApproxEqRel(@as(f64, 9.19698602813643478639499e-11), x.two.upper, 2e-14);
+    try t.expect(x.profile == null);
+    try t.expect((try barnardTails(rare, .right, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
+    const subnormal = (try barnardTails(tableOf(.{ 0, 537, 538, 0 }), .left, .{})).complete;
+    try t.expectEqual(std.math.floatTrueMin(f64), subnormal.two.upper);
+    try t.expectEqual(std.math.floatTrueMin(f64), subnormal.profile.?.two);
+}
+
+test "M9 Barnard profiles on ordinary tables retain the separate continuous bound" {
+    const t = std.testing;
+    const cases = [_]struct { c: [4]u32, one: f64, two: f64 }{
+        .{ .c = .{ 1, 3, 4, 3 }, .one = 0.21658011851414, .two = 0.41796875 },
+        .{ .c = .{ 1, 1, 5, 2 }, .one = 0.5073778468994397, .two = 0.8384121939729534 },
+        .{ .c = .{ 0, 2, 9, 1 }, .one = 0.01545338756716, .two = 0.01546160858111 },
+    };
+    for (cases) |v| {
+        const r = (try barnardTails(tableOf(v.c), .left, .{ .allocator = t.allocator })).complete;
+        try t.expectApproxEqAbs(v.one, r.profile.?.one, 2e-14);
+        try t.expectApproxEqAbs(v.two, r.profile.?.two, 2e-14);
+        try t.expect(r.one.upper >= r.profile.?.one - 1e-14);
+        try t.expect(r.two.upper >= r.profile.?.two - 1e-14);
+    }
+}
+
+test "directional SCORE orders fully opposing outcomes strictly first and inverts their probability" {
+    const t = std.testing;
+    for (1..6) |n1| for (1..6) |n2| {
+        const corner = [4]u32{ 0, @intCast(n1), @intCast(n2), 0 };
+        for ([_]Family{ .relative_risk, .difference }) |family| {
+            const nulls: []const f64 = if (family == .relative_risk) &.{ 0.001, 0.25, 1, 2, 64 } else &.{ -0.95, -0.5, 0, 0.375, 0.9 };
+            for (nulls) |null_value| {
+                const observed = try statistic(corner, family, .score, null_value);
+                for (0..n1 + 1) |x| for (0..n2 + 1) |y| {
+                    if (x == 0 and y == n2) continue;
+                    const other = [4]u32{ @intCast(x), @intCast(n1 - x), @intCast(y), @intCast(n2 - y) };
+                    try t.expect(try statistic(other, family, .score, null_value) > observed);
+                };
+            }
+            for ([_]f64{ 0.05, 0.55, 0.95 }) |alpha| {
+                const ci = (try riskLimits(tableOf(corner), .first, family, .score, alpha, .{})).complete;
+                const bounds = (try riskTail(tableOf(corner), .first, family, .score, ci.upper, .left, .{ .tolerance = 1e-13 })).complete;
+                try t.expect(bounds.lower <= alpha / 2 + 3e-14 and bounds.upper >= alpha / 2 - 3e-14);
+            }
+        }
+    };
+    // For row sizes 1 and 1 at alpha=.05 the stationary point is interior.
+    const paired = risk.Table2x2{ .cells = .{ 0, 1, 1, 0 } };
+    const low = (try riskLimitsSas(paired, .second, .relative_risk, .score, 0.05, .{})).complete.lower;
+    try t.expectApproxEqAbs(@as(f64, 0.1), low, 2e-16);
+    // Reversing the unequal rows gives a different clipped root. A single
+    // budget unit suffices even though the support has 1,204,301 cells.
+    const wide = risk.Table2x2{ .cells = .{ 0, 300, 4000, 0 } };
+    const options = Options{ .budget = .{ .max_tables = 1 } };
+    const upper = (try riskLimitsSas(wide, .first, .relative_risk, .score, 0.05, options)).complete.upper;
+    const lower = (try riskLimitsSas(wide, .second, .relative_risk, .score, 0.05, options)).complete.lower;
+    try t.expectApproxEqRel(@as(f64, 0.012220974694293554), upper, 1e-14);
+    try t.expectApproxEqRel(@as(f64, 1084.8401995789214), lower, 1e-14);
 }
 
 test "SAS outer profile preserves budgets and default methods" {
@@ -848,4 +1330,136 @@ test "dev2 exact boundary SAS FM ordering confirms SCORE2 nuisance endpoint cert
         try t.expectEqual(@as(f64, 1), result.lower);
         try t.expectEqual(@as(f64, 1), result.upper);
     }
+}
+
+
+test "deadline during second risk endpoint retains only the completed inversion" {
+    const Stop = struct {
+        fn afterEndpoint(raw: ?*const anyopaque) bool {
+            const completed: *const risk.Interval = @ptrCast(@alignCast(raw.?));
+            return completed.lower != null or completed.upper != null;
+        }
+    };
+    const table = risk.Table2x2{ .cells = .{ 1, 3, 3, 1 } };
+    for ([_]Family{ .difference, .relative_risk }, [_]Method{ .score2, .noscore }) |family, method| {
+        const full = (try riskLimitsSas(table, .first, family, method, 0.05, .{})).complete;
+        var completed: risk.Interval = .{};
+        const stopped = try riskLimitsSas(table, .first, family, method, 0.05, .{
+            .completed_limits = &completed,
+            .budget = .{ .context = &completed, .expired = Stop.afterEndpoint },
+        });
+        try std.testing.expect(stopped == .exhausted);
+        if (family == .difference) {
+            try std.testing.expectEqual(full.lower, completed.lower.?);
+            try std.testing.expect(completed.upper == null);
+        } else {
+            try std.testing.expectEqual(full.upper, completed.upper.?);
+            try std.testing.expect(completed.lower == null);
+        }
+    }
+}
+
+
+test "Barnard equal risks have probability one across unequal row margins" {
+    const t = std.testing;
+    // The first two small count ratios have native M9 raw p=1 for both
+    // tails. The proof also applies when enumeration exceeds its work limit.
+    for ([_][4]u32{
+        .{ 2, 2, 2, 2 }, .{ 2, 3, 4, 6 }, .{ 250, 750, 750, 2250 },
+        .{ 400_000_000, 600_000_000, 1_200_000_000, 1_800_000_000 },
+    }) |cells| {
+        for ([_]Side{ .left, .right, .two_sided }) |side| {
+            const result = try barnardTails(tableOf(cells), side, .{ .budget = .{ .max_tables = 1 } });
+            try t.expectEqual(pointBounds(1), result.complete.one);
+            try t.expectEqual(pointBounds(1), result.complete.two);
+        }
+    }
+    const m = 800_000_000;
+    for ([_][4]u32{ .{ m, m + 1, m + 1, m + 2 }, .{ m + 1, m + 2, m, m + 1 } }) |cells| {
+        const table = tableOf(cells);
+        const rows = table.samples(.first);
+        try t.expectEqual(rows[0].proportion(), rows[1].proportion());
+        try t.expect((try barnardTails(table, .left, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
+    }
+    const equal = tableOf(.{ 1, 1, 1, 1 });
+    try t.expect((try barnardTails(equal, .left, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+    try t.expectError(error.ExecError, barnardTails(equal, .left, .{ .tolerance = 0 }));
+}
+
+
+test "opposing SCORE2 relative-risk plateau includes the rational cutoff in either direction" {
+    const t = std.testing;
+    const minimal = Options{ .budget = .{ .max_tables = 1 } };
+    for ([_]u32{ 1, 2, 3, 17, 1_000_003 }) |a| {
+        const b: u32 = 2_000_003;
+        const fraction = 1 / @as(f64, @floatFromInt(2 * a));
+        const cutoff = if (@as(f128, fraction) * @as(f128, @floatFromInt(2 * a)) > 1)
+            std.math.nextAfter(f64, fraction, 0)
+        else
+            fraction;
+        const first = tableOf(.{ 0, a, b, 0 });
+        const second = tableOf(.{ b, 0, 0, a });
+        try t.expectEqual(pointBounds(1), (try riskTail(first, .first, .relative_risk, .score2, cutoff, .two_sided, minimal)).complete);
+        try t.expect((try riskTail(first, .first, .relative_risk, .score2, std.math.nextAfter(f64, cutoff, 1), .two_sided, minimal)) == .exhausted);
+        const reciprocal: f64 = @floatFromInt(2 * a);
+        try t.expectEqual(pointBounds(1), (try riskTail(second, .first, .relative_risk, .score2, reciprocal, .two_sided, minimal)).complete);
+        try t.expect((try riskTail(second, .first, .relative_risk, .score2, std.math.nextAfter(f64, reciprocal, 0), .two_sided, minimal)) == .exhausted);
+    }
+    const table = tableOf(.{ 0, 3, 7, 0 });
+    try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .two_sided, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+    try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .left, minimal)) == .exhausted);
+}
+
+test "a single attained nuisance probability certifies confidence-interval acceptance" {
+    const t = std.testing;
+    const c = [4]u32{ 2, 3, 4, 1 };
+    // The observed RD is negative. At null RD=0 and nuisance probability
+    // zero, the all-failure allocation has score zero and is in the right tail.
+    var work = Work{ .options = .{ .budget = .{ .max_tables = 1 } }, .test_size = 0.05 };
+    const decision = try tail(c, .difference, .score, 0, .right, &work);
+    try t.expectEqual(pointBounds(1), decision.complete);
+    try t.expectEqual(@as(u64, 1), work.used);
+    const precise = try riskTail(tableOf(c), .first, .difference, .score, 0, .right, .{});
+    try t.expectEqual(pointBounds(1), precise.complete);
+    try t.expect((try riskTail(tableOf(c), .first, .difference, .score, 0, .right, work.options)) == .exhausted);
+}
+
+test "resolved SCORE2 risk inversion fits the default budget for 1 by 2450 row totals" {
+    const t = std.testing;
+    const table = tableOf(.{ 0, 1, 2450, 0 });
+    // The plateau through r=1/2 has probability one. Just above it, through
+    // r=.6, (X=1,Y=n2) is less extreme than observed and no (X=0,Y<n2)
+    // can be as extreme. The tail is bounded by p*(1-q^n2)+(1-p)*q^n2,
+    // with p=r*q. For q>=1/4 both p and 1-p are <=7/8. Otherwise the
+    // bound is at most p+q^n2<.4. This certifies the local .95 crossing.
+    const ci = (try riskLimitsSas(table, .first, .relative_risk, .score2, 0.95, .{ .allocator = t.allocator })).complete;
+    try t.expectEqual(@as(f64, 0), ci.lower);
+    try t.expectApproxEqAbs(@as(f64, 0.5), ci.upper, 2e-11);
+}
+
+test "reported SCORE2 lower limit at the opposing-row ordering jump agrees with M9" {
+    const t = std.testing;
+    // First three were predicted before an independent M9 run at alpha=.934;
+    // the fourth comes from the earlier .99 sweep (including the Z near-tie).
+    const Case = struct { a: u32, b: u32, alpha: f64, lower: f64 };
+    const cases = [_]Case{
+        .{ .a = 6, .b = 8, .alpha = 0.934, .lower = 15.9999998062849 },
+        .{ .a = 8, .b = 11, .alpha = 0.934, .lower = 21.9999997243285 },
+        .{ .a = 11, .b = 6, .alpha = 0.934, .lower = 11.9999996721744 },
+        .{ .a = 2, .b = 5, .alpha = 0.99, .lower = 9.9999998062849 },
+    };
+    for (cases) |c| {
+        const table = tableOf(.{ c.a, 0, 0, c.b });
+        const bounds = (try riskLimitsSas(table, .first, .relative_risk, .score2, c.alpha, .{})).complete;
+        try t.expectApproxEqAbs(c.lower, bounds.lower, 1e-13);
+        try t.expect(std.math.isInf(bounds.upper));
+        const ref = (try riskLimits(table, .first, .relative_risk, .score2, c.alpha, .{})).complete;
+        try t.expectApproxEqAbs(2 * @as(f64, @floatFromInt(c.b)), ref.lower, 2e-10);
+        try t.expect(bounds.lower < ref.lower);
+    }
+    // The saved 3:2, alpha=.5 discrepancy occurs at r=2, away from the
+    // r=4 probability-one plateau; its certified reference remains in use.
+    const interior = tableOf(.{ 3, 0, 0, 2 });
+    const raw = (try riskLimits(interior, .first, .relative_risk, .score2, 0.5, .{})).complete;
+    try t.expectEqual(raw, (try riskLimitsSas(interior, .first, .relative_risk, .score2, 0.5, .{})).complete);
 }

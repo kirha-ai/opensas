@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 g=A
+stdout-count 1 g=B
+row x 2~5.1e-05 1.5~5.1e-05 0.70711 3.00000 1.00000 2.00000
+row x 1~5.1e-05 3~5.1e-05 . 3.00000 3.00000 3.00000
+row-count 2 x {any} {any} {any} {any} {any} {any}

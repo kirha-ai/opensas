@@ -6,6 +6,10 @@ const Token = @import("../lexer.zig").Token;
 const numeric = @import("univ_distribution_parse.zig").numeric;
 const eq = std.ascii.eqlIgnoreCase;
 
+fn listName(t: []const Token, i: usize) bool {
+    return t[i].tag == .name and t[i + 1].tag != .eq and !eq(t[i].text, "noprint");
+}
+
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error![]kernel.Request {
     i.* += 1;
     var kinds: std.ArrayList(kernel.Kind) = .empty;
@@ -15,12 +19,17 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
     if (t[i.*].tag == .lparen) {
         i.* += 1;
         while (t[i.*].tag != .rparen) {
+            if (t[i.*].tag == .name and eq(t[i.*].text, "noprint")) {
+                // KERNEL never produces fitted-distribution tables.
+                i.* += 1;
+                continue;
+            }
             if (t[i.*].tag != .name or t[i.* + 1].tag != .eq) return d.fail(error.ParseError, 0, "UNIVARIATE: expected KERNEL option=value", .{});
             const key = t[i.*].text;
             i.* += 2;
             if (eq(key, "k")) {
                 if (kinds.items.len > 0) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated KERNEL K option", .{});
-                while (t[i.*].tag == .name and t[i.* + 1].tag != .eq) {
+                while (listName(t, i.*)) {
                     const name = t[i.*].text;
                     const kind: kernel.Kind = if (eq(name, "n") or eq(name, "normal")) .normal else if (eq(name, "q") or eq(name, "quadratic")) .quadratic else if (eq(name, "t") or eq(name, "triangular")) .triangular else return d.fail(error.ParseError, 0, "UNIVARIATE: unknown kernel {s}", .{name});
                     try kinds.append(a, kind);
@@ -28,9 +37,14 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
                     if (t[i.*].tag == .comma) i.* += 1;
                 }
                 if (kinds.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty kernel list", .{});
+            } else if (eq(key, "l")) {
+                // L= selects SAS/GRAPH line types. The ODS renderer uses its
+                // style palette; this list never changes a bandwidth or estimate.
+                const lines = try @import("univ_distribution_parse.zig").numberList(a, d, t, i);
+                for (lines) |line| if (line < 1 or line != @floor(line)) return d.fail(error.ParseError, 0, "UNIVARIATE: KERNEL L requires positive line type numbers", .{});
             } else if (eq(key, "c")) {
                 if (bandwidths.items.len > 0) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated KERNEL C option", .{});
-                while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus or (t[i.*].tag == .name and t[i.* + 1].tag != .eq)) {
+                while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus or listName(t, i.*)) {
                     if (t[i.*].tag == .name) {
                         const name = t[i.*].text;
                         const bandwidth: kernel.Bandwidth = if (eq(name, "mise")) .mise else if (eq(name, "sjpi")) .sjpi else return d.fail(error.ParseError, 0, "UNIVARIATE: unknown bandwidth method {s}", .{name});
@@ -57,13 +71,19 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
     }
     const count = @max(1, @max(kinds.items.len, bandwidths.items.len));
     const result = try a.alloc(kernel.Request, count);
+    var normal_substituted = false;
     for (result, 0..) |*request, j| {
         request.* = .{};
         if (kinds.items.len > 0) request.kind = kinds.items[@min(j, kinds.items.len - 1)];
         if (bandwidths.items.len > 0) request.bandwidth = bandwidths.items[@min(j, bandwidths.items.len - 1)];
+        if (request.bandwidth == .sjpi and request.kind != .normal) {
+            request.kind = .normal;
+            normal_substituted = true;
+        }
         if (lower.items.len > 0) request.lower = lower.items[@min(j, lower.items.len - 1)];
         if (upper.items.len > 0) request.upper = upper.items[@min(j, upper.items.len - 1)];
     }
+    if (normal_substituted) try d.warn(0, "The Sheather-Jones plug-in method uses the normal kernel for all SJPI estimates.", .{});
     return result;
 }
 
@@ -72,7 +92,7 @@ test "UNIVARIATE kernel lists repeat last bandwidth and bounds" {
     defer arena.deinit();
     const a = arena.allocator();
     var d = diag.Diagnostics.init(a);
-    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t c=.5 mise lower=. 0 upper=20);", &d);
+    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t noprint c=.5 mise l=1 20 2 lower=. 0 upper=20);", &d);
     var i: usize = 0;
     const requests = try parse(a, &d, t, &i);
     try std.testing.expectEqual(@as(usize, 3), requests.len);

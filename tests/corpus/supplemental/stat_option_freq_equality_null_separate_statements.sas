@@ -1,0 +1,9 @@
+/* expect-rc: 1 */
+data sample;input r c w;datalines;
+1 1 12
+1 2 8
+2 1 5
+2 2 25
+;
+run;
+proc freq data=sample; weight w; tables r*c / relrisk(equal(null=0)); tables r*c / riskdiff(equal(null=100));run;

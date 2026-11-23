@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 2 Simple Kappa Coefficient
+stdout-count 2 Weighted Kappa Coefficient
+stdout-count 0 Exact Pr >= Statistic
+row One-sided Pr >= Statistic 0.0459~5.1e-05
+row Two-sided Pr >= |Statistic| 0.0576~5.1e-05
+row One-sided Pr >= Statistic 0.1082~5.1e-05
+row Two-sided Pr >= |Statistic| 0.1303~5.1e-05
+row-count 2 One-sided Pr >= Statistic {any}
+row-count 2 Two-sided Pr >= | Statistic | {any}

@@ -1,0 +1,19 @@
+# corpus assertions
+row SERIAL blind-g0_1_u_2 .
+row SERIAL blind-g0_1_u_3 .
+row SERIAL blind-g0_1_u_4 0.64945904589026~6e-12
+row SERIAL blind-g0_1_u_200 0.64945904589026~6e-12
+row SERIAL blind-g0_1_v_2 .
+row SERIAL blind-g0_1_v_3 .
+row SERIAL blind-g0_1_v_4 .
+row SERIAL blind-g0_1_v_200 0.64945904589026~6e-12
+row SERIAL blind-g0_10_u_2 .
+row SERIAL blind-g0_10_u_3 .
+row SERIAL blind-g0_10_u_4 0.64945904589026~6e-12
+row SERIAL blind-g0_10_u_200 0.64945904589026~6e-12
+row SERIAL blind-g0_10_v_2 .
+row SERIAL blind-g0_10_v_3 .
+row SERIAL blind-g0_10_v_4 .
+row SERIAL blind-g0_10_v_200 0.64945904589026~6e-12
+stdout-count 16 SERIAL
+stderr-count 10 did not converge

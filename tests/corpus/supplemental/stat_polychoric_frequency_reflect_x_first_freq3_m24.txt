@@ -1,0 +1,21 @@
+# corpus assertions
+row CORRFIT reflect-x-first-freq3-m24 513~0 -0.9995731059113545~5e-06 0.0~0 . 460.6902927118945~1.126e-06
+row CORRFIT reflect-x-first-freq3-m25 513~0 -0.9995731059113545~5e-06 0.0~0 . 460.6902927118945~1.126e-06
+row CORRFIT reflect-x-first-freq4-m24 684~0 -0.999573109220431~5e-06 0.0~0 . 614.2537236158591~1.468e-06
+row CORRFIT reflect-x-first-freq4-m25 684~0 -0.999573109220431~5e-06 0.0~0 . 614.2537236158591~1.468e-06
+row CORRFIT reflect-x-first-freq5-m24 855~0 -0.9995730855922802~5e-06 0.0~0 . 767.8171545198238~1.81e-06
+row CORRFIT reflect-x-first-freq5-m25 855~0 -0.9995730855922802~5e-06 0.0~0 . 767.8171545198238~1.81e-06
+row CORRFIT reflect-x-first-freq6-m24 1026~0 -0.9995731187269374~5e-06 0.0~0 . 921.380585423789~2.152e-06
+row CORRFIT reflect-x-first-freq6-m25 1026~0 -0.9995731187269374~5e-06 0.0~0 . 921.380585423789~2.152e-06
+row CORRFIT reflect-x-first-freq8-m24 1368~0 -0.9995731357571871~5e-06 0.0~0 . 1228.5074472317183~2.836e-06
+row CORRFIT reflect-x-first-freq8-m25 1368~0 -0.9995731357571871~5e-06 0.0~0 . 1228.5074472317183~2.836e-06
+row CORRFIT reflect-x-first-freq9-m24 1539~0 -0.9995731111571033~5e-06 0.0~0 . 1382.0708781356834~3.178e-06
+row CORRFIT reflect-x-first-freq9-m25 1539~0 -0.9995731111571033~5e-06 0.0~0 . 1382.0708781356834~3.178e-06
+row CORRFIT reflect-x-first-freq10-m24 1710~0 . . . .
+row CORRFIT reflect-x-first-freq11-m24 1881~0 . . . .
+row CORRFIT reflect-x-first-freq12-m24 2052~0 . . . .
+row CORRFIT reflect-x-first-freq13-m24 2223~0 . . . .
+row CORRFIT reflect-x-first-freq16-m24 2736~0 . . . .
+row CORRFIT reflect-x-first-freq20-m24 3420~0 . . . .
+stdout-count 18 CORRFIT
+stderr-count 6 did not converge

@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 The option or parameter is not recognized and will be ignored.

@@ -1,0 +1,6 @@
+# corpus assertions
+row CORRFIT projection-0496-c1e-06-m200 158~0 -0.9999~5e-06 0.0~0 . 126.6960412597457~4.16e-07
+row CORRFIT projection-0765-c1e-06-m200 520~0 0.9999~5e-06 0.0~0 . 413.9257412722973~1.14e-06
+row CORRFIT projection-1261-c1e-06-m200 198~0 0.9999~5e-06 0.0~0 . 157.46063281724162~4.96e-07
+stdout-count 3 CORRFIT
+stderr-count 0 did not converge

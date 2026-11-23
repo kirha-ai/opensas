@@ -3,7 +3,14 @@ const std = @import("std");
 const Error = @import("../diag.zig").Error;
 pub const Row = struct { label: []const u8, values: [5]?f64 = .{ null, null, null, null, null }, probability: [5]bool = .{ false, false, false, false, false } };
 pub const Section = struct { title: []const u8, subtitle: []const u8 = "", columns: []const []const u8, rows: []const Row, note: []const u8 = "" };
-pub const Report = struct { sections: []const Section = &.{}, sample_size: ?f64 = null };
+pub const RiskColumn = struct {
+    estimates: [4]@import("freq_risk.zig").Estimate,
+    binomial_limits: [3]?@import("freq_risk.zig").Interval = @splat(null),
+};
+pub const Report = struct { sections: []const Section = &.{}, sample_size: ?f64 = null, risk_columns: [2]?RiskColumn = @splat(null) };
+pub fn confidence(a: std.mem.Allocator, alpha: f64) Error![]const u8 {
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = 100 * (1 - alpha) }, "best12."), " ");
+}
 fn pad(a: std.mem.Allocator, out: *std.ArrayList(u8), s: []const u8, width: usize, right: bool) Error!void {
     const n = width - @min(width, s.len);
     if (right) try out.appendNTimes(a, ' ', n);

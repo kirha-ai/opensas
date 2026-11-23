@@ -64,6 +64,9 @@ pub const Tag = enum {
 pub const Token = struct {
     tag: Tag,
     text: []const u8 = "",
+    /// Empty quoted text still evaluates to one SAS blank. Procedure syntax
+    /// that uses the literal spelling can distinguish it from a quoted blank.
+    empty_quoted_literal: bool = false,
     /// 1-based source line, for diagnostics.
     line: usize = 0,
 };
@@ -268,7 +271,7 @@ fn lexString(arena: std.mem.Allocator, out: *std.ArrayList(Token), src: []const 
     // it here, at the one point a quoted literal is materialized, keeps computed
     // empties (trimn/substr/empty columns) and the parser's synthesized
     // omitted-arg `.str=""` genuinely zero-length. GH#60.
-    try emit(arena, out, .string, if (body.len == 0) " " else body, line);
+    try out.append(arena, .{ .tag = .string, .text = if (body.len == 0) " " else body, .line = line, .empty_quoted_literal = body.len == 0 });
     return i + 1; // skip the closing quote
 }
 

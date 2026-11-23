@@ -97,7 +97,7 @@ test "joint CMH visits product law and preserves empty middle stratum" {
 const JointSampler = struct {
     generators: []dist.FixedSampler,
     lengths: []const usize,
-    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: dist.Budget) Error!bool {
+    fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: dist.Budget) Error!bool {
         const self: *JointSampler = @ptrCast(@alignCast(raw.?));
         var pos: usize = 0;
         for (self.generators, self.lengths) |*generator, len| {
@@ -130,6 +130,7 @@ pub fn monteCarlo(a: std.mem.Allocator, strata: []const dist.Matrix, statistic: 
     defer for (generators[0..initialized]) |g| {
         a.free(g.rows);
         a.free(g.labels);
+        a.free(g.shuffled);
     };
     const lengths = try a.alloc(usize, strata.len);
     defer a.free(lengths);
@@ -147,13 +148,16 @@ pub fn monteCarlo(a: std.mem.Allocator, strata: []const dist.Matrix, statistic: 
         errdefer a.free(rows);
         @memset(rows, 0);
         const labels = try a.alloc(u8, @intCast(n));
+        errdefer a.free(labels);
+        const shuffled = try a.alloc(u8, labels.len);
         var pos: usize = 0;
         for (m.cells, 0..) |v, k| {
             rows[k / m.cols] += v;
             @memset(labels[pos..][0..v], @intCast(k % m.cols));
             pos += v;
         }
-        generators[index] = .{ .rows = rows, .labels = labels, .cols = m.cols };
+        std.mem.sort(u8, labels, {}, std.sort.asc(u8));
+        generators[index] = .{ .rows = rows, .labels = labels, .shuffled = shuffled, .cols = m.cols };
         initialized += 1;
         lengths[index] = m.cells.len;
         cell_count += m.cells.len;

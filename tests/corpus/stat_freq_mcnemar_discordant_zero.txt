@@ -1,0 +1,3 @@
+# corpus assertions
+row NOTE: There are no discordant pairs.
+stdout-count 0 Exact Pr >= Statistic

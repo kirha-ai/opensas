@@ -1,0 +1,54 @@
+# corpus assertions
+row ODS_ROWS|9
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|8|||
+row ODS_COL|3|Label1|char|24|||
+row ODS_COL|4|cValue1|char|10|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 45 ODS_VALUE|
+row ODS_VALUE|1|Table|Summary for r * c
+row ODS_VALUE|1|Name1|_MHOR_
+row ODS_VALUE|1|Label1|Mantel-Haenszel Estimate
+row ODS_VALUE|1|cValue1|0.7627
+row ODS_VALUE|1|nValue1|0.76271186440677~7.627118644e-09
+row ODS_VALUE|2|Table|Summary for r * c
+row ODS_VALUE|2|Name1|
+row ODS_VALUE|2|Label1|
+row ODS_VALUE|2|cValue1|
+row ODS_VALUE|2|nValue1|.
+row ODS_VALUE|3|Table|Summary for r * c
+row ODS_VALUE|3|Name1|
+row ODS_VALUE|3|Label1|Asymptotic Conf Limits
+row ODS_VALUE|3|cValue1|
+row ODS_VALUE|3|nValue1|.
+row ODS_VALUE|4|Table|Summary for r * c
+row ODS_VALUE|4|Name1|L_MHOR
+row ODS_VALUE|4|Label1|95% Lower Conf Limit
+row ODS_VALUE|4|cValue1|0.1241
+row ODS_VALUE|4|nValue1|0.12413610297963~1.24136103e-09
+row ODS_VALUE|5|Table|Summary for r * c
+row ODS_VALUE|5|Name1|U_MHOR
+row ODS_VALUE|5|Label1|95% Upper Conf Limit
+row ODS_VALUE|5|cValue1|4.6862
+row ODS_VALUE|5|nValue1|4.68622241349336~4.686222413e-08
+row ODS_VALUE|6|Table|Summary for r * c
+row ODS_VALUE|6|Name1|
+row ODS_VALUE|6|Label1|
+row ODS_VALUE|6|cValue1|
+row ODS_VALUE|6|nValue1|.
+row ODS_VALUE|7|Table|Summary for r * c
+row ODS_VALUE|7|Name1|
+row ODS_VALUE|7|Label1|Exact Conf Limits
+row ODS_VALUE|7|cValue1|
+row ODS_VALUE|7|nValue1|.
+row ODS_VALUE|8|Table|Summary for r * c
+row ODS_VALUE|8|Name1|XL_COMOR
+row ODS_VALUE|8|Label1|95% Lower Conf Limit
+row ODS_VALUE|8|cValue1|0.0819
+row ODS_VALUE|8|nValue1|0.08187820214658~8.187820215e-10
+row ODS_VALUE|9|Table|Summary for r * c
+row ODS_VALUE|9|Name1|XU_COMOR
+row ODS_VALUE|9|Label1|95% Upper Conf Limit
+row ODS_VALUE|9|cValue1|6.5500
+row ODS_VALUE|9|nValue1|6.54996520953192~6.54996521e-08

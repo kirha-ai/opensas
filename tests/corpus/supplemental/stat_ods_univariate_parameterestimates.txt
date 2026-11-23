@@ -1,0 +1,22 @@
+# corpus assertions
+row ODS_ROWS|2
+stdout-count 6 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Histogram|num|8|||
+row ODS_COL|3|Distribution|char|6|||
+row ODS_COL|4|Parameter|char|9|||Distribution Parameter
+row ODS_COL|5|Symbol|char|6|||Parameter Symbol
+row ODS_COL|6|Estimate|num|8|BEST8.||Parameter Estimate
+stdout-count 12 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Histogram|1~1e-08
+row ODS_VALUE|1|Distribution|Normal
+row ODS_VALUE|1|Parameter|Mean
+row ODS_VALUE|1|Symbol|Mu
+row ODS_VALUE|1|Estimate|4.3076923076923~4.307692308e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Histogram|1~1e-08
+row ODS_VALUE|2|Distribution|Normal
+row ODS_VALUE|2|Parameter|Std Dev
+row ODS_VALUE|2|Symbol|Sigma
+row ODS_VALUE|2|Estimate|2.39390251070699~2.393902511e-08

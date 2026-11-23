@@ -1,0 +1,4 @@
+# corpus assertions
+row _RRC1_ 0
+row XL_RRC1 0
+row XU_RRC1 0.16666684831891~5e-15

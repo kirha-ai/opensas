@@ -1,0 +1,28 @@
+# corpus assertions
+row g _VAR_ _MINPT_ _OBSPCT_ _COUNT_
+next A x 0 20 1
+next A x 1 40 2
+next A x 2 20 1
+next A x 3 20 1
+next B x 10 25 1
+next B x 11 0 0
+next B x 12 0 0
+next B x 13 0 0
+next B x 14 0 0
+next B x 15 25 1
+next B x 16 0 0
+next B x 17 0 0
+next B x 18 0 0
+next B x 19 0 0
+next B x 20 25 1
+next B x 21 0 0
+next B x 22 0 0
+next B x 23 0 0
+next B x 24 0 0
+next B x 25 0 0
+next B x 26 0 0
+next B x 27 0 0
+next B x 28 0 0
+next B x 29 0 0
+next B x 30 25 1
+end-listing

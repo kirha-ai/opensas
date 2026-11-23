@@ -1,0 +1,30 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row g 6 0.33333 0.51640 2.00000 0~0 1.00000
+row h 6 0.33333 0.51640 2.00000 0~0 1.00000
+row x 6 1.00000 0~0 6.00000 1.00000 1.00000
+row y 6 3.00000 0.89443 18.00000 2.00000 4.00000
+row Partial Statistics
+row x 0~0 0~0
+row y 0~0 0~0
+row Pearson Partial Correlation Coefficients
+row Variable x y
+row x . .
+row P . .
+row N 6 6
+row y . .
+row P . .
+row N 6 6
+stderr-count 1 WARNING: The variable x is singular in calculating the partial PEARSON correlations.
+stderr-count 1 WARNING: The variable y is singular in calculating the partial PEARSON correlations.
+stderr-count 2 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 g {any} {any} {any} {any} {any} {any}
+row-count 1 h {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 2 x {any} {any}
+row-count 2 y {any} {any}
+row-count 2 P {any} {any}
+row-count 2 N {any} {any}

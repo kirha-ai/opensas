@@ -1,0 +1,9 @@
+# corpus assertions
+row FREQHAND|center-amirror|S_COMOR|27.0~1e-12
+row FREQHAND|center-amirror|M0_COMOR|27.0~1e-12
+row FREQHAND|center-amirror|XPL_COMOR|0.7487528344671202~1e-12
+row FREQHAND|center-amirror|XPT_COMOR|0.4657596371882086~1e-12
+row FREQHAND|center-amirror|XMP_COMOR|0.5158730158730158~1e-12
+row FREQHAND|center-amirror|XP2A_COMOR|1.0~1e-12
+row FREQHAND|center-amirror|XP2B_COMOR|1.0~1e-12
+row FREQHAND|center-amirror|XP2C_COMOR|1.0~1e-12

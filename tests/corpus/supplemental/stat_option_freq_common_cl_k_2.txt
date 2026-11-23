@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 1 Column 2 (c = 2)
+row Confidence Limits for the Common Risk Difference
+row Klingenberg -0.1114~5.1e-05 -0.2976~5.1e-05 0.0828~5.1e-05
+row-count 1 Klingenberg {any} {any} {any}

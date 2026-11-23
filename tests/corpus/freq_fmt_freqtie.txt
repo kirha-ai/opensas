@@ -3,9 +3,9 @@
                                           Cumulative    Cumulative
               x      Frequency     Percent     Frequency      Percent
               -------------------------------------------------------
-              Zzz            2       33.33              2        33.33
-              Aaa            2       33.33              4        66.67
-              Mmm            2       33.33              6       100.00
+              Aaa            2       33.33              2        33.33
+              Mmm            2       33.33              4        66.67
+              Zzz            2       33.33              6       100.00
                                       The FREQ Procedure
 
                                           Cumulative    Cumulative

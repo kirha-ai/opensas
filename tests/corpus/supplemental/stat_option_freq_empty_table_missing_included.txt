@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 Table is empty. No statistics are computed.
+row Chi-Square 4~5.1e-05 4~5.1e-05 0.406~5.1e-05
+row-count 1 Chi-Square {any} {any} {any}

@@ -1,0 +1,36 @@
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              code   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+                   .         1        9.09              1         9.09
+              Alpha          1        9.09              2        18.18
+              Zulu           5       45.45              7        63.64
+              Middle         4       36.36             11       100.00
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              code   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+                   .         1        9.09              1         9.09
+              Alpha          1        9.09              2        18.18
+              Middle         4       36.36              6        54.55
+              Zulu           5       45.45             11       100.00
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              code   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+                   .         1        9.09              1         9.09
+              Zulu           5       45.45              6        54.55
+              Middle         4       36.36             10        90.91
+              Alpha          1        9.09             11       100.00
+                                      The FREQ Procedure
+
+                                          Cumulative    Cumulative
+              code   Frequency     Percent     Frequency      Percent
+              -------------------------------------------------------
+                   .         1        9.09              1         9.09
+              Zulu           5       45.45              6        54.55
+              Alpha          1        9.09              7        63.64
+              Middle         4       36.36             11       100.00

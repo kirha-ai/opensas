@@ -10,6 +10,7 @@ pub const Options = struct {
     endpoint_labels: bool = false,
     right: bool = false,
     curve_columns: bool = false,
+    curve_number: usize = 1,
     variable_length: usize = 8,
     bin_width: ?f64 = null,
     /// Window controls omit outside observations without renormalizing N.
@@ -68,7 +69,7 @@ pub fn bins(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, supplied
             if (options.clipped) continue;
             return d.fail(error.ParseError, 0, "UNIVARIATE: histogram lattice does not cover sample", .{});
         }
-        const position = snapped((v - endpoints[0]) / width, @max(@abs(v), @abs(endpoints[0])) / width);
+        const position = snapped((v - endpoints[0]) / width);
         const index = if (options.right) @ceil(position) - 1 else @floor(position);
         const at: usize = @intFromFloat(@min(@as(f64, @floatFromInt(output.len - 1)), @max(@as(f64, 0), index)));
         output[at].count += 1;
@@ -81,8 +82,8 @@ pub fn bins(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, supplied
     if (options.clipped) {
         // Use clamped data extrema even if every observation is outside the
         // window: SAS retains the corresponding zero-count boundary row(s).
-        const low_position = snapped((x[0] - endpoints[0]) / width, @max(@abs(x[0]), @abs(endpoints[0])) / width);
-        const high_position = snapped((x[x.len - 1] - endpoints[0]) / width, @max(@abs(x[x.len - 1]), @abs(endpoints[0])) / width);
+        const low_position = snapped((x[0] - endpoints[0]) / width);
+        const high_position = snapped((x[x.len - 1] - endpoints[0]) / width);
         const low_index = if (options.right) @ceil(low_position) - 1 else @floor(low_position);
         const high_index = if (options.right) @ceil(high_position) - 1 else @floor(high_position);
         first = @intFromFloat(@min(@as(f64, @floatFromInt(output.len - 1)), @max(@as(f64, 0), low_index)));
@@ -91,15 +92,20 @@ pub fn bins(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, supplied
     return output[first..last];
 }
 
-fn snapped(position: f64, scale: f64) f64 {
+fn snapped(position: f64) f64 {
+    // M9 compares the relative difference in bin units, even for a translated axis.
     const nearest = @round(position);
-    return if (@abs(position - nearest) <= @max(@as(f64, 1e-12), 8 * std.math.floatEps(f64) * @max(@as(f64, 1), @max(@abs(position), scale)))) nearest else position;
+    return if (@abs(position - nearest) <= 1000 * std.math.floatEps(f64) * @abs(position)) nearest else position;
 }
 
 pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, endpoints: []const f64, options: Options, curve: ?distributions.Distribution) diag.Error!void {
     if (output.columns.items.len != keys.len + (if (options.curve_columns) @as(usize, 6) else 4)) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram output schema does not match request", .{});
     const intervals = try bins(output.arena, d, x, endpoints, options, curve);
     const fitted = if (x.len > 0 and x[0] == x[x.len - 1]) null else curve;
+    const curve_label = if (fitted) |c| label: {
+        const base = curveName(c.family);
+        break :label if (options.curve_number == 1) base else try std.fmt.allocPrint(output.arena, "{s}{d}", .{ base, options.curve_number });
+    } else "";
     for (intervals) |b| {
         const row = try output.arena.alloc(Value, output.columns.items.len);
         @memset(row, Value.missing);
@@ -110,7 +116,7 @@ pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []
         row[at + 2] = .{ .num = b.observed_percent };
         row[at + 3] = .{ .num = @floatFromInt(b.count) };
         if (options.curve_columns) {
-            row[at + 4] = .{ .str = if (fitted) |c| curveName(c.family) else "" };
+            row[at + 4] = .{ .str = curve_label };
             if (b.expected_percent) |v| row[at + 5] = .{ .num = v };
         }
         try output.appendRow(row);
@@ -262,4 +268,55 @@ test "dev3 output schema retains key attributes and constant failed-curve fields
     try std.testing.expectEqual(@as(f64, 2), row[5].num);
     try std.testing.expectEqualStrings("", row[6].str);
     try std.testing.expect(row[7].isMissing());
+}
+
+test "UNIVARIATE explicit histogram includes near ties relative to the bin index" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var endpoints: [12]f64 = undefined;
+    for (&endpoints, 0..) |*value, i| value.* = -3.25 + @as(f64, @floatFromInt(i));
+    const x = [_]f64{ -2.25 - 6e-13, -2.25 - 1e-13, -2.25 + 1e-13, -2.25 + 6e-13, 6.75 - 5e-12, 6.75 - 1e-12, 6.75 + 1e-12, 6.75 + 5e-12 };
+    for ([_]bool{ false, true }) |right| {
+        const rows = try bins(a, &d, &x, &endpoints, .{ .right = right, .endpoint_labels = true }, null);
+        try std.testing.expectEqual(@as(usize, 11), rows.len);
+        const lower: usize = if (right) 3 else 1;
+        for ([_]usize{ 0, 9 }) |index| {
+            try std.testing.expectEqual(lower, rows[index].count);
+            try std.testing.expectEqual(4 - lower, rows[index + 1].count);
+        }
+    }
+}
+
+test "UNIVARIATE centered NENDPOINTS=2 chooses a preferred width and honors RTINCLUDE" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const cases = [_]struct { x: []const f64, width: f64 }{
+        .{ .x = &.{ -1, -0.9, -0.51, -0.35, 0.01, 0.14 }, .width = 2 },
+        .{ .x = &.{ -0.2, -0.04, 0.3, 0.4, 0.8, 2.4 }, .width = 2.5 },
+        .{ .x = &.{ -0.62, 2.000000001 }, .width = 4 },
+        .{ .x = &.{ -0.62, 2.0000001 }, .width = 2.5 },
+    };
+    for (cases, 0..) |case, i| {
+        for ([_]bool{ false, true }) |right| {
+            const plan = try binning.determine(a, &d, &.{.{ .sorted = case.x }}, .{ .endpoints = true, .right = right, .target_count = 2 });
+            try std.testing.expectEqual(case.width, plan.width);
+            if (i >= 2) continue;
+            const rows = try bins(a, &d, case.x, plan.endpoints, .{ .right = right, .endpoint_labels = true, .bin_width = plan.width }, null);
+            if (i == 0) {
+                try std.testing.expectEqual(if (right) @as(usize, 2) else 1, rows.len);
+                try std.testing.expectEqual(@as(f64, -1), if (right) rows[0].upper else rows[0].lower);
+                try std.testing.expectEqual(if (right) @as(usize, 1) else 6, rows[0].count);
+                if (right) try std.testing.expectEqual(@as(usize, 5), rows[1].count);
+            } else {
+                try std.testing.expectEqual(@as(usize, 2), rows.len);
+                try std.testing.expectEqual(@as(f64, -1.25), rows[0].lower);
+                try std.testing.expectEqual(@as(usize, 5), rows[0].count);
+                try std.testing.expectEqual(@as(usize, 1), rows[1].count);
+            }
+        }
+    }
 }

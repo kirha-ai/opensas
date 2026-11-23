@@ -1,0 +1,4 @@
+# corpus assertions
+row Common Risk Difference Tests
+row Minimum Risk 0.1127~5.1e-05 1.1867~5.1e-05 0.2354~5.1e-05
+row-count 1 Minimum Risk {any} {any} {any}

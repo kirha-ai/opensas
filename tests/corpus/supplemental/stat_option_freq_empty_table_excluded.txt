@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Table is empty. No statistics are computed.
+stdout-count 2 Frequency Missing = 4
+stdout-count 2 Sample Size = 0
+stdout-count 0 Row or column sum zero
+stderr-count 0 has fewer than 2 nonmissing levels.

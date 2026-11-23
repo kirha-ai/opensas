@@ -123,6 +123,12 @@ pub const Diagnostics = struct {
         return e;
     }
 
+    /// SAS numbers some syntax errors and prints their code before the colon.
+    pub fn numberedError(self: *Diagnostics, code: []const u8, message: []const u8) error{OutOfMemory}!void {
+        try self.report(.err, 0, "ERROR {s}: {s}", .{ code, message });
+        self.list.items[self.list.items.len - 1].plain = true;
+    }
+
     /// Record a macro-scoped ERROR: loud in the log and non-zero exit, but
     /// exempt from syntax-check step-skipping (see Diagnostic.recoverable).
     pub fn macroErr(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
@@ -145,7 +151,8 @@ pub const Diagnostics = struct {
         return self.recoverableErr(line, fmt, args);
     }
 
-    fn recoverableErr(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
+    /// Report an error that leaves the step and subsequent processing active.
+    pub fn recoverableErr(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
         const message = try std.fmt.allocPrint(self.arena, fmt, args);
         try self.list.append(self.arena, .{
             .severity = .err,

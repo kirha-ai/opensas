@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 Frequency
+stderr-count 1 ERROR: Domain error.
+stderr-count 1 Termination due to Floating Point Exception

@@ -1,0 +1,5 @@
+# corpus assertions
+stderr-count 1 No variables found beginning with 'NOTHING' in data set WORK.SAMPLE.
+row CELL 1~5.1e-05 |5~5.1e-05 |1~5.1e-05
+row CELL 3~5.1e-05 |7~5.1e-05 |1~5.1e-05
+row-count 2 CELL {any} | {any} | {any}

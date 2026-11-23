@@ -1,0 +1,25 @@
+# corpus assertions
+row ODS_ROWS|2
+stdout-count 7 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|F_r|char|1|||r
+row ODS_COL|3|r|num|8|||
+row ODS_COL|4|Frequency|num|8|BEST8.||
+row ODS_COL|5|Percent|num|8|6.2||
+row ODS_COL|6|CumFrequency|num|8|BEST8.||Cumulative Frequency
+row ODS_COL|7|CumPercent|num|8|6.2||Cumulative Percent
+stdout-count 14 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r
+row ODS_VALUE|1|F_r|1
+row ODS_VALUE|1|r|1~1e-08
+row ODS_VALUE|1|Frequency|4~4e-08
+row ODS_VALUE|1|Percent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|1|CumFrequency|4~4e-08
+row ODS_VALUE|1|CumPercent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|2|Table|Table r
+row ODS_VALUE|2|F_r|2
+row ODS_VALUE|2|r|2~2e-08
+row ODS_VALUE|2|Frequency|7~7e-08
+row ODS_VALUE|2|Percent|63.6363636363636~6.363636364e-07
+row ODS_VALUE|2|CumFrequency|11~1.1e-07
+row ODS_VALUE|2|CumPercent|100~1e-06

@@ -1,0 +1,13 @@
+# corpus assertions
+svg-count 1
+svg-has 1 xmlns="http://www.w3.org/2000/svg"
+svg-has 1 data-kind="pp"
+svg-has 1 class="point"
+row VarName PPPlot Theoretical Empirical
+next x 1 0.02275 0.125
+next x 1 0.15866 0.375
+next x 1 0.50000 0.500~0
+next x 1 0.69146 0.750~0
+next x 1 0.84134 0.875
+next x 1 0.99865 1.000~0
+end-listing

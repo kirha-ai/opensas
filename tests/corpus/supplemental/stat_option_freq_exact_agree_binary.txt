@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 2 Simple Kappa Coefficient
+stdout-count 2 McNemar's Test
+stdout-count 0 Weighted Kappa Coefficient
+row One-sided Pr <= Statistic 0.2619~5.1e-05
+row Two-sided Pr >= |Statistic| 0.5238~5.1e-05
+row Exact Pr >= Statistic 1.0~5.1e-05
+row-count 1 One-sided Pr <= Statistic {any}
+row-count 1 Two-sided Pr >= | Statistic | {any}
+row-count 1 Exact Pr >= Statistic {any}

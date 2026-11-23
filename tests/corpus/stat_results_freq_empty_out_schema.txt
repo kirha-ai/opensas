@@ -1,0 +1,8 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 group 2 4 Study arm
+next 2 COUNT 1 8 Frequency Count
+next 3 PERCENT 1 8 Percent of Total Frequency
+next rows
+next 0
+end-listing

@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 UNIVARIATE: sample is outside the distribution support or fit is degenerate

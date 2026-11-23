@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 Data set down is not sorted in ascending sequence.

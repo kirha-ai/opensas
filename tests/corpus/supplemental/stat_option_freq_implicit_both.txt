@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 No variables available for analysis after specification of BY variables and WEIGHT variable.

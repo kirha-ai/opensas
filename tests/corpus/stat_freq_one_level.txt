@@ -1,0 +1,5 @@
+# corpus assertions
+row Total 1 1 2
+stderr-count 1 NOTE: No statistics are computed for r * c because r has fewer than 2 nonmissing levels.
+stdout-count 0 Fisher's Exact Test
+row-count 1 Total {any} {any} {any}

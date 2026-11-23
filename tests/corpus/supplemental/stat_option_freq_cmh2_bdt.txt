@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Nonzero Correlation
+stdout-count 1 Row Mean Scores Differ
+stdout-count 0 General Association
+row Breslow-Day-Tarone Test for Homogeneity of Odds Ratios
+row 8.5392~5.1e-05 1~5.1e-05 0.0035~5.1e-05

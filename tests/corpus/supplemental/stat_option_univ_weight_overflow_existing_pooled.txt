@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 OLD 99 42
+stderr-count 1 Data set WORK.Q was not replaced because this step was stopped.
+stderr-count 1 Overflow in statistic calculation.

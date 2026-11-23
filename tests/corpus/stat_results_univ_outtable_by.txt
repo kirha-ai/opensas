@@ -1,0 +1,57 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 site 2 8 Study site
+next 2 _VAR_ 2 8 Variable Name
+next 3 _LABEL_ 2 40 Variable Label
+next 4 _NOBS_ 1 8 Number of Nonmissing Observations
+next 5 _NMISS_ 1 8 Number of Missing Observations
+next 6 _SUMWGT_ 1 8 Sum of the Weights
+next 7 _SUM_ 1 8 Sum
+next 8 _MEAN_ 1 8 Mean
+next 9 _STD_ 1 8 Standard Deviation
+next 10 _VARI_ 1 8 Variance
+next 11 _SKEW_ 1 8 Skewness
+next 12 _KURT_ 1 8 Kurtosis
+next 13 _MIN_ 1 8 Minimum
+next 14 _P1_ 1 8 1st Percentile
+next 15 _P5_ 1 8 5th Percentile
+next 16 _P10_ 1 8 10th Percentile
+next 17 _Q1_ 1 8 25th Percentile (Lower Quartile)
+next 18 _MEDIAN_ 1 8 50th Percentile (Median)
+next 19 _Q3_ 1 8 75th Percentile (Upper Quartile)
+next 20 _P90_ 1 8 90th Percentile
+next 21 _P95_ 1 8 95th Percentile
+next 22 _P99_ 1 8 99th Percentile
+next 23 _MAX_ 1 8 Maximum
+next 24 _RANGE_ 1 8 Range
+next 25 _QRANGE_ 1 8 Interquartile range
+next 26 _MODE_ 1 8 Mode
+next 27 _SGNRNK_ 1 8 Centered Signed Rank
+next 28 _PROBS_ 1 8 P-Value of Signed Rank Test
+next 29 _T_ 1 8 Student's t Statistic
+next 30 _PROBT_ 1 8 P-Value of t Statistic
+next 31 _MSIGN_ 1 8 Sign Statistic
+next 32 _PROBM_ 1 8 P-Value of Sign Statistic
+next 33 _NORMAL_ 1 8 Test Statistic for Normality
+next 34 _PROBN_ 1 8 P-Value of Test for Normality
+next 35 _USS_ 1 8 Uncorrected Sum of Squares
+next 36 _CSS_ 1 8 Corrected Sum of Squares
+next 37 _CV_ 1 8 Coefficient of Variation
+next 38 _STDMEAN_ 1 8 Standard Error of the Mean
+next 39 _GINI_ 1 8 Gini's Mean Difference
+next 40 _MAD_ 1 8 Median Absolute Difference About the Median
+next 41 _SN_ 1 8 Sn
+next 42 _QN_ 1 8 Qn
+next 43 _STDQRANGE_ 1 8 Interquartile Range Standard Deviation
+next 44 _STDGINI_ 1 8 Gini's Standard Deviation
+next 45 _STDMAD_ 1 8 MAD Standard Deviation
+next 46 _STDSN_ 1 8 Sn Standard Deviation
+next 47 _STDQN_ 1 8 Qn Standard Deviation
+next 48 _GEOMEAN_ 1 8 Geometric Mean
+next 49 _HARMEAN_ 1 8 Harmonic Mean
+next site _VAR_ _NOBS_ _MEAN_ _MEDIAN_
+next A x 3 2.66667~5e-06 2
+next A y 3 2.66667~5e-06 3
+next B x 3 4.66667~5e-06 4
+next B y 3 4.33333~5e-06 5
+end-listing

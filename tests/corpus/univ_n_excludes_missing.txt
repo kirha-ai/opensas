@@ -53,6 +53,10 @@ Signed Rank    S         5    Pr >= |S| 0.1250
                    2    2                2    2
                    4    4                4    4
                    6    6                6    6
+
+Missing Values
+Missing Value  Count  Percent of All Obs  Percent of Missing Obs
+.  2  33.33  100.00
 UNIVARIATE already COMPUTES the count: n=4 nmiss=2 via OUTPUT
 UNIVARIATE already COMPUTES the count: n=4 nmiss=2 via OUTPUT
 n_   nm_

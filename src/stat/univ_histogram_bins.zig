@@ -27,6 +27,7 @@ pub const Plan = struct {
     width: f64,
     mode: Mode,
     empty_key_fallback: bool = false,
+    endpoint_phase_ambiguous: bool = false,
     constant: ?f64 = null,
     clipped: bool = false,
     cell_order: []const usize = &.{},
@@ -71,11 +72,28 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     const lo = if (pooled) minimum else key[0];
     const hi = if (pooled) maximum else key[key.len - 1];
     const n = if (pooled) total else key.len;
+    // An automatic axis uses the minimum as its first tick when the
+    // entire range is below the resolution of the midpoint of the extrema.
+    const single_tick = lo == hi or (target == null and
+        hi - lo <= @sqrt(std.math.floatEps(f64) / 2) * @abs(lo / 2 + hi / 2));
+    const two_endpoints = request.endpoints and target == 2 and lo != hi;
+    const centered_pair = two_endpoints and lo < 0 and hi > 0;
+    const zero_endpoint = two_endpoints and (lo == 0 or hi == 0);
     var width: f64 = undefined;
     if (explicit) {
         width = request.initial_endpoints[1] - request.initial_endpoints[0];
-    } else if (lo == hi) {
+    } else if (single_tick) {
         width = if (lo == 0) 1 else @abs(lo);
+    } else if (centered_pair) {
+        // A zero-aligned lattice needs three ticks to straddle zero. M9
+        // centers its two-endpoint axis on zero instead. At a preferred
+        // extremum the enclosing interval runs from -width to +width.
+        const magnitude = @max(-lo, hi);
+        const resolution = @sqrt(std.math.floatEps(f64) / 2) * (hi - lo);
+        const tick = preferred(magnitude - resolution, true);
+        width = if (magnitude >= tick) 2 * tick else tick;
+    } else if (zero_endpoint) {
+        width = zeroEndpointWidth(hi - lo);
     } else if (target) |count| {
         width = try controlledWidth(d, minimum, maximum, count);
     } else {
@@ -85,15 +103,26 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     if (!(width > 0) or !std.math.isFinite(width)) return d.fail(error.ParseError, 0, "UNIVARIATE: automatic bin width is not representable", .{});
     var first: f64 = undefined;
     var last: f64 = undefined;
+    var endpoint_phase_ambiguous = false;
     if (explicit) {
         first = request.initial_endpoints[0];
         last = request.initial_endpoints[request.initial_endpoints.len - 1];
-    } else if (lo == hi) {
+    } else if (single_tick) {
         first = if (!request.endpoints) lo - width / 2 else if (request.right) lo - width else lo;
         last = first + width;
     } else if (request.endpoints) {
-        first = if (request.right) (ceilNear(lo / width) - 1) * width else floorNear(lo / width) * width;
-        last = if (request.right) ceilNear(hi / width) * width else (floorNear(hi / width) + 1) * width;
+        const alignment: EndpointAlignment = if (target == null)
+            endpointAlignment(lo / width, hi / width)
+        else if (centered_pair)
+            .{ .shift = 0.5 }
+        else if (zero_endpoint)
+            .{}
+        else
+            .{ .ambiguous = true };
+        const shift = alignment.shift;
+        endpoint_phase_ambiguous = alignment.ambiguous;
+        first = (if (request.right) ceilNear(lo / width - shift) - 1 + shift else floorNear(lo / width - shift) + shift) * width;
+        last = (if (request.right) ceilNear(hi / width - shift) + shift else floorNear(hi / width - shift) + 1 + shift) * width;
     } else if (target != null) {
         first = floorNear(lo / width) * width - width / 2;
         last = ceilNear(hi / width) * width + width / 2;
@@ -170,8 +199,22 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         order[at] = index;
         at += 1;
     }
-    if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
-    return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
+    if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "The {s}= list was extended to accommodate the data.", .{if (request.endpoints) "ENDPOINTS" else "MIDPOINTS"});
+    return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .endpoint_phase_ambiguous = endpoint_phase_ambiguous, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
+}
+
+const EndpointAlignment = struct { shift: f64 = 0, ambiguous: bool = false };
+
+/// SAS compares the zero- and half-width lattices. It first minimizes occupied
+/// labels, then the extrema's total distance from their nearest lattice ticks.
+fn endpointAlignment(lo: f64, hi: f64) EndpointAlignment {
+    const zero_span = floorNear(hi) - floorNear(lo);
+    const half_span = floorNear(hi - 0.5) - floorNear(lo - 0.5);
+    if (half_span != zero_span) return .{ .shift = if (half_span < zero_span) 0.5 else 0 };
+    const distance = @abs(lo - @round(lo)) + @abs(hi - @round(hi));
+    const tolerance = 16 * std.math.floatEps(f64) * @max(1, @abs(lo), @abs(hi));
+    if (@abs(distance - 0.5) <= tolerance) return .{ .ambiguous = true };
+    return .{ .shift = if (distance > 0.5) 0.5 else 0 };
 }
 
 fn floorNear(value: f64) f64 {
@@ -195,6 +238,22 @@ fn preferred(initial: f64, ceiling: bool) f64 {
     };
     return width;
 }
+/// A two-endpoint axis anchored at zero spans twice a decimal tick. The
+/// quarter-decade tick applies when it is nearer than 2 on the log scale.
+/// E.g. upper extrema .44 and .46 give widths 1 and .5, respectively.
+fn zeroEndpointWidth(span: f64) f64 {
+    const half = span / 2;
+    if (!(half > 0) or !std.math.isFinite(half)) return std.math.nan(f64);
+    const unit = std.math.pow(f64, 10, @floor(@log10(half)));
+    const scaled = half / unit;
+    const minimum = scaled * (1 - @sqrt(std.math.floatEps(f64) / 2));
+    for ([_]f64{ 1, 2, 2.5, 5, 10 }) |factor| {
+        if (factor == 2.5 and scaled < @sqrt(@as(f64, 5))) continue;
+        if (factor >= minimum) return 2 * factor * unit;
+    }
+    return std.math.nan(f64);
+}
+
 fn controlledWidth(d: *diag.Diagnostics, lo: f64, hi: f64, count: usize) diag.Error!f64 {
     var width = preferred((hi - lo) / @as(f64, @floatFromInt(count - 1)), true);
     for (0..32) |_| {
@@ -236,8 +295,8 @@ test "UNIVARIATE automatic bin widths and midpoint phase SAS M9" {
 }
 
 /// Validate and extend an explicit boundary lattice using its supplied phase.
-/// M9 warns, rather than dropping the boundary observations, when a supplied
-/// endpoint list needs extension (including its open endpoint).
+/// The statement planner diagnoses an extension of a user-supplied list.
+/// Covering an automatic comparative lattice is ordinary processing.
 pub fn cover(a: std.mem.Allocator, d: *diag.Diagnostics, sorted: []const f64, supplied: []const f64, right: bool) diag.Error![]const f64 {
     if (supplied.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram needs two boundary values", .{});
     const width = supplied[1] - supplied[0];
@@ -249,8 +308,27 @@ pub fn cover(a: std.mem.Allocator, d: *diag.Diagnostics, sorted: []const f64, su
     if (sorted[0] < first or (right and sorted[0] == first)) first -= @max(@as(f64, 1), @ceil((first - sorted[0]) / width)) * width;
     if (sorted[sorted.len - 1] > last or (!right and sorted[sorted.len - 1] == last)) last += @max(@as(f64, 1), @ceil((sorted[sorted.len - 1] - last) / width)) * width;
     if (first == supplied[0] and last == supplied[supplied.len - 1]) return supplied;
-    try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
     return lattice(a, d, first, last, width, 100000);
+}
+
+test "automatic histogram uses the minimum tick below relative axis resolution" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for ([_]f64{ -3, 0.3, 1, 1e7 }) |lo| {
+        const narrow = [_]f64{ lo, lo + @abs(lo) * 1.053e-8 };
+        const wide = [_]f64{ lo, lo + @abs(lo) * 1.054e-8 };
+        const single = try determine(a, &d, &.{.{ .sorted = &narrow }}, .{});
+        try std.testing.expectEqual(@abs(lo), single.width);
+        try std.testing.expectEqual(@as(usize, 2), single.endpoints.len);
+        const multiple = try determine(a, &d, &.{.{ .sorted = &wide }}, .{});
+        try std.testing.expect(multiple.width < @abs(lo) * 1e-7);
+        try std.testing.expect(multiple.endpoints.len > 2);
+
+        const right = try determine(a, &d, &.{.{ .sorted = &narrow }}, .{ .endpoints = true, .right = true });
+        try std.testing.expectEqualSlices(f64, &.{ lo - @abs(lo), lo, lo + @abs(lo) }, right.endpoints);
+    }
 }
 
 test "dev3 constant and shared bin plans preserve KEY UNIFORM counts and windows" {
@@ -295,4 +373,59 @@ test "dev3 constant and shared bin plans preserve KEY UNIFORM counts and windows
     try std.testing.expectError(error.ParseError, determine(a, &d, &cells, .{ .max_nbin = 0 }));
     try std.testing.expectError(error.ParseError, determine(a, &d, &.{.{ .sorted = &.{ 2, 1 } }}, .{}));
     try std.testing.expectError(error.ParseError, cover(a, &d, &first, &.{ 0, 5, 12 }, false));
+}
+
+test "automatic endpoints distinguish occupied span, tick proximity and exact ties" {
+    // SAS phases across independent positive and negative translations.
+    try std.testing.expectEqual(@as(f64, 0.5), endpointAlignment(-16.25 / 4.0, -2.25 / 4.0).shift);
+    try std.testing.expectEqual(@as(f64, 0), endpointAlignment(-13.0 / 6.0, 5.0 / 6.0).shift);
+    try std.testing.expectEqual(@as(f64, 0.5), endpointAlignment(2.0 / 4.0, 16.0 / 4.0).shift);
+    // At this tie M9 changes phase when the same data are rescaled by 0.01.
+    try std.testing.expect(endpointAlignment(-875.0 / 150.0, 50.0 / 150.0).ambiguous);
+}
+
+test "automatic endpoints and RTINCLUDE reproduce native OUTHISTOGRAM after integer translations" {
+    const native = [_]struct { first: [2]f64, counts: [2][4]usize }{
+        .{ .first = .{ -15, -15 }, .counts = .{ .{ 1, 3, 3, 1 }, .{ 1, 1, 2, 4 } } },
+        .{ .first = .{ -15, -9 }, .counts = .{ .{ 1, 2, 4, 1 }, .{ 1, 3, 3, 1 } } },
+        .{ .first = .{ -18, -12 }, .counts = .{ .{ 1, 1, 2, 4 }, .{ 1, 1, 3, 3 } } },
+        .{ .first = .{ -12, -12 }, .counts = .{ .{ 1, 3, 3, 1 }, .{ 1, 1, 2, 4 } } },
+        .{ .first = .{ -12, -6 }, .counts = .{ .{ 1, 2, 4, 1 }, .{ 1, 3, 3, 1 } } },
+        .{ .first = .{ -15, -9 }, .counts = .{ .{ 1, 1, 2, 4 }, .{ 1, 1, 3, 3 } } },
+    };
+    const observations = [_]f64{ -15, -9, -6, -4, -2, -1, 0, 3 };
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for (native, 0..) |reference, shift| {
+        var sample = observations;
+        for (&sample) |*value| value.* += @floatFromInt(shift);
+        for ([_]bool{ false, true }, 0..) |right, side| {
+            const endpoints = try automatic(a, &d, &sample, true, right);
+            const bins = try @import("univ_distribution_values.zig").histogram(a, &d, &sample, endpoints, right, null);
+            try std.testing.expectEqual(reference.counts[side].len, bins.len);
+            for (bins, reference.counts[side], 0..) |bin, count, i| {
+                try std.testing.expectEqual(reference.first[side] + 6 * @as(f64, @floatFromInt(i)), if (right) bin.upper else bin.lower);
+                try std.testing.expectEqual(count, bin.count);
+            }
+        }
+    }
+}
+
+test "UNIVARIATE two-endpoint axes anchored at zero use native decimal widths" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for ([_]f64{ 0.2225, 0.44, 0.46, 0.500000001, 0.50000002 }, [_]f64{ 0.4, 1, 0.5, 0.5, 1 }) |maximum, width| {
+        for ([_][2]f64{ .{ 0, maximum }, .{ -maximum, 0 } }) |sample| {
+            for ([_]bool{ false, true }) |right| {
+                const plan = try determine(a, &d, &.{.{ .sorted = &sample }}, .{ .endpoints = true, .target_count = 2, .right = right });
+                try std.testing.expectEqual(width, plan.width);
+                try std.testing.expect(!plan.endpoint_phase_ambiguous);
+                try std.testing.expect(std.mem.indexOfScalar(f64, plan.endpoints, 0) != null);
+            }
+        }
+    }
 }

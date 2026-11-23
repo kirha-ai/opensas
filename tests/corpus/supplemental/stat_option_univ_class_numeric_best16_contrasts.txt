@@ -1,0 +1,54 @@
+# corpus assertions
+row Case univ_class_numeric_best16_data
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 4~5.1e-05
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row GROUP 1~5.1e-05 32~5.1e-05
+row GROUP 1~5.1e-05 64~5.1e-05
+row GROUP 1~5.1e-05 128~5.1e-05
+row GROUP 1~5.1e-05 256~5.1e-05
+row GROUP 1~5.1e-05 512~5.1e-05
+row GROUP 1~5.1e-05 1024~5.1e-05
+row GROUP 1~5.1e-05 2048~5.1e-05
+row Case univ_class_numeric_best16_formatted
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 64~5.1e-05
+row GROUP 1~5.1e-05 32~5.1e-05
+row GROUP 1~5.1e-05 256~5.1e-05
+row GROUP 1~5.1e-05 2048~5.1e-05
+row GROUP 1~5.1e-05 512~5.1e-05
+row GROUP 1~5.1e-05 1024~5.1e-05
+row GROUP 1~5.1e-05 4~5.1e-05
+row GROUP 1~5.1e-05 128~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row Case univ_class_numeric_best16_freq
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 64~5.1e-05
+row GROUP 1~5.1e-05 32~5.1e-05
+row GROUP 1~5.1e-05 256~5.1e-05
+row GROUP 1~5.1e-05 2048~5.1e-05
+row GROUP 1~5.1e-05 512~5.1e-05
+row GROUP 1~5.1e-05 1024~5.1e-05
+row GROUP 1~5.1e-05 4~5.1e-05
+row GROUP 1~5.1e-05 128~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row Case univ_class_numeric_best16_internal
+row GROUP 1~5.1e-05 32~5.1e-05
+row GROUP 1~5.1e-05 8~5.1e-05
+row GROUP 1~5.1e-05 64~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 1~5.1e-05 256~5.1e-05
+row GROUP 1~5.1e-05 2048~5.1e-05
+row GROUP 1~5.1e-05 512~5.1e-05
+row GROUP 1~5.1e-05 1024~5.1e-05
+row GROUP 1~5.1e-05 4~5.1e-05
+row GROUP 1~5.1e-05 16~5.1e-05
+row GROUP 1~5.1e-05 128~5.1e-05
+row GROUP 1~5.1e-05 2~5.1e-05
+row-count 48 GROUP {any} {any}

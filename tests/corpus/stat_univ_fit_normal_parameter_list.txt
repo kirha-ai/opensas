@@ -1,0 +1,42 @@
+# corpus assertions
+row Fitted Normal Distribution for x
+row Parameters for Normal Distribution
+row Mean Mu 0
+row Std Dev Sigma 1
+row Goodness-of-Fit Tests for Normal Distribution
+row Kolmogorov-Smirnov D 0.5477584 Pr > D <0.001
+row Cramer-von Mises W-Sq 2.1014551 Pr > W-Sq <0.001
+row Anderson-Darling A-Sq 17.7523058 Pr > A-Sq <0.001
+row Quantiles for Normal Distribution
+row 1.0 0.12000 -2.32635
+row 5.0 0.12000 -1.64485
+row 10.0 0.23000 -1.28155
+row 25.0 0.50000 -0.67449
+row 50.0 1.16000 0.00000
+row 75.0 2.51000 0.67449
+row 90.0 4.85000 1.28155
+row 95.0 6.21000 1.64485
+row 99.0 6.21000 2.32635
+row Fitted Normal Distribution for x
+row Parameters for Normal Distribution
+row Mean Mu 2
+row Std Dev Sigma 1
+row Goodness-of-Fit Tests for Normal Distribution
+row Kolmogorov-Smirnov D 0.36391370 Pr > D 0.022
+row Cramer-von Mises W-Sq 0.61450982 Pr > W-Sq 0.021
+row Anderson-Darling A-Sq 4.62833063 Pr > A-Sq 0.005
+row Quantiles for Normal Distribution
+row 1.0 0.12000 -0.32635
+row 5.0 0.12000 0.35515
+row 10.0 0.23000 0.71845
+row 25.0 0.50000 1.32551
+row 50.0 1.16000 2.00000
+row 75.0 2.51000 2.67449
+row 90.0 4.85000 3.28155
+row 95.0 6.21000 3.64485
+row 99.0 6.21000 4.32635
+row-count 2 Mean Mu {any}
+row-count 2 Std Dev Sigma {any}
+row-count 2 Kolmogorov-Smirnov D {any} Pr > D {any}
+row-count 2 Cramer-von Mises W-Sq {any} Pr > W-Sq {any}
+row-count 2 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

@@ -1,0 +1,12 @@
+# corpus assertions
+stdout-count 1 g=_
+stdout-count 1 g=.
+stdout-count 1 g=A
+stdout-count 1 g=Z
+stdout-count 1 g=1
+row Mean 2~5.1e-05 Sum Observations 2~5.1e-05
+row Mean 5~5.1e-05 Sum Observations 5~5.1e-05
+row Mean 9~5.1e-05 Sum Observations 18~5.1e-05
+row Mean 12~5.1e-05 Sum Observations 12~5.1e-05
+row Mean 26~5.1e-05 Sum Observations 26~5.1e-05
+row-count 5 Mean {any} Sum Observations {any}

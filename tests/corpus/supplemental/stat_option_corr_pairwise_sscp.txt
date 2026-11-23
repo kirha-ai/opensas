@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Sums of Squares and Crossproducts
+stdout-count 1 x 4 3.57143
+stdout-count 1 y 3 3.66667
+row y x 76~5.1e-05 116~5.1e-05 54~5.1e-05 2~5.1e-05 3~5.1e-05
+row-count 1 y x {any} {any} {any} {any} {any}

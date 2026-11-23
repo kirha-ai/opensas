@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 1 g=1
+stdout-count 1 g=2
+stdout-count 1 g=3
+row 1 1 50~5.1e-05 1 50~5.1e-05
+row 3 1 50~5.1e-05 2 100~5.1e-05
+row 5 1 50~5.1e-05 1 50~5.1e-05
+row 7 1 50~5.1e-05 2 100~5.1e-05
+row 9 1 50~5.1e-05 1 50~5.1e-05
+row 11 1 50~5.1e-05 2 100~5.1e-05

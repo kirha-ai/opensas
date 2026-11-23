@@ -1,0 +1,7 @@
+data d;length x $8;input x $ n;datalines;
+a 3
+bb 7
+ccc 9
+;
+run;
+proc freq data=d;weight n;tables x/binomial(level='a       x');run;

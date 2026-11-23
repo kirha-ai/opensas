@@ -1,0 +1,25 @@
+# corpus assertions
+row ODS_ROWS|2
+stdout-count 7 ODS_COL|
+row ODS_COL|1|Variable|char|1|||
+row ODS_COL|2|a|num|8|12.7||
+row ODS_COL|3|b|num|8|12.7||
+row ODS_COL|4|Rowa|num|8|12.7||
+row ODS_COL|5|Rowb|num|8|12.7||
+row ODS_COL|6|Cola|num|8|12.7||
+row ODS_COL|7|Colb|num|8|12.7||
+stdout-count 14 ODS_VALUE|
+row ODS_VALUE|1|Variable|a
+row ODS_VALUE|1|a|310~3.1e-06
+row ODS_VALUE|1|b|285~2.85e-06
+row ODS_VALUE|1|Rowa|310~3.1e-06
+row ODS_VALUE|1|Rowb|310~3.1e-06
+row ODS_VALUE|1|Cola|310~3.1e-06
+row ODS_VALUE|1|Colb|358~3.58e-06
+row ODS_VALUE|2|Variable|b
+row ODS_VALUE|2|a|285~2.85e-06
+row ODS_VALUE|2|b|383~3.83e-06
+row ODS_VALUE|2|Rowa|358~3.58e-06
+row ODS_VALUE|2|Rowb|383~3.83e-06
+row ODS_VALUE|2|Cola|310~3.1e-06
+row ODS_VALUE|2|Colb|383~3.83e-06

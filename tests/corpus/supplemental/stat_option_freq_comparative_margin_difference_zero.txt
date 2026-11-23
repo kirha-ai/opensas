@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 Risk Estimates
+stdout-count 0 Analysis for the
+stderr-count 1 The RISKDIFF MARGIN= value must be a positive number.

@@ -1,0 +1,9 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 x_lo 1 8 the 12.5000 percentile, x
+next 2 y_lo 1 8 the 12.5000 percentile, y
+next 3 x_hi 1 8 the 87.5000 percentile, x
+next 4 y_hi 1 8 the 87.5000 percentile, y
+next x_lo y_lo x_hi y_hi
+next 1 1 7 6
+end-listing

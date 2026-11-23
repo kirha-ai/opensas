@@ -35,12 +35,20 @@ pub fn main(init: std.process.Init) !void {
     // Parse `--sasautos <dir>` (autocall library) anywhere in the args; the first
     // non-flag arg is the input `.sas`. `$SASAUTOS` is the fallback.
     var file: ?[]const u8 = null;
+    var graphics_dir: ?[]const u8 = null;
     var sasautos: ?[]const u8 = init.environ_map.get("SASAUTOS");
     var ai: usize = 1;
     while (ai < args.len) : (ai += 1) {
         if (std.mem.eql(u8, args[ai], "--sasautos") and ai + 1 < args.len) {
             sasautos = args[ai + 1];
             ai += 1;
+        } else if (std.mem.eql(u8, args[ai], "--graphics-dir")) {
+            if (ai + 1 >= args.len or args[ai + 1].len == 0) {
+                std.debug.print("opensas: --graphics-dir requires a directory\n", .{});
+                std.process.exit(1);
+            }
+            ai += 1;
+            graphics_dir = args[ai];
         } else if (std.mem.eql(u8, args[ai], "--version") or std.mem.eql(u8, args[ai], "-V")) {
             // GH#10 ISS-versionflag: SHORT-CIRCUIT before the input file is even
             // opened — `sas --version anything.sas` still prints, and the old
@@ -58,7 +66,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     if (file == null) {
-        std.debug.print("usage: opensas [--sasautos <dir>] <file.sas>\n", .{});
+        std.debug.print("usage: opensas [--sasautos <dir>] [--graphics-dir <dir>] <file.sas>\n", .{});
         return;
     }
     sas.macro.setAutocallDir(sasautos);
@@ -70,7 +78,7 @@ pub fn main(init: std.process.Init) !void {
 
     var diags = sas.diag.Diagnostics.init(a);
     var out: std.ArrayList(u8) = .empty;
-    interpret(a, &out, &diags, src, io) catch |e| {
+    interpretNative(a, &out, &diags, src, io, graphics_dir) catch |e| {
         // A propagated lex/parse/exec error already recorded a located diagnostic
         // via diags.fail() — render() below prints `ERROR(Ln): …`. Only emit the
         // bare error-name line when NO diagnostic carries the detail (e.g.
@@ -165,6 +173,15 @@ fn userErr(diags: *sas.diag.Diagnostics, comptime fmt: []const u8, args: anytype
     diags.report(.err, 0, fmt, args) catch {};
 }
 
+/// Native CLI graphics sessions are scoped to one interpretation. The existing
+/// in-memory/wasm entry point keeps its explicit numerical-consumer contract.
+fn interpretNative(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag.Diagnostics, src: []const u8, io: Io, graphics_dir: ?[]const u8) !void {
+    var graphics = sas.proc.native_graphics.Session{ .arena = a, .io = io, .diags = diags, .cli_dir = graphics_dir, .listing = &ods_listing };
+    native_graphics_session = &graphics;
+    defer native_graphics_session = null;
+    try interpret(a, out, diags, src, io);
+}
+
 /// Run a whole `.sas` source, appending all program output to `out`. `io` is
 /// null for the pure-in-memory path (unit tests, corpus programs); with an `Io`,
 /// CSV-backed LIBNAME datasets are read before and written after the run.
@@ -174,6 +191,7 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // reinstalls its own this run) — plus format.zig's other run-scoped globals
     // (BUG-fmterrorneverreset: g_fmt_error, g_nofmterr; see resetPerRun there).
     ods_capture = .{};
+    ods_listing = .{};
     sas.format.resetPerRun();
     sas.functions.resetPerRun(); // drop prior-run prx/dsfns/hashing handles (taste #12)
     sas.diag.resetGap(); // clear the per-run opensas-gap flag (D-009 exit code)
@@ -1396,7 +1414,9 @@ fn stepEnd(toks: []const Token, from: usize) usize {
 /// top-level handler (GAP-titleinsql). The numbered-line/cancel semantics and the
 /// stamp order (titles atop a listing, footnotes below) live on the type there.
 const Globals = sas.sql.Titles;
+var ods_listing: sas.proc.OdsListing = .{};
 var ods_capture: sas.proc.ods.Capture = .{};
+var native_graphics_session: ?*sas.proc.native_graphics.Session = null;
 
 /// A top-level global statement. TITLE/FOOTNOTE update the persistent state
 /// (emitted later by the listing procs); OPTIONS applies runtime settings,
@@ -1534,10 +1554,12 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // and validated; listing procs do NOT wrap/paginate to them yet
                 // (accepted, not an error). Fail LOUD on garbage like OBS=.
                 const is_ls = eqi(t.text, "linesize") or eqi(t.text, "ls");
-                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .number)
-                    std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null
-                else
-                    null;
+                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq) switch (toks[i + 2].tag) {
+                    .number => std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null,
+                    // SAS 9.4 System Options: Reference, PAGESIZE=.
+                    .name => if (!is_ls and eqi(toks[i + 2].text, "max")) 32767 else if (!is_ls and eqi(toks[i + 2].text, "min")) 15 else null,
+                    else => null,
+                } else null;
                 if (v) |n| {
                     if (is_ls) sas.io.global_linesize = n else sas.io.global_pagesize = n;
                     i += 3;
@@ -2028,16 +2050,14 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     // `ods _all_ close`) and the results/graphics/escapechar toggles are
     // accepted-as-listing no-ops — output correctly stays on stdout, and a
     // `ods pdf; … ods pdf close;` wrap around a PROC must still run and print.
-    // OUTPUT routes named typed tables through the capture registry. SELECT,
-    // EXCLUDE and TRACE still fail loud; destination rendering stays inert.
+    // OUTPUT is an independent typed destination. Listing selection and tracing
+    // are driven from named objects in each implemented procedure.
     if (eqi(kw, "ods") and toks.len >= 2 and toks[1].tag == .name) {
         const sub = toks[1].text;
+        if (native_graphics_session) |graphics| try graphics.configure(toks);
+        if (try ods_listing.parse(a, diags, toks)) return;
         if (eqi(sub, "output")) {
             return ods_capture.parse(a, diags, toks);
-        }
-        if (eqi(sub, "select") or eqi(sub, "exclude") or eqi(sub, "trace")) {
-            sas.diag.markGap(); // §5d — same shape as OUTPUT above
-            return diags.fail(error.ParseError, toks[1].line, "ODS {s} is not supported yet", .{sub});
         }
     }
 }
@@ -2824,13 +2844,22 @@ fn sortInPlaceTarget(toks: []const Token) ?[]const u8 {
 
 /// Dispatch a `proc <name> …; … run;` step by name. Each proc hand-parses its
 /// own tokens (parser.zig is A2's) — SORT lives in proc.zig; PRINT is below.
-fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
+fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
     if (toks.len < 2 or toks[1].tag != .name) {
         failLoud("PROC name missing or unrecognized", .{});
         return;
     }
     const proc = toks[1].text;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture };
+    defer ods_listing.endProc();
+    var discard: std.ArrayList(u8) = .empty;
+    const routed = eqi(proc, "univariate") or eqi(proc, "corr");
+    if (ods_listing.trace != null and !routed and ods_listing.accepts(proc))
+        return sas.proc.failGap(diags, 0, "ODS TRACE: object metadata is not implemented for PROC {s}", .{proc});
+    const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
+    const out = if (visible) listing_out else &discard;
+    const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
@@ -2843,7 +2872,9 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     // per BY group, so PROC PRINT then owns its title/footnote emission
     // (substituted per group in printTable); otherwise titles stamp once here.
     const print_bysubst = eqi(proc, "print") and g.hasBySubst();
+    const titles_start = out.items.len;
     if (listing and !print_bysubst) try g.emitTitles(a, out);
+    const titles_end = out.items.len;
 
     if (eqi(proc, "sort")) {
         // GH#15: PROC SORT with no OUT= (or OUT= the source) sorts the source
@@ -2909,8 +2940,11 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         failLoud("PROC {s} is not supported", .{proc});
     }
 
+    if (native_graphics_session) |graphics| try graphics.flush();
     try ods_capture.finish(lib, diags);
-    if (listing and !print_bysubst) try g.emitFootnotes(a, out);
+    if (ods_listing.filtered() and out.items.len == titles_end) {
+        out.shrinkRetainingCapacity(titles_start);
+    } else if (listing and !print_bysubst) try g.emitFootnotes(a, out);
 }
 
 const PrintOpts = struct {
@@ -2938,11 +2972,19 @@ const PrintOpts = struct {
         return c.label orelse c.name;
     }
 
-    /// The render format for column `c`: the per-print FORMAT-statement override,
-    /// else the column's stored format (BUG-printfmtstmt).
+    fn formatMatches(name: []const u8, c: Column) bool {
+        return eqi(name, c.name) or eqi(name, "_all_") or
+            (c.type == .num and eqi(name, "_numeric_")) or
+            (c.type == .char and eqi(name, "_character_"));
+    }
+
+    /// A later FORMAT assignment overrides an earlier one for the same column.
     fn fmtFor(self: PrintOpts, c: Column) ?[]const u8 {
-        if (self.fmt_names) |names| for (names, self.fmt_specs.?) |n, f|
-            if (eqi(n, c.name)) return f;
+        var i = (self.fmt_names orelse return c.format).len;
+        while (i > 0) {
+            i -= 1;
+            if (formatMatches(self.fmt_names.?[i], c)) return self.fmt_specs.?[i];
+        }
         return c.format;
     }
 };
@@ -3152,21 +3194,21 @@ fn printProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Libra
     // compile-time type check as the DATA step's (exec.declareStmt) — a
     // numeric format on a char column (or a `$` on numeric) silently coerced
     // the cell to '.' at render (exit 0). Fail BEFORE any output is produced.
-    for (fnames.items, fspecs.items) |vn, fspec| {
-        const ci = ds.?.indexOf(vn) orelse continue; // unknown var: printTable's existing behavior stands
+    for (fnames.items, fspecs.items) |vn, fspec| for (pcols) |col| {
+        if (!PrintOpts.formatMatches(vn, col)) continue;
         if (fspec.len == 0) continue; // `format v;` disassociates — no type to conflict
-        const col_char = ds.?.columns.items[ci].type == .char;
+        const col_char = col.type == .char;
         if (col_char == sas.format.specIsChar(fspec)) continue;
         // DEC-abortrcvsD009: rc 1, matching the THREE sites already emitting this
         // byte-identical message at rc 1 (exec.zig:1515/1517 declareStmt,
         // proc.zig:2394). It is SAS's own ERROR text for a program whose FORMAT
         // statement contradicts the column's type — the user's SAS is wrong.
         if (col_char)
-            userErr(diags, "The numeric format {s} cannot be used with character variable {s}.", .{ fspec, vn })
+            userErr(diags, "The numeric format {s} cannot be used with character variable {s}.", .{ fspec, col.name })
         else
-            userErr(diags, "The character format {s} cannot be used with numeric variable {s}.", .{ fspec, vn });
+            userErr(diags, "The character format {s} cannot be used with numeric variable {s}.", .{ fspec, col.name });
         return;
-    }
+    };
     // Honour a `where <expr>;` statement or `data=NAME(where=…)` option (BUG-procwhere).
     // srcobs carries each surviving row's physical SOURCE obs number so the Obs
     // column doesn't renumber 1..n over the subset (BUG-printobsnum).
@@ -4321,7 +4363,7 @@ test "GAP-gapsexitingone §5d: main.zig's gaps exit 2 — and every split's typo
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods output Summary=s;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods select MyTable;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods exclude MyTable;\n", &log));
-    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods trace on;\n", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods trace on / listing;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "data a; input x; list; datalines;\n1\n;\nrun;\n", &log));
     try std.testing.expect(std.mem.indexOf(u8, log, "The LIST statement is not supported") != null); // message unchanged
 
@@ -4625,12 +4667,12 @@ test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pr
     try std.testing.expect(!g_failed and !d3.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out.items, "1") != null); // listing printed
 
-    // Unsupported ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
+    // Malformed ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
     // handleGlobal arm, captured diags (D-003).
     var d4 = sas.diag.Diagnostics.init(a);
     try interpret(a, &out, &d4, mk ++ "proc print data=d noobs; ods output zzzq; run;\n", null);
     try std.testing.expect(d4.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT: unsupported table") != null);
+    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT: expected table=dataset") != null);
 }
 
 test "GAP-printby-low-tick274: ID∩VAR/dup VAR keep both columns; SPLIT= implies LABEL; NOBYLINE honored; N/DOUBLE/ROUND/WIDTH= stay loud" {
@@ -5363,7 +5405,7 @@ test "global statements: OPTIONS/TITLE/FOOTNOTE/FILENAME/ODS/X accepted, no DATA
     );
 }
 
-test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE and unknown OUTPUT names fail loud" {
+test "ODS destination wrappers preserve output and unsupported object or trace options fail loud" {
     // Group A: the `ods pdf; … ods pdf close;` wrap (and every other
     // destination/toggle form) runs and still prints the listing — no error.
     try expectRun(
@@ -5379,10 +5421,10 @@ test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE a
     // Group B: captured diagnostics (D-003 — no spawned abort), each naming
     // its own sub-statement.
     inline for (.{
-        .{ "ods select MyTable;\n", "ODS select is not supported yet" },
-        .{ "ods exclude MyTable;\n", "ODS exclude is not supported yet" },
+        .{ "ods select MyTable;\n", "ODS: unsupported selection object" },
+        .{ "ods exclude MyTable;\n", "ODS: unsupported selection object" },
         .{ "ods output Summary=s;\n", "ODS OUTPUT: unsupported table" },
-        .{ "ods trace on;\n", "ODS trace is not supported yet" },
+        .{ "ods trace on / listing;\n", "ODS TRACE: unsupported option" },
     }) |case| {
         var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
         defer arena.deinit();
@@ -5550,6 +5592,11 @@ test "GAP-listingwidth: LINESIZE=/PAGESIZE= captured (inert), garbage fails loud
     );
     try std.testing.expectEqual(@as(usize, 40), sas.io.global_linesize);
     try std.testing.expectEqual(@as(usize, 10), sas.io.global_pagesize);
+    try expectRun("options nodate nonumber linesize=120 pagesize=max nostimer nofullstimer;\ndata _null_; put 'ready'; run;\n", "ready\n");
+    try std.testing.expectEqual(@as(usize, 120), sas.io.global_linesize);
+    try std.testing.expectEqual(@as(usize, 32767), sas.io.global_pagesize);
+    try expectRun("options ps=MiN;\ndata _null_; put 'ready'; run;\n", "ready\n");
+    try std.testing.expectEqual(@as(usize, 15), sas.io.global_pagesize);
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -5909,6 +5956,20 @@ test "TITLE/FOOTNOTE print atop/below a proc listing and persist across procs (G
     ,
         "x\n\n1\n",
     );
+}
+
+test "PROC PRINT FORMAT special lists override stored formats and respect assignment order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var out: std.ArrayList(u8) = .empty;
+    var d = sas.diag.Diagnostics.init(a);
+    try interpret(a, &out, &d, "data d; label='case'; x=0.98771303566856; y=2.125; format x y 5.1; run;\n" ++
+        "proc print data=d noobs; format _numeric_ best32. y 5.2; run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "case") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.98771303566856") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "2.13") != null);
 }
 
 test "put with a format, and a format statement applied by PROC PRINT (F1)" {
@@ -6733,4 +6794,418 @@ test "FEAT-odsoutput missing objects warn empty noprint close and session reset"
     try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "ods output Moments=m;", &log));
     try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, data ++ "proc print data=d; run;", &log));
     try std.testing.expect(std.mem.indexOf(u8, log, "was not created") == null);
+}
+
+test "native UNIVARIATE SVGs and ODS data use M9 step tie and quantile coordinates" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source =
+        "data d; input x @@; datalines;\n-2 -1 -1 0 .5 .5 1 3\n;run;\n" ++
+        "ods graphics on; ods output PPPlot=p QQPlot=q; proc univariate data=d noprint; var x; cdfplot/vscale=proportion; ppplot/normal(mu=0 sigma=1); qqplot/gamma(alpha=2 sigma=1); run;\n" ++
+        "proc sql; select count(*) as rows from p;quit;proc print data=p noobs;run;\n" ++
+        "ods graphics off;proc univariate data=d noprint;var x; qqplot/normal;run;\n" ++
+        "ods graphics on;proc univariate data=d noprint;var x;probplot / normal(mu=0 sigma=1) rotate;run;\n";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const cdf = try dir.dir.readFileAlloc(io_, "opensas-0001-cdf.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, cdf, " V"));
+    try std.testing.expect(std.mem.indexOf(u8, cdf, "class=\"fitted\"") == null);
+    const pp = try dir.dir.readFileAlloc(io_, "opensas-0002-pp.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, pp, "<circle "));
+    try std.testing.expect(std.mem.indexOf(u8, pp, "data-y=\"0.375\" data-observed=\"-1\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, pp, "class=\"reference\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.15866") != null);
+    const qq = try dir.dir.readFileAlloc(io_, "opensas-0003-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, qq, "<circle "));
+    try std.testing.expect(std.mem.indexOf(u8, qq, "Gamma quantile") != null);
+    try std.testing.expect(std.mem.indexOf(u8, qq, "class=\"reference\"") == null);
+    const probability = try dir.dir.readFileAlloc(io_, "opensas-0004-probability.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, probability, "Normal percentile") != null);
+    try std.testing.expect(std.mem.indexOf(u8, probability, "rotate(-90)") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-qq.svg", .{}));
+}
+
+test "native plots use listing GPATH grouped CLASS panels escaped labels and preserve existing files" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    const program = try std.fmt.allocPrint(a, "data sample; input site $ x; label x='A < B & C'; datalines;\nA 1\nA 2\nA 5\nB 3\nB 4\nB 7\n;run;\n" ++
+        "ods listing gpath='{s}'; ods graphics on; proc univariate data=sample noprint; class site;var x;qqplot/normal(mu=est sigma=est);run;ods graphics off;", .{path});
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try dir.dir.writeFile(io_, .{ .sub_path = "opensas-0001-qq.svg", .data = "existing" });
+    try interpretNative(a, &out, &d, program, io_, null);
+    try std.testing.expect(!d.hasErrors());
+    const svg = try dir.dir.readFileAlloc(io_, "opensas-0002-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, svg, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, svg, "<circle "));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, svg, "class=\"reference\""));
+    try std.testing.expect(std.mem.indexOf(u8, svg, "site = A") != null);
+    try std.testing.expect(std.mem.indexOf(u8, svg, "site = B") != null);
+    try std.testing.expect(std.mem.indexOf(u8, svg, "A &lt; B &amp; C") != null);
+    try std.testing.expectEqualStrings("existing", try dir.dir.readFileAlloc(io_, "opensas-0001-qq.svg", a, .limited(64)));
+}
+
+test "native histogram counts fit panels insets and suppression follow the public procedure" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x @@;datalines;\n0.12 0.23 0.31 0.48 0.52 0.76 0.87 1.03 1.29 1.36 1.70 2.28 2.74 3.52 4.85 6.21\n;run;\n" ++
+        "title 'Breaking Strength';ods graphics on;proc univariate data=d noprint;var x;histogram x / endpoints=0 to 8 by 2 barlabel=count normal(fill noprint) outhistogram=bins;inset n mean='Average' / position=nw;" ++
+        "cdf x / normal odstitle=title;inset normal(mu sigma) /format=6.2;" ++
+        "histogram x / noplot;run;proc print data=bins noobs;run;" ++
+        "ods graphics off;proc univariate data=d noprint;histogram x /outhistogram=still;run;proc print data=still;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, hist, "class=\"bar\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, "data-count=\"11\" data-height=\"68.75\"") != null);
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, hist, "class=\"bar-label\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">Average</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">1.766875</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, hist, "class=\"density-fill\"") != null);
+    const cdf = try dir.dir.readFileAlloc(io_, "opensas-0002-cdf.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, cdf, "Breaking Strength") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cdf, ">1.77</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cdf, ">1.76</text>") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-histogram.svg", .{}));
+}
+
+test "comparative histogram aligns class bars and renders a kernel grid" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input g x @@;datalines;\n0 1 0 2 0 3 0 4 1 5 1 6 1 7 1 8\n;run;ods graphics on;proc univariate data=d noprint;class g;var x;histogram x /kernel(c=.6) vscale=count;inset n mean std /pos=ne;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "class=\"kernel\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, "g = 1") != null);
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "data-pos=\"ne\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">Count</text>") != null);
+}
+
+test "CORR native geometry reproduces M9 ellipses and matrix cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x y z @@;datalines;\n1 8 4 2 6 1 2 6 5 3 2 2 4 5 6 5 3 2 6 1 5 8 4 8 9 1 3\n;run;ods graphics on;" ++
+        "proc corr data=d plots=(scatter(ellipse=confidence alpha=.1) scatter(ellipse=prediction alpha=.1));var x;with y;run;" ++
+        "proc corr data=d plots=matrix(nvar=2 nwith=1);var x z; with y z;run;" ++
+        "proc corr data=d plots=matrix(hist);var x y z;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const ci = try dir.dir.readFileAlloc(io_, "opensas-0001-scatter.svg", a, .limited(1 << 20));
+    const pred = try dir.dir.readFileAlloc(io_, "opensas-0002-scatter.svg", a, .limited(1 << 20));
+    // F(2,7) gives first transformed vertices (502.77,320.76) and
+    // (859.29,470.96). The prediction contour is clipped by the frame.
+    try std.testing.expect(std.mem.indexOf(u8, ci, "data-factor=\"0.82728687011844") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ci, "M502.77 320.76") != null);
+    try std.testing.expect(std.mem.indexOf(u8, pred, "M859.29 470.96") != null);
+    try std.testing.expectEqual(@as(usize, 9), std.mem.count(u8, ci, "class=\"point\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, ci, "data-x=\"2\" data-y=\"6\""));
+    const rect = try dir.dir.readFileAlloc(io_, "opensas-0003-matrix.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, rect, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 18), std.mem.count(u8, rect, "class=\"point\""));
+    try std.testing.expect(std.mem.indexOf(u8, rect, "data-x-variable=\"z\" data-y-variable=\"y\"") != null);
+    const mat = try dir.dir.readFileAlloc(io_, "opensas-0004-matrix.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 9), std.mem.count(u8, mat, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 54), std.mem.count(u8, mat, "class=\"point\""));
+    try std.testing.expect(std.mem.count(u8, mat, "class=\"bin\"") >= 3);
+}
+
+test "CORR partial residual coordinates and degenerate, missing and suppressed plots" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x y k k2 flat @@;datalines;\n9 10 -1 -2 4 7 6 -1 -2 4 13 0 1 2 4 11 4 1 2 4 . 12 3 6 4 12 . 0 0 4\n;run;ods graphics on;" ++
+        "proc corr data=d plots=scatter(ellipse=none);var x y;partial k k2;run;" ++
+        "proc corr data=d plots=scatter;var flat;with y;run;" ++
+        "proc corr data=d plots(maxpoints=3)=scatter;var x y;run;proc corr data=d plots=none;var x y;run;" ++
+        "proc corr data=d;var x y;run;proc corr data=d noprint plots=matrix;var x y;run;" ++
+        "ods graphics off;proc corr data=d plots=scatter;var x y;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const partial = try dir.dir.readFileAlloc(io_, "opensas-0001-scatter.svg", a, .limited(1 << 20));
+    for ([_][]const u8{ "data-x=\"1\" data-y=\"2\"", "data-x=\"-1\" data-y=\"-2\"", "data-x=\"1\" data-y=\"-2\"", "data-x=\"-1\" data-y=\"2\"", "x residual" }) |part| try std.testing.expect(std.mem.indexOf(u8, partial, part) != null);
+    const flat = try dir.dir.readFileAlloc(io_, "opensas-0002-scatter.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 5), std.mem.count(u8, flat, "class=\"point\""));
+    try std.testing.expect(std.mem.indexOf(u8, flat, "class=\"ellipse\"") == null);
+    try std.testing.expect(std.mem.indexOf(u8, flat, "class=\"legend\"") == null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-scatter.svg", .{}));
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-matrix.svg", .{}));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Scatter plots with more than 3 points have been suppressed") != null);
+}
+
+test "ODS listing selections expire while NONE persists and captured tables survive exclusion" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a, &out, &d,
+        "data sample;input x;datalines;\n1\n3\n5\n;\nrun;\n" ++
+        "ods select Moments;proc univariate data=sample;var x;run;\n" ++
+        "ods listing exclude Moments;ods output Moments=captured;proc univariate data=sample;var x;run;\n" ++
+        "ods select none;proc print data=sample;run;proc print data=sample;run;\n" ++
+        "ods select all;proc print data=captured noobs;var Label1;run;\n" ++
+        "ods listing close;proc print data=sample;run;ods listing;\n" ++
+        "proc univariate data=sample;var x;run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Moments\n"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Basic Statistical Measures"));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out.items, "The UNIVARIATE Procedure"));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Label1") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs   x") == null);
+}
+
+test "ODS TRACE follows selected CORR object paths independently in each BY group" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diagnostics = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a, &out, &diagnostics,
+        "data d;input site $ x y;datalines;\nA 1 3\nA 2 1\nA 5 4\nB 3 2\nB 4 6\nB 7 5\n;\nrun;\n" ++
+        "ods trace on;ods select PearsonCorr;proc corr data=d;by site;var x y;run;ods trace off;\n", null);
+    try std.testing.expect(!diagnostics.hasErrors());
+    const log = try diagnostics.render();
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, log, "Output Added:"));
+    for ([_][]const u8{ "Name:       PearsonCorr", "Label:      Pearson Correlations", "Template:   base.corr.StackedMatrix" }) |line|
+        try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, log, line));
+    try std.testing.expect(std.mem.indexOf(u8, log, "Path:       Corr.ByGroup1.PearsonCorr") != null);
+    try std.testing.expect(std.mem.indexOf(u8, log, "Path:       Corr.ByGroup2.PearsonCorr") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Simple Statistics") == null);
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Pearson Correlation Coefficients"));
+}
+
+test "FREQ graph geometry uses ordered weighted counts, test proportions and null cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data gce;input r c w @@;datalines;\n1 1 3 1 2 1 1 3 0 2 1 0 2 2 2 2 3 2\n;run;" ++
+        "proc freq data=gce;weight w/zeros;tables r*c/plots(only)=freqplot(twoway=cluster scale=percent);run;" ++
+        "data grades;input label $ n @@;datalines;\nC 3 A 1 B 2\n;run;proc freq data=grades order=data;weight n;tables label/plots(only)=cumfreqplot(type=dotplot scale=percent);run;" ++
+        "data g;input r n @@;datalines;\n1 2 2 7 3 1\n;run;proc freq data=g;weight n / zeros;tables r/chisq(testp=(.2 .3 .5)) plots(only)=deviationplot;run;" ++
+        "ods graphics off;proc freq data=g;weight n;tables r /plots=freqplot;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const cluster = try dir.dir.readFileAlloc(io_, "opensas-0001-freqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, cluster, "class=\"bar\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, cluster, "data-count=\"0\" data-value=\"0\""));
+    try std.testing.expect(std.mem.indexOf(u8, cluster, "data-count=\"3\" data-value=\"37.5\"") != null);
+    const cum = try dir.dir.readFileAlloc(io_, "opensas-0002-cumfreqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, cum, "class=\"dot\""));
+    try std.testing.expect(std.mem.indexOf(u8, cum, "cx=\"368.50\" cy=\"320.33\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cum, "data-count=\"2\" data-value=\"100\"") != null);
+    const dev = try dir.dir.readFileAlloc(io_, "opensas-0003-deviationplot.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, dev, "data-count=\"7\" data-value=\"1.333333") != null);
+    try std.testing.expect(std.mem.indexOf(u8, dev, "data-count=\"1\" data-value=\"-0.8\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, dev, "Pr &gt; ChiSq   0.0140") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-freqplot.svg", .{}));
+}
+test "FREQ mosaic and agreement geometry preserve margins and diagonal counts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data g;input r c n @@;datalines;\n1 1 4 1 2 2 2 1 1 2 2 3\n;run;proc freq data=g;weight n;tables r*c /plots(only)=mosaicplot;tables r*c /agree plots(only)=agreeplot;run;" ++
+        "proc freq data=g;weight n;tables r*c /agree plots=none;run;proc freq data=g noprint;weight n;tables r*c /plots=mosaicplot;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const mosaic = try dir.dir.readFileAlloc(io_, "opensas-0001-mosaicplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, mosaic, "class=\"tile\""));
+    try std.testing.expect(std.mem.indexOf(u8, mosaic, "data-count=\"4\" data-value=\"0.4\"") != null);
+    const agree = try dir.dir.readFileAlloc(io_, "opensas-0002-agreeplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, agree, "class=\"exact\""));
+    try std.testing.expect(std.mem.indexOf(u8, agree, "class=\"exact\" x=\"102.00\" y=\"304.00\" width=\"160.00\" height=\"160.00\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, agree, "class=\"exact\" x=\"382.00\" y=\"64.00\" width=\"120.00\" height=\"120.00\"") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-agreeplot.svg", .{}));
+}
+
+test "FREQ grouped horizontal dots use column facets and row levels in the saved analysis order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data d;input r $ c $ n @@;datalines;\nBlue West 2 Green West 3 Blue East 5 Green East 1\n;run;" ++
+        "proc freq data=d order=data;weight n;tables r*c /plots(only)=freqplot(type=dotplot scale=grouppercent);run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const plot = try dir.dir.readFileAlloc(io_, "opensas-0001-freqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, plot, "class=\"panel\""));
+    try std.testing.expect(std.mem.indexOf(u8, plot, ">c = West</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"2\" data-value=\"40\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"5\" data-value=\"83.333333") != null);
+}
+
+test "QQPLOT percentile axes use theoretical quantiles, reference units and rotated orientation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x @@;datalines;\n.8 1 1.8 2.5 4 6 10.5 14\n;run;ods graphics on;proc univariate data=d noprint;var x;" ++
+        "qqplot /lognormal(sigma=.5) square pctlaxis(grid label='Population percentile' pctlorder=25 50 75) href=.8 to 1.2 by .2 vref=2 to 6 by 2;" ++
+        "qqplot /normal rotate pctlaxis(grid pctlorder=25 50 75);probplot /lognormal(sigma=.5) href=95;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const lognormal = try dir.dir.readFileAlloc(io_, "opensas-0001-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"href\""));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"vref\""));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, lognormal, "class=\"percentile-grid\""));
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, ">Population percentile</text>") != null);
+    // exp(0.5 * Phi^-1(0.25)) and exp(0.5 * Phi^-1(0.5)).
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, "data-percent=\"25\" data-quantile=\"0.713734") != null);
+    try std.testing.expect(std.mem.indexOf(u8, lognormal, "data-percent=\"50\" data-quantile=\"1\" text-anchor=\"middle\"") != null);
+    const normal = try dir.dir.readFileAlloc(io_, "opensas-0002-qq.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, normal, "data-percent=\"25\" data-quantile=\"-0.674489") != null);
+    try std.testing.expect(std.mem.indexOf(u8, normal, "data-percent=\"50\" data-quantile=\"0\" text-anchor=\"start\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, normal, "rotate(90)\">Normal percentile</text>") != null);
+    const prob = try dir.dir.readFileAlloc(io_, "opensas-0003-probability.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, prob, "class=\"href\" data-value=\"95\" data-position=\"2.2760166085") != null);
+}
+
+test "ODS graph selection routes qualified M9 paths and keeps QQ point capture independent" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input g x y @@;datalines;\n1 1 2 1 2 3 1 3 1 2 2 3 2 3 1 2 1 2\n;run;ods graphics on;ods trace on;" ++
+        "ods select Histogram;ods output QQPlot=points;proc univariate data=t noprint;var x;histogram;qqplot;run;ods output close;" ++
+        "ods select Corr.ByGroup2.'Scatter Plots'n.ScatterPlot;proc corr data=t plots=(matrix scatter);by g;var x y;run;" ++
+        "ods select Freq.ByGroup1.Table2.MosaicPlot;proc freq data=t;by g;tables x /plots=freqplot;tables x*y /plots=mosaicplot;run;" ++
+        "ods trace off;ods listing close;proc univariate data=t noprint;var x; histogram;run;ods listing;proc print data=points;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const log = try d.render();
+    for ([_][]const u8{ "Univariate.x.Histogram.Histogram", "Corr.ByGroup2.'Scatter Plots'n.ScatterPlot", "Freq.ByGroup1.Table2.MosaicPlot", "Template:   base.univariate.Graphics.Histogram", "Label:      y by x", "Template:   Base.Freq.Graphics.MosaicPlot" }) |part|
+        try std.testing.expect(std.mem.indexOf(u8, log, part) != null);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, log, "Output Added:"));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Quantile") != null);
+    for ([_][]const u8{ "opensas-0001-histogram.svg", "opensas-0002-scatter.svg", "opensas-0003-mosaicplot.svg" }) |file|
+        try dir.dir.access(io_, file, .{});
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-histogram.svg", .{}));
+}
+
+test "comparative histograms paginate class cells, align levels and retain total proportions across pages" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input machine $ year x @@;datalines;\nA 2002 1 A 2003 2 A 2003 4 B 2002 5 B 2002 9 B 2003 10 C 2002 3 C 2002 5\n;run;" ++
+        "ods graphics on;proc univariate data=t noprint;class machine year /keylevel=('A' '2003');var x;histogram /nrows=2 ncols=2 vaxis=0 35 70 100 cprop intertile=1;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const grid = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, grid, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, grid, ">35</text>"));
+    try std.testing.expect(std.mem.indexOf(u8, grid, "data-row=\"1\" data-column=\"1\" transform=\"translate(0 0)\"><text class=\"facet\" x=\"88\" y=\"61\">machine = A   year = 2003") != null);
+    try std.testing.expect(std.mem.indexOf(u8, grid, "data-row=\"2\" data-column=\"1\" transform=\"translate(0 0)\"><text class=\"facet\" x=\"88\" y=\"281\">machine = B   year = 2003") != null);
+    const last_page = try dir.dir.readFileAlloc(io_, "opensas-0002-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, last_page, "class=\"panel\""));
+    try std.testing.expect(std.mem.indexOf(u8, last_page, "data-row=\"1\" data-column=\"2\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, last_page, "data-proportion=\"0.25\"") != null);
+
+}
+
+test "histogram statistical insets reuse EDF bounds, formatted skewness and labeled reference lines" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input x @@;datalines;\n1 2 3 4 5 6 7 8\n;run;ods graphics on;" ++
+        "proc univariate data=t noprint;var x;histogram / normal(w=3) href=0 hreflabel='Lower bound' vref=25 vreflabel='Quarter';inset n skewness(5.3) normal(ksdpval) /pos=ne format=6.3 cfill=blank;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    for ([_][]const u8{ "class=\"href\" data-value=\"0\"", ">Lower bound</text>", "class=\"vref\" data-value=\"25\"", ">Quarter</text>", ">Skewness</text>", ">0.000</text>", ">Pr &gt; D</text>", ">&gt;0.150</text>" }) |part|
+        try std.testing.expect(std.mem.indexOf(u8, hist, part) != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Pr > D >0.150") != null);
+}
+
+test "unmatched ODS OUTPUT warns and lets CORR and later steps run" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    try interpret(a, &listing, &d, "data d;input x y;datalines;\n1 2\n2 1\n3 4\n;\nrun;\n" ++
+        "ods output DoesNotExist=bad;proc corr data=d;var x y;run;ods output close;\n" ++
+        "data _null_; file print; e=exist('work.bad');put 'CAPTURE_EXISTS=' e;run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Output 'DoesNotExist' was not created") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Pearson Correlation Coefficients") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "CAPTURE_EXISTS=0") != null);
 }

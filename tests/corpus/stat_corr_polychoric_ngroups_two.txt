@@ -1,0 +1,14 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row r 11 2.00000 0.89443 2.00000 1.00000 3.00000
+row c 11 2.18182 0.87386 2.00000 1.00000 3.00000
+row polychoric Correlations
+row r c 11 . . . . . .
+stderr-count 1 WARNING: The number of groups for variable r is greater than 2, the number in the NGROUPS= option, the affected polychoric correlations are set to missing.
+stderr-count 1 WARNING: The number of groups for variable c is greater than 2, the number in the NGROUPS= option, the affected polychoric correlations are set to missing.
+stderr-count 2 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 r {any} {any} {any} {any} {any} {any}
+row-count 1 c {any} {any} {any} {any} {any} {any}
+row-count 1 r c {any} {any} {any} {any} {any} {any} {any}

@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Pearson Correlation Coefficients
+stdout-count 1 N 3
+stdout-count 0 Simple Statistics
+row P 0.3331~5.1e-05
+row-count 1 P {any}

@@ -1,0 +1,3 @@
+# corpus assertions
+svg-count 0
+stderr-count 1 WARNING: Scatter plots with more than 3 points have been suppressed. Use the PLOTS(MAXPOINTS= ) option in the PROC CORR statement to change or override the cutoff.

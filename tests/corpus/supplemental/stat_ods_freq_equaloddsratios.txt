@@ -1,0 +1,39 @@
+# corpus assertions
+row ODS_ROWS|6
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|8|||
+row ODS_COL|3|Label1|char|22|||
+row ODS_COL|4|cValue1|char|6|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 30 ODS_VALUE|
+row ODS_VALUE|1|Table|Summary for r * c
+row ODS_VALUE|1|Name1|_BDCHI_
+row ODS_VALUE|1|Label1|Breslow-Day Chi-Square
+row ODS_VALUE|1|cValue1|1.5165
+row ODS_VALUE|1|nValue1|1.51652266324492~1.516522663e-08
+row ODS_VALUE|2|Table|Summary for r * c
+row ODS_VALUE|2|Name1|DF_BDCHI
+row ODS_VALUE|2|Label1|DF
+row ODS_VALUE|2|cValue1|1
+row ODS_VALUE|2|nValue1|1~1e-08
+row ODS_VALUE|3|Table|Summary for r * c
+row ODS_VALUE|3|Name1|P_BDCHI
+row ODS_VALUE|3|Label1|Pr > ChiSq
+row ODS_VALUE|3|cValue1|0.2181
+row ODS_VALUE|3|nValue1|0.21814647732~2.181464773e-09
+row ODS_VALUE|4|Table|Summary for r * c
+row ODS_VALUE|4|Name1|
+row ODS_VALUE|4|Label1|
+row ODS_VALUE|4|cValue1|
+row ODS_VALUE|4|nValue1|.
+row ODS_VALUE|5|Table|Summary for r * c
+row ODS_VALUE|5|Name1|_EQOR_
+row ODS_VALUE|5|Label1|Zelen's Exact Test (P)
+row ODS_VALUE|5|cValue1|0.3810
+row ODS_VALUE|5|nValue1|0.38095238095238~3.80952381e-09
+row ODS_VALUE|6|Table|Summary for r * c
+row ODS_VALUE|6|Name1|XP_EQOR
+row ODS_VALUE|6|Label1|Exact Pr <= P
+row ODS_VALUE|6|cValue1|0.4286
+row ODS_VALUE|6|nValue1|0.42857142857142~4.285714286e-09

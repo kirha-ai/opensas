@@ -1,10 +1,7 @@
                         The FREQ Procedure
 
-                        Table 1 of v10 by v11
-                        Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
-
-
-Statistics for Table of v10 by v11
+Statistics for Table 1 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -16,13 +13,8185 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 17
 
-                        The FREQ Procedure
 
-                        Table 2 of v10 by v11
-                        Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+Statistics for Table 2 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
 
 
-Statistics for Table of v10 by v11
+Statistics for Table 3 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 4 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 5 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 6 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 7 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 8 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 9 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 10 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 11 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 12 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 13 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 14 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 15 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 16 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 17 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 18 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 19 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 20 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 21 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 22 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 23 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 24 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 25 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 26 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 27 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 28 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 29 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 30 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 31 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 32 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 33 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 34 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 35 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 36 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 37 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 38 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 39 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 40 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 41 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 42 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 43 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 44 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 45 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 46 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 47 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 48 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 49 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 50 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 51 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 52 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 53 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 54 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 55 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 56 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 57 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 58 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 59 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 60 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 61 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 62 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 63 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 64 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 65 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 66 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 67 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 68 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 69 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 70 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 71 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 72 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 73 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 74 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 75 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 76 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 77 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 78 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 79 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 80 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 81 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 82 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 83 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 84 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 85 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 86 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 87 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 88 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 89 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 90 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 91 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 92 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 93 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 94 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 95 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 96 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 97 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 98 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 99 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 100 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 101 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 102 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 103 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 104 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 105 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 106 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 107 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 108 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 109 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 110 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 111 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 112 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 113 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 114 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 115 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 116 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 117 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 118 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 119 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 120 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 121 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 122 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 123 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 124 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 125 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 126 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 127 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 128 of v10 by v11
+Controlling for v0=1 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 129 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 130 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 131 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 132 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 133 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 134 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 135 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 136 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 137 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 138 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 139 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 140 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 141 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 142 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 143 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 144 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 145 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 146 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 147 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 148 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 149 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 150 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 151 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 152 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 153 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 154 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 155 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 156 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 157 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 158 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 159 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 160 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 161 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 162 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 163 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 164 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 165 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 166 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 167 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 168 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 169 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 170 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 171 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 172 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 173 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 174 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 175 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 176 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 177 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 178 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 179 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 180 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 181 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 182 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 183 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 184 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 185 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 186 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 187 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 188 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 189 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 190 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 191 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 192 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 193 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 194 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 195 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 196 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 197 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 198 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 199 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 200 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 201 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 202 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 203 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 204 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 205 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 206 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 207 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 208 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 209 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 210 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 211 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 212 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 213 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 214 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 215 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 216 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 217 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 218 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 219 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 220 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 221 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 222 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 223 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 224 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 225 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 226 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 227 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 228 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 229 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 230 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 231 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 232 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 233 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 234 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 235 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 236 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 237 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 238 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 239 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 240 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 241 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 242 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 243 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 244 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 245 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 246 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 247 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 248 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 249 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 250 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 251 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 252 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 253 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 254 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 255 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 256 of v10 by v11
+Controlling for v0=1 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 257 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 258 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 259 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 260 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 261 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 262 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 263 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 264 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 265 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 266 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 267 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 268 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 269 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 270 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 271 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 272 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 273 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 274 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 275 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 276 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 277 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 278 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 279 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 280 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 281 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 282 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 283 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 284 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 285 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 286 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 287 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 288 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 289 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 290 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 291 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 292 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 293 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 294 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 295 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 296 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 297 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 298 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 299 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 300 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 301 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 302 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 303 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 304 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 305 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 306 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 307 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 308 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 309 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 310 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 311 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 312 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 313 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 314 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 315 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 316 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 317 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 318 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 319 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 320 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 321 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 322 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 323 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 324 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 325 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 326 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 327 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 328 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 329 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 330 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 331 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 332 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 333 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 334 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 335 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 336 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 337 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 338 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 339 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 340 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 341 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 342 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 343 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 344 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 345 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 346 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 347 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 348 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 349 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 350 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 351 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 352 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 353 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 354 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 355 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 356 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 357 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 358 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 359 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 360 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 361 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 362 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 363 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 364 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 365 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 366 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 367 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 368 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 369 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 370 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 371 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 372 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 373 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 374 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 375 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 376 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 377 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 378 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 379 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 380 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 381 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 382 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 383 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 384 of v10 by v11
+Controlling for v0=1 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 385 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 386 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 387 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 388 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 389 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 390 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 391 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 392 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 393 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 394 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 395 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 396 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 397 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 398 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 399 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 400 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 401 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 402 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 403 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 404 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 405 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 406 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 407 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 408 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 409 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 410 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 411 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 412 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 413 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 414 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 415 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 416 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 417 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 418 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 419 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 420 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 421 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 422 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 423 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 424 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 425 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 426 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 427 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 428 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 429 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 430 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 431 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 432 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 433 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 434 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 435 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 436 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 437 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 438 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 439 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 440 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 441 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 442 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 443 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 444 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 445 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 446 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 447 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 448 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 449 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 450 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 451 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 452 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 453 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 454 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 455 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 456 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 457 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 458 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 459 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 460 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 461 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 462 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 463 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 464 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 465 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 466 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 467 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 468 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 469 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 470 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 471 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 472 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 473 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 474 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 475 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 476 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 477 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 478 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 479 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 480 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 481 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 482 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 483 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 484 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 485 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 486 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 487 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 488 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 489 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 490 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 491 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 492 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 493 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 494 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 495 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 496 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 497 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 498 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 499 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 500 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 501 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 502 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 503 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 504 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 505 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 506 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 507 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 508 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 509 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 510 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 511 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 512 of v10 by v11
+Controlling for v0=1 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 513 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 514 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 515 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 516 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 517 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 518 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 519 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 520 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 521 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 522 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 523 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 524 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 525 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 526 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 527 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 528 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 529 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 530 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 531 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 532 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 533 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 534 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 535 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 536 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 537 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 538 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 539 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 540 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 541 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 542 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 543 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 544 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 545 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 546 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 547 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 548 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 549 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 550 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 551 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 552 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 553 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 554 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 555 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 556 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 557 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 558 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 559 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 560 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 561 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 562 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 563 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 564 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 565 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 566 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 567 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 568 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 569 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 570 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 571 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 572 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 573 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 574 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 575 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 576 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 577 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 578 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 579 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 580 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 581 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 582 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 583 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 584 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 585 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 586 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 587 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 588 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 589 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 590 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 591 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 592 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 593 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 594 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 595 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 596 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 597 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 598 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 599 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 600 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 601 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 602 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 603 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 604 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 605 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 606 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 607 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 608 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 609 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 610 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 611 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 612 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 613 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 614 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 615 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 616 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 617 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 618 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 619 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 620 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 621 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 622 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 623 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 624 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 625 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 626 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 627 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 628 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 629 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 630 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 631 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 632 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 633 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 634 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 635 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 636 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 637 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 638 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 639 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 640 of v10 by v11
+Controlling for v0=2 v1=1 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 641 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 642 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 643 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 644 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 645 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 646 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 647 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 648 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 649 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 650 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 651 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 652 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 653 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 654 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 655 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 656 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 657 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 658 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 659 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 660 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 661 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 662 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 663 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 664 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 665 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 666 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 667 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 668 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 669 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 670 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 671 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 672 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 673 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 674 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 675 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 676 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 677 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 678 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 679 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 680 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 681 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 682 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 683 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 684 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 685 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 686 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 687 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 688 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 689 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 690 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 691 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 692 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 693 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 694 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 695 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 696 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 697 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 698 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 699 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 700 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 701 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 702 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 703 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 704 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 705 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 706 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 707 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 708 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 709 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 710 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 711 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 712 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 713 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 714 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 715 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 716 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 717 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 718 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 719 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 720 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 721 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 722 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 723 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 724 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 725 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 726 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 727 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 728 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 729 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 730 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 731 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 732 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 733 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 734 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 735 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 736 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 737 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 738 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 739 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 740 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 741 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 742 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 743 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 744 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 745 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 746 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 747 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 748 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 749 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 750 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 751 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 752 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 753 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 754 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 755 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 756 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 757 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 758 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 759 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 760 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 761 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 762 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 763 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 764 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 765 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 766 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 767 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 768 of v10 by v11
+Controlling for v0=2 v1=1 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 769 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 770 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 771 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 772 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 773 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 774 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 775 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 776 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 777 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 778 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 779 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 780 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 781 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 782 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 783 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 784 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 785 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 786 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 787 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 788 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 789 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 790 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 791 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 792 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 793 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 794 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 795 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 796 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 797 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 798 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 799 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 800 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 801 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 802 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 803 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 804 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 805 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 806 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 807 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 808 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 809 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 810 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 811 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 812 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 813 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 814 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 815 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 816 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 817 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 818 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 819 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 820 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 821 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 822 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 823 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 824 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 825 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 826 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 827 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 828 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 829 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 830 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 831 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 832 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 833 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 834 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 835 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 836 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 837 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 838 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 839 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 840 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 841 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 842 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 843 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 844 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 845 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 846 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 847 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 848 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 849 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 850 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 851 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 852 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 853 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 854 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 855 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 856 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 857 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 858 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 859 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 860 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 861 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 862 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 863 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 864 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 865 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 866 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 867 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 868 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 869 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 870 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 871 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 872 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 873 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 874 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 875 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 876 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 877 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 878 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 879 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 880 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 881 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 882 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 883 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 884 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 885 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 886 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 887 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 888 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 889 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 890 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 891 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 892 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 893 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 894 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 895 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 896 of v10 by v11
+Controlling for v0=2 v1=2 v2=1 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 897 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 898 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 899 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 900 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 901 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 902 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 903 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 904 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 905 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 906 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 907 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 908 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 909 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 910 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 911 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 912 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 913 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 914 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 915 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 916 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 917 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 918 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 919 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 920 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 921 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 922 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 923 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 924 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 925 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 926 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 927 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 928 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 929 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 930 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 931 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 932 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 933 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 934 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 935 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 936 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 937 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 938 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 939 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 940 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 941 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 942 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 943 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 944 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 945 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 946 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 947 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 948 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 949 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 950 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 951 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 952 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 953 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 954 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 955 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 956 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 957 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 958 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 959 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 960 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=1 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 961 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 962 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 963 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 964 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 965 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 966 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 967 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 968 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 969 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 970 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 971 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 972 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 973 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 974 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 975 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 976 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 977 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 978 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 979 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 980 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 981 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 982 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 983 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 984 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 985 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 986 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 987 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 988 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 989 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 990 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 991 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 992 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=1 v5=2 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 993 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 994 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 995 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 996 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 997 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 998 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 999 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1000 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1001 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1002 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1003 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1004 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1005 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1006 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1007 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1008 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=1 v6=2 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1009 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1010 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1011 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1012 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1013 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1014 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1015 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1016 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=1 v7=2 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1017 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1018 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1019 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1020 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=1 v8=2 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1021 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1022 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=1 v9=2
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1023 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=1
+
+Table is empty. No statistics are computed.
+
+Sample Size = 0
+
+
+Statistics for Table 1024 of v10 by v11
+Controlling for v0=2 v1=2 v2=2 v3=2 v4=2 v5=2 v6=2 v7=2 v8=2 v9=2
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq

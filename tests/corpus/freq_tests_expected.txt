@@ -122,6 +122,6 @@ Chi-Square                  6.5891
 DF                               3
 Pr > ChiSq                  0.0862
 
-WARNING: More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+WARNING: 25% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
 
 Sample Size = 75

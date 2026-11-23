@@ -1,0 +1,39 @@
+# corpus assertions
+row ODS_ROWS|6
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|10|||
+row ODS_COL|3|Label1|char|24|||
+row ODS_COL|4|cValue1|char|6|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 30 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|Name1|Cell1_FREQ
+row ODS_VALUE|1|Label1|Cell (1,1) Frequency (F)
+row ODS_VALUE|1|cValue1|1
+row ODS_VALUE|1|nValue1|1~1e-08
+row ODS_VALUE|2|Table|Table r * c
+row ODS_VALUE|2|Name1|XPL_FISH
+row ODS_VALUE|2|Label1|Left-sided Pr <= F
+row ODS_VALUE|2|cValue1|0.3485
+row ODS_VALUE|2|nValue1|0.34848484848484~3.484848485e-09
+row ODS_VALUE|3|Table|Table r * c
+row ODS_VALUE|3|Name1|XPR_FISH
+row ODS_VALUE|3|Label1|Right-sided Pr >= F
+row ODS_VALUE|3|cValue1|0.9545
+row ODS_VALUE|3|nValue1|0.95454545454545~9.545454545e-09
+row ODS_VALUE|4|Table|Table r * c
+row ODS_VALUE|4|Name1|
+row ODS_VALUE|4|Label1|
+row ODS_VALUE|4|cValue1|
+row ODS_VALUE|4|nValue1|.
+row ODS_VALUE|5|Table|Table r * c
+row ODS_VALUE|5|Name1|P_TABLE
+row ODS_VALUE|5|Label1|Table Probability (P)
+row ODS_VALUE|5|cValue1|0.3030
+row ODS_VALUE|5|nValue1|0.3030303030303~3.03030303e-09
+row ODS_VALUE|6|Table|Table r * c
+row ODS_VALUE|6|Name1|XP2_FISH
+row ODS_VALUE|6|Label1|Two-sided Pr <= P
+row ODS_VALUE|6|cValue1|0.5455
+row ODS_VALUE|6|nValue1|0.54545454545454~5.454545455e-09

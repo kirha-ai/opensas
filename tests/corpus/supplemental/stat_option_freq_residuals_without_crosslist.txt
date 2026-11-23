@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 0 Std Residual
+stdout-count 0 Pearson Residual
+stderr-count 1 STDRES option is available only with the CROSSLIST option
+stderr-count 1 PEARSONRESID option is available only with the CROSSLIST option

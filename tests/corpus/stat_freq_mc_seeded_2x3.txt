@@ -1,0 +1,13 @@
+# corpus assertions
+row Table Probability (P) 0.0429
+row Pr <= P 0.2495
+row 95% Lower Conf Limit 0.2305
+row 95% Upper Conf Limit 0.2685
+row Number of Samples 2000
+row Initial Seed 713
+row-count 1 Table Probability (P) {any}
+row-count 1 Pr <= P {any}
+row-count 1 95% Lower Conf Limit {any}
+row-count 1 95% Upper Conf Limit {any}
+row-count 1 Number of Samples {any}
+row-count 1 Initial Seed {any}

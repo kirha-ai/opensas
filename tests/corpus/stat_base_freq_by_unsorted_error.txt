@@ -1,0 +1,3 @@
+# corpus assertions
+empty-listing
+stderr-count 1 Data set sample is not sorted in ascending sequence.

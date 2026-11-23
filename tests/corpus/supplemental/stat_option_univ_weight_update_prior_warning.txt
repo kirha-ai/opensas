@@ -1,0 +1,5 @@
+# corpus assertions
+stderr-count 1 WARNING: Overflow in statistic calculation for variable x. The affected statistics will be set to missing.\nWARNING: Overflow in statistic calculation for variable y. The affected statistics will be set to missing.
+stderr-count 0 ERROR: Overflow in statistic calculation.
+row COUNT 2~5.1e-05
+row-count 1 COUNT {any}

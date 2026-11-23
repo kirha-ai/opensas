@@ -1,0 +1,5 @@
+# corpus assertions
+row Threshold Mu 5~5.1e-07
+row Shape Lambda 6.145967~5.1e-07
+row-count 1 Threshold Mu {any}
+row-count 1 Shape Lambda {any}

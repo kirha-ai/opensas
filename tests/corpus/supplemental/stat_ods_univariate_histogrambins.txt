@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 4 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Histogram|num|8|||
+row ODS_COL|3|Midpoint|num|8|2.||Bin Midpoint
+row ODS_COL|4|ObsPercent|num|8|6.3||Observed Percent
+stdout-count 16 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Histogram|1~1e-08
+row ODS_VALUE|1|Midpoint|2~2e-08
+row ODS_VALUE|1|ObsPercent|28.5714285714285~2.857142857e-07
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Histogram|1~1e-08
+row ODS_VALUE|2|Midpoint|4~4e-08
+row ODS_VALUE|2|ObsPercent|21.4285714285714~2.142857143e-07
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Histogram|1~1e-08
+row ODS_VALUE|3|Midpoint|6~6e-08
+row ODS_VALUE|3|ObsPercent|21.4285714285714~2.142857143e-07
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Histogram|1~1e-08
+row ODS_VALUE|4|Midpoint|8~8e-08
+row ODS_VALUE|4|ObsPercent|21.4285714285714~2.142857143e-07

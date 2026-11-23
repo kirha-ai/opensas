@@ -1,0 +1,15 @@
+# corpus assertions
+row 95% Lower Conf Limit 0.0677
+row 95% Upper Conf Limit 7.7865
+row One-sided Pr <= S 0.5857
+row Point Pr = S 0.3694
+row 2 * One-sided 1.0000
+row Sum <= Point 1.0000
+row Pr >= | S - Mean | 1.0000
+row-count 1 95% Lower Conf Limit {any}
+row-count 1 95% Upper Conf Limit {any}
+row-count 1 One-sided Pr <= S {any}
+row-count 1 Point Pr = S {any}
+row-count 1 {any} * One-sided {any}
+row-count 1 Sum <= Point {any}
+row-count 1 Pr >= | S - Mean | {any}

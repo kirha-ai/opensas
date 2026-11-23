@@ -1,0 +1,6 @@
+# corpus assertions
+row The CORR Procedure
+row polyserial Correlations
+row x g 0 . . . . . .
+stderr-count 1 WARNING:
+stderr-count 1 WARNING: The number of groups for variable g is greater than 2, the number in the NGROUPS= option, the affected polyserial correlations are set to missing.

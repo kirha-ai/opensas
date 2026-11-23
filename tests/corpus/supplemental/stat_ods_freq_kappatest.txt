@@ -1,0 +1,18 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 7 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Estimate|num|8|8.4||
+row ODS_COL|3|Null|num|8|8.4||Null Value
+row ODS_COL|4|StdErr|num|8|8.4||H0 Std Err
+row ODS_COL|5|Z|num|8|8.4||
+row ODS_COL|6|Prob1|num|8|PVALUE6.4||Pr < Z
+row ODS_COL|7|Prob2|num|8|PVALUE6.4||Pr > |Z|
+stdout-count 7 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|Estimate|-0.03954802259886~3.95480226e-10
+row ODS_VALUE|1|Null|0~0
+row ODS_VALUE|1|StdErr|0.1431654955539~1.431654956e-09
+row ODS_VALUE|1|Z|-0.27623990295887~2.76239903e-09
+row ODS_VALUE|1|Prob1|0.39118190549061~3.911819055e-09
+row ODS_VALUE|1|Prob2|0.78236381098123~7.82363811e-09

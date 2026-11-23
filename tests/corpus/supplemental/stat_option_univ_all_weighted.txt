@@ -1,0 +1,11 @@
+# corpus assertions
+stdout-count 1 Modes
+stdout-count 1 Basic Confidence Limits
+stdout-count 1 Weighted Frequency Counts
+stdout-count 0 Location Counts
+stdout-count 0 Tests for Normality
+stdout-count 0 Trimmed Means
+stdout-count 0 Winsorized Means
+stdout-count 0 Robust Measures
+stdout-count 0 Extreme Values
+row 2 2~5.1e-05 2~5.1e-05 25.0~5.1e-05 37.5~5.1e-05

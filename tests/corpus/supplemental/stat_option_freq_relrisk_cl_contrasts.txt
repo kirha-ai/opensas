@@ -1,0 +1,10 @@
+# corpus assertions
+row Case freq_relrisk_cl_lr
+row Likelihood Ratio 1.6179~5.1e-05 9.9526~5.1e-05
+row Case freq_relrisk_cl_wald
+row Wald 1.4984~5.1e-05 8.6491~5.1e-05
+row Case freq_relrisk_cl_waldmodified
+row Wald Modified 1.4713~5.1e-05 7.771~5.1e-05
+row-count 1 Likelihood Ratio {any} {any}
+row-count 1 Wald {any} {any}
+row-count 1 Wald Modified {any} {any}

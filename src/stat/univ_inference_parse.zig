@@ -16,6 +16,8 @@ pub const Options = struct {
     df: ?k.CI = null,
     normal_ci: ?k.CI = null,
     trim: []f64 = &.{},
+    explicit_trim: bool = false,
+    explicit_winsor: bool = false,
     winsor: []f64 = &.{},
     trim_ci: k.CI = .{},
     winsor_ci: k.CI = .{},
@@ -64,9 +66,11 @@ pub const Options = struct {
             }
             const ci = try parseCI(d, t, i, false);
             if (trim) {
+                self.explicit_trim = true;
                 self.trim = try retained.toOwnedSlice(a);
                 self.trim_ci = ci;
             } else {
+                self.explicit_winsor = true;
                 self.winsor = try retained.toOwnedSlice(a);
                 self.winsor_ci = ci;
             }

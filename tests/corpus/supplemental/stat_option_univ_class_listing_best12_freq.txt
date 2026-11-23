@@ -1,0 +1,22 @@
+# corpus assertions
+row x=0.123456789
+row Mean 1194.66666667 Sum Observations 3584~5.1e-05
+row x=-10.5
+row Mean 8 Sum Observations 8~5.1e-05
+row x=-2
+row Mean 1 Sum Observations 1~5.1e-05
+row x=-2.25
+row Mean 64 Sum Observations 64~5.1e-05
+row x=.
+row Mean 32 Sum Observations 32~5.1e-05
+row x=0
+row Mean 256 Sum Observations 256~5.1e-05
+row x=0.75
+row Mean 4 Sum Observations 4~5.1e-05
+row x=10
+row Mean 128 Sum Observations 128~5.1e-05
+row x=12
+row Mean 2 Sum Observations 2~5.1e-05
+row x=2
+row Mean 16 Sum Observations 16~5.1e-05
+row-count 10 Mean {any} Sum Observations {any}

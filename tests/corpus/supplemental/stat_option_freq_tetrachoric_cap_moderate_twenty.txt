@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 Tetrachoric correlation computations did not converge.
+row Tetrachoric Correlation . .
+row-count 1 Tetrachoric Correlation {any} {any}

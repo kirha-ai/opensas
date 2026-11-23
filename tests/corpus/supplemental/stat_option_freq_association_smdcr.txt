@@ -1,0 +1,8 @@
+# corpus assertions
+row Somers' D C|R 0.4386~5.1e-05 0.1002~5.1e-05 0.2422~5.1e-05 0.635~5.1e-05
+rewind
+row ASE under H0 0.1012~5.1e-05
+row Z 4.3327~5.1e-05
+row-count 1 Somers' D C | R {any} {any} {any} {any}
+row-count 1 ASE under H0 {any}
+row-count 1 Z {any}

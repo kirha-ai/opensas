@@ -19,7 +19,16 @@ pub const Point = struct {
 /// For QQ/PROBPLOT the reference is on the theoretical-quantile scale,
 /// including Weibull2's logarithmic scale. PP uses probability coordinates.
 pub const Reference = struct { intercept: f64, slope: f64 };
+pub const AxisOptions = struct {
+    percentile: bool = false,
+    grid: bool = false,
+    percentile_label: ?[]const u8 = null,
+    percentiles: []const f64 = &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 },
+    href: []const f64 = &.{},
+    vref: []const f64 = &.{},
+};
 pub const Plot = struct {
+    axes: AxisOptions = .{},
     kind: Kind,
     variable: Column,
     keys: []const Key,
@@ -29,8 +38,23 @@ pub const Plot = struct {
     rotated: bool = false,
     probability_scale: f64 = 1,
     weibull2: bool = false,
+    cdf_overlay: bool = true,
+    title: @import("univ_graph_annotations.zig").Title = .default,
+    global_title: ?[]const u8 = null,
+    square: bool = false,
+    inset: @import("univ_graph_annotations.zig").Box = .{},
+    statement_index: usize = 0,
+    by_index: usize = 0,
+    curve_index: usize = 0,
 };
 pub const Sink = struct {
+    enabled: bool = true,
     context: ?*anyopaque = null,
     emit: *const fn (?*anyopaque, Plot) diag.Error!void,
 };
+
+/// M9 plot tables and their rendered point cloud use the right endpoint of
+/// each P-P tie. The numerical sink still exposes every source rank.
+pub fn visiblePoint(plot: Plot, i: usize) bool {
+    return (plot.kind != .pp and plot.kind != .cdf) or i + 1 == plot.points.len or plot.points[i].observed != plot.points[i + 1].observed;
+}

@@ -72,7 +72,7 @@ pub fn resolve(req: anytype, statement: ?parse.Options, statements: usize) void 
             .binomial => {
                 if (req.risk.binomial == null) req.risk.binomial = .{ .family = .binomial };
             },
-            .riskdiff, .barnard => {
+            .riskdiff => {
                 if (req.risk.difference == null) req.risk.difference = .{ .family = .difference, .both_columns = true };
             },
             .relrisk => {
@@ -108,6 +108,14 @@ pub fn asymptoticTests(req: anytype, requested: @import("freq_tests_parse.zig").
 }
 
 pub fn validateClRequests(req: anytype, d: *diag.Diagnostics) diag.Error!void {
+    var conflict = false;
+    for ([_]parse.Family{ .kappa, .wtkappa }, [_]?f64{ req.stratified.agreement.null_kappa, req.stratified.agreement.null_weighted }, [_][]const u8{ "NULLKAPPA", "NULLWTKAPPA" }, [_][]const u8{ "KAPPA", "WTKAPPA" }) |f, null_value, option, family| {
+        if (null_value != null and req.exact.families.contains(f)) {
+            try d.report(.err, 0, "The AGREE {s}= option is not available with the {s} option in the EXACT statement.", .{ option, family });
+            conflict = true;
+        }
+    }
+    if (conflict) return error.ParseError;
     const risks = [_]?@import("freq_risk_parse.zig").Request{ req.risk.difference, req.risk.relative_risk, req.risk.odds_ratio };
     for (risks, [_]parse.Family{ .riskdiff, .relrisk, .oddsratio }) |maybe, family| if (maybe) |r| {
         var wants_exact = false;
@@ -131,11 +139,23 @@ fn matrix(scored: model.ScoredMatrix, one: bool) tests.CountMatrix {
 fn config(req: anytype, seed: u64, deadline: *const Deadline) exec.Config {
     return .{ .options = req.exact, .effective_seed = seed, .alpha = req.statistics.alpha, .expected = req.resolved_expected, .null_ratio = req.stratified.agreement.null_ratio, .kappa_weight = req.stratified.agreement.weight, .budget = .{ .context = deadline, .expired = Deadline.expired } };
 }
-fn directional(f: parse.Family) bool {
-    return switch (f) {
-        .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc, .jt, .trend, .kappa, .wtkappa => true,
-        else => false,
-    };
+fn runFamily(a: A, m: tests.CountMatrix, family: parse.Family, config_: exec.Config) exec.Error!exec.Result {
+    if (family != .relrisk or config_.options.relrisk.column != .both or config_.options.max_seconds == null)
+        return exec.run(a, m, family, config_);
+
+    // M9 gives the two RR confidence intervals separate MAXTIME budgets.
+    var results: exec.RiskIntervals = .{};
+    for ([_]parse.Column{ .first, .second }, 0..) |column, i| {
+        var c = config_;
+        const deadline = Deadline{ .end = seconds() + c.options.max_seconds.? };
+        c.budget.context = &deadline;
+        c.options.relrisk.column = column;
+        const r = try exec.run(a, m, family, c);
+        if (r != .risk_intervals) return r;
+        results.columns[i] = r.risk_intervals.columns[i];
+        results.timed_out[i] = r.risk_intervals.timed_out[i];
+    }
+    return .{ .risk_intervals = results };
 }
 fn title(f: parse.Family) []const u8 {
     return switch (f) {
@@ -159,19 +179,24 @@ fn title(f: parse.Family) []const u8 {
         .oddsratio => "Odds Ratio",
         .riskdiff => "Risk Difference",
         .relrisk => "Relative Risk",
-        .barnard => "Barnard's Unconditional Exact Test",
+        .barnard => "Barnard's Exact Test",
         .comor => "Common Odds Ratio",
         .eqor => "Zelen's Exact Test",
         else => "Exact Test",
     };
 }
-fn interval(a: A, out: *Out, name: []const u8, ci: @import("freq_exact.zig").Interval, alpha: f64) diag.Error!void {
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{d}% Lower Conf Limit  {d:.4}\n{d}% Upper Conf Limit  {d:.4}\n", .{ name, 100 * (1 - alpha), ci.lower, 100 * (1 - alpha), ci.upper }));
+fn boundText(a: A, bound: ?f64) diag.Error![]const u8 {
+    return if (bound) |value| std.fmt.allocPrint(a, "{d:.4}", .{value}) else ".";
+}
+fn interval(a: A, out: *Out, name: []const u8, ci: anytype, alpha: f64) diag.Error!void {
+    const level = try @import("freq_risk_render.zig").confidence(a, alpha);
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{s}% Lower Conf Limit  {s}\n{s}% Upper Conf Limit  {s}\n", .{ name, level, try boundText(a, ci.lower), level, try boundText(a, ci.upper) }));
 }
 fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").Request, k: u32, n: u32, c: exec.Config) diag.Error!void {
     if (!request.noninf and !request.sup and !request.equiv) return;
     const exact = @import("freq_exact.zig");
-    const limits = try exact.binomialOneSidedLimits(k, n, c.alpha, .{ .context = c.budget.context, .expired = c.budget.expired });
+    const control = exact.Control{ .context = c.budget.context, .expired = c.budget.expired };
+    const limits = try exact.binomialOneSidedLimits(k, n, c.alpha, control);
     if (limits == .exhausted) {
         try renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
         return;
@@ -180,33 +205,83 @@ fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").R
     for ([_]bool{ false, true }) |superiority| {
         if (if (superiority) !request.sup else !request.noninf) continue;
         const p0 = request.p + (if (superiority) margin[0] else -margin[0]);
-        const p = (try exact.binomialTails(k, n, p0)).right;
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact {s} Analysis\nPr >= P  {s}\n", .{ if (superiority) "Superiority" else "Noninferiority", try renderers.probability(a, p, c.options.pformat) }));
+        const tails = (try exact.binomialTailsControlled(k, n, p0, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact {s} Analysis\nPr >= P  {s}\n", .{ if (superiority) "Superiority" else "Noninferiority", try renderers.probability(a, tails.right, c.options.pformat) }));
         try interval(a, out, "Binomial Proportion", limits.complete, 2 * c.alpha);
     }
     if (request.equiv) {
         const lower = request.p + (if (request.paired_margin) margin[0] else -margin[0]);
         const upper = request.p + margin[1];
-        const left = (try exact.binomialTails(k, n, lower)).right;
-        const right = (try exact.binomialTails(k, n, upper)).left;
+        const lower_tails = (try exact.binomialTailsControlled(k, n, lower, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        const upper_tails = (try exact.binomialTailsControlled(k, n, upper, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        const left = lower_tails.right;
+        const right = upper_tails.left;
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact Equivalence Analysis\nLower Margin Pr >= P  {s}\nUpper Margin Pr <= P  {s}\nOverall P-Value  {s}\n", .{ try renderers.probability(a, left, c.options.pformat), try renderers.probability(a, right, c.options.pformat), try renderers.probability(a, @max(left, right), c.options.pformat) }));
         try interval(a, out, "Binomial Proportion", limits.complete, 2 * c.alpha);
     }
 }
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!void {
-    if (req.exact.families.count() == 0) return;
+// An exact reference set uses integer cell frequencies. A fractional table is
+// still valid for the frequency listing and its asymptotic statistics.
+fn fractionalCounts(counts: []const f64) bool {
+    var fractional = false;
+    var total: f64 = 0;
+    for (counts) |count| {
+        if (!std.math.isFinite(count) or count < 0) return false;
+        total += count;
+        if (count != @floor(count)) fractional = true;
+    }
+    return fractional and total <= std.math.maxInt(u32);
+}
+fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
+    if (f == .fisher) return d.report(.warning, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
+    try d.report(.warning, 0, "PROC FREQ EXACT {s} cannot be computed when there are noninteger frequencies.", .{@tagName(f)});
+}
+
+pub const Tables = struct {
+    exact_tests: std.EnumArray(parse.Family, ?@import("freq_exact_distribution.zig").Probabilities) = .initFill(null),
+    small_scores: std.EnumSet(parse.Family) = .initEmpty(),
+    fisher: ?renderers.Fisher = null,
+    fisher_table_probability: ?f64 = null,
+    odds_ratio: ?@import("freq_exact.zig").Interval = null,
+    simulations: std.ArrayList(@import("ods_freq_mc.zig").Simulation) = .empty,
+    barnard: ?exec.Barnard = null,
+    relative_risk: [2]?@import("freq_risk.zig").Interval = @splat(null),
+    difference: [2]?@import("freq_risk.zig").Interval = @splat(null),
+};
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, simulation_seed: *u64) diag.Error!Tables {
+    var limits: Tables = .{};
+    if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
     for (scored.matrix.counts) |v| total += v;
-    if (total == 0) return;
+    if (total == 0) return limits;
     const m = matrix(scored, one);
-    var it = req.exact.families.iterator();
-    while (it.next()) |requested_family| {
+    // M9 advances a single stream between distinct simulated tests. The four
+    // concordance coefficients have the same conditional ordering at fixed
+    // margins and reuse one sample. PCORR and SCORR follow it. A combined
+    // MHCHI/PCORR/TREND request visits the correlation before the trend test.
+    const mc_order = [_]parse.Family{
+        .pchi,    .lrchi, .mhchi, .fisher, .jt,    .mcnem,    .symmetry, .kappa,    .wtkappa,   .kentb,
+        .stutc,   .smdcr, .smdrc, .pcorr,  .scorr, .trend,    .barnard,  .binomial, .oddsratio, .riskdiff,
+        .relrisk, .comor, .eqor,  .agree,  .chisq, .measures,
+    };
+    const order = if (req.exact.mc) &mc_order else std.enums.values(parse.Family);
+    var concordance_seed: ?u64 = null;
+    for (order) |requested_family| {
+        if (!req.exact.families.contains(requested_family)) continue;
+        const concordance = switch (requested_family) {
+            .kentb, .stutc, .smdcr, .smdrc => true,
+            else => false,
+        };
+        const family_seed = if (concordance) concordance_seed orelse simulation_seed.* else simulation_seed.*;
         const binary = m.rows == 2 and m.cols == 2;
         const f: parse.Family = if (requested_family == .wtkappa and binary) .kappa else requested_family;
         if (f == .comor or f == .eqor) continue;
         if (requested_family == .wtkappa and binary and req.exact.families.contains(.kappa)) continue;
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
-        var c = config(req, seed, &deadline);
+        var c = config(req, family_seed, &deadline);
         c.numeric_table_scores_valid = scored.numeric_table_scores_valid;
         if (req.risk.binomial) |b| {
             c.binomial_p = b.p;
@@ -224,8 +299,12 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         if (req.risk.difference) |rd| {
             c.norisks = rd.norisks;
         }
-        const result = exec.run(a, m, f, c) catch |err| {
+        const result = runFamily(a, m, f, c) catch |err| {
             if (err == error.OutOfMemory) return err;
+            if (fractionalCounts(m.counts)) {
+                try warnFractional(d, f);
+                continue;
+            }
             return d.fail(error.ExecError, 0, "PROC FREQ EXACT {s}: invalid counts, scores, or reference distribution", .{@tagName(f)});
         };
         var options = req.exact;
@@ -236,41 +315,107 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         switch (result) {
             .not_applicable => {},
             .requires_strata => unreachable,
+            .score_too_small => |right| {
+                limits.small_scores.insert(f);
+                const name = switch (f) {
+                    .mhchi => "Mantel-Haenszel Chi-Square",
+                    .pcorr => "Pearson Correlation",
+                    .trend => "Cochran-Armitage Trend Test",
+                    else => unreachable,
+                };
+                try d.report(.warning, 0, "For the following exact computation, absolute value of non-zero row/column scores cannot be smaller than 1.05E-08: {s}.", .{name});
+                try renderers.testResult(a, out, title(f), .{ .not_defined = if (parse.directionalSymbol(f) != null) right else null }, options);
+            },
             .exhausted => {
                 try d.report(.warning, 0, "PROC FREQ EXACT {s}: resource limit reached; no partial p-value is reported", .{@tagName(f)});
                 try renderers.testResult(a, out, title(f), .exhausted, options);
             },
-            .exact_test => |p| try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options),
-            .fisher => |r| try renderers.fisher(a, out, .{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point }, options),
-            .monte_carlo => |r| {
-                if (r == .exhausted) {
-                    try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
-                    try renderers.monteCarlo(a, out, title(f), null, 0, seed, options);
-                } else {
-                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), r.complete.one_sided, r.complete.samples, seed, options);
-                    try renderers.monteCarlo(a, out, title(f), r.complete.two_sided, r.complete.samples, seed, options);
+            .exact_test => |p| {
+                limits.exact_tests.set(f, p);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = parse.directionalSymbol(f) != null, .right_sided = p.right_sided } }, options);
+            },
+            .fisher => |r| {
+                const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
+                limits.fisher = fisher;
+                try renderers.fisher(a, out, fisher, options);
+            },
+            .monte_carlo => |simulation| {
+                if (simulation.table_probability) |p| limits.fisher_table_probability = p;
+                const r = simulation.estimates;
+                var report: @import("freq_exact_distribution.zig").SampleReport = undefined;
+                const final_seed = switch (r) {
+                    .exhausted => {
+                        try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
+                        try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, null, family_seed, options, req.stratified.agreement.restore);
+                        continue;
+                    },
+                    .complete => |sample| blk: {
+                        report = .{ .one_sided = sample.one_sided, .two_sided = sample.two_sided, .samples = sample.samples, .right_sided = sample.right_sided };
+                        break :blk sample.final_seed;
+                    },
+                    .timed_out => |timeout| blk: {
+                        const limit = options.max_seconds.?;
+                        if (f == .symmetry) {
+                            try d.report(.note, 0, "Monte Carlo computations for the exact symmetry test were terminated when time exceeded MAXTIME={d}.", .{limit});
+                        } else {
+                            const name = switch (f) {
+                                .pchi => if (one) "One-Way Chi-Square" else "Chi-Square",
+                                else => title(f),
+                            };
+                            try d.report(.note, 0, "Monte Carlo exact computations for the following test were terminated when time exceeded MAXTIME={d}: {s}.", .{ limit, name });
+                        }
+                        report = .{ .samples = options.samples, .right_sided = timeout.right_sided };
+                        break :blk timeout.final_seed;
+                    },
+                };
+                // The default wide weighted-kappa table displays its ending seed.
+                const displayed_seed = if (f == .wtkappa and !req.stratified.agreement.restore) final_seed else family_seed;
+                try limits.simulations.append(a, .{ .family = f, .sample = report, .seed = displayed_seed });
+                if (!concordance or concordance_seed == null) {
+                    simulation_seed.* = final_seed;
+                    if (concordance) concordance_seed = family_seed;
                 }
+                try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, report, displayed_seed, options, req.stratified.agreement.restore);
             },
             .binomial => |b| {
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right and b.tails.left != b.tails.right } }, options);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right } }, options);
                 if (req.risk.binomial) |request| try binomialHypotheses(a, out, request, try @import("freq_exact.zig").integerCount(m.counts[c.event_index]), try @import("freq_exact.zig").integerCount(total), c);
             },
-            .interval => |ci| try interval(a, out, title(f), ci, c.alpha),
-            .risk_intervals => |r| {
-                if (r.first) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 1)", .{title(f)}), ci, c.alpha);
-                if (r.second) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 2)", .{title(f)}), ci, c.alpha);
+            .interval => |ci| {
+                limits.odds_ratio = ci;
+                try interval(a, out, title(f), ci, c.alpha);
             },
-            .barnard => |b| try renderers.testResult(a, out, title(f), .{ .complete = .{ .directional = true, .right_sided = m.counts[0] / (m.counts[0] + m.counts[1]) > m.counts[2] / (m.counts[2] + m.counts[3]), .probabilities = .{ .one_sided = b.one.upper, .two_sided = b.two.upper, .point = 0, .left = 0, .right = 0, .tables = 0 } } }, options),
+            .risk_intervals => |r| {
+                const columns = if (f == .relrisk) &limits.relative_risk else &limits.difference;
+                columns.* = r.columns;
+                var noted = false;
+                for (r.columns, r.timed_out, 0..) |column, timed_out, i| {
+                    if (timed_out and (!noted or f == .relrisk)) if (options.max_seconds) |limit| {
+                        try d.report(.note, 0, "Exact {s} computations were terminated when time exceeded MAXTIME={d}.", .{ if (f == .riskdiff) "risk difference" else "relative risk", limit });
+                        noted = true;
+                    };
+                    if (column) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column {d})", .{ title(f), i + 1 }), ci, c.alpha);
+                }
+            },
+            .barnard => |b| {
+                if (b.tails == .exhausted) if (options.max_seconds) |limit| {
+                    try d.report(.note, 0, "Computations for Barnard's exact test were terminated when time exceeded MAXTIME={d}.", .{limit});
+                };
+                limits.barnard = b;
+                try renderers.barnard(a, out, b, options);
+            },
         }
     }
+    return limits;
 }
 
-pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, req: anytype, seed: u64) diag.Error!void {
-    if (!req.exact.families.contains(.comor) and !req.exact.families.contains(.eqor)) return;
+pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, req: anytype, seed: u64) diag.Error!@import("ods_freq_exact_strata.zig").Results {
+    var tables: @import("ods_freq_exact_strata.zig").Results = .{};
+    if (!req.exact.families.contains(.comor) and !req.exact.families.contains(.eqor)) return tables;
     const n = tab.dimensions.len;
-    if (n < 3) return;
+    if (n < 3) return tables;
     const size = tab.dimensions[n - 2].levels.len * tab.dimensions[n - 1].levels.len;
-    if (size == 0) return;
+    if (size == 0) return tables;
     var strata: std.ArrayList(tests.CountMatrix) = .empty;
     var previous: ?usize = null;
     for (try tab.keys(a, false, true)) |key| {
@@ -286,22 +431,31 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
         const m = matrix(scored, false);
         // SAS inapplicable.sas suppresses COMOR/EQOR outside h-by-2-by-2;
         // the implied CMH output remains valid for these larger tables.
-        if (m.rows != 2 or m.cols != 2) return;
+        if (m.rows != 2 or m.cols != 2) return tables;
         try strata.append(a, m);
     }
-    if (strata.items.len == 0) return;
+    if (strata.items.len == 0) return tables;
     for ([_]parse.Family{ .comor, .eqor }) |f| {
         if (!req.exact.families.contains(f)) continue;
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
         const result = exec.runStrata(a, strata.items, f, config(req, seed, &deadline)) catch |err| {
             if (err == error.OutOfMemory) return err;
-            return d.fail(error.ExecError, 0, "PROC FREQ EXACT: invalid stratified reference distribution", .{});
+            const fractional = for (strata.items) |m| {
+                if (fractionalCounts(m.counts)) break true;
+            } else false;
+            if (!fractional) return d.fail(error.ExecError, 0, "PROC FREQ EXACT: invalid stratified reference distribution", .{});
+            try warnFractional(d, f);
+            continue;
         };
         switch (result) {
-            .common_odds => |r| try renderers.commonOdds(a, out, r, req.statistics.alpha, req.exact),
+            .common_odds => |r| {
+                tables.common = r;
+                try renderers.commonOdds(a, out, r, req.statistics.alpha, req.exact);
+            },
             // SAS families.sas: with a fixed extreme sum the conditioned
             // reference set has only one outcome; Zelen is not displayed.
             .zelen => |r| if (r.tables > 1) {
+                tables.zelen = r;
                 try renderers.zelen(a, out, r, req.exact);
             },
             .exhausted => {
@@ -310,6 +464,7 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
             },
         }
     }
+    return tables;
 }
 
 const Harness = struct {
@@ -332,6 +487,75 @@ const Harness = struct {
     }
 };
 
+test "public Monte Carlo MAXTIME retains raw Fisher mass, missing tail rows and requested sample metadata" {
+    const t = std.testing;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lex = @import("../lexer.zig");
+    const Value = @import("../value.zig").Value;
+    const Case = struct {
+        capture: []const u8,
+        family: []const u8,
+        counts: []const f64,
+        first_tail: []const u8,
+        rows: usize,
+        missing_rows: []const usize,
+    };
+    const counts = &[_]f64{ 3, 1, 0, 0, 2, 2 };
+    const cases = [_]Case{
+        .{ .capture = "FishersExactMC=sim FishersExact=raw", .family = "fisher", .counts = counts, .first_tail = "MCP_FISH", .rows = 6, .missing_rows = &.{ 0, 1, 2 } },
+        .{ .capture = "TrendTestMC=sim", .family = "trend", .counts = counts, .first_tail = "MCPL_TREND", .rows = 12, .missing_rows = &.{ 1, 2, 3, 6, 7, 8 } },
+        .{ .capture = "SymmetryMC=sim", .family = "symmetry", .counts = &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, .first_tail = "Pr >= ChiSq", .rows = 1, .missing_rows = &.{} },
+    };
+    for (cases) |case| {
+        var h = try Harness.init(a, case.counts, 3);
+        var d = diag.Diagnostics.init(a);
+        var capture: @import("../ods.zig").Capture = .{};
+        try capture.parse(a, &d, try lex.tokenize(a, try std.fmt.allocPrint(a, "ods output {s};", .{case.capture}), &d));
+        var listing: Out = .empty;
+        const tokens = try lex.tokenize(a, try std.fmt.allocPrint(a, "proc freq data=d; weight w / zeros; tables r*c; exact {s} / mc n=20000000 seed=713 maxtime=.000001; run;", .{case.family}), &d);
+        try @import("freq.zig").runFreq(.{ .arena = a, .lib = &h.lib, .diags = &d, .capture = &capture }, &listing, tokens);
+        try capture.finish(&h.lib, &d);
+        const sim = h.lib.find("sim") orelse return error.TestExpectedEqual;
+        try t.expectEqual(@as(usize, case.rows), sim.rowCount());
+        if (case.rows == 1) {
+            const row = sim.row(0);
+            try t.expectEqualStrings(case.first_tail, row[1].str);
+            for (row[2..5]) |v| {
+                try t.expect(v.isMissing());
+                try t.expectEqual(@as(u8, '.'), Value.missingChar(v.num));
+            }
+            try t.expectEqual(@as(f64, 20_000_000), row[5].num);
+            try t.expectEqual(@as(f64, 713), row[6].num);
+        } else {
+            try t.expectEqualStrings(case.first_tail, sim.row(case.missing_rows[0])[1].str);
+            for (case.missing_rows) |i| {
+                try t.expectEqualStrings(".", sim.row(i)[3].str);
+                const v = sim.row(i)[4];
+                try t.expect(v.isMissing());
+                try t.expectEqual(@as(u8, '.'), Value.missingChar(v.num));
+            }
+            try t.expectEqual(@as(f64, 20_000_000), sim.row(sim.rowCount() - 2)[4].num);
+            try t.expectEqual(@as(f64, 713), sim.row(sim.rowCount() - 1)[4].num);
+        }
+        if (std.mem.eql(u8, case.family, "fisher")) {
+            const raw = h.lib.find("raw") orelse return error.TestExpectedEqual;
+            try t.expectEqualStrings("P_TABLE", raw.row(0)[1].str);
+            try t.expectApproxEqAbs(@as(f64, 3.0 / 70.0), raw.row(0)[4].num, 1e-13);
+        }
+        var notes: usize = 0;
+        for (d.list.items) |message| {
+            if (std.mem.indexOf(u8, message.message, "exceeded MAXTIME") != null) {
+                try t.expectEqual(diag.Severity.note, message.severity);
+                notes += 1;
+            }
+        }
+        try t.expectEqual(@as(usize, 1), notes);
+        try t.expect(!d.hasErrors());
+    }
+}
+
 test "public EXACT Fisher includes tied mass and replaces automatic Fisher once" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -345,6 +569,286 @@ test "public EXACT Fisher includes tied mass and replaces automatic Fisher once"
     const mc = try h.run("proc freq data=d; weight w; tables r*c / fisher noprint; exact fisher / n=100 seed=17; run;", &d);
     try std.testing.expect(std.mem.indexOf(u8, mc, "Monte Carlo") == null);
     try std.testing.expect(std.mem.indexOf(u8, mc, "0.0028") != null);
+}
+
+test "public one-way exact likelihood ratio orders the two neighbors of a noncentral null" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 25_001, 24_999 }, 1);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r / testp=(.5000000000001 .4999999999999) noprint; exact lrchi / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // A 70-digit calculation places only X=25,000 strictly inside.
+    // The LR point is the mass of X=25,001 alone.
+    for ([_][]const u8{ "0.996431769609", "0.003568087668" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "binomial hypothesis tail calculations respect the deadline after computing limits" {
+    const exact = @import("freq_exact.zig");
+    const Request = @import("freq_risk_parse.zig").Request;
+    const Timer = struct {
+        polls: usize = 0,
+        limit: usize = std.math.maxInt(usize),
+        fn stopped(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.polls += 1;
+            return self.polls > self.limit;
+        }
+    };
+    var timer = Timer{};
+    const config_with_clock = exec.Config{ .budget = .{ .context = &timer, .expired = Timer.stopped } };
+    const ci = try exact.binomialOneSidedLimits(8, 8, config_with_clock.alpha, .{ .context = &timer, .expired = Timer.stopped });
+    try std.testing.expect(ci == .complete);
+    const limit_polls = timer.polls;
+    for ([_]Request{
+        .{ .family = .binomial, .noninf = true },
+        .{ .family = .binomial, .sup = true },
+        .{ .family = .binomial, .equiv = true },
+    }) |request| {
+        // Allow the first equivalence tail to complete, then stop the second.
+        timer = .{ .limit = limit_polls + @intFromBool(request.equiv) };
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        var out: Out = .empty;
+        try binomialHypotheses(arena.allocator(), &out, request, 8, 8, config_with_clock);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "resource limit") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, " Analysis") == null);
+    }
+}
+
+test "exact binomial labels its smaller inclusive tail and resolves equal tails to the right" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    // SAS 9.4M9 exact_binomial.sas: four of eight at P=.5 gives .6367
+    // on both sides. A null mean need not give equal tails away from P=.5.
+    const Case = struct { counts: [2]f64, p: []const u8, label: []const u8, value: []const u8 };
+    for ([_]Case{
+        .{ .counts = .{ 4, 4 }, .p = ".5", .label = "One-sided Pr >=  P", .value = "0.6367" },
+        .{ .counts = .{ 1, 3 }, .p = ".25", .label = "One-sided Pr >=  P", .value = "0.6836" },
+        .{ .counts = .{ 3, 1 }, .p = ".75", .label = "One-sided Pr <=  P", .value = "0.6836" },
+    }) |c| {
+        var h = try Harness.init(a, &c.counts, 1);
+        const source = try std.fmt.allocPrint(a, "proc freq data=d; weight w; tables r / binomial(p={s}); exact binomial; run;", .{c.p});
+        const out = try h.run(source, &d);
+        const pos = std.mem.indexOf(u8, out, c.label) orelse return error.TestExpectedEqual;
+        const value = std.mem.sliceTo(out[pos + c.label.len ..], '\n');
+        try std.testing.expectEqualStrings(c.value, std.mem.trim(u8, value, " "));
+    }
+    try std.testing.expect(!d.hasErrors());
+}
+
+test "directional exact tests retain the sign of the statistic when inclusive tails coincide" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // SAS/STAT FREQ, Definition of p-Values, p. 232. Draw one of three
+    // scores with equal probability. The middle score has both tails 2/3,
+    // but can lie above or below its null expectation.
+    for ([_][3]f64{ .{ 1, 5, 6 }, .{ 1, 2, 9 } }, [_]bool{ true, false }) |scores, above| {
+        var h = try Harness.init(a, &.{}, 3);
+        const ds = h.lib.sets.items[0];
+        for ([_]f64{ 0, 1, 0, 1, 0, 1 }, 0..) |count, i| {
+            try ds.appendRow(&.{ .{ .num = @floatFromInt(i / 3 + 1) }, .{ .num = scores[i % 3] }, .{ .num = count } });
+        }
+        var d = diag.Diagnostics.init(a);
+        const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / scores=table noprint; exact pcorr trend / point; run;", &d);
+        try std.testing.expect(!d.hasErrors());
+        for ([_][]const u8{ "Cochran-Armitage Trend Test", "Pearson Correlation Coefficient" }, [_]bool{ above, !above }) |title_text, right| {
+            const label = try std.fmt.allocPrint(a, "{s}\n\nOne-sided Pr {s}= Statistic", .{ title_text, if (right) ">" else "<" });
+            const offset = std.mem.indexOf(u8, out, label) orelse return error.TestExpectedEqual;
+            const value = std.mem.sliceTo(out[offset + label.len ..], '\n');
+            try std.testing.expectEqualStrings("0.6667", std.mem.trim(u8, value, " "));
+        }
+    }
+}
+
+test "public rank exact tests preserve distinct integer effects on wide tied margins" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 0, 2, 0, 1_000_000_000, 999_999_998, 1_000_000_001 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact jt kentb stutc smdcr smdrc scorr / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // The six allocations of the two observations have weights C(c_j,2)
+    // or c_i*c_j. The observed concordance surplus is 2. Placing one in
+    // each outside column gives 1, strictly inside the two-sided tail.
+    for ([_][]const u8{ "0.444444444074", "0.111111110963", "0.777777777630" }) |value|
+        try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, out, value));
+}
+
+test "public exact trend compares integral table scores independently of their shared offset" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{}, 2);
+    const ds = h.lib.sets.items[0];
+    ds.setFormat("r", "best32.");
+    ds.setFormat("c", "best32.");
+    const rows = [_]f64{ 1e15 + 1, 1e15 + 4, 1e15 + 9 };
+    const cols = [_]f64{ -1e14 + 1, -1e14 + 5 };
+    const counts = [_]f64{ 1, 5, 3, 2, 2, 4 };
+    for (counts, 0..) |v, k| try ds.appendRow(&.{ .{ .num = rows[k / 2] }, .{ .num = cols[k % 2] }, .{ .num = v } });
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact trend / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // M9 score-table-m9.sas, SCORECASE 2-3. Exhaustive labeled allocations
+    // of six successes among seventeen row slots give the same three tails.
+    for ([_][]const u8{ "0.385180995475", "0.072721396251", "0.770846800259" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "public exact score warnings preserve the ordinary tests and missing tail rows" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{}, 2);
+    const ds = h.lib.sets.items[0];
+    const rows = [_]f64{ 0, 1e-9, 1 };
+    const counts = [_]f64{ 1, 5, 3, 2, 2, 4 };
+    for (counts, 0..) |v, k| try ds.appendRow(&.{ .{ .num = rows[k / 2] }, .{ .num = @floatFromInt(k % 2 + 1) }, .{ .num = v } });
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact pcorr mhchi trend / point; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    var warnings: usize = 0;
+    for (d.list.items) |message| {
+        if (message.severity == .warning and std.mem.indexOf(u8, message.message, "cannot be smaller than 1.05E-08") != null) warnings += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 3), warnings);
+    try std.testing.expect(std.mem.indexOf(u8, out, "Chi-Square") != null);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out, "Point Pr = Statistic              .\n"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out, "Two-sided Pr >= |Statistic|       .\n"));
+    // M9 score-floor-m9.sas, mclow. The score restriction does not apply
+    // to simulation. The correlation and trend consume successive streams.
+    const mc = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact trend pcorr mhchi / mc n=31 seed=71; run;", &d);
+    const corr = std.mem.indexOf(u8, mc, "Pearson Correlation Coefficient") orelse return error.TestExpectedEqual;
+    const trend = std.mem.indexOf(u8, mc, "Cochran-Armitage Trend Test") orelse return error.TestExpectedEqual;
+    try std.testing.expect(corr < trend);
+    for ([_][]const u8{ "136544451", "0.6452" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[corr..trend], v) != null);
+    for ([_][]const u8{ "2005373960", "0.6129" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[trend..], v) != null);
+}
+
+test "Monte Carlo listing identifies both trend tails with one sample and seed" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 2, 0, 2, 1, 4 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; tables r*c; weight w / zeros; exact trend / mc n=431 seed=51; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    const heading = "Monte Carlo Estimates for the Exact Test";
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, listing, heading));
+    const block = listing[std.mem.indexOf(u8, listing, heading).?..];
+    const split = std.mem.indexOf(u8, block, "Two-sided Pr >= |Z|") orelse return error.TestExpectedEqual;
+    // M9's fixed stream yielded 113 one-sided vs 194 two-sided hits in 431 draws.
+    for ([_][]const u8{ "One-sided Pr <=  Z", "0.2622", "0.2075", "0.3168" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[0..split], v) != null);
+    for ([_][]const u8{ "0.4501", "0.3883", "0.5119" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[split..], v) != null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "Number of Samples"));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "Initial Seed"));
+}
+
+test "Monte Carlo agreement listing includes one seed beside the two probability rows" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; tables r*c; weight w / zeros; exact wtkappa / mc n=431 seed=51; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    const at = std.mem.indexOf(u8, listing, "Monte Carlo Exact Weighted Kappa Test") orelse return error.TestExpectedEqual;
+    const block = listing[at..];
+    const right = std.mem.indexOf(u8, block, "Pr >=  K") orelse return error.TestExpectedEqual;
+    const both = std.mem.indexOf(u8, block, "Pr >= |K|") orelse return error.TestExpectedEqual;
+    for ([_][]const u8{ "0.0766", "0.0435", "0.1096", "431", "624296548" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[right..both], v) != null);
+    for ([_][]const u8{ "0.0951", "0.0587", "0.1316" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[both..], v) != null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "624296548"));
+}
+
+test "public exact McNemar uses the specified odds for rare discordant pairs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 0, 999_998, 1 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; weight w / zeros; tables r*c / agree(mnullratio=.000001) noprint; exact mcnem / point midp pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "0.632120374890", "0.367880360871", "0.448180194455" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+}
+
+test "public Bowker probabilities keep the binomial split mass near the center of wide pairs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 30_001, 1, 29_999, 1, 0, 0, 0, 1 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact symmetry / point pformat=18.14; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // The size-one pair contributes 1 for either split. The other pair has
+    // POINT = 2*C(60000,30001)/2^60000 and upper tail 1-C(60000,30000)/2^60000.
+    for ([_][]const u8{ "0.99674266349291", "0.00651445586565" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, out, v) != null);
+}
+
+test "public Fisher on a sparse wide table distinguishes unequal point probabilities" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 2, 0, 0, 999_999_998, 1_000_000_002, 3 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact fisher / point midp pformat=16.10; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "0.2499999986", "0.2500000016", "0.1250000023" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "explicit 2x2 Fisher stops under MAXTIME without an automatic support scan" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 20,000,001 possible tables. The public chi-square path must not perform its
+    // own Fisher scan before the deadline-controlled explicit request can run.
+    var h = try Harness.init(a, &.{ 10_000_000, 10_000_000, 10_000_000, 10_000_000 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const stopped = try h.run("proc freq data=d; weight w; tables r*c / chisq noprint; exact fisher / maxtime=1e-20; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "Chi-Square") != null);
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "resource limit") != null);
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "Table Probability") == null);
+}
+
+test "a FREQ procedure continues its Monte Carlo stream through BY groups, strata and TABLES statements" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Dataset = @import("../dataset.zig").Dataset;
+    const data = try a.create(Dataset);
+    data.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try data.addColumn(name, .num);
+    const matrices = [_][6]u32{ .{ 3, 1, 0, 0, 2, 2 }, .{ 1, 2, 0, 0, 1, 3 }, .{ 1, 0, 2, 2, 2, 0 } };
+    for (matrices, 0..) |m, g| for (m, 0..) |w, i| {
+        try data.appendRow(&.{ .{ .num = @floatFromInt(g + 1) }, .{ .num = @floatFromInt(i / 3 + 1) }, .{ .num = @floatFromInt(i % 3 + 1) }, .{ .num = @floatFromInt(w) } });
+    };
+    var h = Harness{ .a = a, .lib = @import("../exec.zig").Library.init(a) };
+    try h.lib.put(data.name, data);
+    var d = diag.Diagnostics.init(a);
+    for ([_][]const u8{ "by g;tables r*c / fisher;", "tables g*r*c / fisher;" }) |tables| {
+        const source = try std.fmt.allocPrint(a, "proc freq data=d;{s}weight w / zeros;exact fisher / mc n=193 seed=71;run;", .{tables});
+        const listing = try h.run(source, &d);
+        // M9 and independent forward permutations agree on 43, 44 and 60 hits.
+        for ([_][]const u8{ "0.2228", "0.2280", "0.3109", "939616378", "186465444" }) |expected| try std.testing.expect(std.mem.indexOf(u8, listing, expected) != null);
+    }
+    const separate = try h.run("proc freq data=d(where=(g=1));tables r*c / fisher;tables r*c / fisher;weight w / zeros;exact fisher / mc n=193 seed=71;run;", &d);
+    for ([_][]const u8{ "0.2228", "0.2539", "939616378" }) |expected| try std.testing.expect(std.mem.indexOf(u8, separate, expected) != null);
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "public EXACT MC seed is repeatable and budget exhaustion emits no partial estimate" {
@@ -382,6 +886,20 @@ test "public EXACT families honor single versus multiple TABLES selection and ca
     }
 }
 
+test "public exact binomial retains the central and sparse wide-frequency tails" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diagnostics = diag.Diagnostics.init(a);
+    var balanced = try Harness.init(a, &.{ 1_000_000_000, 1_000_000_000 }, 1);
+    const center = try balanced.run("proc freq data=d;weight w;tables r /binomial(p=.5);exact binomial /point midp pformat=12.8;run;", &diagnostics);
+    for ([_][]const u8{ "0.50000892", "0.00001784", "0.50000000" }) |v| try std.testing.expect(std.mem.indexOf(u8, center, v) != null);
+    var sparse = try Harness.init(a, &.{ 1, 1_999_999_999 }, 1);
+    const rare = try sparse.run("proc freq data=d;weight w;tables r /binomial(p=5E-10);exact binomial /point midp pformat=12.8;run;", &diagnostics);
+    for ([_][]const u8{ "0.63212056", "0.36787944", "0.44818084" }) |v| try std.testing.expect(std.mem.indexOf(u8, rare, v) != null);
+    try std.testing.expect(!diagnostics.hasErrors());
+}
+
 test "public EXACT one-way binomial and multinomial use distinct tails" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -401,7 +919,7 @@ test "public EXACT one-way binomial and multinomial use distinct tails" {
     try std.testing.expect(!d.hasErrors());
 }
 
-test "public EXACT zero margins retain agreement and fractional counts fail with diagnostics" {
+test "public EXACT zero margins retain agreement and fractional frequencies retain asymptotic statistics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -414,10 +932,15 @@ test "public EXACT zero margins retain agreement and fractional counts fail with
     const weighted = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact wtkappa; run;", &d);
     try std.testing.expect(std.mem.indexOf(u8, weighted, "Simple Kappa Coefficient") != null);
     try std.testing.expect(std.mem.indexOf(u8, weighted, "Weighted Kappa Coefficient") == null);
-    var fractional = try Harness.init(a, &.{ 1, 2.5, 3, 4 }, 2);
-    var errors = diag.Diagnostics.init(a);
-    try std.testing.expectError(error.ExecError, fractional.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher; run;", &errors));
-    try std.testing.expect(errors.hasErrors());
+    var fractional = try Harness.init(a, &.{ 1.4, 2, 3, 1.6 }, 2);
+    var warnings = diag.Diagnostics.init(a);
+    const listing = try fractional.run("proc freq data=d; weight w / zeros; tables r*c; exact fisher; run;", &warnings);
+    try std.testing.expectEqual(@as(usize, 1), warnings.list.items.len);
+    try std.testing.expectEqual(diag.Severity.warning, warnings.list.items[0].severity);
+    try std.testing.expectEqualStrings("Fisher's exact test cannot be computed when there are noninteger frequencies.", warnings.list.items[0].message);
+    for ([_][]const u8{ "Frequency", "1.4", "1.6", "0.4565", "0.4992", "Sample Size = 8" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing, "Fisher's Exact Test") == null);
 }
 
 test "public EXACT stratified COMOR and EQOR retain conditioning and missing control policy" {
@@ -442,6 +965,40 @@ test "public EXACT stratified COMOR and EQOR retain conditioning and missing con
     try std.testing.expect(std.mem.indexOf(u8, larger, "Exact Confidence Limits") == null);
 }
 
+test "public COMOR selects the M9 tied tail and the joint overflow recurrence" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try a.create(@import("../dataset.zig").Dataset);
+    ds.* = @import("../dataset.zig").Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try ds.addColumn(name, .num);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var h = Harness{ .a = a, .lib = lib };
+    const Case = struct { cells: []const f64, tail: []const u8 };
+    // M9 CommonOddsRatioTest, archived as center-a and overflow-bound-twopart.
+    for ([_]Case{
+        .{ .cells = &.{ 7, 12, 1, 1, 1, 15, 0, 5 }, .tail = "0.7170" },
+        .{ .cells = &.{ 0, 1, 1, 0, 1, 798, 0, 1, 1, 247, 0, 266, 0, 257, 1, 267 }, .tail = "0.5143" },
+    }) |case| {
+        ds.rows.clearRetainingCapacity();
+        for (case.cells, 0..) |weight, i| try ds.appendRow(&.{
+            .{ .num = @floatFromInt(i / 4 + 1) }, .{ .num = @floatFromInt(i / 2 % 2 + 1) },
+            .{ .num = @floatFromInt(i % 2 + 1) }, .{ .num = weight },
+        });
+        var d = diag.Diagnostics.init(a);
+        const out = try h.run("proc freq data=d; weight w / zeros; tables g*r*c / noprint; exact comor / point midp; run;", &d);
+        var lines = std.mem.splitScalar(u8, out, '\n');
+        while (lines.next()) |line| {
+            if (std.mem.startsWith(u8, line, "One-sided Pr <= S")) {
+                try std.testing.expect(std.mem.endsWith(u8, line, case.tail));
+                break;
+            }
+        } else return error.TestExpectedEqual;
+        try std.testing.expect(!d.hasErrors());
+    }
+}
+
 test "public EXACT interval families and Barnard retain columns methods and probability formats" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -453,6 +1010,9 @@ test "public EXACT interval families and Barnard retain columns methods and prob
     const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact oddsratio riskdiff(column=both method=score2) relrisk(column=both method=score2) barnard / pformat=8.6; run;", &d);
     for ([_][]const u8{ "0.0016", "4.7229", "-0.9072", "-0.2500", "0.9072", "0.0238", "1.6859", "0.5932", "0.144531", "0.289063" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
     try std.testing.expect(!d.hasErrors());
+    const barnard = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact barnard; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, barnard, "H0: P1 - P2 = 0") != null);
+    try std.testing.expect(std.mem.indexOf(u8, barnard, "Column 1 Risk Estimates") == null);
     const fisher = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher / point midp pformat=8.6; run;", &d);
     for ([_][]const u8{ "0.242857", "0.985714", "0.228571", "0.485714", "0.457143", "0.257143" }) |value| try std.testing.expect(std.mem.indexOf(u8, fisher, value) != null);
     const noscore = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(method=noscore); run;", &d);
@@ -471,9 +1031,9 @@ test "public RR SCORE2 preserves the quantified unresolved SAS endpoint discrepa
     var d = diag.Diagnostics.init(a);
     const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(column=both method=score2); run;", &d);
     const r = (try exec.run(a, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 3, 3, 1 } }, .relrisk, .{ .options = .{ .relrisk = .{ .column = .both, .method = .score2 } } })).risk_intervals;
-    try std.testing.expectApproxEqRel(1 / r.first.?.lower, r.second.?.upper, 1e-8);
-    try std.testing.expect(@abs(r.second.?.upper - 42.0396959567221) > 0.00005);
-    const displayed = try std.fmt.allocPrint(a, "{d:.4}", .{r.second.?.upper});
+    try std.testing.expectApproxEqRel(1 / r.columns[0].?.lower.?, r.columns[1].?.upper.?, 1e-8);
+    try std.testing.expect(@abs(r.columns[1].?.upper.? - 42.0396959567221) > 0.00005);
+    const displayed = try std.fmt.allocPrint(a, "{d:.4}", .{r.columns[1].?.upper.?});
     try std.testing.expect(std.mem.indexOf(u8, out, displayed) != null);
     try std.testing.expect(std.mem.indexOf(u8, out, "42.0397") == null);
 }
@@ -523,4 +1083,68 @@ test "public BINOMIAL Blaker limits match SAS interior boundaries and fractional
         try std.testing.expectError(error.ParseError, h.run(source, &errors));
         try std.testing.expect(errors.hasErrors());
     }
+}
+
+test "2x3 Fisher probabilities and seeded simulation agree with all 70 labeled allocations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const counts = [_]f64{ 3, 1, 0, 0, 2, 2 };
+    // Each four-person subset of the eight labeled observations is equally
+    // likely. The first two column counts determine the third.
+    var multiplicities = [_][4]usize{@splat(0)} ** 4;
+    var allocations: usize = 0;
+    for (0..256) |mask| {
+        const subset: u8 = @intCast(mask);
+        if (@popCount(subset) != 4) continue;
+        multiplicities[@popCount(subset & 0b111)][@popCount(subset & 0b111000)] += 1;
+        allocations += 1;
+    }
+    const observed = multiplicities[3][1];
+    var tied: usize = 0;
+    var tail: usize = 0;
+    for (multiplicities) |row| for (row) |n| {
+        if (n == observed) tied += n;
+        if (n <= observed) tail += n;
+    };
+    try std.testing.expectEqual([4]usize{ 70, 3, 12, 16 }, [4]usize{ allocations, observed, tied, tail });
+    const m = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = &counts };
+    const denominator: f64 = @floatFromInt(allocations);
+    const p = @as(f64, @floatFromInt(tail)) / denominator;
+    const fisher = (try exec.run(a, m, .fisher, .{})).fisher;
+    try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(observed)) / denominator, fisher.table_probability, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(tied)) / denominator, fisher.probabilities.point, 1e-13);
+    try std.testing.expectApproxEqAbs(p, fisher.probabilities.two_sided, 1e-13);
+
+    const config_ = exec.Config{ .effective_seed = 713, .options = .{ .mc = true, .samples = 2000, .alpha = 0.05 } };
+    const simulation = (try exec.run(a, m, .fisher, config_)).monte_carlo;
+    try std.testing.expectEqual(fisher.table_probability, simulation.table_probability.?);
+    const estimate = simulation.estimates.complete;
+    try std.testing.expectEqual(@as(u64, 2000), estimate.samples);
+    try std.testing.expectApproxEqAbs(p, estimate.two_sided.p, 4 * @sqrt(p * (1 - p) / 2000));
+    try std.testing.expectEqual(@as(f64, 499.0 / 2000.0), estimate.two_sided.p);
+    try std.testing.expect(estimate.two_sided.lower < estimate.two_sided.p and estimate.two_sided.p < estimate.two_sided.upper);
+    var h = try Harness.init(a, &counts, 3);
+    var d = diag.Diagnostics.init(a);
+    const request = "proc freq data=d; weight w / zeros; tables r*c; exact fisher / mc seed=713 n=2000 alpha=.05; run;";
+    const listing = try h.run(request, &d);
+    try std.testing.expectEqualStrings(listing, try h.run(request, &d));
+    for ([_][]const u8{ "Table Probability (P)", "0.0429", "Pr <= P", "95% Lower Conf Limit", "2000", "713" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+    const exact = try h.run("proc freq data=d; weight w / zeros; tables r*c; exact fisher / point midp; run;", &d);
+    for ([_][]const u8{ "0.0429", "0.1714", "0.2286", "0.1429" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, exact, value) != null);
+}
+
+test "weighted kappa reports its completed stream state for standalone and combined MC" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var h = try Harness.init(arena.allocator(), &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, 3);
+    var diagnostics = diag.Diagnostics.init(arena.allocator());
+    for ([_][]const u8{ "wtkappa", "kappa wtkappa" }, [_][]const u8{ "624296548", "1006970956" }, [_][]const u8{ "0.0766", "0.0812" }) |families, reported_seed, one_sided| {
+        const source = try std.fmt.allocPrint(arena.allocator(), "proc freq data=d;weight w / zeros;tables r*c;exact {s} / mc n=431 seed=51;run;", .{families});
+        const listing = try h.run(source, &diagnostics);
+        for ([_][]const u8{ reported_seed, one_sided, "0.0951" }) |native| try std.testing.expect(std.mem.indexOf(u8, listing, native) != null);
+    }
+    try std.testing.expect(!diagnostics.hasErrors());
 }

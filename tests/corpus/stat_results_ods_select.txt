@@ -1,0 +1,11 @@
+# corpus assertions
+next The UNIVARIATE Procedure
+next Variable: x
+next Moments
+next N 8 Sum Weights 8
+next Mean 4.5 Sum Observations 36
+next Std Deviation 2.44948974 Variance 6
+next Skewness 0 Kurtosis -1.2
+next Uncorrected SS 204 Corrected SS 42
+next Coeff Variation 54.4331054 Std Error Mean 0.8660254
+end-listing

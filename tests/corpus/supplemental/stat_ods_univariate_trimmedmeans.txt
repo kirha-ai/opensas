@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 10 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|HalfP|num|8|6.2||Percent Trimmed in Tail
+row ODS_COL|3|HalfN|num|8|6.||Number Trimmed in Tail
+row ODS_COL|4|Mean|num|8|8.6||Trimmed Mean
+row ODS_COL|5|StdMean|num|8|8.6||Std Error of Trimmed Mean
+row ODS_COL|6|LCLMean|num|8|8.6||Lower 95% Confidence Limit for Mean
+row ODS_COL|7|UCLMean|num|8|8.6||Upper 95% Confidence Limit for Mean
+row ODS_COL|8|DF|num|8|6.||Degrees of Freedom
+row ODS_COL|9|tValue|num|8|8.6||t Value
+row ODS_COL|10|Probt|num|8|PVALUE6.4||Pr > |t|
+stdout-count 10 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|HalfP|15.3846153846153~1.538461538e-07
+row ODS_VALUE|1|HalfN|2~2e-08
+row ODS_VALUE|1|Mean|4.11111111111111~4.111111111e-08
+row ODS_VALUE|1|StdMean|0.83589350321554~8.358935032e-09
+row ODS_VALUE|1|LCLMean|2.18353723610577~2.183537236e-08
+row ODS_VALUE|1|UCLMean|6.03868498611644~6.038684986e-08
+row ODS_VALUE|1|DF|8~8e-08
+row ODS_VALUE|1|tValue|4.91822354797155~4.918223548e-08
+row ODS_VALUE|1|Probt|0.00116662344356~1.166623444e-11

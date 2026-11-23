@@ -1,0 +1,19 @@
+# corpus assertions
+stderr-count 1 The range of variable x is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.
+stderr-count 1 The above message was for the following BY group:\n      g=2
+row Std Deviation 6.35958843 Variance 40.4443651~5.1e-07
+row Uncorrected SS 10880332376665803000000000 Corrected SS 323.55492~5.1e-07
+row Std Deviation 0 Variance 0~5.1e-07
+row Uncorrected SS 44565841414282275000000000000 Corrected SS 0~5.1e-07
+row Std Deviation 0 Variance 0~5.1e-07
+row Uncorrected SS 44565841414282275000000000000 Corrected SS 0~5.1e-07
+rewind
+row ODS 1~1e-11 40.4443650539077~1e-11
+row ODS 1~1e-11 323.554920431262~1e-11
+row ODS 2~1e-11 0~1e-11
+row ODS 2~1e-11 0~1e-11
+row ODS 3~1e-11 0~1e-11
+row ODS 3~1e-11 0~1e-11
+row-count 3 Std Deviation {any} Variance {any}
+row-count 3 Uncorrected SS {any} Corrected SS {any}
+row-count 6 ODS {any} {any}

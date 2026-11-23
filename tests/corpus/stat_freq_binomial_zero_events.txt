@@ -1,0 +1,5 @@
+# corpus assertions
+row One-sided Pr <= P 0.2373
+row Two-sided = 2 * One-sided 0.4746
+row-count 1 One-sided Pr <= P {any}
+row-count 1 Two-sided = {any} * One-sided {any}

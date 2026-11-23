@@ -1,0 +1,2 @@
+# corpus assertions
+stdout-count 1 The table cells have expected counts less than 5.

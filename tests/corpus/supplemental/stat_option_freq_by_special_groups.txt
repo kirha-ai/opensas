@@ -1,0 +1,12 @@
+# corpus assertions
+stdout-count 1 g=_
+stdout-count 1 g=.
+stdout-count 1 g=A
+stdout-count 1 g=Z
+stdout-count 1 g=1
+row 2~5.1e-05 1 100~5.1e-05 1 100.00
+row 5~5.1e-05 1 100~5.1e-05 1 100.00
+row 8~5.1e-05 1 50~5.1e-05 1 50.00
+row 10~5.1e-05 1 50~5.1e-05 2 100.00
+row 12~5.1e-05 1 100~5.1e-05 1 100.00
+row 26~5.1e-05 1 100~5.1e-05 1 100.00

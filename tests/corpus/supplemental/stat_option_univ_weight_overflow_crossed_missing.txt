@@ -1,0 +1,6 @@
+# corpus assertions
+stderr-count 0 Overflow in statistic calculation for variable .
+stderr-count 0 Overflow in statistic calculation.
+stderr-count 0 A WEIGHT*FREQ value is too large.
+row WEIGHT 1~5.1e-05 1~5.1e-05
+row-count 1 WEIGHT {any} {any}

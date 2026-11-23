@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 0 Confidence Limits for the Common Risk Difference
+row Common Risk Difference Tests
+row Mantel-Haenszel -0.1114~5.1e-05 -1.1482~5.1e-05 0.2509~5.1e-05
+row-count 1 Mantel-Haenszel {any} {any} {any}
