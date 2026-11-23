@@ -1088,11 +1088,7 @@ test "UNIVARIATE rounding uses even multiples including negative ties" {
     try std.testing.expectEqual(@as(f64, 2), roundEven(2.5));
 }
 
-fn quantile(p: []const h.XW, q: f64, def: u8) f64 {
-    var w: f64 = 0;
-    for (p) |v| w += v.w;
-    return if (p.len == 0) nan else if (w > 0 or def != 5) h.univPercentile(p, q, def) else (p[0].x + p[p.len - 1].x) / 2;
-}
+const quantile = h.univPercentile;
 
 fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
     if (opt.source_rows.get(obs)) |row| return row;

@@ -5228,6 +5228,12 @@ test "UNIVARIATE tests-for-location: exact signed-rank DP + p-value formatting (
     try std.testing.expectEqualStrings(".", try pNum(arena, std.math.nan(f64)));
 }
 
+/// Average finite measurements without overflowing their sum or halving subnormals.
+fn univMidpoint(lo: f64, hi: f64) f64 {
+    const sum = lo + hi;
+    return if (std.math.isInf(sum)) lo / 2 + hi / 2 else sum / 2;
+}
+
 /// SAS weighted percentile, PCTLDEF=5 (empirical distribution with averaging).
 /// `pairs` must be sorted ascending by `.x`. With W = Σwᵢ and threshold t = (p/100)·W,
 /// take the smallest i whose cumulative weight ≥ t; if it equals t exactly, average
@@ -5238,13 +5244,13 @@ fn weightedPercentile(pairs: []const XW, p: f64) f64 {
     if (pairs.len == 1) return pairs[0].x;
     var total: f64 = 0;
     for (pairs) |q| total += q.w;
-    if (!(total > 0)) return (pairs[0].x + pairs[pairs.len - 1].x) / 2;
+    if (!(total > 0)) return univMidpoint(pairs[0].x, pairs[pairs.len - 1].x);
     const thr = p / 100.0 * total;
     var cum: f64 = 0;
     for (pairs, 0..) |q, idx| {
         cum += q.w;
         if (cum >= thr) {
-            if (cum == thr and idx + 1 < pairs.len) return (pairs[idx].x + pairs[idx + 1].x) / 2.0;
+            if (cum == thr and idx + 1 < pairs.len) return univMidpoint(q.x, pairs[idx + 1].x);
             return pairs[idx].x;
         }
     }
