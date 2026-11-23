@@ -992,7 +992,7 @@ fn renderTable(a: std.mem.Allocator, out: *std.ArrayList(u8), tab: *Table, req: 
         number += 1;
         if (number > 1) try out.append(a, '\n');
         const slice = try tab.slice(a, stratum);
-        if (req.crosslist) try renderCross(a, out, slice, req, number) else try renderGrid(a, out, slice, req, opts.formchar, if (n > 2) number else 0);
+        if (req.crosslist) try renderCross(a, out, slice, req, number, opts.zeros) else try renderGrid(a, out, slice, req, opts.formchar, if (n > 2) number else 0, opts.zeros);
     }
 }
 fn shown(l: table_model.Level, req: Request) bool {
@@ -1266,7 +1266,7 @@ fn gridRule(a: std.mem.Allocator, out: *std.ArrayList(u8), nc: usize, labelwidth
     b[14 + labelwidth + nc * colwidth] = chars[2];
     try flush(a, out, b);
 }
-fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, chars: [3]u8, number: usize) !void {
+fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, chars: [3]u8, number: usize, zeros: bool) !void {
     const rows = try selectedLevels(a, sl.rows(), req);
     const cols = try selectedLevels(a, sl.cols(), req);
     if (rows.len == 0 or cols.len == 0) {
@@ -1274,14 +1274,14 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nFor {s} * {s}\nall data are missing because\nall levels of variable {s} are missing.\n", .{ sl.table.dimensions[sl.table.dimensions.len - 2].name, sl.table.dimensions[sl.table.dimensions.len - 1].name, if (rows.len == 0) sl.table.dimensions[sl.table.dimensions.len - 2].name else sl.table.dimensions[sl.table.dimensions.len - 1].name }));
         return;
     }
-    if (sl.table.dimensions.len == 2 and !req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative) {
+    if (!zeros and sl.table.dimensions.len == 2 and !req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative) {
         try out.appendSlice(a, TWOWAY_TITLE);
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nTable of {s} by {s}\n\nSample Size = 0\n", .{ sl.table.dimensions[0].name, sl.table.dimensions[1].name }));
         try appendFreqMissing(a, out, sl.missing);
         return;
     }
     try tableHeading(a, out, sl, number, false);
-    if (!sl.observed or (!req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative)) {
+    if (!zeros and (!sl.observed or (!req.missing and !req.missprint and sl.total == 0 and sl.missing != 0 and !sl.table.negative))) {
         try out.appendSlice(a, "Sample Size = 0\n");
         try appendFreqMissing(a, out, sl.missing);
         return;
@@ -1376,9 +1376,10 @@ fn renderGrid(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sli
     }
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
 }
-fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, number: usize) !void {
-    try tableHeading(a, out, sl, if (sl.table.dimensions.len > 2) number else 0, sl.observed);
-    if (!sl.observed) {
+fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, req: Request, number: usize, zeros: bool) !void {
+    const show_cells = sl.observed or zeros;
+    try tableHeading(a, out, sl, if (sl.table.dimensions.len > 2) number else 0, show_cells);
+    if (!show_cells) {
         try out.appendSlice(a, "Sample Size = 0\n");
         return;
     }
@@ -1460,7 +1461,6 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     var first = true;
     for (cols) |c| {
         if (!req.missing and sl.cols()[c].missing) continue;
-        if (req.nosparse and sl.col_totals[c] == 0) continue;
         const b = try line(a, width);
         if (first) putLeft(b, 15, "Total");
         first = false;
@@ -1955,7 +1955,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
         if (number > 1) try out.append(a, '\n');
         if (!req.noprint) {
-            if (req.crosslist) try renderCross(a, out, sl, req, number) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0);
+            if (req.crosslist) try renderCross(a, out, sl, req, number, opts.zeros) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0, opts.zeros);
         }
         if (body.items.len > 0) {
             const row_name = tab.dimensions[n - 2].name;
