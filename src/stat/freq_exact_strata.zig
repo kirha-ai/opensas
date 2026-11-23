@@ -148,20 +148,44 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget, nati
     }
     return .{ .complete = .{ .logs = logs, .lower = lower, .observed = observed, .exact_moment = moment } };
 }
+/// A lower bound on the unscaled product is significand * 2^shift.
+const CoefficientBound = struct {
+    significand: u64 = 1,
+    shift: u16 = 0,
+
+    fn multiplyChoose(self: *CoefficientBound, n: u64, selected: u64) bool {
+        const k = @min(selected, n - selected);
+        var i: u64 = 1;
+        while (i <= k) : (i += 1) {
+            // The binomial recurrence multiplies by (n-k+i)/i >= 2.
+            // Both integer division and trimming low bits round down, so
+            // crossing the binary64 range proves a real overflow. Across
+            // all strata, at most 1024 factors can be needed for this proof.
+            const lower = @as(u128, self.significand) * (n - k + i) / i;
+            const exponent = std.math.log2_int(u128, lower);
+            if (self.shift + exponent > std.math.floatExponentMax(f64)) return true;
+            const trim = exponent -| 63;
+            self.significand = @intCast(lower >> trim);
+            self.shift += trim;
+        }
+        return false;
+    }
+};
+
 /// Model M9's alternate raw-coefficient arithmetic only when a feasible
 /// coefficient provably exceeds the range of binary64. Its earlier switch
 /// in some sparse tables has no generally verified activation criterion.
 pub fn commonOddsSas(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budget: Budget) Error!CommonResult {
-    var bits: u64 = 0;
+    var bound: CoefficientBound = .{};
     for (strata) |cells| {
         if (budget.stopped()) return .exhausted;
         const d = try exact.OddsDistribution.initStratum(cells);
         const x = d.mode(0);
         const other = d.row - x;
-        // For k <= n/2, choose(n,k) >= 2^k. The product of independent
-        // stratum coefficients at their modes is a feasible path.
-        bits += @min(x, d.col - x) + @min(other, (d.total - d.col) - other);
-        if (bits > std.math.floatExponentMax(f64)) return commonOddsMode(a, strata, alpha, budget, true);
+        // Taking the modal allocation in every stratum gives a feasible
+        // joint path, whose raw weight is the product of these binomials.
+        if (bound.multiplyChoose(d.col, x) or bound.multiplyChoose(d.total - d.col, other))
+            return commonOddsMode(a, strata, alpha, budget, true);
     }
     return commonOdds(a, strata, alpha, budget);
 }
@@ -324,6 +348,27 @@ test "COMOR over binary64 coefficient range distinguishes a unit path from a sol
     try t.expectApproxEqAbs(math.point, reordered.point, 1e-13);
     try t.expectApproxEqRel(math.limits.upper, reordered.limits.upper, 1e-13);
     try t.expectApproxEqAbs(@as(f64, 78.54658242845), reordered.limits.upper, 1e-8);
+}
+
+test "COMOR certifies accumulated stratum weights near the binary64 range" {
+    const t = std.testing;
+    var powers: CoefficientBound = .{};
+    for (0..1023) |_| try t.expect(!powers.multiplyChoose(2, 1));
+    try t.expect(powers.multiplyChoose(2, 1));
+
+    // The two diffuse factors are individually representable. M9's joint
+    // distribution uses the large-coefficient recurrence: a feasible path
+    // has 1037 bits, although the sum of the smaller binomial indices is 506.
+    const tables = [_][4]u32{
+        .{ 0, 1, 1, 0 },     .{ 1, 798, 0, 1 },
+        .{ 1, 247, 0, 266 }, .{ 0, 257, 1, 267 },
+    };
+    const native = (try commonOddsSas(t.allocator, &tables, 0.05, .{})).complete;
+    try t.expectApproxEqAbs(@as(f64, 0.38181363352095), native.point, 1e-12);
+    try t.expectApproxEqAbs(@as(f64, 0.51429690341715), native.one_sided, 1e-12);
+    try t.expectApproxEqRel(@as(f64, 9.9740280394593), native.limits.upper, 1e-8);
+    const ordinary = (try commonOdds(t.allocator, &tables, 0.05, .{})).complete;
+    try t.expect(@abs(ordinary.point - native.point) > 0.00007);
 }
 
 test "COMOR chooses the inclusive left tail at an exactly representable conditional mean" {
