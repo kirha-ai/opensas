@@ -700,7 +700,7 @@ pub fn runStrata(a: std.mem.Allocator, strata: []const tests.CountMatrix, f: par
     }
     const kernel = @import("freq_exact_strata.zig");
     if (f == .comor) {
-        const result = try kernel.commonOdds(a, cells, c.alpha, c.budget);
+        const result = try kernel.commonOddsSas(a, cells, c.alpha, c.budget);
         return switch (result) {
             .complete => |v| .{ .common_odds = v },
             .exhausted => .exhausted,

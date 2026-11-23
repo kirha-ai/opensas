@@ -76,11 +76,14 @@ const Polynomial = struct {
     }
 };
 const Build = union(enum) { complete: Polynomial, exhausted };
-fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error!Build {
+fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget, native_units: bool) Error!Build {
     if (strata.len == 0) return error.ExecError;
     var logs = try a.alloc(f64, 1);
     errdefer a.free(logs);
     logs[0] = 0;
+    var units = try a.alloc(bool, if (native_units) 1 else 0);
+    defer a.free(units);
+    if (native_units) units[0] = true;
     var lower: u64 = 0;
     var observed: u64 = 0;
     var work: u64 = 0;
@@ -98,32 +101,76 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Erro
             a.free(logs);
             return .exhausted;
         }
-        const next = try a.alloc(f64, logs.len + weights.len - 1);
+        const next_len = logs.len + weights.len - 1;
+        const next_units = try a.alloc(bool, if (native_units) next_len else 0);
+        errdefer a.free(next_units);
+        const next = try a.alloc(f64, next_len);
         @memset(next, -std.math.inf(f64));
         for (weights, 0..) |relative_log, j| {
+            const x = d.lo + @as(u32, @intCast(j));
+            const other = d.row - x;
+            const unit = (x == 0 or x == d.col) and (other == 0 or other == d.total - d.col);
             for (logs, 0..) |v, i| {
                 if (work == budget.max_tables or budget.stopped()) {
                     a.free(next);
+                    a.free(next_units);
                     a.free(logs);
                     return .exhausted;
                 }
                 work += 1;
-                next[i + j] = logAdd(next[i + j], v + relative_log);
+                const slot = i + j;
+                const term = v + relative_log;
+                if (!native_units) {
+                    next[slot] = logAdd(next[slot], term);
+                } else {
+                    // In M9's large-table recurrence a raw weight of one
+                    // survives alone, but contributes no additional mass
+                    // when another path reaches the same sufficient sum.
+                    const unit_term = units[i] and unit;
+                    if (next[slot] == -std.math.inf(f64) or next_units[slot]) {
+                        next[slot] = term;
+                        next_units[slot] = unit_term;
+                    } else if (!unit_term) {
+                        next[slot] = logAdd(next[slot], term);
+                    }
+                }
             }
         }
         const peak = next[std.mem.findMax(f64, next)];
         for (next) |*v| v.* -= peak;
         a.free(logs);
         logs = next;
+        a.free(units);
+        units = next_units;
         if (moment) |value| moment = value.append(d);
         lower += d.lo;
         observed += d.observed;
     }
     return .{ .complete = .{ .logs = logs, .lower = lower, .observed = observed, .exact_moment = moment } };
 }
+/// Model M9's alternate raw-coefficient arithmetic only when a feasible
+/// coefficient provably exceeds the range of binary64. Its earlier switch
+/// in some sparse tables has no generally verified activation criterion.
+pub fn commonOddsSas(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budget: Budget) Error!CommonResult {
+    var bits: u64 = 0;
+    for (strata) |cells| {
+        if (budget.stopped()) return .exhausted;
+        const d = try exact.OddsDistribution.initStratum(cells);
+        const x = d.mode(0);
+        const other = d.row - x;
+        // For k <= n/2, choose(n,k) >= 2^k. The product of independent
+        // stratum coefficients at their modes is a feasible path.
+        bits += @min(x, d.col - x) + @min(other, (d.total - d.col) - other);
+        if (bits > std.math.floatExponentMax(f64)) return commonOddsMode(a, strata, alpha, budget, true);
+    }
+    return commonOdds(a, strata, alpha, budget);
+}
 pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budget: Budget) Error!CommonResult {
+    return commonOddsMode(a, strata, alpha, budget, false);
+}
+fn commonOddsMode(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budget: Budget, native_units: bool) Error!CommonResult {
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1) return error.ExecError;
-    const built = try polynomial(a, strata, budget);
+    const built = try polynomial(a, strata, budget, native_units);
     if (built == .exhausted) return .exhausted;
     const p = built.complete;
     defer a.free(p.logs);
@@ -260,6 +307,25 @@ pub fn zelen(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error
 
 // SAS generators.sas: COMOR POINT=.5, one-sided=.75; convolving
 // [1,4,1] with itself gives [1,8,18,8,1]/36. Pooling gives different mass.
+test "COMOR over binary64 coefficient range distinguishes a unit path from a sole coefficient" {
+    const t = std.testing;
+    const a = [4]u32{ 0, 1, 1, 0 };
+    const b = [4]u32{ 1, 798, 0, 1 };
+    const diffuse = [4]u32{ 1, 2047, 0, 2048 };
+    const stats = (try commonOddsSas(t.allocator, &.{ a, b, diffuse }, 0.05, .{})).complete;
+    try t.expectApproxEqAbs(@as(f64, 799.0 / 1599.0), stats.point, 1e-13);
+    try t.expectApproxEqAbs(@as(f64, 799.0 / 1066.0), stats.one_sided, 1e-13);
+    try t.expectApproxEqAbs(@as(f64, 78.49746109345), stats.limits.upper, 1e-8);
+    // Placing the diffuse factor first scales every path away from one.
+    // M9 and the mathematical conditional convolution then coincide.
+    const reordered = (try commonOddsSas(t.allocator, &.{ diffuse, a, b }, 0.05, .{})).complete;
+    const math = (try commonOdds(t.allocator, &.{ a, b, diffuse }, 0.05, .{})).complete;
+    try t.expectApproxEqAbs(@as(f64, 1599.0 / 3200.0), math.point, 1e-13);
+    try t.expectApproxEqAbs(math.point, reordered.point, 1e-13);
+    try t.expectApproxEqRel(math.limits.upper, reordered.limits.upper, 1e-13);
+    try t.expectApproxEqAbs(@as(f64, 78.54658242845), reordered.limits.upper, 1e-8);
+}
+
 test "COMOR chooses the inclusive left tail at an exactly representable conditional mean" {
     const t = std.testing;
     // M9 CommonOddsRatioTest gives XPL_COMOR=527/735; the other
