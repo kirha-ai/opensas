@@ -53,20 +53,27 @@ pub fn numeric(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!f64
 }
 
 const NumericRange = struct {
-    first: f64,
+    current: ?f64,
     step: f64 = 0,
-    count: usize = 1,
+    limit: f64 = 0,
+    emitted: usize = 0,
 
-    fn at(self: NumericRange, index: usize) f64 {
-        return @mulAdd(f64, self.step, @as(f64, @floatFromInt(index)), self.first);
+    fn next(self: *NumericRange, d: *diag.Diagnostics) diag.Error!?f64 {
+        const value = self.current orelse return null;
+        if (self.emitted == 100001) return d.fail(error.ParseError, 0, "UNIVARIATE: numeric list range is too large", .{});
+        self.emitted += 1;
+        const following = value + self.step;
+        self.current = if (std.math.isFinite(following) and ((self.step > 0 and following <= self.limit) or (self.step < 0 and following >= self.limit))) following else null;
+        if (self.current != null and following == value) return d.fail(error.ParseError, 0, "UNIVARIATE: range increment is below floating-point resolution", .{});
+        return value;
     }
 };
 
-/// Expand a single numeric list element. Bound the count before iterating so
-/// floating-point rounding at large offsets cannot prevent termination.
+/// M9 adds the step to the preceding emitted value. The stopping allowance is
+/// sqrt(unit roundoff) in step units in either direction.
 fn numericRange(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!NumericRange {
     const first = try numeric(d, t, i);
-    if (t[i.*].tag != .name or !eq(t[i.*].text, "to")) return .{ .first = first };
+    if (t[i.*].tag != .name or !eq(t[i.*].text, "to")) return .{ .current = first };
     i.* += 1;
     const last = try numeric(d, t, i);
     var step: f64 = 1;
@@ -77,19 +84,19 @@ fn numericRange(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Nu
     const steps = (last - first) / step;
     if (step == 0 or !std.math.isFinite(steps) or steps < 0 or steps > 100000)
         return d.fail(error.ParseError, 0, "UNIVARIATE: invalid numeric list range", .{});
-    const count: usize = @intFromFloat(@floor(steps + 4 * std.math.floatEps(f64) * steps));
-    if (count > 0 and (first + step == first or last - step == last))
-        return d.fail(error.ParseError, 0, "UNIVARIATE: range increment is below floating-point resolution", .{});
-    return .{ .first = first, .step = step, .count = count + 1 };
+    if (first == last) return .{ .current = first };
+    return .{ .current = first, .step = step, .limit = last + step * @sqrt(std.math.floatEps(f64) / 2) };
 }
 
 /// Common value-list syntax for plot reference lines and percentile tick marks.
 pub fn numberList(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error![]const f64 {
     var values: std.ArrayList(f64) = .empty;
     while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus) {
-        const range = try numericRange(d, t, i);
-        if (range.count > 100000 - values.items.len) return d.fail(error.ParseError, 0, "UNIVARIATE: plot reference list is too large", .{});
-        for (0..range.count) |j| try values.append(a, range.at(j));
+        var range = try numericRange(d, t, i);
+        while (try range.next(d)) |value| {
+            if (values.items.len == 100000) return d.fail(error.ParseError, 0, "UNIVARIATE: plot reference list is too large", .{});
+            try values.append(a, value);
+        }
         if (t[i.*].tag == .comma) i.* += 1;
     }
     if (values.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: expected numeric plot reference values", .{});
@@ -249,9 +256,9 @@ pub const FamilyOptions = struct {
                             try self.lists[fi].append(a, null);
                             i.* += 1;
                         } else {
-                            const range = try numericRange(d, t, i);
-                            for (0..range.count) |index| {
-                                var value = range.at(index);
+                            var range = try numericRange(d, t, i);
+                            while (try range.next(d)) |raw| {
+                                var value = raw;
                                 if (slope) {
                                     if (value <= 0) return d.fail(error.ParseError, 0, "UNIVARIATE: SLOPE must be positive", .{});
                                     value = if (kind == .lognormal) @log(value) else 1 / value;
@@ -381,5 +388,25 @@ test "UNIVARIATE parameter and percentile ranges publish the SAS fitted series" 
         i = 0;
         try std.testing.expectError(error.ParseError, parse(a, &invalid, try lex.tokenize(a, bad, &invalid), &i));
         try std.testing.expect(invalid.hasErrors());
+    }
+}
+
+test "UNIVARIATE TO BY lists accumulate displayable increments before testing their endpoints" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    const cases = [_]struct { option: []const u8, count: usize, last: f64 }{
+        .{ .option = "normal(mu=.1 to 1 by .1)", .count = 10, .last = 0.9999999999999999 },
+        .{ .option = "normal(mu=50 to 50.0000000000001 by 1e-14)", .count = 15, .last = 50.0000000000001 },
+        .{ .option = "normal(mu=4 to 4.199999999 by .1)", .count = 3, .last = 4.199999999999999 },
+        .{ .option = "normal(mu=4 to 4.199999998 by .1)", .count = 2, .last = 4.1 },
+    };
+    for (cases) |case| {
+        var i: usize = 0;
+        const curves = try parse(a, &d, try lex.tokenize(a, case.option, &d), &i);
+        try std.testing.expectEqual(case.count, curves.requests.len);
+        try std.testing.expectEqual(case.last, curves.requests[case.count - 1].mu.?);
     }
 }
