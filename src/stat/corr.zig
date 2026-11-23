@@ -544,7 +544,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
             try pairs.append(cx.arena, computePair(s, bs.rows, c, r));
         };
         const unpartial_pairs = if (s.partial.len > 0) try cx.arena.dupe(Pair, pairs.items) else &.{};
-        if (s.partial.len > 0) try partialPairs(cx.arena, s, bs.rows, pairs.items, .pearson);
+        if (s.partial.len > 0) try partialPairs(cx, s, bs.rows, pairs.items, .pearson);
         for (simple.items) |*v| {
             if (s.options.simple_median) v.median = try median(cx.arena, s, bs.rows, v.column);
             if (s.partial.len > 0) for (pairs.items) |p| {
@@ -552,13 +552,17 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                     v.partial_variance = p.variance_x;
                     break;
                 }
+                if (p.row == v.column) {
+                    v.partial_variance = p.variance_y;
+                    break;
+                }
             };
         }
         const polychoric = if (s.options.polychoric) |opt| try polyPairs(cx, s, bs.rows, opt, false) else &.{};
         const polyserial = if (s.options.polyserial) |opt| try polyPairs(cx, s, bs.rows, opt, true) else &.{};
-        const spearman: []Pair = if (s.options.spearman) try rankPairs(cx.arena, s, bs.rows, .spearman) else &.{};
-        const hoeffding: []Pair = if (s.options.hoeffding) try rankPairs(cx.arena, s, bs.rows, .hoeffding) else &.{};
-        const kendall: []Pair = if (s.options.kendall) try rankPairs(cx.arena, s, bs.rows, .kendall) else &.{};
+        const spearman: []Pair = if (s.options.spearman) try rankPairs(cx, s, bs.rows, .spearman) else &.{};
+        const hoeffding: []Pair = if (s.options.hoeffding) try rankPairs(cx, s, bs.rows, .hoeffding) else &.{};
+        const kendall: []Pair = if (s.options.kendall) try rankPairs(cx, s, bs.rows, .kendall) else &.{};
         if (s.options.fisher) |f| {
             for (pairs.items) |*p| p.fisher = advanced.fisher(p.r, p.n, p.controls, false, f);
             for (spearman) |*p| p.fisher = advanced.fisher(p.r, p.n, p.controls, true, f);
@@ -1042,18 +1046,20 @@ fn rankPair(a: std.mem.Allocator, s: Spec, rows: []const []const Value, x: usize
     const e = try advanced.rank(a, data.items, method);
     return .{ .row = y, .column = x, .n = e.n, .r = e.r, .p = if (x == y and method != .hoeffding) nan else e.p };
 }
-fn rankPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, method: advanced.Method) ![]Pair {
+fn rankPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, method: advanced.Method) ![]Pair {
     const rowcols = if (s.with.len > 0) s.with else s.vars;
+    const a = cx.arena;
     const pairs = try a.alloc(Pair, rowcols.len * s.vars.len);
     for (rowcols, 0..) |r, i| for (s.vars, 0..) |c, j| {
         pairs[i * s.vars.len + j] = try rankPair(a, s, rows, c, r, method);
     };
-    if (s.partial.len > 0) try partialPairs(a, s, rows, pairs, method);
+    if (s.partial.len > 0) try partialPairs(cx, s, rows, pairs, method);
     return pairs;
 }
 /// Sequential symmetric Schur complements, with singularity judged against
 /// each original diagonal. Redundant controls do not consume residual df.
-fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pairs: []Pair, method: advanced.Method) !void {
+fn partialPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, pairs: []Pair, method: advanced.Method) !void {
+    const a = cx.arena;
     var cols: std.ArrayList(usize) = .empty;
     defer cols.deinit(a);
     for (s.partial) |c| try addColumn(a, &cols, c);
@@ -1073,7 +1079,10 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
     var used: usize = 0;
     for (0..k) |c| {
         const pivot = matrix[c * n + c];
-        if (!(pivot > 0) or pivot < s.options.singular * original[c]) continue;
+        if (!(pivot > 0) or pivot < s.options.singular * original[c]) {
+            try warnPartialSingular(cx, s, cols.items[c], method);
+            continue;
+        }
         used += 1;
         for (c + 1..n) |i| for (c + 1..n) |j| {
             matrix[i * n + j] -= matrix[i * n + c] * matrix[c * n + j] / pivot;
@@ -1081,6 +1090,7 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
     }
     for (k..n) |i| {
         if (!(matrix[i * n + i] > 0) or matrix[i * n + i] < s.options.singular * original[i]) {
+            try warnPartialSingular(cx, s, cols.items[i], method);
             for (0..n) |j| {
                 matrix[i * n + j] = 0;
                 matrix[j * n + i] = 0;
@@ -1110,6 +1120,15 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
             p.variance_y = if (p.divisor > 0) yy / p.divisor else nan;
         }
     }
+}
+fn warnPartialSingular(cx: proc.ProcCtx, s: Spec, col: usize, method: advanced.Method) !void {
+    const name: []const u8 = switch (method) {
+        .pearson => if (s.options.pearson) "PEARSON" else return,
+        .spearman => "SPEARMAN",
+        .kendall => "KENDALL",
+        .hoeffding => unreachable,
+    };
+    try cx.diags.warn(0, "The variable {s} is singular in calculating the partial {s} correlations.", .{ s.ds.columns.items[col].name, name });
 }
 fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Group, tables: @import("../ods_listing.zig").Tables) !void {
     inline for (.{ "spearman", "kendall", "hoeffding" }) |name| {
@@ -1328,6 +1347,26 @@ test "CORR advanced singular controls Fisher tails constants and missing ranks" 
     try Testing.near(1, t.kendall[1].r);
     try std.testing.expect(std.math.isNan(t.kendall[1].p));
     try std.testing.expect(std.math.isNan(t.hoeffding[1].r));
+}
+test "CORR partial singular warnings identify every affected variable and method" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "g", "h" }, &.{
+        &.{ 1, 2, 0, 0 }, &.{ 1, 2, 0, 0 }, &.{ 1, 3, 0, 1 },
+        &.{ 1, 3, 0, 1 }, &.{ 1, 4, 1, 0 }, &.{ 1, 4, 1, 0 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const s = try parse(cx, try lex.tokenize(a, "proc corr; var x; with y; partial g h; run;", &d));
+    const g = (try compute(cx, s)).groups[0];
+    try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+    for (d.list.items, [_][]const u8{ "x", "y" }) |message, col|
+        try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The variable {s} is singular in calculating the partial PEARSON correlations.", .{col}), message.message);
+    try std.testing.expectEqual(@as(f64, 0), g.simple[2].partial_variance);
+    try std.testing.expectEqual(@as(f64, 0), g.simple[3].partial_variance);
 }
 test "CORR alpha pairwise missing uses Pearson matrix for standardized reliability" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
