@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 Cannot specify more than two CLASS variables.

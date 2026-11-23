@@ -1,0 +1,6 @@
+# corpus assertions
+row The CORR Procedure
+row polychoric Correlations
+row r c 24 . . . . . .
+stderr-count 1 WARNING:
+stderr-count 1 WARNING: The algorithm for polychoric correlation between c and r did not converge.

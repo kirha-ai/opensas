@@ -1,0 +1,4 @@
+# corpus assertions
+next mx my sx sy
+next 4.5 8.875 2.44949~5e-06 4.94072~5e-06
+end-listing

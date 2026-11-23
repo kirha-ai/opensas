@@ -1,0 +1,60 @@
+# corpus assertions
+row ODS_ROWS|6
+stdout-count 8 ODS_COL|
+row ODS_COL|1|Arm|num|8|Z2.||Study arm
+row ODS_COL|2|Table|char|256|||
+row ODS_COL|3|F_r|char|1|||r
+row ODS_COL|4|r|num|8|||
+row ODS_COL|5|Frequency|num|8|BEST8.||
+row ODS_COL|6|Percent|num|8|6.2||
+row ODS_COL|7|CumFrequency|num|8|BEST8.||Cumulative Frequency
+row ODS_COL|8|CumPercent|num|8|6.2||Cumulative Percent
+stdout-count 48 ODS_VALUE|
+row ODS_VALUE|1|Arm|3~3e-08
+row ODS_VALUE|1|Table|Table r
+row ODS_VALUE|1|F_r|1
+row ODS_VALUE|1|r|1~1e-08
+row ODS_VALUE|1|Frequency|4~4e-08
+row ODS_VALUE|1|Percent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|1|CumFrequency|4~4e-08
+row ODS_VALUE|1|CumPercent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|2|Arm|3~3e-08
+row ODS_VALUE|2|Table|Table r
+row ODS_VALUE|2|F_r|2
+row ODS_VALUE|2|r|2~2e-08
+row ODS_VALUE|2|Frequency|7~7e-08
+row ODS_VALUE|2|Percent|63.6363636363636~6.363636364e-07
+row ODS_VALUE|2|CumFrequency|11~1.1e-07
+row ODS_VALUE|2|CumPercent|100~1e-06
+row ODS_VALUE|3|Arm|2~2e-08
+row ODS_VALUE|3|Table|Table r
+row ODS_VALUE|3|F_r|1
+row ODS_VALUE|3|r|1~1e-08
+row ODS_VALUE|3|Frequency|8~8e-08
+row ODS_VALUE|3|Percent|42.1052631578947~4.210526316e-07
+row ODS_VALUE|3|CumFrequency|8~8e-08
+row ODS_VALUE|3|CumPercent|42.1052631578947~4.210526316e-07
+row ODS_VALUE|4|Arm|2~2e-08
+row ODS_VALUE|4|Table|Table r
+row ODS_VALUE|4|F_r|2
+row ODS_VALUE|4|r|2~2e-08
+row ODS_VALUE|4|Frequency|11~1.1e-07
+row ODS_VALUE|4|Percent|57.8947368421052~5.789473684e-07
+row ODS_VALUE|4|CumFrequency|19~1.9e-07
+row ODS_VALUE|4|CumPercent|100~1e-06
+row ODS_VALUE|5|Arm|1~1e-08
+row ODS_VALUE|5|Table|Table r
+row ODS_VALUE|5|F_r|1
+row ODS_VALUE|5|r|1~1e-08
+row ODS_VALUE|5|Frequency|8~8e-08
+row ODS_VALUE|5|Percent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|5|CumFrequency|8~8e-08
+row ODS_VALUE|5|CumPercent|36.3636363636363~3.636363636e-07
+row ODS_VALUE|6|Arm|1~1e-08
+row ODS_VALUE|6|Table|Table r
+row ODS_VALUE|6|F_r|2
+row ODS_VALUE|6|r|2~2e-08
+row ODS_VALUE|6|Frequency|14~1.4e-07
+row ODS_VALUE|6|Percent|63.6363636363636~6.363636364e-07
+row ODS_VALUE|6|CumFrequency|22~2.2e-07
+row ODS_VALUE|6|CumPercent|100~1e-06

@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 Risk Estimates
+stdout-count 0 Equality Test
+stderr-count 1 ERROR 22-322: Syntax error, expecting one of the following: FM, HA, MN, NEWCOMBE, SCORE, WALD, WILSON.\nERROR 76-322: Syntax error, statement will be ignored.

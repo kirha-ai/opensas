@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 0 Statistics for Table
+stdout-count 0 Row or column sum zero
+stdout-count 0 Sample Size =
+stderr-count 1 No statistics are computed for r * c because r has fewer than 2 nonmissing levels.
+row Total 1~5.1e-05 0~5.1e-05 1~5.1e-05
+row-count 1 Total {any} {any} {any}

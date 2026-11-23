@@ -1,0 +1,11 @@
+# corpus assertions
+row Case univ_class_special_key_omit_formatted
+row GROUP 1~5.1e-05 1~5.1e-05
+row GROUP 2~5.1e-05 68~5.1e-05
+row Case univ_class_special_key_omit_freq
+row GROUP 2~5.1e-05 68~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row Case univ_class_special_key_omit_internal
+row GROUP 2~5.1e-05 68~5.1e-05
+row GROUP 1~5.1e-05 1~5.1e-05
+row-count 6 GROUP {any} {any}

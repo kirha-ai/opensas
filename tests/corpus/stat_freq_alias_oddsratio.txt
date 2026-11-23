@@ -1,0 +1,3 @@
+# corpus assertions
+row 95% Lower Conf Limit 0.0327
+row 95% Upper Conf Limit 30.5804

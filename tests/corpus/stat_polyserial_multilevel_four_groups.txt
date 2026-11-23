@@ -1,0 +1,19 @@
+# corpus assertions
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL four-groups-c0.0001-m1 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL four-groups-c0.0001-m5 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL four-groups-c0.0001-m200 .
+row x y {any} {any} 0.0~0 {any} {any} 48.8362793662018~5e-05 {any}
+row SERIAL four-groups-c0.5-m1 0.99~6e-12
+row x y {any} {any} 0.0~0 {any} {any} 48.8362793662018~5e-05 {any}
+row SERIAL four-groups-c0.5-m200 0.99~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL four-groups-c0.01-m1 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL four-groups-c0.01-m5 .
+row x y {any} {any} 0.00820483578153~5e-06 {any} {any} 54.8829228418885~5e-05 {any}
+row SERIAL four-groups-c0.01-m200 0.995~6e-12
+stdout-count 8 SERIAL
+stderr-count 5 did not converge

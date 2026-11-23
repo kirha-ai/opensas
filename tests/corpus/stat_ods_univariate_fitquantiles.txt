@@ -1,0 +1,64 @@
+# corpus assertions
+row ODS_ROWS|9
+stdout-count 6 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Histogram|num|8|||
+row ODS_COL|3|Distribution|char|6|||
+row ODS_COL|4|Percent|num|8|4.1||
+row ODS_COL|5|ObsQuantile|num|8|8.5||Observed Quantile
+row ODS_COL|6|EstQuantile|num|8|8.5||Estimated Quantile
+stdout-count 54 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Histogram|1~1e-08
+row ODS_VALUE|1|Distribution|Normal
+row ODS_VALUE|1|Percent|1~1e-08
+row ODS_VALUE|1|ObsQuantile|1~1e-08
+row ODS_VALUE|1|EstQuantile|-1.26135770875193~1.261357709e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Histogram|1~1e-08
+row ODS_VALUE|2|Distribution|Normal
+row ODS_VALUE|2|Percent|5~5e-08
+row ODS_VALUE|2|ObsQuantile|1~1e-08
+row ODS_VALUE|2|EstQuantile|0.37007308038767~3.700730804e-09
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Histogram|1~1e-08
+row ODS_VALUE|3|Distribution|Normal
+row ODS_VALUE|3|Percent|10~1e-07
+row ODS_VALUE|3|ObsQuantile|2~2e-08
+row ODS_VALUE|3|EstQuantile|1.23978279733461~1.239782797e-08
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Histogram|1~1e-08
+row ODS_VALUE|4|Distribution|Normal
+row ODS_VALUE|4|Percent|25~2.5e-07
+row ODS_VALUE|4|ObsQuantile|2~2e-08
+row ODS_VALUE|4|EstQuantile|2.69302960125177~2.693029601e-08
+row ODS_VALUE|5|VarName|a
+row ODS_VALUE|5|Histogram|1~1e-08
+row ODS_VALUE|5|Distribution|Normal
+row ODS_VALUE|5|Percent|50~5e-07
+row ODS_VALUE|5|ObsQuantile|4~4e-08
+row ODS_VALUE|5|EstQuantile|4.3076923076923~4.307692308e-08
+row ODS_VALUE|6|VarName|a
+row ODS_VALUE|6|Histogram|1~1e-08
+row ODS_VALUE|6|Distribution|Normal
+row ODS_VALUE|6|Percent|75~7.5e-07
+row ODS_VALUE|6|ObsQuantile|6~6e-08
+row ODS_VALUE|6|EstQuantile|5.92235501413283~5.922355014e-08
+row ODS_VALUE|7|VarName|a
+row ODS_VALUE|7|Histogram|1~1e-08
+row ODS_VALUE|7|Distribution|Normal
+row ODS_VALUE|7|Percent|90~9e-07
+row ODS_VALUE|7|ObsQuantile|8~8e-08
+row ODS_VALUE|7|EstQuantile|7.37560181805~7.375601818e-08
+row ODS_VALUE|8|VarName|a
+row ODS_VALUE|8|Histogram|1~1e-08
+row ODS_VALUE|8|Distribution|Normal
+row ODS_VALUE|8|Percent|95~9.5e-07
+row ODS_VALUE|8|ObsQuantile|8~8e-08
+row ODS_VALUE|8|EstQuantile|8.24531153499693~8.245311535e-08
+row ODS_VALUE|9|VarName|a
+row ODS_VALUE|9|Histogram|1~1e-08
+row ODS_VALUE|9|Distribution|Normal
+row ODS_VALUE|9|Percent|99~9.9e-07
+row ODS_VALUE|9|ObsQuantile|8~8e-08
+row ODS_VALUE|9|EstQuantile|9.87674232413654~9.876742324e-08

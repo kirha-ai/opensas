@@ -1,0 +1,20 @@
+# corpus assertions
+row Case univ_class_scope_both
+row GROUP 16~5.1e-05
+row GROUP 1~5.1e-05
+row GROUP 2~5.1e-05
+row GROUP 4~5.1e-05
+row GROUP 32~5.1e-05
+row GROUP 8~5.1e-05
+row Case univ_class_scope_first
+row GROUP 2~5.1e-05
+row GROUP 32~5.1e-05
+row GROUP 8~5.1e-05
+row Case univ_class_scope_neither
+row GROUP 32~5.1e-05
+row GROUP 8~5.1e-05
+row Case univ_class_scope_second
+row GROUP 4~5.1e-05
+row GROUP 32~5.1e-05
+row GROUP 8~5.1e-05
+row-count 14 GROUP {any}

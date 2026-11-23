@@ -1,0 +1,10 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 3 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Mode|num|8|2.||
+row ODS_COL|3|Count|num|8|5.||Mode Frequency
+stdout-count 3 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Mode|2~2e-08
+row ODS_VALUE|1|Count|3~3e-08

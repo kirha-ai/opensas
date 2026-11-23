@@ -1,0 +1,28 @@
+# corpus assertions
+row ODS_ROWS|5
+stdout-count 4 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Measure|char|22|||Robust Measure of Scale
+row ODS_COL|3|Value|num|8|8.6||Value of Robust Measure of Scale
+row ODS_COL|4|Sigma|num|8|8.6||Estimate of Sigma
+stdout-count 20 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Measure|Interquartile Range
+row ODS_VALUE|1|Value|4~4e-08
+row ODS_VALUE|1|Sigma|2.96520333881895~2.965203339e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Measure|Gini's Mean Difference
+row ODS_VALUE|2|Value|2.82051282051282~2.820512821e-08
+row ODS_VALUE|2|Sigma|2.49961440512316~2.499614405e-08
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Measure|MAD
+row ODS_VALUE|3|Value|2~2e-08
+row ODS_VALUE|3|Sigma|2.9652~2.9652e-08
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Measure|Sn
+row ODS_VALUE|4|Value|2.3852~2.3852e-08
+row ODS_VALUE|4|Sigma|2.56261157024793~2.56261157e-08
+row ODS_VALUE|5|VarName|a
+row ODS_VALUE|5|Measure|Qn
+row ODS_VALUE|5|Value|2.2219~2.2219e-08
+row ODS_VALUE|5|Sigma|2.00588194444444~2.005881944e-08

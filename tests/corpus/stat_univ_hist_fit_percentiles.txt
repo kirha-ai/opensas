@@ -1,0 +1,18 @@
+# corpus assertions
+row Fitted Normal Distribution for x
+row Parameters for Normal Distribution
+row Mean Mu 4.5
+row Std Dev Sigma 2.44949
+row Goodness-of-Fit Tests for Normal Distribution
+row Kolmogorov-Smirnov D 0.10485431 Pr > D >0.150
+row Cramer-von Mises W-Sq 0.01735523 Pr > W-Sq >0.250
+row Anderson-Darling A-Sq 0.13400046 Pr > A-Sq >0.250
+row Quantiles for Normal Distribution
+row 10.0 1.00000 1.36085
+row 50.0 4.50000 4.50000
+row 90.0 8.00000 7.63915
+row-count 1 Mean Mu {any}
+row-count 1 Std Dev Sigma {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D >0.150
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq >0.250
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq >0.250

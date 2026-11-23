@@ -1,0 +1,9 @@
+# corpus assertions
+row Z 4.3327~5.1e-05
+row Z 4.3327~5.1e-05
+row Z 4.3327~5.1e-05
+row Z 4.3327~5.1e-05
+row Z 4.3327~5.1e-05
+row Z 3.2821~5.1e-05
+row Z 4.4188~5.1e-05
+row-count 7 Z {any}

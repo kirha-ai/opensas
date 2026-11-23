@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 0 g2=
+stderr-count 1 No variables found beginning with 'ZZZ' in data set WORK.SAMPLE.
+row x 4~5.1e-05 7.5~5.1e-05 5.50757 30.00000 2.00000 14.00000
+row-count 1 x {any} {any} {any} {any} {any} {any}

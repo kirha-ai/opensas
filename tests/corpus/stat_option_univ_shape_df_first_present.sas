@@ -1,0 +1,1 @@
+data d;u=(1000+4481337*2**(-43))*2**(-511);do z=-1,-1,0,1,1;x=z*u;output;end;run;proc univariate data=d noprint vardef=df;var x;output out=q skewness=s kurtosis=k;run;data _null_;set q;file print;put 'SHAPE ' s best32. ' ' k best32.;run;

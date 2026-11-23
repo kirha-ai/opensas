@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 x = a
+row Proportion 0.1579~5.1e-05 0.0837 0.0000 0.3219
+row-count 1 Proportion {any} {any} {any} {any}

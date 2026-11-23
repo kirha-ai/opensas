@@ -1,0 +1,13 @@
+# corpus assertions
+stdout-count 1 Modes
+stdout-count 1 Basic Confidence Limits
+stdout-count 1 Location Counts
+stdout-count 1 Tests for Normality
+stdout-count 1 Trimmed Means
+stdout-count 1 Winsorized Means
+stdout-count 1 Robust Measures of Scale
+stdout-count 1 Extreme Values
+stdout-count 1 Frequency Counts
+stdout-count 1 12.500000  1.000000  4.666667
+stdout-count 1 25.000000  2.000000  4.500000
+row 1 1~5.1e-05 1~5.1e-05 7~5.1e-05 9~5.1e-05 1~5.1e-05

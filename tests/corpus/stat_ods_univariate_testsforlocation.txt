@@ -1,0 +1,32 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 7 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Test|char|11|||Test for Location
+row ODS_COL|3|Testlab|char|1|||Label for Test Statistic
+row ODS_COL|4|Stat|num|8|BEST8.||Test Statistic
+row ODS_COL|5|pType|char|9|||P Value Description
+row ODS_COL|6|pValue|num|8|PVALUE6.4||P Value
+row ODS_COL|7|Mu0|num|8|BEST6.||Mu0 Value
+stdout-count 21 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Test|Student's t
+row ODS_VALUE|1|Testlab|t
+row ODS_VALUE|1|Stat|6.48798579927111~6.487985799e-08
+row ODS_VALUE|1|pType|Pr > |t|
+row ODS_VALUE|1|pValue|0.00002988712956~2.988712956e-13
+row ODS_VALUE|1|Mu0|0~0
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Test|Sign
+row ODS_VALUE|2|Testlab|M
+row ODS_VALUE|2|Stat|6.5~6.5e-08
+row ODS_VALUE|2|pType|Pr >= |M|
+row ODS_VALUE|2|pValue|0.000244140625~2.44140625e-12
+row ODS_VALUE|2|Mu0|0~0
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Test|Signed Rank
+row ODS_VALUE|3|Testlab|S
+row ODS_VALUE|3|Stat|45.5~4.55e-07
+row ODS_VALUE|3|pType|Pr >= |S|
+row ODS_VALUE|3|pValue|0.000244140625~2.44140625e-12
+row ODS_VALUE|3|Mu0|0~0

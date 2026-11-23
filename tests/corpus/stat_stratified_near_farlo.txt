@@ -1,0 +1,5 @@
+# corpus assertions
+row FREQHAND|near-farlo|S_COMOR|256.0~1e-12
+row FREQHAND|near-farlo|XP2A_COMOR|1.0~1e-12
+row FREQHAND|near-farlo|XP2B_COMOR|1.0~1e-12
+row FREQHAND|near-farlo|XP2C_COMOR|0.9999999999999999~1e-12

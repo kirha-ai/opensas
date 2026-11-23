@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 25.000000  2.000000  4.500000
+stdout-count 1 5 7 1    7 9 1
+row 1 1~5.1e-05 1~5.1e-05 3~5.1e-05 4~5.1e-05 1~5.1e-05

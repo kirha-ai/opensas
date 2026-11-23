@@ -1,0 +1,9 @@
+# corpus assertions
+row Chi-Square 8.4~5.1e-05
+row DF 1~5.1e-05
+row Pr > ChiSq 0.0038~5.1e-05
+row Chi-Square 8.5247~5.1e-05
+row DF 1~5.1e-05
+row Pr > ChiSq 0.0035~5.1e-05
+row-count 2 DF {any}
+row-count 2 Pr > ChiSq {any}

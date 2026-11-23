@@ -1,0 +1,2 @@
+# corpus assertions
+row Exact Pr >= Statistic 1.0000

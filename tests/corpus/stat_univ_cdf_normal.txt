@@ -1,0 +1,5 @@
+# corpus assertions
+row Mean 4.5 Sum Observations 36
+svg-count 1
+svg-has 1 data-kind="cdf"
+row-count 1 Mean {any} Sum Observations {any}

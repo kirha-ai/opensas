@@ -1,0 +1,14 @@
+# corpus assertions
+row Case univ_moments_weight_scale_501
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 5.6~1e-11 94.4~1e-11 9.44~1e-11
+row Case univ_moments_weight_scale_502
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 5.6~1e-11 93.8444444444444~1e-11 9.38444444444444~1e-11
+row Case univ_moments_weight_scale_503
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 5.6~1e-11 85.5111111111111~1e-11 8.55111111111111~1e-11
+row Case univ_moments_weight_scale_504
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 5.6~1e-11 77.8044444444444~1e-11 7.78044444444444~1e-11
+row Case univ_moments_weight_scale_505
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 . 77.8044444444444~1e-11 .
+row Case univ_moments_weight_scale_600
+row MOMENT 4~1e-11 10~1e-11 56~1e-11 . 77.8044444444444~1e-11 .
+row-count 6 MOMENT {any} {any} {any} {any} {any} {any}

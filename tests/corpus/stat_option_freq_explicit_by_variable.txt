@@ -1,0 +1,2 @@
+# corpus assertions
+row 1 2~5.1e-05 100.00 2~5.1e-05 100.00

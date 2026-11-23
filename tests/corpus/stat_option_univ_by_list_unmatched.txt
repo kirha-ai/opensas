@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 0 g2=
+stderr-count 1 No variables found beginning with 'ZZZ' in data set WORK.SAMPLE.
+row Mean 7.5~5.1e-05 Sum Observations 30~5.1e-05
+row-count 1 Mean {any} Sum Observations {any}

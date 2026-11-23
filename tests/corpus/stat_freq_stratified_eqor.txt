@@ -1,0 +1,5 @@
+# corpus assertions
+row Zelen's Exact Test (P) 0.2122
+row Exact Pr <= P 0.2840
+row-count 1 Zelen's Exact Test (P) {any}
+row-count 1 Exact Pr <= P {any}

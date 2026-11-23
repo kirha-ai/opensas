@@ -1,0 +1,19 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 site 2 8 Study site
+next 2 _TYPE_ 2 8
+next 3 _NAME_ 2 8
+next 4 y 1 8 Follow-up
+next 5 x 1 8 Baseline
+next site _TYPE_ _NAME_ y x
+next A MEAN 2.66667~5e-06 2.66667~5e-06
+next A STD 1.52753~5e-06 2.08167~5e-06
+next A N 3.00000~0 3.00000~0
+next A CORR y 1.00000~0 0.57656~5e-06
+next A CORR x 0.57656~5e-06 1.00000~0
+next B MEAN 4.33333~5e-06 4.66667~5e-06
+next B STD 2.08167~5e-06 2.08167~5e-06
+next B N 3.00000~0 3.00000~0
+next B CORR y 1.00000~0 0.50000~0
+next B CORR x 0.50000~0 1.00000~0
+end-listing

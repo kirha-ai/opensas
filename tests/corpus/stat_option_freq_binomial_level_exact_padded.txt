@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 x = Z
+row One-sided Pr >= P 0.1719~5.1e-05
+row-count 1 One-sided Pr >= P {any}

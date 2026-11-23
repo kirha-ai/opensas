@@ -1,0 +1,4 @@
+# corpus assertions
+next ODS table exists=0
+stderr-count 1 WARNING: Output 'PearsonCorr' was not created. Make sure the output object is produced by the procedure.
+end-listing

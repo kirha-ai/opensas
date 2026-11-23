@@ -1,0 +1,7 @@
+# corpus assertions
+next g h COUNT PERCENT PCT_ROW PCT_COL
+next 0 0 2 25 50 50
+next 0 1 2 25 50 50
+next 1 0 2 25 50 50
+next 1 1 2 25 50 50
+end-listing

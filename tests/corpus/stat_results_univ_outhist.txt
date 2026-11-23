@@ -1,0 +1,7 @@
+# corpus assertions
+row _VAR_ _MIDPT_ _OBSPCT_ _COUNT_ _CURVE_ _EXPPCT_
+next x 2 25 2 NORMAL 19.3625~5e-05
+next x 4 25 2 NORMAL 31.0726~5e-05
+next x 6 25 2 NORMAL 26.5411~5e-05
+next x 8 25 2 NORMAL 12.0621~5e-05
+end-listing

@@ -1,0 +1,7 @@
+# corpus assertions
+row One-sided Pr >= Statistic 0.1030
+row Point Pr = Statistic 0.0208
+row Two-sided Pr >= | Statistic | 0.2061
+row-count 1 One-sided Pr >= Statistic {any}
+row-count 1 Point Pr = Statistic {any}
+row-count 1 Two-sided Pr >= | Statistic | {any}

@@ -1,0 +1,10 @@
+# corpus assertions
+row Row Scores
+row 1 1~5.1e-07
+row 10 10~5.1e-07
+row 100 100~5.1e-07
+rewind
+row Column Scores
+row 2 2~5.1e-07
+row 7 7~5.1e-07
+row 40 40~5.1e-07

@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 g=Pooled label
+stdout-count 1 g=Third
+row x 4~5.1e-05 4~5.1e-05 2.58199 16.00000 1.00000 7.00000
+row x 2~5.1e-05 10~5.1e-05 1.41421 20.00000 9.00000 11.00000
+row-count 2 x {any} {any} {any} {any} {any} {any}

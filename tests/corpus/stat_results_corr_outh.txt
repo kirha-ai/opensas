@@ -1,0 +1,8 @@
+# corpus assertions
+next _TYPE_ _NAME_ x y
+next MEAN 4.50000~0 8.87500~0
+next STD 2.44949~5e-06 4.94072~5e-06
+next N 8.00000~0 8.00000~0
+next CORR x 1.00000~0 0.38839~5e-06
+next CORR y 0.38839~5e-06 0.87667~5e-06
+end-listing

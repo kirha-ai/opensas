@@ -1,0 +1,12 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 kind 2 8
+next 2 COUNT 1 8 Frequency Count
+next 3 PERCENT 1 8 Percent of Total Frequency
+next 4 CUM_FREQ 1 8 Cumulative Frequency Count
+next 5 CUM_PCT 1 8 Cumulative Percent
+next kind COUNT PERCENT CUM_FREQ CUM_PCT
+next Z 2 33.3333~5e-05 2 33.333~0.0005
+next A 3 50.0000~0 5 83.333~0.0005
+next M 1 16.6667~5e-05 6 100.000~0
+end-listing

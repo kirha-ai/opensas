@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Variable|char|8|||Deleted Variable
+row ODS_COL|2|RawCorr|num|8|8.6||Raw Correlation with Total
+row ODS_COL|3|RawAlpha|num|8|8.6||Raw Alpha
+row ODS_COL|4|StdCorr|num|8|8.6||Standardized Correlation with Total
+row ODS_COL|5|StdAlpha|num|8|8.6||Standardized Alpha
+stdout-count 15 ODS_VALUE|
+row ODS_VALUE|1|Variable|a
+row ODS_VALUE|1|RawCorr|0.42973663941553~4.297366394e-09
+row ODS_VALUE|1|RawAlpha|0.2517353077279~2.517353077e-09
+row ODS_VALUE|1|StdCorr|0.41479554071703~4.147955407e-09
+row ODS_VALUE|1|StdAlpha|0.25644045535174~2.564404554e-09
+row ODS_VALUE|2|Variable|b
+row ODS_VALUE|2|RawCorr|0.3344308305752~3.344308306e-09
+row ODS_VALUE|2|RawAlpha|0.42566876187691~4.256687619e-09
+row ODS_VALUE|2|StdCorr|0.3149353858932~3.149353859e-09
+row ODS_VALUE|2|StdAlpha|0.42873375529417~4.287337553e-09
+row ODS_VALUE|3|Variable|c
+row ODS_VALUE|3|RawCorr|0.25274116826209~2.527411683e-09
+row ODS_VALUE|3|RawAlpha|0.5393634840871~5.393634841e-09
+row ODS_VALUE|3|StdCorr|0.2550552185377~2.550552185e-09
+row ODS_VALUE|3|StdAlpha|0.52443206660369~5.244320666e-09

@@ -1,0 +1,9 @@
+# corpus assertions
+row _VAR_ _MAXPT_ _OBSPCT_ _COUNT_
+next x 0 9.0909~5e-05 1
+next x 1 27.2727~5e-05 3
+next x 2 36.3636~5e-05 4
+next x 3 18.1818~5e-05 2
+next x 4 9.0909~5e-05 1
+stderr-count 1 WARNING: The ENDPOINTS= list was extended to accommodate the data.
+end-listing

@@ -1,0 +1,21 @@
+# corpus assertions
+row CORRFIT positive-first-freq12-m24 2052~0 . . . .
+row CORRFIT positive-first-freq13-m24 2223~0 . . . .
+row CORRFIT positive-first-freq16-m24 2736~0 . . . .
+row CORRFIT positive-first-freq20-m24 3420~0 . . . .
+row CORRFIT positive-first-freq25-m24 4275~0 . . . .
+row CORRFIT positive-first-freq50-m24 8550~0 . . . .
+row CORRFIT positive-first-freq100-m24 17100~0 . . . .
+row CORRFIT positive-rotated-freq1-m24 171~0 0.9995731031652496~5e-06 0.0~0 . 153.5634309039648~4.42e-07
+row CORRFIT positive-rotated-freq1-m25 171~0 0.9995731031652496~5e-06 0.0~0 . 153.5634309039648~4.42e-07
+row CORRFIT positive-rotated-freq2-m24 342~0 0.9995731031652496~5e-06 0.0~0 . 307.1268618079296~7.84e-07
+row CORRFIT positive-rotated-freq2-m25 342~0 0.9995731031652496~5e-06 0.0~0 . 307.1268618079296~7.84e-07
+row CORRFIT positive-rotated-freq3-m24 513~0 0.9995731098048799~5e-06 0.0~0 . 460.69029271189424~1.126e-06
+row CORRFIT positive-rotated-freq3-m25 513~0 0.9995731098048799~5e-06 0.0~0 . 460.69029271189424~1.126e-06
+row CORRFIT positive-rotated-freq4-m24 684~0 0.9995731031652496~5e-06 0.0~0 . 614.2537236158591~1.468e-06
+row CORRFIT positive-rotated-freq4-m25 684~0 0.9995731031652496~5e-06 0.0~0 . 614.2537236158591~1.468e-06
+row CORRFIT positive-rotated-freq5-m24 855~0 0.9995731031652496~5e-06 0.0~0 . 767.8171545198238~1.81e-06
+row CORRFIT positive-rotated-freq5-m25 855~0 0.9995731031652496~5e-06 0.0~0 . 767.8171545198238~1.81e-06
+row CORRFIT positive-rotated-freq6-m24 1026~0 0.9995731031652496~5e-06 0.0~0 . 921.380585423789~2.152e-06
+stdout-count 18 CORRFIT
+stderr-count 7 did not converge

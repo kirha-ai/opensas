@@ -1,0 +1,7 @@
+# corpus assertions
+row N 3 60.00 3 60.00
+row Y 2 40.00 5 100.00
+stderr-count 1 BINOMIAL LEVEL='X' is not found for variable event.
+stdout-count 0 Binomial Proportion
+row-count 1 N {any} {any} {any} {any}
+row-count 1 Y {any} {any} {any} {any}

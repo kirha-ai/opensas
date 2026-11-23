@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 2 Kappa Test
+stdout-count 1 Weighted Kappa Test
+stdout-count 4 <.0001
+row H0 Std Err 0.0975~5.1e-05
+row Z 5.8116~5.1e-05
+row H0 Std Err 0.111~5.1e-05
+row Z 5.2452~5.1e-05
+row-count 2 H0 Std Err {any}
+row-count 2 Z {any}

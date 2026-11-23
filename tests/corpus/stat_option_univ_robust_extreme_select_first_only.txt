@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 0 ERROR: Floating Point Overflow.\nERROR: Termination due to Floating Point Exception

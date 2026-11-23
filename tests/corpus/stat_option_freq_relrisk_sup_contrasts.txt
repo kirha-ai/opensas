@@ -1,0 +1,15 @@
+# corpus assertions
+row Case freq_relrisk_sup_lr
+row Z 2.6243~5.1e-05
+row Pr > Z 0.0043~5.1e-05
+row Case freq_relrisk_sup_score
+row Z 2.5661~5.1e-05
+row Pr > Z 0.0051~5.1e-05
+row Case freq_relrisk_sup_wald
+row Z 2.3653~5.1e-05
+row Pr > Z 0.009~5.1e-05
+row Case freq_relrisk_sup_waldmodified
+row Z 2.3439~5.1e-05
+row Pr > Z 0.0095~5.1e-05
+row-count 4 Z {any}
+row-count 4 Pr > Z {any}

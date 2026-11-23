@@ -1,0 +1,9 @@
+# corpus assertions
+stderr-count 1 WARNING: 5 iterations were used to estimate ALPHA.
+stderr-count 1 WARNING: Estimate of ALPHA may not be valid.
+row Threshold Theta 0~5.1e-07
+row Scale Sigma 24.34118~5.1e-07
+row Shape Alpha 0.251631~5.1e-07
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Alpha {any}

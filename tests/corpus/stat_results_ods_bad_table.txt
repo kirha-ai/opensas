@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 WARNING: Output 'DoesNotExist' was not created. Make sure the output object is produced by the procedure.

@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 1 Pearson Correlation Coefficient
+stdout-count 1 Spearman Correlation Coefficient
+stdout-count 0 Exact Confidence Limits
+row One-sided Pr >= Statistic 0.1597~5.1e-05
+row Two-sided Pr >= |Statistic| 0.3195~5.1e-05
+row One-sided Pr >= Statistic 0.1268~5.1e-05
+row Two-sided Pr >= |Statistic| 0.2537~5.1e-05
+row-count 2 One-sided Pr >= Statistic {any}
+row-count 2 Two-sided Pr >= | Statistic | {any}

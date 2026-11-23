@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 1 Std Residual
+stdout-count 1 Pearson Residual
+stdout-count 1 Cell Chi-Square
+row 1 1 4~5.1e-05 3~5.1e-05 1~5.1e-05 1.291~5.1e-05 0.5774~5.1e-05 0.3333~5.1e-05 40~5.1e-05 80~5.1e-05 66.67~5.1e-05
+row 2 1~5.1e-05 2~5.1e-05 -1~5.1e-05 -1.291~5.1e-05 -0.7071~5.1e-05 0.5~5.1e-05 10~5.1e-05 20~5.1e-05 25~5.1e-05
+row 2 1 2~5.1e-05 3~5.1e-05 -1~5.1e-05 -1.291~5.1e-05 -0.5774~5.1e-05 0.3333~5.1e-05 20~5.1e-05 40~5.1e-05 33.33~5.1e-05
+row 2 3~5.1e-05 2~5.1e-05 1~5.1e-05 1.291~5.1e-05 0.7071~5.1e-05 0.5~5.1e-05 30~5.1e-05 60~5.1e-05 75~5.1e-05
+row-count 2 {any} {any} {any} {any} {any} {any} {any} {any} {any} {any} {any}
+row-count 2 {any} {any} {any} {any} {any} {any} {any} {any} {any} {any}

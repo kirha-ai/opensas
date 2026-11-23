@@ -1,0 +1,40 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 9 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Histogram|num|8|||
+row ODS_COL|3|Distribution|char|6|||
+row ODS_COL|4|Test|char|18|||Goodness-of-Fit Test
+row ODS_COL|5|TestLab|char|6|||Label for Goodness-of-Fit Statistic
+row ODS_COL|6|Stat|num|8|10.8||Value of Goodness-of-Fit Statistic
+row ODS_COL|7|pType|char|11|||p-value Label
+row ODS_COL|8|pSign|char|1|||Sign of p-value
+row ODS_COL|9|pValue|num|8|5.3||p-value
+stdout-count 27 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Histogram|1~1e-08
+row ODS_VALUE|1|Distribution|Normal
+row ODS_VALUE|1|Test|Kolmogorov-Smirnov
+row ODS_VALUE|1|TestLab|D
+row ODS_VALUE|1|Stat|0.16909472164748~1.690947216e-09
+row ODS_VALUE|1|pType|Pr > D
+row ODS_VALUE|1|pSign|>
+row ODS_VALUE|1|pValue|0.15~1.5e-09
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Histogram|1~1e-08
+row ODS_VALUE|2|Distribution|Normal
+row ODS_VALUE|2|Test|Cramer-von Mises
+row ODS_VALUE|2|TestLab|W-Sq
+row ODS_VALUE|2|Stat|0.05578363933872~5.578363934e-10
+row ODS_VALUE|2|pType|Pr > W-Sq
+row ODS_VALUE|2|pSign|>
+row ODS_VALUE|2|pValue|0.25~2.5e-09
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Histogram|1~1e-08
+row ODS_VALUE|3|Distribution|Normal
+row ODS_VALUE|3|Test|Anderson-Darling
+row ODS_VALUE|3|TestLab|A-Sq
+row ODS_VALUE|3|Stat|0.38504697911053~3.850469791e-09
+row ODS_VALUE|3|pType|Pr > A-Sq
+row ODS_VALUE|3|pSign|>
+row ODS_VALUE|3|pValue|0.25~2.5e-09

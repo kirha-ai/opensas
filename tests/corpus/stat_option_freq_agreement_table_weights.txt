@@ -1,0 +1,5 @@
+# corpus assertions
+row Kappa Coefficient Weights
+row 1 1~5.1e-05 0.75~5.1e-05 0~5.1e-05
+row 2 0.75~5.1e-05 1~5.1e-05 0.75~5.1e-05
+row 3 0~5.1e-05 0.75~5.1e-05 1~5.1e-05

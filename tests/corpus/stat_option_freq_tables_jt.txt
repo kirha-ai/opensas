@@ -1,0 +1,10 @@
+# corpus assertions
+row Jonckheere-Terpstra Test
+row Statistic 470~5.1e-05
+row Z 2.8549~5.1e-05
+row One-sided Pr > Z 0.0022~5.1e-05
+row Two-sided Pr > |Z| 0.0043~5.1e-05
+row-count 1 Statistic {any}
+row-count 1 Z {any}
+row-count 1 One-sided Pr > Z {any}
+row-count 1 Two-sided Pr > | Z | {any}

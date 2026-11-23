@@ -1,0 +1,34 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 6 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Histogram|num|8|||
+row ODS_COL|3|Distribution|char|6|||
+row ODS_COL|4|Midpoint|num|8|2.||Bin Midpoint
+row ODS_COL|5|ObsPercent|num|8|6.3||Observed Percent
+row ODS_COL|6|EstPercent|num|8|6.3||Estimated Percent
+stdout-count 24 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Histogram|1~1e-08
+row ODS_VALUE|1|Distribution|Normal
+row ODS_VALUE|1|Midpoint|2~2e-08
+row ODS_VALUE|1|ObsPercent|30.7692307692307~3.076923077e-07
+row ODS_VALUE|1|EstPercent|20.8914209885662~2.089142099e-07
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Histogram|1~1e-08
+row ODS_VALUE|2|Distribution|Normal
+row ODS_VALUE|2|Midpoint|4~4e-08
+row ODS_VALUE|2|ObsPercent|23.076923076923~2.307692308e-07
+row ODS_VALUE|2|EstPercent|32.1340669545301~3.213406695e-07
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Histogram|1~1e-08
+row ODS_VALUE|3|Distribution|Normal
+row ODS_VALUE|3|Midpoint|6~6e-08
+row ODS_VALUE|3|ObsPercent|23.076923076923~2.307692308e-07
+row ODS_VALUE|3|EstPercent|25.5847365395503~2.558473654e-07
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Histogram|1~1e-08
+row ODS_VALUE|4|Distribution|Normal
+row ODS_VALUE|4|Midpoint|8~8e-08
+row ODS_VALUE|4|ObsPercent|23.076923076923~2.307692308e-07
+row ODS_VALUE|4|EstPercent|10.5376646584022~1.053766466e-07

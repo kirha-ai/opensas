@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Nonzero Correlation
+stdout-count 0 Row Mean Scores Differ
+stdout-count 0 General Association
+row Mantel-Fleiss Criterion 19.948~5.1e-05
+row-count 1 Mantel-Fleiss Criterion {any}

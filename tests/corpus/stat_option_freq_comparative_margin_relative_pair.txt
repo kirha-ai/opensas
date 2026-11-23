@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 1 Equivalence Analysis
+stderr-count 0 ERROR:
+row Z 3.5075~5.1e-05
+row Z 3.5075~5.1e-05
+row Lower Margin Z 3.5075~5.1e-05
+row Upper Margin Z 2.1119~5.1e-05
+row-count 2 Z {any}
+row-count 1 Lower Margin Z {any}
+row-count 1 Upper Margin Z {any}

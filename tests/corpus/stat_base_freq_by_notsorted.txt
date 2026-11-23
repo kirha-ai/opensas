@@ -1,0 +1,8 @@
+# corpus assertions
+row g=B
+row 1 1 50.00 1 50.00
+row 2 1 50.00 2 100.00
+row g=A
+row 1 1 100.00 1 100.00
+row g=B
+row 3 1 100.00 1 100.00

@@ -1,0 +1,3 @@
+# corpus assertions
+stderr-count 1 WARNING: One or more parameters for the beta distribution cannot be estimated.
+stdout-count 0 Fitted

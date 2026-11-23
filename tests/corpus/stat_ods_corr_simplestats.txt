@@ -1,0 +1,25 @@
+# corpus assertions
+row ODS_ROWS|2
+stdout-count 7 ODS_COL|
+row ODS_COL|1|Variable|char|8|||
+row ODS_COL|2|NObs|num|8|8.||N
+row ODS_COL|3|Mean|num|8|D10.||
+row ODS_COL|4|StdDev|num|8|D10.||Std Dev
+row ODS_COL|5|Sum|num|8|D10.||
+row ODS_COL|6|Min|num|8|D10.||Minimum
+row ODS_COL|7|Max|num|8|D10.||Maximum
+stdout-count 14 ODS_VALUE|
+row ODS_VALUE|1|Variable|a
+row ODS_VALUE|1|NObs|13~1.3e-07
+row ODS_VALUE|1|Mean|4.3076923076923~4.307692308e-08
+row ODS_VALUE|1|StdDev|2.39390251070699~2.393902511e-08
+row ODS_VALUE|1|Sum|56~5.6e-07
+row ODS_VALUE|1|Min|1~1e-08
+row ODS_VALUE|1|Max|8~8e-08
+row ODS_VALUE|2|Variable|b
+row ODS_VALUE|2|NObs|14~1.4e-07
+row ODS_VALUE|2|Mean|4.64285714285714~4.642857143e-08
+row ODS_VALUE|2|StdDev|2.49945048905809~2.499450489e-08
+row ODS_VALUE|2|Sum|65~6.5e-07
+row ODS_VALUE|2|Min|1~1e-08
+row ODS_VALUE|2|Max|9~9e-08

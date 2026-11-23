@@ -1,0 +1,5 @@
+# corpus assertions
+row The CORR Procedure
+row polychoric Correlations
+row r c 20 -0.98265 0 . . 3.3980 0.0653
+stderr-count 0 WARNING:

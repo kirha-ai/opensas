@@ -1,0 +1,11 @@
+# corpus assertions
+row FREQHAND|proven-range-yzx|S_COMOR|2.0~1e-12
+row FREQHAND|proven-range-yzx|M0_COMOR|1.998750000000022~1e-12
+row FREQHAND|proven-range-yzx|XPR_COMOR|0.7493749999999887~1e-12
+row FREQHAND|proven-range-yzx|XPT_COMOR|0.4996874999999556~1e-12
+row FREQHAND|proven-range-yzx|XMP_COMOR|0.49953125000001086~1e-12
+row FREQHAND|proven-range-yzx|XP2A_COMOR|1.0~1e-12
+row FREQHAND|proven-range-yzx|XP2B_COMOR|1.0~1e-12
+row FREQHAND|proven-range-yzx|XP2C_COMOR|1.0~1e-12
+row FREQHAND|proven-range-yzx|XL_COMOR|0.013901519378283385~1.390151938e-10
+row FREQHAND|proven-range-yzx|XU_COMOR|78.54658242843232~7.854658243e-07

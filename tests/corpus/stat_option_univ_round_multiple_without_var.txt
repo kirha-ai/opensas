@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 The VAR statement must be included when specifying more than one roundoff unit.

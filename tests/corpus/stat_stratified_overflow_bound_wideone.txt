@@ -1,0 +1,11 @@
+# corpus assertions
+row FREQHAND|overflow-bound-wideone|S_COMOR|2.0~1e-12
+row FREQHAND|overflow-bound-wideone|M0_COMOR|1.8822619136961567~1e-12
+row FREQHAND|overflow-bound-wideone|XPR_COMOR|0.6911674796748503~1e-12
+row FREQHAND|overflow-bound-wideone|XPT_COMOR|0.49968730456536387~1e-12
+row FREQHAND|overflow-bound-wideone|XMP_COMOR|0.44132382739216836~1e-12
+row FREQHAND|overflow-bound-wideone|XP2A_COMOR|1.0~1e-12
+row FREQHAND|overflow-bound-wideone|XP2B_COMOR|1.0~1e-12
+row FREQHAND|overflow-bound-wideone|XP2C_COMOR|1.0~1e-12
+row FREQHAND|overflow-bound-wideone|XL_COMOR|0.01689027740338676~1.68902774e-10
+row FREQHAND|overflow-bound-wideone|XU_COMOR|102.38811815400527~1.023881182e-06

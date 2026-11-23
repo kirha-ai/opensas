@@ -1,0 +1,5 @@
+# corpus assertions
+row N 2~5.1e-05 Sum Weights 2
+row N 5~5.1e-05 Sum Weights 5
+row N 4~5.1e-05 Sum Weights 4
+row-count 3 N {any} Sum Weights {any}

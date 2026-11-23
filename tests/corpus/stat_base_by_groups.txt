@@ -1,0 +1,99 @@
+# corpus assertions
+row g=0
+row The CORR Procedure
+row Simple Statistics
+row x 4 2.50000 1.29099 10.00000 1.00000 4.00000
+row y 4 5.25000 2.87228 21.00000 2.00000 9.00000
+row x 1.00000 0.94388
+row y 0.94388 1.00000
+row g=1
+row x 4 6.50000 1.29099 26.00000 5.00000 8.00000
+row y 4 12.50000 3.69685 50.00000 8.00000 17.00000
+row x 1.00000 0.90796
+row y 0.90796 1.00000
+row g=0
+row The FREQ Procedure
+row 0 2 50.00 2 50.00
+row 1 2 50.00 4 100.00
+row g=1
+row 0 2 50.00 2 50.00
+row 1 2 50.00 4 100.00
+row The UNIVARIATE Procedure
+row g=0
+row N 4 Sum Weights 4
+row Mean 2.5 Sum Observations 10
+row Std Deviation 1.29099445 Variance 1.66666667
+row Skewness 0 Kurtosis -1.2
+row Uncorrected SS 30 Corrected SS 5
+row Coeff Variation 51.6397779~5e-08 Std Error Mean 0.64549722
+row Mean 2.5 Std Deviation 1.29099445
+row Median 2.5 Variance 1.66666667
+row Mode . Range 3
+row Interquartile Range 2
+row Student's t t 3.872983~5e-07 Pr > | t | 0.0305
+row Sign M 2 Pr >= | M | 0.1250
+row Signed Rank S 5 Pr >= | S | 0.1250
+row 100% Max 4
+row 99% 4
+row 95% 4
+row 90% 4
+row 75% Q3 3.5
+row 50% Median 2.5
+row 25% Q1 1.5
+row 10% 1
+row 5% 1
+row 1% 1
+row 0% Min 1
+row g=1
+row N 4 Sum Weights 4
+row Mean 6.5 Sum Observations 26
+row Std Deviation 1.29099445 Variance 1.66666667
+row Skewness 0 Kurtosis -1.2
+row Uncorrected SS 174 Corrected SS 5
+row Coeff Variation 19.8614531~5e-08 Std Error Mean 0.64549722
+row Mean 6.5 Std Deviation 1.29099445
+row Median 6.5 Variance 1.66666667
+row Mode . Range 3
+row Interquartile Range 2
+row Student's t t 10.06976~5e-06 Pr > | t | 0.0021
+row Sign M 2 Pr >= | M | 0.1250
+row Signed Rank S 5 Pr >= | S | 0.1250
+row 100% Max 8
+row 99% 8
+row 95% 8
+row 90% 8
+row 75% Q3 7.5
+row 50% Median 6.5
+row 25% Q1 5.5
+row 10% 5
+row 5% 5
+row 1% 5
+row 0% Min 5
+row-count 2 x {any} {any} {any} {any} {any} {any}
+row-count 2 y {any} {any} {any} {any} {any} {any}
+row-count 2 x {any} {any}
+row-count 2 y {any} {any}
+row-count 2 N {any} Sum Weights {any}
+row-count 2 Mean {any} Sum Observations {any}
+row-count 2 Std Deviation {any} Variance {any}
+row-count 2 Skewness {any} Kurtosis {any}
+row-count 2 Uncorrected SS {any} Corrected SS {any}
+row-count 2 Coeff Variation {any} Std Error Mean {any}
+row-count 2 Mean {any} Std Deviation {any}
+row-count 2 Median {any} Variance {any}
+row-count 2 Mode {any} Range {any}
+row-count 2 Interquartile Range {any}
+row-count 2 Student's t t {any} Pr > | t | {any}
+row-count 2 Sign M {any} Pr >= | M | {any}
+row-count 2 Signed Rank S {any} Pr >= | S | {any}
+row-count 2 100% Max {any}
+row-count 2 99% {any}
+row-count 2 95% {any}
+row-count 2 90% {any}
+row-count 2 75% Q3 {any}
+row-count 2 50% Median {any}
+row-count 2 25% Q1 {any}
+row-count 2 10% {any}
+row-count 2 5% {any}
+row-count 2 1% {any}
+row-count 2 0% Min {any}

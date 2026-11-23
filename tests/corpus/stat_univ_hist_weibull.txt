@@ -1,0 +1,28 @@
+# corpus assertions
+row Fitted Weibull Distribution for x
+row Parameters for Weibull Distribution
+row Threshold Theta 0
+row Scale Sigma 5.07827
+row Shape C 2.061768
+row Mean 4.498514
+row Std Dev 2.288019
+row Goodness-of-Fit Tests for Weibull Distribution
+row Cramer-von Mises W-Sq 0.02505781 Pr > W-Sq >0.250
+row Anderson-Darling A-Sq 0.19115846 Pr > A-Sq >0.250
+row Quantiles for Weibull Distribution
+row 1.0 1.00000 0.54542
+row 5.0 1.00000 1.20245
+row 10.0 1.00000 1.70488
+row 25.0 2.50000 2.77509
+row 50.0 4.50000 4.25121
+row 75.0 6.50000 5.95002
+row 90.0 8.00000 7.61023
+row 95.0 8.00000 8.64629
+row 99.0 8.00000 10.65133
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape C {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq >0.250
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq >0.250

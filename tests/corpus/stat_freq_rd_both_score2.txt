@@ -1,0 +1,7 @@
+# corpus assertions
+row 90% Lower Conf Limit -0.7683
+row 90% Upper Conf Limit 0.2087
+row 90% Lower Conf Limit -0.2087
+row 90% Upper Conf Limit 0.7683
+row-count 2 90% Lower Conf Limit {any}
+row-count 2 90% Upper Conf Limit {any}

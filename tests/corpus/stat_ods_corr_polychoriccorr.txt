@@ -1,0 +1,22 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 9 ODS_COL|
+row ODS_COL|1|Var|char|8|||Variable
+row ODS_COL|2|WithVar|char|8|||With Variable
+row ODS_COL|3|NObs|num|8|8.||N
+row ODS_COL|4|Corr|num|8|D10.||Polychoric Correlation
+row ODS_COL|5|StdErr|num|8|D10.||Standard Error
+row ODS_COL|6|WaldChiSq|num|8|10.4||Chi-Square
+row ODS_COL|7|ProbWaldChiSq|num|8|PVALUE6.4||Pr > ChiSq
+row ODS_COL|8|LRChiSq|num|8|10.4||Chi-Square
+row ODS_COL|9|ProbLRChiSq|num|8|PVALUE6.4||Pr > ChiSq
+stdout-count 9 ODS_VALUE|
+row ODS_VALUE|1|Var|r
+row ODS_VALUE|1|WithVar|c
+row ODS_VALUE|1|NObs|23~2.3e-07
+row ODS_VALUE|1|Corr|0.03277056510398~3.27705651e-10
+row ODS_VALUE|1|StdErr|0.26078849702713~2.60788497e-09
+row ODS_VALUE|1|WaldChiSq|0.01579032243139~1.579032243e-10
+row ODS_VALUE|1|ProbWaldChiSq|0.90000142264379~9.000014226e-09
+row ODS_VALUE|1|LRChiSq|0.01606588142976~1.606588143e-10
+row ODS_VALUE|1|ProbLRChiSq|0.89913727487624~8.991372749e-09

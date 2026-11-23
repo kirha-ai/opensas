@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 WARNING: Overflow in statistic calculation for variable x. The affected statistics will be set to missing.
+row EXT 1.75~1e-12 7~1e-12 3~1e-12
+row-count 1 EXT {any} {any} {any}

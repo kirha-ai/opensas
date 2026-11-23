@@ -1,0 +1,7 @@
+# corpus assertions
+row MODE 1~5.1e-05|. |.
+row MODE 2~5.1e-05|5~5.1e-05 |1~5.1e-05
+row MODE 3~5.1e-05|1~5.1e-05 |2~5.1e-05
+row MODE 3~5.1e-05|2~5.1e-05 |2~5.1e-05
+row MODE 4~5.1e-05|9~5.1e-05 |2~5.1e-05
+row-count 5 MODE {any} | {any} | {any}

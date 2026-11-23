@@ -1,0 +1,17 @@
+# corpus assertions
+row Case freq_binomial_ac
+row Agresti-Coull 0.1799~5.1e-05 0.5684~5.1e-05
+row Case freq_binomial_agresticoull
+row Agresti-Coull 0.1799~5.1e-05 0.5684~5.1e-05
+row Case freq_binomial_blaker
+row Blaker 0.1601~5.1e-05 0.5781~5.1e-05
+row Case freq_binomial_clopperpearson
+row Clopper-Pearson (Exact) 0.1539~5.1e-05 0.5922~5.1e-05
+row Case freq_binomial_exact
+row Clopper-Pearson (Exact) 0.1539~5.1e-05 0.5922~5.1e-05
+row Case freq_binomial_jeffreys
+row Jeffreys 0.1723~5.1e-05 0.5678~5.1e-05
+row-count 2 Agresti-Coull {any} {any}
+row-count 1 Blaker {any} {any}
+row-count 2 Clopper-Pearson (Exact) {any} {any}
+row-count 1 Jeffreys {any} {any}

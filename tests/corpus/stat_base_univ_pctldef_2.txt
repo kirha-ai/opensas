@@ -1,0 +1,3 @@
+# corpus assertions
+row p20 p25 p30 p50 p70 p75
+row 1 2 2 8 10 10

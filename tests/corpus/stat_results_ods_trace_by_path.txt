@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 2 Path:
+log-row Path: Corr.ByGroup1.PearsonCorr
+log-row Path: Corr.ByGroup2.PearsonCorr

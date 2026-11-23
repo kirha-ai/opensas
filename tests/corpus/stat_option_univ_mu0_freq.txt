@@ -1,0 +1,10 @@
+# corpus assertions
+stdout-count 1 Pr > |t|  0.3246
+stdout-count 1 Pr >= |M| 0.5488
+stdout-count 1 Pr >= |S| 0.3486
+row Num Obs > Mu0 4~5.1e-05
+row Num Obs ^= Mu0 11~5.1e-05
+row Num Obs < Mu0 7~5.1e-05
+row-count 1 Num Obs > Mu0 {any}
+row-count 1 Num Obs ^= Mu0 {any}
+row-count 1 Num Obs < Mu0 {any}

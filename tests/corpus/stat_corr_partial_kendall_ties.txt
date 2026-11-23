@@ -1,0 +1,20 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row z 9 4.00000 2.23607 4.00000 1.00000 8.00000
+row x 9 4.44444 2.78887 4.00000 1.00000 9.00000
+row y 9 4.00000 2.44949 4.00000 1.00000 8.00000
+row kendall Partial Correlation Coefficients
+row x x 1.00000 9
+row x y -0.70601 9
+row y x -0.70601 9
+row y y 1.00000 9
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 z {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 x x {any} {any}
+row-count 1 x y {any} {any}
+row-count 1 y x {any} {any}
+row-count 1 y y {any} {any}

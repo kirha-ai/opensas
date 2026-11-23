@@ -1,0 +1,3 @@
+# corpus assertions
+row Wald (Corrected) 0.116~5.1e-05 0.584~5.1e-05
+row-count 1 Wald (Corrected) {any} {any}

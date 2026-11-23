@@ -1,0 +1,32 @@
+# corpus assertions
+row Fitted Beta Distribution for x
+row Parameters for Beta Distribution
+row Threshold Theta 0
+row Scale Sigma 1
+row Shape Alpha 1.880254
+row Shape Beta 3.316762
+row Mean 0.361795
+row Std Dev 0.193028
+row Goodness-of-Fit Tests for Beta Distribution
+row Kolmogorov-Smirnov D 0.09117520 Pr > D >0.500
+row Cramer-von Mises W-Sq 0.01722703 Pr > W-Sq >0.500
+row Anderson-Darling A-Sq 0.13107865 Pr > A-Sq >0.500
+row Quantiles for Beta Distribution
+row 1.0 0.08000 0.03247
+row 5.0 0.08000 0.07945
+row 10.0 0.11000 0.11876
+row 25.0 0.19500 0.20937
+row 50.0 0.34000 0.34292
+row 75.0 0.52500 0.49652
+row 90.0 0.63000 0.63390
+row 95.0 0.72000 0.70898
+row 99.0 0.72000 0.82601
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Alpha {any}
+row-count 1 Shape Beta {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D >0.500
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq >0.500
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq >0.500

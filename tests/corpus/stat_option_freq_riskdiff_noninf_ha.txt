@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 <.0001
+row Z 4.609~5.1e-05
+row-count 1 Z {any}

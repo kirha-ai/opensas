@@ -1,0 +1,30 @@
+# corpus assertions
+row Fitted Gamma Distribution for x
+row Parameters for Gamma Distribution
+row Threshold Theta -2
+row Scale Sigma 1.883438
+row Shape Alpha 2
+row Mean 1.766875
+row Std Dev 2.663583
+row Goodness-of-Fit Tests for Gamma Distribution
+row Kolmogorov-Smirnov D 0.31033317 Pr > D 0.004
+row Cramer-von Mises W-Sq 0.24383897 Pr > W-Sq 0.022
+row Anderson-Darling A-Sq 1.39974494 Pr > A-Sq 0.027
+row Quantiles for Gamma Distribution
+row 1.0 0.12000 -1.72021
+row 5.0 0.12000 -1.33070
+row 10.0 0.23000 -0.99837
+row 25.0 0.50000 -0.18949
+row 50.0 1.16000 1.16106
+row 75.0 2.51000 3.07141
+row 90.0 4.85000 5.32604
+row 95.0 6.21000 6.93477
+row 99.0 6.21000 10.50292
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Alpha {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D {any}
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq {any}
+row-count 1 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

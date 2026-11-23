@@ -1,0 +1,59 @@
+# corpus assertions
+row ODS_ROWS|10
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|10|||
+row ODS_COL|3|Label1|char|18|||
+row ODS_COL|4|cValue1|char|10|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 50 ODS_VALUE|
+row ODS_VALUE|1|Table|Summary for r * c
+row ODS_VALUE|1|Name1|S_COMOR
+row ODS_VALUE|1|Label1|Cell (1,1) Sum (S)
+row ODS_VALUE|1|cValue1|3.0000
+row ODS_VALUE|1|nValue1|3~3e-08
+row ODS_VALUE|2|Table|Summary for r * c
+row ODS_VALUE|2|Name1|M0_COMOR
+row ODS_VALUE|2|Label1|Mean of S under H0
+row ODS_VALUE|2|cValue1|3.3182
+row ODS_VALUE|2|nValue1|3.31818181818181~3.318181818e-08
+row ODS_VALUE|3|Table|Summary for r * c
+row ODS_VALUE|3|Name1|
+row ODS_VALUE|3|Label1|
+row ODS_VALUE|3|cValue1|
+row ODS_VALUE|3|nValue1|.
+row ODS_VALUE|4|Table|Summary for r * c
+row ODS_VALUE|4|Name1|XPL_COMOR
+row ODS_VALUE|4|Label1|One-sided Pr <=  S
+row ODS_VALUE|4|cValue1|0.5671
+row ODS_VALUE|4|nValue1|0.56709956709956~5.670995671e-09
+row ODS_VALUE|5|Table|Summary for r * c
+row ODS_VALUE|5|Name1|XPT_COMOR
+row ODS_VALUE|5|Label1|Point     Pr  =  S
+row ODS_VALUE|5|cValue1|0.3409
+row ODS_VALUE|5|nValue1|0.34090909090909~3.409090909e-09
+row ODS_VALUE|6|Table|Summary for r * c
+row ODS_VALUE|6|Name1|
+row ODS_VALUE|6|Label1|
+row ODS_VALUE|6|cValue1|
+row ODS_VALUE|6|nValue1|.
+row ODS_VALUE|7|Table|Summary for r * c
+row ODS_VALUE|7|Name1|
+row ODS_VALUE|7|Label1|Two-sided P-values
+row ODS_VALUE|7|cValue1|
+row ODS_VALUE|7|nValue1|.
+row ODS_VALUE|8|Table|Summary for r * c
+row ODS_VALUE|8|Name1|XP2A_COMOR
+row ODS_VALUE|8|Label1|2 * One-sided
+row ODS_VALUE|8|cValue1|1.0000
+row ODS_VALUE|8|nValue1|1~1e-08
+row ODS_VALUE|9|Table|Summary for r * c
+row ODS_VALUE|9|Name1|XP2B_COMOR
+row ODS_VALUE|9|Label1|Sum <= Point
+row ODS_VALUE|9|cValue1|1.0000
+row ODS_VALUE|9|nValue1|1~1e-08
+row ODS_VALUE|10|Table|Summary for r * c
+row ODS_VALUE|10|Name1|XP2C_COMOR
+row ODS_VALUE|10|Label1|Pr >= |S - Mean|
+row ODS_VALUE|10|cValue1|1.0000
+row ODS_VALUE|10|nValue1|1~1e-08

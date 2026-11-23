@@ -1,0 +1,20 @@
+# corpus assertions
+row x=group
+row Mean 1194.66666667 Sum Observations 3584~5.1e-05
+row x=zneg
+row Mean 32.5 Sum Observations 65~5.1e-05
+row x=.
+row Mean 32 Sum Observations 32~5.1e-05
+row x=apos
+row Mean 2 Sum Observations 2~5.1e-05
+row x=bpos
+row Mean 128 Sum Observations 128~5.1e-05
+row x=cfrac
+row Mean 4 Sum Observations 4~5.1e-05
+row x=d0
+row Mean 256 Sum Observations 256~5.1e-05
+row x=xpos
+row Mean 16 Sum Observations 16~5.1e-05
+row x=yneg
+row Mean 8 Sum Observations 8~5.1e-05
+row-count 9 Mean {any} Sum Observations {any}

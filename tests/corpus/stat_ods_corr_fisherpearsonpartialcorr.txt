@@ -1,0 +1,26 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 11 ODS_COL|
+row ODS_COL|1|Var|char|8|||Variable
+row ODS_COL|2|WithVar|char|8|||With Variable
+row ODS_COL|3|NObs|num|8|8.||N
+row ODS_COL|4|NPartial|num|8|8.||N Partialled
+row ODS_COL|5|Corr|num|8|D10.||Sample Correlation
+row ODS_COL|6|ZVal|num|8|D10.||Fisher's z
+row ODS_COL|7|BiasAdj|num|8|D10.||Bias Adjustment
+row ODS_COL|8|CorrEst|num|8|D10.||Correlation Estimate
+row ODS_COL|9|Lcl|num|8|D12.3||Lower 95% Confidence Limit
+row ODS_COL|10|Ucl|num|8|D12.3||Upper 95% Confidence Limit
+row ODS_COL|11|pValue|num|8|PVALUE6.4||p Value for H0: Partial Rho=0
+stdout-count 11 ODS_VALUE|
+row ODS_VALUE|1|Var|a
+row ODS_VALUE|1|WithVar|b
+row ODS_VALUE|1|NObs|13~1.3e-07
+row ODS_VALUE|1|NPartial|1~1e-08
+row ODS_VALUE|1|Corr|0.33267797449091~3.326779745e-09
+row ODS_VALUE|1|ZVal|0.34583649259753~3.458364926e-09
+row ODS_VALUE|1|BiasAdj|0.01512172611322~1.512172611e-10
+row ODS_VALUE|1|CorrEst|0.31916288011083~3.191628801e-09
+row ODS_VALUE|1|Lcl|-0.31186188334823~3.118618833e-09
+row ODS_VALUE|1|Ucl|0.75480779309098~7.548077931e-09
+row ODS_VALUE|1|pValue|0.29949848095972~2.99498481e-09

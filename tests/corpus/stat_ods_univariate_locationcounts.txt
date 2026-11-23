@@ -1,0 +1,16 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 3 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|Count|char|14|||
+row ODS_COL|3|Value|num|8|8.||Value of Count
+stdout-count 9 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Count|Num Obs > Mu0
+row ODS_VALUE|1|Value|13~1.3e-07
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Count|Num Obs ^= Mu0
+row ODS_VALUE|2|Value|13~1.3e-07
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Count|Num Obs < Mu0
+row ODS_VALUE|3|Value|0~0

@@ -1,0 +1,5 @@
+# corpus assertions
+row Chi-Square 1 0.4565 0.4992
+stderr-count 1 WARNING: Fisher's exact test cannot be computed when there are noninteger frequencies.
+stdout-count 0 Fisher's Exact Test
+row-count 1 Chi-Square {any} {any} {any}

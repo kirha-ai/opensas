@@ -1,0 +1,9 @@
+# corpus assertions
+row Left-sided Pr <= F 0.7571
+row Right-sided Pr >= F 0.7571
+row Table Probability (P) 0.5143
+row Two-sided Pr <= P 1.0000
+row-count 1 Left-sided Pr <= F {any}
+row-count 1 Right-sided Pr >= F {any}
+row-count 1 Table Probability (P) {any}
+row-count 1 Two-sided Pr <= P {any}

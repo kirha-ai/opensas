@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 1 Frequency
+stdout-count 1 Percent
+stdout-count 1 Col Pct
+stdout-count 0 Row Pct

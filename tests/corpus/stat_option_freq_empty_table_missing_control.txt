@@ -1,0 +1,9 @@
+# corpus assertions
+stdout-count 1 These data are missing because one or more control variables are missing.
+stdout-count 1 Frequency Missing = 7
+stdout-count 2 Frequency Missing = 3
+stdout-count 1 Table is empty. No statistics are computed.
+row Sample Size = 0~5.1e-05
+row Sample Size = 5~5.1e-05
+row Sample Size = 0~5.1e-05
+row-count 3 Sample Size = {any}

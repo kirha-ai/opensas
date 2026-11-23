@@ -1,0 +1,7 @@
+# corpus assertions
+row g _VAR_ _MINPT_ _OBSPCT_ _COUNT_
+next A x 0 100 5
+next B x 10 50 2
+next B x 20 25 1
+next B x 30 25 1
+end-listing

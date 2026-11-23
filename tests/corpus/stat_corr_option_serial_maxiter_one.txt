@@ -1,0 +1,6 @@
+# corpus assertions
+row The CORR Procedure
+row polyserial Correlations
+row x g 8 . . . . . .
+stderr-count 1 WARNING:
+stderr-count 1 WARNING: The algorithm for polyserial correlation between g and x did not converge.

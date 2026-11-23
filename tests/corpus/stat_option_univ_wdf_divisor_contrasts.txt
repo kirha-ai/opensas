@@ -1,0 +1,8 @@
+# corpus assertions
+row Case univ_wdf_divisor_high
+row WDF 1~1e-11 1~1e-11 1~1e-11 0~1e-11
+row Case univ_wdf_divisor_small
+row WDF 1~1e-11 . . 2~1e-11
+row Case univ_wdf_divisor_zero
+row WDF 1~1e-11 . . 2~1e-11
+row-count 3 WDF {any} {any} {any} {any}

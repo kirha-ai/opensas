@@ -1,0 +1,11 @@
+# corpus assertions
+stdout-count 1 Overall P-Value
+stdout-count 3 <.0001
+row Lower Margin Z 7.1865~5.1e-05
+row Upper Margin Z -4.8701~5.1e-05
+row 90% Lower Conf Limit 0.2719~5.1e-05
+row 90% Upper Conf Limit 0.3265~5.1e-05
+row-count 1 Lower Margin Z {any}
+row-count 1 Upper Margin Z {any}
+row-count 1 90% Lower Conf Limit {any}
+row-count 1 90% Upper Conf Limit {any}

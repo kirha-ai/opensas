@@ -1,0 +1,5 @@
+# corpus assertions
+stdout-count 1 Column 1 (c = 1)
+row Confidence Limits for the Common Risk Difference
+row Minimum Risk 0.1127~5.1e-05 0.089~5.1e-05 -0.0688~5.1e-05 0.2942~5.1e-05
+row-count 1 Minimum Risk {any} {any} {any} {any}

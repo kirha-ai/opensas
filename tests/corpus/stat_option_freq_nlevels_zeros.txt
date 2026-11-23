@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Number of Variable Levels
+row r 3~5.1e-05
+row c 3~5.1e-05
+row-count 1 r {any}
+row-count 1 c {any}

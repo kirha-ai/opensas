@@ -1,0 +1,16 @@
+# corpus assertions
+row x x 3.333333333~5e-06 3.333333333~5e-06 3.333333333~5e-06 4~0 5
+row x y -2.333333333~5e-06 3.333333333~5e-06 2.833333333~5e-06 4~0 5
+row y x -2.333333333~5e-06 2.833333333~5e-06 3.333333333~5e-06 4~0 5
+row y y 2.833333333~5e-06 2.833333333~5e-06 2.833333333~5e-06 4~0 5
+row Simple Statistics
+row x 5 3.66667 1.82574 22.00000 1.00000 5.00000
+row y 5 4.33333 1.68325 26.00000 2.00000 9.00000
+row x 1.00000 -0.75926
+row y -0.75926 1.00000
+row-count 1 x x {any} {any} {any} {any} {any}
+row-count 1 x y {any} {any} {any} {any} {any}
+row-count 1 y x {any} {any} {any} {any} {any}
+row-count 1 y y {any} {any} {any} {any} {any}
+row-count 1 x {any} {any}
+row-count 1 y {any} {any}

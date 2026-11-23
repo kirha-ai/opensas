@@ -1,0 +1,16 @@
+# corpus assertions
+row The CORR Procedure
+row spearman Correlation Coefficients
+row x x 1.00000 . 9
+row x y -0.81857 0.0070 9
+row y x -0.81857 0.0070 9
+row y y 1.00000 . 9
+row Spearman Fisher Correlation Statistics
+row x y 9 -0.81857 -1.15248 -0.05116 -0.80097 -0.956363 -0.292377 -0.30000 0.0435
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 x x {any} {any} {any}
+row-count 1 x y {any} {any} {any}
+row-count 1 y x {any} {any} {any}
+row-count 1 y y {any} {any} {any}
+row-count 1 x y {any} {any} {any} {any} {any} {any} {any} {any} {any}

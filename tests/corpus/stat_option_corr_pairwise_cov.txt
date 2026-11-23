@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 2 Covariance
+stdout-count 1 x 4 3.57143
+stdout-count 1 y 3 3.66667
+stdout-count 0 Pearson Correlation Coefficients
+row y x 8.666666666666666~5.1e-05 17.666666666666668~5.1e-05 5.666666666666667~5.1e-05 2~5.1e-05 3~5.1e-05
+row-count 1 y x {any} {any} {any} {any} {any}

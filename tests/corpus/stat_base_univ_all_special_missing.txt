@@ -1,0 +1,3 @@
+# corpus assertions
+row nx ny ax ay mx my
+row 0 3 . 2.33333~5e-06 4 1

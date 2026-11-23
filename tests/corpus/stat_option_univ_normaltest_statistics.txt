@@ -1,0 +1,11 @@
+# corpus assertions
+stdout-count 1 >0.1500
+stdout-count 2 >0.2500
+row Shapiro-Wilk W 0.926521~5.1e-05 0.485~5.1e-05
+row Kolmogorov-Smirnov D 0.194392~5.1e-05 >0.1500
+row Cramer-von Mises W-Sq 0.041677~5.1e-05 >0.2500
+row Anderson-Darling A-Sq 0.284267~5.1e-05 >0.2500
+row-count 1 Shapiro-Wilk W {any} {any}
+row-count 1 Kolmogorov-Smirnov D {any} >0.1500
+row-count 1 Cramer-von Mises W-Sq {any} >0.2500
+row-count 1 Anderson-Darling A-Sq {any} >0.2500

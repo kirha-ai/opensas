@@ -1,0 +1,14 @@
+# corpus assertions
+row Case univ_squares_plain_df_0p25
+row SQUARE 0~1e-12 0~1e-12 0~1e-12
+row Case univ_squares_plain_df_0p5
+row SQUARE 0~1e-12 1.5625~1e-12 0~1e-12
+row Case univ_squares_plain_df_0p71
+row SQUARE 0~1e-12 3.150625~1e-12 0~1e-12
+row Case univ_squares_plain_df_0p99
+row SQUARE 0~1e-12 0~1e-12 2.041875~1e-12
+row Case univ_squares_plain_df_1
+row SQUARE 0~1e-12 4~1e-12 3.33333333333333~1e-12
+row Case univ_squares_plain_df_1p25
+row SQUARE 1.14108866146909~1e-12 6.25~1e-12 5.20833333333333~1e-12
+row-count 6 SQUARE {any} {any} {any}

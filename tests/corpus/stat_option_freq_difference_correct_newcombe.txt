@@ -1,0 +1,3 @@
+# corpus assertions
+row Newcombe (Corrected) -0.6588~5.1e-05 -0.1318~5.1e-05
+row-count 1 Newcombe (Corrected) {any} {any}

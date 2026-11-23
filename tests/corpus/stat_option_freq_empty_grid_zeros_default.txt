@@ -1,0 +1,6 @@
+# corpus assertions
+row Total 2~5.1e-05 3~5.1e-05 5~5.1e-05
+row Total 0~5.1e-05 0~5.1e-05 0~5.1e-05
+row Total 0~5.1e-05 0~5.1e-05 0~5.1e-05
+row Total 3~5.1e-05 4~5.1e-05 7~5.1e-05
+row-count 4 Total {any} {any} {any}

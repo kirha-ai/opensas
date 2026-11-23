@@ -1,0 +1,3 @@
+# corpus assertions
+stdout-count 1 100% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+stderr-count 0 expected counts less than 5

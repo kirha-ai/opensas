@@ -1,0 +1,5 @@
+# corpus assertions
+stderr-count 3 Path:
+log-row Path: Corr.VarInformation
+log-row Path: Corr.SimpleStats
+log-row Path: Corr.PearsonCorr

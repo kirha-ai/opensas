@@ -1,0 +1,12 @@
+# corpus assertions
+row Case freq_riskdiff_sup_fm
+row Z 1.7156~5.1e-05
+row Pr > Z 0.0431~5.1e-05
+row Case freq_riskdiff_sup_ha
+row Z 1.5784~5.1e-05
+row Pr > Z 0.0572~5.1e-05
+row Case freq_riskdiff_sup_wald
+row Z 1.8094~5.1e-05
+row Pr > Z 0.0352~5.1e-05
+row-count 3 Z {any}
+row-count 3 Pr > Z {any}

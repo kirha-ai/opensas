@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 0 Variables: x w
+stdout-count 0 w2 3
+stdout-count 0 w1 3
+row x 3~5.1e-05 4.33333~5.1e-05 2.3094~5.1e-05 13~5.1e-05 1~5.1e-05 7~5.1e-05
+row-count 1 x {any} {any} {any} {any} {any} {any}

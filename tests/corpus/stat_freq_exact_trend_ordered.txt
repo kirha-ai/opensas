@@ -1,0 +1,7 @@
+# corpus assertions
+row One-sided Pr <= Statistic 0.0429
+row Mid p-Value 0.0214
+row Two-sided Pr >= | Statistic | 0.0857
+row-count 1 One-sided Pr <= Statistic {any}
+row-count 1 Mid p-Value {any}
+row-count 1 Two-sided Pr >= | Statistic | {any}

@@ -1,0 +1,12 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row r 35 0.48571 0.50709 0~0 0~0 1.00000
+row c 35 1.77143 1.26225 1.00000 0~0 3.00000
+row polychoric Correlations
+row r c 35 1.00000 8.96292E-8 1.2448E14 <.0001 48.4914 <.0001
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 r {any} {any} {any} {any} {any} {any}
+row-count 1 c {any} {any} {any} {any} {any} {any}
+row-count 1 r c {any} {any} {any} {any} {any} {any} {any}

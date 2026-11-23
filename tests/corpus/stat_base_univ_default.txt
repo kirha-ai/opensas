@@ -1,0 +1,49 @@
+# corpus assertions
+row N 8 Sum Weights 8
+row Mean 4.5 Sum Observations 36
+row Std Deviation 2.44948974 Variance 6
+row Skewness 0 Kurtosis -1.2
+row Uncorrected SS 204 Corrected SS 42
+row Coeff Variation 54.4331054 Std Error Mean 0.8660254
+row Mean 4.5 Std Deviation 2.44948974
+row Median 4.5 Variance 6
+row Mode . Range 7
+row Interquartile Range 4
+row Student's t t 5.196152~5e-07 Pr > | t | 0.0013
+row Sign M 4 Pr >= | M | 0.0078
+row Signed Rank S 18 Pr >= | S | 0.0078
+row 100% Max 8
+row 99% 8
+row 95% 8
+row 90% 8
+row 75% Q3 6.5
+row 50% Median 4.5
+row 25% Q1 2.5
+row 10% 1
+row 5% 1
+row 1% 1
+row 0% Min 1
+row-count 1 N {any} Sum Weights {any}
+row-count 1 Mean {any} Sum Observations {any}
+row-count 1 Std Deviation {any} Variance {any}
+row-count 1 Skewness {any} Kurtosis {any}
+row-count 1 Uncorrected SS {any} Corrected SS {any}
+row-count 1 Coeff Variation {any} Std Error Mean {any}
+row-count 1 Mean {any} Std Deviation {any}
+row-count 1 Median {any} Variance {any}
+row-count 1 Mode {any} Range {any}
+row-count 1 Interquartile Range {any}
+row-count 1 Student's t t {any} Pr > | t | {any}
+row-count 1 Sign M {any} Pr >= | M | {any}
+row-count 1 Signed Rank S {any} Pr >= | S | {any}
+row-count 1 100% Max {any}
+row-count 1 99% {any}
+row-count 1 95% {any}
+row-count 1 90% {any}
+row-count 1 75% Q3 {any}
+row-count 1 50% Median {any}
+row-count 1 25% Q1 {any}
+row-count 1 10% {any}
+row-count 1 5% {any}
+row-count 1 1% {any}
+row-count 1 0% Min {any}

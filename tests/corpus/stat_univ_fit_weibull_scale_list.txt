@@ -1,0 +1,51 @@
+# corpus assertions
+row Fitted Weibull Distribution for x
+row Parameters for Weibull Distribution
+row Threshold Theta 0
+row Scale Sigma 2
+row Shape C 1.5
+row Mean 1.805491
+row Std Dev 1.225872
+row Goodness-of-Fit Tests for Weibull Distribution
+row Kolmogorov-Smirnov D 0.19578518 Pr > D >0.250
+row Cramer-von Mises W-Sq 0.18837853 Pr > W-Sq >0.250
+row Anderson-Darling A-Sq 1.30935423 Pr > A-Sq 0.233
+row Quantiles for Weibull Distribution
+row 1.0 0.12000 0.09314
+row 5.0 0.12000 0.27610
+row 10.0 0.23000 0.44615
+row 25.0 0.50000 0.87158
+row 50.0 1.16000 1.56644
+row 75.0 2.51000 2.48657
+row 90.0 4.85000 3.48744
+row 95.0 6.21000 4.15622
+row 99.0 6.21000 5.53597
+row Fitted Weibull Distribution for x
+row Parameters for Weibull Distribution
+row Threshold Theta 0
+row Scale Sigma 4
+row Shape C 1.5
+row Mean 3.610981
+row Std Dev 2.451743
+row Goodness-of-Fit Tests for Weibull Distribution
+row Kolmogorov-Smirnov D 0.44550439 Pr > D 0.003
+row Cramer-von Mises W-Sq 1.25724046 Pr > W-Sq <0.001
+row Anderson-Darling A-Sq 7.74092087 Pr > A-Sq <0.001
+row Quantiles for Weibull Distribution
+row 1.0 0.12000 0.18629
+row 5.0 0.12000 0.55221
+row 10.0 0.23000 0.89230
+row 25.0 0.50000 1.74315
+row 50.0 1.16000 3.13288
+row 75.0 2.51000 4.97314
+row 90.0 4.85000 6.97489
+row 95.0 6.21000 8.31244
+row 99.0 6.21000 11.07194
+row-count 2 Threshold Theta {any}
+row-count 2 Scale Sigma {any}
+row-count 2 Shape C {any}
+row-count 2 Mean {any}
+row-count 2 Std Dev {any}
+row-count 1 Kolmogorov-Smirnov D {any} Pr > D >0.250
+row-count 1 Cramer-von Mises W-Sq {any} Pr > W-Sq >0.250
+row-count 2 Anderson-Darling A-Sq {any} Pr > A-Sq {any}

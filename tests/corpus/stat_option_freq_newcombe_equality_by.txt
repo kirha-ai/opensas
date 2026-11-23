@@ -1,0 +1,10 @@
+# corpus assertions
+stderr-count 1 METHOD=NEWCOMBE is not available for RISKDIFF EQUAL. By default, RISKDIFF EQUAL uses METHOD=WALD. To compute Newcombe confidence limits, specify CL=NEWCOMBE.
+stderr-count 1 The above message was for the following BY group:
+stderr-count 1 g=1
+stderr-count 0 g=2
+row Z 3.3603~5.1e-05
+row Z 3.4759~5.1e-05
+row Z 3.3603~5.1e-05
+row Z 3.4759~5.1e-05
+row-count 4 Z {any}

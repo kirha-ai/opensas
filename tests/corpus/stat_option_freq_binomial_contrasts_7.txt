@@ -1,0 +1,17 @@
+# corpus assertions
+row Case freq_binomial_likelihoodratio
+row Likelihood Ratio 0.1683~5.1e-05 0.5679~5.1e-05
+row Case freq_binomial_logit
+row Logit 0.1768~5.1e-05 0.5744~5.1e-05
+row Case freq_binomial_lr
+row Likelihood Ratio 0.1683~5.1e-05 0.5679~5.1e-05
+row Case freq_binomial_midp
+row Mid-p 0.1677~5.1e-05 0.573~5.1e-05
+row Case freq_binomial_noninf
+row Pr > Z 0.3196~5.1e-05
+row Case freq_binomial_noninferiority
+row Pr > Z 0.3196~5.1e-05
+row-count 2 Likelihood Ratio {any} {any}
+row-count 1 Logit {any} {any}
+row-count 1 Mid-p {any} {any}
+row-count 2 Pr > Z {any}

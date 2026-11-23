@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 0 The range of variable x is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.
+row MOMENT 8~1e-07 400~1e-07 17801000.0625~1e-07 1654.87624740666~1e-07 . .
+row-count 1 MOMENT {any} {any} {any} {any} {any} {any}

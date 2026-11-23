@@ -1,0 +1,11 @@
+# corpus assertions
+row Risk Difference -0.4000
+row ASE (H0) 0.3098
+row Z -1.2910
+row One-sided Pr <= Z 0.1719
+row Two-sided Pr >= | Z | 0.3437
+row-count 1 Risk Difference {any}
+row-count 1 ASE (H0) {any}
+row-count 1 Z {any}
+row-count 1 One-sided Pr <= Z {any}
+row-count 1 Two-sided Pr >= | Z | {any}

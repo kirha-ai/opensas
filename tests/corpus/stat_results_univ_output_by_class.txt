@@ -1,0 +1,11 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 site 2 4
+next 2 arm 2 6 Treatment arm
+next 3 n 1 8 number of nonmissing values, x
+next 4 average 1 8 the mean, x
+next site arm n average
+next A C 2 2
+next A T 1 5
+next B T 2 6
+end-listing

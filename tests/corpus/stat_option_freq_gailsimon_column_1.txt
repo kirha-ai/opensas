@@ -1,0 +1,5 @@
+# corpus assertions
+row Q+ (Positive Risk Differences) 10.0464~5.1e-05 0.0024
+row Q- (Negative Risk Differences) 1.5563~5.1e-05 0.2209
+row-count 1 Q+ (Positive Risk Differences) {any} {any}
+row-count 1 Q- (Negative Risk Differences) {any} {any}

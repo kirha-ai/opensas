@@ -1,0 +1,24 @@
+# corpus assertions
+row SERIAL perturb-1-sweep-1 .
+row SERIAL perturb-1-sweep-2 .
+row SERIAL perturb-1-sweep-3 .
+row SERIAL perturb-1-sweep-4 0.9991023753586404~6e-12
+row SERIAL perturb-1-sweep-5 0.9990740293173344~6e-12
+row SERIAL perturb-1-sweep-6 0.999064580636899~6e-12
+row SERIAL perturb-1-sweep-7 0.9990560768245071~6e-12
+row SERIAL perturb-1-sweep-8 0.9990551319564637~6e-12
+row SERIAL perturb-1-sweep-9 0.9990541870884201~6e-12
+row SERIAL perturb-1-sweep-10 0.9990456832760283~6e-12
+row SERIAL perturb-1-sweep-11 0.9990362345955929~6e-12
+row SERIAL perturb-1-sweep-12 0.9990078885542868~6e-12
+row SERIAL perturb-1-sweep-13 0.99896064515211~6e-12
+row SERIAL perturb-1-sweep-14 0.9988661583477564~6e-12
+row SERIAL perturb-1-sweep-15 0.9985826979346955~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-1-first-m16 .
+row x y {any} {any} 0.0~0 {any} {any} 22.2671946674256~5e-05 {any}
+row SERIAL perturb-1-first-m17 0.99910237535864~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL perturb-1-first-step .
+stdout-count 18 SERIAL
+stderr-count 5 did not converge

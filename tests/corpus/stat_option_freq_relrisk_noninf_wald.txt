@@ -1,0 +1,5 @@
+# corpus assertions
+row Z 3.3632~5.1e-05
+row Pr > Z 0.0004~5.1e-05
+row-count 1 Z {any}
+row-count 1 Pr > Z {any}

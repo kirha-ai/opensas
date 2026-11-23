@@ -1,0 +1,3 @@
+# corpus assertions
+row Score 1.3621~5.1e-05 7.0611~5.1e-05
+row-count 1 Score {any} {any}

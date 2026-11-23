@@ -1,0 +1,45 @@
+# corpus assertions
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.01M1 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.01M2 .
+row x y {any} {any} 0.01544840390521~5e-06 {any} {any} 22.0028069334348~5e-05 {any}
+row SERIAL separated-3-C.01M4 0.995~6e-12
+row x y {any} {any} 0.01544840390521~5e-06 {any} {any} 22.0028069334348~5e-05 {any}
+row SERIAL separated-3-C.01M8 0.995~6e-12
+row x y {any} {any} 0.01544840390521~5e-06 {any} {any} 22.0028069334348~5e-05 {any}
+row SERIAL separated-3-C.01M16 0.995~6e-12
+row x y {any} {any} 0.01544840390521~5e-06 {any} {any} 22.0028069334348~5e-05 {any}
+row SERIAL separated-3-C.01M32 0.995~6e-12
+row x y {any} {any} 0.01544840390521~5e-06 {any} {any} 22.0028069334348~5e-05 {any}
+row SERIAL separated-3-C.01M200 0.995~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.0001M1 .
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M2 0.99995~6e-12
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M4 0.99995~6e-12
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M8 0.99995~6e-12
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M16 0.99995~6e-12
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M32 0.99995~6e-12
+row x y {any} {any} 62.2280906596448~5e-06 {any} {any} 22.0744440656105~5e-05 {any}
+row SERIAL separated-3-C.0001M200 0.99995~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M1 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M2 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M4 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M8 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M16 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M32 .
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-3-C.000001M200 .
+stdout-count 21 SERIAL
+stderr-count 10 did not converge

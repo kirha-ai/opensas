@@ -1,0 +1,10 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 7 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Label|char|11|||Probability
+row ODS_COL|3|Estimate|num|8|PVALUE6.4||
+row ODS_COL|4|LowerCL|num|8|PVALUE6.4||99% Lower Confidence Limit
+row ODS_COL|5|UpperCL|num|8|PVALUE6.4||99% Upper Confidence Limit
+row ODS_COL|6|Samples|num|8|8.||Number of Samples
+row ODS_COL|7|Seed|num|8|10.||Initial Seed

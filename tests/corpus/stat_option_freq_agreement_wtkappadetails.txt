@@ -1,0 +1,6 @@
+# corpus assertions
+row Weighted Kappa Details
+row Observed Agreement 0.8558~5.1e-05
+row Chance-Expected Agreement 0.6428~5.1e-05
+row-count 1 Observed Agreement {any}
+row-count 1 Chance-Expected Agreement {any}

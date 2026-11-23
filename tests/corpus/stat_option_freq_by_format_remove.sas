@@ -1,0 +1,11 @@
+proc format;value grp 1,2='Pooled label' 3='Third';run;
+data sample;input g x;format g grp.;datalines;
+1 1
+1 3
+2 5
+2 7
+3 9
+3 11
+;
+run;
+proc freq data=sample;by g;tables x;format g;run;

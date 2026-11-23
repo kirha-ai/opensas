@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 1 CC_RAW 3FB8000000000000
+row Continuity Adj. Chi-Square 1~1e-12 0.0938~1e-12 0.7595~1e-12
+row-count 1 Continuity Adj. Chi-Square {any} {any} {any}

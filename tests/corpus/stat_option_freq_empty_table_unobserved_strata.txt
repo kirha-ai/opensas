@@ -1,0 +1,12 @@
+# corpus assertions
+stdout-count 5 Table is empty. No statistics are computed.
+stdout-count 1 Frequency Missing = 3
+stdout-count 1 Statistics for Table 2 of r by c\nControlling for g=1 h=2
+stdout-count 1 Statistics for Table 6 of r by c\nControlling for g=3 h=2
+row Sample Size = 5~5.1e-05
+row Sample Size = 0~5.1e-05
+row Sample Size = 0~5.1e-05
+row Sample Size = 0~5.1e-05
+row Sample Size = 0~5.1e-05
+row Sample Size = 0~5.1e-05
+row-count 6 Sample Size = {any}

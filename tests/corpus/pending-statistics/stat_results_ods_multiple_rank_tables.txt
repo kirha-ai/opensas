@@ -1,0 +1,8 @@
+# corpus assertions
+row Variable x y Px Py
+next x 1.00000~5e-06 -0.81857~5e-06 _ 0.0070~5e-05
+next y -0.81857~5e-06 1.00000~5e-06 0.0070~5e-05 _
+next Variable x y Px Py
+next x 1.00000~5e-06 -0.69573~5e-06 _ 0.0110~5e-05
+next y -0.69573~5e-06 1.00000~5e-06 0.0110~5e-05 _
+end-listing

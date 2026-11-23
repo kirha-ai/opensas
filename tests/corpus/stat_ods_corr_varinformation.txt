@@ -1,0 +1,10 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 3 ODS_COL|
+row ODS_COL|1|NVars|num|8|4.||
+row ODS_COL|2|Variables|char|11|||
+row ODS_COL|3|VarNames|char|18|||
+stdout-count 3 ODS_VALUE|
+row ODS_VALUE|1|NVars|2~2e-08
+row ODS_VALUE|1|Variables|Variables:
+row ODS_VALUE|1|VarNames|a        b

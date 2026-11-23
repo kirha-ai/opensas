@@ -1,0 +1,40 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row x 8 4.50000 2.44949 36.00000 1.00000 8.00000
+row y 8 8.87500 4.94072 71.00000 2.00000 17.00000
+row z 8 6.50000 2.44949 52.00000 3.00000 10.00000
+row Pearson Correlation Coefficients
+row Variable x y z
+row x 1.00000 0.96204 0.92857
+row P - 0.0001 0.0009
+row N 8 8 8
+row y 0.96204 1.00000 0.89122
+row P 0.0001 - 0.0030
+row N 8 8 8
+row z 0.92857 0.89122 1.00000
+row P 0.0009 0.0030 -
+row N 8 8 8
+row Cronbach Coefficient Alpha
+row Raw 0.908986
+row Standardized 0.974524
+row x 0.974734 0.829955 0.972114 0.942479
+row y 0.943632 0.962963 0.943632 0.962963
+row z 0.911295 0.867310 0.918653 0.980653
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 z {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any} {any}
+row-count 1 P - {any} {any}
+row-count 3 N {any} {any} {any}
+row-count 1 y {any} {any} {any}
+row-count 1 P {any} - {any}
+row-count 1 z {any} {any} {any}
+row-count 1 P {any} {any} -
+row-count 1 Raw {any}
+row-count 1 Standardized {any}
+row-count 1 x {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any}
+row-count 1 z {any} {any} {any} {any}

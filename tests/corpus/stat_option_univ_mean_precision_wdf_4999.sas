@@ -1,0 +1,1 @@
+data d;w=.5+4999*2**(-53);do t=-1,1;x=t+2**(-24);output;end;run;proc univariate data=d noprint vardef=wdf;var x;weight w;output out=q mean=m sum=s std=d;run;data _null_;set q;nm=m*2**24;ns=s*2**24;nd=missing(d);file print;put 'MEAN ' nm best24. ' ' ns best24. ' ' nd 1.;run;

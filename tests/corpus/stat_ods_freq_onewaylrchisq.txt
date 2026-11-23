@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|3
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Name1|char|8|||
+row ODS_COL|3|Label1|char|10|||
+row ODS_COL|4|cValue1|char|6|||
+row ODS_COL|5|nValue1|num|8|D12.3||
+stdout-count 15 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r
+row ODS_VALUE|1|Name1|_LRCHI_
+row ODS_VALUE|1|Label1|Chi-Square
+row ODS_VALUE|1|cValue1|1.4979
+row ODS_VALUE|1|nValue1|1.49789525443705~1.497895254e-08
+row ODS_VALUE|2|Table|Table r
+row ODS_VALUE|2|Name1|DF_LRCHI
+row ODS_VALUE|2|Label1|DF
+row ODS_VALUE|2|cValue1|2
+row ODS_VALUE|2|nValue1|2~2e-08
+row ODS_VALUE|3|Table|Table r
+row ODS_VALUE|3|Name1|P_LRCHI
+row ODS_VALUE|3|Label1|Pr > ChiSq
+row ODS_VALUE|3|cValue1|0.4729
+row ODS_VALUE|3|nValue1|0.47286392010603~4.728639201e-09

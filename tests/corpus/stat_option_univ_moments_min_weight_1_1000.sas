@@ -1,0 +1,1 @@
+data d;do x=1 to 1;w=1000*2**(-511);output;end;run;proc univariate data=d noprint vardef=weight idout;var x;weight w;id w;output out=t mean=m css=c var=v;run;data _null_;set t;cn=c/w;file print;put 'LOW ' m best32. ' ' cn best32. ' ' v best32.;run;

@@ -1,0 +1,24 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 10 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|HalfP|num|8|6.2||Percent Winsorized in Tail
+row ODS_COL|3|HalfN|num|8|6.||Number Winsorized in Tail
+row ODS_COL|4|Mean|num|8|8.6||Winsorized Mean
+row ODS_COL|5|StdMean|num|8|8.6||Std Error of Winsorized Mean
+row ODS_COL|6|LCLMean|num|8|8.6||Lower 95% Confidence Limit for Mean
+row ODS_COL|7|UCLMean|num|8|8.6||Upper 95% Confidence Limit for Mean
+row ODS_COL|8|DF|num|8|6.||Degrees of Freedom
+row ODS_COL|9|tValue|num|8|8.6||t Value
+row ODS_COL|10|Probt|num|8|PVALUE6.4||Pr > |t|
+stdout-count 10 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|HalfP|15.3846153846153~1.538461538e-07
+row ODS_VALUE|1|HalfN|2~2e-08
+row ODS_VALUE|1|Mean|4.23076923076923~4.230769231e-08
+row ODS_VALUE|1|StdMean|0.85181671501346~8.51816715e-09
+row ODS_VALUE|1|LCLMean|2.26647636351215~2.266476364e-08
+row ODS_VALUE|1|UCLMean|6.19506209802631~6.195062098e-08
+row ODS_VALUE|1|DF|8~8e-08
+row ODS_VALUE|1|tValue|4.96676005084304~4.966760051e-08
+row ODS_VALUE|1|Probt|0.00109755043314~1.097550433e-11

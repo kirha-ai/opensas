@@ -1,0 +1,6 @@
+# corpus assertions
+next average
+next 3.66667~5e-06
+next range
+next 6
+end-listing

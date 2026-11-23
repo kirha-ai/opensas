@@ -1,0 +1,8 @@
+# corpus assertions
+row Spearman Correlation 0.4769~5.1e-05 0.1063~5.1e-05 0.2685~5.1e-05 0.6853~5.1e-05
+rewind
+row ASE under H0 0.1079~5.1e-05
+row Z 4.4188~5.1e-05
+row-count 1 Spearman Correlation {any} {any} {any} {any}
+row-count 1 ASE under H0 {any}
+row-count 1 Z {any}

@@ -1,0 +1,12 @@
+# corpus assertions
+stdout-count 1 g=_
+stdout-count 1 g=.
+stdout-count 1 g=A
+stdout-count 1 g=Z
+stdout-count 1 g=1
+row x 1~5.1e-05 2~5.1e-05 . 2.00000 2.00000 2.00000
+row x 1~5.1e-05 5~5.1e-05 . 5.00000 5.00000 5.00000
+row x 2~5.1e-05 9~5.1e-05 1.41421 18.00000 8.00000 10.00000
+row x 1~5.1e-05 12~5.1e-05 . 12.00000 12.00000 12.00000
+row x 1~5.1e-05 26~5.1e-05 . 26.00000 26.00000 26.00000
+row-count 5 x {any} {any} {any} {any} {any} {any}

@@ -1,0 +1,3 @@
+# corpus assertions
+row WDF 1~1e-11 . . 2~1e-11
+row-count 1 WDF {any} {any} {any} {any}

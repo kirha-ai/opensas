@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 SAVED_q 99
+stdout-count 1 SAVED_t 99
+stderr-count 1 ERROR: Floating Point Overflow.\nERROR: Termination due to Floating Point Exception\nWARNING: The data set WORK.T may be incomplete.  When this step was stopped there were 5 observations and 49 variables.\nWARNING: Data set WORK.T was not replaced because this step was stopped.\nWARNING: The data set WORK.Q may be incomplete.  When this step was stopped there were 2 observations and 4 variables.\nWARNING: Data set WORK.Q was not replaced because this step was stopped.
+stderr-count 0 The above message was for the following BY group:
+stderr-count 1 Floating Point Overflow.

@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 Variable X999 not found.

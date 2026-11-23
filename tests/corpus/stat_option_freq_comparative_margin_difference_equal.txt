@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 0 Risk Estimates
+stdout-count 0 Analysis for the
+stderr-count 1 The lower RISKDIFF MARGIN= value must be less than the upper value.

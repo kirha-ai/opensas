@@ -1,0 +1,5 @@
+# corpus assertions
+row FREQHAND|overflow-bound-c1008|S_COMOR|2.0~1e-12
+row FREQHAND|overflow-bound-c1008|XP2A_COMOR|1.0~1e-12
+row FREQHAND|overflow-bound-c1008|XP2B_COMOR|1.0000000000000002~1e-12
+row FREQHAND|overflow-bound-c1008|XP2C_COMOR|1.0~1e-12

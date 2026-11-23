@@ -1,0 +1,9 @@
+# corpus assertions
+row VarName Label1 cValue1 nValue1 Label2 cValue2 nValue2
+next x N 8 8.000000~0 Sum Weights 8 8.000000~0
+next x Mean 4.5 4.500000~0 Sum Observations 36 36.000000~0
+next x Std Deviation 2.44948974 2.449490~5e-07 Variance 6 6.000000~0
+next x Skewness 0 0~0 Kurtosis -1.2 -1.200000~0
+next x Uncorrected SS 204 204.000000~0 Corrected SS 42 42.000000~0
+next x Coeff Variation 54.4331054 54.433105~5e-07 Std Error Mean 0.8660254 0.866025~5e-07
+end-listing

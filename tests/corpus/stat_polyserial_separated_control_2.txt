@@ -1,0 +1,11 @@
+# corpus assertions
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-control-2-e.01m2 .
+row x y {any} {any} 0.01426849467298~5e-06 {any} {any} 16.5783138595249~5e-05 {any}
+row SERIAL separated-control-2-e.01m8 -0.995~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL separated-control-2-e.0001m2 .
+row x y {any} {any} 0.26221114484028~5e-06 {any} {any} 16.6355323332525~5e-05 {any}
+row SERIAL separated-control-2-e.0001m8 -0.99995~6e-12
+stdout-count 4 SERIAL
+stderr-count 2 did not converge

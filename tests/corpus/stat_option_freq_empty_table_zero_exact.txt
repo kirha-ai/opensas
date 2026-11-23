@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Table is empty. No statistics are computed.
+stdout-count 1 Sample Size = 0
+stdout-count 0 Row or column sum zero
+row Total 0~5.1e-05 0~5.1e-05 0~5.1e-05
+row-count 1 Total {any} {any} {any}

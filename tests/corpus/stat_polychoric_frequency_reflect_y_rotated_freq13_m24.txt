@@ -1,0 +1,9 @@
+# corpus assertions
+row CORRFIT reflect-y-rotated-freq13-m24 2223~0 . . . .
+row CORRFIT reflect-y-rotated-freq16-m24 2736~0 . . . .
+row CORRFIT reflect-y-rotated-freq20-m24 3420~0 . . . .
+row CORRFIT reflect-y-rotated-freq25-m24 4275~0 . . . .
+row CORRFIT reflect-y-rotated-freq50-m24 8550~0 . . . .
+row CORRFIT reflect-y-rotated-freq100-m24 17100~0 . . . .
+stdout-count 6 CORRFIT
+stderr-count 6 did not converge

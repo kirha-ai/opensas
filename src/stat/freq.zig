@@ -2213,8 +2213,8 @@ test "FEAT-base-stat-results last FREQ table writes independent PCHI and cell da
 }
 
 test "FREQ native comparative EQUAL methods, request margins and ordered diagnostics" {
-    // SAS 9.4M9 on cells (12,8;5,25). The displayed reference values and
-    // single-group programs are in tests/statistical-acceptance/freq_risk_cases.py.
+    // SAS 9.4 M9 on cells (12,8;5,25). For the public procedure inputs, see
+    // tests/corpus/stat_option_freq_newcombe_equality_*.sas.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();

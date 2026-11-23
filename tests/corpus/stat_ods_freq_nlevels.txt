@@ -1,0 +1,12 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 4 ODS_COL|
+row ODS_COL|1|TableVar|char|1|||Table Variable
+row ODS_COL|2|NLevels|num|8|BEST8.||Number of Levels
+row ODS_COL|3|NMissLevels|num|8|BEST8.||Number of Missing Levels
+row ODS_COL|4|NNonMissLevels|num|8|BEST8.||Number of Nonmissing Levels
+stdout-count 4 ODS_VALUE|
+row ODS_VALUE|1|TableVar|r
+row ODS_VALUE|1|NLevels|2~2e-08
+row ODS_VALUE|1|NMissLevels|0~0
+row ODS_VALUE|1|NNonMissLevels|2~2e-08

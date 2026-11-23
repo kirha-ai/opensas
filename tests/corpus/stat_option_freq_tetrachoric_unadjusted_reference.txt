@@ -1,0 +1,3 @@
+# corpus assertions
+row Tetrachoric Correlation -0.999~5.1e-05 0~5.1e-05
+row-count 1 Tetrachoric Correlation {any} {any}

@@ -1,0 +1,2 @@
+# corpus assertions
+stderr-count 1 PROC FREQ: score CORRECT must be NO; MEE is a separate suboption

@@ -21,10 +21,11 @@
 //! exits 1 when any fixture fails. It used to always exit 0, which is how
 //! `CORPUS=0` came to be printed beside `1671/1673`.
 //!
-//! argv: <sas-binary> <corpus-dir>  (both wired by build.zig)
+//! argv: <sas-binary> <corpus-dir> [fixture.sas]. The build runs the full directory.
 
 const std = @import("std");
 const Io = std.Io;
+const assertions = @import("corpus_assertions.zig");
 const fixture_rc = @import("fixture_rc.zig");
 
 const max_file: Io.Limit = .limited(1 << 20);
@@ -58,6 +59,9 @@ pub fn main(init: std.process.Init) !void {
     const bin = args.next() orelse std.process.fatal("usage: corpus_runner <sas-bin> <corpus-dir>", .{});
     const corpus_dir = args.next() orelse std.process.fatal("usage: corpus_runner <sas-bin> <corpus-dir>", .{});
 
+    const only = args.next();
+    if (args.next() != null) std.process.fatal("usage: corpus_runner <sas-bin> <corpus-dir> [fixture.sas]", .{});
+
     var dir = try Io.Dir.cwd().openDir(io, corpus_dir, .{ .iterate = true });
     defer dir.close(io);
 
@@ -78,6 +82,9 @@ pub fn main(init: std.process.Init) !void {
     var it = dir.iterate();
     while (try it.next(io)) |entry| {
         if (entry.kind != .file) continue;
+        if (only) |name| {
+            if (!std.mem.eql(u8, name, entry.name)) continue;
+        }
         if (!std.mem.endsWith(u8, entry.name, ".sas")) continue;
 
         const txt_name = try std.fmt.allocPrint(gpa, "{s}.txt", .{entry.name[0 .. entry.name.len - ".sas".len]});
@@ -102,6 +109,7 @@ pub fn main(init: std.process.Init) !void {
     }
 
     const total = clean.items.len + dirty.items.len;
+    if (only != null and total == 0) std.process.fatal("no runnable fixture named {s} in {s}", .{ only.?, corpus_dir });
     var ctx: Ctx = .{
         .io = io,
         .gpa = gpa,
@@ -203,6 +211,12 @@ fn runOneInner(ctx: *Ctx, dir: Io.Dir, name: []const u8) !void {
     };
     defer gpa.free(expected);
 
+    if (std.mem.startsWith(u8, expected, assertions.header)) {
+        const src = try dir.readFileAlloc(io, name, gpa, max_file);
+        defer gpa.free(src);
+        return runAssertions(ctx, sas_path, name, src, expected);
+    }
+
     const res = std.process.run(gpa, io, .{ .argv = &.{ ctx.bin, sas_path } }) catch |e| {
         ctx.print_mu.lockUncancelable(io);
         defer ctx.print_mu.unlock(io);
@@ -242,6 +256,43 @@ fn runOneInner(ctx: *Ctx, dir: Io.Dir, name: []const u8) !void {
     } else {
         const d = firstDiffLine(norm_exp, norm_got);
         std.debug.print("  {s}: FAIL — output differs (expected \"{s}\" | got \"{s}\")\n", .{ name, d.expected, d.got });
+    }
+}
+
+/// SAS may generate several graphs with the same filenames across programs.
+fn runAssertions(ctx: *Ctx, sas_path: []const u8, name: []const u8, src: []const u8, expected: []const u8) !void {
+    const io = ctx.io;
+    const a = ctx.gpa;
+    const cwd = Io.Dir.cwd();
+    var cache = try cwd.createDirPathOpen(io, ".zig-cache/corpus-runs", .{});
+    defer cache.close(io);
+    var nonce: [16]u8 = undefined;
+    io.random(&nonce);
+    const sub = std.fmt.bytesToHex(nonce, .lower);
+    try cache.createDir(io, &sub, .default_dir);
+    defer cache.deleteTree(io, &sub) catch {};
+    var work = try cache.openDir(io, &sub, .{ .iterate = true });
+    defer work.close(io);
+    const file = try cwd.realPathFileAlloc(io, sas_path, a);
+    defer a.free(file);
+    const bin = try cwd.realPathFileAlloc(io, ctx.bin, a);
+    defer a.free(bin);
+    const res = try std.process.run(a, io, .{
+        .argv = &.{ bin, "--graphics-dir", ".", file },
+        .cwd = .{ .dir = work },
+        .stdout_limit = .limited(16 << 20),
+        .stderr_limit = .limited(4 << 20),
+    });
+    defer a.free(res.stdout);
+    defer a.free(res.stderr);
+    const rc = try fixture_rc.mismatch(a, src, res.term);
+    defer if (rc) |message| a.free(message);
+    if (rc orelse try assertions.mismatch(a, io, work, expected, res.stdout, res.stderr)) |why| {
+        ctx.print_mu.lockUncancelable(io);
+        defer ctx.print_mu.unlock(io);
+        std.debug.print("  {s}: FAIL — {s}\n", .{ name, why });
+    } else {
+        _ = ctx.pass.fetchAdd(1, .monotonic);
     }
 }
 
@@ -338,4 +389,5 @@ test {
     // fixture_rc.zig's `test` blocks don't run unless referenced from a test
     // root (modern zig runs only the root file's tests) — pull them in.
     _ = @import("fixture_rc.zig");
+    _ = assertions;
 }

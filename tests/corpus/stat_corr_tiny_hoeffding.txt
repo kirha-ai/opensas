@@ -1,0 +1,18 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row x 2 1.50000 0.70711 1.50000 1.00000 2.00000
+row y 2 1.50000 0.70711 1.50000 1.00000 2.00000
+row hoeffding Correlation Coefficients
+row x x . . 2
+row x y . . 2
+row y x . . 2
+row y y . . 2
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 x x {any} {any} {any}
+row-count 1 x y {any} {any} {any}
+row-count 1 y x {any} {any} {any}
+row-count 1 y y {any} {any} {any}

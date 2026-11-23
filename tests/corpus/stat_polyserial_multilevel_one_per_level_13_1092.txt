@@ -1,0 +1,5 @@
+# corpus assertions
+row x y {any} {any} 0.0~0 {any} {any} 15.8116500170551~5e-05 {any}
+row SERIAL one-per-level-13.1092-c0.1-m200 0.99~6e-12
+stdout-count 1 SERIAL
+stderr-count 0 did not converge

@@ -1,0 +1,10 @@
+# corpus assertions
+row Simple Statistics
+row x 7 2.42857 0.97590 17.00000 1.00000 4.00000
+row y 7 3.28571 1.88982 23.00000 1.00000 5.00000
+row x 1.00000 -0.16783
+row y -0.16783 1.00000
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any}
+row-count 1 y {any} {any}

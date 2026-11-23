@@ -1,0 +1,27 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row z 8 6.50000 2.44949 52.00000 3.00000 10.00000
+row x 8 4.50000 2.44949 36.00000 1.00000 8.00000
+row y 8 8.87500 4.94072 71.00000 2.00000 17.00000
+row Partial Statistics
+row x 0.96429 0.98198
+row y 5.85913 2.42056
+row Pearson Partial Correlation Coefficients
+row Variable x y
+row x 1.00000 0.79884
+row P - 0.0312
+row N 8 8
+row y 0.79884 1.00000
+row P 0.0312 -
+row N 8 8
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 z {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 2 x {any} {any}
+row-count 2 y {any} {any}
+row-count 1 P - {any}
+row-count 2 N {any} {any}
+row-count 1 P {any} -

@@ -1,0 +1,9 @@
+# corpus assertions
+row Table Probability (P) 0.0429
+row Pr <= P 0.2286
+row Point Pr = P 0.1714
+row Mid p-Value 0.1429
+row-count 1 Table Probability (P) {any}
+row-count 1 Pr <= P {any}
+row-count 1 Point Pr = P {any}
+row-count 1 Mid p-Value {any}

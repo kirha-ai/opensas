@@ -1,0 +1,12 @@
+# corpus assertions
+row Fisher's Exact Test
+row Cell (1,1) Frequency (F) 16~5.1e-05
+row Left-sided Pr <= F 0.9994~5.1e-05
+row Right-sided Pr >= F 0.0042~5.1e-05
+row Table Probability (P) 0.0036~5.1e-05
+row Two-sided Pr <= P 0.0052~5.1e-05
+row-count 1 Cell (1,1) Frequency (F) {any}
+row-count 1 Left-sided Pr <= F {any}
+row-count 1 Right-sided Pr >= F {any}
+row-count 1 Table Probability (P) {any}
+row-count 1 Two-sided Pr <= P {any}

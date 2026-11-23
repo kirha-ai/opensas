@@ -1,0 +1,3 @@
+# corpus assertions
+stdout-count 0 Equality Test
+stderr-count 0 METHOD=NEWCOMBE is not available for RISKDIFF EQUAL. By default, RISKDIFF EQUAL uses METHOD=WALD. To compute Newcombe confidence limits, specify CL=NEWCOMBE.

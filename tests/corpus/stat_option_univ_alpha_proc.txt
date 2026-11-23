@@ -1,0 +1,8 @@
+# corpus assertions
+stdout-count 1 90% Confidence Limits
+row Mean 4.75~5.1e-05 2.73254~5.1e-05 6.76746~5.1e-05
+row Std Deviation 3.01188~5.1e-05 2.12463~5.1e-05 5.4128~5.1e-05
+row Variance 9.07143~5.1e-05 4.51407~5.1e-05 29.29845~5.1e-05
+row-count 1 Mean {any} {any} {any}
+row-count 1 Std Deviation {any} {any} {any}
+row-count 1 Variance {any} {any} {any}

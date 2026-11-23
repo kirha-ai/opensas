@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 WARNING: The mean of variable x is too small relative to its range, numerical inaccuracies may occur. Recode if possible.
+row MEAN 0~1e-12 1.5~1e-12 1~1e-12
+row-count 1 MEAN {any} {any} {any}

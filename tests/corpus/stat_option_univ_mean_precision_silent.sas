@@ -1,0 +1,1 @@
+data d;do g=1,2;do c=2,1;do i=1 to 4;if c=2 then do;w=2**96;x=i;y=i;z=1e155;end;else do;w=1;x=16+(i=4)*1001*2**(-48);y=x;z=1e155;end;output;end;end;end;run;proc univariate data=d noprint vardef=n;by g;class c;var x z y;weight w;run;

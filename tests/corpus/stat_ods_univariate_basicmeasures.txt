@@ -1,0 +1,29 @@
+# corpus assertions
+row ODS_ROWS|4
+stdout-count 5 ODS_COL|
+row ODS_COL|1|VarName|char|1|||
+row ODS_COL|2|LocMeasure|char|6|||Measure of Location
+row ODS_COL|3|LocValue|num|8|8.6||Value of Measure of Location
+row ODS_COL|4|VarMeasure|char|19|||Measure of Variability
+row ODS_COL|5|VarValue|num|8|D10.||Value of Measure of Variability
+stdout-count 20 ODS_VALUE|
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|LocMeasure|Mean
+row ODS_VALUE|1|LocValue|4.3076923076923~4.307692308e-08
+row ODS_VALUE|1|VarMeasure|Std Deviation
+row ODS_VALUE|1|VarValue|2.39390251070699~2.393902511e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|LocMeasure|Median
+row ODS_VALUE|2|LocValue|4~4e-08
+row ODS_VALUE|2|VarMeasure|Variance
+row ODS_VALUE|2|VarValue|5.73076923076923~5.730769231e-08
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|LocMeasure|Mode
+row ODS_VALUE|3|LocValue|2~2e-08
+row ODS_VALUE|3|VarMeasure|Range
+row ODS_VALUE|3|VarValue|7~7e-08
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|LocMeasure|
+row ODS_VALUE|4|LocValue|_
+row ODS_VALUE|4|VarMeasure|Interquartile Range
+row ODS_VALUE|4|VarValue|4~4e-08

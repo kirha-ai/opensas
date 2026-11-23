@@ -1,0 +1,4 @@
+# corpus assertions
+stderr-count 1 No variables found beginning with 'NOTHING' in data set WORK.SAMPLE.
+row Mean 2~5.1e-05 Sum Observations 4
+row-count 1 Mean {any} Sum Observations {any}

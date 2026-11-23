@@ -1,0 +1,3 @@
+# corpus assertions
+row Weighted Kappa Coefficient
+row 0.5963~5.1e-05 0.1128~5.1e-05 0.3753~5.1e-05 0.8173~5.1e-05

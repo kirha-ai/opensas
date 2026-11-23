@@ -1,0 +1,23 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row x 8 2.50000 1.60357 2.00000 1.00000 5.00000
+row y 8 4.12500 2.94897 4.50000 1.00000 8.00000
+row spearman Correlation Coefficients
+row x x 1.00000 . 8
+row x y -0.32026 0.4393 8
+row y x -0.32026 0.4393 8
+row y y 1.00000 . 8
+row kendall Correlation Coefficients
+row x x 1.00000 . 8
+row x y -0.18650 0.5734 8
+row y x -0.18650 0.5734 8
+row y y 1.00000 . 8
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 2 x x {any} {any} {any}
+row-count 2 x y {any} {any} {any}
+row-count 2 y x {any} {any} {any}
+row-count 2 y y {any} {any} {any}

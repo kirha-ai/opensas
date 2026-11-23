@@ -1,0 +1,13 @@
+# corpus assertions
+stdout-count 3 Method = Newcombe
+stderr-count 1 METHOD=NEWCOMBE is not available for RISKDIFF EQUAL
+row Z 3.3603~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row 90% Lower Conf Limit 0.2052~5.1e-05
+row 90% Upper Conf Limit 0.6115~5.1e-05
+row-count 1 Z {any}
+row-count 3 90% Lower Conf Limit {any}
+row-count 3 90% Upper Conf Limit {any}

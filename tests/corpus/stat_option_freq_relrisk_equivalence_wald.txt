@@ -1,0 +1,7 @@
+# corpus assertions
+row Overall P-Value 0.2313~5.1e-05
+row 90% Lower Conf Limit 1.7252~5.1e-05
+row 90% Upper Conf Limit 7.5122~5.1e-05
+row-count 1 Overall P-Value {any}
+row-count 1 90% Lower Conf Limit {any}
+row-count 1 90% Upper Conf Limit {any}

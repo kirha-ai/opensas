@@ -1,0 +1,7 @@
+# corpus assertions
+stdout-count 1 Nonzero Correlation
+stdout-count 1 Row Mean Scores Differ
+stdout-count 0 General Association
+row I-Square Measure of Heterogeneity
+row 87.81% 1~5.1e-05 52.88% 96.85%
+row-count 1 87.81% {any} 52.88% 96.85%

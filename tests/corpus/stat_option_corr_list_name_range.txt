@@ -1,0 +1,9 @@
+# corpus assertions
+row x01 2 2~5.1e-05 1.41421 4.00000 1.00000 3.00000
+row extra 2 10~5.1e-05 1.41421 20.00000 9.00000 11.00000
+row x03 2 4~5.1e-05 1.41421 8.00000 3.00000 5.00000
+row x02 2 3~5.1e-05 1.41421 6.00000 2.00000 4.00000
+row-count 1 x01 {any} {any} {any} {any} {any} {any}
+row-count 1 extra {any} {any} {any} {any} {any} {any}
+row-count 1 x03 {any} {any} {any} {any} {any} {any}
+row-count 1 x02 {any} {any} {any} {any} {any} {any}

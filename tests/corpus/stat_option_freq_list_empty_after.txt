@@ -1,0 +1,3 @@
+# corpus assertions
+stderr-count 1 No variables found beginning with 'NOTHING' in data set WORK.SAMPLE.
+stderr-count 1 Variable number 0 is not on file WORK.SAMPLE.

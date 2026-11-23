@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 2 Frequency
+stdout-count 0 Binomial Proportion
+stderr-count 1 BINOMIAL LEVEL=' ' is not found for variable x.

@@ -1,0 +1,5 @@
+# corpus assertions
+row Location Mu 5~5.1e-07
+row Scale Sigma 3.608504~5.1e-07
+row-count 1 Location Mu {any}
+row-count 1 Scale Sigma {any}

@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 1 Equality Test for the Binomial Proportion
+stdout-count 2 Frequency
+stdout-count 0 Equivalence Analysis
+stderr-count 1 ERROR: For binomial noninferiority, superiority, and equivalence tests, the limits determined by the MARGIN and null P values must be between 0 and 1.\nERROR: The binomial equivalence limits are 0 and 0.4. An equivalence test cannot be computed.
+stderr-count 1 For binomial noninferiority, superiority, and equivalence tests, the limits determined by the MARGIN and null P values must be between 0 and 1.

@@ -1,0 +1,17 @@
+# corpus assertions
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL affine-c0.0001-m1 1.0~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL affine-c0.0001-m5 1.0~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL affine-c0.0001-m200 1.0~6e-12
+row x y {any} {any} 0.04625421046509~5e-06 {any} {any} 19.0711762740653~5e-05 {any}
+row SERIAL affine-c0.5-m1 0.99~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL affine-c0.01-m1 1.0~6e-12
+row x y {any} {any} . {any} {any} . {any}
+row SERIAL affine-c0.01-m5 1.0~6e-12
+row x y {any} {any} 6.8828210825935~5e-06 {any} {any} 19.0954250461286~5e-05 {any}
+row SERIAL affine-c0.01-m200 0.995~6e-12
+stdout-count 7 SERIAL
+stderr-count 0 did not converge

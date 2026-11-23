@@ -1,0 +1,25 @@
+# corpus assertions
+row The CORR Procedure
+row Simple Statistics
+row x 3 2.00000 1.00000 6.00000 1.00000 3.00000
+row y 3 2.00000 1.00000 6.00000 1.00000 3.00000
+row Pearson Correlation Coefficients
+row Variable x y
+row x 1.00000 0.50000
+row P - 0.6667
+row N 3 3
+row y 0.50000 1.00000
+row P 0.6667 -
+row N 3 3
+row Pearson Fisher Correlation Statistics
+row x y 3 0.50000 0.54931 . . . . .
+stderr-count 0 WARNING:
+stdout-count 1 The CORR Procedure
+row-count 1 x {any} {any} {any} {any} {any} {any}
+row-count 1 y {any} {any} {any} {any} {any} {any}
+row-count 1 x {any} {any}
+row-count 1 P - {any}
+row-count 2 N {any} {any}
+row-count 1 y {any} {any}
+row-count 1 P {any} -
+row-count 1 x y {any} {any} {any} {any} {any} {any} {any} {any}

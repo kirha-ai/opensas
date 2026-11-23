@@ -1,0 +1,9 @@
+# corpus assertions
+row Location Theta -3.3e-11~5.1e-07
+row Scale Sigma 2.403494~5.1e-07
+row Shape Delta 1.281552~5.1e-07
+row Shape Gamma -1.37e-11~5.1e-07
+row-count 1 Location Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Delta {any}
+row-count 1 Shape Gamma {any}

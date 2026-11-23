@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 2 Tot Pct
+row | 20~5.1e-05 | 5~5.1e-05 | 0~5.1e-05 | 25~5.1e-05
+rewind
+stdout-count 2 Cumulative Col%
+row | 66.67~5.1e-05 | 25~5.1e-05 | . | 50~5.1e-05

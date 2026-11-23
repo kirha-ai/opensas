@@ -1,0 +1,6 @@
+# corpus assertions
+stdout-count 2 Superiority Analysis
+stdout-count 1 Exact Superiority Analysis
+stdout-count 0 Exact Noninferiority Analysis
+stdout-count 0 Exact Equivalence Analysis
+stderr-count 1 For binomial noninferiority, superiority, and equivalence tests, the limits determined by the MARGIN and null P values must be between 0 and 1.

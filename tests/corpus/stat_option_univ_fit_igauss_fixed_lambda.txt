@@ -1,0 +1,7 @@
+# corpus assertions
+row STAT D | 0.15658787070813~1e-11
+row STAT W-Sq | 0.32917053554589~1e-11
+row STAT A-Sq | 1.72606188266944~1e-11
+row-count 1 STAT D | {any}
+row-count 1 STAT W-Sq | {any}
+row-count 1 STAT A-Sq | {any}

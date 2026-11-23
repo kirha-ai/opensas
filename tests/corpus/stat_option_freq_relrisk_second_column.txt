@@ -1,0 +1,4 @@
+# corpus assertions
+stdout-count 2 Column 2 (c = 2)
+row Likelihood Ratio 0.245~5.1e-05 0.7747~5.1e-05
+row-count 1 Likelihood Ratio {any} {any}

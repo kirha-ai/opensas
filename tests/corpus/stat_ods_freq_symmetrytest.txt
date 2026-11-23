@@ -1,0 +1,12 @@
+# corpus assertions
+row ODS_ROWS|1
+stdout-count 4 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|ChiSquare|num|8|10.4||Chi-Square
+row ODS_COL|3|DF|num|8|BEST6.||Degrees of Freedom
+row ODS_COL|4|Prob|num|8|PVALUE6.4||Pr > Chi-Square
+stdout-count 4 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|ChiSquare|1.34285714285714~1.342857143e-08
+row ODS_VALUE|1|DF|3~3e-08
+row ODS_VALUE|1|Prob|0.71898224679232~7.189822468e-09

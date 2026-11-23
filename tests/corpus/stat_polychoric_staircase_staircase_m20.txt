@@ -1,0 +1,12 @@
+# corpus assertions
+row CORRFIT staircase-m20 135~0 . . . .
+row CORRFIT staircase-m200 135~0 0.9999~5e-06 0.0~0 . 197.83030675715~3.7e-07
+row CORRFIT shifted-staircase-m20 2896~0 . . . .
+row CORRFIT reflect-first-axis-m20 135~0 . . . .
+row CORRFIT reflect-first-axis-m200 135~0 -0.9999~5e-06 0.0~0 . 197.83030675715~3.7e-07
+row CORRFIT corner-m20 12352~0 . . . .
+row CORRFIT corner-m200 12352~0 0.9999~5e-06 0.0~0 . 11314.7268426884~2.4804e-05
+row CORRFIT transpose-and-reflect-m20 12352~0 . . . .
+row CORRFIT transpose-and-reflect-m200 12352~0 -0.9999~5e-06 0.0~0 . 11314.7268426884~2.4804e-05
+stdout-count 9 CORRFIT
+stderr-count 5 did not converge

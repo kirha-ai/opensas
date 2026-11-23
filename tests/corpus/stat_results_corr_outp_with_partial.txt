@@ -1,0 +1,11 @@
+# corpus assertions
+next VARNUM NAME TYPE LENGTH FORMAT LABEL
+next 1 _TYPE_ 2 8
+next 2 _NAME_ 2 8
+next 3 x 1 8
+next _TYPE_ _NAME_ x
+next MEAN 0.00000~0
+next STD 2.80299~5e-06
+next N 9.00000~0
+next CORR y -0.81501~5e-06
+end-listing

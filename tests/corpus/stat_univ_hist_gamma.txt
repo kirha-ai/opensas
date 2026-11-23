@@ -1,0 +1,24 @@
+# corpus assertions
+row Fitted Gamma Distribution for x
+row Parameters for Gamma Distribution
+row Threshold Theta 0
+row Scale Sigma 1.52169
+row Shape Alpha 2.957238
+row Mean 4.5
+row Std Dev 2.616793
+row Quantiles for Gamma Distribution
+row 1.0 1.00000 0.64128
+row 5.0 1.00000 1.21103
+row 10.0 1.00000 1.63721
+row 25.0 2.50000 2.57699
+row 50.0 4.50000 4.00420
+row 75.0 6.50000 5.88718
+row 90.0 8.00000 8.00846
+row 95.0 8.00000 9.48276
+row 99.0 8.00000 12.68099
+stderr-count 1 WARNING: A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Gamma distribution is not fully specified.
+row-count 1 Threshold Theta {any}
+row-count 1 Scale Sigma {any}
+row-count 1 Shape Alpha {any}
+row-count 1 Mean {any}
+row-count 1 Std Dev {any}

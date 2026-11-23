@@ -1,0 +1,6 @@
+# corpus assertions
+row Skewness -0.19508732019559~5e-08 Kurtosis -1.10338638561523~5e-08
+rewind
+row ODS_SHAPE -0.19508732019559~1e-11 -1.10338638561523~1e-11
+row-count 1 Skewness {any} Kurtosis {any}
+row-count 1 ODS_SHAPE {any} {any}

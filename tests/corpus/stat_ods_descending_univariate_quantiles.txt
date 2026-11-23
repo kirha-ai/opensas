@@ -1,0 +1,140 @@
+# corpus assertions
+row ODS_ROWS|33
+stdout-count 4 ODS_COL|
+row ODS_COL|1|Arm|num|8|Z2.||Study arm
+row ODS_COL|2|VarName|char|1|||
+row ODS_COL|3|Quantile|char|10|||Level
+row ODS_COL|4|Estimate|num|8|3.||Quantile
+stdout-count 132 ODS_VALUE|
+row ODS_VALUE|1|Arm|3~3e-08
+row ODS_VALUE|1|VarName|a
+row ODS_VALUE|1|Quantile|100% Max
+row ODS_VALUE|1|Estimate|8~8e-08
+row ODS_VALUE|2|Arm|3~3e-08
+row ODS_VALUE|2|VarName|a
+row ODS_VALUE|2|Quantile|99%
+row ODS_VALUE|2|Estimate|8~8e-08
+row ODS_VALUE|3|Arm|3~3e-08
+row ODS_VALUE|3|VarName|a
+row ODS_VALUE|3|Quantile|95%
+row ODS_VALUE|3|Estimate|8~8e-08
+row ODS_VALUE|4|Arm|3~3e-08
+row ODS_VALUE|4|VarName|a
+row ODS_VALUE|4|Quantile|90%
+row ODS_VALUE|4|Estimate|8~8e-08
+row ODS_VALUE|5|Arm|3~3e-08
+row ODS_VALUE|5|VarName|a
+row ODS_VALUE|5|Quantile|75% Q3
+row ODS_VALUE|5|Estimate|6~6e-08
+row ODS_VALUE|6|Arm|3~3e-08
+row ODS_VALUE|6|VarName|a
+row ODS_VALUE|6|Quantile|50% Median
+row ODS_VALUE|6|Estimate|4~4e-08
+row ODS_VALUE|7|Arm|3~3e-08
+row ODS_VALUE|7|VarName|a
+row ODS_VALUE|7|Quantile|25% Q1
+row ODS_VALUE|7|Estimate|2~2e-08
+row ODS_VALUE|8|Arm|3~3e-08
+row ODS_VALUE|8|VarName|a
+row ODS_VALUE|8|Quantile|10%
+row ODS_VALUE|8|Estimate|2~2e-08
+row ODS_VALUE|9|Arm|3~3e-08
+row ODS_VALUE|9|VarName|a
+row ODS_VALUE|9|Quantile|5%
+row ODS_VALUE|9|Estimate|1~1e-08
+row ODS_VALUE|10|Arm|3~3e-08
+row ODS_VALUE|10|VarName|a
+row ODS_VALUE|10|Quantile|1%
+row ODS_VALUE|10|Estimate|1~1e-08
+row ODS_VALUE|11|Arm|3~3e-08
+row ODS_VALUE|11|VarName|a
+row ODS_VALUE|11|Quantile|0% Min
+row ODS_VALUE|11|Estimate|1~1e-08
+row ODS_VALUE|12|Arm|2~2e-08
+row ODS_VALUE|12|VarName|a
+row ODS_VALUE|12|Quantile|100% Max
+row ODS_VALUE|12|Estimate|7~7e-08
+row ODS_VALUE|13|Arm|2~2e-08
+row ODS_VALUE|13|VarName|a
+row ODS_VALUE|13|Quantile|99%
+row ODS_VALUE|13|Estimate|7~7e-08
+row ODS_VALUE|14|Arm|2~2e-08
+row ODS_VALUE|14|VarName|a
+row ODS_VALUE|14|Quantile|95%
+row ODS_VALUE|14|Estimate|7~7e-08
+row ODS_VALUE|15|Arm|2~2e-08
+row ODS_VALUE|15|VarName|a
+row ODS_VALUE|15|Quantile|90%
+row ODS_VALUE|15|Estimate|6~6e-08
+row ODS_VALUE|16|Arm|2~2e-08
+row ODS_VALUE|16|VarName|a
+row ODS_VALUE|16|Quantile|75% Q3
+row ODS_VALUE|16|Estimate|5~5e-08
+row ODS_VALUE|17|Arm|2~2e-08
+row ODS_VALUE|17|VarName|a
+row ODS_VALUE|17|Quantile|50% Median
+row ODS_VALUE|17|Estimate|3~3e-08
+row ODS_VALUE|18|Arm|2~2e-08
+row ODS_VALUE|18|VarName|a
+row ODS_VALUE|18|Quantile|25% Q1
+row ODS_VALUE|18|Estimate|2~2e-08
+row ODS_VALUE|19|Arm|2~2e-08
+row ODS_VALUE|19|VarName|a
+row ODS_VALUE|19|Quantile|10%
+row ODS_VALUE|19|Estimate|2~2e-08
+row ODS_VALUE|20|Arm|2~2e-08
+row ODS_VALUE|20|VarName|a
+row ODS_VALUE|20|Quantile|5%
+row ODS_VALUE|20|Estimate|1~1e-08
+row ODS_VALUE|21|Arm|2~2e-08
+row ODS_VALUE|21|VarName|a
+row ODS_VALUE|21|Quantile|1%
+row ODS_VALUE|21|Estimate|1~1e-08
+row ODS_VALUE|22|Arm|2~2e-08
+row ODS_VALUE|22|VarName|a
+row ODS_VALUE|22|Quantile|0% Min
+row ODS_VALUE|22|Estimate|1~1e-08
+row ODS_VALUE|23|Arm|1~1e-08
+row ODS_VALUE|23|VarName|a
+row ODS_VALUE|23|Quantile|100% Max
+row ODS_VALUE|23|Estimate|12~1.2e-07
+row ODS_VALUE|24|Arm|1~1e-08
+row ODS_VALUE|24|VarName|a
+row ODS_VALUE|24|Quantile|99%
+row ODS_VALUE|24|Estimate|12~1.2e-07
+row ODS_VALUE|25|Arm|1~1e-08
+row ODS_VALUE|25|VarName|a
+row ODS_VALUE|25|Quantile|95%
+row ODS_VALUE|25|Estimate|12~1.2e-07
+row ODS_VALUE|26|Arm|1~1e-08
+row ODS_VALUE|26|VarName|a
+row ODS_VALUE|26|Quantile|90%
+row ODS_VALUE|26|Estimate|12~1.2e-07
+row ODS_VALUE|27|Arm|1~1e-08
+row ODS_VALUE|27|VarName|a
+row ODS_VALUE|27|Quantile|75% Q3
+row ODS_VALUE|27|Estimate|11~1.1e-07
+row ODS_VALUE|28|Arm|1~1e-08
+row ODS_VALUE|28|VarName|a
+row ODS_VALUE|28|Quantile|50% Median
+row ODS_VALUE|28|Estimate|9~9e-08
+row ODS_VALUE|29|Arm|1~1e-08
+row ODS_VALUE|29|VarName|a
+row ODS_VALUE|29|Quantile|25% Q1
+row ODS_VALUE|29|Estimate|7~7e-08
+row ODS_VALUE|30|Arm|1~1e-08
+row ODS_VALUE|30|VarName|a
+row ODS_VALUE|30|Quantile|10%
+row ODS_VALUE|30|Estimate|6~6e-08
+row ODS_VALUE|31|Arm|1~1e-08
+row ODS_VALUE|31|VarName|a
+row ODS_VALUE|31|Quantile|5%
+row ODS_VALUE|31|Estimate|5~5e-08
+row ODS_VALUE|32|Arm|1~1e-08
+row ODS_VALUE|32|VarName|a
+row ODS_VALUE|32|Quantile|1%
+row ODS_VALUE|32|Estimate|5~5e-08
+row ODS_VALUE|33|Arm|1~1e-08
+row ODS_VALUE|33|VarName|a
+row ODS_VALUE|33|Quantile|0% Min
+row ODS_VALUE|33|Estimate|5~5e-08

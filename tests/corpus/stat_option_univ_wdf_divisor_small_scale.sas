@@ -1,0 +1,1 @@
+data d;u=1e-145;w=.5+10000*2**(-53);do z=-1,1;x=z*u;output;end;run;proc univariate data=d noprint vardef=wdf;weight w;var x;output out=q sumwgt=s css=c std=d var=v;run;data _null_;set q;u=1e-145;dc=c/u/u;nd=d*sqrt(s-1)/u;nv=v*(s-1)/u/u;nm=nmiss(d,v);file print;put 'WDF ' dc best24. ' ' nd best24. ' ' nv best24. ' ' nm 1.;run;

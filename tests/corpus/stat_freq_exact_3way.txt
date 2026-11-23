@@ -1,0 +1,10 @@
+# corpus assertions
+row Total 1 1 1 1 0 0 0 0 4
+row Row or column sum zero. No statistics computed for this table.
+row Sample Size = 4
+row Total 0 0 0 0 1 1 1 1 4
+row Row or column sum zero. No statistics computed for this table.
+row Sample Size = 4
+stdout-count 0 Fisher's Exact Test
+row-count 2 Total {any} {any} {any} {any} {any} {any} {any} {any} {any}
+row-count 2 Sample Size = {any}

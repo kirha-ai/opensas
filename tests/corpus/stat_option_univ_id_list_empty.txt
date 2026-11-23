@@ -1,0 +1,2 @@
+# corpus assertions
+row 1~5.1e-05 1~5.1e-05 8~5.1e-05 3~5.1e-05

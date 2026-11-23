@@ -1,0 +1,12 @@
+# corpus assertions
+svg-count 1
+svg-has 1 xmlns="http://www.w3.org/2000/svg"
+svg-has 1 data-kind="histogram"
+svg-has 1 class="bar"
+svg-has 1 class="inset"
+row _VAR_ _MINPT_ _OBSPCT_ _COUNT_
+next x 0 68.75 11
+next x 2 18.75 3
+next x 4 6.25 1
+next x 6 6.25 1
+end-listing

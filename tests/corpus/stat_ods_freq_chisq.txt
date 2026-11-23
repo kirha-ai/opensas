@@ -1,0 +1,44 @@
+# corpus assertions
+row ODS_ROWS|7
+stdout-count 5 ODS_COL|
+row ODS_COL|1|Table|char|256|||
+row ODS_COL|2|Statistic|char|28|||
+row ODS_COL|3|DF|num|8|2.||
+row ODS_COL|4|Value|num|8|10.4||
+row ODS_COL|5|Prob|num|8|PVALUE6.4||
+stdout-count 35 ODS_VALUE|
+row ODS_VALUE|1|Table|Table r * c
+row ODS_VALUE|1|Statistic|Chi-Square
+row ODS_VALUE|1|DF|1~1e-08
+row ODS_VALUE|1|Value|1.06071428571428~1.060714286e-08
+row ODS_VALUE|1|Prob|0.30305232949008~3.030523295e-09
+row ODS_VALUE|2|Table|Table r * c
+row ODS_VALUE|2|Statistic|Likelihood Ratio Chi-Square
+row ODS_VALUE|2|DF|1~1e-08
+row ODS_VALUE|2|Value|1.09880862372941~1.098808624e-08
+row ODS_VALUE|2|Prob|0.2945277103135~2.945277103e-09
+row ODS_VALUE|3|Table|Table r * c
+row ODS_VALUE|3|Statistic|Continuity Adj. Chi-Square
+row ODS_VALUE|3|DF|1~1e-08
+row ODS_VALUE|3|Value|0.16041666666666~1.604166667e-09
+row ODS_VALUE|3|Prob|0.68877319139683~6.887731914e-09
+row ODS_VALUE|4|Table|Table r * c
+row ODS_VALUE|4|Statistic|Mantel-Haenszel Chi-Square
+row ODS_VALUE|4|DF|1~1e-08
+row ODS_VALUE|4|Value|0.96428571428571~9.642857143e-09
+row ODS_VALUE|4|Prob|0.32610945202048~3.26109452e-09
+row ODS_VALUE|5|Table|Table r * c
+row ODS_VALUE|5|Statistic|Phi Coefficient
+row ODS_VALUE|5|DF|_
+row ODS_VALUE|5|Value|-0.31052950170405~3.105295017e-09
+row ODS_VALUE|5|Prob|_
+row ODS_VALUE|6|Table|Table r * c
+row ODS_VALUE|6|Statistic|Contingency Coefficient
+row ODS_VALUE|6|DF|_
+row ODS_VALUE|6|Value|0.29656008284352~2.965600828e-09
+row ODS_VALUE|6|Prob|_
+row ODS_VALUE|7|Table|Table r * c
+row ODS_VALUE|7|Statistic|Cramer's V
+row ODS_VALUE|7|DF|_
+row ODS_VALUE|7|Value|-0.31052950170405~3.105295017e-09
+row ODS_VALUE|7|Prob|_
