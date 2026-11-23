@@ -376,7 +376,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         plot.axes = statement.axes;
                         plot.title = statement.title;
                         plot.global_title = cx.graph_title;
-                        plot.inset = try statement.inset.box(a, cx.diags, x.items, &.{plot.distribution});
+                        plot.inset = try statement.inset.box(a, cx.diags, x.items, &.{.{ .curve = plot.distribution }});
                         plot.by_index = by_index;
                         plot.curve_index = curve_index;
                         try sink.emit(sink.context, plot);

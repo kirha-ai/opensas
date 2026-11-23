@@ -136,7 +136,7 @@ const Context = struct {
     }
 };
 
-pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize) diag.Error!void {
+pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize, supplied_tests: ?gof.Result) diag.Error!void {
     if (options.noprint) return;
     const a = cx.arena;
     const name = familyName(curve.family);
@@ -168,7 +168,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     // The inference helper owns parameter- and sample-dependent availability;
     // a blanket small-gamma guard would suppress valid all-known D/W2 tests.
     if (curve.family != .sb and curve.family != .su) {
-        const tests = try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
+        const tests = supplied_tests orelse try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
         var table = try context.createTable();
         table.ds.label = "Goodness of Fit";
         try table.char("Test", 18);

@@ -154,6 +154,12 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
             }
             if (t[i.*].tag != .eq) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: distribution option requires =", .{});
             i.* += 1;
+            if (eq(key, "w")) {
+                // Distribution-line widths apply to the traditional graphics renderer.
+                const widths = try numberList(a, d, t, i);
+                for (widths) |v| if (v <= 0) return d.fail(error.ParseError, 0, "UNIVARIATE: curve widths must be positive", .{});
+                continue;
+            }
             if ((kind == .sb or kind == .su) and eq(key, "fitmethod")) {
                 const method = t[i.*].text;
                 if (eq(method, "percentile")) common.fitmethod = .percentiles else if (eq(method, "moments")) common.fitmethod = .moments else if (eq(method, "mle")) common.fitmethod = .mle else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid FITMETHOD", .{});

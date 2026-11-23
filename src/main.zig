@@ -7174,3 +7174,23 @@ test "comparative histograms paginate class cells, align levels and retain total
     try std.testing.expect(std.mem.indexOf(u8, last_page, "data-proportion=\"0.25\"") != null);
 
 }
+
+test "histogram statistical insets reuse EDF bounds, formatted skewness and labeled reference lines" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input x @@;datalines;\n1 2 3 4 5 6 7 8\n;run;ods graphics on;" ++
+        "proc univariate data=t noprint;var x;histogram / normal(w=3) href=0 hreflabel='Lower bound' vref=25 vreflabel='Quarter';inset n skewness(5.3) normal(ksdpval) /pos=ne format=6.3 cfill=blank;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    for ([_][]const u8{ "class=\"href\" data-value=\"0\"", ">Lower bound</text>", "class=\"vref\" data-value=\"25\"", ">Quarter</text>", ">Skewness</text>", ">0.000</text>", ">Pr &gt; D</text>", ">&gt;0.150</text>" }) |part|
+        try std.testing.expect(std.mem.indexOf(u8, hist, part) != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Pr > D >0.150") != null);
+}

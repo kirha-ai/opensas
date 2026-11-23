@@ -6,6 +6,13 @@ const format = @import("../format.zig");
 const dist = @import("univ_distributions.zig");
 const parameters = @import("univ_distribution_render.zig").parameters;
 const family = @import("univ_distribution_parse.zig").family;
+const gof = @import("univ_distribution_gof.zig");
+pub const Fitted = struct { curve: dist.Distribution, tests: ?gof.Result = null };
+const EdfStat = enum { ksd, ksdpval, cvm, cvmpval, ad, adpval };
+fn edfStat(key: []const u8) ?EdfStat {
+    for (std.meta.tags(EdfStat)) |tag| if (eq(key, @tagName(tag))) return tag;
+    return null;
+}
 const eq = std.ascii.eqlIgnoreCase;
 const A = std.mem.Allocator;
 
@@ -56,7 +63,7 @@ pub const Inset = struct {
             const key = t[i.*].text;
             i.* += 1;
             var item = Item{ .key = key, .curve = family(key) };
-            if (item.curve == null and !eq(key, "n") and !eq(key, "mean") and !eq(key, "std") and !eq(key, "stddev") and !eq(key, "min") and !eq(key, "max"))
+            if (item.curve == null and !eq(key, "n") and !eq(key, "mean") and !eq(key, "std") and !eq(key, "stddev") and !eq(key, "min") and !eq(key, "max") and !eq(key, "skewness") and !eq(key, "skew"))
                 return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported INSET statistic {s}", .{key});
             if (t[i.*].tag == .eq and t[i.* + 1].tag == .string) {
                 item.label = t[i.* + 1].text;
@@ -89,6 +96,12 @@ pub const Inset = struct {
                 inset.fmt = try readFormat(a, d, t, i);
                 continue;
             }
+            if (eq(key, "cfill") and eq(t[i.*].text, "blank")) {
+                // CFILL=BLANK requests an uncolored, opaque traditional inset.
+                // Native ODS insets already use an opaque white background.
+                i.* += 1;
+                continue;
+            }
             if (eq(key, "pos") or eq(key, "position")) {
                 var found = false;
                 inline for (std.meta.tags(Position)) |pos| if (eq(t[i.*].text, @tagName(pos))) {
@@ -102,7 +115,13 @@ pub const Inset = struct {
         return inset;
     }
 
-    pub fn box(self: Inset, a: A, d: *diag.Diagnostics, x: []const f64, curves: []const dist.Distribution) diag.Error!Box {
+    pub fn needsTests(self: Inset, f: dist.Family) bool {
+        for (self.items) |item| if (item.curve == f) {
+            for (item.symbols) |symbol| if (edfStat(symbol) != null) return true;
+        };
+        return false;
+    }
+    pub fn box(self: Inset, a: A, d: *diag.Diagnostics, x: []const f64, curves: []const Fitted) diag.Error!Box {
         var lines: std.ArrayList(Line) = .empty;
         var mean: f64 = 0;
         var ss: f64 = 0;
@@ -114,11 +133,15 @@ pub const Inset = struct {
         for (self.items) |item| {
             const spec = item.fmt orelse self.fmt;
             if (item.curve) |wanted| {
-                for (curves) |c| if (c.family == wanted) {
-                    const pars = try parameters(a, c);
+                for (curves) |fit| if (fit.curve.family == wanted) {
+                    const pars = try parameters(a, fit.curve);
                     if (item.symbols.len == 0) {
                         for (pars) |p| if (p.symbol.len > 0) try append(a, &lines, p.symbol, p.value, spec);
                     } else for (item.symbols) |sym| {
+                        if (edfStat(sym)) |stat| {
+                            if (fit.tests) |tests| try appendEdf(a, &lines, stat, tests, spec);
+                            continue;
+                        }
                         var found = false;
                         for (pars) |p| if (eq(sym, p.symbol)) {
                             try append(a, &lines, p.symbol, p.value, spec);
@@ -131,6 +154,17 @@ pub const Inset = struct {
                 };
             } else {
                 const n: f64 = @floatFromInt(x.len);
+                if (eq(item.key, "skewness") or eq(item.key, "skew")) {
+                    const sd = if (n > 1) @sqrt(ss / (n - 1)) else 0;
+                    var sum: f64 = 0;
+                    if (sd > 0) for (x) |v| {
+                        const z = (v - mean) / sd;
+                        sum += z * z * z;
+                    };
+                    const skew = if (n > 2 and sd > 0) n / ((n - 1) * (n - 2)) * sum else std.math.nan(f64);
+                    try append(a, &lines, item.label orelse "Skewness", skew, spec);
+                    continue;
+                }
                 const val: f64 = if (eq(item.key, "n")) n else if (eq(item.key, "mean")) mean else if (eq(item.key, "min")) x[0] else if (eq(item.key, "max")) x[x.len - 1] else if (n > 1) @sqrt(ss / (n - 1)) else std.math.nan(f64);
                 const key: []const u8 = if (eq(item.key, "n")) "N" else if (eq(item.key, "mean")) "Mean" else if (eq(item.key, "min")) "Minimum" else if (eq(item.key, "max")) "Maximum" else "Std Deviation";
                 try append(a, &lines, item.label orelse key, val, spec);
@@ -139,6 +173,37 @@ pub const Inset = struct {
         return .{ .lines = lines.items, .pos = self.pos, .header = self.header };
     }
 };
+
+fn appendEdf(a: A, lines: *std.ArrayList(Line), stat: EdfStat, tests: gof.Result, spec: []const u8) !void {
+    const key: []const u8 = switch (stat) {
+        .ad => "Anderson-Darling A-Sq",
+        .adpval => "Pr > A-Sq",
+        .cvm => "Cramer-von Mises W-Sq",
+        .cvmpval => "Pr > W-Sq",
+        .ksd => "Kolmogorov-Smirnov D",
+        .ksdpval => "Pr > D",
+    };
+    const prob = switch (stat) {
+        .ksd, .ksdpval => tests.d,
+        .cvm, .cvmpval => tests.w2,
+        .ad, .adpval => tests.a2,
+    } orelse return;
+    switch (stat) {
+        .ksd => try append(a, lines, key, tests.statistics.d, spec),
+        .cvm => try append(a, lines, key, tests.statistics.w2, spec),
+        .ad => try append(a, lines, key, tests.statistics.a2, spec),
+        .ksdpval, .cvmpval, .adpval => {
+            try append(a, lines, key, prob.value, spec);
+            const line = &lines.items[lines.items.len - 1];
+            const sign: []const u8 = switch (prob.sign) {
+                .less => "<",
+                .greater => ">",
+                .exact => "",
+            };
+            line.value = try std.mem.concat(a, u8, &.{ sign, line.value });
+        },
+    }
+}
 
 fn append(a: A, lines: *std.ArrayList(Line), key: []const u8, value: f64, spec: []const u8) !void {
     const text = try format.apply(a, .{ .num = value }, spec);

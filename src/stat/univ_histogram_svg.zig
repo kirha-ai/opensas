@@ -19,7 +19,10 @@ pub const Panel = struct {
     inset: ann.Box,
     n: usize,
 };
+pub const References = struct { values: []const f64 = &.{}, labels: []const []const u8 = &.{} };
 pub const Layout = struct {
+    href: References = .{},
+    vref: References = .{},
     rows: ?usize = null,
     columns: ?usize = null,
     ticks: []const f64 = &.{},
@@ -97,6 +100,8 @@ pub fn measure(panels: []const Panel, opt: Options) Axes {
     var x = svg.Range{};
     var maximum: f64 = 0;
     for (opt.endpoints) |v| x.add(v);
+    for (opt.layout.href.values) |v| x.add(v);
+    for (opt.layout.vref.values) |v| maximum = @max(maximum, v);
     for (panels) |p| {
         for (p.bins) |b| {
             x.add(b.lower);
@@ -212,6 +217,22 @@ fn draw(a: A, w: *W, panels: []const Panel, page: Page, opt: Options, axes: Axes
                 try w.print("{s}{d:.2} {d:.2}", .{ if (k == start) "M" else " L", b.px(row[at + 2].num), b.py(row[at + 3].num) });
             }
             try w.writeAll("\"/>");
+        }
+        for ([_]bool{ true, false }) |horizontal| {
+            const refs = if (horizontal) opt.layout.href else opt.layout.vref;
+            for (refs.values, 0..) |value, index| {
+                const px = if (horizontal) b.px(value) else svg.Bounds.left;
+                const py = if (horizontal) b.top else b.py(value);
+                try w.print("<path class=\"{s}\" data-value=\"{d}\" stroke=\"#526b80\" stroke-dasharray=\"5 3\" d=\"M{d:.2} {d:.2}", .{ if (horizontal) "href" else "vref", value, px, py });
+                if (horizontal) try w.print("V{d:.2}", .{b.bottom}) else try w.print("H{d:.2}", .{svg.Bounds.right});
+                try w.writeAll("\"/>");
+                if (refs.labels.len > 0) {
+                    const align_end = horizontal and px > svg.Bounds.right - 80;
+                    try w.print("<text class=\"reference-label\" text-anchor=\"{s}\" x=\"{d:.2}\" y=\"{d:.2}\">", .{ if (align_end) "end" else "start", px + if (align_end) @as(f64, -3) else 3, if (horizontal) py + 15 else py - 3 });
+                    try svg.escaped(w, refs.labels[index]);
+                    try w.writeAll("</text>");
+                }
+            }
         }
         try w.writeAll("</g>");
         if (legends.items.len > 0) {

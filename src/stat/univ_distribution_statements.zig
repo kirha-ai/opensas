@@ -154,6 +154,18 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             const n = try parse.numeric(d, t, i);
             if (n < 1 or n >= @as(f64, @floatFromInt(std.math.maxInt(usize))) or n != @floor(n)) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} requires a positive integer", .{key});
             if (eq(key, "nrows") or eq(key, "nrow")) layout.rows = @intFromFloat(n) else layout.columns = @intFromFloat(n);
+        } else if (eq(key, "href") or eq(key, "vref")) {
+            const refs = if (eq(key, "href")) &layout.href else &layout.vref;
+            refs.values = try parse.numberList(a, d, t, i);
+        } else if (eq(key, "hreflabel") or eq(key, "hreflabels") or eq(key, "vreflabel") or eq(key, "vreflabels")) {
+            const refs = if (std.ascii.toLower(key[0]) == 'h') &layout.href else &layout.vref;
+            var labels: std.ArrayList([]const u8) = .empty;
+            while (t[i.*].tag == .string) {
+                try labels.append(a, t[i.*].text);
+                i.* += 1;
+            }
+            if (labels.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram reference labels require strings", .{});
+            refs.labels = labels.items;
         } else if (eq(key, "vaxis")) {
             if (t[i.*].tag == .name) return proc.failGap(d, 0, "UNIVARIATE: named AXIS statements are unsupported", .{});
             layout.ticks = try parse.numberList(a, d, t, i);
@@ -208,6 +220,8 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             if (!(max_sigmas.? > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXSIGMAS must be positive", .{});
         } else return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported HISTOGRAM option {s}", .{key});
     }
+    for ([_]drawing.References{ layout.href, layout.vref }) |refs| if (refs.labels.len > 0 and refs.labels.len != refs.values.len)
+        return d.fail(error.ParseError, 0, "UNIVARIATE: histogram reference labels must match reference lines", .{});
     if (endpoints.items.len == 1 or midpoints.items.len == 1) return d.fail(error.ParseError, 0, "UNIVARIATE: explicit bin lists need at least two values", .{});
     if (endpoint_labels and midpoints.items.len > 0) try d.warn(0, "UNIVARIATE: ENDPOINTS takes precedence over MIDPOINTS", .{});
     if (!endpoint_labels and midpoints.items.len > 0) {
@@ -302,6 +316,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const rep = representatives[gi];
                     const kernel_start = kd.rows.items.len;
                     var graph_curves: std.ArrayList(drawing.Curve) = .empty;
+                    var inset_fits: std.ArrayList(ann.Fitted) = .empty;
                     if (statement.kernels.len > 0 or statement.kernel_output != null) {
                         const pairs = try a.alloc(h.XW, x.len);
                         for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
@@ -338,10 +353,16 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         };
                         if (request.optprint or (request.itprint and trace.weibull.items.len > 0)) try rendering.renderTrace(a, out, trace, report);
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, curve);
-                        if (graphics != null) try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
+                        const tests = if (graphics != null and statement.inset.needsTests(curve.family) and curve.family != .sb and curve.family != .su)
+                            try @import("univ_distribution_gof.zig").computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler)
+                        else null;
+                        if (graphics != null) {
+                            try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
+                            try inset_fits.append(a, .{ .curve = curve, .tests = tests });
+                        }
                         if (!curves.noprint) {
                             const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, curve);
-                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels, by_number);
+                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels, by_number, tests);
                         }
                     };
                     if (graphics != null) {
@@ -350,9 +371,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                             const display = if (rep[idx] == .str) rep[idx].str else try @import("../format.zig").apply(a, rep[idx], descriptors.columns.items[idx].format orelse "BEST12.");
                             key.* = .{ .column = descriptors.columns.items[idx], .value = rep[idx], .display = std.mem.trim(u8, display, " "), .class = j >= bcols.len };
                         }
-                        const pars = try a.alloc(@import("univ_distributions.zig").Distribution, graph_curves.items.len);
-                        for (pars, graph_curves.items) |*p, c| p.* = c.distribution;
-                        try panels.append(a, .{ .keys = graph_keys, .bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null), .curves = graph_curves.items, .kernel_rows = if (statement.kernels.len == 0) &.{} else try a.dupe([]const Value, kd.rows.items[kernel_start..]), .inset = try statement.inset.box(a, cx.diags, x, pars), .n = x.len });
+                        try panels.append(a, .{ .keys = graph_keys, .bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null), .curves = graph_curves.items, .kernel_rows = if (statement.kernels.len == 0) &.{} else try a.dupe([]const Value, kd.rows.items[kernel_start..]), .inset = try statement.inset.box(a, cx.diags, x, inset_fits.items), .n = x.len });
                     }
                 }
                 if (graphics) |session| if (panels.items.len > 0) {
