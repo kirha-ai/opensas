@@ -139,6 +139,24 @@ fn matrix(scored: model.ScoredMatrix, one: bool) tests.CountMatrix {
 fn config(req: anytype, seed: u64, deadline: *const Deadline) exec.Config {
     return .{ .options = req.exact, .effective_seed = seed, .alpha = req.statistics.alpha, .expected = req.resolved_expected, .null_ratio = req.stratified.agreement.null_ratio, .kappa_weight = req.stratified.agreement.weight, .budget = .{ .context = deadline, .expired = Deadline.expired } };
 }
+fn runFamily(a: A, m: tests.CountMatrix, family: parse.Family, config_: exec.Config) exec.Error!exec.Result {
+    if (family != .relrisk or config_.options.relrisk.column != .both or config_.options.max_seconds == null)
+        return exec.run(a, m, family, config_);
+
+    // M9 gives the two RR confidence intervals separate MAXTIME budgets.
+    var results: exec.RiskIntervals = .{};
+    for ([_]parse.Column{ .first, .second }, 0..) |column, i| {
+        var c = config_;
+        const deadline = Deadline{ .end = seconds() + c.options.max_seconds.? };
+        c.budget.context = &deadline;
+        c.options.relrisk.column = column;
+        const r = try exec.run(a, m, family, c);
+        if (r != .risk_intervals) return r;
+        results.columns[i] = r.risk_intervals.columns[i];
+        results.timed_out[i] = r.risk_intervals.timed_out[i];
+    }
+    return .{ .risk_intervals = results };
+}
 fn directional(f: parse.Family) bool {
     return switch (f) {
         .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc, .jt, .trend, .kappa, .wtkappa => true,
@@ -173,9 +191,12 @@ fn title(f: parse.Family) []const u8 {
         else => "Exact Test",
     };
 }
-fn interval(a: A, out: *Out, name: []const u8, ci: @import("freq_exact.zig").Interval, alpha: f64) diag.Error!void {
+fn boundText(a: A, bound: ?f64) diag.Error![]const u8 {
+    return if (bound) |value| std.fmt.allocPrint(a, "{d:.4}", .{value}) else ".";
+}
+fn interval(a: A, out: *Out, name: []const u8, ci: anytype, alpha: f64) diag.Error!void {
     const level = try @import("freq_risk_render.zig").confidence(a, alpha);
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{s}% Lower Conf Limit  {d:.4}\n{s}% Upper Conf Limit  {d:.4}\n", .{ name, level, ci.lower, level, ci.upper }));
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{s}% Lower Conf Limit  {s}\n{s}% Upper Conf Limit  {s}\n", .{ name, level, try boundText(a, ci.lower), level, try boundText(a, ci.upper) }));
 }
 fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").Request, k: u32, n: u32, c: exec.Config) diag.Error!void {
     if (!request.noninf and !request.sup and !request.equiv) return;
@@ -233,8 +254,8 @@ pub const Tables = struct {
     odds_ratio: ?@import("freq_exact.zig").Interval = null,
     simulations: std.ArrayList(@import("ods_freq_mc.zig").Simulation) = .empty,
     barnard: ?exec.Barnard = null,
-    relative_risk: [2]?@import("freq_exact.zig").Interval = @splat(null),
-    difference: [2]?@import("freq_exact.zig").Interval = @splat(null),
+    relative_risk: [2]?@import("freq_risk.zig").Interval = @splat(null),
+    difference: [2]?@import("freq_risk.zig").Interval = @splat(null),
 };
 pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, simulation_seed: *u64) diag.Error!Tables {
     var limits: Tables = .{};
@@ -284,7 +305,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         if (req.risk.difference) |rd| {
             c.norisks = rd.norisks;
         }
-        const result = exec.run(a, m, f, c) catch |err| {
+        const result = runFamily(a, m, f, c) catch |err| {
             if (err == error.OutOfMemory) return err;
             if (fractionalCounts(m.counts)) {
                 try warnFractional(d, f);
@@ -353,9 +374,15 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .risk_intervals => |r| {
                 const columns = if (f == .relrisk) &limits.relative_risk else &limits.difference;
-                columns.* = .{ r.first, r.second };
-                if (r.first) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 1)", .{title(f)}), ci, c.alpha);
-                if (r.second) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 2)", .{title(f)}), ci, c.alpha);
+                columns.* = r.columns;
+                var noted = false;
+                for (r.columns, r.timed_out, 0..) |column, timed_out, i| {
+                    if (timed_out and (!noted or f == .relrisk)) if (options.max_seconds) |limit| {
+                        try d.report(.note, 0, "Exact {s} computations were terminated when time exceeded MAXTIME={d}.", .{ if (f == .riskdiff) "risk difference" else "relative risk", limit });
+                        noted = true;
+                    };
+                    if (column) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column {d})", .{ title(f), i + 1 }), ci, c.alpha);
+                }
             },
             .barnard => |b| {
                 if (b.tails == .exhausted) if (options.max_seconds) |limit| {
@@ -848,9 +875,9 @@ test "public RR SCORE2 preserves the quantified unresolved SAS endpoint discrepa
     var d = diag.Diagnostics.init(a);
     const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(column=both method=score2); run;", &d);
     const r = (try exec.run(a, .{ .rows = 2, .cols = 2, .counts = &.{ 1, 3, 3, 1 } }, .relrisk, .{ .options = .{ .relrisk = .{ .column = .both, .method = .score2 } } })).risk_intervals;
-    try std.testing.expectApproxEqRel(1 / r.first.?.lower, r.second.?.upper, 1e-8);
-    try std.testing.expect(@abs(r.second.?.upper - 42.0396959567221) > 0.00005);
-    const displayed = try std.fmt.allocPrint(a, "{d:.4}", .{r.second.?.upper});
+    try std.testing.expectApproxEqRel(1 / r.columns[0].?.lower.?, r.columns[1].?.upper.?, 1e-8);
+    try std.testing.expect(@abs(r.columns[1].?.upper.? - 42.0396959567221) > 0.00005);
+    const displayed = try std.fmt.allocPrint(a, "{d:.4}", .{r.columns[1].?.upper.?});
     try std.testing.expect(std.mem.indexOf(u8, out, displayed) != null);
     try std.testing.expect(std.mem.indexOf(u8, out, "42.0397") == null);
 }

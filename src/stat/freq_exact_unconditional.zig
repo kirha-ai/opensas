@@ -21,6 +21,9 @@ pub const Options = struct {
     /// the original stack path. A missing allocator returns exhausted when
     /// dynamic workspace is required; no implicit global allocator is used.
     allocator: ?std.mem.Allocator = null,
+    /// Expose endpoints whose numerical inversions have already completed
+    /// if the caller's deadline interrupts the remaining search.
+    completed_limits: ?*risk.Interval = null,
     budget: dist.Budget = .{},
     /// Absolute bound width for the nuisance supremum (floating roundoff aside).
     tolerance: f64 = 1e-10,
@@ -499,6 +502,9 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
         if (hi - lo > options.inversion_tolerance) return .exhausted;
         const endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
         if (lower) out.lower = endpoint else out.upper = endpoint;
+        if (options.completed_limits) |completed| {
+            if (lower) completed.lower = endpoint else completed.upper = endpoint;
+        }
     }
     return .{ .complete = out };
 }
@@ -542,6 +548,9 @@ pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, 
     work.options.tolerance = @min(options.tolerance, 1e-12);
     const upper = try sasNoscoreUpper(c, alpha, &work);
     if (upper == null) return .exhausted;
+    if (options.completed_limits) |completed| {
+        if (std.math.isFinite(upper.?)) completed.upper = upper.?;
+    }
     const reciprocal = try sasNoscoreUpper(.{ c[2], c[3], c[0], c[1] }, alpha, &work);
     if (reciprocal == null) return .exhausted;
     return .{ .complete = .{ .lower = 1 / reciprocal.?, .upper = upper.? } };
@@ -1222,5 +1231,32 @@ test "dev2 exact boundary SAS FM ordering confirms SCORE2 nuisance endpoint cert
         const result = (try riskTail(tableOf(.{ 0, c.n1, c.n2, 0 }), .first, .relative_risk, .score2, c.r, .two_sided, .{ .tolerance = 1e-13 })).complete;
         try t.expectEqual(@as(f64, 1), result.lower);
         try t.expectEqual(@as(f64, 1), result.upper);
+    }
+}
+
+
+test "deadline during second risk endpoint retains only the completed inversion" {
+    const Stop = struct {
+        fn afterEndpoint(raw: ?*const anyopaque) bool {
+            const completed: *const risk.Interval = @ptrCast(@alignCast(raw.?));
+            return completed.lower != null or completed.upper != null;
+        }
+    };
+    const table = risk.Table2x2{ .cells = .{ 1, 3, 3, 1 } };
+    for ([_]Family{ .difference, .relative_risk }, [_]Method{ .score2, .noscore }) |family, method| {
+        const full = (try riskLimitsSas(table, .first, family, method, 0.05, .{})).complete;
+        var completed: risk.Interval = .{};
+        const stopped = try riskLimitsSas(table, .first, family, method, 0.05, .{
+            .completed_limits = &completed,
+            .budget = .{ .context = &completed, .expired = Stop.afterEndpoint },
+        });
+        try std.testing.expect(stopped == .exhausted);
+        if (family == .difference) {
+            try std.testing.expectEqual(full.lower, completed.lower.?);
+            try std.testing.expect(completed.upper == null);
+        } else {
+            try std.testing.expectEqual(full.upper, completed.upper.?);
+            try std.testing.expect(completed.lower == null);
+        }
     }
 }

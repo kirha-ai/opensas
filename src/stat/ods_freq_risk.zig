@@ -12,13 +12,12 @@ const model = @import("freq_table.zig");
 const risk = @import("freq_risk.zig");
 const report = @import("freq_risk_render.zig");
 const public = @import("freq_exact_public.zig");
-const Interval = @import("freq_exact.zig").Interval;
 
 fn numeric(value: ?f64) Value {
     return if (value) |x| (if (std.math.isFinite(x)) b.n(x) else Value.missing) else Value.missing;
 }
 
-fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64, estimates: report.RiskColumn, difference: ?Interval) !void {
+fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64, estimates: report.RiskColumn, difference: ?risk.Interval) !void {
     t.ds.label = try std.fmt.allocPrint(a, "Column {d} Risk Estimates", .{col + 1});
     try t.char("Table", 256);
     try t.char("Row", 12);
@@ -37,7 +36,7 @@ fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64
         var row: std.ArrayList(Value) = .empty;
         try row.appendSlice(a, &.{ b.s(table), b.s(label), numeric(e.estimate), numeric(e.se), numeric(e.limits.lower), numeric(e.limits.upper) });
         if (has_exact) {
-            const ci: risk.Interval = if (i < 3) estimates.binomial_limits[i] orelse .{} else if (difference) |v| .{ .lower = v.lower, .upper = v.upper } else .{};
+            const ci: risk.Interval = if (i < 3) estimates.binomial_limits[i] orelse .{} else difference orelse .{};
             if (i == 3 and difference == null) {
                 try row.appendSlice(a, &.{ Value.specialMissing('_'), Value.specialMissing('_') });
             } else try row.appendSlice(a, &.{ numeric(ci.lower), numeric(ci.upper) });
@@ -47,7 +46,7 @@ fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64
     }
 }
 
-pub fn ratioLimits(a: A, t: *b.Builder, table_name: []const u8, statistic: []const u8, asym_suffix: []const u8, exact_suffix: []const u8, alpha: f64, estimate: ?f64, asym: risk.Interval, exact: Interval) !void {
+pub fn ratioLimits(a: A, t: *b.Builder, table_name: []const u8, statistic: []const u8, asym_suffix: []const u8, exact_suffix: []const u8, alpha: f64, estimate: ?f64, asym: risk.Interval, exact: anytype) !void {
     try t.char("Table", 256);
     var rows = try @import("ods_freq_exact_rows.zig").Rows.init(a, t, table_name, .default, 10);
     const level = try report.confidence(a, alpha);
@@ -60,8 +59,15 @@ pub fn ratioLimits(a: A, t: *b.Builder, table_name: []const u8, statistic: []con
     };
     const labels = [_][]const u8{ statistic, "", "Asymptotic Conf Limits", lower, upper, "", "Exact Conf Limits", lower, upper };
     const values = [_]?f64{ estimate, null, null, asym.lower, asym.upper, null, null, exact.lower, exact.upper };
-    for (names, labels, values) |name, label, value| {
-        const display = if (name.len == 0) "" else if (value) |x| (if (std.math.isInf(x)) "Infinity" else std.mem.trim(u8, try fmt.apply(a, numeric(x), "10.4"), " ")) else ".";
+    for (names, labels, values, 0..) |name, label, value, i| {
+        const display = if (i >= 7 and std.mem.eql(u8, statistic, "Relative Risk"))
+            if (value) |x| (if (std.math.isInf(x)) "Infty" else try fmt.apply(a, numeric(x), "10.4")) else try fmt.apply(a, Value.missing, "6.")
+        else if (name.len == 0)
+            ""
+        else if (value) |x|
+            (if (std.math.isInf(x)) "Infinity" else std.mem.trim(u8, try fmt.apply(a, numeric(x), "10.4"), " "))
+        else
+            ".";
         try rows.add(name, label, display, if (value) |x| (if (std.math.isFinite(x)) x else null) else null);
     }
     rows.finish();
@@ -174,7 +180,7 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
         try std.testing.expectEqualStrings(if (i == 0) "XU_RRC1" else "XU_RRC2", rs.row(8)[1].str);
         try std.testing.expectApproxEqAbs(if (i == 0) @as(f64, 1.63307915458703) else 5.29231468841894, rs.row(4)[4].num, 1e-12);
         // The ODS value is unrounded. Full M9 SCORE endpoint parity is open.
-        try std.testing.expect(rs.row(8)[4].num != try std.fmt.parseFloat(f64, rs.row(8)[3].str));
+        try std.testing.expect(rs.row(8)[4].num != try std.fmt.parseFloat(f64, std.mem.trim(u8, rs.row(8)[3].str, " ")));
     }
     // M9 keeps all five BarnardsTest rows on MAXTIME. Only the two
     // computed probabilities are missing; the observed sample is usable.
@@ -199,5 +205,55 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
     for ([_][]const u8{ "r1", "r2" }) |name| {
         const row = library.find(name).?.row(3);
         for (row[6..8]) |limit| try std.testing.expectEqual(Value.missingRank(Value.specialMissing('_').num), Value.missingRank(limit.num));
+    }
+}
+
+test "M9 risk deadline keeps RD difference rows and only computed RR columns" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lex = @import("../lexer.zig");
+    const cases = [_][4]f64{
+        .{ 105, 115, 160, 140 }, .{ 0, 220, 160, 140 },
+        .{ 105, 115, 0, 300 },   .{ 220, 0, 0, 300 },
+        .{ 0, 300, 4000, 0 },
+    };
+    for (cases, 0..) |counts, shape| {
+        for ([_][]const u8{ "noscore", "score", "score2" }) |method| {
+            var library = @import("../exec.zig").Library.init(a);
+            var d = diag.Diagnostics.init(a);
+            var capture: ods.Capture = .{};
+            const sample = try a.create(Dataset);
+            sample.* = Dataset.init(a, "sample");
+            for ([_][]const u8{ "r", "c", "n" }) |name| _ = try sample.addColumn(name, .num);
+            for (counts, 0..) |n, i| try sample.appendRow(&.{ b.n(@floatFromInt(i / 2 + 1)), b.n(@floatFromInt(i % 2 + 1)), b.n(n) });
+            try library.put(sample.name, sample);
+            try capture.parse(a, &d, try lex.tokenize(a, "ods output RelRisk1ExactCL=rr1 RelRisk2ExactCL=rr2 RiskDiffCol1=rd1 RiskDiffCol2=rd2;", &d));
+            const program = try std.fmt.allocPrint(a, "proc freq data=sample;weight n / zeros;tables r*c / riskdiff relrisk;exact riskdiff(column=both method={s}) relrisk(column=both method={s}) / maxtime=1e-20;run;", .{ method, method });
+            var listing: std.ArrayList(u8) = .empty;
+            try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, program, &d));
+            try capture.finish(&library, &d);
+            try std.testing.expect(!d.hasErrors());
+            const messages = try d.render();
+            try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, messages, "Exact risk difference computations were terminated"));
+            try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, messages, "Exact relative risk computations were terminated"));
+            for ([_][]const u8{ "rd1", "rd2" }, [_][]const u8{ "rr1", "rr2" }, 0..) |rd, rr, col| {
+                const zero_corner = (shape == 3 and col == 1) or (shape == 4 and col == 0);
+                const full_corner = (shape == 3 and col == 0) or (shape == 4 and col == 1);
+                const difference = library.find(rd).?;
+                try std.testing.expectEqual(@as(usize, 4), difference.rowCount());
+                const limits = difference.row(3)[6..8];
+                if (zero_corner) try std.testing.expectEqual(@as(f64, -1), limits[0].num) else try std.testing.expectEqual(Value.missingRank(Value.missing.num), Value.missingRank(limits[0].num));
+                if (full_corner) try std.testing.expectEqual(@as(f64, 1), limits[1].num) else try std.testing.expectEqual(Value.missingRank(Value.missing.num), Value.missingRank(limits[1].num));
+                const ratio = library.find(rr);
+                if (zero_corner or (full_corner and std.mem.eql(u8, method, "noscore"))) {
+                    const r = ratio.?;
+                    try std.testing.expectEqual(@as(usize, 9), r.rowCount());
+                    if (zero_corner) try std.testing.expectEqual(@as(f64, 0), r.row(7)[4].num) else try std.testing.expectEqual(Value.missingRank(Value.missing.num), Value.missingRank(r.row(7)[4].num));
+                    try std.testing.expectEqual(Value.missingRank(Value.missing.num), Value.missingRank(r.row(8)[4].num));
+                    try std.testing.expectEqualStrings(if (full_corner) "Infty" else "     .", r.row(8)[3].str);
+                } else try std.testing.expect(ratio == null);
+            }
+        }
     }
 }

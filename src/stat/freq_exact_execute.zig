@@ -5,6 +5,7 @@ const dist = @import("freq_exact_distribution.zig");
 const reference = @import("freq_exact_reference.zig");
 const exact = @import("freq_exact.zig");
 const unconditional = @import("freq_exact_unconditional.zig");
+const risk = @import("freq_risk.zig");
 const parse = @import("freq_exact_parse.zig");
 const tests = @import("freq_tests.zig");
 const stratified = @import("freq_stratified.zig");
@@ -51,13 +52,17 @@ pub const Barnard = struct {
         return std.math.copysign(@max(0, @abs(self.z) - tolerance), self.z);
     }
 };
+pub const RiskIntervals = struct {
+    columns: [2]?risk.Interval = @splat(null),
+    timed_out: [2]bool = @splat(false),
+};
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
     fisher: struct { table_probability: f64, first_cell: ?f64, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
     monte_carlo: struct { estimates: dist.MonteCarlo, table_probability: ?f64 = null },
     binomial: exact.Binomial,
     interval: exact.Interval,
-    risk_intervals: struct { first: ?exact.Interval = null, second: ?exact.Interval = null },
+    risk_intervals: RiskIntervals,
     barnard: Barnard,
     exhausted,
     score_too_small: bool, // sign of the observed directional statistic
@@ -339,7 +344,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         };
     }
     if (f == .riskdiff or f == .relrisk or f == .barnard) {
-        const table = @import("freq_risk.zig").Table2x2{ .cells = m.counts[0..4].* };
+        const table = risk.Table2x2{ .cells = m.counts[0..4].* };
         if (f == .barnard) {
             const n1 = m.counts[0] + m.counts[1];
             const n2 = m.counts[2] + m.counts[3];
@@ -354,11 +359,38 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         const options = if (f == .riskdiff) c.options.riskdiff else c.options.relrisk;
         const column = options.column orelse if (f == .riskdiff and !c.norisks) parse.Column.both else .first;
         var result: Result = .{ .risk_intervals = .{} };
-        for ([_]bool{ true, false }) |first| {
-            if ((first and column == .second) or (!first and column == .first)) continue;
-            const interval = try unconditional.riskLimitsSas(table, if (first) .first else .second, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget, .allocator = a });
-            if (interval == .exhausted) return .exhausted;
-            if (first) result.risk_intervals.first = interval.complete else result.risk_intervals.second = interval.complete;
+        for ([_]risk.Column{ .first, .second }, 0..) |col, i| {
+            if ((i == 0 and column == .second) or (i == 1 and column == .first)) continue;
+            if (f == .riskdiff and i == 1 and column == .both) {
+                // Complementing the two response probabilities negates RD and
+                // reverses both its test ordering and its confidence limits.
+                const first = result.risk_intervals.columns[0].?;
+                result.risk_intervals.columns[1] = .{
+                    .lower = if (first.upper) |v| -v else null,
+                    .upper = if (first.lower) |v| -v else null,
+                };
+                result.risk_intervals.timed_out[1] = result.risk_intervals.timed_out[0];
+                continue;
+            }
+            var completed: risk.Interval = .{};
+            const interval = try unconditional.riskLimitsSas(table, col, if (f == .riskdiff) .difference else .relative_risk, options.method, c.alpha, .{ .budget = c.budget, .allocator = a, .completed_limits = &completed });
+            if (interval == .complete) {
+                result.risk_intervals.columns[i] = .{ .lower = interval.complete.lower, .upper = interval.complete.upper };
+                continue;
+            }
+            if (!c.budget.stopped()) return .exhausted;
+            result.risk_intervals.timed_out[i] = true;
+            const zero_first = table.cells[i] == 0 and table.cells[3 - i] == 0;
+            const full_first = table.cells[1 - i] == 0 and table.cells[2 + i] == 0;
+            // M9 retains structural bounds immediately at opposite corners.
+            // A single zero cell alone does not produce a timed-out RR object.
+            if (zero_first) completed.lower = if (f == .riskdiff) -1 else 0;
+            if (full_first) {
+                if (f == .riskdiff) completed.upper = 1 else if (options.method == .noscore) {
+                    completed.upper = std.math.inf(f64);
+                }
+            }
+            if (f == .riskdiff or completed.lower != null or completed.upper != null) result.risk_intervals.columns[i] = completed;
         }
         return result;
     }
