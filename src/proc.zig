@@ -4956,7 +4956,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "Median", med, "Variance", variance);
     const mi = modeInfo(vals);
     if (cx.capture) |capture| try @import("stat/ods_univariate.zig").publish(arena, cx.diags, capture, ds, col, bycols, classcols,
-        .{ .left = .{ nf, s.mean, s.std, skew_out, s.uss, cv },
+        .{ .sample = vals, .left = .{ nf, s.mean, s.std, skew_out, s.uss, cv },
            .right = .{ s.sumw, s.sum, variance, kurt_out, s.css, sem },
            .quantiles = .{ s.max, p99, p95, p90, q3, med, q1, p10, p5, p1, s.min },
            .mode = if (mi.count < 2 and pairs.len != 1) nan else mi.mode });
