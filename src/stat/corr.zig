@@ -1194,8 +1194,8 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                     if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
                     try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
                 }
-                const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
             }
+            const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
             try tables.finish(a, out, start, object);
         }
     }
