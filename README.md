@@ -123,7 +123,7 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 Three suites run in CI on every push and before every release.
 
-- **Unit tests.** 1,586 unit tests across the four Zig test suites.
+- **Unit tests.** `zig build test` runs 1,586 tests across four Zig test suites.
 - **Conformance corpus.** 2,063 one-feature programs in [`tests/corpus/`](tests/corpus). Each program runs and its listing is diffed against the expected output.
 - **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
