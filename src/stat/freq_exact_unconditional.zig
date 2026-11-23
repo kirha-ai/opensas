@@ -213,9 +213,22 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
-/// For observed risks (0,1), the left NOSCORE tail is a single allocation.
-/// Write A=1-p1 and B=p2, so A+B=1-d. The unconstrained maximum of
-/// A^n1 B^n2 assigns A:B=n1:n2. When the larger factor reaches 1 the
+/// At (0,n2), both NOSCORE and the directional score have a singleton left
+/// tail. For the score, write the constrained null as p=a+b*q, b>0,
+/// V=p*(1-p), W=q*(1-q), and t=x-n1*p. At an interior MLE, y-n2*q
+/// equals -b*t*W/V. For t<0, the count bounds therefore give
+/// -t <= min(n1*p, n2*V/(b*q)). The squared score is
+/// t^2*(1/(n1*V) + b^2*W/(n2*V^2)).
+/// Put A=n1*b/n2. On the first branch, A*q<=1-p and the derivative of
+/// the squared bound has the sign of (1-p)*(1+A*(1-2*q))+2*A*b*q*(1-q),
+/// which is positive. On the second branch, A*q>=1-p and the derivative
+/// has the sign of -1+(1-2*p)/A-2*V/(A*b*q), which is negative.
+/// Their meeting point, clipped to the legal nuisance range, is the fit
+/// at (0,n2). At a clipped boundary the remaining count is monotone.
+/// Absolute score ordering in SCORE2 also includes the opposite tail.
+///
+/// For the risk difference write A=1-p1 and B=p2, so A+B=1-d. The interior
+/// maximum of A^n1 B^n2 assigns A:B=n1:n2. When the larger factor reaches 1 the
 /// probability becomes (-d)^min(n1,n2). Invert the two regions at alpha/2.
 fn opposingDifferenceUpper(n1: f64, n2: f64, alpha: f64) f64 {
     const small = @min(n1, n2);
@@ -229,6 +242,21 @@ fn opposingDifferenceUpper(n1: f64, n2: f64, alpha: f64) f64 {
     return -std.math.expm1(log_target / n + entropy);
 }
 
+/// For (0,n2), the RR tail is (1-r)^n1 up to r=n2/N; above that point
+/// it is (n1/N)^n1 * (n2/(N*r))^n2. Return the log upper root so row
+/// reversal can yield a representable lower endpoint even for large ratios.
+fn opposingRatioLogUpper(n1: f64, n2: f64, alpha: f64) f64 {
+    const log_target = @log(alpha) - @log(@as(f64, 2));
+    const at_transition = n1 * logRowShare(n1, n2);
+    if (log_target >= at_transition) return @log(-std.math.expm1(log_target / n1));
+    return logRowShare(n2, n1) + (at_transition - log_target) / n2;
+}
+
+fn logRowShare(row: f64, other: f64) f64 {
+    const total = row + other;
+    return if (row >= other) std.math.log1p(-other / total) else @log(row / total);
+}
+
 /// Equal-tailed NOSCORE/SCORE inversion or absolute-score SCORE2 inversion.
 /// Returns bracketed numerical endpoints; no fixed-margin shortcut is valid.
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
@@ -238,11 +266,19 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
     const s = tableOf(c).samples(.first);
     const estimate = if (family == .difference) s[0].proportion() - s[1].proportion() else if (c[2] == 0) std.math.inf(f64) else s[0].proportion() / s[1].proportion();
     const opposing = (c[0] == 0 and c[3] == 0) or (c[1] == 0 and c[2] == 0);
-    if (family == .difference and method == .noscore and opposing) {
+    if (opposing and (method == .score or (method == .noscore and family == .difference))) {
         if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
         if (options.budget.max_tables == 0 or options.budget.stopped()) return .exhausted;
-        const upper = opposingDifferenceUpper(s[0].total, s[1].total, alpha);
-        return .{ .complete = if (estimate < 0) .{ .lower = -1, .upper = upper } else .{ .lower = -upper, .upper = 1 } };
+        if (family == .difference) {
+            const upper = opposingDifferenceUpper(s[0].total, s[1].total, alpha);
+            return .{ .complete = if (c[0] == 0) .{ .lower = -1, .upper = upper } else .{ .lower = -upper, .upper = 1 } };
+        }
+        const zero_first = c[0] == 0;
+        const zero_row: usize = @intFromBool(!zero_first);
+        const log_upper = opposingRatioLogUpper(s[zero_row].total, s[1 - zero_row].total, alpha);
+        const finite = @exp(if (zero_first) log_upper else -log_upper);
+        if (finite == 0 or !std.math.isFinite(finite)) return .exhausted;
+        return .{ .complete = if (zero_first) .{ .lower = 0, .upper = finite } else .{ .lower = finite, .upper = std.math.inf(f64) } };
     }
     const target = if (method == .score2) alpha else alpha / 2;
     var out = exact.Interval{ .lower = if (family == .difference) -1 else 0, .upper = if (family == .difference) 1 else std.math.inf(f64) };
@@ -364,7 +400,7 @@ fn noscoreUpperTail(c: [4]u32, r: f64, work: *Work) Error!TailResult {
         const q = share / r;
         // Avoid subtracting nearly equal values before multiplying their
         // logarithms by a potentially large row total.
-        const log_failure = if (n1 >= n2) std.math.log1p(-share) else @log(n1 / n);
+        const log_failure = logRowShare(n1, n2);
         const log_success = if (q > 0.5) std.math.log1p(@mulAdd(f64, -r, n, n2) / (r * n)) else @log(q);
         break :blk n1 * log_failure + n2 * log_success;
     };
@@ -646,6 +682,41 @@ test "NOSCORE boundary risk differences invert the constrained maximum for both 
     const reference = -1 - 2 * std.math.expm1(@log(@as(f64, 0.025)) / 4_000_000_000);
     try t.expectApproxEqAbs(reference, interval.upper, 5e-16);
     try t.expect((try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+}
+
+test "directional SCORE orders fully opposing outcomes strictly first and inverts their probability" {
+    const t = std.testing;
+    for (1..6) |n1| for (1..6) |n2| {
+        const corner = [4]u32{ 0, @intCast(n1), @intCast(n2), 0 };
+        for ([_]Family{ .relative_risk, .difference }) |family| {
+            const nulls: []const f64 = if (family == .relative_risk) &.{ 0.001, 0.25, 1, 2, 64 } else &.{ -0.95, -0.5, 0, 0.375, 0.9 };
+            for (nulls) |null_value| {
+                const observed = try statistic(corner, family, .score, null_value);
+                for (0..n1 + 1) |x| for (0..n2 + 1) |y| {
+                    if (x == 0 and y == n2) continue;
+                    const other = [4]u32{ @intCast(x), @intCast(n1 - x), @intCast(y), @intCast(n2 - y) };
+                    try t.expect(try statistic(other, family, .score, null_value) > observed);
+                };
+            }
+            for ([_]f64{ 0.05, 0.55, 0.95 }) |alpha| {
+                const ci = (try riskLimits(tableOf(corner), .first, family, .score, alpha, .{})).complete;
+                const bounds = (try riskTail(tableOf(corner), .first, family, .score, ci.upper, .left, .{ .tolerance = 1e-13 })).complete;
+                try t.expect(bounds.lower <= alpha / 2 + 3e-14 and bounds.upper >= alpha / 2 - 3e-14);
+            }
+        }
+    };
+    // For row sizes 1 and 1 at alpha=.05 the stationary point is interior.
+    const paired = risk.Table2x2{ .cells = .{ 0, 1, 1, 0 } };
+    const low = (try riskLimitsSas(paired, .second, .relative_risk, .score, 0.05, .{})).complete.lower;
+    try t.expectApproxEqAbs(@as(f64, 0.1), low, 2e-16);
+    // Reversing the unequal rows gives a different clipped root. A single
+    // budget unit suffices even though the support has 1,204,301 cells.
+    const wide = risk.Table2x2{ .cells = .{ 0, 300, 4000, 0 } };
+    const options = Options{ .budget = .{ .max_tables = 1 } };
+    const upper = (try riskLimitsSas(wide, .first, .relative_risk, .score, 0.05, options)).complete.upper;
+    const lower = (try riskLimitsSas(wide, .second, .relative_risk, .score, 0.05, options)).complete.lower;
+    try t.expectApproxEqRel(@as(f64, 0.012220974694293554), upper, 1e-14);
+    try t.expectApproxEqRel(@as(f64, 1084.8401995789214), lower, 1e-14);
 }
 
 test "SAS outer profile preserves budgets and default methods" {
