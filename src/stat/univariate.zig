@@ -1455,7 +1455,7 @@ fn summaryOverflows(a: Allocator, view: Analysis, ci: usize, stat: h.Stats, def:
 
 /// M9 reports each affected CLASS cell and variable on its first overflowing
 /// observation. One BY note follows all warnings from the same BY group.
-pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options, outputs: []const Output) !?CalculationFailure {
+pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options, outputs: []const Output) !?CalculationFailure {
     if (ds.rows.items.len == 0) return null;
     const source = opt.source.?;
     var max_weight: f64 = 1;
@@ -1468,7 +1468,10 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
     // WDF can additionally overflow at the final division even when CSS is finite.
     const min_divisor: f64 = if (vd == .wdf and wc != null) h.minWdf else 1;
     const limit = 0.5 * @sqrt((std.math.floatMax(f64) / count) * min_divisor) / @sqrt(max_weight);
+    const check_weight_squares = wc != null and max_weight > 0.5 * @sqrt(std.math.floatMax(f64) / count);
+    const check_weight_ratio = wc != null and max_weight >= @sqrt(std.math.floatMax(f64) * h.minWeight) / count;
     possible: {
+        if (check_weight_squares or check_weight_ratio) break :possible;
         for (source.rows.items) |row| for (acols) |ci| {
             if (@abs(h.toNum(row[ci])) >= limit) break :possible;
         };
@@ -1499,26 +1502,34 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
         try chunk.rows.appendSlice(cx.arena, by.rows);
         const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt);
         var first_failure: ?usize = null;
+        var input_failure: ?WeightFailure = null;
         for (groups, 0..) |class_group, gi| {
             var group = Dataset.init(cx.arena, ds.name);
             group.columns = ds.columns;
             try group.rows.appendSlice(cx.arena, class_group.rows);
             const view = try analysisView(cx.arena, &group, acols, wc, opt);
+            const disabled = if (check_weight_squares) try cx.arena.alloc(?usize, acols.len) else null;
             for (acols, 0..) |ci, vi| {
                 const stat = h.computeUnivStats(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
                 if (try summaryOverflows(cx.arena, view, ci, stat, def, robust[vi])) {
                     const rank = vi * groups.len + gi;
                     first_failure = @min(first_failure orelse rank, rank);
                 }
+                if (disabled) |starts| starts[vi] = stat.overflow_at;
                 if (stat.overflow_at) |at| {
                     try events.append(cx.arena, .{ .observation = @intFromFloat(h.toNum(class_group.rows[at][opt.obscol.?])), .variable = vi });
                 }
             }
+            if (disabled) |starts| if (try weightFailureInCell(cx.arena, view, acols, starts, opt.obscol.?)) |failure| {
+                if (input_failure == null or failure.observation < input_failure.?.observation) input_failure = failure;
+            };
         }
         std.mem.sort(Event, events.items, {}, Event.before);
         for (events.items) |event| {
+            if (input_failure) |failure| if (event.observation > failure.observation) break;
             try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
         }
+        if (input_failure) |failure| return .{ .completed_rows = completed, .reason = if (failure.missing_only) .missing_weight else .weight_statistic, .warn_weight = failure.unnamed_warning };
         if (first_failure) |partial| return .{ .completed_rows = completed, .reason = .floating_point, .failing_rows = by.rows.len, .partial_cells = partial };
         if (events.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt);
         completed += by.rows.len;
@@ -1531,6 +1542,7 @@ pub const CalculationFailure = struct {
     reason: enum { weight_statistic, missing_weight, floating_point },
     failing_rows: usize = 0,
     partial_cells: usize = 0,
+    warn_weight: bool = true,
     outputs: std.ArrayList(OutputInfo) = .empty,
 
     const OutputInfo = struct { name: []const u8, variables: usize, observations: usize, preserved: bool };
@@ -1543,7 +1555,7 @@ pub const CalculationFailure = struct {
         switch (self.reason) {
             .missing_weight => try d.report(.err, 0, "A WEIGHT*FREQ value is too large.", .{}),
             .weight_statistic => {
-                try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
+                if (self.warn_weight) try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
                 try d.report(.err, 0, "Overflow in statistic calculation.", .{});
             },
             .floating_point => {
@@ -1558,45 +1570,31 @@ pub const CalculationFailure = struct {
     }
 };
 
-/// M9 accumulates squared weights separately for each analysis variable's
-/// missing and nonmissing values within a CLASS cell. A failure discards
-/// the entire current BY group, including its other CLASS cells.
-pub fn weightOverflow(a: Allocator, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: usize, opt: Options) !?CalculationFailure {
-    if (ds.rows.items.len == 0) return null;
-    const source = opt.source.?;
-    // The expanded row count bounds every sum of squares, including FREQ.
-    // Ordinary weights never need a second grouping pass.
-    const safe_weight = 0.5 * @sqrt(std.math.floatMax(f64) / @as(f64, @floatFromInt(ds.rows.items.len)));
-    for (source.rows.items) |row| {
-        if (h.toNum(row[wc]) > safe_weight) break;
-    } else return null;
+const WeightFailure = struct { observation: usize, missing_only: bool, unnamed_warning: bool };
 
-    const Totals = std.HashMapUnmanaged([]const Value, [][2]f64, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
-    var completed: usize = 0;
-    for (try bySlices(a, ds.rows.items, bcols, opt)) |by| {
-        var totals: Totals = .empty;
-        for (by.rows) |row| {
-            const raw = sourceRow(source, opt, @intFromFloat(h.toNum(row[opt.obscol.?])));
-            const w = h.toNum(raw[wc]);
-            if (!(w > 0)) continue;
-            const entry = try totals.getOrPutContext(a, row, .{ .ccols = ccols });
-            if (!entry.found_existing) {
-                entry.value_ptr.* = try a.alloc([2]f64, acols.len);
-                @memset(entry.value_ptr.*, .{ 0, 0 });
+/// Evaluate squared weights in input order, separately for missing and valid
+/// values. A disabled statistic no longer raises a second squared-weight error.
+fn weightFailureInCell(a: Allocator, view: Analysis, acols: []const usize, disabled: []const ?usize, obscol: usize) !?WeightFailure {
+    const totals = try a.alloc([2]f64, acols.len);
+    @memset(totals, .{ 0, 0 });
+    for (view.ds.rows.items, 0..) |row, at| {
+        const w = h.toNum(row[view.weight.?]);
+        if (!(w > 0)) continue;
+        var failed = false;
+        var missing_only = true;
+        var unnamed = false;
+        for (acols, totals, disabled) |ci, *sums, start| {
+            const missing = std.math.isNan(h.toNum(row[ci]));
+            if (!missing) {
+                missing_only = false;
+                unnamed = start == null or at < start.?;
+                if (!unnamed) continue;
             }
-            var missing_overflow = false;
-            for (acols, entry.value_ptr.*) |ci, *count| {
-                const missing = std.math.isNan(h.toNum(raw[ci]));
-                const sum = &count[@intFromBool(missing)];
-                sum.* += w * w;
-                if (!std.math.isFinite(sum.*)) {
-                    if (!missing) return .{ .completed_rows = completed, .reason = .weight_statistic };
-                    missing_overflow = true;
-                }
-            }
-            if (missing_overflow) return .{ .completed_rows = completed, .reason = .missing_weight };
+            const sum = &sums[@intFromBool(missing)];
+            sum.* += w * w;
+            failed = failed or !std.math.isFinite(sum.*);
         }
-        completed += by.rows.len;
+        if (failed) return .{ .observation = @intFromFloat(h.toNum(row[obscol])), .missing_only = missing_only, .unnamed_warning = unnamed };
     }
     return null;
 }

@@ -2046,6 +2046,7 @@ fn computeUnivStats(rows: []const []const Value, col: usize, wcol: ?usize, varde
     return computeMoments(true, rows, col, wcol, vardef, frequency_obs);
 }
 
+const univ_min_weight = 1000 * @sqrt(std.math.floatMin(f64));
 const univ_min_wdf = 5000 * std.math.floatEps(f64);
 
 // M9 flushes subnormal sums of squares, squared residuals, and variance
@@ -2073,7 +2074,6 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     // the larger magnitude. This also applies to nearly constant groups
     // with small absolute observations.
     const relative_tolerance = 500 * std.math.floatEps(f64);
-    const minimum_weight = 1000 * @sqrt(std.math.floatMin(f64));
     var at: usize = 0;
     while (at < rows.len) {
         const start = at;
@@ -2097,10 +2097,12 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         if (native_univariate and previous_weight > 0 and w > 0) {
             const updated_mean = sumwx / sumw;
             const delta = x - updated_mean;
-            if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean))) {
-                // Below the M9 minimum weight, the previous total is the
-                // CSS multiplier. Avoid multiplying two tiny weights here.
-                const multiplier = if (previous_weight <= minimum_weight) previous_weight else (sumw / previous_weight) * w;
+            // M9 evaluates the weight multiplier even when the residual is
+            // exactly zero. Its overflow invalidates CSS for this variable.
+            const multiplier = if (previous_weight <= univ_min_weight) previous_weight else (sumw / previous_weight) * w;
+            if (!std.math.isFinite(multiplier)) {
+                running_css = nan;
+            } else if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean))) {
                 // The fused update preserves the final ULP at the minimum SD for skew and kurtosis.
                 running_css = univNormalSquare(@mulAdd(f64, univNormalSquare(delta * delta), multiplier, running_css));
             }
@@ -2144,7 +2146,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         const sum_tolerance = 50000 * std.math.floatEps(f64);
         if (@abs(sumwx) / @sqrt(sumw) <= sum_tolerance * @sqrt(uss)) sumwx = 0;
     }
-    const usable_weight = !native_univariate or sumw > minimum_weight;
+    const usable_weight = !native_univariate or sumw > univ_min_weight;
     const mean = if (usable_weight) sumwx / sumw else nan;
     var css: f64 = running_css;
     var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄)³ (skewness input)
@@ -4821,12 +4823,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         diags.warn(toks[0].line, "PROC UNIVARIATE: PCTLDEF= is ignored with a WEIGHT statement — weighted percentiles use Definition 5", .{}) catch {};
 
 
-    var overflow = if (wcol) |wc| try univ.weightOverflow(arena, cds, acols.items, ccols.items, obcols.items, wc, extra) else null;
-    if (overflow) |stop| cds.rows.items = cds.rows.items[0..stop.completed_rows];
-    if (try univ.variableOverflow(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra, outputs.items)) |failure| {
-        overflow = failure;
-        cds.rows.items = cds.rows.items[0 .. failure.completed_rows + failure.failing_rows];
-    }
+    var overflow = try univ.calculationFailure(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra, outputs.items);
+    if (overflow) |failure| cds.rows.items = cds.rows.items[0 .. failure.completed_rows + failure.failing_rows];
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint,
@@ -17329,6 +17327,7 @@ pub const UnivariateHelpers = struct {
     pub const expandVarPrefixes = @import("proc.zig").expandVarPrefixes;
     pub const VarDef = @import("proc.zig").VarDef;
     pub const minWdf = @import("proc.zig").univ_min_wdf;
+    pub const minWeight = @import("proc.zig").univ_min_weight;
     pub const XW = @import("proc.zig").XW;
     pub const Stats = @import("proc.zig").Stats;
     pub const FmtLevels = @import("proc.zig").FmtLevels;
