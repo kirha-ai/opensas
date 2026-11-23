@@ -4,6 +4,7 @@ const lex = @import("../lexer.zig");
 const diag = @import("../diag.zig");
 const infer = @import("freq_risk_inference.zig");
 pub const Family = enum { binomial, difference, relative_risk, odds_ratio };
+// Binomial CL methods are in SAS presentation order (Table 3.10).
 pub const Method = enum { ac, blaker, exact, jeffreys, lr, logit, midp, wald, wilson, ha, mn, newcombe, waldmodified, fm };
 pub const CL = struct { method: Method, correct: bool = false, bias: bool = true };
 pub const Level = union(enum) { number: usize, value: []const u8 };
@@ -126,7 +127,15 @@ const Reader = struct {
                 }
                 try self.expect(.rparen);
             }
-            try cls.append(self.a, cl);
+            if (req.family == .binomial) {
+                var pos: usize = 0;
+                while (pos < cls.items.len and @intFromEnum(cls.items[pos].method) < @intFromEnum(cl.method)) pos += 1;
+                if (pos < cls.items.len and cls.items[pos].method == cl.method) {
+                    // Repeated aliases request a single interval. A correction
+                    // requested in any occurrence applies to that interval.
+                    cls.items[pos].correct = cls.items[pos].correct or cl.correct;
+                } else try cls.insert(self.a, pos, cl);
+            } else try cls.append(self.a, cl);
             if (!list or self.at(.rparen)) break;
             if (self.at(.comma)) self.i += 1;
         }
@@ -288,7 +297,7 @@ test "FEAT-freq-risk parser aliases percent nulls and method controls" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.01), opts.binomial.?.p, 1e-15);
     try std.testing.expectEqualStrings("Event", opts.binomial.?.level.value);
     try std.testing.expectEqual(@as(f64, -0.2), opts.binomial.?.margin.?[0]);
-    try std.testing.expect(opts.binomial.?.cls[1].correct);
+    try std.testing.expect(opts.binomial.?.cls[2].correct);
     try std.testing.expectEqual(@as(usize, 1), opts.difference.?.column);
     try std.testing.expectEqual(@as(f64, 0.1), opts.difference.?.null_value);
     try std.testing.expect(!opts.difference.?.cls[0].bias);
@@ -309,14 +318,29 @@ test "PROC FREQ Example 3.4 bare binomial intervals and test options" {
     const cls = opts.binomial.?.cls;
     try std.testing.expectEqual(@as(usize, 3), cls.len);
     try std.testing.expectEqual(Method.ac, cls[0].method);
-    try std.testing.expectEqual(Method.wilson, cls[1].method);
-    try std.testing.expectEqual(Method.exact, cls[2].method);
+    try std.testing.expectEqual(Method.exact, cls[1].method);
+    try std.testing.expectEqual(Method.wilson, cls[2].method);
     i += 4;
     opts = .{};
     try std.testing.expect(try consumeTableOption(a, tokens, &i, &opts, &d));
     try std.testing.expect(opts.binomial.?.equiv);
     try std.testing.expectEqual(@as(f64, 0.28), opts.binomial.?.p);
     try std.testing.expectEqual([2]f64{ 0.1, 0.1 }, opts.binomial.?.margin.?);
+}
+test "PROC FREQ repeated binomial CL aliases keep the corrected interval" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const tokens = try lex.tokenize(a, "binomial(wilson cl=(wald(correct) ac wald score(correct) score))", &d);
+    var opts = Options{};
+    var i: usize = 0;
+    try std.testing.expect(try consumeTableOption(a, tokens, &i, &opts, &d));
+    const cls = opts.binomial.?.cls;
+    try std.testing.expectEqual(@as(usize, 3), cls.len);
+    try std.testing.expectEqual(CL{ .method = .ac }, cls[0]);
+    try std.testing.expectEqual(CL{ .method = .wald, .correct = true }, cls[1]);
+    try std.testing.expectEqual(CL{ .method = .wilson, .correct = true }, cls[2]);
 }
 test "FEAT-freq-risk parser captures invalid requests versus pending dependencies" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
