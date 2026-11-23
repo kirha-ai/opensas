@@ -354,8 +354,17 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
             p.alpha = a;
             p.beta = b;
         },
-        .gumbel => {
+        .gumbel => gumbel: {
             if (r.sigma == null) {
+                const sigma = @sqrt(css / (n - 1)) * (@sqrt(@as(f64, 6)) / std.math.pi);
+                if (!(sigma > 0) or !std.math.isFinite(sigma)) return support(d);
+                const initial_mu = r.mu orelse mean - 0.57722 * sigma;
+                const gradient = gumbelGradient(x, initial_mu, sigma);
+                if (@abs(gradient.scale) <= 1e-5 and (r.mu != null or @abs(gradient.location) <= 1e-5)) {
+                    p.mu = initial_mu;
+                    p.sigma = sigma;
+                    break :gumbel;
+                }
                 var lo = @sqrt(css / n) * 1e-6;
                 var hi = @sqrt(css / n) * 100 + @abs((r.mu orelse mean) - mean);
                 if (!(lo > 0)) return support(d);
@@ -401,6 +410,20 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
         if (!std.math.isFinite(result.logPdf(v))) return support(d);
     }
     return result;
+}
+
+// The M9 Gumbel optimizer checks the unnormalized likelihood score in the
+// original units. Large-scale samples can therefore retain the moment start.
+fn gumbelGradient(x: []const f64, mu: f64, sigma: f64) struct { location: f64, scale: f64 } {
+    var location: f64 = 0;
+    var scale: f64 = 0;
+    for (x) |v| {
+        const z = (v - mu) / sigma;
+        const residual = -std.math.expm1(-z);
+        location += residual;
+        scale += z * residual - 1;
+    }
+    return .{ .location = location / sigma, .scale = scale / sigma };
 }
 
 fn logLikelihood(x: []const f64, distribution: dist.Distribution) f64 {
@@ -867,6 +890,24 @@ test "UNIVARIATE fits SAS M9 fixed and estimated parameters" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.765082), power.p.alpha, 5e-7);
     try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .gamma, .maxiter = 1 }));
     try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .lognormal, .theta = 1 }));
+}
+
+test "Gumbel keeps its moment start when the raw likelihood score is small" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const base = [_]f64{ -2, -0.5, 0, 0.2, 0.8, 1.6, 2.1, 5 };
+    var large: [base.len]f64 = undefined;
+    for (&large, base) |*v, value| v.* = value * 1e6;
+    // M9 ParameterEstimates for the same physical data and each fixed mask.
+    const both = try fit(&d, &large, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, -38204.9237731), both.p.mu, 1e-6);
+    try std.testing.expectApproxEqAbs(@as(f64, 1625385.33622), both.p.sigma, 1e-5);
+    const fixed_mu = try fit(&d, &large, .{ .family = .gumbel, .mu = 5e5 });
+    try std.testing.expectEqual(@as(f64, 5e5), fixed_mu.p.mu);
+    try std.testing.expectEqual(both.p.sigma, fixed_mu.p.sigma);
+    const ordinary = try fit(&d, &base, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, 1.600730697), ordinary.p.sigma, 1e-8);
 }
 
 test "UNIVARIATE uniform Pareto endpoint has finite likelihood" {
