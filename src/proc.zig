@@ -4538,8 +4538,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var bys: std.ArrayList([]const u8) = .empty; // BY groups -> one OUTPUT row each (BUG-meansoutputby)
     var classes: std.ArrayList([]const u8) = .empty; // CLASS: per-level stats, not pooled (BUG-univclass)
     var class_missing = false; // `class v / missing` re-includes the missing level
-    var weight_var: ?[]const u8 = null; // `weight w;` — weighted moments/quantiles (WEIGHT-uni-impl)
-    var freq_var: ?[]const u8 = null; // `freq f;` — each obs counts trunc(f) times (F2)
+    const var_list = @import("stat/variable_lists.zig");
+    const Role = struct { name: Token, weight: bool };
+    var roles: std.ArrayList(Role) = .empty;
     var fmt_specs: std.ArrayList(VarSpec) = .empty; // `format v spec;` — CLASS groups by formatted value (NOTE-freqtablesfmt)
     while (i < toks.len and toks[i].tag != .eof) {
         if (toks[i].tag == .semicolon) {
@@ -4555,16 +4556,10 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         } else if (tkKw(toks[i], "by")) {
             bys.clearRetainingCapacity();
             try parseProcBy(arena, diags, toks, &i, &bys);
-        } else if (tkKw(toks[i], "weight")) {
-            i += 1; // `weight w;` — the (single) weight variable (WEIGHT-uni-impl)
-            while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
-                if (toks[i].tag == .name) weight_var = toks[i].text;
-            }
-        } else if (tkKw(toks[i], "freq")) {
-            i += 1; // `freq f;` — frequency var; expanded like PROC MEANS (F2)
-            while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
-                if (toks[i].tag == .name) freq_var = toks[i].text;
-            }
+        } else if (tkKw(toks[i], "weight") or tkKw(toks[i], "freq")) {
+            const name = try var_list.roleVariable(toks, i + 1, false, diags);
+            try roles.append(arena, .{ .name = name, .weight = tkKw(toks[i], "weight") });
+            i += 2;
         } else if (tkKw(toks[i], "output")) {
             try outputs.append(arena, try univ.parseOutput(arena, diags, toks, &i));
         } else if (tkKw(toks[i], "format")) {
@@ -4636,12 +4631,19 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     const by_groups = @import("stat/by_groups.zig");
     const formatted_input = try by_groups.withFormats(arena, input_view.ds, fmt_specs.items);
     var ds = try extra.identify(arena, formatted_input, input_view.srcobs); // WHERE stmt / data= options (BUG-procwhere)
+    var frequencies: var_list.NumericRole = .{};
+    var weights: var_list.NumericRole = .{};
+    for (roles.items) |entry| {
+        const role = if (entry.weight) &weights else &frequencies;
+        try role.add(arena, input_view.ds, entry.name, diags);
+    }
+    const wcol = weights.first();
     // UNIVARIATE processes repeated VAR selections in the original order.
     // The input descriptor supplies the order for name ranges and prefixes.
     for (var_lists.items) |tokens| {
         var next: usize = 0;
         while (next < tokens.len) {
-            const names = try @import("stat/variable_lists.zig").next(arena, input_view.ds, tokens, &next, diags);
+            const names = try var_list.next(arena, input_view.ds, tokens, &next, diags);
             try vars.appendSlice(arena, names);
         }
     }
@@ -4658,15 +4660,12 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     try extra.markBy(arena, ds, obcols.items, checked_by.desc, checked_by.notsorted, diags);
     // FREQ f; — expand each obs to trunc(f) copies so N=Σf and every moment /
     // quantile / test is over the frequency-weighted sample (F2, mirrors MEANS).
-    if (freq_var) |fv| {
-        const fcol = ds.indexOf(fv) orelse
-            return diags.fail(error.ParseError, toks[0].line, "PROC UNIVARIATE: FREQ variable {s} is not on the input data set", .{fv});
-        if (ds.columns.items[fcol].type != .num) return diags.fail(error.ParseError, 0, "UNIVARIATE: FREQ variable must be numeric", .{});
+    if (frequencies.first()) |fcol| {
         extra.freqcol = fcol;
         ds = try expandFreq(arena, diags, ds, fcol);
     }
 
-    if (extra.exclnpwgt) if (try resolveWeightCol(ds, weight_var, diags, toks[0].line)) |wc| {
+    if (extra.exclnpwgt) if (wcol) |wc| {
         // Keep pre-exclusion counts separate from eligible CLASS identities.
         if (classes.items.len == 0) extra.nobs_source = ds;
         ds = try dropNonpositiveWeight(arena, ds, wc);
@@ -4703,8 +4702,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     } else {
         var_loop: for (ds.columns.items, 0..) |c, ix| {
             if (c.type != .num or ix == extra.obscol.?) continue;
-            if (weight_var) |wv| if (eqi(c.name, wv)) continue;
-            if (freq_var) |fv| if (eqi(c.name, fv)) continue;
+            if (weights.contains(ix) or frequencies.contains(ix)) continue;
             for (checked_by.names) |bn| if (eqi(c.name, bn)) continue :var_loop;
             for (ids.items) |id| if (eqi(c.name, id)) continue :var_loop;
             for (ccols.items) |ci| if (ci == ix) continue :var_loop;
@@ -4721,14 +4719,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     for (ids.items) |id| try icols.append(arena, ds.indexOf(id) orelse
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: ID variable {s} not found", .{id}));
     try extra.configureRounding(arena, diags, cds, acols.items, vars.items.len > 0);
-    // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
-    // named-but-absent weight var errors (BUG-weightvarcheck).
-    const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
     if (wcol != null and (histograms.items.len > 0 or distribution_plots.items.len > 0)) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
     try extra.applyAll(arena, wcol != null);
     try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
-    if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
-        return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});
 
     // SAS computes weighted percentiles with definition 5 only — say so rather
     // than silently honoring PCTLDEF= on the weighted path (BUG-univpctldef).

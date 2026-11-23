@@ -11,7 +11,7 @@ const Token = @import("../lexer.zig").Token;
 const ProcCtx = p.ProcCtx;
 const procInput = p.procInput;
 const cmpValue = p.cmpValue;
-const resolveWeightCol = p.resolveWeightCol;
+const var_lists = @import("variable_lists.zig");
 const by_groups = @import("by_groups.zig");
 const bySlices = p.bySlices;
 const cellText = p.cellText;
@@ -146,7 +146,7 @@ const Options = struct {
     order: FreqOrder = .internal,
     noprint: bool = false,
     nlevels: bool = false,
-    weight: ?[]const u8 = null,
+    weights: var_lists.NumericRole = .{},
     zeros: bool = false,
     formchar: [3]u8 = .{ '|', '-', '+' },
     bys: std.ArrayList([]const u8) = .empty,
@@ -218,7 +218,7 @@ const Parser = struct {
         return tok;
     }
     fn variable(self: *Parser, ds: *Dataset) diag.Error![][]const u8 {
-        const names = try @import("variable_lists.zig").next(self.a, ds, self.toks, &self.i, self.diags);
+        const names = try var_lists.next(self.a, ds, self.toks, &self.i, self.diags);
         for (names) |*name| {
             const ci = ds.indexOf(name.*) orelse return self.diags.fail(error.ParseError, self.toks[self.i - 1].line, "PROC FREQ: TABLES variable {s} not found", .{name.*});
             name.* = ds.columns.items[ci].name;
@@ -246,7 +246,7 @@ const Parser = struct {
             while (true) {
                 const names = try self.factor(ds);
                 if (names.len == 0) {
-                    if (combos.items.len > 0) return self.diags.fail(error.ParseError, 0, "Variable number 0 is not on file {s}.", .{try @import("variable_lists.zig").datasetName(self.a, ds)});
+                    if (combos.items.len > 0) return self.diags.fail(error.ParseError, 0, "Variable number 0 is not on file {s}.", .{try var_lists.datasetName(self.a, ds)});
                     return self.diags.fail(error.ParseError, 0, "A specification in the TABLES statement produces an empty variable list.", .{});
                 }
                 var next: std.ArrayList([]const []const u8) = .empty;
@@ -443,10 +443,9 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             try parseProcBy(a, cx.diags, toks, &parser.i, &opts.bys);
         } else if (parser.kw("weight")) {
             parser.i += 1;
-            if (!parser.tag(.name)) return parser.fail("WEIGHT requires a variable");
-            opts.weight = toks[parser.i].text;
+            const name = try var_lists.roleVariable(toks, parser.i, true, cx.diags);
+            try opts.weights.add(a, input, name, cx.diags);
             parser.i += 1;
-            opts.zeros = false;
             if (parser.tag(.slash)) {
                 parser.i += 1;
                 if (!parser.kw("zeros")) return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ: WEIGHT option {s} is not supported — expected ZEROS", .{toks[parser.i].text});
@@ -485,8 +484,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
         simulation_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
     }
-    if (opts.requests.items.len == 0) for (input.columns.items) |col| {
-        if (opts.weight) |w| if (eqi(w, col.name)) continue;
+    if (opts.requests.items.len == 0) for (input.columns.items, 0..) |col, ci| {
+        if (opts.weights.contains(ci)) continue;
         const bylist = try decodeProcBy(a, opts.bys.items);
         var isby = false;
         for (bylist.names) |bn| if (eqi(bn, col.name)) {
@@ -533,8 +532,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             _ = stat_kernel.expectedFactor(values.len, 1, .{ .proportions = values }) catch return cx.diags.fail(error.ExecError, 0, "PROC FREQ: the sum of the TESTP probabilities must equal one or 100 percent", .{});
         }
     }
-    const wc = try resolveWeightCol(input, opts.weight, cx.diags, 0);
-    if (wc) |ci| if (input.columns.items[ci].type != .num) return cx.diags.fail(error.ParseError, 0, "PROC FREQ: WEIGHT variable {s} must be numeric", .{input.columns.items[ci].name});
+    const wc = opts.weights.first();
     const pb = try decodeProcBy(a, opts.bys.items);
     if (opts.by_seen and pb.names.len == 0) return parser.fail("BY requires at least one variable");
     const bc = try a.alloc(usize, pb.names.len);

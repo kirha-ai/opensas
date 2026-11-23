@@ -14,6 +14,7 @@ const advanced = @import("corr_advanced.zig");
 
 pub const VarDef = enum { df, n, wdf, weight };
 const graphics = @import("corr_plots.zig");
+const var_lists = @import("variable_lists.zig");
 const by_groups = @import("by_groups.zig");
 pub const Options = struct {
     plots: graphics.Options = .{},
@@ -123,11 +124,8 @@ fn fail(cx: proc.ProcCtx, t: lex.Token) diag.Error {
     }
     return cx.diags.fail(error.ParseError, t.line, "PROC CORR: unsupported option or statement {s}", .{t.text});
 }
-fn column(cx: proc.ProcCtx, ds: *Dataset, name: []const u8, numeric: bool) diag.Error!usize {
-    const c = ds.indexOf(name) orelse return cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{name});
-    if (numeric and ds.columns.items[c].type != .num)
-        return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable {s} must be numeric.", .{name});
-    return c;
+fn column(cx: proc.ProcCtx, ds: *Dataset, name: []const u8) diag.Error!usize {
+    return ds.indexOf(name) orelse cx.diags.fail(error.ParseError, 0, "Variable {s} not found.", .{name});
 }
 fn contains(cols: []const usize, c: usize) bool {
     return std.mem.indexOfScalar(usize, cols, c) != null;
@@ -141,9 +139,9 @@ fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token, statement: [
     try cols.appendSlice(cx.arena, prior);
     var i: usize = 0;
     while (i < toks.len) {
-        const names = try @import("variable_lists.zig").next(cx.arena, ds, toks, &i, cx.diags);
+        const names = try var_lists.next(cx.arena, ds, toks, &i, cx.diags);
         for (names) |name| {
-            const ci = try column(cx, ds, name, false);
+            const ci = try column(cx, ds, name);
             if (ds.columns.items[ci].type != .num)
                 return cx.diags.fail(error.ParseError, 0, "Variable {s} in list does not match type prescribed for this list.", .{name});
             if (contains(cols.items, ci))
@@ -283,8 +281,8 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     var with: []const usize = &.{};
     var partial: []const usize = &.{};
     var by_names: std.ArrayList([]const u8) = .empty;
-    var freq: ?usize = null;
-    var weight: ?usize = null;
+    var frequencies: var_lists.NumericRole = .{};
+    var weights: var_lists.NumericRole = .{};
     i += 1;
     while (i < toks.len and toks[i].tag != .eof) {
         if (toks[i].tag == .semicolon) {
@@ -307,24 +305,25 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             by_names.clearRetainingCapacity();
             try proc.parseProcBy(cx.arena, cx.diags, toks, &i, &by_names);
         } else if (kw(toks, i, "freq") or kw(toks, i, "weight")) {
-            if (end != i + 2 or !at(toks, i + 1, .name)) return fail(cx, toks[i]);
-            const c = try column(cx, ds, toks[i + 1].text, true);
-            if (kw(toks, i, "freq")) freq = c else weight = c;
+            const role = if (kw(toks, i, "freq")) &frequencies else &weights;
+            try role.add(cx.arena, ds, try var_lists.roleVariable(toks[0..end], i + 1, false, cx.diags), cx.diags);
         } else if (!kw(toks, i, "where") and !kw(toks, i, "run") and !kw(toks, i, "quit") and !(toks[i].tag == .name and parser.isMidStepSkippable(toks[i].text))) return fail(cx, toks[start]);
         i = end;
     }
-    for (formats.items) |spec| _ = try column(cx, ds, spec.name, false);
+    for (formats.items) |spec| _ = try column(cx, ds, spec.name);
     ds = try by_groups.withFormats(cx.arena, ds, formats.items);
     const by = try proc.decodeProcBy(cx.arena, by_names.items);
     var bcols: std.ArrayList(usize) = .empty;
-    for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n, false));
+    for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n));
     if (vars == null) {
         var cs: std.ArrayList(usize) = .empty;
         for (ds.columns.items, 0..) |c, j| {
-            if (c.type == .num and !contains(with, j) and !contains(partial, j) and !contains(bcols.items, j) and freq != j and weight != j) try cs.append(cx.arena, j);
+            if (c.type == .num and !contains(with, j) and !contains(partial, j) and !contains(bcols.items, j) and !frequencies.contains(j) and !weights.contains(j)) try cs.append(cx.arena, j);
         }
         vars = cs.items;
     }
+    const freq = frequencies.first();
+    const weight = weights.first();
     if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "Variable list empty.", .{});
     for (vars.?) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: analysis variables cannot also be PARTIAL variables.", .{});
     for (with) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: WITH variables cannot also be PARTIAL variables.", .{});
@@ -892,6 +891,17 @@ test "CORR variable lists and variance divisors" {
     }
     // M9 rejects a repeated named variable within or across VAR statements.
     try std.testing.expectError(error.ParseError, Testing.analyze(a, ds, "proc corr;var x2 x1 x2;run;"));
+}
+test "CORR repeated frequency or weight uses first and excludes both from implicit VAR" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "w1", "w2" }, &.{ &.{ 1, 1, 3 }, &.{ 3, 2, 1 }, &.{ 7, 1, 2 } });
+    for ([_][]const u8{ "freq w1;freq w2;", "weight w1;weight w2;" }) |statements| {
+        const result = try Testing.analyze(a, ds, try std.fmt.allocPrint(a, "proc corr;{s}run;", .{statements}));
+        try std.testing.expectEqualSlices(usize, &.{0}, result.spec.vars);
+        try Testing.near(3.5, result.groups[0].simple[0].mean);
+    }
 }
 test "CORR invalid inputs fail through captured diagnostics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

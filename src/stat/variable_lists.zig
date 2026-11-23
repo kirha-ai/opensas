@@ -11,6 +11,36 @@ fn tag(t: []const Token, i: usize, wanted: lex.Tag) bool {
     return i < t.len and t[i].tag == wanted;
 }
 
+/// Each FREQ or WEIGHT statement names one numeric variable. All declared
+/// variables leave the default analysis list, but only the first supplies values.
+pub const NumericRole = struct {
+    columns: std.ArrayList(usize) = .empty,
+
+    pub fn add(self: *NumericRole, a: std.mem.Allocator, ds: *const Dataset, name: Token, d: *diag.Diagnostics) diag.Error!void {
+        const ci = ds.indexOf(name.text) orelse return d.fail(error.ParseError, name.line, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, name.text)});
+        const col = ds.columns.items[ci];
+        if (col.type != .num) return d.fail(error.ParseError, name.line, "Variable {s} in list does not match type prescribed for this list.", .{col.name});
+        if (!self.contains(ci)) try self.columns.append(a, ci);
+    }
+
+    pub fn first(self: NumericRole) ?usize {
+        return if (self.columns.items.len > 0) self.columns.items[0] else null;
+    }
+
+    pub fn contains(self: NumericRole, ci: usize) bool {
+        return std.mem.indexOfScalar(usize, self.columns.items, ci) != null;
+    }
+};
+
+pub fn roleVariable(tokens: []const Token, at: usize, allow_options: bool, d: *diag.Diagnostics) diag.Error!Token {
+    if (!tag(tokens, at, .name)) return d.fail(error.ParseError, if (at < tokens.len) tokens[at].line else 0, "Expecting a name.", .{});
+    if (at + 1 < tokens.len and !tag(tokens, at + 1, .semicolon) and !(allow_options and tag(tokens, at + 1, .slash))) {
+        if (allow_options) return d.fail(error.ParseError, tokens[at + 1].line, "Syntax error, expecting one of the following: ;, /.", .{});
+        return d.fail(error.ParseError, tokens[at + 1].line, "Expecting ;.", .{});
+    }
+    return tokens[at];
+}
+
 const Suffix = struct {
     prefix: []const u8,
     number: usize,
