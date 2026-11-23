@@ -475,7 +475,9 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         const dr = -grad[dim - 1];
         const limit = std.math.copysign(bound, dr);
         const to_limit = if (dr == 0) 0 else (limit - params[dim - 1]) / dr;
-        const project = dim == 2 and dr != 0 and (kind == .ridged or @abs(params[1] + dr) > bound);
+        // A nearby endpoint and its midpoint bracket the ordinary Newton
+        // trial. The endpoint can be selected even when it extends the step.
+        const project = dim == 2 and dr != 0 and (kind == .ridged or (to_limit > 0 and to_limit < 2));
         var scale: f64 = if (project) to_limit else 1;
         var accepted = false;
         for (0..30) |trial| {
@@ -758,4 +760,17 @@ test "CORR partially overlapping binary categories return inside the correlation
     try std.testing.expectApproxEqAbs(@as(f64, -0.97652920115824), fit.r, 1e-12);
     try std.testing.expectApproxEqAbs(@as(f64, 0.02404594247376), fit.se, 1e-12);
     try std.testing.expectApproxEqAbs(@as(f64, 27.8786552569544), fit.lr, 1e-11);
+}
+
+test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
+    const xs = [_]f64{ -9.5, -3, -2.875, -2.625, -0.5, 1.625, 1.875, 2.375, 6.625, 8.875 };
+    const frequencies = [_]f64{ 4, 1, 5, 2, 1, 5, 2, 1, 5, 2 };
+    var data: [xs.len]Observation = undefined;
+    for (&data, xs, frequencies, 0..) |*d, x, f, i| d.* = .{ .x = x, .y = if (i < 2) 0 else 1, .f = f };
+    const early = try polyserial(std.testing.allocator, &data, .{ .converge = 0.01, .maxiter = 5 });
+    try std.testing.expect(!early.converged);
+    const fit = try polyserial(std.testing.allocator, &data, .{ .converge = 0.01, .maxiter = 6 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.995), fit.r, 1e-12);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expectApproxEqAbs(@as(f64, 21.2736613123838), fit.lr, 1e-11);
 }
