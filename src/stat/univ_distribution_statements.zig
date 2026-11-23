@@ -1211,3 +1211,29 @@ test "UNIVARIATE two-endpoint kernel keeps a regular row immediately above its l
     try std.testing.expectEqual(@as(f64, 1), rows[201][3].num);
     try std.testing.expectApproxEqAbs(@as(f64, 0.8607353479640445), rows[101][5].num, 1e-12);
 }
+
+test "UNIVARIATE invalid fitted percent list warns per printed curve and restores default quantiles" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 0.15, 0.23, 0.29, 0.35, 0.41, 0.62, 0.78, 0.84, 0.92 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    const lex = @import("../lexer.zig");
+    var d = diag.Diagnostics.init(a);
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output FitQuantiles=q;", &d));
+    const text = "proc univariate data=d noprint;histogram x / normal(mu=.4 .6 sigma=.2 percents=90 percent=-5 10) beta(alpha=2 beta=3 percents=30 30) noplot;run;";
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, text, &d));
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, try d.render(), "The list of percents specified for the Normal density must be greater than 0 and less than 100."));
+    const q = lib.find("q").?;
+    const p = q.indexOf("Percent").?;
+    const expected = [_]f64{ 1, 5, 10, 25, 50, 75, 90, 95, 99, 1, 5, 10, 25, 50, 75, 90, 95, 99, 30, 30 };
+    try std.testing.expectEqual(expected.len, q.rowCount());
+    for (expected, q.rows.items) |value, row| try std.testing.expectEqual(value, row[p].num);
+}

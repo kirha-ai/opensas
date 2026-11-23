@@ -6,7 +6,7 @@ const Token = @import("../lexer.zig").Token;
 const fitting = @import("univ_distribution_fit.zig");
 const dist = @import("univ_distributions.zig");
 const eq = std.ascii.eqlIgnoreCase;
-pub const Curves = struct { requests: []fitting.Request, percents: []const f64, noprint: bool, midpercents: bool, noline: bool = false, fill: bool = false };
+pub const Curves = struct { requests: []fitting.Request, percents: []const f64, noprint: bool, midpercents: bool, invalid_percents: bool = false, noline: bool = false, fill: bool = false };
 
 pub fn family(name: []const u8) ?dist.Family {
     inline for (std.meta.tags(dist.Family)) |tag| if (eq(name, @tagName(tag))) return tag;
@@ -117,6 +117,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
     if (kind == .su) common.theta = null;
     var count: usize = 1;
     var percents: std.ArrayList(f64) = .empty;
+    var invalid_percents = false;
     var noprint = false;
     var midpercents = false;
     var noline = false;
@@ -206,19 +207,12 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                 continue;
             }
             if (eq(key, "percents") or eq(key, "percent")) {
-                while (t[i.*].tag == .number or t[i.*].tag == .comma) {
-                    if (t[i.*].tag == .comma) {
-                        i.* += 1;
-                        continue;
-                    }
-                    const range = try numericRange(d, t, i);
-                    for (0..range.count) |index| {
-                        const value = range.at(index);
-                        if (value <= 0 or value >= 100) return d.fail(error.ParseError, 0, "UNIVARIATE: PERCENTS must be between 0 and 100", .{});
-                        try percents.append(a, value);
-                    }
-                }
-                if (percents.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty PERCENTS list", .{});
+                const values = try numberList(a, d, t, i);
+                for (values) |value| if (value <= 0 or value >= 100) {
+                    invalid_percents = true;
+                    break;
+                };
+                try percents.appendSlice(a, values);
                 continue;
             }
             const slope = plot and eq(key, "slope") and (kind == .lognormal or weibull2);
@@ -269,7 +263,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
         };
         try (dist.Distribution{ .family = kind, .p = fixed }).validate(d);
     }
-    return .{ .requests = requests, .fill = fill, .noprint = noprint, .midpercents = midpercents, .noline = noline, .percents = if (percents.items.len == 0) &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 } else percents.items };
+    return .{ .requests = requests, .fill = fill, .noprint = noprint, .midpercents = midpercents, .noline = noline, .invalid_percents = invalid_percents, .percents = if (invalid_percents or percents.items.len == 0) &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 } else percents.items };
 }
 
 test "UNIVARIATE distribution parameter lists aliases and captured rejection" {

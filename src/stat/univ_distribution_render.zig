@@ -141,6 +141,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     if (options.noprint) return;
     const a = cx.arena;
     const name = familyName(curve.family);
+    if (options.invalid_percents) try cx.diags.warn(0, "The list of percents specified for the {s} density must be greater than 0 and less than 100.", .{name});
     const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
     const variable = source.columns.items[col].name;
     const tables = try context.listingTables(by_number);
