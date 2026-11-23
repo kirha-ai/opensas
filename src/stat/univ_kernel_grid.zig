@@ -10,6 +10,7 @@ pub const Options = struct {
     note_prefix: ?[]const u8 = null,
     automatic: bool = false,
     endpoint_labels: bool = false,
+    comparative: bool = false,
     windowed: bool = false,
     bin_width: ?f64 = null,
     right: bool = false,
@@ -112,6 +113,17 @@ fn reportEstimate(d: *diag.Diagnostics, note_prefix: ?[]const u8, estimate: kern
     }
 }
 
+fn advanceConstantTicks(d: *diag.Diagnostics, center: f64, increment: f64, count: f64, budget: usize) diag.Error!f64 {
+    if (count > @as(f64, @floatFromInt(budget))) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis exceeds its stepping budget", .{});
+    var value = center;
+    for (0..@as(usize, @intFromFloat(count))) |_| {
+        const next = value + increment;
+        if (next == value) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis cannot advance", .{});
+        value = next;
+    }
+    return value;
+}
+
 pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate: kernel.Estimate, endpoints: []const f64, options: Options) diag.Error!Plan {
     if (x.len == 0 or endpoints.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sample and histogram boundaries", .{});
     for (x, 0..) |v, i| if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sorted finite observations", .{});
@@ -157,10 +169,38 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     // requires an additional interval, including for an explicit endpoint list.
     if (!options.windowed and options.right and x[0] == first) first -= width;
     if (!options.windowed and !options.right and x[x.len - 1] == last) last += width;
-    if (options.automatic and !options.windowed and options.endpoint_labels) {
+    // A single constant cell is centered on its observation. Comparative
+    // endpoint labels are anchored to the histogram's common bin boundaries.
+    const automatic_constant = options.automatic and !options.windowed and constant and (!options.endpoint_labels or !options.comparative);
+    if (automatic_constant) {
+        // Extend centers by the kernel padding on the Fourier lattice. Leave
+        // the last node available for interpolation. A tail on a bin edge is
+        // covered without taking an additional step.
+        const padding_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+        const increments = @ceil(@min(axis_pad, padding_limit) / width - 0.5);
+        var left_steps = increments;
+        var right_steps = increments;
+        if (options.endpoint_labels) {
+            if (options.clip_lower) if (estimate.request.lower) |bound| {
+                left_steps = @min(left_steps, -@floor((bound - x[0]) / width + 0.5));
+            };
+            if (options.clip_upper) if (estimate.request.upper) |bound| {
+                right_steps = @min(right_steps, @floor((bound - x[0]) / width + 0.5));
+            };
+            left_steps = @max(left_steps, @as(f64, @floatFromInt(@intFromBool(options.right))));
+            right_steps = @max(right_steps, 1);
+        }
+        const left = try advanceConstantTicks(d, x[0], -width, left_steps, options.max_axis_steps);
+        const right = try advanceConstantTicks(d, x[0], width, right_steps, options.max_axis_steps);
+        if (options.endpoint_labels) {
+            first = if (options.clip_lower and estimate.request.lower != null) left else @min(first, left);
+            last = if (options.clip_upper and estimate.request.upper != null) right else @max(last, right);
+        } else {
+            first = left - width / 2;
+            last = right + width / 2;
+        }
+    } else if (options.automatic and !options.windowed and options.endpoint_labels) {
         const raw_pad = options.shared_axis_padding orelse own.axis;
-        // Constant observations use the padded native Fourier lattice to
-        // bound the display padding, independently of the histogram width.
         const constant_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
         const pad = if (constant) @min(raw_pad, constant_limit) else raw_pad;
         const lower = (if (constant) x[0] else lo) - pad;
@@ -168,34 +208,17 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         first = @min(first, endpoints[0] + @round((lower - endpoints[0]) / width) * width);
         last = @max(last, endpoints[0] + @round((upper - endpoints[0]) / width) * width);
         if (constant and last <= x[0]) last += width;
-    } else if (options.automatic and !options.windowed and constant) {
-        // Extend centers by the kernel padding on the Fourier lattice. Leave
-        // its last node available for interpolation, then snap to the nearest
-        // whole number of bins. M9 advances each center by one bin width.
-        const padding_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
-        // A tail exactly on the outer edge is already covered.
-        const increments = @ceil(@min(axis_pad, padding_limit) / width - 0.5);
-        if (increments > @as(f64, @floatFromInt(options.max_axis_steps))) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis exceeds its stepping budget", .{});
-        var left = x[0];
-        var right = x[0];
-        for (0..@as(usize, @intFromFloat(increments))) |_| {
-            const next_left = left - width;
-            const next_right = right + width;
-            if (!(next_left < left) or !(next_right > right)) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis cannot advance", .{});
-            left = next_left;
-            right = next_right;
-        }
-        first = left - width / 2;
-        last = right + width / 2;
     } else if (options.automatic and !options.windowed) {
         if (lo - axis_pad < first) first -= @ceil((first - (lo - axis_pad)) / width) * width;
         if (hi + axis_pad > last) last += @ceil(((hi + axis_pad) - last) / width) * width;
     }
-    if (options.clip_lower) {
-        if (estimate.request.lower) |bound| first = @max(first, endpoints[0] + @floor((bound - endpoints[0]) / width) * width);
-    }
-    if (options.clip_upper) {
-        if (estimate.request.upper) |bound| last = @min(last, endpoints[0] + @ceil((bound - endpoints[0]) / width) * width);
+    if (!(automatic_constant and options.endpoint_labels)) {
+        if (options.clip_lower) if (estimate.request.lower) |bound| {
+            first = @max(first, endpoints[0] + @floor((bound - endpoints[0]) / width) * width);
+        };
+        if (options.clip_upper) if (estimate.request.upper) |bound| {
+            last = @min(last, endpoints[0] + @ceil((bound - endpoints[0]) / width) * width);
+        };
     }
     if (!std.math.isFinite(first) or !std.math.isFinite(last) or !(last > first)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid kernel output extent", .{});
     var points: std.ArrayList(f64) = .empty;
@@ -392,6 +415,43 @@ test "constant midpoint kernel limits match M9 at interior and saturated Fourier
         const endpoints = [_]f64{ case.center / 2, case.center + case.center / 2 };
         const fitted: kernel.Estimate = .{ .request = .{ .kind = .quadratic }, .bandwidth = case.tail, .c = 1, .amise = 0 };
         const plan = try make(a, &d, &x, fitted, &endpoints, .{ .automatic = true, .bin_width = case.center });
+        try std.testing.expectEqual(case.rows, plan.points.len);
+        try std.testing.expectEqual(case.first, plan.points[0]);
+        try std.testing.expectEqual(case.last, plan.points[plan.points.len - 1]);
+    }
+}
+
+test "automatic constant ENDPOINTS uses the native bin offsets and bounded ticks" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const Case = struct {
+        n: usize,
+        center: f64,
+        kind: kernel.Kind,
+        c: f64,
+        right: bool = false,
+        lower: ?f64 = null,
+        upper: ?f64 = null,
+        rows: usize,
+        first: f64,
+        last: f64,
+    };
+    for ([_]Case{
+        .{ .n = 73, .center = 0.3, .kind = .triangular, .c = 2.472, .rows = 309, .first = -0.8999999999999999, .last = 1.5 },
+        .{ .n = 73, .center = 0.3, .kind = .triangular, .c = 2.472, .lower = 0.04999999999999999, .rows = 194, .first = 0, .last = 1.5 },
+        .{ .n = 7, .center = -0.01, .kind = .triangular, .c = 4.056, .lower = -0.26, .upper = 4.99, .rows = 225, .first = -0.26000000000000006, .last = 1.480000000000001 },
+        .{ .n = 8, .center = 0.01, .kind = .quadratic, .c = 2.737, .right = true, .lower = -0.24, .upper = 0.12, .rows = 49, .first = -0.24000000000000007, .last = 0.11999999999999998 },
+        .{ .n = 73, .center = 0, .kind = .normal, .c = 3.662, .right = true, .lower = -1, .upper = 0.5, .rows = 259, .first = -1, .last = 1 },
+    }) |case| {
+        const x = try a.alloc(f64, case.n);
+        @memset(x, case.center);
+        const width = if (case.center == 0) 1 else @abs(case.center);
+        const first = if (case.right) case.center - width else case.center;
+        const endpoints = [_]f64{ first, first + width };
+        const estimate: kernel.Estimate = .{ .request = .{ .kind = case.kind, .lower = case.lower, .upper = case.upper }, .bandwidth = case.c * std.math.pow(f64, @as(f64, @floatFromInt(case.n)), -0.2), .c = case.c, .amise = 0 };
+        const plan = try make(a, &d, x, estimate, &endpoints, .{ .automatic = true, .endpoint_labels = true, .right = case.right, .clip_lower = true, .clip_upper = true, .bin_width = width });
         try std.testing.expectEqual(case.rows, plan.points.len);
         try std.testing.expectEqual(case.first, plan.points[0]);
         try std.testing.expectEqual(case.last, plan.points[plan.points.len - 1]);

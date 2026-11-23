@@ -389,7 +389,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
                             plan.endpoint_phase_ambiguous)
                             return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
-                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
+                        try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .comparative = plan.cell_order.len > 1, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report, .note_prefix = prefix });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
                     if (statement.midpercents) {
