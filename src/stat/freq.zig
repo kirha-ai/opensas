@@ -627,7 +627,9 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
             if (opts.noprint and writer == null) continue;
-            if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
+            const requested = hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0;
+            const sufficient_levels = !requested or tab.negative or try hasInferenceLevels(&tab, cx.diags);
+            if ((writer != null or requested) and sufficient_levels) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
                 try analyzeTable(cx, out, &tab, req, opts, &simulation_seed, stratified, writer, &view, bc, group.rep);
@@ -1787,6 +1789,30 @@ test "MISSPRINT controlling missing: conditional TOTPCT differs from OUT PERCENT
 fn hasStatistics(opts: stat_parse.Options) bool {
     return opts.chisq or opts.measures or opts.plcorr;
 }
+/// Level eligibility is shared by the strata of this table. A retained zero
+/// marginal count in a full-size table is checked separately for each stratum.
+fn hasInferenceLevels(tab: *const Table, d: *diag.Diagnostics) !bool {
+    const n = tab.dimensions.len;
+    if (n < 2) return true;
+    const dims = tab.dimensions[n - 2 ..][0..2];
+    var counts = [2]usize{ 0, 0 };
+    for (dims, 0..) |dim, i| {
+        for (dim.levels) |level| {
+            if (tab.include_missing or !level.missing) counts[i] += 1;
+            if (counts[i] == 2) break;
+        }
+    }
+    if (counts[0] == 0 or counts[1] == 0) {
+        try d.report(.note, 0, "No statistics are computed for {s} * {s} because all data are missing.", .{ dims[0].name, dims[1].name });
+        return false;
+    }
+    for (counts, dims) |count, dim| if (count == 1) {
+        try d.report(.note, 0, "No statistics are computed for {s} * {s} because {s} has fewer than 2 nonmissing levels.", .{ dims[0].name, dims[1].name, dim.name });
+        return false;
+    };
+    return true;
+}
+
 fn inferenceMatrix(m: CountMatrix) stat_kernel.CountMatrix {
     return .{ .rows = m.rows, .cols = m.cols, .counts = m.counts, .row_scores = m.row_scores, .col_scores = m.col_scores };
 }
