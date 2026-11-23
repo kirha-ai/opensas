@@ -201,16 +201,13 @@ pub fn polychoric(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
 const Serial = struct { data: []const Observation, categories: []const f64, mean: f64, sd: f64 };
 fn serialLikelihood(ctx: Serial, params: []const f64) f64 {
     const rho = params[ctx.categories.len - 1];
-    const mean = if (params.len > ctx.categories.len) params[ctx.categories.len] else ctx.mean;
-    const sd = if (params.len > ctx.categories.len) @exp(params[ctx.categories.len + 1]) else ctx.sd;
-    if (@abs(rho) >= 0.999999) return std.math.inf(f64);
+    if (@abs(rho) >= 1) return std.math.inf(f64);
     for (1..ctx.categories.len - 1) |i| if (params[i] <= params[i - 1]) return std.math.inf(f64);
-    const residual = @sqrt(1 - rho * rho);
+    const residual = @sqrt((1 - rho) * (1 + rho));
     var ll: f64 = 0;
     for (ctx.data) |d| {
         const i = std.mem.indexOfScalar(f64, ctx.categories, d.y).?;
-        const z = (d.x - mean) / sd;
-        if (params.len > ctx.categories.len) ll += d.f * (@log(sd) + z * z / 2);
+        const z = (d.x - ctx.mean) / ctx.sd;
         const lo = if (i == 0) -std.math.inf(f64) else (params[i - 1] - rho * z) / residual;
         const hi = if (i == ctx.categories.len - 1) std.math.inf(f64) else (params[i] - rho * z) / residual;
         const p = if (lo > 0) normal(-lo) - normal(-hi) else normal(hi) - normal(lo);
@@ -241,35 +238,59 @@ fn solve(matrix: []f64, rhs: []f64) bool {
     }
     return true;
 }
-fn derivatives(ctx: Serial, params: []f64, hess: []f64, gradient: []f64) void {
-    const d: f64 = 0.00005;
-    const n = params.len;
-    const base = serialLikelihood(ctx, params);
-    for (0..n) |i| {
-        const old = params[i];
-        params[i] = old + d;
-        const plus = serialLikelihood(ctx, params);
-        params[i] = old - d;
-        const minus = serialLikelihood(ctx, params);
-        params[i] = old;
-        gradient[i] = (plus - minus) / (2 * d);
-        hess[i * n + i] = (plus - 2 * base + minus) / (d * d);
-        for (0..i) |j| {
-            const other = params[j];
-            params[i] = old + d;
-            params[j] = other + d;
-            const pp = serialLikelihood(ctx, params);
-            params[j] = other - d;
-            const pm = serialLikelihood(ctx, params);
-            params[i] = old - d;
-            const mm = serialLikelihood(ctx, params);
-            params[j] = other + d;
-            const mp = serialLikelihood(ctx, params);
-            params[i] = old;
-            params[j] = other;
-            hess[i * n + j] = (pp - pm - mp + mm) / (4 * d * d);
-            hess[j * n + i] = hess[i * n + j];
+// Conditional cut/rho derivatives are the leading block. Standardized
+// continuous location and scale supply the nuisance information used for SE.
+fn serialInformation(ctx: Serial, params: []const f64, info: []f64, score: []f64, gradient: []f64) void {
+    const k = params.len;
+    const dim = k + 2;
+    const ir = k - 1;
+    const rho = params[ir];
+    const s = @sqrt((1 - rho) * (1 + rho));
+    const s3 = s * s * s;
+    @memset(info, 0);
+    @memset(gradient, 0);
+    for (ctx.data) |d| {
+        const z = (d.x - ctx.mean) / ctx.sd;
+        const category = std.mem.indexOfScalar(f64, ctx.categories, d.y).?;
+        const lo = if (category == 0) -std.math.inf(f64) else (params[category - 1] - rho * z) / s;
+        const hi = if (category == ir) std.math.inf(f64) else (params[category] - rho * z) / s;
+        const p = if (lo > 0) normal(-lo) - normal(-hi) else normal(hi) - normal(lo);
+        if (!(p > 0)) {
+            @memset(info, nan);
+            return;
         }
+        @memset(score, 0);
+        var active: [5]usize = undefined;
+        var cuts: usize = 0;
+        // For each bounding CDF, dPhi(q)=phi(q)dq and
+        // d²Phi(q)=phi(q)[d²q - q dq dq']. Combine before dividing by P.
+        for ([_]f64{ lo, hi }, 0..) |q, edge| {
+            if (!std.math.isFinite(q)) continue;
+            const cut = if (edge == 0) category - 1 else category;
+            active[cuts] = cut;
+            cuts += 1;
+            const ratio = (if (edge == 0) @as(f64, -1) else 1) * @exp(-q * q / 2) / (@sqrt(2 * std.math.pi) * p);
+            const dr = (rho * params[cut] - z) / s3;
+            const indices = [_]usize{ cut, ir, k, k + 1 };
+            const dq = [_]f64{ 1 / s, dr, rho / s, rho * z / s };
+            const d2 = [4][4]f64{
+                .{ 0, rho / s3, 0, 0 },
+                .{ rho / s3, params[cut] / s3 + 3 * rho * dr / (s * s), 1 / s3, z / s3 },
+                .{ 0, 1 / s3, 0, -rho / s },
+                .{ 0, z / s3, -rho / s, -2 * rho * z / s },
+            };
+            for (indices, 0..) |r, i| {
+                score[r] += ratio * dq[i];
+                for (indices, 0..) |c, j| info[r * dim + c] += d.f * ratio * (q * dq[i] * dq[j] - d2[i][j]);
+            }
+        }
+        active[cuts..][0..3].* = .{ ir, k, k + 1 };
+        for (active[0 .. cuts + 3]) |i| {
+            gradient[i] -= d.f * score[i];
+            for (active[0 .. cuts + 3]) |j| info[i * dim + j] += d.f * score[i] * score[j];
+        }
+        info[k * dim + k] += d.f;
+        info[(k + 1) * dim + k + 1] += 2 * d.f;
     }
 }
 // Under reflection of the continuous scores and exchange of the binary levels,
@@ -421,16 +442,33 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     // The observed Hessian at independence can be indefinite for strongly
     // associated pairs. Initialize at the marginal Pearson correlation.
     params[dim - 1] = xy / @sqrt(css * yy);
+    const information = try a.alloc(f64, (dim + 2) * (dim + 2));
+    defer a.free(information);
+    const score = try a.alloc(f64, dim + 2);
+    defer a.free(score);
+    const gradient = try a.alloc(f64, dim + 2);
+    defer a.free(gradient);
     const hess = try a.alloc(f64, dim * dim);
     defer a.free(hess);
     const grad = try a.alloc(f64, dim);
     defer a.free(grad);
     const candidate = try a.alloc(f64, dim);
     defer a.free(candidate);
+    const marginal_ll = result.n * (@log(ctx.sd) + 0.5 * (1 + @log(2.0 * std.math.pi)));
     for (0..opt.maxiter) |_| {
         const base = serialLikelihood(ctx, params);
-        derivatives(ctx, params, hess, grad);
+        serialInformation(ctx, params, information, score, gradient);
+        for (0..dim) |j| @memcpy(hess[j * dim ..][0..dim], information[j * (dim + 2) ..][0..dim]);
+        @memcpy(grad, gradient[0..dim]);
         if (!solve(hess, grad)) break;
+        // The decrement measures the remaining local improvement against the
+        // full joint likelihood, including the scale of the continuous margin.
+        var decrement: f64 = 0;
+        for (gradient[0..dim], grad) |g, step| decrement += g * step;
+        if (decrement >= 0 and decrement <= 10000 * std.math.floatEps(f64) * @abs(base + marginal_ll)) {
+            result.converged = true;
+            break;
+        }
         var scale: f64 = 1;
         var accepted = false;
         for (0..30) |_| {
@@ -451,24 +489,15 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         }
     }
     if (!result.converged) return result;
-    const full = try a.alloc(f64, dim + 2);
-    defer a.free(full);
-    @memcpy(full[0..dim], params);
-    full[dim] = mean;
-    full[dim + 1] = @log(ctx.sd);
-    const information = try a.alloc(f64, (dim + 2) * (dim + 2));
-    defer a.free(information);
-    const inverse = try a.alloc(f64, dim + 2);
-    defer a.free(inverse);
-    derivatives(ctx, full, information, inverse);
-    @memset(inverse, 0);
-    inverse[dim - 1] = 1;
-    if (!solve(information, inverse) or !(inverse[dim - 1] > 0)) {
+    serialInformation(ctx, params, information, score, gradient);
+    @memset(gradient, 0);
+    gradient[dim - 1] = 1;
+    if (!solve(information, gradient) or !(gradient[dim - 1] > 0)) {
         result.converged = false;
         return result;
     }
     result.r = params[dim - 1];
-    result.se = @sqrt(inverse[dim - 1]);
+    result.se = @sqrt(gradient[dim - 1]);
     result.wald = (result.r / result.se) * (result.r / result.se);
     result.p = 2 * normal(-@abs(result.r / result.se));
     result.lr = @max(0, 2 * (null_ll - serialLikelihood(ctx, params)));
@@ -543,6 +572,44 @@ test "CORR polyserial Fitness1 RunTime and Oxygen from SAS example 2.5" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.04071), fit.se, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 500.0345), fit.wald, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 38.6963), fit.lr, 0.00005);
+}
+
+test "CORR polyserial joint likelihood scale controls the final Newton update" {
+    const observations = [_]Observation{
+        .{ .x = -1.699, .y = 0, .f = 1 },
+        .{ .x = 3.177, .y = 2, .f = 1 },
+        .{ .x = -1.437, .y = 1, .f = 5 },
+        .{ .x = -0.216, .y = 2, .f = 4 },
+        .{ .x = 6.056, .y = 1, .f = 4 },
+        .{ .x = 3.596, .y = 2, .f = 3 },
+        .{ .x = 1.577, .y = 1, .f = 2 },
+        .{ .x = -6.034, .y = 0, .f = 5 },
+        .{ .x = 3.635, .y = 2, .f = 2 },
+        .{ .x = -2.391, .y = 0, .f = 1 },
+        .{ .x = -0.065, .y = 2, .f = 1 },
+        .{ .x = 1.288, .y = 2, .f = 6 },
+        .{ .x = -0.425, .y = 1, .f = 2 },
+        .{ .x = 2.199, .y = 1, .f = 4 },
+        .{ .x = -2.077, .y = 0, .f = 2 },
+        .{ .x = 0.65, .y = 1, .f = 6 },
+        .{ .x = 2.285, .y = 2, .f = 3 },
+        .{ .x = 2.275, .y = 2, .f = 5 },
+        .{ .x = 4.241, .y = 2, .f = 6 },
+        .{ .x = -1.212, .y = 1, .f = 2 },
+        .{ .x = -0.587, .y = 2, .f = 1 },
+        .{ .x = -2.21, .y = 2, .f = 1 },
+        .{ .x = 6.12, .y = 2, .f = 4 },
+    };
+    for ([_]f64{ 1, 1048576, 1.0 / 1048576.0 }) |scale| {
+        var data = observations;
+        for (&data) |*d| d.x *= scale;
+        const at_four = try polyserial(std.testing.allocator, &data, .{ .maxiter = 4, .converge = 1e-10 });
+        try std.testing.expectEqual(scale != 1, at_four.converged);
+        if (at_four.converged) try std.testing.expectApproxEqAbs(@as(f64, 0.68377621855765), at_four.r, 1e-12);
+        const fit = try polyserial(std.testing.allocator, &data, .{ .converge = 1e-10 });
+        const expected: f64 = if (scale == 1) 0.68377458477580 else 0.68377621855765;
+        try std.testing.expectApproxEqAbs(expected, fit.r, 1e-12);
+    }
 }
 
 test "CORR separated binary polyserial threshold, reflected units, and information rank" {
