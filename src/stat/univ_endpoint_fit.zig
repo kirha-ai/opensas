@@ -104,15 +104,79 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
             return fail(.iteration_limit);
         return fitted;
     }
-    if (family == .pareto and fixed.alpha != null and fixed.sigma == null and (fixed.alpha.? == 0 or fixed.alpha.? == 1)) {
-        var scale: f64 = 0;
-        for (x) |v| scale += (v - fixed.theta.?) / @as(f64, @floatFromInt(x.len));
-        if (fixed.alpha.? == 1) scale = x[x.len - 1] - fixed.theta.?;
-        const p: Parameters = .{ .theta = fixed.theta.?, .sigma = scale, .alpha = fixed.alpha.? };
-        return .{ .converged = .{ .parameters = p, .log_likelihood = logLikelihood(.pareto, x, p) } };
+    if (family == .pareto and fixed.alpha != null and fixed.sigma == null) {
+        if (paretoScale(x, fixed.theta.?, fixed.alpha.?, controls)) |curve| return .{ .converged = curve };
     }
     if (family == .pareto and fixed.alpha == null and fixed.sigma == null) return paretoProfile(x, fixed.theta.?, controls);
     return optimize(family, x, fixed, controls);
+}
+
+fn paretoLogScaleScore(x: []const f64, p: Parameters) f64 {
+    var sum: f64 = 0;
+    for (x) |v| {
+        const excess = v - p.theta;
+        sum += excess / (p.sigma - p.alpha * excess);
+    }
+    return (1 - p.alpha) * sum - @as(f64, @floatFromInt(x.len));
+}
+
+/// With a specified shape, M9 starts the log-scale iterations at the
+/// first-moment estimate. Near the exponential limit it fits the mean and
+/// retains the supplied shape in ParameterEstimates.
+fn paretoScale(x: []const f64, theta: f64, alpha: f64, controls: Controls) ?Curve {
+    const n: f64 = @floatFromInt(x.len);
+    const maximum = x[x.len - 1] - theta;
+    var mean: f64 = 0;
+    for (x) |v| mean += (v - theta) / n;
+    var p: Parameters = .{ .theta = theta, .sigma = mean, .alpha = alpha };
+    if (alpha == 1 or @abs(alpha) < 1e-6) {
+        if (alpha == 1) p.sigma = maximum;
+        return .{ .parameters = p, .log_likelihood = logLikelihood(.pareto, x, p) };
+    }
+    if (!(alpha > -1 and alpha < 1)) return null;
+    p.sigma = mean * (1 + alpha);
+    // If a positive shape puts the moment estimate outside the support,
+    // M9 starts one micro-unit above the physical scale boundary.
+    if (p.sigma <= alpha * maximum) p.sigma = alpha * maximum + 1e-6;
+    var log_scale = @log(p.sigma);
+    // The objective receives exp(log-scale), including at the initial point.
+    p.sigma = @exp(log_scale);
+    var ll = logLikelihood(.pareto, x, p);
+    if (!std.math.isFinite(ll)) return null;
+    const first_ridge: f64 = 1.0 / 32.0;
+    var ridge: f64 = 0;
+    for (0..@min(controls.maxiter, 80)) |i| {
+        const score = paretoLogScaleScore(x, p);
+        if (@abs(score) <= 1e-5) return .{ .parameters = p, .log_likelihood = ll, .iterations = i };
+        const high = log_scale + std.math.cbrt(std.math.floatEps(f64)) * (1 + @abs(log_scale));
+        var probe = p;
+        probe.sigma = @exp(high);
+        const curvature = (paretoLogScaleScore(x, probe) - score) / (high - log_scale);
+        if (!std.math.isFinite(curvature)) return null;
+        for (0..64) |_| {
+            if (ridge > curvature) {
+                const delta = score / (ridge - curvature);
+                const next_log_scale = log_scale + delta;
+                probe.sigma = @exp(next_log_scale);
+                const next_ll = logLikelihood(.pareto, x, probe);
+                if (std.math.isFinite(next_ll) and next_ll >= ll) {
+                    const projected = score * delta;
+                    if (projected <= 1e-8 * (@abs(ll) + @abs(next_ll)))
+                        return .{ .parameters = probe, .log_likelihood = next_ll, .iterations = i + 1 };
+                    if (ridge > 0) {
+                        ridge /= if (next_ll - ll < 0.5 * projected) @as(f64, 2) else 4;
+                        if (ridge < first_ridge) ridge = 0;
+                    }
+                    log_scale = next_log_scale;
+                    p = probe;
+                    ll = next_ll;
+                    break;
+                }
+            }
+            ridge = if (ridge == 0) first_ridge else 4 * ridge;
+        } else return null;
+    }
+    return null;
 }
 
 /// M9 retains the moment-based width when it bounds the fitted scale.
@@ -416,6 +480,25 @@ test "endpoint Pareto SAS M9 negative shape fixed and estimated" {
     try check(.{ .theta = 0, .sigma = 1.991393, .alpha = -0.3 }, fit(.pareto, &x, .{ .alpha = -0.3 }, .{}), 5e-5);
     try check(.{ .theta = 0, .sigma = 2, .alpha = -0.27802 }, fit(.pareto, &x, .{ .sigma = 2 }, .{}), 5e-5);
     try check(.{ .theta = 0, .sigma = 2.764319, .alpha = 0 }, fit(.pareto, &x, .{ .alpha = 0 }, .{}), 5e-5);
+}
+
+test "specified Pareto shape follows M9 log-scale Newton steps and exponential limit" {
+    const sample = [_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 };
+    for ([_]f64{ 1, 1e5 }, [_]f64{ 6.9179109917530734, 691791.0998294684 }) |scale, expected| {
+        var x: [sample.len]f64 = undefined;
+        for (sample, &x) |v, *out| out.* = -3 + v * scale;
+        const curve = fit(.pareto, &x, .{ .theta = -3, .alpha = 0.2 }, .{}).converged;
+        try std.testing.expectApproxEqAbs(expected / scale, curve.parameters.sigma / scale, 1e-10);
+    }
+    const tied = [_]f64{ 1, 1, 1, 2, 3, 8, 23 };
+    try check(.{ .sigma = 3.658276968259533, .alpha = -0.3 }, fit(.pareto, &tied, .{ .alpha = -0.3 }, .{}), 1e-11);
+    try check(.{ .sigma = 16.177794893374532, .alpha = 0.65 }, fit(.pareto, &tied, .{ .alpha = 0.65 }, .{}), 1e-10);
+    const small = [_]f64{ 0.25, 0.65, 0.77, 1.33, 2.35, 6.23, 12.51 };
+    for ([_]f64{ -1e-8, 9.999e-7, 1e-6 }, [_]f64{ 3.4414285714285713, 3.4414285714285713, 3.4414320128571427 }) |alpha, expected| {
+        const curve = fit(.pareto, &small, .{ .alpha = alpha }, .{}).converged;
+        try std.testing.expectEqual(alpha, curve.parameters.alpha);
+        try std.testing.expectApproxEqAbs(expected, curve.parameters.sigma, 1e-12);
+    }
 }
 
 test "endpoint heldout shifted scaled beta Pareto and power" {
