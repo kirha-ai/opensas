@@ -72,7 +72,9 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     const lo = if (pooled) minimum else key[0];
     const hi = if (pooled) maximum else key[key.len - 1];
     const n = if (pooled) total else key.len;
-    const centered_pair = request.endpoints and target == 2 and lo < 0 and hi > 0;
+    const two_endpoints = request.endpoints and target == 2 and lo != hi;
+    const centered_pair = two_endpoints and lo < 0 and hi > 0;
+    const zero_endpoint = two_endpoints and (lo == 0 or hi == 0);
     var width: f64 = undefined;
     if (explicit) {
         width = request.initial_endpoints[1] - request.initial_endpoints[0];
@@ -86,6 +88,8 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         const resolution = @sqrt(std.math.floatEps(f64) / 2) * (hi - lo);
         const tick = preferred(magnitude - resolution, true);
         width = if (magnitude >= tick) 2 * tick else tick;
+    } else if (zero_endpoint) {
+        width = zeroEndpointWidth(hi - lo);
     } else if (target) |count| {
         width = try controlledWidth(d, minimum, maximum, count);
     } else {
@@ -107,6 +111,8 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
             endpointAlignment(lo / width, hi / width)
         else if (centered_pair)
             .{ .shift = 0.5 }
+        else if (zero_endpoint)
+            .{}
         else
             .{ .ambiguous = true };
         const shift = alignment.shift;
@@ -228,6 +234,22 @@ fn preferred(initial: f64, ceiling: bool) f64 {
     };
     return width;
 }
+/// A two-endpoint axis anchored at zero spans twice a decimal tick. The
+/// quarter-decade tick applies when it is nearer than 2 on the log scale.
+/// E.g. upper extrema .44 and .46 give widths 1 and .5, respectively.
+fn zeroEndpointWidth(span: f64) f64 {
+    const half = span / 2;
+    if (!(half > 0) or !std.math.isFinite(half)) return std.math.nan(f64);
+    const unit = std.math.pow(f64, 10, @floor(@log10(half)));
+    const scaled = half / unit;
+    const minimum = scaled * (1 - @sqrt(std.math.floatEps(f64) / 2));
+    for ([_]f64{ 1, 2, 2.5, 5, 10 }) |factor| {
+        if (factor == 2.5 and scaled < @sqrt(@as(f64, 5))) continue;
+        if (factor >= minimum) return 2 * factor * unit;
+    }
+    return std.math.nan(f64);
+}
+
 fn controlledWidth(d: *diag.Diagnostics, lo: f64, hi: f64, count: usize) diag.Error!f64 {
     var width = preferred((hi - lo) / @as(f64, @floatFromInt(count - 1)), true);
     for (0..32) |_| {
@@ -336,4 +358,21 @@ test "automatic endpoints distinguish occupied span, tick proximity and exact ti
     try std.testing.expectEqual(@as(f64, 0.5), endpointAlignment(2.0 / 4.0, 16.0 / 4.0).shift);
     // At this tie M9 changes phase when the same data are rescaled by 0.01.
     try std.testing.expect(endpointAlignment(-875.0 / 150.0, 50.0 / 150.0).ambiguous);
+}
+
+test "UNIVARIATE two-endpoint axes anchored at zero use native decimal widths" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for ([_]f64{ 0.2225, 0.44, 0.46, 0.500000001, 0.50000002 }, [_]f64{ 0.4, 1, 0.5, 0.5, 1 }) |maximum, width| {
+        for ([_][2]f64{ .{ 0, maximum }, .{ -maximum, 0 } }) |sample| {
+            for ([_]bool{ false, true }) |right| {
+                const plan = try determine(a, &d, &.{.{ .sorted = &sample }}, .{ .endpoints = true, .target_count = 2, .right = right });
+                try std.testing.expectEqual(width, plan.width);
+                try std.testing.expect(!plan.endpoint_phase_ambiguous);
+                try std.testing.expect(std.mem.indexOfScalar(f64, plan.endpoints, 0) != null);
+            }
+        }
+    }
 }
