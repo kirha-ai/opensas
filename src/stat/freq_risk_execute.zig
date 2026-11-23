@@ -150,10 +150,12 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         try names.append(b.a, "Equivalence Analysis");
     }
     for (hs.items, names.items) |h, name| {
+        var test_request = req;
+        if (h == .equality and req.method == .newcombe) test_request.method = .wald;
         const variance = req.variance orelse (if (req.family == .binomial and h == .equality) infer.Variance.null_value else .sample);
         const result = (switch (req.family) {
             .binomial => infer.binomial(sample.?, h, variance, b.alpha, req.correct),
-            .difference => infer.difference(table.?, if (req.column == 0) .first else .second, h, switch (req.method) {
+            .difference => infer.difference(table.?, if (req.column == 0) .first else .second, h, switch (test_request.method) {
                 .wald => .wald,
                 .ha => .hauck_anderson,
                 .fm => .farrington_manning,
@@ -170,7 +172,7 @@ fn hypotheses(b: *Builder, req: p.Request, table: ?k.Table2x2, sample: ?k.Binomi
         const point: ?f64 = if (sample) |s| s.proportion() else if (req.family == .difference) (try k.difference(table.?, if (req.column == 0) .first else .second, b.alpha, false)).estimate else (try k.ratio(table.?, if (req.column == 0) .first else .second, .relative_risk, b.alpha, .wald, true)).estimate;
         const modified: ?f64 = if (req.method == .waldmodified) (try k.ratio(table.?, if (req.column == 0) .first else .second, .relative_risk, b.alpha, .wald_modified, true)).estimate else null;
         const title = if (req.family == .binomial) try std.fmt.allocPrint(b.a, "{s} for the {s}", .{ name, family_name }) else try std.fmt.allocPrint(b.a, "{s} for the {s} (Column {d})", .{ name, family_name, req.column + 1 });
-        try b.inference(req, h, result, title, point, modified);
+        try b.inference(test_request, h, result, title, point, modified);
     }
 }
 fn ratioMethod(m: p.Method) k.RatioMethod {

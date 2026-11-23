@@ -291,7 +291,6 @@ const Reader = struct {
             } else return self.fail("unknown risk suboption");
         }
         self.i += 1;
-        if (req.equal and req.method == .newcombe) return self.fail("Newcombe is not an equality test");
     }
 };
 fn proportionValue(x: f64) f64 {
