@@ -384,6 +384,35 @@ test "automatic endpoints distinguish occupied span, tick proximity and exact ti
     try std.testing.expect(endpointAlignment(-875.0 / 150.0, 50.0 / 150.0).ambiguous);
 }
 
+test "automatic endpoints and RTINCLUDE reproduce native OUTHISTOGRAM after integer translations" {
+    const native = [_]struct { first: [2]f64, counts: [2][4]usize }{
+        .{ .first = .{ -15, -15 }, .counts = .{ .{ 1, 3, 3, 1 }, .{ 1, 1, 2, 4 } } },
+        .{ .first = .{ -15, -9 }, .counts = .{ .{ 1, 2, 4, 1 }, .{ 1, 3, 3, 1 } } },
+        .{ .first = .{ -18, -12 }, .counts = .{ .{ 1, 1, 2, 4 }, .{ 1, 1, 3, 3 } } },
+        .{ .first = .{ -12, -12 }, .counts = .{ .{ 1, 3, 3, 1 }, .{ 1, 1, 2, 4 } } },
+        .{ .first = .{ -12, -6 }, .counts = .{ .{ 1, 2, 4, 1 }, .{ 1, 3, 3, 1 } } },
+        .{ .first = .{ -15, -9 }, .counts = .{ .{ 1, 1, 2, 4 }, .{ 1, 1, 3, 3 } } },
+    };
+    const observations = [_]f64{ -15, -9, -6, -4, -2, -1, 0, 3 };
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    for (native, 0..) |reference, shift| {
+        var sample = observations;
+        for (&sample) |*value| value.* += @floatFromInt(shift);
+        for ([_]bool{ false, true }, 0..) |right, side| {
+            const endpoints = try automatic(a, &d, &sample, true, right);
+            const bins = try @import("univ_distribution_values.zig").histogram(a, &d, &sample, endpoints, right, null);
+            try std.testing.expectEqual(reference.counts[side].len, bins.len);
+            for (bins, reference.counts[side], 0..) |bin, count, i| {
+                try std.testing.expectEqual(reference.first[side] + 6 * @as(f64, @floatFromInt(i)), if (right) bin.upper else bin.lower);
+                try std.testing.expectEqual(count, bin.count);
+            }
+        }
+    }
+}
+
 test "UNIVARIATE two-endpoint axes anchored at zero use native decimal widths" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
