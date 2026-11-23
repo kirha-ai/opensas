@@ -320,7 +320,8 @@ fn newtonStep(info: []const f64, at_bound: bool, grad: []f64, factor: []f64) ?Ne
             ridge *= 16;
             if (!std.math.isFinite(ridge)) return null;
         }
-        while (ridge / 16 > 0 and factorInformation(info, stride, free, ridge / 16, factor)) ridge /= 16;
+        // Try one lower ridge after positive curvature has been restored.
+        if (ridge / 16 > 0 and factorInformation(info, stride, free, ridge / 16, factor)) ridge /= 16;
         if (!factorInformation(info, stride, free, ridge, factor)) return null;
         if (!at_bound) kind = .ridged;
     }
@@ -464,11 +465,16 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     defer a.free(candidate);
     const marginal_ll = result.n * (@log(ctx.sd) + 0.5 * (1 + @log(2.0 * std.math.pi)));
     const bound = @max(0.99, 1 - opt.converge / 2);
+    var consecutive_ridges: usize = 0;
     for (0..opt.maxiter) |_| {
         const base = serialLikelihood(ctx, params);
         serialInformation(ctx, params, information, score, gradient);
         @memcpy(grad, gradient[0..dim]);
         const kind = newtonStep(information, @abs(params[dim - 1]) == bound, grad, factor) orelse break;
+        if (kind == .ridged) {
+            consecutive_ridges += 1;
+            if (consecutive_ridges > 10) break;
+        } else consecutive_ridges = 0;
         // The decrement measures the remaining local improvement against the
         // full joint likelihood, including the scale of the continuous margin.
         var decrement: f64 = 0;
@@ -482,7 +488,8 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         const to_limit = if (dr == 0) 0 else (limit - params[dim - 1]) / dr;
         // A nearby endpoint and its midpoint bracket the ordinary Newton
         // trial. The endpoint can be selected even when it extends the step.
-        const project = dr != 0 and (kind == .ridged or (to_limit > 0 and to_limit < 2));
+        const projection_limit: f64 = if (kind == .ridged) 10 else 2;
+        const project = to_limit > 0 and to_limit < projection_limit;
         var scale: f64 = if (project) to_limit else 1;
         var accepted = false;
         for (0..30) |trial| {
@@ -490,12 +497,12 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
             if (project and trial == 0) candidate[dim - 1] = limit;
             const objective = serialLikelihood(ctx, candidate);
             if (project and trial == 0) {
-                for (params, 0..) |v, i| score[i] = v - 0.5 * scale * grad[i];
-                score[dim - 1] = (params[dim - 1] + limit) / 2;
+                // Compare the endpoint with a retraction no longer than the
+                // ordinary Newton step. This is also the next step if it wins.
+                const retraction = @min(1, scale / 2);
+                for (params, 0..) |v, i| score[i] = v - retraction * grad[i];
                 if (serialLikelihood(ctx, score[0..dim]) < objective) {
-                    // Retracting from a projected endpoint never extends the
-                    // original Newton step, even when its midpoint lies beyond it.
-                    scale = @min(1, scale / 2);
+                    scale = retraction;
                     continue;
                 }
             }
@@ -777,6 +784,7 @@ test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
         .{ .tolerance = 0.008, .first_success = 8, .lr = 21.3767589182459 },
         .{ .tolerance = 0.006, .first_success = 8, .lr = 21.5215656621666 },
         .{ .tolerance = 0.004, .first_success = 9, .lr = 21.7492337767932 },
+        .{ .tolerance = 0.00174230229798, .first_success = 17, .lr = 22.3050902699286 },
     }) |ref| {
         const early = try polyserial(std.testing.allocator, &data, .{ .converge = ref.tolerance, .maxiter = ref.first_success - 1 });
         try std.testing.expect(!early.converged);
@@ -785,6 +793,9 @@ test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
         try std.testing.expectEqual(@as(f64, 0), fit.se);
         try std.testing.expectApproxEqAbs(ref.lr, fit.lr, 1e-11);
     }
+    const unbounded = try polyserial(std.testing.allocator, &data, .{ .converge = 0.001, .maxiter = 1000 });
+    try std.testing.expect(!unbounded.converged);
+    try std.testing.expect(std.math.isNan(unbounded.r) and std.math.isNan(unbounded.se) and std.math.isNan(unbounded.lr));
 }
 
 test "CORR rejects an unidentified interior polyserial correlation" {
