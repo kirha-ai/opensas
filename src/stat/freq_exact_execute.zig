@@ -29,8 +29,14 @@ pub const Barnard = struct {
     difference: f64,
     se: f64,
     z: f64,
-    one: unconditional.Bounds,
-    two: unconditional.Bounds,
+    tails: unconditional.BarnardTails,
+
+    pub fn oneSided(self: Barnard) ?f64 {
+        return if (self.tails == .complete) self.tails.complete.one.upper else null;
+    }
+    pub fn twoSided(self: Barnard) ?f64 {
+        return if (self.tails == .complete) self.tails.complete.two.upper else null;
+    }
 
     /// M9 reports the observed score one square root of unit roundoff closer
     /// to zero. Preserve the analytical score and independently enumerated tails.
@@ -333,11 +339,11 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
             const n2 = m.counts[2] + m.counts[3];
             const delta = m.counts[0] / n1 - m.counts[2] / n2;
             const tails = try unconditional.barnardTails(table, if (delta > 0) .right else .left, .{ .budget = c.budget, .allocator = a });
-            if (tails == .exhausted) return .exhausted;
+            if (tails == .exhausted and !c.budget.stopped()) return .exhausted;
             const p = (m.counts[0] + m.counts[2]) / (n1 + n2);
             const q = (m.counts[1] + m.counts[3]) / (n1 + n2);
             const se = @sqrt(p * q * (1 / n1 + 1 / n2));
-            return .{ .barnard = .{ .difference = delta, .se = se, .z = delta / se, .one = tails.complete.one, .two = tails.complete.two } };
+            return .{ .barnard = .{ .difference = delta, .se = se, .z = delta / se, .tails = tails } };
         }
         const options = if (f == .riskdiff) c.options.riskdiff else c.options.relrisk;
         const column = options.column orelse if (f == .riskdiff and !c.norisks) parse.Column.both else .first;
@@ -699,8 +705,8 @@ test "Barnard maximizes the opposing tail above the stack cutoff and keeps ordin
     // The one-sided event contains only the observed table. Its likelihood is
     // (1-p)*p^129, with an interior maximum at p=129/130.
     const one = 0.002840774943588005242286090151658295;
-    try std.testing.expectApproxEqRel(@as(f64, one), result.barnard.one.upper, 2e-14);
-    try std.testing.expect(result.barnard.two.upper >= result.barnard.one.upper);
+    try std.testing.expectApproxEqRel(@as(f64, one), result.barnard.oneSided().?, 2e-14);
+    try std.testing.expect(result.barnard.twoSided().? >= result.barnard.oneSided().?);
     try std.testing.expect((try run(std.testing.allocator, m, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .barnard);
     const near = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 0, 2, 128, 1 } };
     try std.testing.expect((try run(std.testing.allocator, near, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .exhausted);
@@ -727,7 +733,7 @@ test "Barnard reported score respects equal risks and signed near-null row/colum
     // M9 null and permutation capture: [30,31;31,32] and its row, column,
     // and double swaps. The elementary pooled score also stays accessible.
     for ([_]f64{ 0, -0.002897613511751, 0.002897613511751 }, [_]f64{ 0, -0.00289760297503, 0.00289760297503 }) |z, native| {
-        const r: Barnard = .{ .difference = z, .se = 1, .z = z, .one = undefined, .two = undefined };
+        const r: Barnard = .{ .difference = z, .se = 1, .z = z, .tails = .exhausted };
         try std.testing.expectApproxEqAbs(native, r.reportedZ(), 1e-14);
     }
 }

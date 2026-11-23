@@ -78,8 +78,8 @@ pub fn barnard(a: A, out: *Out, r: @import("freq_exact_execute.zig").Barnard, op
     try nLine(a, out, "Risk Difference", r.difference);
     try nLine(a, out, "ASE (H0)", r.se);
     try nLine(a, out, "Z", r.reportedZ());
-    try pLine(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", r.one.upper, options);
-    try pLine(a, out, "Two-sided Pr >= |Z|", r.two.upper, options);
+    try pLine(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", r.oneSided(), options);
+    try pLine(a, out, "Two-sided Pr >= |Z|", r.twoSided(), options);
 }
 
 pub const Fisher = struct { first_cell: ?f64 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };

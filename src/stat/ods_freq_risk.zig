@@ -89,9 +89,9 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         const right = v.difference > 0;
         const names = [_][]const u8{ "_RDIF1_", "E_RDIF1", "Z_RDIF1", if (right) "XPR_RDIF1" else "XPL_RDIF1", "XP2_RDIF1" };
         const labels = [_][]const u8{ "Risk Difference", "ASE (H0)", "Z", if (right) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", "Two-sided Pr >= |Z|" };
-        for (names, labels, [_]f64{ v.difference, v.se, v.reportedZ(), v.one.upper, v.two.upper }, 0..) |name, label, value, i| {
-            const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, b.n(value), "8.4"), " ") else try @import("freq_exact_render.zig").probability(a, value, style);
-            try t.row(&.{ b.s(table), b.s(name), b.s(label), b.s(display), b.n(value) });
+        for (names, labels, [_]?f64{ v.difference, v.se, v.reportedZ(), v.oneSided(), v.twoSided() }, 0..) |name, label, value, i| {
+            const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, numeric(value), "8.4"), " ") else try @import("freq_exact_render.zig").probability(a, value, style);
+            try t.row(&.{ b.s(table), b.s(name), b.s(label), b.s(display), numeric(value) });
         }
         try capture.publish(a, d, "BarnardsTest", &t.ds);
     };
@@ -175,6 +175,23 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
         // The ODS value is unrounded. Full M9 SCORE endpoint parity is open.
         try std.testing.expect(rs.row(8)[4].num != try std.fmt.parseFloat(f64, rs.row(8)[3].str));
     }
+    // M9 keeps all five BarnardsTest rows on MAXTIME. Only the two
+    // computed probabilities are missing; the observed sample is usable.
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output BarnardsTest=stopped;", &d));
+    try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, "proc freq data=sample;weight n;tables r*c;exact barnard / maxtime=1e-20;run;", &d));
+    try capture.finish(&library, &d);
+    const stopped = library.find("stopped").?;
+    try std.testing.expectEqual(@as(usize, 5), stopped.rowCount());
+    for (0..5) |i| {
+        try std.testing.expectEqualStrings(barnard.row(i)[1].str, stopped.row(i)[1].str);
+        if (i < 3) {
+            try std.testing.expectEqual(barnard.row(i)[4].num, stopped.row(i)[4].num);
+        } else {
+            try std.testing.expectEqualStrings(".", stopped.row(i)[3].str);
+            try std.testing.expectEqual(Value.missingRank(Value.missing.num), Value.missingRank(stopped.row(i)[4].num));
+        }
+    }
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "terminated when time exceeded MAXTIME=") != null);
     try capture.parse(a, &d, try lex.tokenize(a, "ods output RiskDiffCol1=r1 RiskDiffCol2=r2;", &d));
     try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, "proc freq data=sample;weight n;tables r*c / riskdiff(column=both cl=wald);run;", &d));
     try capture.finish(&library, &d);

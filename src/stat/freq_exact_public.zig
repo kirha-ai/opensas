@@ -358,6 +358,9 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 if (r.second) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 2)", .{title(f)}), ci, c.alpha);
             },
             .barnard => |b| {
+                if (b.tails == .exhausted) if (options.max_seconds) |limit| {
+                    try d.report(.note, 0, "Computations for Barnard's exact test were terminated when time exceeded MAXTIME={d}.", .{limit});
+                };
                 limits.barnard = b;
                 try renderers.barnard(a, out, b, options);
             },
