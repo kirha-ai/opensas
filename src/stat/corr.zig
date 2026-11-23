@@ -2089,8 +2089,8 @@ test "CORR small Fisher bias displays the significant digits from manual example
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    const batch1 = 0.2208125944316187 / (2 * 149);
-    const batch2 = 0.3369440964259697 / (2 * 149);
+    const batch1 = @as(f64, 0.2208125944316187) / (2 * 149);
+    const batch2 = @as(f64, 0.3369440964259697) / (2 * 149);
     try std.testing.expectEqualStrings("0.0007410", try smallEstimate(a, batch1));
     try std.testing.expectEqualStrings("-0.0007410", try smallEstimate(a, -batch1));
     try std.testing.expectEqualStrings("0.00113", try smallEstimate(a, batch2));
