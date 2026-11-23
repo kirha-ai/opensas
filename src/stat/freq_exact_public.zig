@@ -302,7 +302,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options);
             },
             .fisher => |r| {
-                const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
+                const fisher = renderers.Fisher{ .first_cell = if (r.first_cell) |fcell| @floatFromInt(fcell) else null, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
                 limits.fisher = fisher;
                 try renderers.fisher(a, out, fisher, options);
             },
@@ -439,6 +439,21 @@ test "public EXACT Fisher includes tied mass and replaces automatic Fisher once"
     const mc = try h.run("proc freq data=d; weight w; tables r*c / fisher noprint; exact fisher / n=100 seed=17; run;", &d);
     try std.testing.expect(std.mem.indexOf(u8, mc, "Monte Carlo") == null);
     try std.testing.expect(std.mem.indexOf(u8, mc, "0.0028") != null);
+}
+
+test "explicit 2x2 Fisher stops under MAXTIME without an automatic support scan" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // 20,000,001 possible tables. The public chi-square path must not perform its
+    // own Fisher scan before the deadline-controlled explicit request can run.
+    var h = try Harness.init(a, &.{ 10_000_000, 10_000_000, 10_000_000, 10_000_000 }, 2);
+    var d = diag.Diagnostics.init(a);
+    const stopped = try h.run("proc freq data=d; weight w; tables r*c / chisq noprint; exact fisher / maxtime=1e-20; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "Chi-Square") != null);
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "resource limit") != null);
+    try std.testing.expect(std.mem.indexOf(u8, stopped, "Table Probability") == null);
 }
 
 test "public EXACT MC seed is repeatable and budget exhaustion emits no partial estimate" {

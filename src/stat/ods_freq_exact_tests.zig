@@ -17,7 +17,7 @@ const model = @import("freq_table.zig");
 
 fn fisherRows(rows: *Rows, result: render.Fisher, opt: parse.Options) !void {
     if (result.first_cell) |f| {
-        try rows.integer("Cell1_FREQ", "Cell (1,1) Frequency (F)", f);
+        try rows.add("Cell1_FREQ", "Cell (1,1) Frequency (F)", try std.fmt.allocPrint(rows.a, "{d:.0}", .{f}), f);
         try rows.probability("XPL_FISH", "Left-sided Pr <= F", result.left.?);
         try rows.probability("XPR_FISH", "Right-sided Pr >= F", result.right.?);
         try rows.add("", "", "", null);
@@ -46,7 +46,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         // Automatic Fisher belongs to CHISQ only for an integer 2x2 table.
         // An explicitly exhausted test must never fall back to this result.
         if (result == null and !opt.families.contains(.fisher)) if (chisq) |chi| {
-            if (chi.fisher) |f| result = .{ .first_cell = @intFromFloat(m.counts[0]), .table_probability = f.probability, .left = f.left, .right = f.right, .p = f.two_sided, .point = 0 };
+            if (chi.fisher) |f| result = .{ .first_cell = m.counts[0], .table_probability = f.probability, .left = f.left, .right = f.right, .p = f.two_sided, .point = 0 };
         };
         if (result != null or exact.fisher_table_probability != null) {
             var builder = try b.Builder.init(a, source, by, rep);
@@ -68,6 +68,27 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         rows.finish();
         try capture.publish(a, d, object, &builder.ds);
     }
+}
+
+test "automatic Fisher ODS preserves first-cell frequencies wider than a 32 bit integer" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var source = Dataset.init(a, "sample");
+    var diagnostics = diag.Diagnostics.init(a);
+    var capture: ods.Capture = .{};
+    const lex = @import("../lexer.zig");
+    try capture.parse(a, &diagnostics, try lex.tokenize(a, "ods output FishersExact=f;", &diagnostics));
+    const counts = [_]f64{ 4_294_967_296, 1, 1, 2 };
+    const m = model.CountMatrix{ .rows = 2, .cols = 2, .counts = &counts };
+    const chi = try k.contingency(a, .{ .rows = m.rows, .cols = m.cols, .counts = m.counts }, null);
+    try publish(a, &diagnostics, &capture, &source, &.{}, null, "Table r * c", m, chi, .{}, .{});
+    var lib = @import("../exec.zig").Library.init(a);
+    try capture.finish(&lib, &diagnostics);
+    const row = lib.find("f").?.row(0);
+    try std.testing.expectEqualStrings("4294967296", row[3].str);
+    try std.testing.expectEqual(counts[0], row[4].num);
+    try std.testing.expect(!diagnostics.hasErrors());
 }
 
 test "2x3 Fisher ODS separates tied probability, mid-p, observed table mass and seeded simulation" {

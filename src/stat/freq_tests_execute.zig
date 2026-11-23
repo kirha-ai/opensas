@@ -112,7 +112,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
     if (!table.numeric_table_scores_valid) try d.report(.warning, 0, "Some statistics are not computed because there is no valid numeric table score for the missing values.", .{});
     if (!proc_noprint) if (table.score_display) |display| try render.scores(a, out, m, display, options.score_type);
     if (options.chisq) {
-        var chisq = k.contingency(a, m, options.df) catch |err| {
+        var chisq = k.contingencyWithFisher(a, m, options.df, !table.suppress_fisher) catch |err| {
             if (err == error.OutOfMemory) return err;
             return d.fail(error.ExecError, 0, "PROC FREQ: invalid counts or chi-square degrees of freedom", .{});
         };
@@ -121,11 +121,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         if (options.warn.output) report.warning = chisq.sparse;
         try warn(d, chisq.sparse, options, proc_noprint);
         if (!table.suppress_fisher and m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
-        if (!proc_noprint) {
-            var displayed = chisq;
-            if (table.suppress_fisher) displayed.fisher = null;
-            try render.contingency(a, out, displayed, options, m.counts[0]);
-        }
+        if (!proc_noprint) try render.contingency(a, out, chisq, options, m.counts[0]);
     }
     if (options.measures or options.plcorr) {
         var ordinal = try k.association(a, m, options.alpha);

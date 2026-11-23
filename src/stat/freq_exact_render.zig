@@ -76,11 +76,11 @@ pub fn barnard(a: A, out: *Out, r: @import("freq_exact_execute.zig").Barnard, op
     try pLine(a, out, "Two-sided Pr >= |Z|", r.two.upper, options);
 }
 
-pub const Fisher = struct { first_cell: ?u32 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
+pub const Fisher = struct { first_cell: ?f64 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
 pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     try out.appendSlice(a, "\nFisher's Exact Test\n----------------------------------\n");
     if (r.first_cell) |cell| {
-        try line(a, out, "Cell (1,1) Frequency (F)", try std.fmt.allocPrint(a, "{d}", .{cell}));
+        try line(a, out, "Cell (1,1) Frequency (F)", try std.fmt.allocPrint(a, "{d:.0}", .{cell}));
         try pLine(a, out, "Left-sided Pr <= F", r.left, options);
         try pLine(a, out, "Right-sided Pr >= F", r.right, options);
     }

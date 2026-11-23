@@ -132,6 +132,11 @@ fn score(s: ?[]const f64, i: usize) f64 {
 }
 
 pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Error!ChiSquare {
+    return contingencyWithFisher(a, m, df_override, true);
+}
+
+/// An explicit EXACT FISHER request supplies its own controlled enumeration.
+pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64, automatic_fisher: bool) Error!ChiSquare {
     const t = try margins(a, m);
     defer a.free(t.row);
     defer a.free(t.col);
@@ -157,7 +162,7 @@ pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Erro
         .likelihood_ratio = chi(lr, df),
         .mantel_haenszel = if (corr.estimate) |r| chi((t.n - 1) * r * r, 1) else null,
         .continuity = if (two) chi(cc, df) else null,
-        .fisher = if (two and integerCounts(m.counts)) try fisherExact(m.counts) else null,
+        .fisher = if (automatic_fisher and two and integerCounts(m.counts)) try fisherExact(m.counts) else null,
         .phi = phi,
         .contingency = @sqrt(p / (p + t.n)),
         .cramer_v = if (two) phi else @sqrt(p / t.n / @as(f64, @floatFromInt(@min(t.nr, t.nc) - 1))),

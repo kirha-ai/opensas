@@ -239,7 +239,12 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     if (f == .fisher) {
         if (enumerated == .exhausted) return .exhausted;
         const two = m.rows == 2 and m.cols == 2;
-        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = if (two) integers.cells[0] else null, .cell_tails = if (two) try (try exact.OddsDistribution.init(integers.cells[0..4].*)).tails(0, c.budget.max_tables) else null, .probabilities = enumerated.complete } };
+        const cell_tails: ?exact.Tails = if (two) blk: {
+            const distribution = try exact.OddsDistribution.init(integers.cells[0..4].*);
+            const control: exact.Control = .{ .context = c.budget.context, .expired = c.budget.expired };
+            break :blk (try distribution.tailsControlled(0, c.budget.max_tables, control)) orelse return .exhausted;
+        } else null;
+        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = if (two) integers.cells[0] else null, .cell_tails = cell_tails, .probabilities = enumerated.complete } };
     }
     return finish(enumerated);
 }
