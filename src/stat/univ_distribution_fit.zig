@@ -5,6 +5,7 @@ const diag = @import("../diag.zig");
 const functions = @import("../functions.zig");
 const johnson = @import("univ_johnson_fit.zig");
 const endpoint = @import("univ_endpoint_fit.zig");
+const gumbel_fit = @import("univ_gumbel_fit.zig");
 pub const Report = struct { converged: bool = true, no_fit: bool = false, reason: ?[]const u8 = null, iterations: usize = 0, starts: usize = 0 };
 pub const Trace = struct {
     allocator: std.mem.Allocator,
@@ -359,10 +360,9 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
                 const sigma = @sqrt(css / (n - 1)) * (@sqrt(@as(f64, 6)) / std.math.pi);
                 if (!(sigma > 0) or !std.math.isFinite(sigma)) return support(d);
                 const initial_mu = r.mu orelse mean - 0.57722 * sigma;
-                const gradient = gumbelGradient(x, initial_mu, sigma);
-                if (@abs(gradient.scale) <= 1e-5 and (r.mu != null or @abs(gradient.location) <= 1e-5)) {
-                    p.mu = initial_mu;
-                    p.sigma = sigma;
+                if (gumbel_fit.fit(x, .{ .mu = initial_mu, .sigma = sigma }, r.mu != null)) |estimate| {
+                    p.mu = estimate.mu;
+                    p.sigma = estimate.sigma;
                     break :gumbel;
                 }
                 var lo = @sqrt(css / n) * 1e-6;
@@ -410,20 +410,6 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
         if (!std.math.isFinite(result.logPdf(v))) return support(d);
     }
     return result;
-}
-
-// The M9 Gumbel optimizer checks the unnormalized likelihood score in the
-// original units. Large-scale samples can therefore retain the moment start.
-fn gumbelGradient(x: []const f64, mu: f64, sigma: f64) struct { location: f64, scale: f64 } {
-    var location: f64 = 0;
-    var scale: f64 = 0;
-    for (x) |v| {
-        const z = (v - mu) / sigma;
-        const residual = -std.math.expm1(-z);
-        location += residual;
-        scale += z * residual - 1;
-    }
-    return .{ .location = location / sigma, .scale = scale / sigma };
 }
 
 fn logLikelihood(x: []const f64, distribution: dist.Distribution) f64 {
@@ -890,6 +876,20 @@ test "UNIVARIATE fits SAS M9 fixed and estimated parameters" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.765082), power.p.alpha, 5e-7);
     try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .gamma, .maxiter = 1 }));
     try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .lognormal, .theta = 1 }));
+}
+
+test "Gumbel ridge and direct Newton steps match fitted M9 parameters" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const sample = [_]f64{ 0.12, 0.23, 0.31, 0.48, 0.52, 0.76, 0.87, 1.03, 1.29, 1.36, 1.70, 2.28, 2.74, 3.52, 4.85, 6.21 };
+    const fitted = try fit(&d, &sample, .{ .family = .gumbel });
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0452065877997954), fitted.p.mu, 2e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.0840419648454998), fitted.p.sigma, 2e-12);
+    const tied = [_]f64{ 1, 1, 1, 2, 3, 8, 23 };
+    const fixed = try fit(&d, &tied, .{ .family = .gumbel, .mu = 0.5 });
+    try std.testing.expectEqual(@as(f64, 0.5), fixed.p.mu);
+    try std.testing.expectApproxEqAbs(@as(f64, 4.322225566808891), fixed.p.sigma, 2e-11);
 }
 
 test "Gumbel keeps its moment start when the raw likelihood score is small" {
