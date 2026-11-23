@@ -451,7 +451,10 @@ const ParetoProfile = struct {
     x: []const f64,
     theta: f64,
     maximum: f64,
-    fn score(self: @This(), u: f64) f64 {
+    const Evaluation = struct { score: f64, slope: f64 };
+    // Store the derivative of the unscaled score u²*score. It has the same
+    // nonzero roots, and its extrema can isolate pairs missed by a sign scan.
+    fn evaluate(self: @This(), u: f64) Evaluation {
         const n: f64 = @floatFromInt(self.x.len);
         if (@abs(u) < 0.001) {
             // Divide Grimshaw's score by its spurious u^2 zero. The series
@@ -467,23 +470,42 @@ const ParetoProfile = struct {
                 }
             }
             var sum: f64 = 0;
+            var slope: f64 = 0;
             var power: f64 = 1;
             for (2..9) |k| {
                 var coefficient = m[k];
                 for (1..k + 1) |j| coefficient -= m[j] * m[k - j] / @as(f64, @floatFromInt(j));
                 sum += coefficient * power;
+                slope += @as(f64, @floatFromInt(k)) * coefficient * power;
                 power *= u;
             }
-            return sum;
+            return .{ .score = sum, .slope = u * slope };
         }
         var logarithm: f64 = 0;
         var reciprocal: f64 = 0;
+        var reciprocal_derivative: f64 = 0;
         for (self.x) |v| {
             const z = u * (v - self.theta) / self.maximum;
             logarithm += std.math.log1p(-z) / n;
-            reciprocal += 1 / (1 - z) / n;
+            const inv = 1 / (1 - z);
+            reciprocal += inv / n;
+            reciprocal_derivative += (v - self.theta) / self.maximum * inv * inv / n;
         }
-        return ((1 + logarithm) * reciprocal - 1) / (u * u);
+        return .{
+            .score = ((1 + logarithm) * reciprocal - 1) / (u * u),
+            .slope = (1 - reciprocal) * reciprocal / u + (1 + logarithm) * reciprocal_derivative,
+        };
+    }
+
+    fn turningPoint(self: @This(), lower: f64, upper: f64, lower_slope: f64) f64 {
+        var lo = lower;
+        var hi = upper;
+        for (0..55) |_| {
+            const mid = (lo + hi) / 2;
+            if (mid == lo or mid == hi) break;
+            if (self.evaluate(mid).slope * lower_slope > 0) lo = mid else hi = mid;
+        }
+        return (lo + hi) / 2;
     }
     fn curve(self: @This(), u: f64) ?Curve {
         const n: f64 = @floatFromInt(self.x.len);
@@ -502,7 +524,7 @@ const ParetoProfile = struct {
 fn paretoProfile(x: []const f64, theta: f64, controls: Controls) Result {
     const problem: ParetoProfile = .{ .x = x, .theta = theta, .maximum = x[x.len - 1] - theta };
     var previous = -@exp(@as(f64, 16));
-    var fs = problem.score(previous);
+    var previous_eval = problem.evaluate(previous);
     var best: ?Curve = null;
     var total: usize = 0;
     // Logarithmic coverage on both sides of the exponential limit, and
@@ -510,16 +532,33 @@ fn paretoProfile(x: []const f64, theta: f64, controls: Controls) Result {
     for (0..321) |i| {
         const fi: f64 = @floatFromInt(i);
         const next = if (i < 160) -@exp(16 - (fi + 1) * 0.2) else if (i == 160) @as(f64, 0) else -std.math.expm1(-@exp(-16 + (fi - 160) * 0.12));
-        const fnx = problem.score(next);
-        if (fs * fnx < 0 or fnx == 0) {
-            var lo = previous;
-            var hi = next;
-            var fl = fs;
+        const next_eval = problem.evaluate(next);
+        var boundaries = [_]f64{ next, next };
+        var count: usize = 1;
+        if (previous * next > 0 and previous_eval.score * next_eval.score > 0 and
+            previous_eval.slope * previous_eval.score < 0 and next_eval.slope * next_eval.score > 0)
+        {
+            const turning = problem.turningPoint(previous, next, previous_eval.slope);
+            if (problem.evaluate(turning).score * previous_eval.score < 0) {
+                boundaries[0] = turning;
+                count = 2;
+            }
+        }
+        for (boundaries[0..count]) |bound| {
+            const bound_eval = if (bound == next) next_eval else problem.evaluate(bound);
+            const lower = previous;
+            const fl_start = previous_eval.score;
+            previous = bound;
+            previous_eval = bound_eval;
+            if (fl_start * bound_eval.score >= 0 and bound_eval.score != 0) continue;
+            var lo = lower;
+            var hi = bound;
+            var fl = fl_start;
             var resolved = false;
             for (0..controls.maxiter) |_| {
                 total += 1;
                 const mid = lo / 2 + hi / 2;
-                const fm = problem.score(mid);
+                const fm = problem.evaluate(mid).score;
                 if (fm == 0 or hi - lo < controls.tolerance * (1 + @abs(mid))) {
                     lo = mid;
                     hi = mid;
@@ -540,8 +579,6 @@ fn paretoProfile(x: []const f64, theta: f64, controls: Controls) Result {
                 if (left != null and right != null and candidate.log_likelihood >= left.?.log_likelihood and candidate.log_likelihood >= right.?.log_likelihood and (best == null or candidate.log_likelihood > best.?.log_likelihood)) best = candidate;
             }
         }
-        previous = next;
-        fs = fnx;
     }
     if (best) |*curve| {
         curve.iterations = total;
@@ -849,4 +886,10 @@ test "beta free scale and first shape retain the fitted lower scale bound" {
     const interior = fit(.beta, &x, .{ .theta = 0, .beta = 1.1 }, .{});
     try std.testing.expect(interior == .converged);
     try std.testing.expectApproxEqAbs(@as(f64, 0.097583568), interior.converged.parameters.sigma, 5e-8);
+}
+
+test "Pareto profile isolates the supported local maximum between two adjacent roots" {
+    // M9 returned sigma=1.81161316, alpha=0.88998287 for this 16-value sample.
+    const x = [_]f64{ 0.17945781591940654, 0.22410221645861458, 0.23281313583046595, 0.29019361215709338, 0.36933287331190595, 0.38257567475311544, 0.40989061974203794, 0.51096190575725786, 0.64809332516627816, 1.0198637278475928, 1.1847242109320089, 1.2059546430497177, 1.2689145725502562, 1.7441018133009203, 1.8494279942521605, 2.0165321863387438 };
+    try check(.{ .theta = 0, .sigma = 1.8116131558896376, .alpha = 0.8899828665921032 }, fit(.pareto, &x, .{}, .{}), 3e-5);
 }
