@@ -219,6 +219,10 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
             if (r.alpha == null) {
                 const gap = @log(mean - p.theta) - logmean;
                 var a = r.alphainitial orelse (3 - gap + @sqrt((gap - 3) * (gap - 3) + 24 * gap)) / (12 * gap);
+                // A nearly constant sample can round the log-mean gap to
+                // zero or below. Thom's estimate is then outside the domain
+                // of the positive-shape digamma recurrence.
+                if (!(a > 0) or !std.math.isFinite(a)) return convergence(d);
                 var converged = false;
                 for (0..r.maxiter) |_| {
                     const value = if (r.sigma) |s| digamma(a) + @log(s) - logmean else digamma(a) - @log(a) + gap;
@@ -663,6 +667,16 @@ fn trigamma(value: f64) f64 {
     while (x < 12) : (x += 1) result += 1 / (x * x);
     const q = 1 / (x * x);
     return result + 1 / x + q / 2 + q / x * (1.0 / 6.0 - q * (1.0 / 30.0 - q * (1.0 / 42.0 - q / 30)));
+}
+
+test "gamma fitting handles a rounded log-mean gap before its positive-shape recurrence" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.29999999999999993, 0.3, 0.30000000000000004 };
+    try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .gamma, .sigma = 1 }));
+    const fitted = try fit(&d, &x, .{ .family = .gamma, .sigma = 1, .alphainitial = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.7057), fitted.p.alpha, 1e-6);
 }
 
 test "UNIVARIATE fits SAS M9 fixed and estimated parameters" {
