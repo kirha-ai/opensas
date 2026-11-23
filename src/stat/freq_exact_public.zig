@@ -223,14 +223,30 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
     for (scored.matrix.counts) |v| total += v;
     if (total == 0) return limits;
     const m = matrix(scored, one);
-    var it = req.exact.families.iterator();
-    while (it.next()) |requested_family| {
+    // M9 advances a single stream between distinct simulated tests. The four
+    // concordance coefficients have the same conditional ordering at fixed
+    // margins and reuse one sample. In particular PCORR and SCORR follow it.
+    const mc_order = [_]parse.Family{
+        .pchi,    .lrchi, .mhchi, .fisher, .jt,    .trend,    .mcnem,   .symmetry, .kappa,     .wtkappa,
+        .kentb,   .stutc, .smdcr, .smdrc,  .pcorr, .scorr,    .barnard, .binomial, .oddsratio, .riskdiff,
+        .relrisk, .comor, .eqor,  .agree,  .chisq, .measures,
+    };
+    const order = if (req.exact.mc) &mc_order else std.enums.values(parse.Family);
+    var next_seed = seed;
+    var concordance_seed: ?u64 = null;
+    for (order) |requested_family| {
+        if (!req.exact.families.contains(requested_family)) continue;
+        const concordance = switch (requested_family) {
+            .kentb, .stutc, .smdcr, .smdrc => true,
+            else => false,
+        };
+        const family_seed = if (concordance) concordance_seed orelse next_seed else next_seed;
         const binary = m.rows == 2 and m.cols == 2;
         const f: parse.Family = if (requested_family == .wtkappa and binary) .kappa else requested_family;
         if (f == .comor or f == .eqor) continue;
         if (requested_family == .wtkappa and binary and req.exact.families.contains(.kappa)) continue;
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
-        var c = config(req, seed, &deadline);
+        var c = config(req, family_seed, &deadline);
         c.numeric_table_scores_valid = scored.numeric_table_scores_valid;
         if (req.risk.binomial) |b| {
             c.binomial_p = b.p;
@@ -274,10 +290,14 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 const r = simulation.estimates;
                 if (r == .exhausted) {
                     try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
-                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, seed, options);
+                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, family_seed, options);
                 } else {
-                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, seed, options);
-                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, seed, options);
+                    if (!concordance or concordance_seed == null) {
+                        next_seed = r.complete.final_seed;
+                        if (concordance) concordance_seed = family_seed;
+                    }
+                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, family_seed, options);
+                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, family_seed, options);
                 }
             },
             .binomial => |b| {
@@ -607,6 +627,7 @@ test "2x3 Fisher probabilities and seeded simulation agree with all 70 labeled a
     const estimate = simulation.estimates.complete;
     try std.testing.expectEqual(@as(u64, 2000), estimate.samples);
     try std.testing.expectApproxEqAbs(p, estimate.two_sided.p, 4 * @sqrt(p * (1 - p) / 2000));
+    try std.testing.expectEqual(@as(f64, 499.0 / 2000.0), estimate.two_sided.p);
     try std.testing.expect(estimate.two_sided.lower < estimate.two_sided.p and estimate.two_sided.p < estimate.two_sided.upper);
     var h = try Harness.init(a, &counts, 3);
     var d = diag.Diagnostics.init(a);

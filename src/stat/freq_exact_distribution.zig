@@ -253,13 +253,12 @@ pub fn estimate(hits: u64, n: u64, alpha: f64) Error!Estimate {
         .upper = if (hits == n) 1 else if (hits == 0) -std.math.expm1(@log(alpha) / nf) else @min(1, p + z * se),
     };
 }
-pub const MonteCarlo = union(enum) { complete: struct { point: Estimate, left: Estimate, right: Estimate, two_sided: Estimate, one_sided: Estimate, samples: u64 }, exhausted };
+pub const MonteCarlo = union(enum) { complete: struct { point: Estimate, left: Estimate, right: Estimate, two_sided: Estimate, one_sided: Estimate, samples: u64, final_seed: u64, right_sided: bool }, exhausted };
 pub const Simulation = struct { samples: u64 = 10_000, seed: u64, alpha: f64 = 0.01, max_observations: u32 = 1_000_000 };
 
 /// Uniformly shuffle column labels into fixed row slots: every table has its
-/// conditional hypergeometric probability. Reproducible within this engine;
-/// SAS's RNG stream is not claimed to match. Caller resolves nonpositive SAS
-/// seeds from its clock and records the effective positive seed.
+/// conditional hypergeometric probability. M9 reinitializes the sorted column
+/// labels for each draw, then takes one forward-selection variate per observation.
 pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: Simulation, budget: Budget) Error!MonteCarlo {
     if (options.samples == 0 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
     _ = try estimate(0, options.samples, options.alpha);
@@ -276,33 +275,51 @@ pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options
         @memset(labels[pos..][0..v], @intCast(j));
         pos += v;
     }
-    var context = FixedSampler{ .labels = labels, .rows = shape.rows, .cols = m.cols };
+    const shuffled = try a.alloc(u8, shape.total);
+    defer a.free(shuffled);
+    var context = FixedSampler{ .labels = labels, .shuffled = shuffled, .rows = shape.rows, .cols = m.cols };
     return simulate(a, m, statistic, options, budget, .{ .context = &context, .draw = FixedSampler.draw });
 }
+
+pub const Generator = struct {
+    state: u64,
+    const modulus: u64 = 2147483647;
+    pub fn init(seed: u64) Generator {
+        return .{ .state = (seed - 1) % (modulus - 1) + 1 };
+    }
+    fn next(self: *Generator) u64 {
+        self.state = self.state * 397204094 % modulus;
+        return self.state;
+    }
+    pub fn uniform(self: *Generator) f64 {
+        return @as(f64, @floatFromInt(self.next())) / @as(f64, @floatFromInt(modulus));
+    }
+};
 pub const FixedSampler = struct {
-    labels: []u8,
+    labels: []const u8,
+    shuffled: []u8,
     rows: []const u32,
     cols: usize,
-    pub fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+    pub fn draw(raw: ?*anyopaque, random: *Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *FixedSampler = @ptrCast(@alignCast(raw.?));
-        var remaining = self.labels.len;
-        while (remaining > 1) {
-            if (remaining % 1024 == 0 and budget.stopped()) return false;
-            const j = random.uintLessThan(usize, remaining);
-            remaining -= 1;
-            std.mem.swap(u8, &self.labels[remaining], &self.labels[j]);
-        }
+        @memcpy(self.shuffled, self.labels);
         @memset(cells, 0);
         var pos: usize = 0;
-        for (self.rows, 0..) |v, i| {
-            for (self.labels[pos..][0..v]) |j| cells[i * self.cols + j] += 1;
-            pos += v;
+        for (self.rows, 0..) |count, row| {
+            for (0..count) |_| {
+                if (pos % 1024 == 0 and budget.stopped()) return false;
+                const remaining = self.shuffled.len - pos;
+                const offset: usize = @intCast((random.next() * remaining) / Generator.modulus);
+                std.mem.swap(u8, &self.shuffled[pos], &self.shuffled[pos + offset]);
+                cells[row * self.cols + self.shuffled[pos]] += 1;
+                pos += 1;
+            }
         }
         return true;
     }
 };
 /// Generator owns its law. False is an interrupted draw, never a usable table.
-pub const Sampler = struct { context: ?*anyopaque, draw: *const fn (?*anyopaque, std.Random, []u32, Budget) Error!bool };
+pub const Sampler = struct { context: ?*anyopaque, draw: *const fn (?*anyopaque, *Generator, []u32, Budget) Error!bool };
 pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: Simulation, budget: Budget, sampler: Sampler) Error!MonteCarlo {
     if (options.samples == 0 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
     _ = try estimate(0, options.samples, options.alpha);
@@ -310,13 +327,12 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
     if (!std.math.isFinite(observed)) return error.ExecError;
     const cells = try a.alloc(u32, m.cells.len);
     defer a.free(cells);
-    var prng = std.Random.DefaultPrng.init(options.seed);
-    const random = prng.random();
+    var random = Generator.init(options.seed);
     var hits: [5]u64 = @splat(0);
     var sample: u64 = 0;
     while (sample < options.samples) : (sample += 1) {
         if (sample == budget.max_tables or budget.stopped()) return .exhausted;
-        if (!try sampler.draw(sampler.context, random, cells, budget)) return .exhausted;
+        if (!try sampler.draw(sampler.context, &random, cells, budget)) return .exhausted;
         const value = try statistic.evaluate(statistic.context, .{ .rows = m.rows, .cols = m.cols, .cells = cells });
         if (!std.math.isFinite(value)) return error.ExecError;
         const e = events(value, observed, statistic);
@@ -326,7 +342,7 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
         if (e.two) hits[3] += 1;
         if (if (statistic.directional and observed <= statistic.expected) e.left else e.right) hits[4] += 1;
     }
-    return .{ .complete = .{ .point = try estimate(hits[0], sample, options.alpha), .left = try estimate(hits[1], sample, options.alpha), .right = try estimate(hits[2], sample, options.alpha), .two_sided = try estimate(hits[3], sample, options.alpha), .one_sided = try estimate(hits[4], sample, options.alpha), .samples = sample } };
+    return .{ .complete = .{ .point = try estimate(hits[0], sample, options.alpha), .left = try estimate(hits[1], sample, options.alpha), .right = try estimate(hits[2], sample, options.alpha), .two_sided = try estimate(hits[3], sample, options.alpha), .one_sided = try estimate(hits[4], sample, options.alpha), .samples = sample, .final_seed = random.state, .right_sided = observed > statistic.expected } };
 }
 
 fn firstCell(_: ?*const anyopaque, m: Matrix) Error!f64 {

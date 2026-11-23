@@ -186,12 +186,12 @@ test "discordant pair laws discriminate from conditional independence" {
 const MultinomialSampler = struct {
     n: u32,
     probabilities: []const f64,
-    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+    fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *MultinomialSampler = @ptrCast(@alignCast(raw.?));
         @memset(cells, 0);
         for (0..self.n) |i| {
             if (i % 1024 == 0 and budget.stopped()) return false;
-            const u = random.float(f64);
+            const u = random.uniform();
             var cumulative: f64 = 0;
             for (self.probabilities, 0..) |p, j| {
                 cumulative += p;
@@ -220,22 +220,19 @@ pub fn multinomialMonteCarlo(a: std.mem.Allocator, observed: []const u32, probab
 }
 const SymmetrySampler = struct {
     observed: Matrix,
-    fn draw(raw: ?*anyopaque, random: std.Random, cells: []u32, budget: Budget) Error!bool {
+    fn draw(raw: ?*anyopaque, random: *dist.Generator, cells: []u32, budget: Budget) Error!bool {
         const self: *SymmetrySampler = @ptrCast(@alignCast(raw.?));
-        @memcpy(cells, self.observed.cells);
+        @memset(cells, 0);
         const n = self.observed.rows;
-        for (0..n) |i| for (i + 1..n) |j| {
-            const up = i * n + j;
-            const down = j * n + i;
-            const total = cells[up] + cells[down];
-            var successes: u32 = 0;
-            for (0..total) |trial| {
-                if (trial % 1024 == 0 and budget.stopped()) return false;
-                if (random.boolean()) successes += 1;
+        for (self.observed.cells, 0..) |count, index| {
+            const transposed = (index % n) * n + index / n;
+            // Each original observation receives a variate, including the
+            // diagonal; swapping its row and column preserves the pair total.
+            for (0..count) |k| {
+                if (k % 1024 == 0 and budget.stopped()) return false;
+                cells[if (random.uniform() < 0.5) index else transposed] += 1;
             }
-            cells[up] = successes;
-            cells[down] = total - successes;
-        };
+        }
         return true;
     }
 };

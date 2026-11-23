@@ -345,3 +345,20 @@ test "Barnard exact test uses the bounded polynomial workspace above the stack c
     try std.testing.expect(result.barnard.two.upper >= one);
     try std.testing.expect((try run(std.testing.allocator, m, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .exhausted);
 }
+
+test "native fixed-margin multinomial and symmetry MC use the same seeded uniform stream" {
+    const a = std.testing.allocator;
+    const m = tests.CountMatrix{ .rows = 3, .cols = 3, .counts = &.{ 1, 3, 1, 4, 3, 2, 3, 3, 3 } };
+    const c = Config{ .effective_seed = 12, .options = .{ .mc = true, .samples = 500 } };
+    const cases = [_]struct { family: parse.Family, table: tests.CountMatrix, hits: u64 }{
+        .{ .family = .fisher, .table = m, .hits = 417 },
+        .{ .family = .symmetry, .table = m, .hits = 440 },
+        .{ .family = .pchi, .table = .{ .rows = 1, .cols = 3, .counts = &.{ 5, 9, 9 } }, .hits = 274 },
+        .{ .family = .pchi, .table = .{ .rows = 2, .cols = 2, .counts = &.{ 1, 3, 4, 3 } }, .hits = 283 },
+    };
+    for (cases, 0..) |case, i| {
+        const estimates = (try run(a, case.table, case.family, c)).monte_carlo.estimates.complete;
+        try std.testing.expectEqual(@as(f64, @floatFromInt(case.hits)) / 500, estimates.two_sided.p);
+        try std.testing.expectEqual(if (i == 3) @as(u64, 1671574333) else 534628942, estimates.final_seed);
+    }
+}
