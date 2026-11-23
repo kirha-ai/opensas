@@ -370,9 +370,9 @@ fn correlationVariance(matrix: []f64, rhs: []f64, at_bound: bool) ?f64 {
         const i = sweepIndex(row, categories);
         const pivot = matrix[i * stride + i];
         if (pivot < 1e-8) {
-            // A free correlation needs positive information after removing
-            // the continuous margin. Only a fixed boundary can have zero SE.
-            if (i == rho and !at_bound) return null;
+            // An interior fit needs positive information for its correlation
+            // and every estimated cut after removing the continuous margin.
+            if (i <= rho and !at_bound) return null;
             for (0..stride) |j| {
                 matrix[i * stride + j] = 0;
                 matrix[j * stride + i] = 0;
@@ -719,6 +719,20 @@ test "CORR polyserial shortens both thresholds and correlation on a rejected ste
     try std.testing.expectApproxEqAbs(@as(f64, 101.129366689651), second.lr, 1e-10);
     const tight = try polyserial(std.testing.allocator, &data, .{ .converge = 1e-10 });
     try std.testing.expectApproxEqAbs(@as(f64, 0.82922750554063), tight.r, 1e-12);
+}
+
+test "CORR unidentified interior polyserial cuts preserve only a one-to-one limiting coefficient" {
+    const one_to_one = [_]Observation{ .{ .x = 2, .y = -4, .f = 1 }, .{ .x = 9, .y = 12, .f = 9 } };
+    const perfect = try polyserial(std.testing.allocator, &one_to_one, .{});
+    try std.testing.expectEqual(@as(f64, 1), perfect.r);
+    try std.testing.expectEqual(@as(f64, 10), perfect.n);
+    try std.testing.expect(std.math.isNan(perfect.se) and std.math.isNan(perfect.lr));
+
+    const separated = [_]Observation{ .{ .x = 0.4, .y = 0, .f = 2 }, .{ .x = 1.75, .y = 1, .f = 51 }, .{ .x = 2.1, .y = 1, .f = 1 } };
+    const missing = try polyserial(std.testing.allocator, &separated, .{ .converge = 0.99 });
+    try std.testing.expect(!missing.converged);
+    try std.testing.expectEqual(@as(f64, 54), missing.n);
+    try std.testing.expect(std.math.isNan(missing.r) and std.math.isNan(missing.se) and std.math.isNan(missing.lr));
 }
 
 test "CORR polyserial brackets ordinary Newton projections within ten step lengths" {
