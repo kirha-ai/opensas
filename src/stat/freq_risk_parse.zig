@@ -38,6 +38,17 @@ pub const Options = struct {
     relative_risk: ?Request = null,
     odds_ratio: ?Request = null,
     senspec: bool = false,
+    pub fn validateTests(self: Options, d: *diag.Diagnostics) !void {
+        if (self.difference) |rd| if (rd.equal and @abs(rd.null_value) >= 1) {
+            try d.report(.err, 0, "The NULL= value for the RISKDIFF EQUAL test must be between -100 and 100.", .{});
+        };
+        if (self.relative_risk) |rr| {
+            if (rr.equiv and !rr.paired_margin) if (rr.margin) |m| {
+                if (m[0] >= 1) try d.report(.err, 0, "The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.", .{});
+            };
+            if (rr.equal and rr.null_value <= 0) try d.report(.err, 0, "The NULL= value for the RELRISK EQUAL test must be a positive number.", .{});
+        }
+    }
     pub fn any(self: Options) bool {
         return self.binomial != null or self.difference != null or self.relative_risk != null or self.odds_ratio != null or self.senspec;
     }
@@ -280,7 +291,6 @@ const Reader = struct {
             } else return self.fail("unknown risk suboption");
         }
         self.i += 1;
-        if (req.equal and ((req.family == .relative_risk and req.null_value <= 0) or (req.family == .difference and @abs(req.null_value) >= 1))) return self.fail("invalid equality null value");
         if (req.equal and req.method == .newcombe) return self.fail("Newcombe is not an equality test");
     }
 };

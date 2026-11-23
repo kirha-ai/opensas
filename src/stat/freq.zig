@@ -265,10 +265,6 @@ const Parser = struct {
             try self.tableOptions(&req);
         }
         try self.expect(.semicolon);
-        // Repeated RELRISK specifications share the last explicit margin.
-        if (req.risk.relative_risk) |rr| if (rr.equiv and !rr.paired_margin) if (rr.margin) |m| {
-            if (m[0] >= 1) return self.diags.fail(error.ParseError, 0, "The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.", .{});
-        };
         if (req.sparse and req.nosparse) return self.fail("SPARSE and NOSPARSE cannot be specified together");
         if (!req.crosslist and req.stdres) try self.diags.report(.warning, 0, "The STDRES option is available only with the CROSSLIST option.", .{});
         if (!req.crosslist and req.pearsonres) try self.diags.report(.warning, 0, "The PEARSONRESID option is available only with the CROSSLIST option.", .{});
@@ -474,6 +470,11 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         } else return cx.diags.fail(error.ParseError, toks[parser.i].line, "PROC FREQ statement {s} is not supported", .{toks[parser.i].text});
         try parser.expect(.semicolon);
     }
+    // A TABLES statement can expand to several requests. SAS diagnoses each
+    // final specification, including all invalid RISKDIFF/RELRISK nulls.
+    const risk_messages = cx.diags.count();
+    for (opts.requests.items) |req| try req.risk.validateTests(cx.diags);
+    if (cx.diags.errSince(risk_messages)) return error.ParseError;
     if (opts.output != null and opts.tables_statement_count == 0) return parser.fail("OUTPUT requires a TABLES statement.");
     try opts.tests.finish(opts.tables_statement_count, cx.diags);
     var simulation_seed: u64 = 1;
