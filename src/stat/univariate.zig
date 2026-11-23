@@ -1270,6 +1270,24 @@ test "UNIVARIATE skewness and kurtosis are invariant across ordinary, large, and
     }
 }
 
+test "UNIVARIATE treats underflow of corrected and uncorrected squares independently" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const unit = @sqrt(std.math.floatMin(f64));
+    for ([_]f64{ -0.99, -0.99, 0, 0.99, 0.99 }) |scaled| {
+        try ds.appendRow(&.{ .{ .num = scaled * unit }, .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    try testRun(a, lib, "proc univariate data=d noprint;var x;output out=o std=d css=c uss=u;run;");
+    const out = lib.find("o").?;
+    try std.testing.expectEqual(@as(f64, 0), testCell(out, 0, "d"));
+    try std.testing.expectEqual(@as(f64, 0), testCell(out, 0, "u"));
+    try std.testing.expectApproxEqAbs(@as(f64, 2.041875), testCell(out, 0, "c") / unit / unit, 1e-13);
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

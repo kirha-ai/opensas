@@ -2045,6 +2045,12 @@ fn computeUnivStats(rows: []const []const Value, col: usize, wcol: ?usize, varde
     return computeMoments(true, rows, col, wcol, vardef, frequency_obs);
 }
 
+// M9 flushes subnormal sums of squares, squared residuals, and variance
+// to zero at their individual calculation boundaries.
+fn univNormalSquare(value: f64) f64 {
+    return if (value < std.math.floatMin(f64)) 0 else value;
+}
+
 fn computeMoments(comptime native_univariate: bool, rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
     if (rows.len > 0) assert(col < rows[0].len); // analysis column aligns with the row schema
     // WEIGHT column too — a bad weight index reads a wrong cell per row and every
@@ -2083,16 +2089,16 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         const previous_weight = sumw;
         sumwx += w * x;
         sumw += w;
-        uss += w * x * x;
+        uss = if (native_univariate) univNormalSquare(@mulAdd(f64, w * x, x, uss)) else uss + w * x * x;
         if (native_univariate and previous_weight > 0 and w > 0) {
             const updated_mean = sumwx / sumw;
             const delta = x - updated_mean;
             if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean))) {
                 // Below the M9 minimum weight, the previous total is the
                 // CSS multiplier. Avoid multiplying two tiny weights here.
-                const multiplier = if (previous_weight <= minimum_weight) previous_weight else w * sumw / previous_weight;
+                const multiplier = if (previous_weight <= minimum_weight) previous_weight else (sumw / previous_weight) * w;
                 // The fused update preserves the final ULP at the minimum SD for skew and kurtosis.
-                running_css = @mulAdd(f64, delta * delta, multiplier, running_css);
+                running_css = univNormalSquare(@mulAdd(f64, univNormalSquare(delta * delta), multiplier, running_css));
             }
         }
         if (x < lo) lo = x;
@@ -2147,7 +2153,8 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         .wgt => sumw,
         .wdf => sumw - 1,
     };
-    var sd = if (divisor > 0 and usable_weight) @sqrt(css / divisor) else nan;
+    const variance = if (divisor > 0 and usable_weight) css / divisor else nan;
+    var sd = @sqrt(if (native_univariate) univNormalSquare(variance) else variance);
     const small_range = native_univariate and sd > 0 and sd <= relative_tolerance * @abs(mean);
     if (small_range) {
         css = 0;
