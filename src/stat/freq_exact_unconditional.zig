@@ -213,6 +213,22 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
+/// For observed risks (0,1), the left NOSCORE tail is a single allocation.
+/// Write A=1-p1 and B=p2, so A+B=1-d. The unconstrained maximum of
+/// A^n1 B^n2 assigns A:B=n1:n2. When the larger factor reaches 1 the
+/// probability becomes (-d)^min(n1,n2). Invert the two regions at alpha/2.
+fn opposingDifferenceUpper(n1: f64, n2: f64, alpha: f64) f64 {
+    const small = @min(n1, n2);
+    const large = @max(n1, n2);
+    const log_target = @log(alpha) - @log(@as(f64, 2));
+    const boundary = small * @log(small / large);
+    if (log_target >= boundary) return -@exp(log_target / small);
+    const n = small + large;
+    const p = small / n;
+    const entropy = -p * @log(p) - (large / n) * std.math.log1p(-p);
+    return -std.math.expm1(log_target / n + entropy);
+}
+
 /// Equal-tailed NOSCORE/SCORE inversion or absolute-score SCORE2 inversion.
 /// Returns bracketed numerical endpoints; no fixed-margin shortcut is valid.
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
@@ -221,6 +237,13 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
     if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
     const s = tableOf(c).samples(.first);
     const estimate = if (family == .difference) s[0].proportion() - s[1].proportion() else if (c[2] == 0) std.math.inf(f64) else s[0].proportion() / s[1].proportion();
+    const opposing = (c[0] == 0 and c[3] == 0) or (c[1] == 0 and c[2] == 0);
+    if (family == .difference and method == .noscore and opposing) {
+        if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
+        if (options.budget.max_tables == 0 or options.budget.stopped()) return .exhausted;
+        const upper = opposingDifferenceUpper(s[0].total, s[1].total, alpha);
+        return .{ .complete = if (estimate < 0) .{ .lower = -1, .upper = upper } else .{ .lower = -upper, .upper = 1 } };
+    }
     const target = if (method == .score2) alpha else alpha / 2;
     var out = exact.Interval{ .lower = if (family == .difference) -1 else 0, .upper = if (family == .difference) 1 else std.math.inf(f64) };
     var work = Work{ .options = options };
@@ -602,6 +625,27 @@ test "NOSCORE opposing outcomes have a single-allocation tail on either side of 
     try t.expectEqual(std.math.inf(f64), second.upper);
     var stopped = Work{ .options = .{ .budget = .{ .max_tables = 0 } } };
     try t.expect((try noscoreUpperTail(.{ 0, 2000, 2000, 0 }, 1, &stopped)) == .exhausted);
+}
+
+test "NOSCORE boundary risk differences invert the constrained maximum for both response columns" {
+    const t = std.testing;
+    for (1..6) |i| for (1..6) |j| {
+        const c = [4]u32{ 0, @intCast(i), @intCast(j), 0 };
+        for ([_]f64{ 0.01, 0.1, 0.48, 0.95 }) |alpha| {
+            const first = (try riskLimits(tableOf(c), .first, .difference, .noscore, alpha, .{})).complete;
+            const second = (try riskLimits(tableOf(c), .second, .difference, .noscore, alpha, .{})).complete;
+            try t.expectEqual(@as(f64, -1), first.lower);
+            try t.expectEqual(@as(f64, 1), second.upper);
+            try t.expectEqual(-first.upper, second.lower);
+            const bounds = (try riskTail(tableOf(c), .first, .difference, .noscore, first.upper, .left, .{ .tolerance = 1e-13 })).complete;
+            try t.expect(bounds.lower <= alpha / 2 + 2e-14 and bounds.upper >= alpha / 2 - 2e-14);
+        }
+    };
+    const table = risk.Table2x2{ .cells = .{ 0, 2_000_000_000, 2_000_000_000, 0 } };
+    const interval = (try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 1 } })).complete;
+    const reference = -1 - 2 * std.math.expm1(@log(@as(f64, 0.025)) / 4_000_000_000);
+    try t.expectApproxEqAbs(reference, interval.upper, 5e-16);
+    try t.expect((try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
 }
 
 test "SAS outer profile preserves budgets and default methods" {
