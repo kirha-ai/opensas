@@ -17,13 +17,38 @@ pub const Common = struct {
     expected: f64,
     point: f64,
     one_sided: f64,
+    right_sided: bool,
     two_doubled: f64,
     two_probability: f64,
     two_distance: f64,
     limits: exact.Interval,
 };
 pub const CommonResult = union(enum) { complete: Common, exhausted };
+/// For central hypergeometrics, sum(C) = choose(N, row) and
+/// sum(x*C) = sum(C) * row * column / N. The joint first moment can be
+/// kept as exact binary64-representable integer coefficients while they fit.
+/// Wider cases retain the log-scaled convolution and its centered moment.
+const ExactMoment = struct {
+    weight: u64 = 1,
+    weighted_sum: u64 = 0,
+
+    fn append(self: ExactMoment, d: exact.OddsDistribution) ?ExactMoment {
+        const largest: u64 = 1 << 53;
+        const k = @min(d.row, d.total - d.row);
+        var weight: u128 = 1;
+        var j: u64 = 1;
+        while (j <= k) : (j += 1) {
+            weight = weight * (d.total - k + j) / j;
+            if (weight * self.weight > largest) return null;
+        }
+        const moment = if (d.total == 0) 0 else weight * d.row * d.col / d.total;
+        const next_sum = weight * self.weighted_sum + moment * self.weight;
+        if (next_sum > largest) return null;
+        return .{ .weight = @intCast(weight * self.weight), .weighted_sum = @intCast(next_sum) };
+    }
+};
 const Polynomial = struct {
+    exact_moment: ?ExactMoment = null,
     logs: []f64,
     lower: u64,
     observed: u64,
@@ -59,6 +84,7 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Erro
     var lower: u64 = 0;
     var observed: u64 = 0;
     var work: u64 = 0;
+    var moment: ?ExactMoment = .{};
     for (strata) |cells| {
         const d = try exact.OddsDistribution.initStratum(cells);
         const width = @as(u64, d.hi) - d.lo + 1;
@@ -89,10 +115,11 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Erro
         for (next) |*v| v.* -= peak;
         a.free(logs);
         logs = next;
+        if (moment) |value| moment = value.append(d);
         lower += d.lo;
         observed += d.observed;
     }
-    return .{ .complete = .{ .logs = logs, .lower = lower, .observed = observed } };
+    return .{ .complete = .{ .logs = logs, .lower = lower, .observed = observed, .exact_moment = moment } };
 }
 pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budget: Budget) Error!CommonResult {
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1) return error.ExecError;
@@ -110,9 +137,17 @@ pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budg
         mean += w * @as(f64, @floatFromInt(i));
     }
     mean /= total;
+    const observed_offset: f64 = @floatFromInt(p.observed - p.lower);
+    var expected = @as(f64, @floatFromInt(p.lower)) + mean;
+    var right = observed_offset > mean;
+    if (p.exact_moment) |moment| {
+        const denominator: f64 = @floatFromInt(moment.weight);
+        expected = @as(f64, @floatFromInt(moment.weighted_sum)) / denominator;
+        mean = @as(f64, @floatFromInt(moment.weighted_sum - p.lower * moment.weight)) / denominator;
+        right = @as(u128, p.observed) * moment.weight > moment.weighted_sum;
+    }
     const control = exact.Control{ .context = budget.context, .expired = budget.expired };
     const t = (try p.tailsControlled(0, budget.max_tables, control)) orelse return .exhausted;
-    const observed_offset: f64 = @floatFromInt(p.observed - p.lower);
     const observed_log = p.logs[@intCast(p.observed - p.lower)];
     var probability: f64 = 0;
     var distance: f64 = 0;
@@ -123,7 +158,7 @@ pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budg
         if (v <= observed_log + tolerance) probability += w;
         if (@abs(@as(f64, @floatFromInt(i)) - mean) >= observed_distance - 64 * std.math.floatEps(f64) * @max(1, observed_distance)) distance += w;
     }
-    const one = if (observed_offset > mean) t.right else t.left;
+    const one = if (right) t.right else t.left;
     const upper = p.lower + p.logs.len - 1;
     const target = if (p.observed == p.lower or p.observed == upper) alpha else alpha / 2;
     if (budget.stopped()) return .exhausted;
@@ -135,7 +170,7 @@ pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budg
             if (lower) limits.lower = endpoint else limits.upper = endpoint;
         }
     }
-    return .{ .complete = .{ .observed = p.observed, .expected = @as(f64, @floatFromInt(p.lower)) + mean, .point = t.point, .one_sided = one, .two_doubled = @min(1, 2 * one), .two_probability = @min(1, probability), .two_distance = @min(1, distance), .limits = limits } };
+    return .{ .complete = .{ .observed = p.observed, .expected = expected, .point = t.point, .one_sided = one, .right_sided = right, .two_doubled = @min(1, 2 * one), .two_probability = @min(1, probability), .two_distance = @min(1, distance), .limits = limits } };
 }
 
 pub const Zelen = struct { point: f64, p: f64, tables: u64 };
@@ -225,6 +260,37 @@ pub fn zelen(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error
 
 // SAS generators.sas: COMOR POINT=.5, one-sided=.75; convolving
 // [1,4,1] with itself gives [1,8,18,8,1]/36. Pooling gives different mass.
+test "COMOR chooses the inclusive left tail at an exactly representable conditional mean" {
+    const t = std.testing;
+    // M9 CommonOddsRatioTest gives XPL_COMOR=527/735; the other
+    // inclusive tail is 1651/2205. The cell-count sum equals E[S]=8.
+    const a = [4]u32{ 7, 12, 1, 1 };
+    const b = [4]u32{ 1, 15, 0, 5 };
+    for ([_][2][4]u32{ .{ a, b }, .{ b, a } }) |tables| {
+        const r = (try commonOdds(t.allocator, &tables, 0.05, .{})).complete;
+        try t.expectEqual(@as(f64, 8), r.expected);
+        try t.expect(!r.right_sided);
+        try t.expectApproxEqAbs(@as(f64, 527.0 / 735.0), r.one_sided, 1e-14);
+        try t.expectApproxEqAbs(@as(f64, 61.0 / 126.0), r.one_sided - r.point / 2, 1e-14);
+    }
+    const right = (try commonOdds(t.allocator, &.{ .{ 8, 11, 0, 2 }, b }, 0.05, .{})).complete;
+    try t.expect(right.right_sided);
+    try t.expectApproxEqAbs(@as(f64, 208.0 / 735.0), right.one_sided, 1e-14);
+}
+
+test "COMOR keeps the selected tail when a wide conditional mean rounds to the observed count" {
+    const t = std.testing;
+    // Changing the second stratum total on either side of 600000 reverses the
+    // deviation, while the raw conditional center in binary64 rounds to
+    // 600000 on both sides. The side must travel with its probability.
+    for ([_]u32{ 599_999, 600_001 }, [_]bool{ true, false }, [_]f64{ 0.7454541212114142, 0.7636358787880823 }) |n, right, one| {
+        const tables = [_][4]u32{ .{ 599_998, 1, 1, 0 }, .{ 1, n - 2, 0, 1 }, .{ 1, 3, 2, 6 } };
+        const r = (try commonOdds(t.allocator, &tables, 0.05, .{})).complete;
+        try t.expectEqual(right, r.right_sided);
+        try t.expectApproxEqAbs(one, r.one_sided, 3e-14);
+    }
+}
+
 test "common odds conditional convolution and one-stratum reduction" {
     const t = std.testing;
     const c = (try commonOdds(t.allocator, &.{ .{ 2, 0, 0, 2 }, .{ 0, 2, 2, 0 } }, 0.05, .{})).complete;

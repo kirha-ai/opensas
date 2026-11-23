@@ -28,7 +28,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
             try t.char("Table", 256);
             var rows = try Rows.init(a, &t, title, opt.pformat, 10);
             const sum: f64 = @floatFromInt(r.observed);
-            const right = sum > r.expected;
+            const right = r.right_sided;
             try rows.number("S_COMOR", "Cell (1,1) Sum (S)", sum, "10.4");
             try rows.number("M0_COMOR", "Mean of S under H0", r.expected, "10.4");
             try rows.add("", "", "", null);
