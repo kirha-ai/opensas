@@ -11,11 +11,12 @@ const nan = std.math.nan(f64);
 fn text(a: std.mem.Allocator, v: Value) ![]const u8 {
     return if (v == .str) v.str else std.mem.trim(u8, try @import("../format.zig").apply(a, v, "BEST12."), " ");
 }
-pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture, ds: *Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, req: freq.Request) diag.Error!void {
+pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture, ds: *Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, req: freq.Request, zeros: bool) diag.Error!void {
     const one = tab.dimensions.len == 1;
+    if (!one and req.list) return @import("ods_freq_list.zig").list(a, d, capture, ds, by, rep, tab, req, zeros);
+    if (!one and req.crosslist) return @import("ods_freq_list.zig").crossList(a, d, capture, ds, by, rep, tab, req);
     const name = if (one) "OneWayFreqs" else "CrossTabFreqs";
-    if (!capture.wants(name) or (!one and req.list)) return;
-    if (!one and req.crosslist) return; // SAS produces CrossList, not CrossTabFreqs.
+    if (!capture.wants(name)) return;
     if (one) if (req.maxlevels) |limit| if (tab.dimensions[0].levels.len > limit) return;
     var t = try b.Builder.init(a, ds, by, rep);
     t.ds.label = if (one) "One-Way Frequencies" else "Frequency Counts and Percentages";
@@ -159,7 +160,7 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
     if (t.ds.rows.items.len > 0) try capture.publish(a, d, name, &t.ds);
 }
 
-fn uniqueName(a: std.mem.Allocator, ds: *Dataset, name: []const u8) ![]const u8 {
+pub fn uniqueName(a: std.mem.Allocator, ds: *Dataset, name: []const u8) ![]const u8 {
     if (ds.indexOf(name) == null) return name;
     var suffix: usize = 2;
     while (true) : (suffix += 1) {

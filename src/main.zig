@@ -4667,12 +4667,12 @@ test "BUG-libnamemidstepboth + BUG-filenamemidstep: mid-PROC globals EXECUTE (pr
     try std.testing.expect(!g_failed and !d3.hasErrors());
     try std.testing.expect(std.mem.indexOf(u8, out.items, "1") != null); // listing printed
 
-    // Unsupported ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
+    // Malformed ODS OUTPUT mid-PROC stays LOUD — via the hoisted global segment's
     // handleGlobal arm, captured diags (D-003).
     var d4 = sas.diag.Diagnostics.init(a);
     try interpret(a, &out, &d4, mk ++ "proc print data=d noobs; ods output zzzq; run;\n", null);
     try std.testing.expect(d4.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT: unsupported table") != null);
+    try std.testing.expect(std.mem.indexOf(u8, try d4.render(), "ODS OUTPUT: expected table=dataset") != null);
 }
 
 test "GAP-printby-low-tick274: ID∩VAR/dup VAR keep both columns; SPLIT= implies LABEL; NOBYLINE honored; N/DOUBLE/ROUND/WIDTH= stay loud" {
@@ -7193,4 +7193,19 @@ test "histogram statistical insets reuse EDF bounds, formatted skewness and labe
     for ([_][]const u8{ "class=\"href\" data-value=\"0\"", ">Lower bound</text>", "class=\"vref\" data-value=\"25\"", ">Quarter</text>", ">Skewness</text>", ">0.000</text>", ">Pr &gt; D</text>", ">&gt;0.150</text>" }) |part|
         try std.testing.expect(std.mem.indexOf(u8, hist, part) != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Pr > D >0.150") != null);
+}
+
+test "unmatched ODS OUTPUT warns and lets CORR and later steps run" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    try interpret(a, &listing, &d, "data d;input x y;datalines;\n1 2\n2 1\n3 4\n;\nrun;\n" ++
+        "ods output DoesNotExist=bad;proc corr data=d;var x y;run;ods output close;\n" ++
+        "data _null_; file print; e=exist('work.bad');put 'CAPTURE_EXISTS=' e;run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Output 'DoesNotExist' was not created") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Pearson Correlation Coefficients") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "CAPTURE_EXISTS=0") != null);
 }

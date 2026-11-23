@@ -107,9 +107,9 @@ these caused real regressions (see D-001).
   ODS LISTING can be closed and reopened. Overall and LISTING-specific SELECT
   and EXCLUDE lists route implemented, named procedure objects. TRACE ON/OFF
   reports producer-supplied identities and BY paths for CORR and UNIVARIATE. ODS OUTPUT
-  is typed capture whose allowlist lives in `src/ods.zig`
-  — not in this decision — and grows with landed, SAS-aligned producers; unknown
-  names stay loud. This does not change destination rendering or claim
+  creates datasets from the typed producers registered in `src/ods.zig`. An unmatched
+  output name gives a warning and leaves the target dataset uncreated. Documented
+  statistical objects that still lack an implemented producer give a gap diagnostic. This does not change destination rendering or claim
   FEAT-base-stat-results. Neither inert form is an unimplemented gap waiting
   for a dev — both are deliberate, and `docs/sas9.4.ebnf` deliberately withholds
   `(* opensas *)` from `x_stmt`/`ods_stmt` to say so. Do not "finish" them.

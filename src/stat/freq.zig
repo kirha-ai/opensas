@@ -631,7 +631,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         };
         if (negative) try cx.diags.report(.note, 0, "Percentages and other statistics are not computed because there are negative weights. Plots are not produced.", .{});
         if (any and !opts.noprint) if (group.rep) |row| try formattedByLine(a, out, &view, row, bc);
-        if (any and opts.nlevels and !opts.noprint) try renderLevels(a, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items);
+        if (any and opts.nlevels and !opts.noprint) try renderLevels(cx, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items, &view, bc, group.rep);
         var rendered = any and opts.nlevels and !opts.noprint;
         for (opts.requests.items, 0..) |req, k| {
             const cols = try a.alloc(usize, req.vars.len);
@@ -640,7 +640,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             var tab = try computeTable(a, ds, cols, analysis_wc, opts.zeros, req.missing, opts.order, fl.items);
             tab.score_kind = req.scores;
             if (any and !opts.noprint and !req.noprint) if (cx.capture) |capture|
-                try @import("ods_freq.zig").publish(a, cx.diags, capture, &view, bc, group.rep, &tab, req);
+                try @import("ods_freq.zig").publish(a, cx.diags, capture, &view, bc, group.rep, &tab, req, opts.zeros);
             if (req.out_name) |name| {
                 if (outputs[k] == null) for (cols, 0..) |ci, j| if (std.mem.indexOfScalar(usize, cols[0..j], ci) != null) try cx.diags.report(.warning, 0, "Variable {s} already exists on file {s}.", .{ ds.columns.items[ci].name, name });
                 const part = try tableOutput(a, &view, ds, cols, fl.items, &tab, req, opts.zeros);
@@ -690,6 +690,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         try cx.lib.put(req.out_name.?, ds);
     };
     if (stats_writer) |writer| {
+        try writer.finish();
         try io.applyDatasetOptions(a, writer.ds, opts.output.?.dataset_options, cx.diags, false);
         try cx.lib.put(writer.ds.name, writer.ds);
     }
@@ -956,7 +957,8 @@ fn tableOutput(a: std.mem.Allocator, raw: *Dataset, ds: *Dataset, cols: []const 
 }
 
 // ── Listing rendering ──────────────────────────────────────────────────────
-fn renderLevels(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, order: FreqOrder, wc: ?usize, zeros: bool, formats: []const FmtLevels) !void {
+fn renderLevels(cx: ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, vars: []const []const u8, order: FreqOrder, wc: ?usize, zeros: bool, formats: []const FmtLevels, source: *const Dataset, by: []const usize, rep: ?[]const Value) !void {
+    const a = cx.arena;
     var names: std.ArrayList([]const u8) = .empty;
     var totals: std.ArrayList(usize) = .empty;
     var misses: std.ArrayList(usize) = .empty;
@@ -984,6 +986,7 @@ fn renderLevels(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, var
         try misses.append(a, nmiss);
         any_missing = any_missing or nmiss > 0;
     }
+    if (cx.capture) |capture| try @import("ods_freq_tests.zig").levels(a, cx.diags, capture, source, by, rep, names.items, totals.items, misses.items);
     try out.appendSlice(a, NLEVELS_TITLE);
     try out.append(a, '\n');
     const title = try line(a, 64);
@@ -1841,7 +1844,7 @@ pub fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     return ids.toOwnedSlice(a);
 }
 
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?*stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
     const a = cx.arena;
     const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
@@ -1856,12 +1859,13 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
         var body: std.ArrayList(u8) = .empty;
         const result = try stat_exec.execute(a, cx.diags, &body, .{ .name = tab.dimensions[0].name, .one_way = true, .matrix = inferenceMatrix(scored.matrix) }, req.statistics, requested_tests, req.resolved_expected, opts.noprint);
-        if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result);
+        if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result, false);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
         _ = try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
+        if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
@@ -1897,10 +1901,11 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,
                 }, req.statistics, requested_tests, .equal, opts.noprint);
-                if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result);
+                if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result, scored.matrix.rows == 2 and scored.matrix.cols == 2);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
                     const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
+                    if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, req, result);
                     if (cx.capture) |capture| try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, req.exact.pformat, risk_report, limits);
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {

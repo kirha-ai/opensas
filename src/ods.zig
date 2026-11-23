@@ -6,7 +6,7 @@ const Dataset = @import("dataset.zig").Dataset;
 const Library = @import("exec.zig").Library;
 const Value = @import("value.zig").Value;
 const eq = std.ascii.eqlIgnoreCase;
-pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "BarnardsTest", "RelRisk1ExactCL", "RelRisk2ExactCL", "RiskDiffCol1", "RiskDiffCol2", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "HistogramBins", "PPPlot", "QQPlot", "FisherPearsonCorr", "FisherSpearmanCorr", "FisherPearsonPartialCorr", "FisherSpearmanPartialCorr", "VarInformation", "Cov", "Csscp", "Sscp", "PartialCov", "PartialCsscp", "CronbachAlpha", "CronbachAlphaDel", "HoeffdingCorr", "PartialPearsonCorr", "PartialSpearmanCorr", "PartialKendallCorr" };
+pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "BarnardsTest", "RelRisk1ExactCL", "RelRisk2ExactCL", "RiskDiffCol1", "RiskDiffCol2", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "HistogramBins", "PPPlot", "QQPlot", "FisherPearsonCorr", "FisherSpearmanCorr", "FisherPearsonPartialCorr", "FisherSpearmanPartialCorr", "VarInformation", "Cov", "Csscp", "Sscp", "PartialCov", "PartialCsscp", "CronbachAlpha", "CronbachAlphaDel", "HoeffdingCorr", "PartialPearsonCorr", "PartialSpearmanCorr", "PartialKendallCorr", "NLevels", "ChiSq", "OneWayChiSq", "OneWayLRChiSq", "List", "CrossList" };
 const Request = struct { table: []const u8, target: []const u8, result: ?*Dataset = null };
 pub const Capture = struct {
     requests: std.ArrayList(Request) = .empty,
@@ -28,7 +28,7 @@ pub const Capture = struct {
             if (table.tag != .name) return d.fail(error.ParseError, table.line, "ODS OUTPUT: expected a supported table name", .{});
             var known = false;
             for (names) |name| known = known or eq(name, table.text);
-            if (!known) {
+            if (!known and @import("ods_documented.zig").contains(table.text)) {
                 diag.markGap();
                 return d.fail(error.ParseError, table.line, "ODS OUTPUT: unsupported table {s}", .{table.text});
             }
@@ -167,7 +167,7 @@ test "FEAT-odsoutput parser is atomic and malformed unsupported requests stay lo
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    for ([_][]const u8{ "ods output NoSuch=x;", "ods output Moments=;", "ods output Moments=x(bogus);", "ods output Moments=x NoSuch=y;", "ods output Moments;", "ods output;", "ods output close junk;" }) |source| {
+    for ([_][]const u8{ "ods output Summary=x;", "ods output Moments=;", "ods output Moments=x(bogus);", "ods output Moments=x Summary=y;", "ods output Moments;", "ods output;", "ods output close junk;" }) |source| {
         var d = diag.Diagnostics.init(a);
         var capture: Capture = .{};
         try std.testing.expectError(error.ParseError, capture.parse(a, &d, try lex.tokenize(a, source, &d)));

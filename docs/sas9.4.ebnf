@@ -200,20 +200,17 @@ title_stmt     = "TITLE" [ digit ] [ string ] ";" ;               (* opensas *)
 footnote_stmt  = "FOOTNOTE" [ digit ] [ string ] ";" ;            (* opensas *)
                  (* FOOTNOTE1..10 likewise, printed below the listing
                    (bug_titlecancel, title_in_sql) *)
-ods_stmt       = ods_output_stmt | "ODS" { any_token } ";" ;
-                 (* Destination open/close (LISTING/HTML/PDF/RTF/CSV/EXCEL/HTML5,
-                    _ALL_ CLOSE) and results/graphics/escapechar remain deliberate
-                    listing no-ops (D-022). SELECT/EXCLUDE/TRACE fail loud. *)
+ods_stmt       = ods_output_stmt | ods_listing_select | ods_trace | "ODS" { any_token } ";" ;
+                 (* D-022 covers destination handling. The named listing
+                    selection and trace productions appear with PROC UNIVARIATE. *)
 ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
                 | ods_table_name "=" ( sas_name | two_level_name )
                   { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
-ods_table_name  = "PearsonCorr" | "PolychoricCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
-                | "BarnardsTest" | "RelRisk1ExactCL" | "RelRisk2ExactCL" | "RiskDiffCol1" | "RiskDiffCol2"
-                | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
-                 (* Typed capture; default requests expire after next PROC.
-                    BY objects concatenate, missing objects warn without creating
-                    a dataset. Unknown tables and unimplemented OUTPUT options
-                    fail visibly. No destination rendering or selection implied. *)
+ods_table_name  = name ; (* opensas *)
+                 (* src/ods.zig registers the implemented typed producers.
+                    BY objects concatenate; requests expire after the next PROC.
+                    An unmatched name warns and creates no dataset. Documented
+                    statistical objects lacking producers give a gap diagnostic. *)
 x_stmt         = "X" [ ( name | string ) { name | string } ] ";" ;  (* opensas: parsed,
                  accepted inert — the shell command is NOT executed (audit probe:
                  x "echo …"; runs clean, no command runs). Accepted-inert by
@@ -933,7 +930,9 @@ proc_freq      = "PROC" "FREQ" { freq_proc_option } ";"          (* opensas *)
                  | "FORMAT" var_list format_ref ";"
                  | "WHERE" expression ";"
                  | "TEST" { freq_test } ";"
-                 | freq_exact_statement } step_boundary ;
+                 | freq_exact_statement
+                 | "OUTPUT" { "OUT" "=" dataset | freq_output_stat } ";" } step_boundary ;
+freq_output_stat = "N" | "NMISS" | "PCHI" | "LRCHI" | "CHISQ" ; (* opensas *)
 freq_proc_option = "DATA" "=" dataset | "ORDER" "=" name
                  | "NOPRINT" | "NLEVELS"
                  | "FORMCHAR" [ "(" number { "," number } ")" ] "=" string ;
@@ -994,8 +993,11 @@ freq_test      = "MEASURES" | "GAMMA" | "KENTB" | "TAUB" | "STUTC" | "TAUC"
                  (* TEST implies MEASURES/PLCORR only with one TABLES statement.
                     CHISQ includes automatic 2x2 Fisher for integer counts.
                     TESTP/TESTF lists imply CHISQ; dataset references alone do not.
-                    OUTPUT statistics datasets remain explicit gaps;
-                    WARN=OUTPUT does not create a dataset. *)
+                    OUTPUT uses the last TABLES request. CHISQ writes the eligible
+                    test statistics, coefficients and integer 2x2 Fisher tails.
+                    An unmatched TABLES statistics request warns and produces
+                    no dataset. An OUTPUT statement requires a TABLES statement.
+                    WARN=OUTPUT adds a warning flag when PCHI is captured. *)
 
 freq_exact_statement = "EXACT" { freq_exact_stat }
                        [ "/" { freq_exact_control } ] ";" ; (* opensas *)

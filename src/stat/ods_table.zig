@@ -9,7 +9,11 @@ pub const Builder = struct {
         var b = Builder{ .ds = Dataset.init(a, ""), .prefix = &.{} };
         const cells = try a.alloc(Value, cols.len);
         for (cols, 0..) |ci, i| {
-            const c = source.columns.items[ci];
+            // The output destination carries the BY display format and label.
+            // Its column has no input informat (SAS 9.4 M9).
+            var c = source.columns.items[ci];
+            c.informat = null;
+            if (c.format) |f| c.format = try std.ascii.allocUpperString(a, f);
             _ = try b.ds.addColumnLike(c.name, c);
             cells[i] = if (rep) |representative| representative[ci] else if (c.type == .num) Value.missing else .{ .str = "" };
         }
