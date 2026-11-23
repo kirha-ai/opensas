@@ -117,18 +117,37 @@ const Reader = struct {
         return .{ .number = std.math.cast(usize, index) orelse std.math.maxInt(usize) };
     }
 
-    fn methodName(self: *Reader, family: Family, test_method: bool) diag.Error!Method {
+    fn testMethod(self: *Reader, family: Family) diag.Error!Method {
+        const difference = family == .difference;
+        if (self.at(.name)) {
+            const t = self.t[self.i];
+            self.i += 1;
+            if (kw(t, "wald")) return .wald;
+            if (kw(t, "fm") or kw(t, "mn") or kw(t, "score")) return .fm;
+            if (difference) {
+                if (kw(t, "ha")) return .ha;
+                if (kw(t, "newcombe") or kw(t, "wilson")) return .newcombe;
+            } else {
+                if (kw(t, "log")) return .wald;
+                if (kw(t, "waldmodified")) return .waldmodified;
+                if (kw(t, "lr") or kw(t, "likelihoodratio")) return .lr;
+            }
+        }
+        try self.d.numberedError("22-322", if (difference)
+            "Syntax error, expecting one of the following: FM, HA, MN, NEWCOMBE, SCORE, WALD, WILSON."
+        else
+            "Syntax error, expecting one of the following: FM, LIKELIHOODRATIO, LOG, LR, MN, SCORE, WALD, WALDMODIFIED.");
+        try self.d.numberedError("76-322", "Syntax error, statement will be ignored.");
+        return error.ParseError;
+    }
+    fn confidenceMethod(self: *Reader, family: Family) diag.Error!Method {
         if (!self.at(.name)) return self.fail("expected risk method name");
         const t = self.t[self.i];
         self.i += 1;
         if ((kw(t, "agresticoull") or kw(t, "clopperpearson")) and family != .binomial) return self.fail("binomial method alias used for another family");
         if ((kw(t, "agresticaffo") or kw(t, "mn")) and family != .difference) return self.fail("risk difference method alias used for another family");
-        const m: Method = if (kw(t, "wald")) .wald else if (kw(t, "waldmodified")) .waldmodified else if (kw(t, "lr") or kw(t, "likelihoodratio")) .lr else if (kw(t, "exact") or kw(t, "clopperpearson")) .exact else if (kw(t, "midp")) .midp else if (kw(t, "ac") or kw(t, "agresticoull") or kw(t, "agresticaffo")) .ac else if (kw(t, "jeffreys")) .jeffreys else if (kw(t, "logit")) .logit else if (kw(t, "wilson")) .wilson else if (kw(t, "ha")) .ha else if (kw(t, "newcombe")) .newcombe else if (kw(t, "mn")) .mn else if (kw(t, "fm")) .fm else if (kw(t, "score")) (if (test_method) .fm else if (family == .binomial) .wilson else .mn) else if (kw(t, "blaker")) .blaker else return self.fail("invalid risk method");
-        const valid = if (test_method) switch (family) {
-            .difference => m == .wald or m == .ha or m == .fm or m == .newcombe,
-            .relative_risk => m == .wald or m == .waldmodified or m == .fm or m == .lr,
-            else => false,
-        } else switch (family) {
+        const m: Method = if (kw(t, "wald")) .wald else if (kw(t, "waldmodified")) .waldmodified else if (kw(t, "lr") or kw(t, "likelihoodratio")) .lr else if (kw(t, "exact") or kw(t, "clopperpearson")) .exact else if (kw(t, "midp")) .midp else if (kw(t, "ac") or kw(t, "agresticoull") or kw(t, "agresticaffo")) .ac else if (kw(t, "jeffreys")) .jeffreys else if (kw(t, "logit")) .logit else if (kw(t, "wilson")) .wilson else if (kw(t, "ha")) .ha else if (kw(t, "newcombe")) .newcombe else if (kw(t, "mn")) .mn else if (kw(t, "fm")) .fm else if (kw(t, "score")) (if (family == .binomial) .wilson else .mn) else if (kw(t, "blaker")) .blaker else return self.fail("invalid risk method");
+        const valid = switch (family) {
             .binomial => m == .wald or m == .exact or m == .blaker or m == .ac or m == .jeffreys or m == .lr or m == .logit or m == .midp or m == .wilson,
             .difference => m == .wald or m == .exact or m == .ac or m == .ha or m == .mn or m == .newcombe,
             .relative_risk => m == .wald or m == .waldmodified or m == .exact or m == .mn or m == .lr,
@@ -146,7 +165,7 @@ const Reader = struct {
         var cls: std.ArrayList(CL) = .empty;
         try cls.appendSlice(self.a, req.cls);
         while (true) {
-            var cl = CL{ .method = try self.methodName(req.family, false) };
+            var cl = CL{ .method = try self.confidenceMethod(req.family) };
             if (self.at(.lparen)) {
                 self.i += 1;
                 if (req.family == .difference and cl.method == .mn and self.is("mee")) {
@@ -260,7 +279,7 @@ const Reader = struct {
                 if (self.is("null")) req.variance = .null_value else if (self.is("sample")) req.variance = .sample else return self.fail("VAR must be NULL or SAMPLE");
                 self.i += 1;
             } else if (kw(token, "method") and req.family != .binomial) {
-                req.method = try self.methodName(req.family, true);
+                req.method = try self.testMethod(req.family);
             } else if (kw(token, "margin")) {
                 req.paired_margin = self.at(.lparen);
                 if (req.paired_margin) self.i += 1;
