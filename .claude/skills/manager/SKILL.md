@@ -162,10 +162,6 @@ avoids re-running ~2k corpus fixtures on an unchanged tip. The file lives under
    - **Goldens:** a landing that edits an expected-output file must carry the
      evidence in its own commit (§7); spot-check the diff — SAS-correct, not a
      pass-hack.
-   - **Regression coverage.** Before landing, check that the tracked test
-     cited for each delivered behavior in the dev's report (§7) exercises
-     that behavior. When closing out a ticket as `PARK`, apply the same check
-     to the portion delivered.
    - **Board:** removal happens after the push (step 8). For a `GH#` task,
      close its issue only once the fix is on the remote working branch, per
      the `issue-manager` skill.
@@ -193,6 +189,11 @@ avoids re-running ~2k corpus fixtures on an unchanged tip. The file lives under
    completed `GH#` task, follow the `issue-manager` ordering: push the fix,
    close the issue, then remove the line — a failed push or close leaves
    both the issue and the task open.
+   The manager also maintains the unit-test and corpus totals in the README's
+   “How it is verified” section. Before the board push, compare them with the
+   green gate report for the landed code. If either count is stale, commit
+   the correction to `README.md` on the working branch and include it in
+   that push.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
    run the next iteration. Until the human explicitly stops the manager, each dev
    report is the trigger for the next tick (land+push → refill that dev → sense →
@@ -240,7 +241,8 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 
 - Write interpreter/feature code — and that includes resolving merge
   conflicts; the landing protocol routes all of that to devs (§7). You may
-  write *test fixtures* (`.sas` corpus programs) and edit `jira.md`.
+  write *test fixtures* (`.sas` corpus programs), edit `jira.md` and maintain
+  the README test counts (§1 step 8).
 - Land a tip the dev reported red, or push when `--ff-only` refused. There
   is no manager consolidated gate — bounce bad reports; trust green reports
   + PR CI.
@@ -449,8 +451,6 @@ task):
    resolution or an interaction with landed work (fix forward; beyond your
    scope → the escape hatch above). Green → report
    `(branch, base-sha, sha, counts)` from `git rev-parse <work> HEAD`.
-   For each delivered behavior, give the path to the new or existing tracked
-   test that covers it.
 
 Manager side, on the working branch: **`git merge --ff-only devN`** — it
 lands atomically or refuses ("Not possible to fast-forward"); it can NEVER
