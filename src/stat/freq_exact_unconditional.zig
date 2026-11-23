@@ -213,6 +213,75 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
+pub const BarnardTails = union(enum) {
+    complete: struct { one: Bounds, two: Bounds },
+    exhausted,
+};
+
+/// Under H0 the Barnard score is the signed square root of Pearson X².
+/// |Z|=sqrt(N) only under perfect association: a directional tail contains
+/// the observed extreme allocation, and the absolute tail also its reverse.
+pub fn barnardTails(table: risk.Table2x2, side: Side, options: Options) Error!BarnardTails {
+    const c = try canonical(table, .first);
+    var work = Work{ .options = options };
+    const negative = c[0] == 0 and c[3] == 0;
+    const positive = c[1] == 0 and c[2] == 0;
+    if ((negative and side == .left) or (positive and side == .right)) {
+        const n1 = if (negative) c[1] else c[0];
+        const n2 = if (negative) c[2] else c[3];
+        if (n1 == 0 or n2 == 0) return error.ExecError;
+        if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
+        return opposingBarnard(@min(n1, n2), @max(n1, n2), &work);
+    }
+    const one = try tail(c, .difference, .score, 0, side, &work);
+    if (one == .exhausted) return .exhausted;
+    work = .{ .options = options };
+    const two = try tail(c, .difference, .score, 0, .two_sided, &work);
+    return if (two == .exhausted) .exhausted else .{ .complete = .{ .one = one.complete, .two = two.complete } };
+}
+
+fn pointBounds(value: f64) Bounds {
+    return .{ .lower = value, .upper = value };
+}
+
+/// For ordered row totals a<=b, g(q)=q^a(1-q)^b has its peak at a/N.
+/// Its reflected sum g(q)+g(1-q) is symmetric. With u=log((1-q)/q)/2
+/// its log derivative is d*tanh(d*u)-N*tanh(u), d=b-a. On u>0 with
+/// d>1, tanh(d*u)/tanh(u) decreases from d to 1, since its log derivative
+/// is 2*d/sinh(2*d*u)-2/sinh(2*u)<0. The maximum is at 1/2 when d²<=N.
+/// Otherwise there is one maximum on [a/N,1/2] and its reflection.
+fn opposingBarnard(small: u32, large: u32, work: *Work) BarnardTails {
+    if (!work.tick()) return .exhausted;
+    const a: f64 = @floatFromInt(small);
+    const b: f64 = @floatFromInt(large);
+    const n = a + b;
+    const one = pointBounds(@exp(a * logRowShare(a, b) + b * logRowShare(b, a)));
+    const d: u64 = large - small;
+    if (d * d <= @as(u64, small) + large) {
+        return .{ .complete = .{ .one = one, .two = pointBounds(@exp2(1 - n)) } };
+    }
+
+    var lo = a / n;
+    var hi: f64 = 0.5;
+    while (true) {
+        if (!work.tick()) return .exhausted;
+        const q = (lo + hi) / 2;
+        if (q == lo or q == hi) break;
+        // The sign of the derivative after factoring out g(q)/(q*(1-q)).
+        const ratio = std.math.pow(f64, q / (1 - q), @floatFromInt(d));
+        const derivative = @mulAdd(f64, -n, q, a) + ratio * @mulAdd(f64, -n, q, b);
+        if (derivative > 0) lo = q else hi = q;
+    }
+    // Within the final bracket g(q) decreases and g(1-q) increases. Form
+    // the sum in log space in case each probability underflows separately.
+    const large_log = a * @log(lo) + b * std.math.log1p(-lo);
+    const small_log = b * @log(hi) + a * std.math.log1p(-hi);
+    const upper = @max(one.upper, @exp(large_log + std.math.log1p(@exp(small_log - large_log))));
+    const at_hi = a * @log(hi) + b * std.math.log1p(-hi);
+    const lower = @exp(at_hi + std.math.log1p(@exp(small_log - at_hi)));
+    return .{ .complete = .{ .one = one, .two = .{ .lower = @max(one.lower, @min(lower, upper)), .upper = upper } } };
+}
+
 /// At (0,n2), both NOSCORE and the directional score have a singleton left
 /// tail. For the score, write the constrained null as p=a+b*q, b>0,
 /// V=p*(1-p), W=q*(1-q), and t=x-n1*p. At an interior MLE, y-n2*q
@@ -682,6 +751,30 @@ test "NOSCORE boundary risk differences invert the constrained maximum for both 
     const reference = -1 - 2 * std.math.expm1(@log(@as(f64, 0.025)) / 4_000_000_000);
     try t.expectApproxEqAbs(reference, interval.upper, 5e-16);
     try t.expect((try riskLimitsSas(table, .first, .difference, .noscore, 0.05, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+}
+
+test "Barnard opposing limits match elementary polynomial extrema and exhaustive unsigned score tails" {
+    const t = std.testing;
+    for (1..9) |i| for (1..10) |j| {
+        const corner = tableOf(.{ 0, @intCast(i), @intCast(j), 0 });
+        const actual = (try barnardTails(corner, .left, .{})).complete;
+        const one = (try riskTail(corner, .first, .difference, .score, 0, .left, .{ .tolerance = 1e-13 })).complete;
+        const two = (try riskTail(corner, .first, .difference, .score, 0, .two_sided, .{ .tolerance = 1e-13 })).complete;
+        try t.expect(actual.one.lower >= one.lower - 2e-14 and actual.one.upper <= one.upper + 2e-14);
+        try t.expect(actual.two.lower >= two.lower - 2e-14 and actual.two.upper <= two.upper + 2e-14);
+    };
+    // At (1,3) the central mode is flat; at (1,4), putting s=q*(1-q)
+    // gives s*(1-3*s) with a maximum of 1/12 at either off-center root.
+    inline for (.{ .{ 3, 0.125 }, .{ 4, 1.0 / 12.0 } }) |pair| {
+        const x = (try barnardTails(tableOf(.{ 0, 1, pair[0], 0 }), .left, .{})).complete;
+        try t.expectApproxEqAbs(@as(f64, pair[1]), x.two.upper, 1e-15);
+    }
+    const rare = tableOf(.{ 4_000_000_000, 0, 0, 1 });
+    const x = (try barnardTails(rare, .right, .{})).complete;
+    try t.expectApproxEqRel(@as(f64, 9.19698602813643478639499e-11), x.two.upper, 2e-14);
+    try t.expect((try barnardTails(rare, .right, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
+    const subnormal = (try barnardTails(tableOf(.{ 0, 537, 538, 0 }), .left, .{})).complete;
+    try t.expectEqual(std.math.floatTrueMin(f64), subnormal.two.upper);
 }
 
 test "directional SCORE orders fully opposing outcomes strictly first and inverts their probability" {
