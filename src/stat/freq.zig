@@ -12,9 +12,8 @@ const ProcCtx = p.ProcCtx;
 const procInput = p.procInput;
 const cmpValue = p.cmpValue;
 const resolveWeightCol = p.resolveWeightCol;
-const byOrderViolation = p.byOrderViolation;
+const by_groups = @import("by_groups.zig");
 const bySlices = p.bySlices;
-const appendByLine = p.appendByLine;
 const cellText = p.cellText;
 const VarSpec = p.VarSpec;
 const parseProcFormat = p.parseProcFormat;
@@ -470,7 +469,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         try cx.diags.report(.err, 0, "File {s} does not exist", .{input_name orelse "_last_"});
         return;
     };
-    const input = try procInput(a, raw, toks, cx.diags);
+    var input = try procInput(a, raw, toks, cx.diags);
     while (!parser.tag(.eof) and !parser.kw("run")) {
         if (parser.tag(.semicolon)) {
             parser.i += 1; // Null statement: no request or TEST implication.
@@ -590,10 +589,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             return;
         }
     }
-    if (!pb.notsorted) for (1..@max(1, input.rows.items.len)) |i| {
-        if (byOrderViolation(input.rows.items[i], input.rows.items[i - 1], bc, pb.desc, input.sortseq_linguistic orelse io.global_sortseq_linguistic)) |j| return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ input.name, if (pb.desc[j]) "descending" else "ascending" });
-    };
-    const slices = try bySlices(a, input.rows.items, bc);
+    input = try by_groups.withFormats(a, input, opts.formats.items);
+    const slices = try by_groups.checkedSlices(a, input, bc, pb.desc, pb.notsorted, cx.diags);
     const groups = if (slices.len == 0) try bySlices(a, input.rows.items, &.{}) else slices;
     const outputs = try a.alloc(?*Dataset, opts.requests.items.len);
     @memset(outputs, null);
@@ -611,9 +608,6 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         var vars: std.ArrayList([]const u8) = .empty;
         for (opts.requests.items) |req| for (req.vars) |vn| try vars.append(a, vn);
         view.columns = .{ .items = try a.dupe(@import("../dataset.zig").Column, input.columns.items), .capacity = input.columns.items.len };
-        for (opts.formats.items) |spec| if (view.indexOf(spec.name)) |ci| {
-            view.columns.items[ci].format = if (spec.spec.len == 0) null else spec.spec;
-        };
         var analysis_wc = wc;
         if (wc) |ci| if (view.columns.items[ci].format != null) {
             var selected = false;
@@ -638,7 +632,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             break;
         };
         if (negative) try cx.diags.report(.note, 0, "Percentages and other statistics are not computed because there are negative weights. Plots are not produced.", .{});
-        if (any and !opts.noprint) if (group.rep) |row| try formattedByLine(a, out, &view, row, bc);
+        if (any and !opts.noprint) if (group.rep) |row| try by_groups.appendLine(a, out, &view, row, bc);
         if (any and opts.nlevels and !opts.noprint) try renderLevels(cx, out, ds, vars.items, opts.order, analysis_wc, opts.zeros, fl.items, &view, bc, group.rep);
         var rendered = any and opts.nlevels and !opts.noprint;
         for (opts.requests.items, 0..) |req, k| {
@@ -677,7 +671,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             if (!any) continue;
             if (!opts.noprint and (cx.graphics != null or req.plots.plots.len != 0)) {
                 var by_text: std.ArrayList(u8) = .empty;
-                if (bc.len > 0) if (group.rep) |row| try formattedByLine(a, &by_text, &view, row, bc);
+                if (bc.len > 0) if (group.rep) |row| try by_groups.appendLine(a, &by_text, &view, row, bc);
                 try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"), if (bc.len > 0) by_number else null, k + 1);
             }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
@@ -878,13 +872,6 @@ pub fn computeTable(a: std.mem.Allocator, ds: *Dataset, cols: []const usize, wc:
         try tab.add(a, key, rowWeight(row, wc));
     }
     return tab;
-}
-fn formattedByLine(a: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, cols: []const usize) !void {
-    const display = try a.dupe(Value, row);
-    for (cols) |ci| if (ds.columns.items[ci].format) |fmt| {
-        display[ci] = .{ .str = std.mem.trim(u8, try format.apply(a, row[ci], fmt), " ") };
-    };
-    try appendByLine(a, out, ds, display, cols);
 }
 fn uniqueColumns(a: std.mem.Allocator, cols: []const usize) ![]usize {
     var result: std.ArrayList(usize) = .empty;

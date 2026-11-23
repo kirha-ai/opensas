@@ -135,6 +135,7 @@ pub const Options = struct {
     pub fn identify(self: *Options, a: Allocator, ds: *Dataset, obs: ?[]const usize) !*Dataset {
         const copy = try a.create(Dataset);
         copy.* = Dataset.init(a, ds.name);
+        copy.sortseq_linguistic = ds.sortseq_linguistic;
         try copy.columns.appendSlice(a, ds.columns.items);
         self.obscol = copy.columns.items.len;
         _ = try copy.addColumn("__UNIV_SOURCE_OBS__", .num);
@@ -149,14 +150,10 @@ pub const Options = struct {
         return copy;
     }
     /// Record BY boundaries after input filtering but before FREQ exclusion.
-    pub fn markBy(self: *Options, a: Allocator, ds: *Dataset, cols: []const usize) !void {
+    pub fn markBy(self: *Options, a: Allocator, ds: *Dataset, cols: []const usize, desc: []const bool, notsorted: bool, d: *diag.Diagnostics) diag.Error!void {
         if (cols.len == 0) return;
-        for (ds.rows.items, 0..) |row, j| {
-            var start = j == 0;
-            if (j > 0) for (cols) |ci| {
-                if (h.compareValue(row[ci], ds.rows.items[j - 1][ci]) != .eq) start = true;
-            };
-            if (start) try self.by_starts.append(a, @intFromFloat(h.toNum(row[self.obscol.?])));
+        for (try @import("by_groups.zig").checkedSlices(a, ds, cols, desc, notsorted, d)) |group| {
+            try self.by_starts.append(a, @intFromFloat(h.toNum(group.rep.?[self.obscol.?])));
         }
     }
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
@@ -760,6 +757,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                                 if (ci == id and bs.rows.len > 0) row[j] = firstByRow(opt, bs.rows[0], bcols)[ci];
                             };
                             if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, wc, ccols, ci, g.rows[0]);
+                            if (std.mem.indexOfScalar(usize, bcols, ci) != null) row[j] = bs.rep.?[ci];
                         } else if (od.columns.items[j].type == .char) row[j] = .{ .str = "" };
                     }
                     var at = keycols.items.len;
@@ -1160,19 +1158,11 @@ test "UNIVARIATE CLASS parenthesized options and IDOUT metadata" {
 /// IDOUT uses the first source observation in the BY group, including FREQ=0.
 fn firstByRow(opt: Options, row: []const Value, by: []const usize) []const Value {
     const ds = opt.source orelse return row;
-    const oi = opt.obscol orelse return row;
-    var at: usize = 0;
-    while (at < ds.rows.items.len and h.toNum(ds.rows.items[at][oi]) != h.toNum(row[oi])) at += 1;
-    if (at == ds.rows.items.len) return row;
-    while (at > 0) {
-        var same = true;
-        for (by) |ci| {
-            if (h.compareValue(ds.rows.items[at - 1][ci], ds.rows.items[at][ci]) != .eq) same = false;
-        }
-        if (!same) break;
-        at -= 1;
-    }
-    return ds.rows.items[at];
+    if (opt.obscol == null or ds.rows.items.len == 0) return row;
+    if (by.len == 0) return ds.rows.items[0];
+    const segment = bySegment(opt, row);
+    if (segment == 0) return row;
+    return opt.source_rows.get(opt.by_starts.items[segment - 1]) orelse row;
 }
 
 test "UNIVARIATE OUTTABLE weighted schema and unweighted normality" {
@@ -1426,7 +1416,7 @@ pub fn bySlices(a: Allocator, rows: []const []const Value, cols: []const usize, 
         const segment = bySegment(opt, rows[start]);
         var stop = start + 1;
         while (stop < rows.len and bySegment(opt, rows[stop]) == segment) stop += 1;
-        try slices.append(a, .{ .rep = rows[start], .rows = rows[start..stop] });
+        try slices.append(a, .{ .rep = firstByRow(opt, rows[start], cols), .rows = rows[start..stop] });
         start = stop;
     }
     return slices.toOwnedSlice(a);

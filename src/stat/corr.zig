@@ -7,7 +7,6 @@ const parser = @import("../parser.zig");
 const diag = @import("../diag.zig");
 const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
-const io = @import("../io.zig");
 const nan = std.math.nan(f64);
 const eq = std.ascii.eqlIgnoreCase;
 const output = @import("corr_output.zig");
@@ -15,6 +14,7 @@ const advanced = @import("corr_advanced.zig");
 
 pub const VarDef = enum { df, n, wdf, weight };
 const graphics = @import("corr_plots.zig");
+const by_groups = @import("by_groups.zig");
 pub const Options = struct {
     plots: graphics.Options = .{},
     pearson: bool = false,
@@ -311,7 +311,8 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     }
     const raw = (if (name) |n| cx.lib.find(n) else proc.lastDataset(cx.lib)) orelse
         return cx.diags.fail(error.ParseError, 0, "File {s} does not exist.", .{name orelse "_last_"});
-    const ds = try proc.procInput(cx.arena, raw, toks, cx.diags);
+    var ds = try proc.procInput(cx.arena, raw, toks, cx.diags);
+    var formats: std.ArrayList(proc.VarSpec) = .empty;
     var vars: ?[]const usize = null;
     var with: []const usize = &.{};
     var partial: []const usize = &.{};
@@ -339,6 +340,8 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             partial = try columns(cx, ds, toks[i + 1 .. end]);
             if (partial.len == 0) return fail(cx, toks[i]);
             opts.nomiss = true;
+        } else if (kw(toks, i, "format")) {
+            try proc.parseProcFormat(cx.arena, toks, &i, &formats);
         } else if (kw(toks, i, "by")) {
             by_names.clearRetainingCapacity();
             try proc.parseProcBy(cx.arena, cx.diags, toks, &i, &by_names);
@@ -349,6 +352,8 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         } else if (!kw(toks, i, "where") and !kw(toks, i, "run") and !kw(toks, i, "quit") and !(toks[i].tag == .name and parser.isMidStepSkippable(toks[i].text))) return fail(cx, toks[start]);
         i = end;
     }
+    for (formats.items) |spec| _ = try column(cx, ds, spec.name, false);
+    ds = try by_groups.withFormats(cx.arena, ds, formats.items);
     const by = try proc.decodeProcBy(cx.arena, by_names.items);
     var bcols: std.ArrayList(usize) = .empty;
     for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n, false));
@@ -499,14 +504,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
         try cx.diags.report(.note, 0, "No observations were selected from data set {s}.", .{s.ds.name});
         return .{ .spec = s, .groups = &.{} };
     }
-    const slices = try proc.bySlices(cx.arena, s.ds.rows.items, s.by);
-    if (!s.notsorted) {
-        for (slices, 0..) |bs, j| {
-            if (j == 0) continue;
-            if (proc.byOrderViolation(bs.rep.?, slices[j - 1].rep.?, s.by, s.by_desc, s.ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
-                return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ s.ds.name, if (s.by_desc[k]) @as([]const u8, "descending") else "ascending" });
-        }
-    }
+    const slices = try by_groups.checkedSlices(cx.arena, s.ds, s.by, s.by_desc, s.notsorted, cx.diags);
     var groups: std.ArrayList(Group) = .empty;
     const rowcols = if (s.with.len > 0) s.with else s.vars;
     for (slices) |bs| {
@@ -639,7 +637,7 @@ fn renderListing(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result, 
     for (result.groups, 1..) |g, by_group| {
         const tables: @import("../ods_listing.zig").Tables = .{ .selection = selection, .prefix = if (g.by_values != null and selection != null) try std.fmt.allocPrint(a, "Corr.ByGroup{d}", .{by_group}) else "Corr" };
         const header_start = out.items.len;
-        if (g.by_values) |row| try proc.appendByLine(a, out, s.ds, row, s.by);
+        if (g.by_values) |row| try by_groups.appendLine(a, out, s.ds, row, s.by);
         try out.appendSlice(a, "The CORR Procedure\n\n");
         const header_end = out.items.len;
         var start = header_end;

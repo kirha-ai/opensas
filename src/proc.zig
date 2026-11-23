@@ -4631,7 +4631,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         return;
     };
     const input_view = try procInputObs(arena, raw, toks, diags);
-    var ds = try extra.identify(arena, input_view.ds, input_view.srcobs); // WHERE stmt / data= options (BUG-procwhere)
+    const by_groups = @import("stat/by_groups.zig");
+    const formatted_input = try by_groups.withFormats(arena, input_view.ds, fmt_specs.items);
+    var ds = try extra.identify(arena, formatted_input, input_view.srcobs); // WHERE stmt / data= options (BUG-procwhere)
     // GAP-varcolonprefix-procs: expand `pfx:` entries now that the dataset is
     // known (PDV order — see expandVarPrefixes). ONE point, ahead of every
     // ds.indexOf consumer below (groupFormats' CLASS scan included).
@@ -4643,9 +4645,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     const checked_by = try decodeProcBy(arena, bys.items);
     for (checked_by.names) |bn| if (ds.indexOf(bn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: BY variable {s} not found", .{bn});
-    var boundary_cols: std.ArrayList(usize) = .empty;
-    for (checked_by.names) |bn| try boundary_cols.append(arena, ds.indexOf(bn).?);
-    try extra.markBy(arena, ds, boundary_cols.items);
+    var obcols: std.ArrayList(usize) = .empty;
+    for (checked_by.names) |bn| try obcols.append(arena, ds.indexOf(bn).?);
+    try extra.markBy(arena, ds, obcols.items, checked_by.desc, checked_by.notsorted, diags);
     // FREQ f; — expand each obs to trunc(f) copies so N=Σf and every moment /
     // quantile / test is over the frequency-weighted sample (F2, mirrors MEANS).
     if (freq_var) |fv| {
@@ -4726,34 +4728,6 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         diags.warn(toks[0].line, "PROC UNIVARIATE: PCTLDEF= is ignored with a WEIGHT statement — weighted percentiles use Definition 5", .{}) catch {};
 
 
-    // BY: decode scanByList's wire encoding ONCE — clean names + per-key
-    // directions + NOTSORTED (GAP-procbydescending) — shared by OUTPUT OUT=
-    // (one row per group, BUG-meansoutputby) and the listing (one block set
-    // per group, BUG-univignoresby), so the two surfaces cannot disagree.
-    const pb = try decodeProcBy(arena, bys.items);
-    var obcols: std.ArrayList(usize) = .empty;
-    var obdesc: std.ArrayList(bool) = .empty; // BY direction per obcols entry (BUG-meansoutbydescending)
-    for (pb.names, 0..) |bn, k| if (ds.indexOf(bn)) |idx| {
-        try obcols.append(arena, idx);
-        try obdesc.append(arena, pb.desc[k]);
-    };
-    // BY demands sorted data: a backward step between contiguous groups ERRORs
-    // like SAS — the same guard MEANS/TRANSPOSE run (BUG-meansbyunsorted),
-    // joined here per NOTE-procsortguards. Without it an unsorted BY silently
-    // POOLED out-of-order groups (listing) and emitted duplicate OUT= rows.
-    // DESCENDING flips the check per key; NOTSORTED drops it.
-    if (obcols.items.len > 0 and !pb.notsorted) {
-        const rows = (extra.source orelse ds).rows.items;
-        var s: usize = 0;
-        while (s < rows.len) {
-            var e = s + 1;
-            while (e < rows.len and byEqual(rows[s], rows[e], obcols.items)) e += 1;
-            if (e < rows.len) if (byOrderViolation(rows[e], rows[s], obcols.items, pb.desc, ds.sortseq_linguistic orelse io.global_sortseq_linguistic)) |k|
-                return diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ ds.name, if (pb.desc[k]) "descending" else "ascending" });
-            s = e;
-        }
-    }
-
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
@@ -4774,7 +4748,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra), 1..) |bs, by_number| {
         extra.listing = .{ .selection = cx.listing, .prefix = if (bs.rep != null and cx.listing != null and (filtered or cx.listing.?.trace != null)) try std.fmt.allocPrint(arena, "Univariate.ByGroup{d}", .{by_number}) else "Univariate" };
         const by_start = out.items.len;
-        if (bs.rep) |r| try appendByLine(arena, out, ds, r, obcols.items);
+        if (bs.rep) |r| try by_groups.appendLine(arena, out, formatted_input, r, obcols.items);
         const by_end = out.items.len;
         defer if (filtered and out.items.len == by_end) out.shrinkRetainingCapacity(by_start);
         // Shallow per-group view (columns shared, rows = the slice's) — the same
