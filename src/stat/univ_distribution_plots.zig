@@ -333,7 +333,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const groups = try h.collectGroups(a, &bd, ccols);
-            try univ.orderGroups(a, &bd, groups, ccols, levels, null, opt);
+            univ.orderGroups(groups, ccols, opt);
             const resolved = try @import("univ_plot_groups.zig").resolve(a, cx.diags, &bd, groups, ccols, opt);
             for (try @import("univ_plot_groups.zig").order(a, resolved, opt.key_move)) |index| {
                 const group = resolved.groups[index];
@@ -347,7 +347,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const is_class = j >= bcols.len;
                     const ci = if (is_class) ccols[j - bcols.len] else bcols[j];
                     var column = source.columns.items[ci];
-                    const value = if (is_class) univ.classRepresentative(&bd, opt, null, ccols, ci, group.rep) else group.rep[ci];
+                    const value = if (is_class) univ.classRepresentative(opt, ccols, ci, group.rep) else group.rep[ci];
                     if (h.fmtLevelsFor(levels, ci)) |fl| column.format = fl.spec;
                     const text = if (value == .str) value.str else try @import("../format.zig").apply(a, value, column.format orelse "BEST12.");
                     key.* = .{ .column = column, .value = value, .display = std.mem.trim(u8, text, " "), .class = is_class };

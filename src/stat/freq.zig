@@ -574,7 +574,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
         };
-        const ds = try groupFormats(a, &view, vars.items, &.{}, &fl, cx.diags, true);
+        const ds = try groupFormats(a, &view, vars.items, &.{}, &fl, cx.diags, .freq);
         var negative = false;
         for (view.rows.items) |row| if (rowWeight(row, wc) < 0) {
             negative = true;

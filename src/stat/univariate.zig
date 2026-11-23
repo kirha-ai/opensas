@@ -67,6 +67,13 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     }
     return list.toOwnedSlice(a);
 }
+const ClassLevel = struct {
+    first: usize = std.math.maxInt(usize),
+    count: usize = 0,
+    raw: Value = .{ .num = nan },
+};
+const ClassLevels = std.HashMapUnmanaged([]const Value, ClassLevel, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
+
 pub const Options = struct {
     ods: ?@import("ods_univariate.zig").Context = null,
     listing: @import("../ods_listing.zig").Tables = .{},
@@ -80,6 +87,7 @@ pub const Options = struct {
     freqcol: ?usize = null,
     round_units: []f64 = &.{},
     by_starts: std.ArrayList(usize) = .empty,
+    class_levels: std.AutoHashMapUnmanaged(usize, [2]ClassLevel) = .empty,
     class_missing: [2]bool = .{ false, false },
     class_order: [2][]const u8 = .{ "internal", "internal" },
     freq: bool = false,
@@ -156,6 +164,41 @@ pub const Options = struct {
             try self.by_starts.append(a, @intFromFloat(h.toNum(group.rep.?[self.obscol.?])));
         }
     }
+    /// Compute class order on the retained observations of each BY segment.
+    /// DATA/FREQ use the marginal level's first observation and occurrence
+    /// count. The raw representative depends on all preceding CLASS keys.
+    pub fn indexClassLevels(self: *Options, a: Allocator, ds: *Dataset, by: []const usize, cols: []const usize, wc: ?usize) !void {
+        if (cols.len == 0) return;
+        for (try bySlices(a, ds.rows.items, by, self.*)) |group| {
+            for (cols, 0..) |ci, j| {
+                const marginal_key = h.GroupKeyCtx{ .ccols = cols[j..][0..1] };
+                const prefix_key = h.GroupKeyCtx{ .ccols = cols[0 .. j + 1] };
+                var marginal: ClassLevels = .empty;
+                var prefix: ClassLevels = .empty;
+                defer marginal.deinit(a);
+                defer prefix.deinit(a);
+                for (group.rows, 0..) |row, position| {
+                    const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+                    const original = self.source_rows.get(obs).?;
+                    if (h.weightAt(original, wc) == null) continue;
+                    const m = try marginal.getOrPutContext(a, row, marginal_key);
+                    if (!m.found_existing) m.value_ptr.* = .{ .first = position };
+                    m.value_ptr.count += 1;
+                    const p = try prefix.getOrPutContext(a, row, prefix_key);
+                    if (!p.found_existing) p.value_ptr.* = .{ .raw = original[ci] };
+                }
+                for (group.rows) |row| {
+                    const obs: usize = @intFromFloat(h.toNum(row[self.obscol.?]));
+                    const entry = try self.class_levels.getOrPut(a, obs);
+                    if (!entry.found_existing) entry.value_ptr.* = .{ .{}, .{} };
+                    var info = marginal.getContext(row, marginal_key) orelse ClassLevel{};
+                    info.raw = if (prefix.getContext(row, prefix_key)) |p| p.raw else row[ci];
+                    entry.value_ptr.*[j] = info;
+                }
+            }
+        }
+    }
+
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
         i.* += 1;
         while (!end(t, i.*) and t[i.*].tag != .rparen) {
@@ -721,7 +764,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const groups = try h.collectGroups(a, &bd, ccols);
-            try orderGroups(a, &bd, groups, ccols, levels, wc, opt);
+            orderGroups(groups, ccols, opt);
             // collectGroups emits a pooled group even for an empty, unclassified input.
             for (groups) |g| {
                 if (!hasUsableWeight(g.rows, wc, opt)) continue;
@@ -756,7 +799,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                             if (opt.idout and !table) for (ids) |id| {
                                 if (ci == id and bs.rows.len > 0) row[j] = firstByRow(opt, bs.rows[0], bcols)[ci];
                             };
-                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(&bd, opt, wc, ccols, ci, g.rows[0]);
+                            if (h.fmtLevelsFor(levels, ci) != null) row[j] = classRepresentative(opt, ccols, ci, g.rows[0]);
                             if (std.mem.indexOfScalar(usize, bcols, ci) != null) row[j] = bs.rep.?[ci];
                         } else if (od.columns.items[j].type == .char) row[j] = .{ .str = "" };
                     }
@@ -1015,52 +1058,27 @@ fn sourceRow(ds: *Dataset, opt: Options, obs: usize) []const Value {
     }
     return ds.rows.items[obs - 1];
 }
-pub fn orderGroups(a: Allocator, ds: *Dataset, groups: []h.MeansGroup, cols: []const usize, levels: []const h.FmtLevels, wc: ?usize, opt: Options) !void {
-    h.reorderGroupsFmt(groups, cols, levels);
-    const C = struct {
-        ds: *Dataset,
+pub fn orderGroups(groups: []h.MeansGroup, cols: []const usize, opt: Options) void {
+    if (cols.len == 0 or groups.len < 2) return;
+    const Context = struct {
         cols: []const usize,
-        levels: []const h.FmtLevels,
-        wc: ?usize,
         opt: Options,
         fn less(c: @This(), l: h.MeansGroup, r: h.MeansGroup) bool {
+            const left = c.opt.class_levels.get(@intFromFloat(h.toNum(l.rep[c.opt.obscol.?]))).?;
+            const right = c.opt.class_levels.get(@intFromFloat(h.toNum(r.rep[c.opt.obscol.?]))).?;
             for (c.cols, 0..) |ci, j| {
-                const lv = l.rep[ci];
-                const rv = r.rep[ci];
-                if (h.compareValue(lv, rv) == .eq) continue;
+                const label_order = h.compareValue(l.rep[ci], r.rep[ci]);
+                if (label_order == .eq) continue;
                 const mode = c.opt.class_order[j];
-                if (eq(mode, "data") or eq(mode, "freq")) {
-                    var lf: usize = 0;
-                    var rf: usize = 0;
-                    var li: usize = c.ds.rows.items.len;
-                    var ri: usize = c.ds.rows.items.len;
-                    for (c.ds.rows.items, 0..) |row, k| {
-                        // FREQ expansion and EXCLNPWGT already apply; missing
-                        // original weights cannot establish CLASS order/counts.
-                        const raw = if (c.opt.source) |source| sourceRow(source, c.opt, @intFromFloat(h.toNum(row[c.opt.obscol.?]))) else row;
-                        if (h.weightAt(raw, c.wc) == null) continue;
-                        if (h.compareValue(row[ci], lv) == .eq) {
-                            lf += 1;
-                            li = @min(li, k);
-                        }
-                        if (h.compareValue(row[ci], rv) == .eq) {
-                            rf += 1;
-                            ri = @min(ri, k);
-                        }
-                    }
-                    if (eq(mode, "data")) return li < ri;
-                    if (lf != rf) return lf > rf;
-                }
-                if (eq(mode, "internal")) {
-                    if (h.fmtLevelsFor(c.levels, ci) != null) return h.compareValue(classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, l.rep), classRepresentative(c.ds, c.opt, c.wc, c.cols, ci, r.rep)) == .lt;
-                }
-                return h.compareValue(lv, rv) == .lt;
+                if (eq(mode, "data") and left[j].first != right[j].first) return left[j].first < right[j].first;
+                if (eq(mode, "freq") and left[j].count != right[j].count) return left[j].count > right[j].count;
+                if (eq(mode, "internal")) return h.compareValue(left[j].raw, right[j].raw) == .lt;
+                return label_order == .lt;
             }
             return false;
         }
     };
-    std.mem.sort(h.MeansGroup, groups, C{ .ds = ds, .cols = cols, .levels = levels, .wc = wc, .opt = opt }, C.less);
-    _ = a;
+    std.mem.sort(h.MeansGroup, groups, Context{ .cols = cols, .opt = opt }, Context.less);
 }
 
 fn testData(a: Allocator) !*@import("../exec.zig").Library {
@@ -1089,6 +1107,27 @@ fn testRun(a: Allocator, lib: *@import("../exec.zig").Library, source: []const u
 fn testCell(ds: *Dataset, row: usize, name: []const u8) f64 {
     return h.toNum(ds.rows.items[row][ds.indexOf(name).?]);
 }
+test "UNIVARIATE default BEST12 CLASS groups retain numeric observations and format attributes" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const values = [_]f64{ 0.123456789012355, 0.123456789045678, 0.123456789012345 };
+    for (values) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+    for ([_][]const u8{ "", "format x best12.;", "format x best16.;" }, 0..) |format_stmt, j| {
+        try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint;class x(order=data);{s}var x;output out=o n=n sum=s;run;", .{format_stmt}));
+        const o = lib.find("o").?;
+        const col = o.columns.items[o.indexOf("x").?];
+        try std.testing.expectEqual(@as(usize, if (j == 2) 3 else 1), o.rows.items.len);
+        if (j == 0) try std.testing.expect(col.format == null) else try std.testing.expect(eq(col.format.?, if (j == 1) "best12." else "best16."));
+        try std.testing.expectEqual(values[0], testCell(o, 0, "x"));
+        try std.testing.expectEqual(@as(f64, if (j == 2) 1 else 3), testCell(o, 0, "n"));
+        try std.testing.expectApproxEqAbs(if (j == 2) values[0] else values[0] + values[1] + values[2], testCell(o, 0, "s"), 1e-15);
+    }
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1332,19 +1371,10 @@ test "UNIVARIATE percentile and statistic name collisions preserve first value" 
 /// Select the first weight-eligible original value within this BY group and
 /// preceding CLASS levels. FREQ and EXCLNPWGT exclusions already apply to ds;
 /// missing weights must not supply a representative, even without EXCLNPWGT.
-pub fn classRepresentative(ds: *Dataset, opt: Options, wc: ?usize, cols: []const usize, ci: usize, rep: []const Value) Value {
-    const level = rep[ci];
-    const oi = opt.obscol orelse return level;
-    rows: for (ds.rows.items) |row| {
-        for (cols) |key| {
-            if (h.compareValue(row[key], rep[key]) != .eq) continue :rows;
-            if (key == ci) break;
-        }
-        const raw = sourceRow(opt.source orelse ds, opt, @intFromFloat(h.toNum(row[oi])));
-        if (h.weightAt(raw, wc) == null) continue;
-        return raw[ci];
-    }
-    return level;
+pub fn classRepresentative(opt: Options, cols: []const usize, ci: usize, rep: []const Value) Value {
+    const obs: usize = @intFromFloat(h.toNum(rep[opt.obscol.?]));
+    const j = std.mem.indexOfScalar(usize, cols, ci).?;
+    return opt.class_levels.get(obs).?[j].raw;
 }
 /// CLASS grouping uses formatted keys, but an explicitly selected CLASS
 /// variable is analyzed using its original numeric values, after ROUND.
@@ -1851,6 +1881,9 @@ test "BUG-univclassrepweight raw-key ordering and ROUND preserve original weight
         try ds.appendRow(&.{ .{ .num = r[1] }, .{ .num = r[0] }, .{ .num = r[2] }, .{ .num = 1 }, .{ .num = 1 } });
     var diags = diag.Diagnostics.init(a);
     const toks = try @import("../lexer.zig").tokenize(a, "proc format; value band 1='A' 2='B' 3='A';run;", &diags);
+    const formats = @import("../format.zig");
+    formats.clearUserFormats();
+    defer formats.clearUserFormats();
     try proc.runFormat(.{ .arena = a, .lib = lib, .diags = &diags }, toks);
     try std.testing.expect(!diags.hasErrors());
     for ([_]bool{ false, true }) |roles| {

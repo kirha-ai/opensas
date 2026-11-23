@@ -311,7 +311,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
             const collected = try h.collectGroups(a, &bd, ccols);
-            try univ.orderGroups(a, &bd, collected, ccols, levels, wc, opt);
+            univ.orderGroups(collected, ccols, opt);
             const resolved = try plot_groups.resolve(a, cx.diags, &bd, collected, ccols, opt);
             const groups = resolved.groups;
             const analyses = try a.alloc(univ.Analysis, groups.len);
@@ -319,7 +319,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             for (groups, 0..) |g, gi| {
                 const rep = try a.dupe(Value, g.rep);
                 if (g.rows.len > 0) for (ccols) |ci| if (h.fmtLevelsFor(levels, ci) != null) {
-                    rep[ci] = univ.classRepresentative(&bd, opt, wc, ccols, ci, g.rep);
+                    rep[ci] = univ.classRepresentative(opt, ccols, ci, g.rep);
                 };
                 representatives[gi] = rep;
                 const gd = try a.create(Dataset);

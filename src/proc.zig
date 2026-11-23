@@ -1503,7 +1503,7 @@ pub fn runMeans(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.
     // vars from the default VAR set); an explicit VAR naming that same var is
     // the ponytail edge noted at groupFormats.
     var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped CLASS col (BUG-freqfmtorder)
-    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, false);
+    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, .general);
 
     // BY: decode scanByList's wire encoding ONCE — clean names for every
     // indexOf below, per-key directions + NOTSORTED for the sortedness guard
@@ -2554,23 +2554,18 @@ pub fn parseProcFormat(arena: std.mem.Allocator, toks: []const Token, i: *usize,
     for (pending.items) |vn| try specs.append(arena, .{ .name = vn, .spec = "" });
 }
 
-/// NOTE-freqtablesfmt (tick185 + tick167:176): a format associated with a
-/// grouping var — a FORMAT statement in the proc (wins), else the column's
-/// DATA-step-persisted format — makes SAS group by the FORMATTED value: raw
-/// values sharing a label collapse into ONE level, displayed as the label.
-/// Rewrite each such column's cells to their formatted text in a FRESH row set
-/// (proc input rows are shared with the library dataset — never mutate in
-/// place), flip the column to .str, and clear the stored spec so nothing
-/// formats twice. Missing stays missing (blank str) so the default missing
-/// exclusion still bites. Returns `ds` unchanged when nothing applies.
-/// ponytail: level ORDER follows the formatted text (SAS's ORDER=INTERNAL
-/// orders by the smallest raw value per collapsed group — switch the sort if a
-/// live-SAS golden disagrees); OUT= datasets carry the formatted text (SAS
-/// stores a raw value + the attached format there); a var in BOTH VAR and
-/// CLASS with a format sees its stats count as nmiss (split raw/formatted
-/// copies if a golden ever needs that).
-pub fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []const u8, stmt_specs: []const VarSpec, levels_out: *std.ArrayList(FmtLevels), diags: *diag.Diagnostics, freq_missing: bool) diag.Error!*Dataset {
-    const Target = struct { ci: usize, spec: []const u8 };
+/// FREQ and UNIVARIATE include formatted missing values once their own
+/// observation selection has run. UNIVARIATE also groups default numerics by
+/// BEST12. and ignores leading field padding for numeric classification keys.
+const GroupFormatMode = enum { general, freq, univariate };
+
+fn groupLabel(arena: std.mem.Allocator, value: Value, spec: []const u8, mode: GroupFormatMode) ![]const u8 {
+    const field = try format.apply(arena, value, spec);
+    return if (mode == .univariate and value == .num) std.mem.trimStart(u8, field, " ") else field;
+}
+
+pub fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []const u8, stmt_specs: []const VarSpec, levels_out: *std.ArrayList(FmtLevels), diags: *diag.Diagnostics, mode: GroupFormatMode) diag.Error!*Dataset {
+    const Target = struct { ci: usize, field: []const u8, assigned: ?[]const u8 };
     var targets: std.ArrayList(Target) = .empty;
     for (varnames) |vn| {
         const ci = ds.indexOf(vn) orelse continue; // unknown var: no TABLES/CLASS use → no effect
@@ -2579,7 +2574,7 @@ pub fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []
             spec = if (ss.spec.len == 0) null else ss.spec;
             break;
         };
-        const s = spec orelse continue;
+        const s = spec orelse if (mode == .univariate and ds.columns.items[ci].type == .num) "BEST12." else continue;
         // NOTE-fmtnumoncharcoerce: the grouping rewrite formats every cell — a
         // numeric format on a char column (or `$` on numeric) silently turned
         // the level into '.'. Same compile-time type check as PROC PRINT's
@@ -2595,26 +2590,25 @@ pub fn groupFormats(arena: std.mem.Allocator, ds: *Dataset, varnames: []const []
             seen = true;
             break;
         };
-        if (!seen) try targets.append(arena, .{ .ci = ci, .spec = s });
+        if (!seen) try targets.append(arena, .{ .ci = ci, .field = s, .assigned = spec });
     }
     if (targets.items.len == 0) return ds;
     const copy = try dupDataset(arena, ds);
     for (targets.items) |tg| {
-        // BUG-freqfmtorder: capture each label's ORDER=INTERNAL rank (ascending
-        // underlying raw value) from the RAW column BEFORE the rewrite, so
-        // consumers order collapsed groups by smallest raw value, not label text.
-        // NOTE-freqfmtoutraw: keep the RAW type + applied spec + each label's
-        // lowest raw alongside the labels, so OUT= builders can store the raw
-        // value with the format attached instead of the label string.
-        const lr = try fmtLabelsByRaw(arena, ds, tg.ci, tg.spec, freq_missing);
-        try levels_out.append(arena, .{ .col = tg.ci, .labels = lr.labels, .raws = lr.raws, .ty = ds.columns.items[tg.ci].type, .spec = tg.spec });
+        // MEANS and FREQ need the lowest raw for each label. UNIVARIATE
+        // selects the first eligible raw separately within each BY/CLASS group.
+        const lr: FmtLabelsRaws = if (mode == .univariate)
+            .{ .labels = &.{}, .raws = &.{} }
+        else
+            try fmtLabelsByRaw(arena, ds, tg.ci, tg.field, mode == .freq);
+        try levels_out.append(arena, .{ .col = tg.ci, .labels = lr.labels, .raws = lr.raws, .ty = ds.columns.items[tg.ci].type, .spec = tg.assigned });
         copy.columns.items[tg.ci].type = .char;
         copy.columns.items[tg.ci].format = null;
         for (copy.rows.items) |*r| {
             const old = r.*[tg.ci];
             const nv = try arena.alloc(Value, r.*.len);
             @memcpy(nv, r.*);
-            nv[tg.ci] = if (!freq_missing and isFreqMissing(old)) .{ .str = "" } else .{ .str = try format.apply(arena, old, tg.spec) };
+            nv[tg.ci] = if (mode == .general and isFreqMissing(old)) .{ .str = "" } else .{ .str = try groupLabel(arena, old, tg.field, mode) };
             r.* = nv;
         }
     }
@@ -2672,9 +2666,9 @@ fn fmtLabelsByRaw(arena: std.mem.Allocator, ds: *Dataset, ci: usize, spec: []con
 /// +49 exactly as its provenance header states; the `1496 Chapter 40` footer
 /// just ABOVE that marker belongs to the PRECEDING page, which is the trap),
 /// `ty`: the column's type BEFORE the label-string rewrite, and
-/// `spec`: the format applied (attach it to the OUT= column so the raw value
+/// `spec`: the assigned format, null for an implicit BEST12. (attach it to the OUT= column so the raw value
 /// still renders as its label).
-pub const FmtLevels = struct { col: usize, labels: []const []const u8, raws: []const Value, ty: VarType, spec: []const u8 };
+pub const FmtLevels = struct { col: usize, labels: []const []const u8, raws: []const Value, ty: VarType, spec: ?[]const u8 };
 const FmtLabelsRaws = struct { labels: []const []const u8, raws: []const Value };
 
 pub fn fmtLevelsFor(list: []const FmtLevels, col: usize) ?FmtLevels {
@@ -4662,22 +4656,18 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         ds = try dropNonpositiveWeight(arena, ds, wc);
     };
 
-    // A format on a CLASS var groups by the FORMATTED value — the SAME
-    // groupFormats rewrite MEANS/SUMMARY/FREQ run, not a parallel grouping
-    // (BUG-univclassrawgroup: grouping by the RAW value split one formatted
-    // level into several, printing the same label twice with per-raw n;
-    // Procedures Guide MEANS CLASS stmt Tip, printed p.1497 — a collapsing
-    // format REDUCES the number of levels).
-    var fmt_levels: std.ArrayList(FmtLevels) = .empty; // raw-value order per format-grouped CLASS col (BUG-freqfmtorder)
-    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, false);
-
-    // CLASS columns (BUG-univclass). Obs with a missing CLASS value are excluded
-    // unless / MISSING (as MEANS, BUG-meansclassmiss); `cds` is the analysis view.
+    // MISSING applies to the source CLASS value. A nonmissing raw value
+    // whose label is blank remains eligible, while a missing raw value
+    // cannot enter through a nonblank format unless MISSING was requested.
     var ccols: std.ArrayList(usize) = .empty;
-    for (classes.items) |cn| if (ds.indexOf(cn)) |idx| try ccols.append(arena, idx);
+    for (classes.items) |cn| try ccols.append(arena, ds.indexOf(cn).?);
     var excluded: std.ArrayList(usize) = .empty;
     for (ccols.items, 0..) |ci, j| if (!class_missing and !extra.class_missing[j]) try excluded.append(arena, ci);
-    const cds = if (excluded.items.len > 0) try dropMissingClass(arena, ds, excluded.items) else ds;
+    if (excluded.items.len > 0) ds = try dropMissingClass(arena, ds, excluded.items);
+    var fmt_levels: std.ArrayList(FmtLevels) = .empty;
+    if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, .univariate);
+    const cds = ds;
+    try extra.indexClassLevels(arena, cds, obcols.items, ccols.items, wcol);
 
     // the VAR list, else every numeric column (as MEANS does) — but never a CLASS
     // variable: SAS excludes CLASS vars from the default analysis list.
@@ -4757,7 +4747,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
             // BY group.
             const groups = try collectGroups(arena, bd, ccols.items);
-            try univ.orderGroups(arena, bd, groups, ccols.items, fmt_levels.items, wcol, extra); // collapsed bands in raw-value order, as the MEANS listing (BUG-freqfmtorder)
+            univ.orderGroups(groups, ccols.items, extra);
             for (groups) |g| {
                 if (!univ.hasUsableWeight(g.rows, wcol, extra)) continue;
                 var hdr: std.ArrayList(u8) = .empty;
@@ -17248,7 +17238,7 @@ pub const UnivariateHelpers = struct {
     pub const nmissCount = @import("proc.zig").nmissCount;
     pub const bySlices = @import("proc.zig").bySlices;
     pub const collectGroups = @import("proc.zig").collectGroups;
-    pub const reorderGroupsFmt = @import("proc.zig").reorderGroupsFmt;
+    pub const GroupKeyCtx = @import("proc.zig").GroupKeyCtx;
     pub const fmtLevelsFor = @import("proc.zig").fmtLevelsFor;
     pub const fmtRawFor = @import("proc.zig").fmtRawFor;
     pub const valStr = @import("proc.zig").valStr;
