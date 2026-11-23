@@ -2050,18 +2050,14 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     // `ods _all_ close`) and the results/graphics/escapechar toggles are
     // accepted-as-listing no-ops — output correctly stays on stdout, and a
     // `ods pdf; … ods pdf close;` wrap around a PROC must still run and print.
-    // OUTPUT routes named typed tables through the capture registry. SELECT,
-    // EXCLUDE and TRACE still fail loud; destination rendering stays inert.
+    // OUTPUT is an independent typed destination. Listing selection and tracing
+    // are driven from named objects in each implemented procedure.
     if (eqi(kw, "ods") and toks.len >= 2 and toks[1].tag == .name) {
         const sub = toks[1].text;
         if (native_graphics_session) |graphics| try graphics.configure(toks);
         if (try ods_listing.parse(a, diags, toks)) return;
         if (eqi(sub, "output")) {
             return ods_capture.parse(a, diags, toks);
-        }
-        if (eqi(sub, "trace")) {
-            sas.diag.markGap(); // §5d — same shape as OUTPUT above
-            return diags.fail(error.ParseError, toks[1].line, "ODS {s} is not supported yet", .{sub});
         }
     }
 }
@@ -2856,7 +2852,9 @@ fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec
     const proc = toks[1].text;
     defer ods_listing.endProc();
     var discard: std.ArrayList(u8) = .empty;
-    const routed = eqi(proc, "univariate");
+    const routed = eqi(proc, "univariate") or eqi(proc, "corr");
+    if (ods_listing.trace != null and !routed and ods_listing.accepts(proc))
+        return sas.proc.failGap(diags, 0, "ODS TRACE: object metadata is not implemented for PROC {s}", .{proc});
     const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
     const out = if (visible) listing_out else &discard;
     const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
@@ -4365,7 +4363,7 @@ test "GAP-gapsexitingone §5d: main.zig's gaps exit 2 — and every split's typo
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods output Summary=s;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods select MyTable;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods exclude MyTable;\n", &log));
-    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods trace on;\n", &log));
+    try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "ods trace on / listing;\n", &log));
     try std.testing.expectEqual(@as(u8, 2), try rcOf(a, &out, "data a; input x; list; datalines;\n1\n;\nrun;\n", &log));
     try std.testing.expect(std.mem.indexOf(u8, log, "The LIST statement is not supported") != null); // message unchanged
 
@@ -5407,7 +5405,7 @@ test "global statements: OPTIONS/TITLE/FOOTNOTE/FILENAME/ODS/X accepted, no DATA
     );
 }
 
-test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE and unknown OUTPUT names fail loud" {
+test "ODS destination wrappers preserve output and unsupported object or trace options fail loud" {
     // Group A: the `ods pdf; … ods pdf close;` wrap (and every other
     // destination/toggle form) runs and still prints the listing — no error.
     try expectRun(
@@ -5426,7 +5424,7 @@ test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE a
         .{ "ods select MyTable;\n", "ODS: unsupported selection object" },
         .{ "ods exclude MyTable;\n", "ODS: unsupported selection object" },
         .{ "ods output Summary=s;\n", "ODS OUTPUT: unsupported table" },
-        .{ "ods trace on;\n", "ODS trace is not supported yet" },
+        .{ "ods trace on / listing;\n", "ODS TRACE: unsupported option" },
     }) |case| {
         var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
         defer arena.deinit();
@@ -6995,4 +6993,24 @@ test "ODS listing selections expire while NONE persists and captured tables surv
     try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out.items, "The UNIVARIATE Procedure"));
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Label1") != null);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs   x") == null);
+}
+
+test "ODS TRACE follows selected CORR object paths independently in each BY group" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diagnostics = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a, &out, &diagnostics,
+        "data d;input site $ x y;datalines;\nA 1 3\nA 2 1\nA 5 4\nB 3 2\nB 4 6\nB 7 5\n;\nrun;\n" ++
+        "ods trace on;ods select PearsonCorr;proc corr data=d;by site;var x y;run;ods trace off;\n", null);
+    try std.testing.expect(!diagnostics.hasErrors());
+    const log = try diagnostics.render();
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, log, "Output Added:"));
+    for ([_][]const u8{ "Name:       PearsonCorr", "Label:      Pearson Correlations", "Template:   base.corr.StackedMatrix" }) |line|
+        try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, log, line));
+    try std.testing.expect(std.mem.indexOf(u8, log, "Path:       Corr.ByGroup1.PearsonCorr") != null);
+    try std.testing.expect(std.mem.indexOf(u8, log, "Path:       Corr.ByGroup2.PearsonCorr") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Simple Statistics") == null);
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Pearson Correlation Coefficients"));
 }

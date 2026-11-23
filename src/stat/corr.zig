@@ -595,11 +595,19 @@ fn number(a: std.mem.Allocator, x: f64, probability: bool) ![]const u8 {
 /// Text is deliberately downstream of Result: output datasets/ODS can consume
 /// the full precision typed cells, never scrape this rounded listing.
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !void {
+    return renderListing(a, out, result, null);
+}
+
+fn renderListing(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result, selection: ?*const proc.OdsListing) !void {
     const s = result.spec;
     if (s.options.noprint) return;
-    for (result.groups) |g| {
+    for (result.groups, 1..) |g, by_group| {
+        const tables: @import("../ods_listing.zig").Tables = .{ .selection = selection, .prefix = if (g.by_values != null and selection != null) try std.fmt.allocPrint(a, "Corr.ByGroup{d}", .{by_group}) else "Corr" };
+        const header_start = out.items.len;
         if (g.by_values) |row| try proc.appendByLine(a, out, s.ds, row, s.by);
         try out.appendSlice(a, "The CORR Procedure\n\n");
+        const header_end = out.items.len;
+        var start = header_end;
         if (s.with.len > 0) {
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} With Variables:", .{s.with.len}));
             for (s.with) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
@@ -610,18 +618,25 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
         try out.append(a, '\n');
         if (s.freq) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, "Freq Variable: {s}\n", .{s.ds.columns.items[c].name}));
         if (s.weight) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, "Weight Variable: {s}\n", .{s.ds.columns.items[c].name}));
+        try tables.finish(a, out, start, "VarInformation");
         inline for (.{ "sscp", "csscp", "cov" }) |kind| {
             if (@field(s.options, kind)) {
+                start = out.items.len;
+                const normal_name = if (eq(kind, "csscp")) "Csscp" else if (eq(kind, "sscp")) "Sscp" else "Cov";
                 if (eq(kind, "csscp") and g.unpartial_pairs.len > 0) {
                     var original = g;
                     original.pairs = g.unpartial_pairs;
                     try out.appendSlice(a, "\nUnpartial");
                     try renderMoments(a, out, s, original, kind);
+                    try tables.finish(a, out, start, normal_name);
+                    start = out.items.len;
                     try out.appendSlice(a, "\nPartial");
                 }
                 try renderMoments(a, out, s, g, kind);
+                try tables.finish(a, out, start, if (s.partial.len > 0 and eq(kind, "csscp")) "PartialCsscp" else if (s.partial.len > 0 and eq(kind, "cov")) "PartialCov" else normal_name);
             }
         }
+        start = out.items.len;
         if (!s.options.nosimple) {
             try out.appendSlice(a, if (s.options.simple_median) "\nSimple Statistics\nVariable N Mean Std Dev Median Minimum Maximum\n" else "\nSimple Statistics\nVariable N Mean Std Dev Sum Minimum Maximum\n");
             for (g.simple) |v| {
@@ -638,6 +653,8 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ s.ds.columns.items[v.column].name, try number(a, v.partial_variance, false), try number(a, @sqrt(v.partial_variance), false) }));
             }
         }
+        try tables.finish(a, out, start, "SimpleStats");
+        start = out.items.len;
         if (!s.options.nocorr and s.options.pearson) {
             try out.appendSlice(a, if (s.partial.len > 0) "\nPearson Partial Correlation Coefficients\n" else "\nPearson Correlation Coefficients\n");
             if (!s.options.noprob) try out.appendSlice(a, "Prob > |r| under H0: Rho=0\n");
@@ -658,7 +675,12 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
                 try out.append(a, '\n');
             }
         }
-        try renderAdvanced(a, out, s, g);
+        try tables.finish(a, out, start, if (s.partial.len > 0) "PartialPearsonCorr" else "PearsonCorr");
+        try renderAdvanced(a, out, s, g, tables);
+        if (out.items.len == header_end) {
+            out.shrinkRetainingCapacity(header_start);
+            continue;
+        }
         try out.append(a, '\n');
     }
 }
@@ -685,7 +707,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) d
     try output.write(cx, result);
     if (cx.capture) |capture| try @import("ods_corr.zig").publish(cx.arena, cx.diags, capture, result);
     try graphics.execute(cx, result);
-    try render(cx.arena, out, result);
+    try renderListing(cx.arena, out, result, cx.listing);
 }
 
 const Testing = struct {
@@ -1089,10 +1111,11 @@ fn partialPairs(a: std.mem.Allocator, s: Spec, rows: []const []const Value, pair
         }
     }
 }
-fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Group) !void {
+fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Group, tables: @import("../ods_listing.zig").Tables) !void {
     inline for (.{ "spearman", "kendall", "hoeffding" }) |name| {
         const pairs = @field(g, name);
         if (pairs.len > 0) {
+            const start = out.items.len;
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\nRow Column Correlation", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
             if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, " P");
             try out.appendSlice(a, " N\n");
@@ -1101,11 +1124,14 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
                 try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
             }
+            const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
+            try tables.finish(a, out, start, object);
         }
     }
     inline for (.{ "polychoric", "polyserial" }) |kind| {
         const estimates = @field(g, kind);
         if (estimates.len > 0) {
+            const start = out.items.len;
             const polychoric = eq(kind, "polychoric");
             const hide_probs = s.options.noprob and !polychoric;
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s}", .{ kind, if (hide_probs) @as([]const u8, "Row Column N Correlation StdError WaldChiSquare LRChiSquare\n") else "Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP\n" }));
@@ -1121,15 +1147,22 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 }
                 try out.append(a, '\n');
             }
+            try tables.finish(a, out, start, if (polychoric) "PolychoricCorr" else "PolyserialCorr");
         }
     }
     if (g.alpha) |alpha_result| {
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\nDeleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n", .{ try number(a, alpha_result.raw, false), try number(a, alpha_result.standardized, false) }));
+        var start = out.items.len;
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try number(a, alpha_result.raw, false), try number(a, alpha_result.standardized, false) }));
+        try tables.finish(a, out, start, "CronbachAlpha");
+        start = out.items.len;
+        try out.appendSlice(a, "Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n");
         for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try number(a, d.raw_correlation, false), try number(a, d.raw, false), try number(a, d.standardized_correlation, false), try number(a, d.standardized, false) }));
+        try tables.finish(a, out, start, "CronbachAlphaDel");
     }
     if (s.options.fisher != null) {
         for ([_][]const Pair{ if (s.options.pearson) g.pairs else &.{}, g.spearman }, [_][]const u8{ "Pearson", "Spearman" }) |pairs, title| {
             if (pairs.len == 0) continue;
+            const start = out.items.len;
             try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Fisher Correlation Statistics\nRow Column N Z Bias Estimate Lower Upper", .{title}));
             if (!s.options.noprob) try out.appendSlice(a, " P");
             try out.append(a, '\n');
@@ -1140,6 +1173,7 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 if (!s.options.noprob) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.fisher.p, true)}));
                 try out.append(a, '\n');
             }
+            try tables.finish(a, out, start, @import("ods_corr.zig").fisherTableName(eq(title, "Spearman"), s.partial.len != 0));
         }
     }
 }

@@ -105,6 +105,6 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
             const interval = if (distribution_free) k.distributionFree(x, p / 100, ci, opt.alpha) else k.normalQuantileCI(z.s.mean, z.s.std, z.s.n, p / 100, ci, opt.alpha);
             if (distribution_free) try row(a, out, "", &.{ p, interval.lower, interval.upper, if (interval.lower_rank == 0) std.math.nan(f64) else @floatFromInt(interval.lower_rank), if (interval.upper_rank == 0) std.math.nan(f64) else @floatFromInt(interval.upper_rank), 100 * interval.coverage }) else try row(a, out, "", &.{ p, interval.lower, interval.upper });
         }
-        try listing.finish(a, out, start, "Quantiles");
+        try listing.section(a, out, start, "Quantiles", false);
     }
 }

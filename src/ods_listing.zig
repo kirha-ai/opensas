@@ -33,6 +33,7 @@ const List = union(enum) {
 
 pub const Listing = struct {
     open: bool = true,
+    trace: ?*diag.Diagnostics = null,
     overall: List = .all,
     destination: List = .all,
 
@@ -53,6 +54,15 @@ pub const Listing = struct {
     /// such as GPATH remain the responsibility of their own handlers.
     pub fn parse(self: *Listing, a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token) diag.Error!bool {
         if (t.len < 3 or t[1].tag != .name) return false;
+        if (eq(t[1].text, "trace")) {
+            if (t[2].tag != .name or (!eq(t[2].text, "on") and !eq(t[2].text, "off"))) return d.fail(error.ParseError, t[2].line, "ODS TRACE: expected ON or OFF", .{});
+            if (t.len > 3 and t[3].tag != .semicolon and t[3].tag != .eof) {
+                diag.markGap();
+                return d.fail(error.ParseError, t[3].line, "ODS TRACE: unsupported option {s}", .{t[3].text});
+            }
+            self.trace = if (eq(t[2].text, "on")) d else null;
+            return true;
+        }
         const local = eq(t[1].text, "listing");
         var i: usize = if (local) 2 else 1;
         if (local) {
@@ -102,12 +112,59 @@ pub const Listing = struct {
     }
 };
 
+const Identity = struct {
+    name: []const u8,
+    template: []const u8,
+    label: ?[]const u8 = null,
+};
+
+const identities = [_]Identity{
+    .{ .name = "VarInformation", .template = "base.corr.VarInfo", .label = "Variables Information" },
+    .{ .name = "Sscp", .template = "base.corr.Matrix", .label = "SSCP Matrix" },
+    .{ .name = "Csscp", .template = "base.corr.Matrix", .label = "CSSCP Matrix" },
+    .{ .name = "Cov", .template = "base.corr.Matrix", .label = "Covariance Matrix" },
+    .{ .name = "SimpleStats", .template = "base.corr.UniStat", .label = "Simple Statistics" },
+    .{ .name = "CronbachAlpha", .template = "base.corr.Alpha", .label = "Cronbach Coefficient Alpha" },
+    .{ .name = "CronbachAlphaDel", .template = "base.corr.AlphaDel", .label = "Cronbach Coefficient Alpha with Deleted Variable" },
+    .{ .name = "PearsonCorr", .template = "base.corr.StackedMatrix", .label = "Pearson Correlations" },
+    .{ .name = "SpearmanCorr", .template = "base.corr.StackedMatrix", .label = "Spearman Correlations" },
+    .{ .name = "KendallCorr", .template = "base.corr.StackedMatrix", .label = "Kendall Correlations" },
+    .{ .name = "HoeffdingCorr", .template = "base.corr.StackedMatrix", .label = "Hoeffding Correlations" },
+    .{ .name = "FisherPearsonCorr", .template = "base.corr.FisherPearsonCorr" },
+    .{ .name = "FisherSpearmanCorr", .template = "base.corr.FisherSpearmanCorr" },
+    .{ .name = "PartialCsscp", .template = "base.corr.Matrix", .label = "Partial CSSCP Matrix" },
+    .{ .name = "PartialCov", .template = "base.corr.Matrix", .label = "Partial Covariance Matrix" },
+    .{ .name = "PartialPearsonCorr", .template = "base.corr.StackedMatrix", .label = "Pearson Partial Correlations" },
+    .{ .name = "PartialSpearmanCorr", .template = "base.corr.StackedMatrix", .label = "Spearman Partial Correlations" },
+    .{ .name = "PartialKendallCorr", .template = "base.corr.StackedMatrix", .label = "Kendall Partial Correlations" },
+    .{ .name = "FisherPearsonPartialCorr", .template = "base.corr.FisherPearsonPartialCorr" },
+    .{ .name = "FisherSpearmanPartialCorr", .template = "base.corr.FisherSpearmanPartialCorr" },
+    .{ .name = "Moments", .template = "base.univariate.Moments", .label = "Moments" },
+    .{ .name = "BasicMeasures", .template = "base.univariate.Measures", .label = "Basic Measures of Location and Variability" },
+    .{ .name = "Modes", .template = "base.univariate.Modes", .label = "Modes" },
+    .{ .name = "BasicIntervals", .template = "base.univariate.ConfLimits", .label = "Basic Confidence Limits" },
+    .{ .name = "TestsForLocation", .template = "base.univariate.Location", .label = "Tests For Location" },
+    .{ .name = "LocationCounts", .template = "base.univariate.LocCount", .label = "Location Counts" },
+    .{ .name = "TestsForNormality", .template = "base.univariate.Normal", .label = "Tests For Normality" },
+    .{ .name = "TrimmedMeans", .template = "base.univariate.Trim", .label = "Trimmed Means" },
+    .{ .name = "WinsorizedMeans", .template = "base.univariate.Wins", .label = "Winsorized Means" },
+    .{ .name = "RobustScale", .template = "base.univariate.Robustscale", .label = "Robust Measures of Scale" },
+    .{ .name = "Quantiles", .template = "base.univariate.Quantiles", .label = "Quantiles" },
+    .{ .name = "ExtremeObs", .template = "base.univariate.ExtObs", .label = "Extreme Observations" },
+    .{ .name = "ExtremeValues", .template = "base.univariate.ExtVal", .label = "Extreme Values" },
+    .{ .name = "Frequencies", .template = "base.univariate.Frequency", .label = "Frequencies" },
+    .{ .name = "ParameterEstimates", .template = "base.univariate.FitParms", .label = "Parameter Estimates" },
+    .{ .name = "GoodnessOfFit", .template = "base.univariate.FitGood", .label = "Goodness of Fit" },
+    .{ .name = "Bins", .template = "base.univariate.BinPercents", .label = "Histogram Bins" },
+    .{ .name = "FitQuantiles", .template = "base.univariate.FitQuant", .label = "Quantiles" },
+};
+
+fn identity(name: []const u8) ?Identity {
+    for (identities) |obj| if (eq(name, obj.name)) return obj;
+    return null;
+}
 fn known(name: []const u8) bool {
-    // Only accept table names with a listing producer. New entries must route
-    // a real object before adding its name here.
-    const names = [_][]const u8{ "Moments", "BasicMeasures", "TestsForLocation", "Quantiles", "ExtremeObs", "ExtremeValues", "Modes", "Frequencies", "BasicIntervals", "TrimmedMeans", "WinsorizedMeans", "RobustScale", "LocationCounts", "TestsForNormality", "ParameterEstimates", "GoodnessOfFit", "FitQuantiles", "Bins" };
-    for (names) |value| if (eq(name, value)) return true;
-    return false;
+    return identity(name) != null;
 }
 
 /// A table's listing text can be suppressed after its numerical and typed ODS
@@ -117,9 +174,22 @@ pub const Tables = struct {
     prefix: []const u8 = "",
 
     pub fn finish(self: Tables, a: std.mem.Allocator, out: *std.ArrayList(u8), start: usize, name: []const u8) !void {
+        try self.section(a, out, start, name, true);
+    }
+
+    pub fn section(self: Tables, a: std.mem.Allocator, out: *std.ArrayList(u8), start: usize, name: []const u8, first: bool) !void {
+        if (out.items.len == start) return;
         const selection = self.selection orelse return;
-        if (!selection.filtered()) return;
+        if (!selection.filtered() and selection.trace == null) return;
         const path = try std.fmt.allocPrint(a, "{s}.{s}", .{ self.prefix, name });
-        if (!selection.accepts(path)) out.shrinkRetainingCapacity(start);
+        if (!selection.accepts(path)) {
+            out.shrinkRetainingCapacity(start);
+            return;
+        }
+        if (first) if (selection.trace) |d| {
+            const obj = identity(name) orelse return;
+            const label = if (obj.label) |l| try std.fmt.allocPrint(a, "Label:      {s}\n", .{l}) else "";
+            try d.plainLine(try std.fmt.allocPrint(a, "Output Added:\n-------------\nName:       {s}\n{s}Template:   {s}\nPath:       {s}\n-------------", .{ obj.name, label, obj.template, path }));
+        };
     }
 };

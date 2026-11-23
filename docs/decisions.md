@@ -105,7 +105,8 @@ these caused real regressions (see D-001).
   the OS command, and an `ODS <destination>` statement is accepted as a listing
   no-op for alternate destinations (opensas renders ONE output stream).
   ODS LISTING can be closed and reopened. Overall and LISTING-specific SELECT
-  and EXCLUDE lists route implemented, named procedure objects. ODS OUTPUT
+  and EXCLUDE lists route implemented, named procedure objects. TRACE ON/OFF
+  reports producer-supplied identities and BY paths for CORR and UNIVARIATE. ODS OUTPUT
   is typed capture whose allowlist lives in `src/ods.zig`
   — not in this decision — and grows with landed, SAS-aligned producers; unknown
   names stay loud. This does not change destination rendering or claim

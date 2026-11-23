@@ -4768,7 +4768,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // number formatted exactly like the per-group answer asked for). bySlices
     // yields one null-rep slice without BY, so the pooled path is byte-identical.
     for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra), 1..) |bs, by_number| {
-        extra.listing = .{ .selection = cx.listing, .prefix = if (bs.rep != null and filtered) try std.fmt.allocPrint(arena, "Univariate.ByGroup{d}", .{by_number}) else "Univariate" };
+        extra.listing = .{ .selection = cx.listing, .prefix = if (bs.rep != null and cx.listing != null and (filtered or cx.listing.?.trace != null)) try std.fmt.allocPrint(arena, "Univariate.ByGroup{d}", .{by_number}) else "Univariate" };
         const by_start = out.items.len;
         if (bs.rep) |r| try appendByLine(arena, out, ds, r, obcols.items);
         const by_end = out.items.len;

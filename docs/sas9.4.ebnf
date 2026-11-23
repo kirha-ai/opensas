@@ -885,6 +885,7 @@ corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
 ods_listing_select = "ODS" [ "LISTING" ] ( "SELECT" | "EXCLUDE" )
                      ( "ALL" | "NONE" | ods_object { ods_object } ) ";" ; (* opensas *)
 ods_object = name { "." name } ; (* opensas *)
+ods_trace = "ODS" "TRACE" ( "ON" | "OFF" ) ";" ; (* opensas *)
 
 (* UNIVARIATE HISTOGRAM fitted distribution parameters (pp.330-341).
    The longest positional parameter list gives the number of curves. Shorter

@@ -217,7 +217,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
         const output = try histogram_output.create(a, &descriptors, keys.items, schema);
         output.name = statement.output orelse "";
         const kd = try kernel_output.create(a, &descriptors, keys.items, variable_length, statement.vscale);
-        for (try univ.bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+        for (try univ.bySlices(a, ds.rows.items, bcols, opt), 1..) |bs, by_number| {
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
@@ -309,7 +309,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         if (graphics != null) try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
                         if (!curves.noprint) {
                             const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, curve);
-                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels);
+                            try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels, by_number);
                         }
                     };
                     if (graphics != null) {

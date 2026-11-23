@@ -114,13 +114,14 @@ const Context = struct {
     }
 };
 
-pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool) diag.Error!void {
+pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, x: []const f64, def: u8, curve: dist.Distribution, request: fitting.Request, options: parse.Curves, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize) diag.Error!void {
     if (options.noprint) return;
     const a = cx.arena;
     const name = familyName(curve.family);
     const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
     const variable = source.columns.items[col].name;
-    const tables: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = name };
+    const prefix = if (by.len > 0) try std.fmt.allocPrint(a, "Univariate.ByGroup{d}.{s}.Histogram.{s}", .{ by_number, variable, name }) else try std.fmt.allocPrint(a, "Univariate.{s}.Histogram.{s}", .{ variable, name });
+    const tables: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = prefix };
     const head = out.items.len;
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\nThe UNIVARIATE Procedure\nFitted {s} Distribution for {s}\n", .{ name, variable }));
     const first = out.items.len;
