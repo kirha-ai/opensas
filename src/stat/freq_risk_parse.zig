@@ -100,9 +100,9 @@ const Reader = struct {
         // table construction; preserve the typed request here.
         return m;
     }
-    fn confidence(self: *Reader, req: *Request) diag.Error!void {
-        try self.expect(.eq);
-        const list = self.at(.lparen);
+    fn confidence(self: *Reader, req: *Request, explicit_cl: bool) diag.Error!void {
+        if (explicit_cl) try self.expect(.eq);
+        const list = explicit_cl and self.at(.lparen);
         if (list) self.i += 1;
         var cls: std.ArrayList(CL) = .empty;
         try cls.appendSlice(self.a, req.cls);
@@ -140,7 +140,7 @@ const Reader = struct {
             const token = self.t[self.i];
             self.i += 1;
             if (kw(token, "cl")) {
-                try self.confidence(req);
+                try self.confidence(req, true);
                 continue;
             }
             if (kw(token, "common") and req.family == .difference) {
@@ -184,6 +184,13 @@ const Reader = struct {
                     if (req.family == .difference) req.null_value = proportionValue(req.null_value);
                     try self.expect(.rparen);
                 }
+                continue;
+            }
+            // Example 3.4 also writes the individual binomial interval methods
+            // directly, interspersed with the other BINOMIAL options.
+            if (req.family == .binomial and !self.at(.eq)) {
+                self.i -= 1;
+                try self.confidence(req, false);
                 continue;
             }
             try self.expect(.eq);
@@ -289,11 +296,33 @@ test "FEAT-freq-risk parser aliases percent nulls and method controls" {
     try std.testing.expect(opts.relative_risk.?.printall and opts.senspec);
     try std.testing.expect(!opts.odds_ratio.?.cls[0].bias);
 }
+test "PROC FREQ Example 3.4 bare binomial intervals and test options" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const tokens = try lex.tokenize(a, "binomial(ac wilson exact) alpha=.1; binomial(equiv p=.28 margin=.1);", &d);
+    var opts = Options{};
+    var i: usize = 0;
+    try std.testing.expect(try consumeTableOption(a, tokens, &i, &opts, &d));
+    try std.testing.expect(kw(tokens[i], "alpha"));
+    const cls = opts.binomial.?.cls;
+    try std.testing.expectEqual(@as(usize, 3), cls.len);
+    try std.testing.expectEqual(Method.ac, cls[0].method);
+    try std.testing.expectEqual(Method.wilson, cls[1].method);
+    try std.testing.expectEqual(Method.exact, cls[2].method);
+    i += 4;
+    opts = .{};
+    try std.testing.expect(try consumeTableOption(a, tokens, &i, &opts, &d));
+    try std.testing.expect(opts.binomial.?.equiv);
+    try std.testing.expectEqual(@as(f64, 0.28), opts.binomial.?.p);
+    try std.testing.expectEqual([2]f64{ 0.1, 0.1 }, opts.binomial.?.margin.?);
+}
 test "FEAT-freq-risk parser captures invalid requests versus pending dependencies" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
-    for ([_][]const u8{ "bin(level=0)", "bin(p=0)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))", "riskdiff(cl=mn(correct=mee))", "relrisk(cl=score(mee))" }) |source| {
+    for ([_][]const u8{ "bin(ac(correct))", "bin(ha)", "bin(unknown)", "bin(level=0)", "bin(p=0)", "riskdiff(column=3)", "riskdiff(method=typo)", "or(cl=agresticoull)", "relrisk(cl=wald(correct))", "riskdiff(cl=mn(correct=mee))", "relrisk(cl=score(mee))" }) |source| {
         var d = diag.Diagnostics.init(a);
         const t = try lex.tokenize(a, source, &d);
         var i: usize = 0;
