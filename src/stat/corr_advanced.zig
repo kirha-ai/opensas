@@ -93,8 +93,9 @@ pub const Fisher = struct { z: f64 = nan, bias: f64 = nan, estimate: f64 = nan, 
 pub fn fisher(r: f64, count: f64, controls: usize, spearman: bool, opt: FisherOptions) Fisher {
     _ = spearman;
     const n = count - @as(f64, @floatFromInt(controls));
-    if (n <= 3 or !std.math.isFinite(r) or @abs(r) >= 1) return .{};
+    if (!std.math.isFinite(r) or @abs(r) >= 1) return .{};
     const z = std.math.atanh(r);
+    if (n <= 3) return .{ .z = z };
     const bias = if (opt.biasadj) r / (2 * (n - 1)) else 0;
     const se = 1 / @sqrt(n - 3);
     const q = -fns.distQuantile(.normal, opt.alpha / (if (opt.kind == .twosided) @as(f64, 2) else 1), &.{}).?;
@@ -104,6 +105,12 @@ pub fn fisher(r: f64, count: f64, controls: usize, spearman: bool, opt: FisherOp
         .upper => normal(testz),
         .twosided => 2 * normal(-@abs(testz)),
     } };
+}
+test "CORR Fisher reports the transformed sample correlation at N=3" {
+    const fit = fisher(0.5, 3, 0, false, .{});
+    try std.testing.expectApproxEqAbs(@as(f64, 0.54931), fit.z, 0.000005);
+    for ([_]f64{ fit.bias, fit.estimate, fit.lower, fit.upper, fit.p }) |value|
+        try std.testing.expect(std.math.isNan(value));
 }
 pub const AlphaRow = struct { raw: f64 = nan, standardized: f64 = nan, raw_correlation: f64 = nan, standardized_correlation: f64 = nan };
 pub const Alpha = struct { raw: f64, standardized: f64, deleted: []const AlphaRow };
