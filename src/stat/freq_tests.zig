@@ -171,34 +171,96 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
     };
 }
 
-fn logChoose(n: f64, k: f64) f64 {
-    return fns.lgammaOf(n + 1) - fns.lgammaOf(k + 1) - fns.lgammaOf(n - k + 1);
+// Normalize adjacent hypergeometric masses at a mode. Reorient the smallest
+// observed cell into the top left so the lower support is zero. A single row
+// or column reversal interchanges the original left and right cell-count tests.
+const Hypergeometric2x2 = struct {
+    row: f64,
+    column: f64,
+    offset: f64,
+    reversed: bool,
+    observed: u64,
+    mode: u64,
+    upper: u64,
+
+    fn init(cells: []const f64) Error!Hypergeometric2x2 {
+        if (cells.len != 4 or !countValid(cells) or !integerCounts(cells)) return error.ExecError;
+        const corner = std.mem.findMin(f64, cells);
+        const observed = cells[corner];
+        const row = observed + cells[corner ^ 1];
+        const column = observed + cells[corner ^ 2];
+        const upper = @min(row, column);
+        const total = row + cells[corner ^ 2] + cells[corner ^ 3];
+        if (!std.math.isFinite(total) or upper >= @as(f64, @floatFromInt(std.math.maxInt(u64)))) return error.ExecError;
+        return .{
+            .row = row,
+            .column = column,
+            .offset = cells[corner ^ 3] - observed,
+            .reversed = corner == 1 or corner == 2,
+            .observed = @intFromFloat(observed),
+            .mode = @intFromFloat(@min(upper, @floor((row + 1) / (total + 2) * (column + 1)))),
+            .upper = @intFromFloat(upper),
+        };
+    }
+
+    // Ratio of the next mass to the current mass when moving away from a mode.
+    fn step(self: Hypergeometric2x2, from: u64, right: bool) f64 {
+        const x: f64 = @floatFromInt(from);
+        if (right) return (self.row - x) / (x + 1) * ((self.column - x) / (self.offset + x + 1));
+        return x / (self.row - x + 1) * ((self.offset + x) / (self.column - x + 1));
+    }
+};
+
+pub const FisherEnumeration = struct { cell: Fisher, point: f64, more_likely: f64, tables: u64 };
+pub fn fisherControlled(cells: []const f64, budget: @import("freq_exact_distribution.zig").Budget) Error!?FisherEnumeration {
+    const m = try Hypergeometric2x2.init(cells);
+    if (budget.stopped() or m.upper >= budget.max_tables) return null;
+    var log_observed: f64 = 0;
+    var i = m.mode;
+    const toward_right = m.observed > i;
+    while (i != m.observed and @exp(log_observed) > 0) {
+        if (budget.stopped()) return null;
+        log_observed += @log(m.step(i, toward_right));
+        if (toward_right) i += 1 else i -= 1;
+    }
+    const observed_weight = @exp(log_observed);
+    var more_likely: f64 = 0;
+    var total: f64 = 0;
+    var left: f64 = 0;
+    var right: f64 = 0;
+    var included: f64 = 0;
+    var tied: f64 = 0;
+    for ([_]bool{ true, false }) |up| {
+        var log_weight: f64 = 0;
+        i = m.mode;
+        while (true) {
+            if (budget.stopped()) return null;
+            const weight = @exp(log_weight);
+            if (weight == 0) break;
+            if (up or i != m.mode) {
+                total += weight;
+                if (i <= m.observed) left += weight;
+                if (i >= m.observed) right += weight;
+                const equal = @abs(weight - observed_weight) <= 64 * std.math.floatEps(f64) * @max(weight, observed_weight);
+                if (equal) tied += weight;
+                if (equal or weight < observed_weight) included += weight;
+                if (equal or weight > observed_weight) more_likely += weight;
+            }
+            if (i == (if (up) m.upper else 0)) break;
+            log_weight += @log(m.step(i, up));
+            if (up) i += 1 else i -= 1;
+        }
+    }
+    if (m.reversed) std.mem.swap(f64, &left, &right);
+    return .{
+        .cell = .{ .probability = observed_weight / total, .left = left / total, .right = right / total, .two_sided = included / total },
+        .point = tied / total,
+        .more_likely = more_likely / total,
+        .tables = m.upper + 1,
+    };
 }
 pub fn fisherExact(cells: []const f64) Error!Fisher {
-    if (cells.len != 4 or !countValid(cells)) return error.ExecError;
-    // SAS suppresses exact tests for noninteger cell frequencies (oracle edges).
-    if (!integerCounts(cells)) return error.ExecError;
-    var v: [4]f64 = undefined;
-    for (cells, 0..) |x, i| v[i] = x;
-    const n = sum(&v);
-    const r = v[0] + v[1];
-    const c = v[0] + v[2];
-    const lo = @max(0, r + c - n);
-    const hi = @min(r, c);
-    const lp = logChoose(c, v[0]) + logChoose(n - c, r - v[0]) - logChoose(n, r);
-    var out = Fisher{ .probability = @exp(lp), .left = 0, .right = 0, .two_sided = 0 };
-    var x = lo;
-    while (x <= hi) : (x += 1) {
-        const l = logChoose(c, x) + logChoose(n - c, r - x) - logChoose(n, r);
-        const p = @exp(l);
-        if (x <= v[0]) out.left += p;
-        if (x >= v[0]) out.right += p;
-        if (l <= lp + 1e-10) out.two_sided += p;
-    }
-    out.left = @min(1, out.left);
-    out.right = @min(1, out.right);
-    out.two_sided = @min(1, out.two_sided);
-    return out;
+    return (try fisherControlled(cells, .{ .max_tables = std.math.maxInt(u64) }) orelse return error.ExecError).cell;
 }
 
 pub const Measure = struct {

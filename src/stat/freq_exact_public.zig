@@ -301,7 +301,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options);
             },
             .fisher => |r| {
-                const fisher = renderers.Fisher{ .first_cell = if (r.first_cell) |fcell| @floatFromInt(fcell) else null, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
+                const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
                 limits.fisher = fisher;
                 try renderers.fisher(a, out, fisher, options);
             },

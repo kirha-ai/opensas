@@ -41,7 +41,7 @@ pub const Barnard = struct {
 };
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
-    fisher: struct { table_probability: f64, first_cell: ?u32, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
+    fisher: struct { table_probability: f64, first_cell: ?f64, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
     monte_carlo: struct { estimates: dist.MonteCarlo, table_probability: ?f64 = null },
     binomial: exact.Binomial,
     interval: exact.Interval,
@@ -127,6 +127,17 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     if (!applicable(f, m)) return .not_applicable;
     if (f == .mcnem and m.counts.len == 4 and m.counts[1] + m.counts[2] == 0) return .not_applicable;
     if (m.counts.len > 256) return .exhausted;
+    if (f == .fisher and m.rows == 2 and m.cols == 2 and m.counts.len == 4) {
+        const result = (try tests.fisherControlled(m.counts, c.budget)) orelse return .exhausted;
+        if (result.tables == 1) return .not_applicable;
+        const cell = result.cell;
+        return .{ .fisher = .{
+            .table_probability = cell.probability,
+            .first_cell = m.counts[0],
+            .cell_tails = .{ .point = cell.probability, .left = cell.left, .right = cell.right },
+            .probabilities = .{ .point = result.point, .left = result.more_likely, .right = cell.two_sided, .two_sided = cell.two_sided, .one_sided = cell.two_sided, .tables = result.tables },
+        } };
+    }
     const integers = try dist.Matrix.fromCounts(a, m.rows, m.cols, m.counts);
     defer a.free(integers.cells);
     // SAS sparse.sas: zero margins suppress all but AGREE statistics, even
@@ -238,15 +249,62 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     const enumerated = try dist.enumerate(a, integers, callback, c.budget);
     if (f == .fisher) {
         if (enumerated == .exhausted) return .exhausted;
-        const two = m.rows == 2 and m.cols == 2;
-        const cell_tails: ?exact.Tails = if (two) blk: {
-            const distribution = try exact.OddsDistribution.init(integers.cells[0..4].*);
-            const control: exact.Control = .{ .context = c.budget.context, .expired = c.budget.expired };
-            break :blk (try distribution.tailsControlled(0, c.budget.max_tables, control)) orelse return .exhausted;
-        } else null;
-        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = if (two) integers.cells[0] else null, .cell_tails = cell_tails, .probabilities = enumerated.complete } };
+        return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = null, .cell_tails = null, .probabilities = enumerated.complete } };
     }
     return finish(enumerated);
+}
+
+test "2x2 Fisher matches exhaustive integer weights, ties, and both cell tails" {
+    const choose = struct {
+        fn small(n: u64, k: u64) u64 {
+            var result: u64 = 1;
+            for (0..@min(k, n - k)) |j| result = result * (n - j) / (j + 1);
+            return result;
+        }
+    }.small;
+    for (1..8) |r1| for (1..8) |r2| for (1..r1 + r2) |c1| {
+        const lo = c1 -| r2;
+        const hi = @min(r1, c1);
+        const den: f64 = @floatFromInt(choose(r1 + r2, c1));
+        for (lo..hi + 1) |a| {
+            const observed = choose(r1, a) * choose(r2, c1 - a);
+            var totals = [_]u64{0} ** 4;
+            for (lo..hi + 1) |x| {
+                const w = choose(r1, x) * choose(r2, c1 - x);
+                if (w == observed) totals[0] += w;
+                if (x <= a) totals[1] += w;
+                if (x >= a) totals[2] += w;
+                if (w <= observed) totals[3] += w;
+            }
+            const counts = [_]f64{ @floatFromInt(a), @floatFromInt(r1 - a), @floatFromInt(c1 - a), @floatFromInt(r2 - (c1 - a)) };
+            const result = (try run(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .fisher, .{})).fisher;
+            try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(observed)) / den, result.table_probability, 2e-15);
+            for (totals, [_]f64{ result.probabilities.point, result.cell_tails.?.left, result.cell_tails.?.right, result.probabilities.two_sided }) |total, actual| {
+                try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(total)) / den, actual, 2e-15);
+            }
+        }
+    };
+}
+
+test "wide 2x2 counts retain exact representable tail probabilities independent of orientation" {
+    // For A=2^32 the opposing margins both equal 3. The denominator is
+    // C(A+4,3); the observed mass is 3*(A+1)/C(A+4,3), and one still
+    // rarer table contributes 1/C(A+4,3). These rational values distinguish
+    // cancellation in log-gamma subtraction from SAS's own wide P_TABLE.
+    const a: f64 = 4_294_967_296;
+    const denominator = (a + 4) * (a + 3) * (a + 2) / 6;
+    const observed = 3 * (a + 1) / denominator;
+    const tail = (3 * (a + 1) + 1) / denominator;
+    for ([_][4]f64{ .{ a, 1, 1, 2 }, .{ 1, a, 2, 1 }, .{ 1, 2, a, 1 }, .{ 2, 1, 1, a } }, [_]bool{ false, true, true, false }) |counts, reversed| {
+        const m = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &counts };
+        const f = (try run(std.testing.allocator, m, .fisher, .{})).fisher;
+        try std.testing.expectApproxEqRel(observed, f.table_probability, 1e-14);
+        try std.testing.expectApproxEqRel(observed, f.probabilities.point, 1e-14);
+        try std.testing.expectApproxEqRel(tail, f.probabilities.two_sided, 1e-14);
+        try std.testing.expectApproxEqRel(tail, if (reversed) f.cell_tails.?.left else f.cell_tails.?.right, 1e-14);
+        try std.testing.expectEqual(@as(f64, 1), if (reversed) f.cell_tails.?.right else f.cell_tails.?.left);
+        try std.testing.expectEqual(@as(u64, 4), f.probabilities.tables);
+    }
 }
 
 test "EXACT family dispatch binds actual callbacks to correct null distributions" {
