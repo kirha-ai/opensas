@@ -342,20 +342,40 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             .monte_carlo => |simulation| {
                 if (simulation.table_probability) |p| limits.fisher_table_probability = p;
                 const r = simulation.estimates;
-                if (r == .exhausted) {
-                    try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
-                    try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, null, family_seed, options, req.stratified.agreement.restore);
-                } else {
-                    // M9 displays the last RNG state in the weighted-kappa
-                    // table even when it is the only requested statistic.
-                    const displayed_seed = if (f == .wtkappa and !req.stratified.agreement.restore) r.complete.final_seed else family_seed;
-                    try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = displayed_seed });
-                    if (!concordance or concordance_seed == null) {
-                        simulation_seed.* = r.complete.final_seed;
-                        if (concordance) concordance_seed = family_seed;
-                    }
-                    try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, r.complete, displayed_seed, options, req.stratified.agreement.restore);
+                var report: @import("freq_exact_distribution.zig").SampleReport = undefined;
+                const final_seed = switch (r) {
+                    .exhausted => {
+                        try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
+                        try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, null, family_seed, options, req.stratified.agreement.restore);
+                        continue;
+                    },
+                    .complete => |sample| blk: {
+                        report = .{ .one_sided = sample.one_sided, .two_sided = sample.two_sided, .samples = sample.samples, .right_sided = sample.right_sided };
+                        break :blk sample.final_seed;
+                    },
+                    .timed_out => |timeout| blk: {
+                        const limit = options.max_seconds.?;
+                        if (f == .symmetry) {
+                            try d.report(.note, 0, "Monte Carlo computations for the exact symmetry test were terminated when time exceeded MAXTIME={d}.", .{limit});
+                        } else {
+                            const name = switch (f) {
+                                .pchi => if (one) "One-Way Chi-Square" else "Chi-Square",
+                                else => title(f),
+                            };
+                            try d.report(.note, 0, "Monte Carlo exact computations for the following test were terminated when time exceeded MAXTIME={d}: {s}.", .{ limit, name });
+                        }
+                        report = .{ .samples = options.samples, .right_sided = timeout.right_sided };
+                        break :blk timeout.final_seed;
+                    },
+                };
+                // The default wide weighted-kappa table displays its ending seed.
+                const displayed_seed = if (f == .wtkappa and !req.stratified.agreement.restore) final_seed else family_seed;
+                try limits.simulations.append(a, .{ .family = f, .sample = report, .seed = displayed_seed });
+                if (!concordance or concordance_seed == null) {
+                    simulation_seed.* = final_seed;
+                    if (concordance) concordance_seed = family_seed;
                 }
+                try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, report, displayed_seed, options, req.stratified.agreement.restore);
             },
             .binomial => |b| {
                 try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right } }, options);
@@ -466,6 +486,75 @@ const Harness = struct {
         return out.items;
     }
 };
+
+test "public Monte Carlo MAXTIME retains raw Fisher mass, missing tail rows and requested sample metadata" {
+    const t = std.testing;
+    var arena = std.heap.ArenaAllocator.init(t.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lex = @import("../lexer.zig");
+    const Value = @import("../value.zig").Value;
+    const Case = struct {
+        capture: []const u8,
+        family: []const u8,
+        counts: []const f64,
+        first_tail: []const u8,
+        rows: usize,
+        missing_rows: []const usize,
+    };
+    const counts = &[_]f64{ 3, 1, 0, 0, 2, 2 };
+    const cases = [_]Case{
+        .{ .capture = "FishersExactMC=sim FishersExact=raw", .family = "fisher", .counts = counts, .first_tail = "MCP_FISH", .rows = 6, .missing_rows = &.{ 0, 1, 2 } },
+        .{ .capture = "TrendTestMC=sim", .family = "trend", .counts = counts, .first_tail = "MCPL_TREND", .rows = 12, .missing_rows = &.{ 1, 2, 3, 6, 7, 8 } },
+        .{ .capture = "SymmetryMC=sim", .family = "symmetry", .counts = &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, .first_tail = "Pr >= ChiSq", .rows = 1, .missing_rows = &.{} },
+    };
+    for (cases) |case| {
+        var h = try Harness.init(a, case.counts, 3);
+        var d = diag.Diagnostics.init(a);
+        var capture: @import("../ods.zig").Capture = .{};
+        try capture.parse(a, &d, try lex.tokenize(a, try std.fmt.allocPrint(a, "ods output {s};", .{case.capture}), &d));
+        var listing: Out = .empty;
+        const tokens = try lex.tokenize(a, try std.fmt.allocPrint(a, "proc freq data=d; weight w / zeros; tables r*c; exact {s} / mc n=20000000 seed=713 maxtime=.000001; run;", .{case.family}), &d);
+        try @import("freq.zig").runFreq(.{ .arena = a, .lib = &h.lib, .diags = &d, .capture = &capture }, &listing, tokens);
+        try capture.finish(&h.lib, &d);
+        const sim = h.lib.find("sim") orelse return error.TestExpectedEqual;
+        try t.expectEqual(@as(usize, case.rows), sim.rowCount());
+        if (case.rows == 1) {
+            const row = sim.row(0);
+            try t.expectEqualStrings(case.first_tail, row[1].str);
+            for (row[2..5]) |v| {
+                try t.expect(v.isMissing());
+                try t.expectEqual(@as(u8, '.'), Value.missingChar(v.num));
+            }
+            try t.expectEqual(@as(f64, 20_000_000), row[5].num);
+            try t.expectEqual(@as(f64, 713), row[6].num);
+        } else {
+            try t.expectEqualStrings(case.first_tail, sim.row(case.missing_rows[0])[1].str);
+            for (case.missing_rows) |i| {
+                try t.expectEqualStrings(".", sim.row(i)[3].str);
+                const v = sim.row(i)[4];
+                try t.expect(v.isMissing());
+                try t.expectEqual(@as(u8, '.'), Value.missingChar(v.num));
+            }
+            try t.expectEqual(@as(f64, 20_000_000), sim.row(sim.rowCount() - 2)[4].num);
+            try t.expectEqual(@as(f64, 713), sim.row(sim.rowCount() - 1)[4].num);
+        }
+        if (std.mem.eql(u8, case.family, "fisher")) {
+            const raw = h.lib.find("raw") orelse return error.TestExpectedEqual;
+            try t.expectEqualStrings("P_TABLE", raw.row(0)[1].str);
+            try t.expectApproxEqAbs(@as(f64, 3.0 / 70.0), raw.row(0)[4].num, 1e-13);
+        }
+        var notes: usize = 0;
+        for (d.list.items) |message| {
+            if (std.mem.indexOf(u8, message.message, "exceeded MAXTIME") != null) {
+                try t.expectEqual(diag.Severity.note, message.severity);
+                notes += 1;
+            }
+        }
+        try t.expectEqual(@as(usize, 1), notes);
+        try t.expect(!d.hasErrors());
+    }
+}
 
 test "public EXACT Fisher includes tied mass and replaces automatic Fisher once" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

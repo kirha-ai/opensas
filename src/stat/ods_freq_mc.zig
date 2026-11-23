@@ -12,7 +12,7 @@ const parse = @import("freq_exact_parse.zig");
 const model = @import("freq_table.zig");
 pub const Simulation = struct {
     family: parse.Family,
-    sample: @FieldType(dist.MonteCarlo, "complete"),
+    sample: dist.SampleReport,
     seed: u64,
 };
 
@@ -39,11 +39,11 @@ fn definition(f: parse.Family, one: bool) ?Definition {
 }
 
 const Rows = @import("ods_freq_exact_rows.zig").Rows;
-fn interval(rows: *Rows, prefix: []const u8, suffix: []const u8, label: []const u8, est: dist.Estimate, level: []const u8) !void {
+fn interval(rows: *Rows, prefix: []const u8, suffix: []const u8, label: []const u8, est: ?dist.Estimate, level: []const u8) !void {
     const id = try std.fmt.allocPrint(rows.a, "{s}_{s}", .{ prefix, suffix });
-    try rows.probability(id, label, est.p);
-    try rows.probability(try std.fmt.allocPrint(rows.a, "L_{s}", .{id}), try std.fmt.allocPrint(rows.a, "{s}% Lower Conf Limit", .{level}), est.lower);
-    try rows.probability(try std.fmt.allocPrint(rows.a, "U_{s}", .{id}), try std.fmt.allocPrint(rows.a, "{s}% Upper Conf Limit", .{level}), est.upper);
+    try rows.probability(id, label, if (est) |v| v.p else null);
+    try rows.probability(try std.fmt.allocPrint(rows.a, "L_{s}", .{id}), try std.fmt.allocPrint(rows.a, "{s}% Lower Conf Limit", .{level}), if (est) |v| v.lower else null);
+    try rows.probability(try std.fmt.allocPrint(rows.a, "U_{s}", .{id}), try std.fmt.allocPrint(rows.a, "{s}% Upper Conf Limit", .{level}), if (est) |v| v.upper else null);
     try rows.add("", "", "", null);
 }
 
@@ -73,10 +73,10 @@ fn agreement(a: A, t: *b.Builder, title: []const u8, sim: Simulation, level: []c
     t.ds.setLabel("Samples", "Number of Samples");
     try t.num("Seed", "10.");
     t.ds.setLabel("Seed", "Initial Seed");
-    for ([_]dist.Estimate{ sim.sample.one_sided, sim.sample.two_sided }, 0..) |est, i| {
+    for ([_]?dist.Estimate{ sim.sample.one_sided, sim.sample.two_sided }, 0..) |est, i| {
         if (symmetry and i == 0) continue;
         const label = if (symmetry) "Pr >= ChiSq" else if (i == 1) "Pr >= |K|" else if (sim.sample.right_sided) "Pr >=  K" else "Pr <=  K";
-        try t.row(&.{ b.s(title), b.s(label), b.n(est.p), b.n(est.lower), b.n(est.upper), b.n(@floatFromInt(sim.sample.samples)), b.n(@floatFromInt(sim.seed)) });
+        try t.row(&.{ b.s(title), b.s(label), if (est) |v| b.n(v.p) else Value.missing, if (est) |v| b.n(v.lower) else Value.missing, if (est) |v| b.n(v.upper) else Value.missing, b.n(@floatFromInt(sim.sample.samples)), b.n(@floatFromInt(sim.seed)) });
     }
 }
 

@@ -442,15 +442,16 @@ pub fn symmetryMonteCarlo(a: std.mem.Allocator, observed: Matrix, statistic: Sta
     defer for (pairs[0..used]) |pair| a.free(pair.cdf);
     // M9 visits all upper-triangular pairs in row order. Even an empty
     // pair advances the stream once. The diagonal remains fixed.
+    const timed_out: dist.MonteCarlo = .{ .timed_out = .{ .right_sided = true, .final_seed = dist.Generator.init(options.seed).state } };
     for (0..observed.rows) |i| for (i + 1..observed.cols) |j| {
-        if (budget.stopped()) return .exhausted;
+        if (budget.stopped()) return timed_out;
         const upper = i * observed.cols + j;
         const lower = j * observed.cols + i;
         const n = observed.cells[upper] + observed.cells[lower];
         const cdf = try a.alloc(f64, @as(usize, n) + 1);
         pairs[used] = .{ .upper = upper, .lower = lower, .cdf = cdf };
         used += 1;
-        if (!symmetricBinomialCdf(cdf, budget)) return .exhausted;
+        if (!symmetricBinomialCdf(cdf, budget)) return timed_out;
     };
     var context = SymmetrySampler{ .observed = observed, .pairs = pairs };
     return dist.simulate(a, observed, statistic, options, budget, .{ .context = &context, .draw = SymmetrySampler.draw });

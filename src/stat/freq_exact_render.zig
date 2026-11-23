@@ -107,7 +107,7 @@ pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.p - r.point / 2), options);
 }
 
-const Sample = @FieldType(dist.MonteCarlo, "complete");
+const Sample = dist.SampleReport;
 
 fn simulationInterval(a: A, out: *Out, label: []const u8, est: ?dist.Estimate, level: []const u8, opt: parse.Options) Error!void {
     try pLine(a, out, label, if (est) |v| v.p else null, opt);
@@ -124,10 +124,10 @@ fn agreementSimulation(a: A, out: *Out, family: parse.Family, sample: Sample, se
         else => unreachable,
     };
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\nMonte Carlo Exact {s} Test\n\nProbability    Estimate    {s}% Confidence Limits     Samples          Seed\n\n", .{ name, level }));
-    for ([_]dist.Estimate{ sample.one_sided, sample.two_sided }, 0..) |est, i| {
+    for ([_]?dist.Estimate{ sample.one_sided, sample.two_sided }, 0..) |est, i| {
         if (symmetry and i == 0) continue;
         const label = if (symmetry) "Pr >= ChiSq" else if (i == 1) "Pr >= |K|" else if (sample.right_sided) "Pr >=  K" else "Pr <=  K";
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s:<12} {s:>10} {s:>10} {s:>14}", .{ label, try probability(a, est.p, opt.pformat), try probability(a, est.lower, opt.pformat), try probability(a, est.upper, opt.pformat) }));
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s:<12} {s:>10} {s:>10} {s:>14}", .{ label, try probability(a, if (est) |v| v.p else null, opt.pformat), try probability(a, if (est) |v| v.lower else null, opt.pformat), try probability(a, if (est) |v| v.upper else null, opt.pformat) }));
         if (symmetry or i == 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:>11} {d:>13}", .{ sample.samples, seed }));
         try out.append(a, '\n');
     }

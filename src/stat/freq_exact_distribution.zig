@@ -431,7 +431,17 @@ pub fn estimate(hits: u64, n: u64, alpha: f64) Error!Estimate {
         .upper = if (hits == n) 1 else if (hits == 0) -std.math.expm1(@log(alpha) / nf) else @min(1, p + z * se),
     };
 }
-pub const MonteCarlo = union(enum) { complete: struct { point: Estimate, left: Estimate, right: Estimate, two_sided: Estimate, one_sided: Estimate, samples: u64, final_seed: u64, right_sided: bool }, exhausted };
+pub const SampleReport = struct {
+    one_sided: ?Estimate = null,
+    two_sided: ?Estimate = null,
+    samples: u64,
+    right_sided: bool,
+};
+pub const MonteCarlo = union(enum) {
+    complete: struct { point: Estimate, left: Estimate, right: Estimate, two_sided: Estimate, one_sided: Estimate, samples: u64, final_seed: u64, right_sided: bool },
+    timed_out: struct { right_sided: bool, final_seed: u64 },
+    exhausted,
+};
 pub const Simulation = struct {
     samples: u64 = 10_000,
     seed: u64,
@@ -519,15 +529,19 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
     var random = Generator.init(options.seed);
     var hits: [5]u64 = @splat(0);
     var sample: u64 = 0;
+    // A time limit discards all estimates. The next statistic resumes the
+    // generator after the last fully scored table, never mid-permutation.
+    var stopped: MonteCarlo = .{ .timed_out = .{ .right_sided = observed > statistic.expected, .final_seed = random.state } };
     while (sample < options.samples) : (sample += 1) {
-        if (sample == budget.max_tables or budget.stopped()) return .exhausted;
-        if (!try sampler.draw(sampler.context, &random, cells, budget)) return .exhausted;
+        if (budget.stopped()) return stopped;
+        if (sample == budget.max_tables) return .exhausted;
+        if (!try sampler.draw(sampler.context, &random, cells, budget)) return if (budget.stopped()) stopped else .exhausted;
         const sampled = Matrix{ .rows = m.rows, .cols = m.cols, .cells = cells };
         const e = if (statistic.centered_integer) |integer| integer.compare(statistic.context, sampled) else blk: {
             const value = if (law) |*l| -l.logProbability(cells) else try statistic.evaluate(statistic.context, sampled);
             if (!std.math.isFinite(value)) return error.ExecError;
             if (law) |*fixed| {
-                if (fixed.overlaps(value, observed)) break :blk (try fisherTie(a, cells, m.cells, budget)) orelse return .exhausted;
+                if (fixed.overlaps(value, observed)) break :blk (try fisherTie(a, cells, m.cells, budget)) orelse return if (budget.stopped()) stopped else .exhausted;
             }
             break :blk events(value, observed, statistic);
         };
@@ -536,6 +550,7 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
         if (e.right) hits[2] += 1;
         if (e.two) hits[3] += 1;
         if (if (statistic.directional and observed <= statistic.expected) e.left else e.right) hits[4] += 1;
+        stopped.timed_out.final_seed = random.state;
     }
     return .{ .complete = .{ .point = try estimate(hits[0], sample, options.alpha), .left = try estimate(hits[1], sample, options.alpha), .right = try estimate(hits[2], sample, options.alpha), .two_sided = try estimate(hits[3], sample, options.alpha), .one_sided = try estimate(hits[4], sample, options.alpha), .samples = sample, .final_seed = random.state, .right_sided = observed > statistic.expected } };
 }
@@ -673,6 +688,30 @@ test "Monte Carlo reproducibility, enumeration agreement and confidence endpoint
     const half = try estimate(50, 100, 0.01);
     try t.expectApproxEqAbs(@sqrt(@as(f64, 0.25 / 99.0)), half.standard_error, 1e-15);
     try t.expect((try monteCarlo(t.allocator, m, s, opts, .{ .max_tables = 1 })) == .exhausted);
+}
+
+test "Monte Carlo deadline discards an incomplete draw and resumes at the last scored table" {
+    const Probe = struct {
+        draws: u32 = 0,
+        fn stopped(raw: ?*const anyopaque) bool {
+            const self: *const @This() = @ptrCast(@alignCast(raw.?));
+            return self.draws == 3;
+        }
+        fn draw(raw: ?*anyopaque, random: *Generator, cells: []u32, _: Budget) Error!bool {
+            const self: *@This() = @ptrCast(@alignCast(raw.?));
+            _ = random.uniform();
+            self.draws += 1;
+            cells[0] = 1;
+            return self.draws < 3;
+        }
+    };
+    var probe: Probe = .{};
+    const result = try simulate(std.testing.allocator, .{ .rows = 1, .cols = 1, .cells = &.{1} }, .{ .evaluate = firstCell, .directional = true }, .{ .seed = 713, .samples = 8 }, .{ .context = &probe, .expired = Probe.stopped }, .{ .context = &probe, .draw = Probe.draw });
+    // Independent two-step modular recurrence from the initial seed 713.
+    const expected: u64 = (713 * @as(u64, 397204094) % 2147483647) * 397204094 % 2147483647;
+    try std.testing.expect(result == .timed_out);
+    try std.testing.expectEqual(expected, result.timed_out.final_seed);
+    try std.testing.expect(result.timed_out.right_sided);
 }
 
 test "public matrix conversion checks fractional counts and aggregate overflow" {
