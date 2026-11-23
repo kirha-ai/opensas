@@ -322,25 +322,6 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         const r: f64 = if (counts[1] == 0) 1 else -1;
         return .{ .coefficient = measure(r, 0, 0, opts.alpha), .likelihood_ratio = null, .converged = true, .iterations = 0 };
     }
-    // SAS reports the constrained tetrachoric boundary as +/-0.999 for
-    // exactly one zero cell without ADJUST; the likelihood is saturated.
-    // Oracle boundary.sas: rho=-0.9990, ASE=0, LR=17.2930 for [0,9;11,3].
-    if (m.rows == 2 and m.cols == 2 and !opts.adjust) {
-        var zero_count: usize = 0;
-        var zero_index: usize = 0;
-        for (counts, 0..) |v, i| if (v == 0) {
-            zero_count += 1;
-            zero_index = i;
-        };
-        if (zero_count == 1) {
-            var saturated: f64 = 0;
-            for (counts) |v| if (v > 0) {
-                saturated -= v * @log(v / t.n);
-            };
-            const rho: f64 = if (zero_index == 0 or zero_index == 3) -0.999 else 0.999;
-            return .{ .coefficient = measure(rho, 0, 0, opts.alpha), .likelihood_ratio = chi(2 * (null_ll - saturated), 1), .converged = true, .iterations = 0 };
-        }
-    }
     var sx: f64 = 0;
     var sy: f64 = 0;
     var xx: f64 = 0;
@@ -488,6 +469,30 @@ fn chiTail(x: f64, df: f64) f64 {
         if (@abs(delta - 1) < 1e-15) break;
     }
     return @max(0, @min(1, @exp(-z + a * @log(z) - fns.lgammaOf(a)) * h));
+}
+
+test "CORR single-zero tetrachoric tables use the requested iteration limit" {
+    const cases = [_]struct { counts: [4]f64, rho: f64, lr: f64, converges_by_20: bool }{
+        .{ .counts = .{ 0, 5, 5, 10 }, .rho = -0.98265, .lr = 3.3980, .converges_by_20 = false },
+        .{ .counts = .{ 5, 0, 10, 5 }, .rho = 0.98265, .lr = 3.3980, .converges_by_20 = false },
+        .{ .counts = .{ 0, 4, 8, 12 }, .rho = -0.98187, .lr = 3.6322, .converges_by_20 = false },
+        .{ .counts = .{ 0, 9, 11, 3 }, .rho = -0.99900, .lr = 17.2930, .converges_by_20 = true },
+    };
+    for (cases) |c| {
+        const matrix: CountMatrix = .{ .rows = 2, .cols = 2, .counts = &c.counts };
+        for ([_]usize{ 20, 200 }) |maxiter| {
+            const result = try polychoric(std.testing.allocator, matrix, .{ .converge = 0.0001, .maxiter = maxiter });
+            try std.testing.expectEqual(maxiter == 200 or c.converges_by_20, result.converged);
+            if (!result.converged) {
+                try std.testing.expectEqual(maxiter, result.iterations);
+                try std.testing.expect(result.coefficient.estimate == null);
+                continue;
+            }
+            try std.testing.expectApproxEqAbs(c.rho, result.coefficient.estimate.?, 0.000005);
+            try std.testing.expectEqual(@as(f64, 0), result.coefficient.ase.?);
+            try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 0.00005);
+        }
+    }
 }
 
 test "CORR binary-margin polychoric boundary uses the native information rank at both frequency scales" {
