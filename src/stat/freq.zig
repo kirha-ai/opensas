@@ -265,6 +265,10 @@ const Parser = struct {
             try self.tableOptions(&req);
         }
         try self.expect(.semicolon);
+        // Repeated RELRISK specifications share the last explicit margin.
+        if (req.risk.relative_risk) |rr| if (rr.equiv and !rr.paired_margin) if (rr.margin) |m| {
+            if (m[0] >= 1) return self.diags.fail(error.ParseError, 0, "The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.", .{});
+        };
         if (req.sparse and req.nosparse) return self.fail("SPARSE and NOSPARSE cannot be specified together");
         if (!req.crosslist and req.stdres) try self.diags.report(.warning, 0, "The STDRES option is available only with the CROSSLIST option.", .{});
         if (!req.crosslist and req.pearsonres) try self.diags.report(.warning, 0, "The PEARSONRESID option is available only with the CROSSLIST option.", .{});
