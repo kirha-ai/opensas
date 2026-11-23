@@ -217,7 +217,15 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         i += 1;
                     } else {
                         const value = try numericOption(cx, toks, &i);
-                        if (eq(key.text, "converge") and value > 0 and value < 1) opt.converge = value else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) opt.maxiter = @intFromFloat(value) else if (eq(key.text, "ngroups") and value > 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) opt.ngroups = @intFromFloat(value) else return fail(cx, key);
+                        if (eq(key.text, "converge")) {
+                            if (value < 0 or value > 1) return cx.diags.fail(error.ParseError, key.line, "The parameter value {d} is not within the required range of 0 and 1.", .{value});
+                            if (value == 0) return fail(cx, key);
+                            opt.converge = value;
+                        } else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
+                            opt.maxiter = @intFromFloat(value);
+                        } else if (eq(key.text, "ngroups") and value > 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
+                            opt.ngroups = @intFromFloat(value);
+                        } else return fail(cx, key);
                     }
                 }
                 i += 1;
@@ -1400,6 +1408,38 @@ test "CORR ordinal SAS joint MLE and convergence options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.9375), s.lr, 0.00005);
     const fail_result = (try Testing.analyze(a, ds, "proc corr polychoric(maxiter=1); var x y; freq f; run;")).groups[0].polychoric[0].estimate;
     try std.testing.expect(!fail_result.converged and std.math.isNan(fail_result.r));
+}
+
+test "CORR ordinal convergence accepts one and diagnoses values outside the unit interval" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "g", "h", "f" }, &.{
+        &.{ 1, 0, 0, 1 }, &.{ 2, 0, 1, 1 }, &.{ 3, 0, 0, 2 }, &.{ 4, 0, 1, 1 },
+        &.{ 5, 1, 0, 1 }, &.{ 6, 1, 1, 2 }, &.{ 7, 1, 0, 1 }, &.{ 8, 1, 1, 1 },
+    });
+    for ([_][]const u8{ ".9999999999999999", "1", "1.0" }) |value| {
+        const chor_src = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s} maxiter=50);var g;with h;freq f;run;", .{value});
+        const serial_src = try std.fmt.allocPrint(a, "proc corr polyserial(converge={s} maxiter=50);var x;with g;freq f;run;", .{value});
+        const c = (try Testing.analyze(a, ds, chor_src)).groups[0].polychoric[0].estimate;
+        const sfit = (try Testing.analyze(a, ds, serial_src)).groups[0].polyserial[0].estimate;
+        try Testing.near(0.31052229459722, c.r);
+        try Testing.near(0.48267813752924, c.se);
+        try Testing.near(0.99, sfit.r);
+        try std.testing.expectEqual(@as(f64, 0), sfit.se);
+    }
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    for ([_][]const u8{ "polychoric", "polyserial" }) |method| {
+        for ([_][]const u8{ "-0.00001", "1.000001", "2" }) |value| {
+            var d = diag.Diagnostics.init(a);
+            const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+            const source = try std.fmt.allocPrint(a, "proc corr {s}(converge={s}); var x;with g;run;", .{ method, value });
+            try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
+            const expected = try std.fmt.allocPrint(a, "The parameter value {s} is not within the required range of 0 and 1.", .{value});
+            try std.testing.expectEqualStrings(expected, d.list.items[0].message);
+        }
+    }
 }
 
 test "CORR Hoeffding SAS tied coefficients and probability integration" {
