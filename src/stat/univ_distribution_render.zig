@@ -226,10 +226,15 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         observed_range.add(observed);
         estimated_range.add(estimated);
         try context.row(&quantiles, &.{ b.n(percent), b.n(observed), b.n(estimated) });
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "{d:.1} {d:.5} {d:.5}\n", .{ percent, observed, estimated }));
     }
-    quantiles.ds.setFormat("ObsQuantile", try observed_range.format(a));
-    quantiles.ds.setFormat("EstQuantile", try estimated_range.format(a));
+    const observed_format = try observed_range.format(a);
+    const estimated_format = try estimated_range.format(a);
+    quantiles.ds.setFormat("ObsQuantile", observed_format);
+    quantiles.ds.setFormat("EstQuantile", estimated_format);
+    const pct = quantiles.ds.indexOf("Percent").?;
+    for (quantiles.ds.rows.items) |row| {
+        try out.print(a, "{d:.1} {s} {s}\n", .{ row[pct].num, try displayNumber(a, row[pct + 1], observed_format), try displayNumber(a, row[pct + 2], estimated_format) });
+    }
     try context.publish("FitQuantiles", &quantiles);
     try tables.finish(a, out, start, "FitQuantiles");
     if (out.items.len == first) out.shrinkRetainingCapacity(head);
@@ -263,6 +268,10 @@ fn decimalDigits(magnitude: f64) usize {
 fn numberFormat(a: std.mem.Allocator, width: usize, decimals: usize) ![]const u8 {
     if (decimals == 0) return std.fmt.allocPrint(a, "{d}.", .{width});
     return std.fmt.allocPrint(a, "{d}.{d}", .{ width, decimals });
+}
+
+fn displayNumber(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
+    return std.mem.trim(u8, try @import("../format.zig").apply(a, value, spec), " ");
 }
 
 fn binPoint(bin: values.Bin, right: bool, midpoints: bool) f64 {
@@ -304,7 +313,8 @@ fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bi
     var table = try context.createTable();
     table.ds.label = if (fitted) "Histogram Bins" else "Bin Midpoints";
     const loc = if (midpoints) "Midpoint" else if (right) "MaxPoint" else "MinPoint";
-    try table.num(loc, try pointFormat(a, bins, right, midpoints));
+    const point_format = try pointFormat(a, bins, right, midpoints);
+    try table.num(loc, point_format);
     try table.num("ObsPercent", "6.3");
     table.ds.setLabel(loc, if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point");
     table.ds.setLabel("ObsPercent", "Observed Percent");
@@ -312,7 +322,10 @@ fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bi
         try table.num("EstPercent", "6.3");
         table.ds.setLabel("EstPercent", "Estimated Percent");
     }
-    try out.appendSlice(a, if (fitted) "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n" else if (midpoints) "Bin Midpoint  Observed Percent\n" else if (right) "Bin Maximum Point  Observed Percent\n" else "Bin Minimum Point  Observed Percent\n");
+    const bin_label = if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point";
+    if (context.distribution) |name| {
+        try out.print(a, "\nHistogram Bin Percents for {s} Distribution\n{s}  Observed Percent  Estimated Percent\n", .{ name, bin_label });
+    } else try out.print(a, "{s}  Observed Percent\n", .{bin_label});
     for (bins) |bin| {
         const point = binPoint(bin, right, midpoints);
         // Standalone MIDPERCENTS includes the group's missing analysis values
@@ -320,10 +333,10 @@ fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bi
         const observed = if (fitted) bin.observed_percent else 100 * @as(f64, @floatFromInt(bin.count)) / @as(f64, @floatFromInt(context.source.rows.items.len));
         if (fitted) {
             try context.row(&table, &.{ b.n(point), b.n(observed), b.n(bin.expected_percent.?) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3} {d:.3}\n", .{ point, observed, bin.expected_percent.? }));
+            try out.print(a, "{s} {d:.3} {d:.3}\n", .{ try displayNumber(a, b.n(point), point_format), observed, bin.expected_percent.? });
         } else {
             try context.row(&table, &.{ b.n(point), b.n(observed) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3}\n", .{ point, observed }));
+            try out.print(a, "{s} {d:.3}\n", .{ try displayNumber(a, b.n(point), point_format), observed });
         }
     }
     try context.publish(if (fitted) "Bins" else "HistogramBins", &table);

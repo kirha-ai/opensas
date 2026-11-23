@@ -1128,3 +1128,20 @@ test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two 
     try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 7.0), hist.row(0)[4].num, 1e-12);
     try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 6.0), bins.row(0)[bins.indexOf("ObsPercent").?].num, 1e-12);
 }
+
+test "UNIVARIATE fitted quantiles retain small measured values in the listing" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var sample = Dataset.init(a, "series");
+    _ = try sample.addColumn("x", .num);
+    for (1..20) |i| try sample.appendRow(&.{.{ .num = @as(f64, @floatFromInt(i)) * 1e-6 }});
+    try lib.put("series", &sample);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const program = "proc univariate data=series noprint;var x; histogram x / normal(midpercents) noplot;run;";
+    const t = try @import("../lexer.zig").tokenize(a, program, &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "1.0 0.000001 -0.0000031\n") != null);
+}
