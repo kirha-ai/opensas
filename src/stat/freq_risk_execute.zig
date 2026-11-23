@@ -89,8 +89,9 @@ fn methodName(m: p.Method) []const u8 {
     };
 }
 fn methodLabel(a: A, cl: p.CL, family: p.Family, correct: bool) ![]const u8 {
+    if (cl.method == .mn and family == .difference and !cl.bias) return "Miettinen-Nurminen-Mee";
     const name = if (cl.method == .ac) (if (family == .binomial) "Agresti-Coull" else "Agresti-Caffo") else if (cl.method == .mn and family != .difference) "Score" else methodName(cl.method);
-    return if (cl.correct or (correct and (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe))) std.fmt.allocPrint(a, "{s} (Corrected)", .{name}) else if (cl.method == .mn and !cl.bias) std.fmt.allocPrint(a, "{s} (Uncorrected)", .{name}) else name;
+    return if (cl.correct or (correct and (cl.method == .wald or cl.method == .wilson or cl.method == .newcombe))) std.fmt.allocPrint(a, "{s} (Corrected)", .{name}) else name;
 }
 fn ciRow(label: []const u8, ci: k.Interval) r.Row {
     return .{ .label = label, .values = .{ ci.lower, ci.upper, null, null, null } };
