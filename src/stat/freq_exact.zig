@@ -50,14 +50,18 @@ pub fn logFactorialCorrection(n: u32) f64 {
 /// x*log(x/mean) - (x-mean), with its even-power expansion near the mean.
 pub fn poissonDeviance(x: f64, mean: f64, delta: f64) f64 {
     if (x == 0) return mean;
-    const v = delta / (x + mean);
+    if (mean == 0 or !std.math.isFinite(mean) or !std.math.isFinite(delta)) return std.math.inf(f64);
+    if (delta == 0) return 0;
+    const scale = x + mean;
+    const v = if (std.math.isFinite(scale)) delta / scale else (0.5 * delta) / (0.5 * x + 0.5 * mean);
     if (@abs(v) > 0.125) {
         const ratio = x / mean;
-        const log_ratio = if (std.math.isFinite(ratio)) @log(ratio) else @log(x) - @log(mean);
-        return x * log_ratio - delta;
+        const log_ratio = if (ratio > 0 and std.math.isFinite(ratio)) @log(ratio) else @log(x) - @log(mean);
+        const product = x * log_ratio;
+        return if (std.math.isFinite(product)) product - delta else x * (log_ratio - delta / x);
     }
     const v2 = v * v;
-    var term = 2 * x * v;
+    var term = (2 * v) * x;
     var sum = delta * v;
     var denominator: f64 = 3;
     while (true) : (denominator += 2) {

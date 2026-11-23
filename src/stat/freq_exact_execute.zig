@@ -84,9 +84,12 @@ const Context = struct {
             }
             var statistic: f64 = 0;
             for (counts, 0..) |v, i| {
-                const expected = rows[i / m.cols] * cols[i % m.cols] / total;
-                if (expected == 0) continue;
-                if (self.family == .pchi) statistic += (v - expected) * (v - expected) / expected else if (v > 0) statistic += 2 * v * @log(v / expected);
+                const cell = tests.independenceCell(v, rows[i / m.cols], cols[i % m.cols], total);
+                if (cell.mean == 0) continue;
+                statistic += if (self.family == .pchi)
+                    cell.delta * cell.delta / cell.mean
+                else
+                    2 * exact.poissonDeviance(v, cell.mean, cell.delta);
             }
             return statistic;
         }
@@ -233,7 +236,8 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         defer a.free(probabilities);
         for (probabilities, 0..) |*p, i| p.* = switch (c.expected) {
             .equal => 1 / @as(f64, @floatFromInt(m.cols)),
-            .proportions, .frequencies => |v| v[i] * factor / total,
+            .proportions => |v| if (factor == total) v[i] else v[i] / 100,
+            .frequencies => |v| v[i] / total,
         };
         if (mc) return .{ .monte_carlo = .{ .estimates = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) } };
         return finish(try reference.multinomial(a, integers.cells, probabilities, callback, c.budget));
@@ -332,6 +336,21 @@ test "two adjacent Fisher modes with unequal labeled multiplicity keep separate 
         const result = (try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 2, 1, m, next } }, .fisher, .{})).fisher;
         try t.expectApproxEqRel(@as(f64, 0.375), result.probabilities.point, 2e-15);
         try t.expectApproxEqRel(@as(f64, 0.625), result.probabilities.two_sided, 2e-15);
+    }
+}
+
+test "exact conditional likelihood ratio includes all tables with the same cell multiset" {
+    const t = std.testing;
+    const counts = [_]f64{ 1, 0, 2, 1_000_001, 1_000_000, 999_999 };
+    const other = [_]f64{ 2, 1, 0, 1_000_000, 999_999, 1_000_001 };
+    for ([_][]const f64{ &counts, &other }) |cells| {
+        const m = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = cells };
+        const result = (try run(t.allocator, m, .lrchi, .{})).exact_test;
+        // Both tables have identical sum(X*log(X)) at fixed margins.
+        // Three labeled draws give ten allocations and two tied tables.
+        try t.expectEqual(@as(u64, 10), result.tables);
+        try t.expectApproxEqRel(@as(f64, 0.22222244444417284), result.point, 3e-14);
+        try t.expectApproxEqRel(@as(f64, 0.66666622222251852), result.two_sided, 3e-14);
     }
 }
 

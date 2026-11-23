@@ -81,6 +81,19 @@ fn smallPercentage(small: usize, cells: usize) u8 {
     return @intFromFloat(@round(100 * @as(f64, @floatFromInt(small)) / @as(f64, @floatFromInt(cells))));
 }
 
+// Keep the residual of an accepted TESTP/TESTF total without losing it
+// to rounding at the scale of the supplied total.
+fn expectedResidual(target: f64, values: []const f64) f64 {
+    var remainder = target;
+    var correction: f64 = 0;
+    for (values) |value| {
+        const next = remainder - value;
+        correction += if (@abs(remainder) >= value) (remainder - next) - value else (-value - next) + remainder;
+        remainder = next;
+    }
+    return remainder + correction;
+}
+
 pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
     if (counts.len == 0 or !countValid(counts)) return error.ExecError;
     const n = sum(counts);
@@ -88,19 +101,34 @@ pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64)
     // An explicit DF still goes through the ordinary validation path.
     const df = if (counts.len == 1 and df_override == null) 0 else try degreesOfFreedom(@floatFromInt(counts.len - 1), df_override);
     const factor = try expectedFactor(counts.len, n, expected);
+    const levels: f64 = @floatFromInt(counts.len);
     var pearson: f64 = 0;
-    var lr: f64 = 0;
+    // Sum x*log(x/e)-(x-e) near H0; its linear terms cancel when the
+    // expected total equals N. Keep a supplied TESTF/TESTP total correction
+    // independent of which multinomial allocation is being tested.
+    var lr_half: f64 = switch (expected) {
+        .equal => 0,
+        .proportions => |v| if (factor == n) n * expectedResidual(1, v) else factor * expectedResidual(100, v),
+        .frequencies => |v| expectedResidual(n, v),
+    };
     var small: usize = 0;
     for (counts, 0..) |o, i| {
         const e = switch (expected) {
-            .equal => n / @as(f64, @floatFromInt(counts.len)),
+            .equal => n / levels,
             .proportions, .frequencies => |v| v[i] * factor,
         };
-        pearson += sq(o - e) / e;
-        if (o > 0) lr += 2 * o * @log(o / e);
+        const delta = switch (expected) {
+            .equal => blk: {
+                const numerator = @mulAdd(f64, o, levels, -n);
+                break :blk if (std.math.isFinite(numerator)) numerator / levels else o - e;
+            },
+            .proportions, .frequencies => |v| @mulAdd(f64, -factor, v[i], o),
+        };
+        pearson += sq(delta) / e;
+        lr_half += @import("freq_exact.zig").poissonDeviance(o, e, delta);
         if (e < 5) small += 1;
     }
-    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = df > 0 and small * 5 > counts.len, .small_percent = if (expected == .equal) null else smallPercentage(small, counts.len), .total = n };
+    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(2 * lr_half, df), .sparse = df > 0 and small * 5 > counts.len, .small_percent = if (expected == .equal) null else smallPercentage(small, counts.len), .total = n };
 }
 
 const Margins = struct { row: []f64, col: []f64, n: f64, nr: usize, nc: usize };
@@ -136,6 +164,19 @@ fn score(s: ?[]const f64, i: usize) f64 {
     return if (s) |v| v[i] else @floatFromInt(i + 1);
 }
 
+/// E=R*C/N and O-E. A compensated product difference evaluates the
+/// residual accurately when both margin products exceed double precision.
+pub fn independenceCell(o: f64, row: f64, column: f64, total: f64) struct { mean: f64, delta: f64 } {
+    const product = row * column;
+    const scaled = o * total;
+    if (std.math.isFinite(product) and std.math.isFinite(scaled) and product >= std.math.floatMin(f64)) {
+        const difference = @mulAdd(f64, -row, column, scaled) + @mulAdd(f64, o, total, -scaled);
+        return .{ .mean = product / total, .delta = difference / total };
+    }
+    const fraction = row / total;
+    return .{ .mean = fraction * column, .delta = @mulAdd(f64, -fraction, column, o) };
+}
+
 pub fn contingency(a: std.mem.Allocator, m: CountMatrix, df_override: ?f64) Error!ChiSquare {
     return contingencyWithFisher(a, m, df_override, true);
 }
@@ -152,12 +193,12 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
     var cc: f64 = 0;
     var small: usize = 0;
     for (m.counts, 0..) |o, k| {
-        const e = t.row[k / m.cols] * t.col[k % m.cols] / t.n;
-        if (e == 0) continue;
-        p += sq(o - e) / e;
-        cc += sq(@max(0, @abs(o - e) - 0.5)) / e;
-        if (o > 0) lr += 2 * o * @log(o / e);
-        if (e < 5) small += 1;
+        const cell = independenceCell(o, t.row[k / m.cols], t.col[k % m.cols], t.n);
+        if (cell.mean == 0) continue;
+        p += sq(cell.delta) / cell.mean;
+        cc += sq(@max(0, @abs(cell.delta) - 0.5)) / cell.mean;
+        lr += 2 * @import("freq_exact.zig").poissonDeviance(o, cell.mean, cell.delta);
+        if (cell.mean < 5) small += 1;
     }
     const two = m.rows == 2 and m.cols == 2;
     const phi = if (two) (m.counts[0] * m.counts[3] - m.counts[1] * m.counts[2]) / @sqrt(t.row[0] * t.row[1] * t.col[0] * t.col[1]) else @sqrt(p / t.n);
@@ -479,6 +520,26 @@ fn spearman(m: CountMatrix, t: Margins, rs: []const f64, cs: []const f64, alpha:
         v2 += x * vij * vij;
     }
     return measure(v / w, (z2 - zs * zs / t.n) / (sq(t.n) * sq(sq(w))), (v2 - vs * vs / t.n) / (sq(t.n) * sq(w)), alpha);
+}
+
+test "one-way likelihood deviance retains small departures and supplied null totals" {
+    const t = std.testing;
+    const p = [_]f64{ 0.500000000001, 0.499999999999 };
+    const upper = try goodnessOfFit(&.{ 250_001, 249_999 }, .{ .proportions = &p }, null);
+    const lower = try goodnessOfFit(&.{ 249_999, 250_001 }, .{ .proportions = &p }, null);
+    // Evaluated from 2*sum(O*log(O/E)) at 80 decimal digits.
+    try t.expectApproxEqRel(@as(f64, 7.999992000200307006e-6), upper.likelihood_ratio.statistic, 4e-15);
+    try t.expectApproxEqRel(@as(f64, 8.000007999846359484e-6), lower.likelihood_ratio.statistic, 4e-15);
+    const deviance = @import("freq_exact.zig").poissonDeviance;
+    try t.expectEqual(@as(f64, 0), deviance(1e308, 1e308, 0));
+    try t.expectApproxEqRel(@as(f64, 1e308), deviance(1e-200, 1e308, -1e308), 2e-15);
+    const huge = deviance(1.6e308, 4e307, 1.2e308);
+    try t.expectApproxEqRel(@as(f64, 1.6e308) * (@log(@as(f64, 4)) - 0.75), huge, 2e-15);
+    const f = [_]f64{ 2, 8 - 5e-8 };
+    const accepted = try goodnessOfFit(&.{ 2, 8 }, .{ .frequencies = &f }, null);
+    try t.expectApproxEqRel(-16 * std.math.log1p((f[1] - 8) / 8), accepted.likelihood_ratio.statistic, 3e-15);
+    const near = try goodnessOfFit(&.{ 50_000, 50_000 }, .{ .proportions = &.{ 0.5000000000000001, 0.4999999999999999 } }, null);
+    try t.expectApproxEqRel(@as(f64, 4.930380657631323784e-27), near.likelihood_ratio.statistic, 4e-15);
 }
 
 test "FEAT-freq-tests exact tails and signed 2x2 association" {

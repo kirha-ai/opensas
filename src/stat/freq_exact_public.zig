@@ -440,6 +440,20 @@ test "public EXACT Fisher includes tied mass and replaces automatic Fisher once"
     try std.testing.expect(std.mem.indexOf(u8, mc, "0.0028") != null);
 }
 
+test "public one-way exact likelihood ratio orders the two neighbors of a noncentral null" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 25_001, 24_999 }, 1);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r / testp=(.5000000000001 .4999999999999) noprint; exact lrchi / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // A 70-digit calculation places only X=25,000 strictly inside.
+    // The LR point is the mass of X=25,001 alone.
+    for ([_][]const u8{ "0.996431769609", "0.003568087668" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
 test "public exact McNemar uses the specified odds for rare discordant pairs" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

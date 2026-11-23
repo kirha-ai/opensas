@@ -19,6 +19,7 @@ fn lf(x: u32) f64 {
 const MultinomialSearch = struct {
     counts: []u32,
     probabilities: []const f64,
+    total: f64,
     statistic: Statistic,
     accumulator: dist.Accumulator,
     budget: Budget,
@@ -42,8 +43,13 @@ const MultinomialSearch = struct {
         }
         var x: u64 = if (k + 1 == self.counts.len) remaining else 0;
         while (x <= remaining) : (x += 1) {
+            const exact = @import("freq_exact.zig");
+            const observed: f64 = @floatFromInt(x);
+            const p = self.probabilities[k];
+            const delta = @mulAdd(f64, -self.total, p, observed);
+            const deviance = exact.poissonDeviance(observed, self.total * p, delta);
             self.counts[k] = @intCast(x);
-            try self.visit(k + 1, remaining - @as(u32, @intCast(x)), log_weight + @as(f64, @floatFromInt(x)) * @log(self.probabilities[k]) - lf(@intCast(x)));
+            try self.visit(k + 1, remaining - @as(u32, @intCast(x)), log_weight - (exact.logFactorialCorrection(@intCast(x)) + deviance));
             if (self.stopped) return;
         }
     }
@@ -64,8 +70,11 @@ pub fn multinomial(a: std.mem.Allocator, observed: []const u32, probabilities: [
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
     const cells = try a.alloc(u32, observed.len);
     defer a.free(cells);
-    var search = MultinomialSearch{ .counts = cells, .probabilities = probabilities, .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
-    try search.visit(0, @intCast(n), 0); // N! is constant and cancels in normalization.
+    var search = MultinomialSearch{ .counts = cells, .probabilities = probabilities, .total = @floatFromInt(n), .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
+    // Combine the multinomial factorial ratio and its cell weights as
+    // log-factorial corrections minus deviances about N*p. Any residual
+    // from a rounded sum(p) is identical for all allocations.
+    try search.visit(0, @intCast(n), @import("freq_exact.zig").logFactorialCorrection(@intCast(n)));
     if (search.stopped) return .exhausted;
     return .{ .complete = try search.accumulator.result(search.count) };
 }
