@@ -64,6 +64,15 @@ pub fn multinomial(a: std.mem.Allocator, observed: []const u32, probabilities: [
     if (n == 0 or @abs(p - 1) > 1e-12) return error.ExecError;
     const value = try statistic.evaluate(statistic.context, .{ .rows = 1, .cols = observed.len, .cells = observed });
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    if (budget.max_tables == 0 or budget.stopped()) return .exhausted;
+    // Distributing N observations among k categories has C(N+k-1,k-1)
+    // outcomes. The previous product is bounded by max_tables (u64) and
+    // N by u32, so the next numerator fits in u128 even at the largest budget.
+    var outcomes: u128 = 1;
+    for (1..observed.len) |j| {
+        outcomes = @divExact(outcomes * (@as(u128, n) + j), j);
+        if (outcomes > budget.max_tables) return .exhausted;
+    }
     const cells = try a.alloc(u32, observed.len);
     defer a.free(cells);
     var search = MultinomialSearch{ .counts = cells, .probabilities = probabilities, .total = @floatFromInt(n), .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
@@ -187,6 +196,14 @@ pub fn symmetry(a: std.mem.Allocator, observed: Matrix, null_ratio: f64, statist
     };
     const value = try statistic.evaluate(statistic.context, observed);
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
+    if (budget.stopped()) return .exhausted;
+    // Each reflected cell pair independently admits total+1 splits.
+    var outcomes: u64 = 1;
+    for (pairs) |pair| {
+        const splits = @as(u64, pair.total) + 1;
+        if (outcomes > budget.max_tables / splits) return .exhausted;
+        outcomes *= splits;
+    }
     const cells = try a.dupe(u32, observed.cells);
     defer a.free(cells);
     // The less likely split always has representable probability <= 1/2.
@@ -216,6 +233,29 @@ test "multinomial exact goodness of fit and budget" {
     try t.expectApproxEqAbs(@as(f64, 0.712), r.two_sided, 1e-12);
     try t.expectApproxEqAbs(@as(f64, 0.285), r.point, 1e-12);
     try t.expect((try multinomial(t.allocator, &.{ 0, 1, 3 }, &.{ 0.2, 0.3, 0.5 }, .{ .evaluate = testPearson }, .{ .max_tables = 14 })) == .exhausted);
+}
+
+test "known reference sizes reject oversized enumerations before evaluating sampled tables" {
+    const t = std.testing;
+    const Calls = struct {
+        n: usize = 0,
+        fn evaluate(raw: ?*const anyopaque, m: Matrix) Error!f64 {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.n += 1;
+            return @floatFromInt(m.cells[0]);
+        }
+    };
+    var calls = Calls{};
+    const statistic = Statistic{ .context = &calls, .evaluate = Calls.evaluate };
+    const ps = [_]f64{ 0.25, 0.25, 0.5 };
+    try t.expect((try multinomial(t.allocator, &.{ 1, 1, 1 }, &ps, statistic, .{ .max_tables = 9 })) == .exhausted);
+    try t.expectEqual(@as(usize, 1), calls.n);
+    try t.expectEqual(@as(u64, 10), (try multinomial(t.allocator, &.{ 1, 1, 1 }, &ps, statistic, .{ .max_tables = 10 })).complete.tables);
+    const m = Matrix{ .rows = 3, .cols = 3, .cells = &.{ 1, 1, 2, 1, 1, 0, 1, 1, 1 } };
+    calls.n = 0;
+    try t.expect((try symmetry(t.allocator, m, 1, statistic, .{ .max_tables = 23 })) == .exhausted);
+    try t.expectEqual(@as(usize, 1), calls.n);
+    try t.expectEqual(@as(u64, 24), (try symmetry(t.allocator, m, 1, statistic, .{ .max_tables = 24 })).complete.tables);
 }
 
 test "McNemar tail and point reductions match integer enumeration at every split" {
