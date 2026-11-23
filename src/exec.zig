@@ -7437,7 +7437,7 @@ pub const Executor = struct {
                         } else {
                             // explicit `put x fmt.` wins; otherwise honour the variable's
                             // associated FORMAT/ATTRIB format, else the default.
-                            try self.emitPutValue(val, ml.fmt orelse self.resolveFormat(v.name), pa.al);
+                            try self.emitListVariable(val, v.name, ml.fmt, pa.al);
                         }
                         need_space = true;
                         // LIST output: only an item with NO explicit format owes
@@ -7466,7 +7466,7 @@ pub const Executor = struct {
                         // explicit `put x= fmt.` wins; else the variable's attached
                         // FORMAT/ATTRIB format; else default (BUG-putnamedfmt).
                         const pa = peelAlign(n.fmt);
-                        try self.emitPutValue(val, pa.fmt orelse self.resolveFormat(n.name), pa.al);
+                        try self.emitListVariable(val, n.name, pa.fmt, pa.al);
                         need_space = true;
                         owe_blank = true; // named output is list-style (spaced like `x` alone)
                     }
@@ -7663,6 +7663,19 @@ pub const Executor = struct {
     /// when FILE DSD is on and the emitted text holds the delimiter or a quote,
     /// rewrap that slice in double quotes (doubling embedded quotes — CSV rules,
     /// SAS DSD semantics). Buffer-splice keeps emitField the single formatter.
+    fn emitListVariable(self: *Executor, val: Value, name: []const u8, explicit: ?[]const u8, al: PutAlign) Error!void {
+        const assigned = self.resolveFormat(name);
+        // List output strips numeric field padding from an attached format.
+        // An explicitly formatted PUT item retains the requested width.
+        if (explicit == null and al == .none and val == .num) {
+            if (assigned) |fmt| {
+                const rendered = try format.apply(self.arena, val, fmt);
+                return self.emitPutValue(.{ .str = std.mem.trim(u8, rendered, " ") }, null, .none);
+            }
+        }
+        try self.emitPutValue(val, explicit orelse assigned, al);
+    }
+
     fn emitPutValue(self: *Executor, val: Value, fmt: ?[]const u8, al: PutAlign) Error!void {
         const raw = try self.emitFieldText(val, fmt, al);
         const f = self.file orelse return self.putWriteSlice(raw);
