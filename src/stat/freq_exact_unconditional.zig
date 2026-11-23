@@ -213,8 +213,9 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
+const BarnardProfile = struct { one: f64, two: f64 };
 pub const BarnardTails = union(enum) {
-    complete: struct { one: Bounds, two: Bounds },
+    complete: struct { one: Bounds, two: Bounds, profile: ?BarnardProfile = null },
     exhausted,
 };
 
@@ -244,6 +245,37 @@ fn pointBounds(value: f64) Bounds {
     return .{ .lower = value, .upper = value };
 }
 
+// Independent M9 raw cells recover the nuisance grid at increments of
+// .0001. At a resolved peak, unimodality restricts the discrete maximum
+// to the two enclosing grid points. When the peak falls inside the very
+// first cell, M9 can miss an entire reflected tail; retain the continuous
+// bounds for this numerically unresolved profile.
+fn opposingBarnardProfile(a: f64, b: f64, two_mode: f64) ?BarnardProfile {
+    const divisions = 10_000.0;
+    const one_mode = a / (a + b);
+    if (one_mode * divisions < 1) return null;
+    var profile: BarnardProfile = undefined;
+    for ([_]f64{ one_mode, two_mode }, [_]*f64{ &profile.one, &profile.two }, [_]bool{ false, true }) |mode, field, two| {
+        const lo = @floor(mode * divisions);
+        var high: f64 = 0;
+        for ([_]f64{ lo, @min(divisions / 2, lo + 1) }) |index| {
+            const q = index / divisions;
+            if (q == 0.5) {
+                const exponent = if (two) 1 - (a + b) else -(a + b);
+                high = @max(high, @exp2(exponent));
+                continue;
+            }
+            const log_q = @log(q);
+            const log_complement = std.math.log1p(-q);
+            const log_mass = a * log_q + b * log_complement;
+            const log_ratio = (b - a) * (log_q - log_complement);
+            high = @max(high, @exp(if (two) log_mass + std.math.log1p(@exp(log_ratio)) else log_mass));
+        }
+        field.* = high;
+    }
+    return profile;
+}
+
 /// For ordered row totals a<=b, g(q)=q^a(1-q)^b has its peak at a/N.
 /// Its reflected sum g(q)+g(1-q) is symmetric. With u=log((1-q)/q)/2
 /// its log derivative is d*tanh(d*u)-N*tanh(u), d=b-a. On u>0 with
@@ -258,7 +290,7 @@ fn opposingBarnard(small: u32, large: u32, work: *Work) BarnardTails {
     const one = pointBounds(@exp(a * logRowShare(a, b) + b * logRowShare(b, a)));
     const d: u64 = large - small;
     if (d * d <= @as(u64, small) + large) {
-        return .{ .complete = .{ .one = one, .two = pointBounds(@exp2(1 - n)) } };
+        return .{ .complete = .{ .one = one, .two = pointBounds(@exp2(1 - n)), .profile = opposingBarnardProfile(a, b, 0.5) } };
     }
 
     var lo = a / n;
@@ -279,7 +311,7 @@ fn opposingBarnard(small: u32, large: u32, work: *Work) BarnardTails {
     const upper = @max(one.upper, @exp(large_log + std.math.log1p(@exp(small_log - large_log))));
     const at_hi = a * @log(hi) + b * std.math.log1p(-hi);
     const lower = @exp(at_hi + std.math.log1p(@exp(small_log - at_hi)));
-    return .{ .complete = .{ .one = one, .two = .{ .lower = @max(one.lower, @min(lower, upper)), .upper = upper } } };
+    return .{ .complete = .{ .one = one, .two = .{ .lower = @max(one.lower, @min(lower, upper)), .upper = upper }, .profile = opposingBarnardProfile(a, b, (lo + hi) / 2) } };
 }
 
 /// At (0,n2), both NOSCORE and the directional score have a singleton left
@@ -772,9 +804,11 @@ test "Barnard opposing limits match elementary polynomial extrema and exhaustive
     const rare = tableOf(.{ 4_000_000_000, 0, 0, 1 });
     const x = (try barnardTails(rare, .right, .{})).complete;
     try t.expectApproxEqRel(@as(f64, 9.19698602813643478639499e-11), x.two.upper, 2e-14);
+    try t.expect(x.profile == null);
     try t.expect((try barnardTails(rare, .right, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
     const subnormal = (try barnardTails(tableOf(.{ 0, 537, 538, 0 }), .left, .{})).complete;
     try t.expectEqual(std.math.floatTrueMin(f64), subnormal.two.upper);
+    try t.expectEqual(std.math.floatTrueMin(f64), subnormal.profile.?.two);
 }
 
 test "directional SCORE orders fully opposing outcomes strictly first and inverts their probability" {

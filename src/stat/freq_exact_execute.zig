@@ -32,10 +32,16 @@ pub const Barnard = struct {
     tails: unconditional.BarnardTails,
 
     pub fn oneSided(self: Barnard) ?f64 {
-        return if (self.tails == .complete) self.tails.complete.one.upper else null;
+        return switch (self.tails) {
+            .exhausted => null,
+            .complete => |v| if (v.profile) |profile| profile.one else v.one.upper,
+        };
     }
     pub fn twoSided(self: Barnard) ?f64 {
-        return if (self.tails == .complete) self.tails.complete.two.upper else null;
+        return switch (self.tails) {
+            .exhausted => null,
+            .complete => |v| if (v.profile) |profile| profile.two else v.two.upper,
+        };
     }
 
     /// M9 reports the observed score one square root of unit roundoff closer
@@ -705,7 +711,10 @@ test "Barnard maximizes the opposing tail above the stack cutoff and keeps ordin
     // The one-sided event contains only the observed table. Its likelihood is
     // (1-p)*p^129, with an interior maximum at p=129/130.
     const one = 0.002840774943588005242286090151658295;
-    try std.testing.expectApproxEqRel(@as(f64, one), result.barnard.oneSided().?, 2e-14);
+    try std.testing.expectApproxEqRel(@as(f64, one), result.barnard.tails.complete.one.upper, 2e-14);
+    // M9 BY capture under full separation: the maximum on its grid is at
+    // q=.0077. The continuous maximum is retained above.
+    try std.testing.expectApproxEqAbs(@as(f64, 0.00284077351313), result.barnard.oneSided().?, 1e-14);
     try std.testing.expect(result.barnard.twoSided().? >= result.barnard.oneSided().?);
     try std.testing.expect((try run(std.testing.allocator, m, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .barnard);
     const near = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 0, 2, 128, 1 } };
