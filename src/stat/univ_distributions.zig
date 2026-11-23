@@ -58,7 +58,7 @@ pub const Distribution = struct {
                 if (x <= 0) break :blk 0;
                 const r = @sqrt(p.lambda / x);
                 const z = -r * (x / p.mu + 1);
-                break :blk @min(1, normal(r * (x / p.mu - 1)) + @exp(2 * p.lambda / p.mu + logNormalTail(-z)));
+                break :blk @min(1, normal(r * (x / p.mu - 1)) + @exp(2 * p.lambda / p.mu + f.logStdNormTail(-z)));
             },
             .sb => if (y <= 0) 0 else if (y >= 1) 1 else normal(p.gamma + p.delta * @log(y / (1 - y))),
             .su => normal(p.gamma + p.delta * std.math.asinh(y)),
@@ -125,11 +125,11 @@ pub const Distribution = struct {
         const p = self.p;
         if (self.family == .normal) {
             const z = (x - p.mu) / p.sigma;
-            return logNormalTail(if (upper) z else -z);
+            return f.logStdNormTail(if (upper) z else -z);
         }
         if (self.family == .lognormal and x > p.theta) {
             const z = (@log(x - p.theta) - p.zeta) / p.sigma;
-            return logNormalTail(if (upper) z else -z);
+            return f.logStdNormTail(if (upper) z else -z);
         }
         const y = (x - p.theta) / p.sigma;
         if (upper and y > 0) switch (self.family) {
@@ -190,11 +190,6 @@ fn normal(z: f64) f64 {
     return f.distCdf(.normal, z, &.{}).?;
 }
 
-fn logNormalTail(z: f64) f64 {
-    if (z > 8) return f.logStdNormTail(z);
-    return @log(normal(-z));
-}
-
 pub const Edf = struct { d: f64, w2: f64, a2: f64 };
 /// Raw EDF statistics; p-value availability depends on which parameters were
 /// estimated. Do not reuse known-parameter p-values for estimated fits.
@@ -219,6 +214,12 @@ test "UNIVARIATE EDF SAS normal fitted statistics and stable tails" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.38811470), result.a2, 5e-9);
     const extreme = edf(.{ .family = .normal, .p = .{} }, &.{ -40, 0, 40 }).?;
     try std.testing.expect(std.math.isFinite(extreme.a2));
+    // Normal EDF uses log probabilities on both sides, including immediately
+    // below the asymptotic branch of the normal tail calculation.
+    const left = edf(.{ .family = .normal, .p = .{} }, &.{ -8, -0.25, 0, 0.25, 0.5, 1, 1.25 }).?;
+    const right = edf(.{ .family = .normal, .p = .{} }, &.{ -0.25, 0, 0.25, 0.5, 1, 1.25, 8 }).?;
+    try std.testing.expectApproxEqAbs(@as(f64, 4.9149198843498585), left.a2, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 6.232405901787631), right.a2, 1e-12);
 }
 
 pub fn rankProbability(index: usize, n: usize, rankadj: f64, nadj: f64) f64 {
