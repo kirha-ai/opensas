@@ -397,7 +397,7 @@ test "UNIVARIATE OUTKERNEL grid descriptors and values match SAS M9" {
     try lib.put("d", &ds);
     var d = diag.Diagnostics.init(a);
     var out: std.ArrayList(u8) = .empty;
-    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; histogram x / noplot kernel(k=n q t c=.5) endpoints=0 to 20 by 5 outkernel=k; run;", &d);
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; histogram x / noplot kernel(k=n q t c=.5 noprint) endpoints=0 to 20 by 5 outkernel=k; run;", &d);
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
     const k = lib.find("k").?;
     try std.testing.expectEqual(@as(usize, 555), k.rows.items.len);

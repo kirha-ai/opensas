@@ -890,6 +890,12 @@ univ_curve_percents = ( "PERCENTS" | "PERCENT" ) "=" univ_curve_numeric_range
                          { [ "," ] univ_curve_numeric_range } ; (* opensas *)
 univ_curve_numeric_range = univ_curve_number [ "TO" univ_curve_number [ "BY" univ_curve_number ] ] ; (* opensas *)
 univ_curve_number = [ "+" | "-" ] number ; (* opensas *)
+univ_kernel = "KERNEL" [ "(" { "NOPRINT" | "K" "=" univ_kernel_kind { [ "," ] univ_kernel_kind }
+                  | "C" "=" univ_bandwidth { [ "," ] univ_bandwidth }
+                  | ( "LOWER" | "UPPER" ) "=" univ_kernel_bound { [ "," ] univ_kernel_bound } } ")" ] ; (* opensas *)
+univ_kernel_kind = "NORMAL" | "N" | "QUADRATIC" | "Q" | "TRIANGULAR" | "T" ; (* opensas *)
+univ_bandwidth = univ_curve_number | "MISE" | "SJPI" ; (* opensas *)
+univ_kernel_bound = univ_curve_number | "." ; (* opensas *)
 
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)

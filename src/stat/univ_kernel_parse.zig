@@ -6,6 +6,10 @@ const Token = @import("../lexer.zig").Token;
 const numeric = @import("univ_distribution_parse.zig").numeric;
 const eq = std.ascii.eqlIgnoreCase;
 
+fn listName(t: []const Token, i: usize) bool {
+    return t[i].tag == .name and t[i + 1].tag != .eq and !eq(t[i].text, "noprint");
+}
+
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error![]kernel.Request {
     i.* += 1;
     var kinds: std.ArrayList(kernel.Kind) = .empty;
@@ -15,12 +19,17 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
     if (t[i.*].tag == .lparen) {
         i.* += 1;
         while (t[i.*].tag != .rparen) {
+            if (t[i.*].tag == .name and eq(t[i.*].text, "noprint")) {
+                // KERNEL never produces fitted-distribution tables.
+                i.* += 1;
+                continue;
+            }
             if (t[i.*].tag != .name or t[i.* + 1].tag != .eq) return d.fail(error.ParseError, 0, "UNIVARIATE: expected KERNEL option=value", .{});
             const key = t[i.*].text;
             i.* += 2;
             if (eq(key, "k")) {
                 if (kinds.items.len > 0) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated KERNEL K option", .{});
-                while (t[i.*].tag == .name and t[i.* + 1].tag != .eq) {
+                while (listName(t, i.*)) {
                     const name = t[i.*].text;
                     const kind: kernel.Kind = if (eq(name, "n") or eq(name, "normal")) .normal else if (eq(name, "q") or eq(name, "quadratic")) .quadratic else if (eq(name, "t") or eq(name, "triangular")) .triangular else return d.fail(error.ParseError, 0, "UNIVARIATE: unknown kernel {s}", .{name});
                     try kinds.append(a, kind);
@@ -30,7 +39,7 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
                 if (kinds.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty kernel list", .{});
             } else if (eq(key, "c")) {
                 if (bandwidths.items.len > 0) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated KERNEL C option", .{});
-                while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus or (t[i.*].tag == .name and t[i.* + 1].tag != .eq)) {
+                while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus or listName(t, i.*)) {
                     if (t[i.*].tag == .name) {
                         const name = t[i.*].text;
                         const bandwidth: kernel.Bandwidth = if (eq(name, "mise")) .mise else if (eq(name, "sjpi")) .sjpi else return d.fail(error.ParseError, 0, "UNIVARIATE: unknown bandwidth method {s}", .{name});
@@ -78,7 +87,7 @@ test "UNIVARIATE kernel lists repeat last bandwidth and bounds" {
     defer arena.deinit();
     const a = arena.allocator();
     var d = diag.Diagnostics.init(a);
-    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t c=.5 mise lower=. 0 upper=20);", &d);
+    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t noprint c=.5 mise lower=. 0 upper=20);", &d);
     var i: usize = 0;
     const requests = try parse(a, &d, t, &i);
     try std.testing.expectEqual(@as(usize, 3), requests.len);
