@@ -1247,6 +1247,8 @@ pub const SimulationOptions = struct {
     /// Caller resolves omitted/time-of-day seed once, and can retain it in ODS.
     seed: u64,
     samples: usize = 500,
+    /// A Pareto histogram can omit an unavailable EDF table and keep its fit.
+    require_probabilities: bool = true,
 };
 pub const SimulationResult = struct {
     probabilities: Result,
@@ -1329,7 +1331,7 @@ pub const AccountedSimulationResult = struct {
 /// This is additive: strict simulate and its callback contract stay unchanged.
 /// Fatal errors abort immediately, even after earlier counted failures. The
 /// failure payload is consumed synchronously, not retained in the aggregate.
-/// no_valid returns counts/status and an ERROR diagnostic, without numbers.
+/// no_valid returns counts/status with no probabilities or standard errors.
 pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics, n: usize, options: SimulationOptions, sampler: AccountedSimulator) diag.Error!AccountedSimulationResult {
     try validate(d, observed, n);
     switch (r.family) {
@@ -1354,7 +1356,8 @@ pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics,
         }
     }
     if (result.valid == 0) {
-        try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
+        if (options.require_probabilities)
+            try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
         return result;
     }
     if (result.failed > 0) try d.note(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });

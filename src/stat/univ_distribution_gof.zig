@@ -61,7 +61,11 @@ pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: di
             defer d.arena.free(sample);
             const seed = try fitting.resolveSeed(d, request.edfseed);
             var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request, .uniforms = .init(seed) };
-            const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = seed, .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
+            const result = try inference.simulateAccounted(d, r, stats, x.len, .{
+                .seed = seed,
+                .samples = request.edfnsamples,
+                .require_probabilities = request.family != .pareto,
+            }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
             const probabilities = result.probabilities orelse inference.Result{};
             return checkAndersonDarling(d, .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result });
         },
@@ -306,6 +310,20 @@ test "UNIVARIATE estimated-family MC callbacks agree with independent M9 probes"
             try std.testing.expectApproxEqAbs(reference, actual, tolerance);
         }
     }
+}
+
+test "Pareto single failed EDF refit preserves the observed curve without probabilities" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.04, 0.36, 0.68, 1.32, 1.64, 1.96 };
+    const request: fitting.Request = .{ .family = .pareto, .sigma = 0.95, .edfseed = 19, .edfnsamples = 1 };
+    const fitted = try fitting.fit(&d, &x, request);
+    const result = try compute(&d, &x, fitted, request);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.2576900490249301), fitted.p.alpha, 1e-11);
+    try std.testing.expectEqual(inference.SimulationStatus.no_valid, result.simulation.?.status);
+    try std.testing.expect(result.d == null and result.w2 == null and result.a2 == null);
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "UNIVARIATE conditional Pareto callback preserves counts and matches independent SAS references" {
