@@ -242,8 +242,8 @@ pub const Density = struct {
         return result;
     }
     pub fn at(self: Density, point: f64) f64 {
-        if (self.estimate.request.lower) |b| if (point < b) return 0;
-        if (self.estimate.request.upper) |b| if (point > b) return 0;
+        // Bound the Fourier nodes before interpolating an output boundary.
+        // The last segment can have a positive ordinate just outside a bound.
         const position = (point - self.plan.data_origin) / self.plan.step;
         const low = @floor(position);
         const fraction = position - low;
@@ -354,6 +354,24 @@ test "kernel bounds crossing the opposite reflected tail use the ordinary densit
     try std.testing.expect(!valid.ignore_bounds);
     const reflected = try evaluate(a, &d, &x, nearby, valid);
     try std.testing.expectEqual(@as(f64, 0), reflected.at(3.65625));
+}
+
+test "interpolated output boundaries retain the final segment of a bounded kernel" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const x = [_]f64{0} ** 5;
+    const fit: kernel.Estimate = .{
+        .request = .{ .lower = -0.125 },
+        .c = 0.18,
+        .bandwidth = 0.18 * std.math.pow(f64, 5, -0.2),
+        .amise = 0,
+    };
+    const plan = try make(a, &d, &x, fit, &.{ -0.12890625, 0.165 }, .{});
+    const density = try evaluate(a, &d, &x, fit, plan);
+    try std.testing.expectApproxEqAbs(@as(f64, 1.9323289468917175), density.at(-0.12890625), 1e-13);
+    try std.testing.expectEqual(@as(f64, 0), density.at(-0.134375));
 }
 
 test "constant midpoint kernel limits match M9 at interior and saturated Fourier bounds" {
