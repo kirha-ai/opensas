@@ -33,6 +33,15 @@ pub const Statistic = struct {
     /// Null expectation for directional distance-from-null two-sided tests.
     expected: f64 = 0,
     directional: bool = false,
+    /// An integer numerator with a fixed positive denominator and null zero.
+    /// Only its sign is needed in floating point to select the one-sided tail.
+    centered_integer: ?CenteredInteger = null,
+
+    fn observedValue(self: Statistic, m: Matrix, law: ?*const FixedLaw) Error!f64 {
+        if (self.centered_integer) |integer| return @floatFromInt(integer.observed);
+        if (law) |fixed| return -fixed.logProbability(m.cells);
+        return self.evaluate(self.context, m);
+    }
 };
 pub const Budget = struct {
     max_tables: u64 = 1_000_000,
@@ -89,6 +98,15 @@ fn close(x: f64, y: f64) bool {
     return @abs(x - y) <= statistic_tolerance * @max(1, @max(@abs(x), @abs(y)));
 }
 const Events = struct { point: bool, left: bool, right: bool, two: bool };
+pub const CenteredInteger = struct {
+    observed: i128,
+    score: *const fn (?*const anyopaque, Matrix) i128,
+
+    fn compare(self: CenteredInteger, context: ?*const anyopaque, m: Matrix) Events {
+        const value = self.score(context, m);
+        return .{ .point = value == self.observed, .left = value <= self.observed, .right = value >= self.observed, .two = @abs(value) >= @abs(self.observed) };
+    }
+};
 fn events(value: f64, observed: f64, s: Statistic) Events {
     const tied = close(value, observed);
     const distance = @abs(value - s.expected);
@@ -291,6 +309,10 @@ const Search = struct {
                 try v.visit(v.context, sampled, log_weight);
                 return;
             }
+            if (self.s.centered_integer) |integer| {
+                try self.accumulator.addEvents(log_weight, integer.compare(self.s.context, sampled));
+                return;
+            }
             if (self.s.evaluate == fisherStatistic and self.law.overlaps(-log_weight, self.observed)) {
                 // Fixed-margin tables are connected by unit 2x2 moves. Each
                 // move covers L1 distance at most four. This pair alone can
@@ -365,7 +387,7 @@ pub fn enumerate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, budget: 
     defer shape.deinit(a);
     if (!std.math.isFinite(statistic.expected)) return error.ExecError;
     const law = FixedLaw.init(shape.rows, shape.cols, shape.total);
-    const observed = if (statistic.evaluate == fisherStatistic) -law.logProbability(m.cells) else try statistic.evaluate(statistic.context, m);
+    const observed = try statistic.observedValue(m, if (statistic.evaluate == fisherStatistic) &law else null);
     if (!std.math.isFinite(observed)) return error.ExecError;
     const cells = try a.alloc(u32, m.cells.len);
     defer a.free(cells);
@@ -479,7 +501,7 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
     if (options.samples == 0 or options.seed == 0 or !std.math.isFinite(statistic.expected)) return error.ExecError;
     _ = try estimate(0, options.samples, options.alpha);
     const law: ?FixedLaw = if (statistic.evaluate == fisherStatistic) try FixedLaw.fromMatrix(m) else null;
-    const observed = if (law) |*l| -l.logProbability(m.cells) else try statistic.evaluate(statistic.context, m);
+    const observed = try statistic.observedValue(m, if (law) |*l| l else null);
     if (!std.math.isFinite(observed)) return error.ExecError;
     const cells = try a.alloc(u32, m.cells.len);
     defer a.free(cells);
@@ -489,12 +511,15 @@ pub fn simulate(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options: 
     while (sample < options.samples) : (sample += 1) {
         if (sample == budget.max_tables or budget.stopped()) return .exhausted;
         if (!try sampler.draw(sampler.context, &random, cells, budget)) return .exhausted;
-        const value = if (law) |*l| -l.logProbability(cells) else try statistic.evaluate(statistic.context, .{ .rows = m.rows, .cols = m.cols, .cells = cells });
-        if (!std.math.isFinite(value)) return error.ExecError;
-        var e = events(value, observed, statistic);
-        if (law) |*fixed| {
-            if (fixed.overlaps(value, observed)) e = (try fisherTie(a, cells, m.cells, budget)) orelse return .exhausted;
-        }
+        const sampled = Matrix{ .rows = m.rows, .cols = m.cols, .cells = cells };
+        const e = if (statistic.centered_integer) |integer| integer.compare(statistic.context, sampled) else blk: {
+            const value = if (law) |*l| -l.logProbability(cells) else try statistic.evaluate(statistic.context, sampled);
+            if (!std.math.isFinite(value)) return error.ExecError;
+            if (law) |*fixed| {
+                if (fixed.overlaps(value, observed)) break :blk (try fisherTie(a, cells, m.cells, budget)) orelse return .exhausted;
+            }
+            break :blk events(value, observed, statistic);
+        };
         if (e.point) hits[0] += 1;
         if (e.left) hits[1] += 1;
         if (e.right) hits[2] += 1;

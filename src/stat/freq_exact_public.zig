@@ -454,6 +454,21 @@ test "public one-way exact likelihood ratio orders the two neighbors of a noncen
         try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
 }
 
+test "public rank exact tests preserve distinct integer effects on wide tied margins" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 0, 2, 0, 1_000_000_000, 999_999_998, 1_000_000_001 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact jt kentb stutc smdcr smdrc scorr / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // The six allocations of the two observations have weights C(c_j,2)
+    // or c_i*c_j. The observed concordance surplus is 2. Placing one in
+    // each outside column gives 1, strictly inside the two-sided tail.
+    for ([_][]const u8{ "0.444444444074", "0.111111110963", "0.777777777630" }) |value|
+        try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, out, value));
+}
+
 test "public exact McNemar uses the specified odds for rare discordant pairs" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

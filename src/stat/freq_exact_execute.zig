@@ -93,16 +93,71 @@ const Context = struct {
             }
             return statistic;
         }
+        if (self.family != .pcorr) return error.ExecError;
         const r = try tests.association(self.allocator, matrix, 0.05);
-        return switch (self.family) {
-            .pcorr => r.pearson.estimate,
-            .scorr => r.spearman.estimate,
-            .kentb => r.tau_b.estimate,
-            .stutc => r.tau_c.estimate,
-            .smdcr => r.somers_cr.estimate,
-            .smdrc => r.somers_rc.estimate,
-            else => null,
-        } orelse error.ExecError;
+        return r.pearson.estimate orelse error.ExecError;
+    }
+};
+
+/// A fixed-margin permutation changes neither the normalizing denominator of
+/// a rank coefficient nor the null mean of J. C-D orders the four concordance
+/// coefficients and is twice the centered Jonckheere-Terpstra statistic.
+const Ordinal = struct {
+    spearman: bool,
+    row_rank: [256]i64 = undefined,
+    col_rank: [256]i64 = undefined,
+
+    fn init(m: dist.Matrix, spearman: bool) Ordinal {
+        var self = Ordinal{ .spearman = spearman };
+        if (!spearman) return self;
+        const rows = self.row_rank[0..m.rows];
+        const cols = self.col_rank[0..m.cols];
+        @memset(rows, 0);
+        @memset(cols, 0);
+        var n: i64 = 0;
+        for (m.cells, 0..) |x, k| {
+            rows[k / m.cols] += x;
+            cols[k % m.cols] += x;
+            n += x;
+        }
+        // Twice the centered midrank is integral, even with ties.
+        for ([_][]i64{ rows, cols }) |ranks| {
+            var preceding: i64 = 0;
+            for (ranks) |*rank| {
+                const count = rank.*;
+                rank.* = 2 * preceding + count - n;
+                preceding += count;
+            }
+        }
+        return self;
+    }
+
+    fn score(raw: ?*const anyopaque, m: dist.Matrix) i128 {
+        const self: *const Ordinal = @ptrCast(@alignCast(raw.?));
+        var sum: i128 = 0;
+        if (self.spearman) {
+            for (m.cells, 0..) |x, k| sum += @as(i128, x) * self.row_rank[k / m.cols] * self.col_rank[k % m.cols];
+        } else {
+            var above: [256]i64 = @splat(0);
+            var above_total: i64 = 0;
+            for (0..m.rows) |i| {
+                var left: i64 = 0;
+                var row_total: i64 = 0;
+                for (m.cells[i * m.cols ..][0..m.cols], 0..) |x, j| {
+                    const right = above_total - left - above[j];
+                    sum += @as(i128, x) * (left - right);
+                    left += above[j];
+                    above[j] += x;
+                    row_total += x;
+                }
+                above_total += row_total;
+            }
+        }
+        return sum;
+    }
+
+    fn asFloat(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        return @floatFromInt(score(raw, m));
     }
 };
 fn finish(result: dist.Enumeration) Result {
@@ -200,14 +255,14 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     }
     var context = Context{ .allocator = a, .family = f, .row_scores = m.row_scores, .col_scores = m.col_scores, .expected = c.expected };
     var callback = dist.Statistic{ .context = &context, .evaluate = Context.evaluate, .directional = switch (f) {
-        .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc => true,
+        .pcorr => true,
         else => false,
     } };
     var sc: adapters.Context = undefined;
+    var ordinal: Ordinal = undefined;
     var weights: ?[]f64 = null;
     defer if (weights) |w| a.free(w);
     const sf: ?adapters.Family = switch (f) {
-        .jt => .jonckheere,
         .trend => .trend,
         .kappa => .kappa,
         .wtkappa => .weighted_kappa,
@@ -220,7 +275,14 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         if (f == .wtkappa) weights = try stratified.kappaWeights(a, sm, c.kappa_weight);
         sc = try adapters.Context.init(sm, family, weights, c.null_ratio);
         callback = adapters.Adapters(dist).statistic(&sc);
-    } else if (f == .fisher) callback = .{ .evaluate = dist.fisherStatistic };
+    } else switch (f) {
+        .fisher => callback = .{ .evaluate = dist.fisherStatistic },
+        .jt, .kentb, .stutc, .smdcr, .smdrc, .scorr => {
+            ordinal = Ordinal.init(integers, f == .scorr);
+            callback = .{ .context = &ordinal, .evaluate = Ordinal.asFloat, .directional = true, .centered_integer = .{ .observed = Ordinal.score(&ordinal, integers), .score = Ordinal.score } };
+        },
+        else => {},
+    }
     const simulation = dist.Simulation{
         .seed = c.effective_seed,
         .samples = c.options.samples,
