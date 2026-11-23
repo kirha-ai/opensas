@@ -207,7 +207,7 @@ ods_stmt       = ods_output_stmt | "ODS" { any_token } ";" ;
 ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
                 | ods_table_name "=" ( sas_name | two_level_name )
                   { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
-ods_table_name  = "PearsonCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
+ods_table_name  = "PearsonCorr" | "PolychoricCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
                 | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
                  (* Typed capture; default requests expire after next PROC.
                     BY objects concatenate, missing objects warn without creating
@@ -846,6 +846,8 @@ proc_print     = "PROC" "PRINT" [ "DATA" "=" dataset ]            (* opensas *)
                  | "BY" var_list ";"
                  | "SUM" var_list ";"
                  | "ID" var_list ";"
+                 | "FORMAT" ( var | special_var_list ) { var | special_var_list } format_ref
+                   { ( var | special_var_list ) { var | special_var_list } format_ref } ";"
                  | "WHERE" expression ";" } step_boundary ;
 
 (* 5.2 PROC SORT *)
@@ -856,7 +858,8 @@ proc_sort      = "PROC" "SORT" "DATA" "=" dataset                 (* opensas *)
 (* PROC CORR — Statistical Procedures pp.8–36.
    Typed Pearson/rank/partial/Fisher/reliability and ordinal estimates are implemented.
    HOEFFDING includes calibrated probabilities with tied/FREQ/small-N conventions.
-   Polychoric boundary information below numerical resolution fails explicitly.
+   Binary-margin polychoric fits refine successive boundary projections.
+   Unresolved higher-dimensional boundary information fails explicitly.
    OUTP=/other output data sets and plots remain fail-loud. *)
 proc_corr      = "PROC" "CORR" { "DATA" "=" dataset | "PEARSON" | "NOMISS"
                  | "SPEARMAN" | "KENDALL" | "HOEFFDING" | "ALPHA"
@@ -1314,7 +1317,7 @@ format_ref     = [ "$" ] name [ number ] "." [ number ] ;   (* opensas *)
    engine actually renders/reads — each carries a fixture (tests/corpus/gfmt_*).
    Names not listed (COMMAX/DOLLARX/NEGPAREN, B8601DT) parse but don't render
    SAS-correctly yet, so they are deliberately NOT marked. *)
-numeric_format = ( "F" | "COMMA" | "DOLLAR" ) [ number [ "." number ] ] "." ; (* opensas *)
+numeric_format = ( "F" | "COMMA" | "DOLLAR" | "PVALUE" ) [ number [ "." number ] ] "." ; (* opensas *)
 sci_format     = ( "Z" | "E" | "BEST" | "PERCENT" ) [ number [ "." number ] ] "." ; (* opensas *)
 date_format    = ( "DATE" | "MMDDYY" | "DDMMYY" | "YYMMDD" ) [ number ] "." ; (* opensas *)
 julqtr_format  = ( "JULIAN" | "YYMMN" | "QTR" | "QTRR" | "YYQ" | "YYQC" )

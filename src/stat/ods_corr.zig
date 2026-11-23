@@ -34,6 +34,29 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
             }
             try capture.publish(a, d, "SimpleStats", &t.ds);
         }
+        if (group.polychoric.len > 0 and capture.wants("PolychoricCorr")) {
+            var t = try b.Builder.init(a, spec.ds, spec.by, group.by_values);
+            t.ds.label = "Polychoric Correlations";
+            try t.char("Var", @max(8, name_len));
+            try t.char("WithVar", @max(8, name_len));
+            t.ds.setLabel("Var", "Variable");
+            t.ds.setLabel("WithVar", "With Variable");
+            // M9 includes the two ordinal tests in this object under NOPROB
+            // and NOCORR as well. The names, widths and labels are from CONTENTS.
+            for ([_][]const u8{ "NObs", "Corr", "StdErr", "WaldChiSq", "ProbWaldChiSq", "LRChiSq", "ProbLRChiSq" }, [_][]const u8{ "8.", "D10.", "D10.", "10.4", "PVALUE6.4", "10.4", "PVALUE6.4" }, [_][]const u8{ "N", "Polychoric Correlation", "Standard Error", "Chi-Square", "Pr > ChiSq", "Chi-Square", "Pr > ChiSq" }) |name, fmt, label| {
+                try t.num(name, fmt);
+                t.ds.setLabel(name, label);
+            }
+            for (group.polychoric) |entry| {
+                // Without WITH, the leading variable is the first VAR in the
+                // pair. With WITH, Var and WithVar follow their statements.
+                const v = if (spec.with.len == 0) entry.row else entry.column;
+                const w = if (spec.with.len == 0) entry.column else entry.row;
+                const e = entry.estimate;
+                try t.row(&.{ b.s(spec.ds.columns.items[v].name), b.s(spec.ds.columns.items[w].name), b.n(e.n), b.n(e.r), b.n(e.se), b.n(e.wald), b.n(e.p), b.n(e.lr), b.n(e.lr_p) });
+            }
+            try capture.publish(a, d, "PolychoricCorr", &t.ds);
+        }
         if (spec.options.pearson and !spec.options.nocorr and capture.wants("PearsonCorr"))
             try publishMatrix(a, d, capture, spec, group, group.pairs, name_len, label_len, "PearsonCorr", "Pearson Correlations");
         if (spec.partial.len == 0) {
@@ -133,5 +156,42 @@ test "M9 ODS multiple rank matrices route method-specific p-values and diagonal 
         try std.testing.expectApproxEqAbs(coef, rs.row(0)[2].num, 0.000005);
         try std.testing.expectApproxEqAbs(p, rs.row(0)[4].num, 0.00005);
         try std.testing.expectEqual(Value.missingRank(Value.specialMissing('_').num), Value.missingRank(rs.row(0)[3].num));
+    }
+}
+
+test "PolychoricCorr captures named full-precision ordinal pairs and native descriptors" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    var capture: ods.Capture = .{};
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    for ([_][]const u8{ "x", "y", "f" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_][3]f64{ .{ 0, 0, 110 }, .{ 0, 1, 352 }, .{ 10, 1, 418 }, .{ 20, 1, 110 } }) |v| try ds.appendRow(&.{ b.n(v[0]), b.n(v[1]), b.n(v[2]) });
+    try lib.put("d", &ds);
+    const lexer = @import("../lexer.zig");
+    const cx: @import("../proc.zig").ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture };
+    var listing: std.ArrayList(u8) = .empty;
+    for ([_][]const u8{ "proc corr data=d polychoric(converge=1e-6) noprob;var x;with y;freq f;run;", "proc corr data=d polychoric(converge=1e-6) nocorr;var x y;freq f;run;" }) |source| {
+        try capture.parse(a, &d, try lexer.tokenize(a, "ods output PolychoricCorr=fit;", &d));
+        try corr.run(cx, &listing, try lexer.tokenize(a, source, &d));
+        try capture.finish(&lib, &d);
+        const fit = lib.find("fit").?;
+        try std.testing.expectEqual(@as(usize, 9), fit.columns.items.len);
+        try std.testing.expectEqual(@as(usize, 1), fit.rowCount());
+        const row = fit.row(0);
+        try std.testing.expectEqualStrings("x", row[fit.indexOf("Var").?].str);
+        try std.testing.expectEqualStrings("y", row[fit.indexOf("WithVar").?].str);
+        try std.testing.expectEqual(@as(?usize, 8), fit.columns.items[0].len);
+        try std.testing.expectEqualStrings("D10.", fit.columns.items[3].format.?);
+        try std.testing.expectEqualStrings("Polychoric Correlation", fit.columns.items[3].label.?);
+        try std.testing.expectEqualStrings("PVALUE6.4", fit.columns.items[8].format.?);
+        try std.testing.expectEqual(@as(f64, 990), row[2].num);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.98771303566856), row[3].num, 5e-8);
+        try std.testing.expectEqual(@as(f64, 0), row[4].num);
+        try std.testing.expect(row[5].isMissing() and row[6].isMissing());
+        try std.testing.expectApproxEqAbs(@as(f64, 183.527618505065), row[7].num, 1e-7);
+        try std.testing.expectApproxEqRel(@as(f64, 8.2269409306717e-42), row[8].num, 1e-7);
     }
 }

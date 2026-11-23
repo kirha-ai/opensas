@@ -1099,13 +1099,18 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
     inline for (.{ "polychoric", "polyserial" }) |kind| {
         const estimates = @field(g, kind);
         if (estimates.len > 0) {
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s}", .{ kind, if (s.options.noprob) @as([]const u8, "Row Column N Correlation StdError WaldChiSquare LRChiSquare\n") else "Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP\n" }));
+            const polychoric = eq(kind, "polychoric");
+            const hide_probs = s.options.noprob and !polychoric;
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s}", .{ kind, if (hide_probs) @as([]const u8, "Row Column N Correlation StdError WaldChiSquare LRChiSquare\n") else "Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP\n" }));
             for (estimates) |entry| {
                 const e = entry.estimate;
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[entry.row].name, s.ds.columns.items[entry.column].name, e.n }));
+                const var_first = polychoric and s.with.len != 0;
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[if (var_first) entry.column else entry.row].name, s.ds.columns.items[if (var_first) entry.row else entry.column].name, e.n }));
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
-                    if (s.options.noprob and (i == 3 or i == 5)) continue;
-                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v, i == 3 or i == 5)}));
+                    if (hide_probs and (i == 3 or i == 5)) continue;
+                    // Keep a small positive SE distinguishable from the rank-deficient zero.
+                    const value = if (i == 1 and v > 0 and v < 0.000005) try std.fmt.allocPrint(a, "{e:.5}", .{v}) else try number(a, v, i == 3 or i == 5);
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{value}));
                 }
                 try out.append(a, '\n');
             }
