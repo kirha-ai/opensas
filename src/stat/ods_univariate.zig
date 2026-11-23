@@ -6,7 +6,7 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const b = @import("ods_table.zig");
 const fm = @import("ods_univ_formats.zig");
-pub const Values = struct { sample: []const f64, left: [6]f64, right: [6]f64, quantiles: [11]f64, mode: f64 };
+pub const Values = struct { left: [6]f64, right: [6]f64, quantiles: [11]f64, mode: f64 };
 fn printed(a: std.mem.Allocator, x: f64) ![]const u8 {
     if (std.math.isNan(x)) return a.dupe(u8, ".");
     // SAS Moments uses BEST10. with eight fractional places at unit magnitude.
@@ -39,7 +39,7 @@ pub fn publish(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *ods.Capture
         try t.char("VarName", variable.len);
         try classSchema(&t, ds, classes);
         try t.char("Quantile", 10);
-        try t.num("Estimate", try fm.measurement(a, v.sample));
+        try t.num("Estimate", try fm.measurement(a, &v.quantiles));
         t.ds.setLabel("Quantile", "Level");
         t.ds.setLabel("Estimate", "Quantile");
         const labels = [_][]const u8{ "100% Max", "99%", "95%", "90%", "75% Q3", "50% Median", "25% Q1", "10%", "5%", "1%", "0% Min" };
