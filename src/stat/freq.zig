@@ -141,7 +141,6 @@ pub const Request = struct {
 const Options = struct {
     output: ?stat_output.Spec = null,
     exact: ?exact_parse.Options = null,
-    exact_seed: u64 = 1,
     tables_statement_count: usize = 0,
     tests: stat_parse.TestStatement = .{},
     agreement_tests: strat_parse.Tests = .{},
@@ -524,9 +523,10 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     }
     if (opts.output != null and opts.tables_statement_count == 0) return parser.fail("OUTPUT requires a TABLES statement.");
     try opts.tests.finish(opts.tables_statement_count, cx.diags);
+    var simulation_seed: u64 = 1;
     if (opts.exact) |e| {
         if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
-        opts.exact_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
+        simulation_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
     }
     if (opts.requests.items.len == 0) for (input.columns.items) |col| {
         if (opts.weight) |w| if (eqi(w, col.name)) continue;
@@ -676,7 +676,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
-                try analyzeTable(cx, out, &tab, req, opts, stratified, writer, &view, bc, group.rep);
+                try analyzeTable(cx, out, &tab, req, opts, &simulation_seed, stratified, writer, &view, bc, group.rep);
                 if (!opts.noprint) rendered = true;
             } else if (!opts.noprint and !req.noprint) {
                 if (rendered) try out.append(a, '\n');
@@ -1844,7 +1844,7 @@ pub fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     return ids.toOwnedSlice(a);
 }
 
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?*stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, simulation_seed: *u64, stratified: strat_exec.Report, writer: ?*stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
     const a = cx.arena;
     const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
@@ -1864,7 +1864,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
-        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
+        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, req, simulation_seed);
         if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);
         if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
@@ -1905,7 +1905,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                 if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result, scored.matrix.rows == 2 and scored.matrix.cols == 2);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
-                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
+                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, simulation_seed);
                     if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, req, result);
                     if (cx.capture) |capture| {
                         const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
@@ -1939,7 +1939,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         }
     }
     if (!opts.noprint) {
-        const exact_strata = try exact_public.renderStrata(a, cx.diags, out, tab, req, opts.exact_seed);
+        const exact_strata = try exact_public.renderStrata(a, cx.diags, out, tab, req, simulation_seed.*);
         if (exact_strata.common != null or exact_strata.zelen != null) if (cx.capture) |capture| {
             const title = try std.fmt.allocPrint(a, "Summary for {s} * {s}", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name });
             try @import("ods_freq_exact_strata.zig").publish(a, cx.diags, capture, source, by, by_row, title, stratified, exact_strata, req.statistics.alpha, req.exact);

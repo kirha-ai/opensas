@@ -229,7 +229,7 @@ pub const Tables = struct {
     relative_risk: [2]?@import("freq_exact.zig").Interval = @splat(null),
     difference: [2]?@import("freq_exact.zig").Interval = @splat(null),
 };
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!Tables {
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, simulation_seed: *u64) diag.Error!Tables {
     var limits: Tables = .{};
     if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
@@ -245,7 +245,6 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         .relrisk, .comor, .eqor,  .agree,  .chisq, .measures,
     };
     const order = if (req.exact.mc) &mc_order else std.enums.values(parse.Family);
-    var next_seed = seed;
     var concordance_seed: ?u64 = null;
     for (order) |requested_family| {
         if (!req.exact.families.contains(requested_family)) continue;
@@ -253,7 +252,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             .kentb, .stutc, .smdcr, .smdrc => true,
             else => false,
         };
-        const family_seed = if (concordance) concordance_seed orelse next_seed else next_seed;
+        const family_seed = if (concordance) concordance_seed orelse simulation_seed.* else simulation_seed.*;
         const binary = m.rows == 2 and m.cols == 2;
         const f: parse.Family = if (requested_family == .wtkappa and binary) .kappa else requested_family;
         if (f == .comor or f == .eqor) continue;
@@ -318,7 +317,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                     const displayed_seed = if (f == .wtkappa and !req.stratified.agreement.restore) r.complete.final_seed else family_seed;
                     try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = displayed_seed });
                     if (!concordance or concordance_seed == null) {
-                        next_seed = r.complete.final_seed;
+                        simulation_seed.* = r.complete.final_seed;
                         if (concordance) concordance_seed = family_seed;
                     }
                     if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, displayed_seed, options);
@@ -454,6 +453,32 @@ test "explicit 2x2 Fisher stops under MAXTIME without an automatic support scan"
     try std.testing.expect(std.mem.indexOf(u8, stopped, "Chi-Square") != null);
     try std.testing.expect(std.mem.indexOf(u8, stopped, "resource limit") != null);
     try std.testing.expect(std.mem.indexOf(u8, stopped, "Table Probability") == null);
+}
+
+test "a FREQ procedure continues its Monte Carlo stream through BY groups, strata and TABLES statements" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Dataset = @import("../dataset.zig").Dataset;
+    const data = try a.create(Dataset);
+    data.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try data.addColumn(name, .num);
+    const matrices = [_][6]u32{ .{ 3, 1, 0, 0, 2, 2 }, .{ 1, 2, 0, 0, 1, 3 }, .{ 1, 0, 2, 2, 2, 0 } };
+    for (matrices, 0..) |m, g| for (m, 0..) |w, i| {
+        try data.appendRow(&.{ .{ .num = @floatFromInt(g + 1) }, .{ .num = @floatFromInt(i / 3 + 1) }, .{ .num = @floatFromInt(i % 3 + 1) }, .{ .num = @floatFromInt(w) } });
+    };
+    var h = Harness{ .a = a, .lib = @import("../exec.zig").Library.init(a) };
+    try h.lib.put(data.name, data);
+    var d = diag.Diagnostics.init(a);
+    for ([_][]const u8{ "by g;tables r*c / fisher;", "tables g*r*c / fisher;" }) |tables| {
+        const source = try std.fmt.allocPrint(a, "proc freq data=d;{s}weight w / zeros;exact fisher / mc n=193 seed=71;run;", .{tables});
+        const listing = try h.run(source, &d);
+        // M9 and independent forward permutations agree on 43, 44 and 60 hits.
+        for ([_][]const u8{ "0.2228", "0.2280", "0.3109", "939616378", "186465444" }) |expected| try std.testing.expect(std.mem.indexOf(u8, listing, expected) != null);
+    }
+    const separate = try h.run("proc freq data=d(where=(g=1));tables r*c / fisher;tables r*c / fisher;weight w / zeros;exact fisher / mc n=193 seed=71;run;", &d);
+    for ([_][]const u8{ "0.2228", "0.2539", "939616378" }) |expected| try std.testing.expect(std.mem.indexOf(u8, separate, expected) != null);
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "public EXACT MC seed is repeatable and budget exhaustion emits no partial estimate" {
