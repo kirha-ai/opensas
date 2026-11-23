@@ -24,6 +24,7 @@ pub const Statement = struct {
     variables: [][]const u8,
     order: usize = 0,
     noplot: bool = false,
+    midpercents: bool = false,
     title: ann.Title = .default,
     barlabel: ?kernel.VScale = null,
     inset: ann.Inset = .{},
@@ -90,6 +91,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     var midpoints: std.ArrayList(f64) = .empty;
     var endpoint_labels = false;
     var noplot = false;
+    var midpercents = false;
     var right = false;
     var output: ?[]const u8 = null;
     var outkernel: ?[]const u8 = null;
@@ -119,6 +121,10 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
         i.* += 1;
         if (eq(key, "noplot") or eq(key, "nochart")) {
             noplot = true;
+            continue;
+        }
+        if (eq(key, "midpercents")) {
+            midpercents = true;
             continue;
         }
         if (eq(key, "rtinclude")) {
@@ -193,7 +199,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     if (max_nbin != null and max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (max_nbin != null and max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (endpoints.items.len > 0) _ = try binning.cover(a, d, &.{}, endpoints.items, right);
-    return .{ .order = start, .noplot = noplot, .title = title, .barlabel = barlabel, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
+    return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
@@ -285,6 +291,10 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1]) return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel phase for negative nonconstant data is not verified; supply explicit endpoints", .{});
                         try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
+                    }
+                    if (statement.midpercents) {
+                        const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null);
+                        try rendering.histogramBins(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, bins, statement.right, !statement.endpoint_labels);
                     }
                     const constant = x[0] == x[x.len - 1];
                     if (statement.curves.len == 0 or constant) {
@@ -1067,4 +1077,48 @@ test "UNIVARIATE public SJPI uses the normal kernel and omits a constant curve" 
     const messages = try d.render();
     try std.testing.expect(std.mem.indexOf(u8, messages, "normal kernel") != null);
     try std.testing.expect(std.mem.indexOf(u8, messages, "no estimate") != null);
+}
+
+test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two bin denominators" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var source = Dataset.init(a, "sample");
+    _ = try source.addColumn("g", .char);
+    source.setLen("g", 6);
+    _ = try source.addColumn("x", .num);
+    for ([_][]const u8{ "Red", "Blue" }, 1..) |label, group| {
+        try source.appendRow(&.{ .{ .str = label }, Value.missing });
+        for (1..7) |i| try source.appendRow(&.{ .{ .str = label }, .{ .num = @floatFromInt(i + group) } });
+    }
+    try lib.put("sample", &source);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output GoodnessOfFit=gof FitQuantiles=q Bins=fitbins HistogramBins=h;", &d));
+    var out: std.ArrayList(u8) = .empty;
+    const program = "proc univariate data=sample noprint;class g;var x;" ++
+        "histogram x / midpercents normal(midpercents percents=10 50 90) noplot;run;";
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, program, &d));
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const gof = lib.find("gof").?;
+    try std.testing.expectEqualStrings("Goodness of Fit", gof.label.?);
+    try std.testing.expectEqualStrings("10.8", gof.columns.items[gof.indexOf("Stat").?].format.?);
+    const q = lib.find("q").?;
+    try std.testing.expectEqualStrings("Histogram", q.columns.items[1].name);
+    try std.testing.expectEqualStrings("g", q.columns.items[2].name);
+    try std.testing.expectEqual(@as(?usize, 4), q.columns.items[2].len);
+    try std.testing.expectEqualStrings("Blue", q.row(0)[2].str);
+    try std.testing.expectEqual(@as(usize, 6), q.rowCount());
+    try std.testing.expectEqual(@as(f64, 5.5), q.row(1)[q.indexOf("ObsQuantile").?].num);
+    const bins = lib.find("fitbins").?;
+    const hist = lib.find("h").?;
+    try std.testing.expectEqualStrings("4.1", bins.columns.items[bins.indexOf("Midpoint").?].format.?);
+    try std.testing.expectEqualStrings("Midpoint", hist.columns.items[3].name);
+    try std.testing.expect(hist.indexOf("Distribution") == null);
+    try std.testing.expectEqual(@as(f64, 3), hist.row(0)[3].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 7.0), hist.row(0)[4].num, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 100.0 / 6.0), bins.row(0)[bins.indexOf("ObsPercent").?].num, 1e-12);
 }

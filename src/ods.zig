@@ -6,7 +6,7 @@ const Dataset = @import("dataset.zig").Dataset;
 const Library = @import("exec.zig").Library;
 const Value = @import("value.zig").Value;
 const eq = std.ascii.eqlIgnoreCase;
-pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "BarnardsTest", "RelRisk1ExactCL", "RelRisk2ExactCL", "RiskDiffCol1", "RiskDiffCol2", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "PPPlot", "QQPlot", "FisherPearsonCorr", "FisherSpearmanCorr", "FisherPearsonPartialCorr", "FisherSpearmanPartialCorr" };
+pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "BarnardsTest", "RelRisk1ExactCL", "RelRisk2ExactCL", "RiskDiffCol1", "RiskDiffCol2", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "HistogramBins", "PPPlot", "QQPlot", "FisherPearsonCorr", "FisherSpearmanCorr", "FisherPearsonPartialCorr", "FisherSpearmanPartialCorr" };
 const Request = struct { table: []const u8, target: []const u8, result: ?*Dataset = null };
 pub const Capture = struct {
     requests: std.ArrayList(Request) = .empty,
@@ -71,6 +71,11 @@ pub const Capture = struct {
                 if (dst.indexOf(c.name)) |ci| {
                     if (dst.columns.items[ci].type != c.type) return d.fail(error.ParseError, 0, "ODS OUTPUT: incompatible types for {s}", .{c.name});
                     if (c.len) |n| dst.columns.items[ci].len = @max(dst.columns.items[ci].len orelse 0, n);
+                    if (c.type == .num and (eq(name, "FitQuantiles") or eq(name, "GoodnessOfFit") or eq(name, "Bins") or eq(name, "HistogramBins"))) {
+                        if (c.format) |incoming| if (dst.columns.items[ci].format) |prior| {
+                            dst.columns.items[ci].format = try mergeHistogramFormat(a, prior, incoming);
+                        };
+                    }
                 } else {
                     _ = try dst.addColumnLike(c.name, c);
                     for (dst.rows.items) |*row| {
@@ -100,6 +105,17 @@ pub const Capture = struct {
         self.requests.clearRetainingCapacity();
     }
 };
+// ODS combines compatible w.d displays at the wider width. When the
+// fractional precision differs it switches the column to the D display.
+fn mergeHistogramFormat(a: std.mem.Allocator, left: []const u8, right: []const u8) ![]const u8 {
+    if (eq(left, right)) return left;
+    const li = std.mem.indexOfScalar(u8, left, '.') orelse return left;
+    const ri = std.mem.indexOfScalar(u8, right, '.') orelse return left;
+    const lw = std.fmt.parseInt(usize, std.mem.trimStart(u8, left[0..li], "DdEe"), 10) catch return left;
+    const rw = std.fmt.parseInt(usize, std.mem.trimStart(u8, right[0..ri], "DdEe"), 10) catch return left;
+    if (std.ascii.isDigit(left[0]) and std.ascii.isDigit(right[0]) and eq(left[li..], right[ri..])) return if (lw >= rw) left else right;
+    return std.fmt.allocPrint(a, "D{d}.3", .{@max(4, lw, rw)});
+}
 fn missing(t: @import("pdv.zig").VarType) Value {
     return if (t == .num) .{ .num = std.math.nan(f64) } else .{ .str = "" };
 }

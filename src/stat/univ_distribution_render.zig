@@ -87,25 +87,27 @@ const Context = struct {
     by: []const usize,
     classes: []const usize,
     histogram: usize,
-    distribution: []const u8,
+    distribution: ?[]const u8,
     fn createTable(self: Context) !b.Builder {
         var table = try b.Builder.init(self.cx.arena, self.source, self.by, self.source.rows.items[0]);
         try table.char("VarName", self.source.columns.items[self.col].name.len);
-        for (self.classes) |ci| try table.char(self.source.columns.items[ci].name, 16);
         try table.num("Histogram", null);
-        try table.char("Distribution", self.distribution.len);
+        for (self.classes) |ci| try table.char(self.source.columns.items[ci].name, (try self.classValue(ci)).len);
+        if (self.distribution) |name| try table.char("Distribution", name.len);
         return table;
+    }
+    fn classValue(self: Context, ci: usize) ![]const u8 {
+        const col = self.source.columns.items[ci];
+        const v = self.source.rows.items[0][ci];
+        const text = if (v == .str and col.format == null) v.str else try @import("../format.zig").apply(self.cx.arena, v, col.format orelse "BEST12.");
+        return std.mem.trim(u8, text, " ");
     }
     fn row(self: Context, table: *b.Builder, cells: []const Value) !void {
         var values_: std.ArrayList(Value) = .empty;
         try values_.append(self.cx.arena, b.s(self.source.columns.items[self.col].name));
-        for (self.classes) |ci| {
-            const col = self.source.columns.items[ci];
-            const value = self.source.rows.items[0][ci];
-            const text = if (value == .str) value.str else try @import("../format.zig").apply(self.cx.arena, value, col.format orelse "BEST12.");
-            try values_.append(self.cx.arena, b.s(std.mem.trim(u8, text, " ")));
-        }
-        try values_.appendSlice(self.cx.arena, &.{ b.n(@floatFromInt(self.histogram)), b.s(self.distribution) });
+        try values_.append(self.cx.arena, b.n(@floatFromInt(self.histogram)));
+        for (self.classes) |ci| try values_.append(self.cx.arena, b.s(try self.classValue(ci)));
+        if (self.distribution) |name| try values_.append(self.cx.arena, b.s(name));
         try values_.appendSlice(self.cx.arena, cells);
         try table.row(values_.items);
     }
@@ -147,10 +149,15 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     if (curve.family != .sb and curve.family != .su) {
         const tests = try gof.computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler);
         var table = try context.createTable();
-        table.ds.label = "Goodness-of-Fit Tests";
+        table.ds.label = "Goodness of Fit";
         try table.char("Test", 18);
         try table.char("TestLab", 6);
-        try table.num("Stat", "D10.3");
+        var largest_stat: f64 = 0;
+        if (tests.d != null) largest_stat = @max(largest_stat, tests.statistics.d);
+        if (tests.w2 != null) largest_stat = @max(largest_stat, tests.statistics.w2);
+        if (tests.a2 != null) largest_stat = @max(largest_stat, tests.statistics.a2);
+        const decimals: usize = 9 -| decimalDigits(largest_stat);
+        try table.num("Stat", try numberFormat(a, 10, decimals));
         try table.char("pType", 11);
         try table.char("pSign", 1);
         try table.num("pValue", "5.3");
@@ -175,11 +182,18 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     }
     try tables.finish(a, out, start, "GoodnessOfFit");
     start = out.items.len;
+    if (options.midpercents) {
+        try renderBins(context, out, bins, right, midpoints);
+        try tables.finish(a, out, start, "Bins");
+        start = out.items.len;
+    }
     var quantiles = try context.createTable();
     quantiles.ds.label = "Quantiles";
     try quantiles.num("Percent", "4.1");
-    try quantiles.num("ObsQuantile", "9.5");
-    try quantiles.num("EstQuantile", "8.5");
+    try quantiles.num("ObsQuantile", null);
+    try quantiles.num("EstQuantile", null);
+    var observed_range: QuantileRange = .{};
+    var estimated_range: QuantileRange = .{};
     quantiles.ds.setLabel("ObsQuantile", "Observed Quantile");
     quantiles.ds.setLabel("EstQuantile", "Estimated Quantile");
     const pairs = try a.alloc(h.XW, x.len);
@@ -188,30 +202,101 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     for (options.percents) |percent| {
         const observed = h.univPercentile(pairs, percent, def);
         const estimated = curve.quantile(percent / 100);
+        observed_range.add(observed);
+        estimated_range.add(estimated);
         try context.row(&quantiles, &.{ b.n(percent), b.n(observed), b.n(estimated) });
         try out.appendSlice(a, try std.fmt.allocPrint(a, "{d:.1} {d:.5} {d:.5}\n", .{ percent, observed, estimated }));
     }
+    quantiles.ds.setFormat("ObsQuantile", try observed_range.format(a));
+    quantiles.ds.setFormat("EstQuantile", try estimated_range.format(a));
     try context.publish("FitQuantiles", &quantiles);
     try tables.finish(a, out, start, "FitQuantiles");
-    start = out.items.len;
-    if (options.midpercents) {
-        var table = try context.createTable();
-        table.ds.label = "Histogram Bin Percentages";
-        const loc = if (midpoints) "MidPoint" else if (right) "MaxPoint" else "MinPoint";
-        try table.num(loc, "3.");
-        try table.num("ObsPercent", "6.3");
-        try table.num("EstPercent", "6.3");
-        table.ds.setLabel(loc, if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point");
-        table.ds.setLabel("ObsPercent", "Observed Percent");
-        table.ds.setLabel("EstPercent", "Estimated Percent");
-        try out.appendSlice(a, "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n");
-        for (bins) |bin| {
-            const point = if (midpoints) bin.midpoint else if (right) bin.upper else bin.lower;
-            try context.row(&table, &.{ b.n(point), b.n(bin.observed_percent), b.n(bin.expected_percent.?) });
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3} {d:.3}\n", .{ point, bin.observed_percent, bin.expected_percent.? }));
-        }
-        try context.publish("Bins", &table);
-        try tables.finish(a, out, start, "Bins");
-    }
     if (out.items.len == first) out.shrinkRetainingCapacity(head);
+}
+
+const QuantileRange = struct {
+    smallest: f64 = std.math.inf(f64),
+    largest: f64 = 0,
+
+    fn add(self: *QuantileRange, value: f64) void {
+        if (!std.math.isFinite(value) or value == 0) return;
+        self.smallest = @min(self.smallest, @abs(value));
+        self.largest = @max(self.largest, @abs(value));
+    }
+
+    fn format(self: QuantileRange, a: std.mem.Allocator) ![]const u8 {
+        if (self.largest == 0) return "8.5";
+        const exponent: i32 = @intFromFloat(@floor(@log10(self.smallest)));
+        const decimals: usize = @intCast(if (exponent < 0) @max(5, -exponent) else @max(0, 5 - exponent));
+        const width = 1 + decimalDigits(self.largest) + decimals + @intFromBool(decimals != 0);
+        if (width > 16) return "E15.8";
+        return numberFormat(a, width, decimals);
+    }
+};
+
+fn decimalDigits(magnitude: f64) usize {
+    if (magnitude < 1 or !std.math.isFinite(magnitude)) return 1;
+    return @intFromFloat(1 + @floor(@log10(magnitude)));
+}
+
+fn numberFormat(a: std.mem.Allocator, width: usize, decimals: usize) ![]const u8 {
+    if (decimals == 0) return std.fmt.allocPrint(a, "{d}.", .{width});
+    return std.fmt.allocPrint(a, "{d}.{d}", .{ width, decimals });
+}
+
+fn binPoint(bin: values.Bin, right: bool, midpoints: bool) f64 {
+    return if (midpoints) bin.midpoint else if (right) bin.upper else bin.lower;
+}
+
+fn pointFormat(a: std.mem.Allocator, bins: []const values.Bin, right: bool, midpoints: bool) ![]const u8 {
+    var largest: f64 = 0;
+    var precision: usize = 0;
+    for (bins) |bin| {
+        const point = @abs(binPoint(bin, right, midpoints));
+        largest = @max(largest, point);
+        var scaled = point;
+        for (0..6) |places| {
+            if (@abs(scaled - @round(scaled)) <= 32 * std.math.floatEps(f64) * @max(1, scaled)) {
+                precision = @max(precision, places);
+                break;
+            }
+            scaled *= 10;
+        } else return "E15.8";
+    }
+    return numberFormat(a, 1 + decimalDigits(largest) + precision + @intFromBool(precision != 0), precision);
+}
+
+pub fn histogramBins(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, bins: []const values.Bin, right: bool, midpoints: bool) !void {
+    try renderBins(.{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = null }, out, bins, right, midpoints);
+}
+
+fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bin, right: bool, midpoints: bool) !void {
+    const a = context.cx.arena;
+    const fitted = context.distribution != null;
+    var table = try context.createTable();
+    table.ds.label = if (fitted) "Histogram Bins" else "Bin Midpoints";
+    const loc = if (midpoints) "Midpoint" else if (right) "MaxPoint" else "MinPoint";
+    try table.num(loc, try pointFormat(a, bins, right, midpoints));
+    try table.num("ObsPercent", "6.3");
+    table.ds.setLabel(loc, if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point");
+    table.ds.setLabel("ObsPercent", "Observed Percent");
+    if (fitted) {
+        try table.num("EstPercent", "6.3");
+        table.ds.setLabel("EstPercent", "Estimated Percent");
+    }
+    try out.appendSlice(a, if (fitted) "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n" else "\nHistogram Bin Percentages\nEndpoint Observed\n");
+    for (bins) |bin| {
+        const point = binPoint(bin, right, midpoints);
+        // Standalone MIDPERCENTS includes the group's missing analysis values
+        // in its denominator. Fitted Bins uses the sample that was fitted.
+        const observed = if (fitted) bin.observed_percent else 100 * @as(f64, @floatFromInt(bin.count)) / @as(f64, @floatFromInt(context.source.rows.items.len));
+        if (fitted) {
+            try context.row(&table, &.{ b.n(point), b.n(observed), b.n(bin.expected_percent.?) });
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3} {d:.3}\n", .{ point, observed, bin.expected_percent.? }));
+        } else {
+            try context.row(&table, &.{ b.n(point), b.n(observed) });
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3}\n", .{ point, observed }));
+        }
+    }
+    try context.publish(if (fitted) "Bins" else "HistogramBins", &table);
 }
