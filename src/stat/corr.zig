@@ -136,53 +136,19 @@ fn addColumn(a: std.mem.Allocator, cols: *std.ArrayList(usize), c: usize) !void 
     if (!contains(cols.items, c)) try cols.append(a, c);
 }
 
-fn numberedSuffix(name: []const u8) ?struct { prefix: []const u8, number: usize } {
-    var i = name.len;
-    while (i > 0 and std.ascii.isDigit(name[i - 1])) i -= 1;
-    if (i == name.len) return null;
-    return .{ .prefix = name[0..i], .number = std.fmt.parseInt(usize, name[i..], 10) catch return null };
-}
-
-/// Resolve SAS variable lists in source order, including numbered/name ranges,
-/// prefixes, and _NUMERIC_. Explicit character variables fail visibly.
-fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token) diag.Error![]const usize {
+fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token, statement: []const u8, prior: []const usize) diag.Error![]const usize {
     var cols: std.ArrayList(usize) = .empty;
+    try cols.appendSlice(cx.arena, prior);
     var i: usize = 0;
     while (i < toks.len) {
-        if (toks[i].tag != .name) return fail(cx, toks[i]);
-        const name = toks[i].text;
-        if (at(toks, i + 1, .colon) or eq(name, "_numeric_") or eq(name, "_all_")) {
-            var matched = false;
-            for (ds.columns.items, 0..) |c, j| {
-                if (eq(name, "_numeric_") or eq(name, "_all_") or (c.name.len >= name.len and eq(c.name[0..name.len], name))) {
-                    matched = true;
-                    if (c.type == .num) try addColumn(cx.arena, &cols, j) else if (!eq(name, "_numeric_"))
-                        return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable {s} must be numeric.", .{c.name});
-                }
-            }
-            if (!matched) return cx.diags.fail(error.ParseError, 0, "PROC CORR: variable list {s} matched no variables.", .{name});
-            i += if (at(toks, i + 1, .colon)) @as(usize, 2) else 1;
-        } else if (at(toks, i + 1, .minus) and at(toks, i + 2, .minus) and at(toks, i + 3, .name)) {
-            const first = try column(cx, ds, name, true);
-            const last = try column(cx, ds, toks[i + 3].text, true);
-            if (last < first) return fail(cx, toks[i]);
-            for (first..last + 1) |j| {
-                _ = try column(cx, ds, ds.columns.items[j].name, true);
-                try addColumn(cx.arena, &cols, j);
-            }
-            i += 4;
-        } else if (at(toks, i + 1, .minus) and at(toks, i + 2, .name)) {
-            const first = numberedSuffix(name);
-            const last = numberedSuffix(toks[i + 2].text);
-            if (first == null or last == null or !eq(first.?.prefix, last.?.prefix) or first.?.number > last.?.number)
-                return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: invalid numbered variable range.", .{});
-            var names: std.ArrayList([]const u8) = .empty;
-            try parser.expandRange(cx.arena, &names, name, toks[i + 2].text);
-            for (names.items) |n| try addColumn(cx.arena, &cols, try column(cx, ds, n, true));
-            i += 3;
-        } else {
-            try addColumn(cx.arena, &cols, try column(cx, ds, name, true));
-            i += 1;
+        const names = try @import("variable_lists.zig").next(cx.arena, ds, toks, &i, cx.diags);
+        for (names) |name| {
+            const ci = try column(cx, ds, name, false);
+            if (ds.columns.items[ci].type != .num)
+                return cx.diags.fail(error.ParseError, 0, "Variable {s} in list does not match type prescribed for this list.", .{name});
+            if (contains(cols.items, ci))
+                return cx.diags.fail(error.ParseError, 0, "Duplicate variable name in the {s} statement.", .{statement});
+            try cols.append(cx.arena, ci);
         }
     }
     return cols.items;
@@ -328,18 +294,13 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         const start = i;
         var end = i + 1;
         while (end < toks.len and toks[end].tag != .semicolon and toks[end].tag != .eof) end += 1;
-        if (kw(toks, i, "var") or kw(toks, i, "with")) {
-            const cs = try columns(cx, ds, toks[i + 1 .. end]);
-            if (cs.len == 0) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: empty variable list.", .{});
-            var combined: std.ArrayList(usize) = .empty;
-            const old = if (kw(toks, i, "var")) vars orelse &.{} else with;
-            for (old) |c| try addColumn(cx.arena, &combined, c);
-            for (cs) |c| try addColumn(cx.arena, &combined, c);
-            if (kw(toks, i, "var")) vars = combined.items else with = combined.items;
+        if (kw(toks, i, "var")) {
+            vars = try columns(cx, ds, toks[i + 1 .. end], "VAR", vars orelse &.{});
+        } else if (kw(toks, i, "with")) {
+            with = try columns(cx, ds, toks[i + 1 .. end], "WITH", with);
         } else if (kw(toks, i, "partial")) {
-            partial = try columns(cx, ds, toks[i + 1 .. end]);
-            if (partial.len == 0) return fail(cx, toks[i]);
-            opts.nomiss = true;
+            partial = try columns(cx, ds, toks[i + 1 .. end], "PARTIAL", partial);
+            if (partial.len > 0) opts.nomiss = true;
         } else if (kw(toks, i, "format")) {
             try proc.parseProcFormat(cx.arena, toks, &i, &formats);
         } else if (kw(toks, i, "by")) {
@@ -925,10 +886,12 @@ test "CORR variable lists and variance divisors" {
         try std.testing.expectApproxEqAbs(@as(f64, 0.98287), r.groups[0].pairs[1].r, 0.000005);
         try std.testing.expectApproxEqAbs(@as(f64, 0.1180), r.groups[0].pairs[1].p, 0.00005);
     }
-    for ([_][]const u8{ "var x:;", "var x1--x2;", "var x2 x1 x2;" }) |list| {
+    for ([_][]const u8{ "var x:;", "var x1--x2;", "var x2-x1;" }) |list| {
         const r = try Testing.analyze(a, ds, try std.fmt.allocPrint(a, "proc corr; {s} weight w; run;", .{list}));
         try std.testing.expectEqual(@as(usize, 2), r.spec.vars.len);
     }
+    // M9 rejects a repeated named variable within or across VAR statements.
+    try std.testing.expectError(error.ParseError, Testing.analyze(a, ds, "proc corr;var x2 x1 x2;run;"));
 }
 test "CORR invalid inputs fail through captured diagnostics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);

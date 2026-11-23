@@ -218,57 +218,12 @@ const Parser = struct {
         return tok;
     }
     fn variable(self: *Parser, ds: *Dataset) diag.Error![][]const u8 {
-        if (!self.tag(.name)) return self.fail("expected a TABLES variable");
-        const first = self.toks[self.i].text;
-        self.i += 1;
-        var result: std.ArrayList([]const u8) = .empty;
-        if (self.tag(.minus)) {
-            self.i += 1;
-            const descriptor = self.tag(.minus);
-            if (descriptor) self.i += 1;
-            if (!self.tag(.name)) return self.fail("expected end of variable range");
-            const last = self.toks[self.i].text;
-            self.i += 1;
-            if (descriptor) {
-                const start = ds.indexOf(first) orelse return self.fail("range variable not found");
-                const end = ds.indexOf(last) orelse return self.fail("range variable not found");
-                if (end < start) return self.fail("variable range is reversed");
-                for (ds.columns.items[start .. end + 1]) |col| try result.append(self.a, col.name);
-            } else {
-                var split = first.len;
-                while (split > 0 and std.ascii.isDigit(first[split - 1])) split -= 1;
-                var endsplit = last.len;
-                while (endsplit > 0 and std.ascii.isDigit(last[endsplit - 1])) endsplit -= 1;
-                if (split == first.len or endsplit == last.len or !eqi(first[0..split], last[0..endsplit])) return self.fail("numbered ranges require the same variable prefix");
-                const lo = std.fmt.parseInt(usize, first[split..], 10) catch return self.fail("invalid variable range");
-                const hi = std.fmt.parseInt(usize, last[endsplit..], 10) catch return self.fail("invalid variable range");
-                if (hi < lo or hi - lo > ds.columns.items.len) return self.fail("invalid variable range");
-                for (lo..hi + 1) |n| {
-                    const digits = try std.fmt.allocPrint(self.a, "{d}", .{n});
-                    const width = if (first[split] == '0') @max(digits.len, first.len - split) else digits.len;
-                    const suffix = try self.a.alloc(u8, width);
-                    @memset(suffix, '0');
-                    @memcpy(suffix[width - digits.len ..], digits);
-                    const name = try std.fmt.allocPrint(self.a, "{s}{s}", .{ first[0..split], suffix });
-                    const ci = ds.indexOf(name) orelse return self.fail("range variable not found");
-                    try result.append(self.a, ds.columns.items[ci].name);
-                }
-            }
-        } else if (self.tag(.colon)) {
-            self.i += 1;
-            for (ds.columns.items) |col| if (col.name.len >= first.len and eqi(col.name[0..first.len], first)) {
-                try result.append(self.a, col.name);
-            };
-        } else if (eqi(first, "_all_") or eqi(first, "_numeric_") or (eqi(first, "_character_") or eqi(first, "_char_"))) {
-            for (ds.columns.items) |col| if (eqi(first, "_all_") or (eqi(first, "_numeric_") and col.type == .num) or ((eqi(first, "_character_") or eqi(first, "_char_")) and col.type == .char)) {
-                try result.append(self.a, col.name);
-            };
-        } else {
-            const ci = ds.indexOf(first) orelse return self.diags.fail(error.ParseError, self.toks[self.i - 1].line, "PROC FREQ: TABLES variable {s} not found", .{first});
-            try result.append(self.a, ds.columns.items[ci].name);
+        const names = try @import("variable_lists.zig").next(self.a, ds, self.toks, &self.i, self.diags);
+        for (names) |*name| {
+            const ci = ds.indexOf(name.*) orelse return self.diags.fail(error.ParseError, self.toks[self.i - 1].line, "PROC FREQ: TABLES variable {s} not found", .{name.*});
+            name.* = ds.columns.items[ci].name;
         }
-        if (result.items.len == 0) return self.fail("variable list matches no columns");
-        return result.items;
+        return names;
     }
     fn factor(self: *Parser, ds: *Dataset) diag.Error![][]const u8 {
         if (!self.tag(.lparen)) return self.variable(ds);
@@ -279,7 +234,6 @@ const Parser = struct {
             try names.appendSlice(self.a, try self.variable(ds));
         }
         self.i += 1;
-        if (names.items.len == 0) return self.fail("empty TABLES variable list");
         return names.items;
     }
     fn tables(self: *Parser, ds: *Dataset, opts: *Options) diag.Error!void {
@@ -291,6 +245,10 @@ const Parser = struct {
             try expanded.append(self.a, &.{});
             while (true) {
                 const names = try self.factor(ds);
+                if (names.len == 0) {
+                    if (combos.items.len > 0) return self.diags.fail(error.ParseError, 0, "Variable number 0 is not on file {s}.", .{try @import("variable_lists.zig").datasetName(self.a, ds)});
+                    return self.diags.fail(error.ParseError, 0, "A specification in the TABLES statement produces an empty variable list.", .{});
+                }
                 var next: std.ArrayList([]const []const u8) = .empty;
                 // SAS varies the first parenthesized factor fastest (Table 3.8).
                 for (names) |name| for (expanded.items) |previous| {

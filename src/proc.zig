@@ -4533,6 +4533,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     }
     if (atTag(toks, i, .semicolon)) i += 1;
 
+    var var_lists: std.ArrayList([]const Token) = .empty;
     var vars: std.ArrayList([]const u8) = .empty;
     var bys: std.ArrayList([]const u8) = .empty; // BY groups -> one OUTPUT row each (BUG-meansoutputby)
     var classes: std.ArrayList([]const u8) = .empty; // CLASS: per-level stats, not pooled (BUG-univclass)
@@ -4548,8 +4549,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (tkKw(toks[i], "run") or tkKw(toks[i], "quit")) break;
         if (tkKw(toks[i], "var")) {
             i += 1;
-            while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
-                if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &vars); // GAP-varcolonprefix-procs: keep `pfx:`
+            const begin = i;
+            while (i < toks.len and toks[i].tag != .semicolon and toks[i].tag != .eof) i += 1;
+            try var_lists.append(arena, toks[begin..i]);
         } else if (tkKw(toks[i], "by")) {
             bys.clearRetainingCapacity();
             try parseProcBy(arena, diags, toks, &i, &bys);
@@ -4621,7 +4623,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (atTag(toks, i, .semicolon)) i += 1;
     }
 
-    if (extra.inference.location.len > 1 and vars.items.len == 0)
+    if (extra.inference.location.len > 1 and var_lists.items.len == 0)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: multiple MU0 values require a VAR statement", .{});
     const raw = (if (in_name) |n| lib.find(n) else lastDataset(lib)) orelse {
         // BUG-procmissingrc2: missing table = user error (D-009 rc 1), not a
@@ -4634,10 +4636,16 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     const by_groups = @import("stat/by_groups.zig");
     const formatted_input = try by_groups.withFormats(arena, input_view.ds, fmt_specs.items);
     var ds = try extra.identify(arena, formatted_input, input_view.srcobs); // WHERE stmt / data= options (BUG-procwhere)
-    // GAP-varcolonprefix-procs: expand `pfx:` entries now that the dataset is
-    // known (PDV order — see expandVarPrefixes). ONE point, ahead of every
-    // ds.indexOf consumer below (groupFormats' CLASS scan included).
-    try expandVarListPrefixes(arena, input_view.ds, &vars, diags, toks[0].line, "PROC UNIVARIATE");
+    // UNIVARIATE processes repeated VAR selections in the original order.
+    // The input descriptor supplies the order for name ranges and prefixes.
+    for (var_lists.items) |tokens| {
+        var next: usize = 0;
+        while (next < tokens.len) {
+            const names = try @import("stat/variable_lists.zig").next(arena, input_view.ds, tokens, &next, diags);
+            try vars.appendSlice(arena, names);
+        }
+    }
+    if (var_lists.items.len > 0 and vars.items.len == 0) return diags.fail(error.ParseError, 0, "VAR list empty.", .{});
     try expandVarListPrefixes(arena, input_view.ds, &classes, diags, toks[0].line, "PROC UNIVARIATE");
     for (classes.items) |cn| if (ds.indexOf(cn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: CLASS variable {s} not found", .{cn});
@@ -4705,7 +4713,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     }
     if (acols.items.len == 0) return diags.fail(error.ParseError, 0, "VAR list empty.", .{});
     for (acols.items) |ci| if (input_view.ds.columns.items[ci].type != .num)
-        return diags.fail(error.ParseError, 0, "UNIVARIATE: analysis variable {s} must be numeric", .{ds.columns.items[ci].name});
+        return diags.fail(error.ParseError, 0, "Variable {s} in list does not match type prescribed for this list.", .{ds.columns.items[ci].name});
     if (outputs.items.len > 0 and vars.items.len == 0)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: OUTPUT requires a VAR statement", .{});
 
