@@ -39,7 +39,7 @@ pub const Plan = struct {
     data_origin: f64,
     sample_min: f64,
     sample_max: f64,
-    wraps_around: bool,
+    ignore_bounds: bool,
 };
 
 /// M9 emits the Fourier lattice in groups of four. Rounding affects whether a
@@ -86,8 +86,10 @@ fn outputLattice(points: []f64, lo: f64, hi: f64, odd_count: bool, constant_cent
     points[at + 1] = scalar + step;
 }
 
-fn reportEstimate(d: *diag.Diagnostics, note_prefix: ?[]const u8, estimate: kernel.Estimate, wraps_around: bool) diag.Error!void {
-    if (note_prefix == null and !wraps_around) return;
+const BoundaryStatus = enum { valid, wraps_around, interval_too_small };
+
+fn reportEstimate(d: *diag.Diagnostics, note_prefix: ?[]const u8, estimate: kernel.Estimate, status: BoundaryStatus) diag.Error!void {
+    if (note_prefix == null and status == .valid) return;
     const fmt = @import("../format.zig");
     const prefix = note_prefix orelse "";
     const article = if (prefix.len == 0) "The" else "the";
@@ -95,12 +97,14 @@ fn reportEstimate(d: *diag.Diagnostics, note_prefix: ?[]const u8, estimate: kern
     const c = try fmt.bestNumW(d.arena, estimate.c, 6);
     const bandwidth = try fmt.bestNumW(d.arena, estimate.bandwidth, 6);
     const bounded = estimate.request.lower != null or estimate.request.upper != null;
-    if (wraps_around) {
+    if (status == .wraps_around) {
         try d.warn(0, "{s}{s} {s} kernel estimate for c={s} has a large bandwidth of {s}, which results in the wrap-around effect at the ends of the horizontal axis.", .{ prefix, article, kind, c, bandwidth });
         if (bounded) try d.warn(0, "{s}{s} LOWER= and UPPER= options are not used in the {s} kernel estimate for c={s} because of the wrap-around effect at the ends of the horizontal axis.", .{ prefix, article, kind, c });
+    } else if (status == .interval_too_small) {
+        try d.warn(0, "{s}{s} interval specified with the LOWER= and UPPER= options is too small to compute the {s} kernel estimate for c={s}. The LOWER= and UPPER= options are not used.", .{ prefix, article, kind, c });
     }
     if (note_prefix == null) return;
-    if (bounded and !wraps_around) {
+    if (bounded and status == .valid) {
         try d.note(0, "{s}{s} bounded {s} kernel estimate for c={s} has a bandwidth of {s}.", .{ prefix, article, kind, c, bandwidth });
     } else {
         const amise = try fmt.bestNumW(d.arena, estimate.amise, 6);
@@ -131,8 +135,17 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     // The constant-sample grid starts with a unit reference span around
     // its single distinct value, leaving two full spans for padding.
     const wrap_limit = if (constant) 2 * range else 1.5 * range;
-    const wraps_around = own.fft > wrap_limit;
-    try reportEstimate(d, options.note_prefix, estimate, wraps_around);
+    var status: BoundaryStatus = .valid;
+    if (own.fft > wrap_limit) {
+        status = .wraps_around;
+    } else if (estimate.request.lower) |lower| if (estimate.request.upper) |upper| {
+        // A single reflection from either boundary must stay inside the
+        // opposite boundary. Compare the reflected data tails in input units.
+        const lower_tail = x[0] - own.fft;
+        const upper_tail = x[x.len - 1] + own.fft;
+        if (lower + (lower - lower_tail) > upper or upper - (upper_tail - upper) < lower) status = .interval_too_small;
+    };
+    try reportEstimate(d, options.note_prefix, estimate, status);
     const origin = if (constant) x[0] - @as(f64, @floatFromInt(length)) / 256 else lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
     var storage: [512]f64 = undefined;
     const lattice = storage[0..length];
@@ -195,7 +208,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     if (options.report) |report| {
         report.point_count += points.items.len;
     }
-    return .{ .points = try points.toOwnedSlice(a), .origin = origin, .step = step, .length = length, .bin_width = width, .data_origin = lo, .sample_min = x[0], .sample_max = x[x.len - 1], .wraps_around = wraps_around };
+    return .{ .points = try points.toOwnedSlice(a), .origin = origin, .step = step, .length = length, .bin_width = width, .data_origin = lo, .sample_min = x[0], .sample_max = x[x.len - 1], .ignore_bounds = status != .valid };
 }
 
 pub const Density = struct {
@@ -306,14 +319,41 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
             first = last;
         }
     }
-    // Bounds still set the output extent, but a wrapped estimate uses the
-    // unreflected periodic density at every returned point.
+    // Bounds still set the output extent when circular wrap-around or an
+    // overlapping reflection requires the unreflected periodic density.
     var fitted = estimate;
-    if (plan.wraps_around) {
+    if (plan.ignore_bounds) {
         fitted.request.lower = null;
         fitted.request.upper = null;
     }
     return .{ .plan = plan, .estimate = fitted, .ordinates = ordinates };
+}
+
+test "kernel bounds crossing the opposite reflected tail use the ordinary density" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const x = [_]f64{4} ** 8;
+    const fit: kernel.Estimate = .{
+        .request = .{ .kind = .triangular, .lower = 3.75, .upper = 4.11 },
+        .c = 1.38,
+        .bandwidth = 1.38 * std.math.pow(f64, 8, -0.2),
+        .amise = 0,
+    };
+    const plan = try make(a, &d, &x, fit, &.{ 2, 6 }, .{ .automatic = true, .bin_width = 4, .note_prefix = "" });
+    try std.testing.expect(plan.ignore_bounds);
+    try std.testing.expectEqualStrings("The interval specified with the LOWER= and UPPER= options is too small to compute the triangular kernel estimate for c=1.38. The LOWER= and UPPER= options are not used.", d.list.items[0].message);
+    const density = try evaluate(a, &d, &x, fit, plan);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.6836565694821494), density.at(3.65625), 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.7119339898422231), density.at(4.3203125), 1e-13);
+
+    var nearby = fit;
+    nearby.request = .{ .kind = .triangular, .lower = 3.75, .upper = 4.5 };
+    const valid = try make(a, &d, &x, nearby, &.{ 2, 6 }, .{ .automatic = true, .bin_width = 4 });
+    try std.testing.expect(!valid.ignore_bounds);
+    const reflected = try evaluate(a, &d, &x, nearby, valid);
+    try std.testing.expectEqual(@as(f64, 0), reflected.at(3.65625));
 }
 
 test "constant midpoint kernel limits match M9 at interior and saturated Fourier bounds" {
