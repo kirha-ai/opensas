@@ -72,7 +72,7 @@ pub fn resolve(req: anytype, statement: ?parse.Options, statements: usize) void 
             .binomial => {
                 if (req.risk.binomial == null) req.risk.binomial = .{ .family = .binomial };
             },
-            .riskdiff, .barnard => {
+            .riskdiff => {
                 if (req.risk.difference == null) req.risk.difference = .{ .family = .difference, .both_columns = true };
             },
             .relrisk => {
@@ -159,7 +159,7 @@ fn title(f: parse.Family) []const u8 {
         .oddsratio => "Odds Ratio",
         .riskdiff => "Risk Difference",
         .relrisk => "Relative Risk",
-        .barnard => "Barnard's Unconditional Exact Test",
+        .barnard => "Barnard's Exact Test",
         .comor => "Common Odds Ratio",
         .eqor => "Zelen's Exact Test",
         else => "Exact Test",
@@ -313,7 +313,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .barnard => |b| {
                 limits.barnard = b;
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .directional = true, .right_sided = b.difference > 0, .probabilities = .{ .one_sided = b.one.upper, .two_sided = b.two.upper, .point = 0, .left = 0, .right = 0, .tables = 0 } } }, options);
+                try renderers.barnard(a, out, b, options);
             },
         }
     }
@@ -518,6 +518,9 @@ test "public EXACT interval families and Barnard retain columns methods and prob
     const out = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact oddsratio riskdiff(column=both method=score2) relrisk(column=both method=score2) barnard / pformat=8.6; run;", &d);
     for ([_][]const u8{ "0.0016", "4.7229", "-0.9072", "-0.2500", "0.9072", "0.0238", "1.6859", "0.5932", "0.144531", "0.289063" }) |value| try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
     try std.testing.expect(!d.hasErrors());
+    const barnard = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact barnard; run;", &d);
+    try std.testing.expect(std.mem.indexOf(u8, barnard, "H0: P1 - P2 = 0") != null);
+    try std.testing.expect(std.mem.indexOf(u8, barnard, "Column 1 Risk Estimates") == null);
     const fisher = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher / point midp pformat=8.6; run;", &d);
     for ([_][]const u8{ "0.242857", "0.985714", "0.228571", "0.485714", "0.457143", "0.257143" }) |value| try std.testing.expect(std.mem.indexOf(u8, fisher, value) != null);
     const noscore = try h.run("proc freq data=d; weight w; tables r*c / noprint; exact relrisk(method=noscore); run;", &d);

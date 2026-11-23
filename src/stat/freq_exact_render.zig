@@ -67,6 +67,15 @@ pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: p
     if (r.directional) try pLine(a, out, if (r.two_doubled) "Two-sided = 2 * One-sided" else "Two-sided Pr >= |Statistic|", r.probabilities.two_sided, options);
 }
 
+pub fn barnard(a: A, out: *Out, r: @import("freq_exact_execute.zig").Barnard, options: parse.Options) Error!void {
+    try out.appendSlice(a, "\nBarnard's Exact Test\nRisk Difference\nH0: P1 - P2 = 0\n\n");
+    try nLine(a, out, "Risk Difference", r.difference);
+    try nLine(a, out, "ASE (H0)", r.se);
+    try nLine(a, out, "Z", r.reportedZ());
+    try pLine(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", r.one.upper, options);
+    try pLine(a, out, "Two-sided Pr >= |Z|", r.two.upper, options);
+}
+
 pub const Fisher = struct { first_cell: ?u32 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };
 pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     try out.appendSlice(a, "\nFisher's Exact Test\n----------------------------------\n");

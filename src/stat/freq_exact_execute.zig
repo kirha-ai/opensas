@@ -31,6 +31,13 @@ pub const Barnard = struct {
     z: f64,
     one: unconditional.Bounds,
     two: unconditional.Bounds,
+
+    /// M9 reports the observed score one square root of unit roundoff closer
+    /// to zero. Preserve the analytical score and independently enumerated tails.
+    pub fn reportedZ(self: Barnard) f64 {
+        const tolerance = @sqrt(std.math.floatEps(f64) / 2);
+        return std.math.copysign(@max(0, @abs(self.z) - tolerance), self.z);
+    }
 };
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
@@ -360,5 +367,14 @@ test "native fixed-margin multinomial and symmetry MC use the same seeded unifor
         const estimates = (try run(a, case.table, case.family, c)).monte_carlo.estimates.complete;
         try std.testing.expectEqual(@as(f64, @floatFromInt(case.hits)) / 500, estimates.two_sided.p);
         try std.testing.expectEqual(if (i == 3) @as(u64, 1671574333) else 534628942, estimates.final_seed);
+    }
+}
+
+test "Barnard reported score respects equal risks and signed near-null row/column permutations" {
+    // M9 null and permutation capture: [30,31;31,32] and its row, column,
+    // and double swaps. The elementary pooled score also stays accessible.
+    for ([_]f64{ 0, -0.002897613511751, 0.002897613511751 }, [_]f64{ 0, -0.00289760297503, 0.00289760297503 }) |z, native| {
+        const r: Barnard = .{ .difference = z, .se = 1, .z = z, .one = undefined, .two = undefined };
+        try std.testing.expectApproxEqAbs(native, r.reportedZ(), 1e-14);
     }
 }

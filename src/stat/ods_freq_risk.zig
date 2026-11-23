@@ -84,7 +84,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         const right = v.difference > 0;
         const names = [_][]const u8{ "_RDIF1_", "E_RDIF1", "Z_RDIF1", if (right) "XPR_RDIF1" else "XPL_RDIF1", "XP2_RDIF1" };
         const labels = [_][]const u8{ "Risk Difference", "ASE (H0)", "Z", if (right) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", "Two-sided Pr >= |Z|" };
-        for (names, labels, [_]f64{ v.difference, v.se, v.z, v.one.upper, v.two.upper }, 0..) |name, label, value, i| {
+        for (names, labels, [_]f64{ v.difference, v.se, v.reportedZ(), v.one.upper, v.two.upper }, 0..) |name, label, value, i| {
             const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, b.n(value), "8.4"), " ") else try @import("freq_exact_render.zig").probability(a, value, style);
             try t.row(&.{ b.s(table), b.s(name), b.s(label), b.s(display), b.n(value) });
         }
@@ -126,9 +126,7 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
     try std.testing.expectEqual(@as(usize, 5), barnard.rowCount());
     try std.testing.expectEqualStrings("XPL_RDIF1", barnard.row(3)[1].str);
     try std.testing.expectEqualStrings("One-sided Pr <=  Z", barnard.row(3)[2].str);
-    // At p=4/10 the analytical null ASE is sqrt(.096). M9 obtains a
-    // numerical constrained fit (Z=-1.29099443819909) with the same display.
-    try std.testing.expectApproxEqAbs(-0.4 / @sqrt(@as(f64, 0.096)), barnard.row(2)[4].num, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, -1.29099443819909), barnard.row(2)[4].num, 1e-13);
     try std.testing.expectEqualStrings("-1.2910", barnard.row(2)[3].str);
     // For this 5-by-5 design, the two-sided tail is 20u²-100u³+210u⁴-168u⁵,
     // u=p(1-p). Its maximum at p=1/2 is 11/32; M9 printed .34374999999999.
