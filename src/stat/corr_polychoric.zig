@@ -381,6 +381,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
     }
     const boundary = !(concordant and discordant);
+    // A binary margin has a single latent cut. On a monotone table the
+    // scoring step can repeatedly project across the same correlation bound.
+    const binary_boundary = boundary and (m.rows == 2 or m.cols == 2);
+    var boundary_distance: f64 = 0.001;
     var converged = false;
     var iterations: usize = 0;
     while (iterations < opts.maxiter) {
@@ -413,7 +417,14 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
             // SAS first-step oracle: an overshoot is restarted at +/-0.999,
             // rather than halving all coordinates solely to force |rho|<1.
-            if (@abs(candidate[dim - 1]) >= 1) candidate[dim - 1] = if (candidate[dim - 1] > 0) 0.999 else -0.999;
+            // With a binary margin, successive overshoots refine this distance
+            // by one decimal place (positive and negative M9 MAXITER traces).
+            if (@abs(candidate[dim - 1]) >= 1) {
+                const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
+                if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
+                candidate[dim - 1] = rho;
+                if (binary_boundary) boundary_distance *= 0.1;
+            }
             if (negativeLogLikelihood(m, candidate) <= base + 1e-10) {
                 accepted = true;
                 break;
@@ -425,9 +436,14 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         // SAS uses the updated estimate for both the relative denominator and
         // the near-zero decision. Fresh crossing controls pin both directions
         // across .01; equality retains relative scaling (stopping-fix evidence).
-        for (params, candidate) |p, c| change = @max(change, @abs(c - p) / (if (@abs(c) < 0.01) 1 else @abs(c)));
+        for (params, candidate, gradient) |p, c, step| {
+            // Projecting rho shortens its apparent move. M9 tests the
+            // scoring increment before this projection on the binary boundary.
+            const delta = if (binary_boundary) scale * step else c - p;
+            change = @max(change, @abs(delta) / (if (@abs(c) < 0.01) 1 else @abs(c)));
+        }
         @memcpy(params, candidate);
-        if (boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
+        if (boundary and !binary_boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
             // The likelihood gap is below the quadrature error budget. A
             // validated rank decision alone does not establish the remaining
             // SAS boundary-step convention, so preserve this public guard.
@@ -471,6 +487,40 @@ fn chiTail(x: f64, df: f64) f64 {
         if (@abs(delta - 1) < 1e-15) break;
     }
     return @max(0, @min(1, @exp(-z + a * @log(z) - fns.lgammaOf(a)) * h));
+}
+
+test "CORR binary-margin polychoric boundary uses the native information rank at both frequency scales" {
+    const xs = [_]f64{ 0, 10, 20 };
+    const ys = [_]f64{ 0, 1 };
+    // Same ordinal margins and association. Only the information scale changes.
+    for ([_]f64{ 11, 12 }, [_]f64{ 0.98771303566856, 0.999 }, [_]f64{ 183.527618505065, 200.211947460075 }, [_]f64{ 8.2269409306717e-42, 1.8775016946271e-45 }) |scale, rho, lr, p| {
+        var counts = [_]f64{ 10, 32, 0, 38, 0, 10 };
+        for (&counts) |*n| n.* *= scale;
+        const matrix: CountMatrix = .{ .rows = 3, .cols = 2, .counts = &counts, .row_scores = &xs, .col_scores = &ys };
+        const result = try polychoric(std.testing.allocator, matrix, .{ .converge = 1e-6 });
+        try std.testing.expect(result.converged);
+        try std.testing.expectApproxEqAbs(rho, result.coefficient.estimate.?, 5e-8);
+        try std.testing.expectEqual(@as(f64, 0), result.coefficient.ase.?);
+        try std.testing.expectApproxEqAbs(lr, result.likelihood_ratio.?.statistic, 1e-7);
+        try std.testing.expectApproxEqRel(p, result.likelihood_ratio.?.p, 1e-7);
+    }
+}
+
+test "CORR binary-margin nested thresholds retain finite SE and stop on the unprojected increment" {
+    const cases = [_]struct { matrix: CountMatrix, rho: f64, se: f64, lr: f64 }{
+        .{ .matrix = .{ .rows = 2, .cols = 3, .counts = &.{ 7, 11, 0, 0, 0, 17 }, .row_scores = &.{ 0, 1 }, .col_scores = &.{ 0, 1, 3 } }, .rho = 0.99999999, .se = 2.8341430859619e-6, .lr = 48.488578142682 },
+        .{ .matrix = .{ .rows = 3, .cols = 2, .counts = &.{ 0, 9, 0, 13, 21, 0 }, .row_scores = &.{ 0, 2, 7 }, .col_scores = &.{ -1, 0 } }, .rho = -0.99999999, .se = 2.5566692489271e-6, .lr = 59.5835297853088 },
+    };
+    for (cases) |c| {
+        const early = try polychoric(std.testing.allocator, c.matrix, .{ .converge = 3.7e-7, .maxiter = 5 });
+        try std.testing.expect(!early.converged);
+        const result = try polychoric(std.testing.allocator, c.matrix, .{ .converge = 3.7e-7, .maxiter = 6 });
+        try std.testing.expect(result.converged);
+        try std.testing.expectEqual(@as(usize, 6), result.iterations);
+        try std.testing.expectApproxEqAbs(c.rho, result.coefficient.estimate.?, 1e-12);
+        try std.testing.expectApproxEqRel(c.se, result.coefficient.ase.?, 1e-4);
+        try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 1e-7);
+    }
 }
 
 test "CORR stopping normalization uses updated estimates across the near-zero threshold" {
