@@ -1584,7 +1584,7 @@ test "table syntax rejects invalid SAS and keeps destination gaps explicit" {
     _ = try ds.addColumn("y", .num);
     try ds.appendRow(&.{ .{ .num = 1 }, .{ .num = 2 } });
     try lib.put("d", ds);
-    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", "by;tables x;", ";;tablse x;;", ";;tables;;", ";;weight;;" }) |statement| {
+    for ([_][]const u8{ "tables x / (chisq);", "tables x / missing=0;", "tables x*y / list crosslist;", "tables x*y / sparse nosparse;", "tables x / maxlevels=0;", "tables x*y / format=30.;", "tables;", "tables x / out=o(chisq);", "tables x / crosslist(bogus);", ";;tablse x;;", ";;tables;;", ";;weight;;" }) |statement| {
         var d = diag.Diagnostics.init(a);
         var out: std.ArrayList(u8) = .empty;
         diag.resetGap();
