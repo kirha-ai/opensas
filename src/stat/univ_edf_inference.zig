@@ -1348,11 +1348,11 @@ pub fn simulateAccounted(d: *diag.Diagnostics, r: Request, observed: Statistics,
             },
         }
     }
-    if (result.failed > 0) try d.warn(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });
     if (result.valid == 0) {
         try d.report(.err, 0, "UNIVARIATE: EDF simulation attempted={d}, valid=0, failed={d}; no probabilities or standard errors are available", .{ result.attempted, result.failed });
         return result;
     }
+    if (result.failed > 0) try d.note(0, "UNIVARIATE: EDF simulation attempted={d}, valid={d}, failed={d}; probabilities are conditional on successful/converged refits", .{ result.attempted, result.valid, result.failed });
     result.status = if (result.failed == 0) .all_valid else .conditional;
     const m: f64 = @floatFromInt(result.valid);
     var p: [3]Probability = undefined;
@@ -2040,7 +2040,7 @@ test "dev5 EDF accounted mixed attempts use valid denominator and exact budget" 
         try std.testing.expectEqual(Sign.exact, p.sign);
         try std.testing.expectEqual(@sqrt(expected * (1 - expected) / 3), se);
     }
-    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=5, valid=3, failed=2; probabilities are conditional on successful/converged refits\n", try d.render());
+    try std.testing.expectEqualStrings("NOTE: UNIVARIATE: EDF simulation attempted=5, valid=3, failed=2; probabilities are conditional on successful/converged refits\n", try d.render());
 }
 
 test "dev5 EDF accounted zero valid remains bounded and returns no fake probabilities" {
@@ -2058,7 +2058,7 @@ test "dev5 EDF accounted zero valid remains bounded and returns no fake probabil
     try std.testing.expect(got.probabilities == null and got.standard_errors == null);
     try std.testing.expectEqualDeep([3]usize{ 0, 0, 0 }, got.exceedances);
     try std.testing.expect(d.hasErrors());
-    try std.testing.expectEqualStrings("WARNING: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; probabilities are conditional on successful/converged refits\nERROR: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; no probabilities or standard errors are available\n", try d.render());
+    try std.testing.expectEqualStrings("ERROR: UNIVARIATE: EDF simulation attempted=3, valid=0, failed=3; no probabilities or standard errors are available\n", try d.render());
 }
 
 test "dev5 EDF accounted fatal and malformed outcomes abort without exclusion" {

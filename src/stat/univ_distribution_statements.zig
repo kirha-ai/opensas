@@ -712,7 +712,7 @@ test "UNIVARIATE public ODS uses valid MC denominator and omits no-valid probabi
             try std.testing.expect(!d.hasErrors());
         }
         var counted = false;
-        for (d.list.items) |entry| if (entry.severity == .warning and std.mem.indexOf(u8, entry.message, "attempted=5") != null) {
+        for (d.list.items) |entry| if (entry.severity == (if (all_fail) @as(diag.Severity, .err) else .note) and std.mem.indexOf(u8, entry.message, "attempted=5") != null) {
             counted = true;
         };
         try std.testing.expect(counted);
@@ -986,7 +986,7 @@ test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact ke
     }
 }
 
-test "UNIVARIATE public power location publishes only oracle curves with nonstationary warnings" {
+test "UNIVARIATE public power location warns only when no curve can be published" {
     var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_endpoint_power_location_dev5.txt"), '\n');
     var curves: usize = 0;
     var absent: usize = 0;
@@ -1017,12 +1017,12 @@ test "UNIVARIATE public power location publishes only oracle curves with nonstat
         var out: std.ArrayList(u8) = .empty;
         try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, tokens);
         const no_fit = std.mem.eql(u8, theta, "none");
-        var warned = false;
+        var reported = false;
         for (d.list.items) |message| {
-            try std.testing.expect(message.severity == .warning);
-            if (std.mem.indexOf(u8, message.message, if (no_fit) "initialization_failed" else "nonstationary_candidate") != null) warned = true;
+            try std.testing.expect(message.severity == (if (no_fit) @as(diag.Severity, .warning) else .note));
+            if (std.mem.indexOf(u8, message.message, if (no_fit) "initialization_failed" else "nonstationary_candidate") != null) reported = true;
         }
-        try std.testing.expect(warned);
+        try std.testing.expect(reported);
         try capture.finish(&lib, &d);
         if (no_fit) {
             absent += 1;

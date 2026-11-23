@@ -170,7 +170,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         order[at] = index;
         at += 1;
     }
-    if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
+    if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "The {s}= list was extended to accommodate the data.", .{if (request.endpoints) "ENDPOINTS" else "MIDPOINTS"});
     return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
 }
 
@@ -236,8 +236,8 @@ test "UNIVARIATE automatic bin widths and midpoint phase SAS M9" {
 }
 
 /// Validate and extend an explicit boundary lattice using its supplied phase.
-/// M9 warns, rather than dropping the boundary observations, when a supplied
-/// endpoint list needs extension (including its open endpoint).
+/// The statement planner diagnoses an extension of a user-supplied list.
+/// Covering an automatic comparative lattice is ordinary processing.
 pub fn cover(a: std.mem.Allocator, d: *diag.Diagnostics, sorted: []const f64, supplied: []const f64, right: bool) diag.Error![]const f64 {
     if (supplied.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram needs two boundary values", .{});
     const width = supplied[1] - supplied[0];
@@ -249,7 +249,6 @@ pub fn cover(a: std.mem.Allocator, d: *diag.Diagnostics, sorted: []const f64, su
     if (sorted[0] < first or (right and sorted[0] == first)) first -= @max(@as(f64, 1), @ceil((first - sorted[0]) / width)) * width;
     if (sorted[sorted.len - 1] > last or (!right and sorted[sorted.len - 1] == last)) last += @max(@as(f64, 1), @ceil((sorted[sorted.len - 1] - last) / width)) * width;
     if (first == supplied[0] and last == supplied[supplied.len - 1]) return supplied;
-    try d.warn(0, "UNIVARIATE: histogram interval list extended to accommodate the data", .{});
     return lattice(a, d, first, last, width, 100000);
 }
 
