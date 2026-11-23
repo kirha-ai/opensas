@@ -9810,6 +9810,7 @@ pub fn runFormat(cx: ProcCtx, toks: []const Token) diag.Error!void {
             return diags.fail(error.ParseError, toks[i].line, "PROC FORMAT: VALUE option ({s}) is not supported", .{opt});
         }
         var entries: std.ArrayList(format.UserFmtEntry) = .empty;
+        var label_start = entries.items.len;
         while (i < toks.len and toks[i].tag != .semicolon and toks[i].tag != .eof) {
             var e: format.UserFmtEntry = .{ .label = "" };
             if (tkKw(toks[i], "other")) {
@@ -9851,6 +9852,13 @@ pub fn runFormat(cx: ProcCtx, toks: []const Token) diag.Error!void {
             } else {
                 return diags.fail(error.ParseError, toks[i].line, "PROC FORMAT: unsupported VALUE entry '{s}' (entries are number/low/high ranges or 'char' keys)", .{toks[i].text});
             }
+            if (atTag(toks, i, .comma)) {
+                try entries.append(arena, e);
+                i += 1;
+                if (i >= toks.len or atTag(toks, i, .semicolon) or atTag(toks, i, .eof))
+                    return diags.fail(error.ParseError, toks[i - 1].line, "PROC FORMAT: expected another VALUE range after comma", .{});
+                continue;
+            }
             if (atTag(toks, i, .eq)) i += 1; // `=`
             if (atTag(toks, i, .string)) {
                 e.label = toks[i].text;
@@ -9861,7 +9869,13 @@ pub fn runFormat(cx: ProcCtx, toks: []const Token) diag.Error!void {
             } else {
                 return diags.fail(error.ParseError, toks[i -| 1].line, "PROC FORMAT: VALUE entry requires ='label' or =[format]", .{});
             }
+            // All comma-separated ranges share the following label or nested format.
+            for (entries.items[label_start..]) |*entry| {
+                entry.label = e.label;
+                entry.nested = e.nested;
+            }
             try entries.append(arena, e);
+            label_start = entries.items.len;
         }
         if (!is_char) try checkValueOverlap(diags, fname, entries.items, def_line);
         try cats.append(arena, .{ .name = fname, .is_char = is_char, .entries = try entries.toOwnedSlice(arena) });
