@@ -41,6 +41,8 @@ const Work = struct {
     /// Used only for inversion decisions. Public p-values retain their
     /// full absolute error bounds.
     test_size: ?f64 = null,
+    /// Raw absolute Z adjustment used for a separately reported M9 SCORE2 limit.
+    reported_score2: bool = false,
     fn tick(self: *Work) bool {
         if (self.stopped) return false;
         if (self.used == self.options.budget.max_tables or self.options.budget.stopped()) {
@@ -172,7 +174,8 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     const p2hi = if (family == .difference) @min(1, 1 - null_value) else @min(1, 1 / null_value);
     const p1lo = if (family == .difference) p2lo + null_value else p2lo * null_value;
     const p1hi = if (family == .difference) p2hi + null_value else p2hi * null_value;
-    const observed = try statistic(c, family, method, null_value);
+    const raw_observed = try statistic(c, family, method, null_value);
+    const observed = if (work.reported_score2) reportedScore2Threshold(raw_observed) else raw_observed;
     if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, null, work);
     const n = n1 + n2;
     var sum: [stack_degree + 1]f64 = @splat(0);
@@ -461,6 +464,10 @@ fn logRowShare(row: f64, other: f64) f64 {
 /// Equal-tailed NOSCORE/SCORE inversion or absolute-score SCORE2 inversion.
 /// Returns bracketed numerical endpoints; no fixed-margin shortcut is valid.
 pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
+    return invertRiskLimits(table, column, family, method, alpha, options, false);
+}
+
+fn invertRiskLimits(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options, report_score2: bool) Error!LimitsResult {
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or !std.math.isFinite(options.inversion_tolerance) or options.inversion_tolerance <= 0 or options.inversion_tolerance >= 1) return error.ExecError;
     const c = try canonical(table, column);
     if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
@@ -536,7 +543,13 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
             if (accepted == lower) hi = mid else lo = mid;
         }
         if (hi - lo > options.inversion_tolerance) return .exhausted;
-        const endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
+        var endpoint = if (family == .difference) (lo + hi) / 2 else @exp((lo + hi) / 2);
+        if (report_score2 and lower and c[1] == 0 and c[2] == 0) {
+            const log_plateau = @log(2 * @as(f64, @floatFromInt(c[3])));
+            if (lo <= log_plateau and log_plateau <= hi) {
+                if (try reportedPlateauLower(c, alpha, &work)) |reported| endpoint = @min(endpoint, reported);
+            }
+        }
         if (lower) out.lower = endpoint else out.upper = endpoint;
         if (options.completed_limits) |completed| {
             if (lower) completed.lower = endpoint else completed.upper = endpoint;
@@ -545,9 +558,57 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
     return .{ .complete = out };
 }
 
+fn reportedScore2Threshold(z: f64) f64 {
+    return @max(0, @abs(z) - @sqrt(std.math.floatEps(f64) / 2));
+}
+
+/// M9's lower limit at the probability-one SCORE2 ordering jump, with an
+/// all-event first row and a zero-event second row. The modified RR is
+/// 2*b+1. Its half supplies the first lower trial when the Wald limit is
+/// undefined. Once the linear bracket is at most 1e-6 wide, M9 reports its
+/// first rejected midpoint. The raw observed Z uses the same absolute
+/// square-root-of-unit-roundoff adjustment as the reported Barnard Z.
+/// Each accepted/rejected trial is decided from certified nuisance bounds.
+/// A smooth p-stop or a decision the budget cannot establish falls back to
+/// the already-computed reference endpoint.
+fn reportedPlateauLower(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
+    const a: f64 = @floatFromInt(c[0]);
+    const b: f64 = @floatFromInt(c[3]);
+    var inside = 2 * b + 1;
+    var outside = inside / 2;
+    work.reported_score2 = true;
+    defer work.reported_score2 = false;
+    const seed = try tail(c, .relative_risk, .score2, outside, .two_sided, work);
+    if (seed == .exhausted or seed.complete.upper > alpha) return null;
+    while (true) {
+        const mid = (inside + outside) / 2;
+        if (mid == inside or mid == outside) return null;
+        const trial = try tail(c, .relative_risk, .score2, mid, .two_sided, work);
+        if (trial == .exhausted) return null;
+        if (trial.complete.lower > alpha) {
+            inside = mid;
+        } else if (trial.complete.upper < alpha - 1e-6) {
+            if (inside - outside <= 1e-6) {
+                // At p1=1 the first-row count is fixed. When all row-two
+                // counts share the fitted nuisance endpoint, |Z| increases
+                // for y>=1. Check the closest alternative to certify that
+                // the accepted side contains this actual probability-one jump.
+                if (inside < b or (b > 1 and inside < 1 + b / a)) return null;
+                const event = try statistic(c, .relative_risk, .score2, inside);
+                const next = try statistic(.{ c[0], 0, 1, c[3] - 1 }, .relative_risk, .score2, inside);
+                return if (selected(next, reportedScore2Threshold(event), .two_sided)) mid else null;
+            }
+            outside = mid;
+        } else {
+            return null;
+        }
+    }
+}
+
 /// SAS-compatible OUTER search profile for RR NOSCORE. The certified
 /// mathematical inversion above remains the independent reference and default.
-/// Other families/methods retain that implementation unchanged.
+/// The separate SCORE2 lower-bound profile applies only at its certified
+/// opposing-row ordering jump.
 ///
 /// Verified with transition-b0..b3.sas under /tmp/opensas-stat-batch2/EXACT-RR-support:
 /// start at modified RR, seed with UNMODIFIED Wald upper, double its distance
@@ -563,6 +624,7 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
 /// nominal-coverage guarantee (see the complete sample-space counterexample).
 /// Do not claim full NOSCORE SAS parity from this profile alone.
 pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, alpha: f64, options: Options) Error!LimitsResult {
+    if (family == .relative_risk and method == .score2) return invertRiskLimits(table, column, family, method, alpha, options, true);
     if (family != .relative_risk or method != .noscore) return riskLimits(table, column, family, method, alpha, options);
     if (!std.math.isFinite(alpha) or alpha <= 0 or alpha >= 1 or
         !std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1 or
@@ -1373,4 +1435,31 @@ test "resolved SCORE2 risk inversion fits the default budget for 1 by 2450 row t
     const ci = (try riskLimitsSas(table, .first, .relative_risk, .score2, 0.95, .{ .allocator = t.allocator })).complete;
     try t.expectEqual(@as(f64, 0), ci.lower);
     try t.expectApproxEqAbs(@as(f64, 0.5), ci.upper, 2e-11);
+}
+
+test "reported SCORE2 lower limit at the opposing-row ordering jump agrees with M9" {
+    const t = std.testing;
+    // First three were predicted before an independent M9 run at alpha=.934;
+    // the fourth comes from the earlier .99 sweep (including the Z near-tie).
+    const Case = struct { a: u32, b: u32, alpha: f64, lower: f64 };
+    const cases = [_]Case{
+        .{ .a = 6, .b = 8, .alpha = 0.934, .lower = 15.9999998062849 },
+        .{ .a = 8, .b = 11, .alpha = 0.934, .lower = 21.9999997243285 },
+        .{ .a = 11, .b = 6, .alpha = 0.934, .lower = 11.9999996721744 },
+        .{ .a = 2, .b = 5, .alpha = 0.99, .lower = 9.9999998062849 },
+    };
+    for (cases) |c| {
+        const table = tableOf(.{ c.a, 0, 0, c.b });
+        const bounds = (try riskLimitsSas(table, .first, .relative_risk, .score2, c.alpha, .{})).complete;
+        try t.expectApproxEqAbs(c.lower, bounds.lower, 1e-13);
+        try t.expect(std.math.isInf(bounds.upper));
+        const ref = (try riskLimits(table, .first, .relative_risk, .score2, c.alpha, .{})).complete;
+        try t.expectApproxEqAbs(2 * @as(f64, @floatFromInt(c.b)), ref.lower, 2e-10);
+        try t.expect(bounds.lower < ref.lower);
+    }
+    // The saved 3:2, alpha=.5 discrepancy occurs at r=2, away from the
+    // r=4 probability-one plateau; its certified reference remains in use.
+    const interior = tableOf(.{ 3, 0, 0, 2 });
+    const raw = (try riskLimits(interior, .first, .relative_risk, .score2, 0.5, .{})).complete;
+    try t.expectEqual(raw, (try riskLimitsSas(interior, .first, .relative_risk, .score2, 0.5, .{})).complete);
 }
