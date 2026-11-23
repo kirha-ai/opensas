@@ -75,6 +75,14 @@ S002      BASELINE     142      91     108
 `opensas --sasautos ./macros program.sas` adds an autocall macro library. A
 `libname` points to a directory; members resolve as `.sas7bdat`, `.xpt` or
 `.csv`, and datasets the program writes land there in the same formats.
+For native UNIVARIATE distribution plots, `opensas --graphics-dir figures program.sas`
+writes numbered SVG files and reports their paths in the log. CDFPLOT, PPPLOT,
+QQPLOT and PROBPLOT support this output. CLASS levels share axes in a single
+figure for each BY group, variable and requested curve. ODS GRAPHICS OFF
+suppresses new figures. With ODS GRAPHICS ON, LISTING GPATH supplies the
+directory and defaults to the current directory. A CLI directory takes precedence.
+Existing files are preserved.
+
 [`tests/programs/dm`](tests/programs/dm) is a complete example: a raw
 demographics dataset mapped to the SDTM DM domain, with the expected output.
 

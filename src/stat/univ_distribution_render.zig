@@ -50,7 +50,7 @@ pub fn familyName(family: dist.Family) []const u8 {
     };
 }
 
-fn parameters(a: std.mem.Allocator, curve: dist.Distribution) ![]Parameter {
+pub fn parameters(a: std.mem.Allocator, curve: dist.Distribution) ![]Parameter {
     var rows: std.ArrayList(Parameter) = .empty;
     const p = curve.p;
     if (curve.family == .normal) {

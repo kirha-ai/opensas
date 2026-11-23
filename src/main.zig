@@ -35,12 +35,20 @@ pub fn main(init: std.process.Init) !void {
     // Parse `--sasautos <dir>` (autocall library) anywhere in the args; the first
     // non-flag arg is the input `.sas`. `$SASAUTOS` is the fallback.
     var file: ?[]const u8 = null;
+    var graphics_dir: ?[]const u8 = null;
     var sasautos: ?[]const u8 = init.environ_map.get("SASAUTOS");
     var ai: usize = 1;
     while (ai < args.len) : (ai += 1) {
         if (std.mem.eql(u8, args[ai], "--sasautos") and ai + 1 < args.len) {
             sasautos = args[ai + 1];
             ai += 1;
+        } else if (std.mem.eql(u8, args[ai], "--graphics-dir")) {
+            if (ai + 1 >= args.len or args[ai + 1].len == 0) {
+                std.debug.print("opensas: --graphics-dir requires a directory\n", .{});
+                std.process.exit(1);
+            }
+            ai += 1;
+            graphics_dir = args[ai];
         } else if (std.mem.eql(u8, args[ai], "--version") or std.mem.eql(u8, args[ai], "-V")) {
             // GH#10 ISS-versionflag: SHORT-CIRCUIT before the input file is even
             // opened — `sas --version anything.sas` still prints, and the old
@@ -58,7 +66,7 @@ pub fn main(init: std.process.Init) !void {
         }
     }
     if (file == null) {
-        std.debug.print("usage: opensas [--sasautos <dir>] <file.sas>\n", .{});
+        std.debug.print("usage: opensas [--sasautos <dir>] [--graphics-dir <dir>] <file.sas>\n", .{});
         return;
     }
     sas.macro.setAutocallDir(sasautos);
@@ -70,7 +78,7 @@ pub fn main(init: std.process.Init) !void {
 
     var diags = sas.diag.Diagnostics.init(a);
     var out: std.ArrayList(u8) = .empty;
-    interpret(a, &out, &diags, src, io) catch |e| {
+    interpretNative(a, &out, &diags, src, io, graphics_dir) catch |e| {
         // A propagated lex/parse/exec error already recorded a located diagnostic
         // via diags.fail() — render() below prints `ERROR(Ln): …`. Only emit the
         // bare error-name line when NO diagnostic carries the detail (e.g.
@@ -163,6 +171,15 @@ fn failLoud(comptime fmt: []const u8, args: anytype) void {
 /// error. Under `is_test` the captured reporter holds it, never stderr (D-003).
 fn userErr(diags: *sas.diag.Diagnostics, comptime fmt: []const u8, args: anytype) void {
     diags.report(.err, 0, fmt, args) catch {};
+}
+
+/// Native CLI graphics sessions are scoped to one interpretation. The existing
+/// in-memory/wasm entry point keeps its explicit numerical-consumer contract.
+fn interpretNative(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag.Diagnostics, src: []const u8, io: Io, graphics_dir: ?[]const u8) !void {
+    var graphics = sas.proc.native_graphics.Session{ .arena = a, .io = io, .diags = diags, .cli_dir = graphics_dir };
+    native_graphics_session = &graphics;
+    defer native_graphics_session = null;
+    try interpret(a, out, diags, src, io);
 }
 
 /// Run a whole `.sas` source, appending all program output to `out`. `io` is
@@ -1397,6 +1414,7 @@ fn stepEnd(toks: []const Token, from: usize) usize {
 /// stamp order (titles atop a listing, footnotes below) live on the type there.
 const Globals = sas.sql.Titles;
 var ods_capture: sas.proc.ods.Capture = .{};
+var native_graphics_session: ?*sas.proc.native_graphics.Session = null;
 
 /// A top-level global statement. TITLE/FOOTNOTE update the persistent state
 /// (emitted later by the listing procs); OPTIONS applies runtime settings,
@@ -2034,6 +2052,7 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     // EXCLUDE and TRACE still fail loud; destination rendering stays inert.
     if (eqi(kw, "ods") and toks.len >= 2 and toks[1].tag == .name) {
         const sub = toks[1].text;
+        if (native_graphics_session) |graphics| try graphics.configure(toks);
         if (eqi(sub, "output")) {
             return ods_capture.parse(a, diags, toks);
         }
@@ -2832,7 +2851,8 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         return;
     }
     const proc = toks[1].text;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture };
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .univariate_plot_sink = if (native_graphics_session) |graphics| graphics.sink() else null };
+    if (native_graphics_session) |graphics| graphics.pending.clearRetainingCapacity();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
@@ -2911,6 +2931,7 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         failLoud("PROC {s} is not supported", .{proc});
     }
 
+    if (native_graphics_session) |graphics| try graphics.flush();
     try ods_capture.finish(lib, diags);
     if (listing and !print_bysubst) try g.emitFootnotes(a, out);
 }
@@ -6762,4 +6783,65 @@ test "FEAT-odsoutput missing objects warn empty noprint close and session reset"
     try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, "ods output Moments=m;", &log));
     try std.testing.expectEqual(@as(u8, 0), try rcOf(a, &out, data ++ "proc print data=d; run;", &log));
     try std.testing.expect(std.mem.indexOf(u8, log, "was not created") == null);
+}
+
+test "native UNIVARIATE SVGs and ODS data use M9 step tie and quantile coordinates" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source =
+        "data d; input x @@; datalines;\n-2 -1 -1 0 .5 .5 1 3\n;run;\n" ++
+        "ods graphics on; ods output PPPlot=p QQPlot=q; proc univariate data=d noprint; var x; cdfplot/vscale=proportion; ppplot/normal(mu=0 sigma=1); qqplot/gamma(alpha=2 sigma=1); run;\n" ++
+        "proc sql; select count(*) as rows from p;quit;proc print data=p noobs;run;\n" ++
+        "ods graphics off;proc univariate data=d noprint;var x; qqplot/normal;run;\n" ++
+        "ods graphics on;proc univariate data=d noprint;var x;probplot / normal(mu=0 sigma=1) rotate;run;\n";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const cdf = try dir.dir.readFileAlloc(io_, "opensas-0001-cdf.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, cdf, " V"));
+    try std.testing.expect(std.mem.indexOf(u8, cdf, "class=\"fitted\"") == null);
+    const pp = try dir.dir.readFileAlloc(io_, "opensas-0002-pp.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, pp, "<circle "));
+    try std.testing.expect(std.mem.indexOf(u8, pp, "data-y=\"0.375\" data-observed=\"-1\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, pp, "class=\"reference\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "0.15866") != null);
+    const qq = try dir.dir.readFileAlloc(io_, "opensas-0003-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 8), std.mem.count(u8, qq, "<circle "));
+    try std.testing.expect(std.mem.indexOf(u8, qq, "Gamma quantile") != null);
+    try std.testing.expect(std.mem.indexOf(u8, qq, "class=\"reference\"") == null);
+    const probability = try dir.dir.readFileAlloc(io_, "opensas-0004-probability.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, probability, "Normal percentile") != null);
+    try std.testing.expect(std.mem.indexOf(u8, probability, "rotate(-90)") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-qq.svg", .{}));
+}
+
+test "native plots use listing GPATH grouped CLASS panels escaped labels and preserve existing files" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    const program = try std.fmt.allocPrint(a, "data sample; input site $ x; label x='A < B & C'; datalines;\nA 1\nA 2\nA 5\nB 3\nB 4\nB 7\n;run;\n" ++
+        "ods listing gpath='{s}'; ods graphics on; proc univariate data=sample noprint; class site;var x;qqplot/normal(mu=est sigma=est);run;ods graphics off;", .{path});
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try dir.dir.writeFile(io_, .{ .sub_path = "opensas-0001-qq.svg", .data = "existing" });
+    try interpretNative(a, &out, &d, program, io_, null);
+    try std.testing.expect(!d.hasErrors());
+    const svg = try dir.dir.readFileAlloc(io_, "opensas-0002-qq.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, svg, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, svg, "<circle "));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, svg, "class=\"reference\""));
+    try std.testing.expect(std.mem.indexOf(u8, svg, "site = A") != null);
+    try std.testing.expect(std.mem.indexOf(u8, svg, "site = B") != null);
+    try std.testing.expect(std.mem.indexOf(u8, svg, "A &lt; B &amp; C") != null);
+    try std.testing.expectEqualStrings("existing", try dir.dir.readFileAlloc(io_, "opensas-0001-qq.svg", a, .limited(64)));
 }

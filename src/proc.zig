@@ -46,6 +46,7 @@ const freq_stat = @import("stat/freq.zig");
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
 pub const ods = @import("ods.zig");
+pub const native_graphics = @import("stat/graphics_svg.zig");
 pub const univariate_plot = @import("stat/univ_plot_data.zig");
 pub const univariate_edf = @import("stat/univ_edf_inference.zig");
 pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };

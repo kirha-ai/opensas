@@ -29,8 +29,19 @@ pub const Plot = struct {
     rotated: bool = false,
     probability_scale: f64 = 1,
     weibull2: bool = false,
+    cdf_overlay: bool = true,
+    statement_index: usize = 0,
+    by_index: usize = 0,
+    curve_index: usize = 0,
 };
 pub const Sink = struct {
+    enabled: bool = true,
     context: ?*anyopaque = null,
     emit: *const fn (?*anyopaque, Plot) diag.Error!void,
 };
+
+/// M9 plot tables and their rendered point cloud use the right endpoint of
+/// each P-P tie. The numerical sink still exposes every source rank.
+pub fn visiblePoint(plot: Plot, i: usize) bool {
+    return (plot.kind != .pp and plot.kind != .cdf) or i + 1 == plot.points.len or plot.points[i].observed != plot.points[i + 1].observed;
+}

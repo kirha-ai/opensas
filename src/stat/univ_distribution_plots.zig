@@ -19,6 +19,7 @@ pub const Statement = struct {
     variables: [][]const u8,
     curves: parameters.Curves,
     weibull2: bool = false,
+    cdf_overlay: bool = false,
     rankadj: f64 = -0.375,
     nadj: f64 = 0.25,
     rotated: bool = false,
@@ -36,6 +37,7 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
         const option = t[i.*].text;
         if (parameters.family(option) != null or eq(option, "weibull2") or eq(option, "w2")) {
             if (statement.curves.requests.len != 0) return d.fail(error.ParseError, 0, "UNIVARIATE: a plot statement accepts only one distribution family", .{});
+            statement.cdf_overlay = true;
             statement.weibull2 = eq(option, "weibull2") or eq(option, "w2");
             if (statement.weibull2 and (kind == .cdf or kind == .pp)) return d.fail(error.ParseError, 0, "UNIVARIATE: WEIBULL2 is a QQPLOT/PROBPLOT option", .{});
             statement.curves = try parameters.parsePlot(a, d, t, i);
@@ -97,7 +99,7 @@ fn curve(d: *diag.Diagnostics, x: []const f64, request: fitting.Request, quantil
 /// Sorted finite values after FREQ expansion, without graphical side effects.
 pub fn calculate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, statement: Statement, request: fitting.Request, variable: @import("../dataset.zig").Column, keys: []const data.Key) diag.Error!data.Plot {
     const quantile = statement.kind == .qq or statement.kind == .probability;
-    const fitted = try curve(d, x, request, quantile);
+    const fitted = if (statement.kind == .cdf and !statement.cdf_overlay) dist.Distribution{ .family = .normal, .p = .{} } else try curve(d, x, request, quantile);
     const points = try a.alloc(data.Point, x.len);
     var reference: ?data.Reference = null;
     if (quantile) {
@@ -126,13 +128,13 @@ pub fn calculate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, sta
                 while (tie_end < x.len and x[tie_end] == v) tie_end += 1;
             }
             const empirical = @as(f64, @floatFromInt(if (statement.kind == .cdf) tie_end else j + 1)) / n;
-            const theoretical = fitted.cdf(v);
+            const theoretical = if (statement.kind == .cdf and !statement.cdf_overlay) std.math.nan(f64) else fitted.cdf(v);
             point.* = .{ .x = if (statement.kind == .cdf) v else theoretical, .y = empirical * statement.probability_scale, .observed = v, .empirical_probability = empirical, .theoretical_probability = theoretical };
         }
         if (statement.kind == .pp and !statement.curves.noline) reference = .{ .intercept = 0, .slope = 1 };
     }
     if (statement.rotated) for (points) |*point| std.mem.swap(f64, &point.x, &point.y);
-    return .{ .kind = statement.kind, .variable = variable, .keys = keys, .distribution = fitted, .points = points, .reference = reference, .rotated = statement.rotated, .probability_scale = statement.probability_scale, .weibull2 = statement.weibull2 };
+    return .{ .kind = statement.kind, .variable = variable, .keys = keys, .distribution = fitted, .points = points, .reference = reference, .rotated = statement.rotated, .probability_scale = statement.probability_scale, .weibull2 = statement.weibull2, .cdf_overlay = statement.cdf_overlay };
 }
 
 const Collector = struct {
@@ -269,12 +271,13 @@ test "UNIVARIATE public QQ Weibull ITPRINT reaches listing and consumer" {
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
-    for (statements) |statement| {
+    for (statements, 0..) |statement, statement_index| {
         if (wc != null) return cx.diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
         const source = opt.source orelse ds;
         const cols = try variables.resolve(a, cx.diags, source, acols, statement.variables, has_var);
         const sink = cx.univariate_plot_sink orelse return proc.failGap(cx.diags, 0, "UNIVARIATE: {s} graphics require a plot consumer; graphics rendering is not supported", .{@tagName(statement.kind)});
-        for (try univ.bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+        if (!sink.enabled) continue;
+        for (try univ.bySlices(a, ds.rows.items, bcols, opt), 0..) |bs, by_index| {
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
@@ -306,21 +309,51 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     }
                     if (x.items.len == 0) continue;
                     std.mem.sort(f64, x.items, {}, std.sort.asc(f64));
-                    for (statement.curves.requests) |request| {
+                    for (statement.curves.requests, 0..) |request, curve_index| {
                         var actual_request = request;
                         var report: fitting.Report = .{};
                         var trace: fitting.Trace = .{ .allocator = a };
                         actual_request.report = &report;
                         if (request.itprint) actual_request.trace = &trace;
-                        const plot = calculate(a, cx.diags, x.items, statement, actual_request, source.columns.items[ci], keys) catch |err| {
+                        var plot = calculate(a, cx.diags, x.items, statement, actual_request, source.columns.items[ci], keys) catch |err| {
                             if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
                             return err;
                         };
                         if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
+                        plot.statement_index = statement_index;
+                        plot.by_index = by_index;
+                        plot.curve_index = curve_index;
                         try sink.emit(sink.context, plot);
+                        if (cx.capture) |capture| try publishPoints(a, cx.diags, capture, plot);
                     }
                 }
             }
         }
     }
+}
+
+fn publishPoints(a: std.mem.Allocator, d: *diag.Diagnostics, capture: *@import("../ods.zig").Capture, plot: data.Plot) diag.Error!void {
+    const name: []const u8 = switch (plot.kind) {
+        .pp => "PPPlot",
+        .qq => "QQPlot",
+        else => return,
+    };
+    if (!capture.wants(name)) return;
+    const b = @import("ods_table.zig");
+    var table = b.Builder{ .ds = Dataset.init(a, ""), .prefix = &.{} };
+    const prefix = try a.alloc(Value, plot.keys.len);
+    for (plot.keys, prefix) |key, *cell| {
+        _ = try table.ds.addColumnLike(key.column.name, key.column);
+        cell.* = key.value;
+    }
+    table.prefix = prefix;
+    try table.char("VarName", @max(8, plot.variable.name.len));
+    try table.num(name, null);
+    try table.num(if (plot.kind == .pp) "Theoretical" else "Quantile", "8.5");
+    try table.num(if (plot.kind == .pp) "Empirical" else "Data", null);
+    for (plot.points, 0..) |point, i| {
+        if (!data.visiblePoint(plot, i)) continue;
+        try table.row(&.{ b.s(plot.variable.name), b.n(@floatFromInt(plot.curve_index + 1)), b.n(if (plot.kind == .pp) point.theoretical_probability else point.theoretical_quantile.?), b.n(if (plot.kind == .pp) point.empirical_probability else point.observed) });
+    }
+    try capture.publish(a, d, name, &table.ds);
 }

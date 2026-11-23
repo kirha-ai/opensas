@@ -110,6 +110,12 @@ these caused real regressions (see D-001).
   FEAT-base-stat-results. Neither inert form is an unimplemented gap waiting
   for a dev — both are deliberate, and `docs/sas9.4.ebnf` deliberately withholds
   `(* opensas *)` from `x_stmt`/`ods_stmt` to say so. Do not "finish" them.
+  Native statistical graphics are a separate file output. The CLI writes SVG
+  for supported plot requests when a graphics directory or ODS Graphics is
+  explicitly enabled. ODS GRAPHICS OFF suppresses that output. An explicit
+  CLI directory takes precedence over LISTING GPATH. Embedded interpreters
+  supply their own plot consumer. Destination rendering and SAS/GRAPH GRSEG
+  catalogs are separate facilities.
   (b) **BUT INERT MUST NOT MEAN SILENT.** `isInertGlobalKw`'s doc-comment
   justifies the whole set as *"Real SAS global statements a batch interpreter
   cannot observe"*. That justification is TRUE for RUN/QUIT, GOPTIONS, SASFILE,
