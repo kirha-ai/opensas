@@ -1840,6 +1840,26 @@ test "CORR reconstructs a rare occupied mixed corner at marginal precision" {
     try std.testing.expectApproxEqAbs(@as(f64, 321.12005493364404), fit.lr, 1e-7);
 }
 
+test "CORR retains upper-corner precision in the likelihood and next scoring step" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -54, -70, 5256 },  &.{ -54, -31, 3796 },  &.{ 119, -31, 73 },    &.{ 109, -139, 4015 },
+        &.{ -54, -136, 1898 }, &.{ -40, -139, 5183 }, &.{ -54, -139, 1168 }, &.{ 119, -139, 2336 },
+    });
+    const first = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9394343879823328), first.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.006855375898700553), first.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 19291.138813428144), first.lr, 1e-6);
+
+    const second = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.3 maxiter=2);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(second.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9045864059529483), second.r, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 19361.447810602287), second.lr, 1e-5);
+}
+
 test "CORR retracts a projected ordinal step when its likelihood loss is distinguishable" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

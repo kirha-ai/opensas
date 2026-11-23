@@ -225,6 +225,33 @@ pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     }
     return @max(0, total);
 }
+const NormalMargins = struct { lower: f64, upper: f64 };
+
+fn positiveNormalMargins(x: f64) NormalMargins {
+    const z: f128 = @as(f64, x * @sqrt(@as(f64, 0.5)));
+    const z2 = z * z;
+    // erf(z) is 2z/sqrt(pi) times the ratio of these positive series.
+    // Sum both in extended precision so that rounding erf and erfc separately
+    // also retains the small upper margin when the lower margin is near one.
+    var numerator: f128 = 1;
+    var denominator: f128 = 1;
+    var numerator_term: f128 = 1;
+    var denominator_term: f128 = 1;
+    var k: f128 = 1;
+    while (true) : (k += 1) {
+        numerator_term *= z2 / (k + 0.5);
+        denominator_term *= z2 / k;
+        numerator += numerator_term;
+        const next = denominator + denominator_term;
+        if (next == denominator) break;
+        denominator = next;
+    }
+    const value = (2 * z / @sqrt(@as(f128, std.math.pi))) * (numerator / denominator);
+    const erf: f64 = @floatCast(value);
+    const erfc: f64 = @floatCast(1 - value);
+    return .{ .lower = 0.5 * (1 + erf), .upper = 0.5 * erfc };
+}
+
 const ProbabilityUse = enum { fit, likelihood_gap };
 fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize, use: ProbabilityUse) f64 {
     const xl = if (i == 0) -40 else params[i - 1];
@@ -234,6 +261,18 @@ fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize, use:
     const rho = params[params.len - 1];
     const q = rectangleProbability(xl, xu, yl, yu, rho);
     if (use == .likelihood_gap or rho == 0 or !(q > 0)) return q;
+
+    if (rho < 0 and i + 1 == m.rows and j + 1 == m.cols and xl > 0 and yl > 0) {
+        // A probability far below the shared fitting floor has the same
+        // likelihood and score denominator after the corner subtractions.
+        if (q + 4 * std.math.floatEps(f64) < minimum_cell_probability) return q;
+        const x = positiveNormalMargins(xl);
+        const y = positiveNormalMargins(yl);
+        // PROBBNRM constructs the lower-left CDF from the two upper margins.
+        // The rectangle then uses the independently rounded lower margins.
+        const lower_left = 1 - ((x.upper + y.upper) - q);
+        return @max(0, ((1 - y.lower) - x.lower) + lower_left);
+    }
 
     // CORR obtains a mixed outer corner by subtracting its bivariate CDF
     // from a marginal CDF. Reconstruct the CDF from the integrated tail:
