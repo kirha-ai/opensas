@@ -284,7 +284,20 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     if (cats.len < 2 or cats.len > opt.ngroups or result.n < 2) return result;
     const mean = sum / result.n;
     var css: f64 = 0;
-    for (data) |d| css += d.f * (d.x - mean) * (d.x - mean);
+    var y_sum: f64 = 0;
+    const origin_y = cats[0];
+    for (data) |d| {
+        css += d.f * (d.x - mean) * (d.x - mean);
+        y_sum += d.f * (d.y - origin_y);
+    }
+    const y_mean = y_sum / result.n;
+    var yy: f64 = 0;
+    var xy: f64 = 0;
+    for (data) |d| {
+        const dy = (d.y - origin_y) - y_mean;
+        yy += d.f * dy * dy;
+        xy += d.f * (d.x - mean) * dy;
+    }
     if (!(css > 0)) return result;
     var increasing = true;
     var decreasing = true;
@@ -312,6 +325,9 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     }
     params[dim - 1] = 0;
     const null_ll = serialLikelihood(ctx, params);
+    // The observed Hessian at independence can be indefinite for strongly
+    // associated pairs. Initialize at the marginal Pearson correlation.
+    params[dim - 1] = xy / @sqrt(css * yy);
     const hess = try a.alloc(f64, dim * dim);
     defer a.free(hess);
     const grad = try a.alloc(f64, dim);
@@ -392,4 +408,46 @@ pub fn hoeffding(data: []const Observation) Estimate {
     result.r = 30 * ((n - 2) * (n - 3) * d1 + d2 - 2 * (n - 2) * d3) / (n * (n - 1) * (n - 2) * (n - 3) * (n - 4));
     result.p = @import("corr_hoeffding_probability.zig").probability(result.r, result.n);
     return result;
+}
+
+test "CORR polyserial Fitness1 RunTime and Oxygen from SAS example 2.5" {
+    const observed = [_][2]f64{
+        .{ 11.37, 8 },
+        .{ 10.07, 9 },
+        .{ 8.65, 10 },
+        .{ 8.17, 11 },
+        .{ 11.63, 8 },
+        .{ 11.95, 9 },
+        .{ 10.85, 9 },
+        .{ 13.08, 7 },
+        .{ 8.63, 12 },
+        .{ 10.13, 10 },
+        .{ 14.03, 7 },
+        .{ 11.12, 8 },
+        .{ 10.60, 9 },
+        .{ 10.33, 10 },
+        .{ 8.95, 9 },
+        .{ 10.95, 8 },
+        .{ 10.00, 9 },
+        .{ 10.25, 9 },
+        .{ 12.63, 7 },
+        .{ 11.17, 9 },
+        .{ 9.63, 9 },
+        .{ 8.92, 10 },
+        .{ 11.08, 9 },
+        .{ 12.88, 7 },
+        .{ 10.47, 9 },
+        .{ 9.93, 10 },
+        .{ 11.50, 9 },
+        .{ 10.50, 9 },
+    };
+    var data: [observed.len]Observation = undefined;
+    for (observed, &data) |v, *d| d.* = .{ .x = v[0], .y = v[1] };
+    const fit = try polyserial(std.testing.allocator, &data, .{});
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 28), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.91042), fit.r, 0.000005);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.04071), fit.se, 0.000005);
+    try std.testing.expectApproxEqAbs(@as(f64, 500.0345), fit.wald, 0.00005);
+    try std.testing.expectApproxEqAbs(@as(f64, 38.6963), fit.lr, 0.00005);
 }
