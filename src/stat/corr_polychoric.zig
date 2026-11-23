@@ -252,6 +252,8 @@ fn cellGradient(m: CountMatrix, params: []const f64, i: usize, j: usize, out: []
     if (j + 1 < m.cols) out[m.rows + j - 1] = normalPdf(yu) * normalInterval(conditionalCut(xl, yu, rho, sd), conditionalCut(xu, yu, rho, sd));
     out[params.len - 1] = bivariateDensity(xu, yu, rho) - bivariateDensity(xl, yu, rho) - bivariateDensity(xu, yl, rho) + bivariateDensity(xl, yl, rho);
 }
+const minimum_cell_probability = 1e-12;
+
 fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     if (@abs(params[params.len - 1]) >= 1) return std.math.inf(f64);
     for (1..m.rows - 1) |i| if (params[i] <= params[i - 1]) return std.math.inf(f64);
@@ -260,8 +262,8 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     for (m.counts, 0..) |n, k| {
         if (n == 0) continue;
         const p = cellProbability(m, params, k / m.cols, k % m.cols);
-        if (!std.math.isFinite(p) or p <= 0) return std.math.inf(f64);
-        result -= n * @log(p);
+        if (!std.math.isFinite(p) or p < 0) return std.math.inf(f64);
+        result -= n * @log(@max(p, minimum_cell_probability));
     }
     return result;
 }
@@ -295,8 +297,9 @@ fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64) ?Like
             empty_error += q * rectangle_relative_error + rectangle_absolute_error;
             continue;
         }
-        if (q == 0) return null;
         const empirical = count / total;
+        // The gap identity requires the untruncated occupied probabilities.
+        if (q < minimum_cell_probability or empirical < minimum_cell_probability) return null;
         const ratio = q / empirical;
         const e = @abs((q - empirical) / empirical) + ratio * rectangle_relative_error;
         if (e < 1) {
@@ -492,17 +495,16 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             const i = cell / m.cols;
             const j = cell % m.cols;
             const probability = cellProbability(m, params, i, j);
-            if (!std.math.isFinite(probability) or (probability <= 0 and n > 0))
+            if (!std.math.isFinite(probability) or probability < 0)
                 return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
-            if (!(probability > 0)) continue;
+            if (probability == 0 and n == 0) continue;
             cellGradient(m, params, i, j, derivatives);
-            // SAS's information denominator safeguard is distinct from the
-            // actual likelihood probability. The bounded case-2 oracle also
-            // discriminates this at finite, nonzero standard errors.
-            const information_probability = @max(probability, 1e-12);
+            // M9 uses the same lower bound for an occupied cell in the
+            // likelihood, score, and expected information.
+            const denominator = @max(probability, minimum_cell_probability);
             for (0..dim) |r| {
-                gradient[r] -= n * derivatives[r] / probability;
-                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / information_probability;
+                gradient[r] -= n * derivatives[r] / denominator;
+                for (0..dim) |c| hessian[r * dim + c] += t.n * derivatives[r] * derivatives[c] / denominator;
             }
         }
         @memcpy(saved_information, hessian);
@@ -607,6 +609,22 @@ fn chiTail(x: f64, df: f64) f64 {
         if (@abs(delta - 1) < 1e-15) break;
     }
     return @max(0, @min(1, @exp(-z + a * @log(z) - fns.lgammaOf(a)) * h));
+}
+
+test "CORR limits tiny occupied probabilities in the independence likelihood" {
+    // At N=2,000,000 the independent (0,0) probability is exactly 1e-12.
+    const cases = [_]struct { last: f64, rho: f64, lr: f64 }{
+        .{ .last = 800000, .rho = 0.9607104663828177, .lr = 23.63956531881088 },
+        .{ .last = 1999997, .rho = 0.9634949539264885, .lr = 25.4721385328007 },
+        .{ .last = 8000000, .rho = 0.9670390368242384, .lr = 22.699548685896232 },
+    };
+    for (cases) |case| {
+        const counts = [_]f64{ 1, 1, 1, case.last };
+        const fit = try polychoric(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .{ .converge = 1e-6 });
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(case.rho, fit.coefficient.estimate.?, 1e-9);
+        try std.testing.expectApproxEqAbs(case.lr, fit.likelihood_ratio.?.statistic, 5e-9);
+    }
 }
 
 test "CORR single-zero tetrachoric tables use the requested iteration limit" {

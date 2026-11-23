@@ -1716,6 +1716,32 @@ test "CORR polychoric returns a finite first step for an independent frequency t
     try std.testing.expectApproxEqAbs(@as(f64, 0), fit.lr, 1e-9);
 }
 
+test "CORR uses the occupied cell probability floor in fitted likelihood and score" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -72, -88, 101 }, &.{ 43, 119, 2121 }, &.{ -72, 119, 7171 }, &.{ 0, 119, 1616 },
+        &.{ 43, -88, 1414 }, &.{ 43, 91, 6666 },  &.{ 43, 68, 606 },    &.{ -48, 119, 1010 },
+    });
+    // The first fit assigns probability 4.35e-13 to an occupied cell.
+    // Its LR checks the logarithm, and later fits check the scoring step.
+    const cases = [_]struct { tol: []const u8, rho: f64, se: f64, lr: f64 }{
+        .{ .tol = "1", .rho = -0.96106981353344, .se = 0.0086265455138, .lr = 12009.7483795129 },
+        .{ .tol = ".1", .rho = -0.89437947232223, .se = 0.00294875255757, .lr = 13612.6341753773 },
+        .{ .tol = "1e-6", .rho = -0.8999899142733, .se = 0.00316562143193, .lr = 13622.2627583379 },
+    };
+    for (cases) |case| {
+        const src = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s});var x;with y;freq f;run;", .{case.tol});
+        const fit = (try Testing.analyze(a, ds, src)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectEqual(@as(f64, 20705), fit.n);
+        try std.testing.expectApproxEqAbs(case.rho, fit.r, 1e-12);
+        try std.testing.expectApproxEqAbs(case.se, fit.se, 1e-13);
+        try std.testing.expectApproxEqAbs(case.lr, fit.lr, 1e-9);
+    }
+}
+
 test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
