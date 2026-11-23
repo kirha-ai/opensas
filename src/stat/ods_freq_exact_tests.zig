@@ -28,15 +28,15 @@ fn fisherRows(rows: *Rows, result: render.Fisher, opt: parse.Options) !void {
     if (opt.midp) try rows.probability("XMP_FISH", "Mid p-Value", @max(0, result.p - result.point / 2));
 }
 
-fn chiRows(rows: *Rows, suffix: []const u8, statistic: k.Test, p: ?dist.Probabilities, opt: parse.Options) !void {
+fn chiRows(rows: *Rows, suffix: []const u8, statistic: k.Test, p: ?dist.Probabilities, small_score: bool, opt: parse.Options) !void {
     const a = rows.a;
     try rows.number(try std.fmt.allocPrint(a, "_{s}_", .{suffix}), "Chi-Square", statistic.statistic, "10.4");
     try rows.number(try std.fmt.allocPrint(a, "DF_{s}", .{suffix}), "DF", statistic.df, "best12.");
     try rows.add(try std.fmt.allocPrint(a, "P_{s}", .{suffix}), "Asymptotic Pr >  ChiSq", try render.probability(a, statistic.p, .default), statistic.p);
-    if (p) |exact| {
-        try rows.probability(try std.fmt.allocPrint(a, "XP_{s}", .{suffix}), "Exact      Pr >= ChiSq", exact.two_sided);
-        if (opt.point) try rows.probability(try std.fmt.allocPrint(a, "XPT_{s}", .{suffix[0..4]}), "Exact      Pr  = ChiSq", exact.point);
-        if (opt.midp) try rows.probability(try std.fmt.allocPrint(a, "XMP_{s}", .{suffix}), "Exact Mid p-Value", @max(0, exact.two_sided - exact.point / 2));
+    if (p != null or small_score) {
+        try rows.probability(try std.fmt.allocPrint(a, "XP_{s}", .{suffix}), "Exact      Pr >= ChiSq", if (p) |exact| exact.two_sided else null);
+        if (opt.point) try rows.probability(try std.fmt.allocPrint(a, "XPT_{s}", .{suffix[0..4]}), "Exact      Pr  = ChiSq", if (p) |exact| exact.point else null);
+        if (opt.midp) try rows.probability(try std.fmt.allocPrint(a, "XMP_{s}", .{suffix}), "Exact Mid p-Value", if (p) |exact| @max(0, exact.two_sided - exact.point / 2) else null);
     }
 }
 
@@ -64,7 +64,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         var builder = try b.Builder.init(a, source, by, rep);
         try builder.char("Table", 256);
         var rows = try Rows.init(a, &builder, table, opt.pformat, 10);
-        try chiRows(&rows, suffix, statistic.?, exact.exact_tests.get(family), opt);
+        try chiRows(&rows, suffix, statistic.?, exact.exact_tests.get(family), exact.small_scores.contains(family), opt);
         rows.finish();
         try capture.publish(a, d, object, &builder.ds);
     }

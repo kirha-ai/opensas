@@ -48,6 +48,7 @@ pub const Result = union(enum) {
     risk_intervals: struct { first: ?exact.Interval = null, second: ?exact.Interval = null },
     barnard: Barnard,
     exhausted,
+    score_too_small: bool, // sign of the observed directional statistic
     /// Valid family, but not defined for this table's dimensions/zero variance.
     not_applicable,
     /// Joint strata must be dispatched through their dedicated adapter.
@@ -212,6 +213,16 @@ fn applicable(f: parse.Family, m: tests.CountMatrix) bool {
         else => m.rows > 1 and m.cols > 1,
     };
 }
+
+fn smallNetworkScore(scores: ?[]const f64) bool {
+    // Adjacent binary64 M9 probes straddle sqrt(unit roundoff). Zero is a
+    // valid score. This check belongs to the network algorithm, not simulation.
+    const minimum = @sqrt(std.math.floatEps(f64) / 2);
+    for (scores orelse return false) |s| {
+        if (s != 0 and @abs(s) <= minimum) return true;
+    }
+    return false;
+}
 /// Group options must be expanded by Options.expanded before calling this.
 pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Config) Error!Result {
     if (f == .comor or f == .eqor) return .requires_strata;
@@ -330,6 +341,18 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         .binary_response = if (f != .trend) .none else if (m.cols == 2) .columns else .rows,
     };
     const mc = c.options.mc and parse.supportsMonteCarlo(f, m.rows, m.cols);
+    if (!mc and switch (f) {
+        .mhchi, .pcorr => smallNetworkScore(m.row_scores) or smallNetworkScore(m.col_scores),
+        .trend => smallNetworkScore(if (m.cols == 2) m.row_scores else m.col_scores),
+        else => false,
+    }) {
+        const value = callback.evaluate(callback.context, integers) catch |err| {
+            if (err == error.OutOfMemory) return err;
+            return .not_applicable;
+        };
+        if (!std.math.isFinite(value)) return .not_applicable;
+        return .{ .score_too_small = value > callback.expected };
+    }
     if (m.rows == 1) {
         var total: f64 = 0;
         for (m.counts) |v| total += v;
@@ -358,6 +381,27 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         return .{ .fisher = .{ .table_probability = try dist.tableProbability(integers), .first_cell = null, .cell_tails = null, .probabilities = enumerated.complete } };
     }
     return finish(enumerated);
+}
+
+test "network tests enforce the native score precision boundary only on their scoring axes" {
+    const t = std.testing;
+    // M9 score-floor-m9.sas: hexadecimal BCC and BCD report missing exact
+    // rows; BCE proceeds. The Monte Carlo estimators remain available.
+    const last: f64 = @bitCast(@as(u64, 0x3e46a09e667f3bcd));
+    const first: f64 = @bitCast(@as(u64, 0x3e46a09e667f3bce));
+    for ([_]f64{ std.math.nextAfter(f64, last, 0), last, -last, first, 0 }) |s| {
+        const m = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 1, 5, 3, 2, 2, 4 }, .row_scores = &.{ 0, s, 1 }, .col_scores = &.{ 1, 2 } };
+        for ([_]parse.Family{ .trend, .pcorr, .mhchi }) |f| {
+            const r = try run(t.allocator, m, f, .{});
+            try t.expect((r == .score_too_small) == (s != 0 and @abs(s) <= last));
+            const mc = try run(t.allocator, m, f, .{ .options = .{ .mc = true, .samples = 31 }, .effective_seed = 71 });
+            try t.expect(mc.monte_carlo.estimates == .complete);
+        }
+    }
+    const response = tests.CountMatrix{ .rows = 3, .cols = 2, .counts = &.{ 1, 5, 3, 2, 2, 4 }, .row_scores = &.{ 1, 2, 3 }, .col_scores = &.{ last, 1 } };
+    try t.expect((try run(t.allocator, response, .trend, .{})) == .exact_test);
+    try t.expect((try run(t.allocator, response, .pcorr, .{})) == .score_too_small);
+    try t.expect((try run(t.allocator, response, .mhchi, .{})) == .score_too_small);
 }
 
 test "2x2 Fisher matches exhaustive integer weights, ties, and both cell tails" {

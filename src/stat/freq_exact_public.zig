@@ -221,6 +221,7 @@ fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
 
 pub const Tables = struct {
     exact_tests: std.EnumArray(parse.Family, ?@import("freq_exact_distribution.zig").Probabilities) = .initFill(null),
+    small_scores: std.EnumSet(parse.Family) = .initEmpty(),
     fisher: ?renderers.Fisher = null,
     fisher_table_probability: ?f64 = null,
     odds_ratio: ?@import("freq_exact.zig").Interval = null,
@@ -292,6 +293,17 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         switch (result) {
             .not_applicable => {},
             .requires_strata => unreachable,
+            .score_too_small => |right| {
+                limits.small_scores.insert(f);
+                const name = switch (f) {
+                    .mhchi => "Mantel-Haenszel Chi-Square",
+                    .pcorr => "Pearson Correlation",
+                    .trend => "Cochran-Armitage Trend Test",
+                    else => unreachable,
+                };
+                try d.report(.warning, 0, "For the following exact computation, absolute value of non-zero row/column scores cannot be smaller than 1.05E-08: {s}.", .{name});
+                try renderers.testResult(a, out, title(f), .{ .not_defined = if (directional(f)) right else null }, options);
+            },
             .exhausted => {
                 try d.report(.warning, 0, "PROC FREQ EXACT {s}: resource limit reached; no partial p-value is reported", .{@tagName(f)});
                 try renderers.testResult(a, out, title(f), .exhausted, options);
@@ -488,6 +500,28 @@ test "public exact trend compares integral table scores independently of their s
     // of six successes among seventeen row slots give the same three tails.
     for ([_][]const u8{ "0.385180995475", "0.072721396251", "0.770846800259" }) |value|
         try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "public exact score warnings preserve the ordinary tests and missing tail rows" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{}, 2);
+    const ds = h.lib.sets.items[0];
+    const rows = [_]f64{ 0, 1e-9, 1 };
+    const counts = [_]f64{ 1, 5, 3, 2, 2, 4 };
+    for (counts, 0..) |v, k| try ds.appendRow(&.{ .{ .num = rows[k / 2] }, .{ .num = @floatFromInt(k % 2 + 1) }, .{ .num = v } });
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact pcorr mhchi trend / point; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    var warnings: usize = 0;
+    for (d.list.items) |message| {
+        if (message.severity == .warning and std.mem.indexOf(u8, message.message, "cannot be smaller than 1.05E-08") != null) warnings += 1;
+    }
+    try std.testing.expectEqual(@as(usize, 3), warnings);
+    try std.testing.expect(std.mem.indexOf(u8, out, "Chi-Square") != null);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out, "Point Pr = Statistic              .\n"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out, "Two-sided Pr >= |Statistic|       .\n"));
 }
 
 test "public exact McNemar uses the specified odds for rare discordant pairs" {

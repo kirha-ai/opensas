@@ -39,7 +39,7 @@ pub const Rows = struct {
         for (&self.lengths, [_][]const u8{ name, label, display }) |*width, text| width.* = @max(width.*, text.len);
         try self.builder.row(&.{ b.s(self.title), b.s(name), b.s(label), b.s(display), if (value) |x| b.n(x) else Value.missing });
     }
-    pub fn probability(self: *Rows, name: []const u8, label: []const u8, p: f64) !void {
+    pub fn probability(self: *Rows, name: []const u8, label: []const u8, p: ?f64) !void {
         try self.add(name, label, try @import("freq_exact_render.zig").probability(self.a, p, self.style), p);
     }
     pub fn number(self: *Rows, name: []const u8, label: []const u8, x: f64, format: []const u8) !void {
