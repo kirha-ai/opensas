@@ -1,5 +1,5 @@
-/* BUG-sortspecialmiss: special missings are distinct, SAS order ._ < . < .A < ... < .Z
-   across SORT keys, NODUPKEY dedup, and FREQ /missing levels. */
+/* BUG-sortspecialmiss: SORT and NODUPKEY use ._ < . < .A < ... < .Z.
+   FREQ / MISSING lists the distinct missing levels in display order: . A B _. */
 data m; input id x; datalines;
 1 .Z
 2 .
