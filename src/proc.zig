@@ -4714,6 +4714,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);
     if (wcol != null and (histograms.items.len > 0 or distribution_plots.items.len > 0)) return diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
+    try extra.applyAll(arena, wcol != null);
     try extra.inference.validate(diags, wcol != null, vardef == .df, acols.items.len);
     if (wcol) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: WEIGHT variable must be numeric", .{});

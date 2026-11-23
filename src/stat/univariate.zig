@@ -86,6 +86,8 @@ pub const Options = struct {
     modes: bool = false,
     idout: bool = false,
     exclnpwgt: bool = false,
+    all: bool = false,
+    explicit_nextrval: bool = false,
     nextrobs: usize = 5,
     nextrval: usize = 0,
     round: []const f64 = &.{},
@@ -173,10 +175,28 @@ pub const Options = struct {
         }
         if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed CLASS options", .{});
     }
+    /// Statistical Procedures p.300. Apply defaults after all explicit options
+    /// and the WEIGHT statement are known, regardless of their source order.
+    pub fn applyAll(self: *Options, a: Allocator, weighted: bool) !void {
+        if (!self.all) return;
+        self.freq = true;
+        self.modes = true;
+        if (!self.explicit_nextrval) self.nextrval = 5;
+        const inf = &self.inference;
+        if (inf.basic == null) inf.basic = .{};
+        if (weighted) return;
+        if (inf.df == null) inf.df = .{};
+        if (inf.normal_ci == null) inf.normal_ci = .{};
+        inf.loccount = true;
+        inf.normal = true;
+        inf.robustscale = true;
+        if (!inf.explicit_trim) inf.trim = try a.dupe(f64, &.{0.25});
+        if (!inf.explicit_winsor) inf.winsor = try a.dupe(f64, &.{0.25});
+    }
     pub fn parse(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!bool {
         if (try self.inference.parse(a, d, t, i)) return true;
         const key = t[i.*].text;
-        inline for (.{ "freq", "modes", "idout", "exclnpwgt" }) |f| {
+        inline for (.{ "freq", "modes", "idout", "exclnpwgt", "all" }) |f| {
             if (eq(key, f)) {
                 @field(self, f) = true;
                 i.* += 1;
@@ -204,7 +224,12 @@ pub const Options = struct {
             i.* += 2;
             const v = try number(d, t, i);
             if (v < 0 or v != @floor(v) or v > 1000000) return d.fail(error.ParseError, 0, "UNIVARIATE: extreme count must be a nonnegative integer", .{});
-            if (eq(key, "nextrobs")) self.nextrobs = @intFromFloat(v) else self.nextrval = @intFromFloat(v);
+            if (eq(key, "nextrobs")) {
+                self.nextrobs = @intFromFloat(v);
+            } else {
+                self.nextrval = @intFromFloat(v);
+                self.explicit_nextrval = true;
+            }
             return true;
         }
         if (eq(key, "outtable")) {
