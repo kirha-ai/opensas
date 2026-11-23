@@ -81,9 +81,13 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     if (!(r.alpha > 0) or !(r.beta > 0) or !(r.sigma > 0) or !(r.c > 0) or
         !std.math.isFinite(r.alpha) or !std.math.isFinite(r.beta) or !std.math.isFinite(r.sigma) or !std.math.isFinite(r.c))
         return d.fail(error.ParseError, 0, "UNIVARIATE: invalid EDF inference shape", .{});
+    const e = r.estimated;
+    if (r.family == .gamma and n < 10 and (e.theta or e.sigma or e.alpha)) {
+        try d.warn(0, "A sample size of 10 or more is required to compute the EDF goodness-of-fit statistics when the Gamma distribution is not fully specified.", .{});
+        return .{};
+    }
     const available = availability(r);
     if (!available.a2) return .{};
-    const e = r.estimated;
     var edf_n = n;
     if (r.family == .exponential) {
         const excluded = r.exponential_boundary_count orelse (if (e.theta and !e.sigma) @as(usize, 1) else 0);
@@ -1575,7 +1579,10 @@ test "dev5 EDF fixed-threshold gamma three estimation masks independent M9 holdo
     }
     try std.testing.expectEqual(@as(usize, 23184), count);
     const s: Statistics = .{ .d = 0.2, .w2 = 0.1, .a2 = 0.5 };
+    const before = d.count();
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 2 }, s, 9));
+    try std.testing.expectEqual(before + 1, d.count());
+    try std.testing.expectEqual(diag.Severity.warning, d.list.items[before].severity);
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .sigma = true }, .alpha = 1 }, s, 20));
     try std.testing.expectEqual(Result{}, try tabulated(&d, .{ .family = .gamma, .estimated = .{ .alpha = true }, .alpha = 0.99 }, s, 20));
 }
