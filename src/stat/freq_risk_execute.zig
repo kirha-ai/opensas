@@ -78,7 +78,7 @@ fn methodName(m: p.Method) []const u8 {
         .jeffreys => "Jeffreys",
         .lr => "Likelihood Ratio",
         .logit => "Logit",
-        .midp => "Exact Mid-p",
+        .midp => "Mid-p",
         .wald => "Wald",
         .wilson => "Wilson",
         .ha => "Hauck-Anderson",
