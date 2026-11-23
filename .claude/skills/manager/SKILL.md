@@ -189,6 +189,11 @@ avoids re-running ~2k corpus fixtures on an unchanged tip. The file lives under
    completed `GH#` task, follow the `issue-manager` ordering: push the fix,
    close the issue, then remove the line — a failed push or close leaves
    both the issue and the task open.
+   The manager also maintains the unit-test and corpus totals in the README's
+   “How it is verified” section. Before the board push, compare them with the
+   green gate report for the landed code. If either count is stale, commit
+   the correction to `README.md` on the working branch and include it in
+   that push.
 9. **Loop back.** Wait for the next completion notification, then go to step 1 and
    run the next iteration. Until the human explicitly stops the manager, each dev
    report is the trigger for the next tick (land+push → refill that dev → sense →
@@ -236,7 +241,8 @@ devs with assignable work remaining is a bug in your loop, not a finish line.
 
 - Write interpreter/feature code — and that includes resolving merge
   conflicts; the landing protocol routes all of that to devs (§7). You may
-  write *test fixtures* (`.sas` corpus programs) and edit `jira.md`.
+  write *test fixtures* (`.sas` corpus programs), edit `jira.md` and maintain
+  the README test counts (§1 step 8).
 - Land a tip the dev reported red, or push when `--ff-only` refused. There
   is no manager consolidated gate — bounce bad reports; trust green reports
   + PR CI.
@@ -365,6 +371,15 @@ the subagent does not share your context and never reads `jira.md`:
 - **house rules (CLAUDE.md)**: read `src/lexer.zig` first; fail LOUD; ship a
   runnable test/fixture; `grep docs/decisions.md` before touching a shared
   file.
+- **Regression coverage.** Before reporting, review the SAS oracle cases,
+  manual examples and temporary checks used for this change. For new or fixed
+  behavior with a known SAS result, include a regression in this batch if
+  `zig build gate` does not already cover it. Prioritize previously wrong
+  results and normal, boundary or error cases that would catch a regression.
+  Prefer a self-contained `tests/corpus/<name>.sas` and matching `.txt` for
+  output a user can check as text. Use an in-source Zig `test` for checks
+  such as column types, numeric tolerances or plot coordinates. Cite the
+  real SAS result or manual section that establishes the expected value.
 - **git discipline**: work and commit ONLY in your worktree, by explicit
   pathspec (`git commit src/foo.zig tests/... -m "devN: DONE <ID> — …"`). A
   golden/expected-output edit is its OWN commit whose message states what was
@@ -372,8 +387,8 @@ the subagent does not share your context and never reads `jira.md`:
   run). NEVER `git add -A`/`add .`/`commit -a`; NEVER fetch/pull/push — the
   working branch's tip is a local ref, visible without any network.
 - **landing discipline**: the dev-side protocol below, verbatim.
-- **stay-running**: "when done, report `(branch, base-sha, sha, suite
-  counts)` and stay available for a bounce; do not exit."
+- **stay-running**: "when done, send the landing report below and stay
+  running for a possible bounce."
 
 **Dispatch model — ONE ASYNC RUN PER AGENT.** Launch
 each dev/QA/perf/doc-finder agent as its OWN top-level **background async run**
