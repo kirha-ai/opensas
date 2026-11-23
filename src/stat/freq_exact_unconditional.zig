@@ -326,6 +326,29 @@ pub fn riskLimitsSas(table: risk.Table2x2, column: risk.Column, family: Family, 
     return .{ .complete = .{ .lower = 1 / reciprocal.?, .upper = upper.? } };
 }
 
+/// At fixed row totals the modified RR increases strictly in first-row
+/// successes and decreases strictly in second-row successes. At its minimum,
+/// the left tail contains just the observed (0, n2) allocation. Its probability
+/// is (1-r*q)^n1 * q^n2, maximized at q=min(1, n2/(r*(n1+n2))).
+fn noscoreUpperTail(c: [4]u32, r: f64, work: *Work) Error!TailResult {
+    if (c[0] != 0 or c[3] != 0) return tail(c, .relative_risk, .noscore, r, .left, work);
+    if (!work.tick()) return .exhausted;
+    const n1: f64 = @floatFromInt(c[1]);
+    const n2: f64 = @floatFromInt(c[2]);
+    const n = n1 + n2;
+    const share = n2 / n;
+    const log_mass = if (r <= share) n1 * std.math.log1p(-r) else blk: {
+        const q = share / r;
+        // Avoid subtracting nearly equal values before multiplying their
+        // logarithms by a potentially large row total.
+        const log_failure = if (n1 >= n2) std.math.log1p(-share) else @log(n1 / n);
+        const log_success = if (q > 0.5) std.math.log1p(@mulAdd(f64, -r, n, n2) / (r * n)) else @log(q);
+        break :blk n1 * log_failure + n2 * log_success;
+    };
+    const p = @exp(log_mass);
+    return .{ .complete = .{ .lower = p, .upper = p } };
+}
+
 /// Null is a numerical/resource stop, never an approximate partial result.
 fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     if (!work.tick()) return null;
@@ -347,7 +370,7 @@ fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     const target = alpha / 2;
     while (true) {
         if (!std.math.isFinite(hi)) return null;
-        const bound = try tail(c, .relative_risk, .noscore, hi, .left, work);
+        const bound = try noscoreUpperTail(c, hi, work);
         if (bound == .exhausted) return null;
         if (bound.complete.upper <= target) break;
         const next = point + 2 * (hi - point);
@@ -357,7 +380,7 @@ fn sasNoscoreUpper(c: [4]u32, alpha: f64, work: *Work) Error!?f64 {
     for (0..256) |_| {
         const mid = lo + (hi - lo) / 2;
         if (mid == lo or mid == hi) return null;
-        const value = try tail(c, .relative_risk, .noscore, mid, .left, work);
+        const value = try noscoreUpperTail(c, mid, work);
         if (value == .exhausted) return null;
         // One-sided residual: an equally close accepted point is not returned.
         if (value.complete.upper <= target and target - value.complete.lower <= 1e-6) return mid;
@@ -546,6 +569,39 @@ test "SAS RR NOSCORE outer profile predicts transitions and held-out reversals" 
     // or weakened to accommodate a SAS runtime initialization rule.
     const certified = (try riskLimits(.{ .cells = .{ 1, 1, 2, 1 } }, .first, .relative_risk, .noscore, 0.95, .{})).complete;
     try t.expectApproxEqAbs(@as(f64, 0.9884657555036446), certified.upper, 1e-9);
+}
+
+test "NOSCORE opposing outcomes have a single-allocation tail on either side of the nuisance maximum" {
+    const t = std.testing;
+    for (1..6) |i| for (1..6) |j| {
+        const cells = [4]u32{ 0, @intCast(i), @intCast(j), 0 };
+        for ([_]f64{ 0.125, 0.5, 0.75, 1, 3, 12 }) |r| {
+            var work = Work{ .options = .{} };
+            const direct = (try noscoreUpperTail(cells, r, &work)).complete;
+            const reference = (try riskTail(tableOf(cells), .first, .relative_risk, .noscore, r, .left, .{ .tolerance = 1e-13 })).complete;
+            try t.expect(direct.lower >= reference.lower - 3e-14 and direct.upper <= reference.upper + 3e-14);
+        }
+    };
+    // At r=1 either orientation has maximum (1/(N+1))*(N/(N+1))^N.
+    // An 85-digit evaluation with N=4e9 distinguishes cancellation of 1-q.
+    for ([_][4]u32{ .{ 0, 1, 4_000_000_000, 0 }, .{ 0, 4_000_000_000, 1, 0 } }) |cells| {
+        var work = Work{ .options = .{} };
+        const mass = (try noscoreUpperTail(cells, 1, &work)).complete.lower;
+        try t.expectApproxEqRel(@as(f64, 9.19698602813643478639499e-11), mass, 1e-14);
+    }
+    // Four million candidate tables exceed the enumeration budget. The finite
+    // endpoint lies in the q=1 regime, where (1-r)^2000=alpha/2.
+    const table = risk.Table2x2{ .cells = .{ 0, 2000, 2000, 0 } };
+    const upper = -std.math.expm1(@log(@as(f64, 0.025)) / 2000);
+    const options = Options{ .budget = .{ .max_tables = 100 } };
+    const first = (try riskLimitsSas(table, .first, .relative_risk, .noscore, 0.05, options)).complete;
+    const second = (try riskLimitsSas(table, .second, .relative_risk, .noscore, 0.05, options)).complete;
+    try t.expectEqual(@as(f64, 0), first.lower);
+    try t.expectApproxEqAbs(upper, first.upper, 3e-8);
+    try t.expectEqual(1 / first.upper, second.lower);
+    try t.expectEqual(std.math.inf(f64), second.upper);
+    var stopped = Work{ .options = .{ .budget = .{ .max_tables = 0 } } };
+    try t.expect((try noscoreUpperTail(.{ 0, 2000, 2000, 0 }, 1, &stopped)) == .exhausted);
 }
 
 test "SAS outer profile preserves budgets and default methods" {
