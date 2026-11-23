@@ -374,7 +374,11 @@ pub fn fit(d: *diag.Diagnostics, x: []const f64, request: Request) diag.Error!di
     }
     const result: dist.Distribution = .{ .family = r.family, .p = p };
     try result.validate(d);
-    for (x) |v| if (!std.math.isFinite(result.logPdf(v))) return support(d);
+    for (x) |v| {
+        // Rayleigh accepts observations at its threshold, where the PDF is zero.
+        if (r.family == .rayleigh and v == p.theta) continue;
+        if (!std.math.isFinite(result.logPdf(v))) return support(d);
+    }
     return result;
 }
 
@@ -709,4 +713,18 @@ test "UNIVARIATE uniform Pareto endpoint has finite likelihood" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.125), curve.pdf(8), 1e-15);
     const power: dist.Distribution = .{ .family = .power, .closed_upper = true, .p = .{ .theta = 1, .sigma = 4, .alpha = 2 } };
     try std.testing.expectApproxEqAbs(@as(f64, 0.5), power.pdf(5), 1e-15);
+}
+
+test "UNIVARIATE Rayleigh accepts tied threshold observations with fixed or estimated scale" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    for ([_]?f64{ 1, null }) |sigma| {
+        const request: Request = .{ .family = .rayleigh, .theta = -2, .sigma = sigma };
+        const curve = try fit(&d, &.{ -2, -2, -2, -1.5, -1, 0 }, request);
+        try std.testing.expectApproxEqAbs(sigma orelse @sqrt(@as(f64, 5.25 / 12.0)), curve.p.sigma, 1e-14);
+        try std.testing.expect(!d.hasErrors());
+        var bad = diag.Diagnostics.init(arena.allocator());
+        try std.testing.expectError(error.ParseError, fit(&bad, &.{ -2.01, -2, -1 }, request));
+    }
 }
