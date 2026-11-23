@@ -350,8 +350,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     var concordant = false;
     var discordant = false;
     var saturated: f64 = 0;
+    var occupied: usize = 0;
     for (m.counts, 0..) |n, i| {
         if (n == 0) continue;
+        occupied += 1;
         saturated -= n * @log(n / t.n);
         for (m.counts, 0..) |other, j| {
             if (other == 0) continue;
@@ -362,10 +364,12 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
     }
     const boundary = !(concordant and discordant);
-    // Repeated projections and the unprojected increment reproduce the
-    // retained monotone binary-margin and three-by-three fits. The higher-
-    // dimensional boundary still needs a consistent line-search rule.
-    const projected_boundary = boundary and (m.rows == 2 or m.cols == 2 or (m.rows == 3 and m.cols == 3));
+    const four_by_four_boundary = boundary and m.rows == 4 and m.cols == 4;
+    const projected_boundary = boundary and (m.rows == 2 or m.cols == 2 or (m.rows == 3 and m.cols == 3) or four_by_four_boundary);
+    // Rounding uncertainty in the two sums of occupied-cell log likelihoods.
+    // Each term involves a logarithm and multiplication before summation.
+    const ku = @as(f64, @floatFromInt(occupied + 2)) * std.math.floatEps(f64) / 2;
+    const accumulated_roundoff = ku / (1 - ku);
     var boundary_distance: f64 = 0.001;
     var converged = false;
     var iterations: usize = 0;
@@ -402,6 +406,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             // Successive overshoots on the supported boundaries refine this distance
             // by one decimal place (positive and negative M9 MAXITER traces).
             if (@abs(candidate[dim - 1]) >= 1) {
+                // Once the likelihood is indistinguishable from its saturated
+                // lower bound, the comparison cannot resolve another retraction.
+                if (four_by_four_boundary and base - saturated <= accumulated_roundoff * (base + saturated))
+                    return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 candidate[dim - 1] = rho;
@@ -492,6 +500,23 @@ test "CORR single-zero tetrachoric tables use the requested iteration limit" {
             try std.testing.expectEqual(@as(f64, 0), result.coefficient.ase.?);
             try std.testing.expectApproxEqAbs(c.lr, result.likelihood_ratio.?.statistic, 0.00005);
         }
+    }
+}
+
+test "CORR four-level ordinal boundaries with a distinguishable projected step" {
+    const cases = [_]struct { counts: [16]f64, lr: f64 }{
+        .{ .counts = .{ 35, 0, 0, 0, 17, 30, 0, 0, 0, 21, 9, 0, 0, 0, 16, 7 }, .lr = 197.83030675715 },
+        .{ .counts = .{ 2240, 0, 0, 0, 1344, 0, 0, 0, 3008, 0, 0, 0, 960, 2176, 1792, 832 }, .lr = 11314.7268426884 },
+    };
+    for (cases) |c| {
+        const m: CountMatrix = .{ .rows = 4, .cols = 4, .counts = &c.counts, .row_scores = &.{ -9, 0, 11, 31 }, .col_scores = &.{ -17, -4, 8, 13 } };
+        const early = try polychoric(std.testing.allocator, m, .{ .converge = 1e-6, .maxiter = 20 });
+        try std.testing.expect(!early.converged and !early.information_unresolved);
+        const fit = try polychoric(std.testing.allocator, m, .{ .converge = 1e-6 });
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.9999), fit.coefficient.estimate.?, 1e-12);
+        try std.testing.expectEqual(@as(f64, 0), fit.coefficient.ase.?);
+        try std.testing.expectApproxEqAbs(c.lr, fit.likelihood_ratio.?.statistic, 1e-7);
     }
 }
 
