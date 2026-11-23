@@ -25,6 +25,13 @@ pub const Config = struct {
     kappa_weight: stratified.KappaWeight = .cicchetti_allison,
     norisks: bool = false,
 };
+pub const Barnard = struct {
+    difference: f64,
+    se: f64,
+    z: f64,
+    one: unconditional.Bounds,
+    two: unconditional.Bounds,
+};
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
     fisher: struct { table_probability: f64, first_cell: ?u32, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
@@ -32,7 +39,7 @@ pub const Result = union(enum) {
     binomial: exact.Binomial,
     interval: exact.Interval,
     risk_intervals: struct { first: ?exact.Interval = null, second: ?exact.Interval = null },
-    barnard: struct { one: unconditional.Bounds, two: unconditional.Bounds },
+    barnard: Barnard,
     exhausted,
     /// Valid family, but not defined for this table's dimensions/zero variance.
     not_applicable,
@@ -150,10 +157,13 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         const table = @import("freq_risk.zig").Table2x2{ .cells = m.counts[0..4].* };
         if (f == .barnard) {
             const delta = m.counts[0] / (m.counts[0] + m.counts[1]) - m.counts[2] / (m.counts[2] + m.counts[3]);
-            const one = try unconditional.riskTail(table, .first, .difference, .score, 0, if (delta > 0) .right else .left, .{ .budget = c.budget });
-            const two = try unconditional.riskTail(table, .first, .difference, .score, 0, .two_sided, .{ .budget = c.budget });
+            const options: unconditional.Options = .{ .budget = c.budget, .allocator = a };
+            const one = try unconditional.riskTail(table, .first, .difference, .score, 0, if (delta > 0) .right else .left, options);
+            const two = try unconditional.riskTail(table, .first, .difference, .score, 0, .two_sided, options);
             if (one == .exhausted or two == .exhausted) return .exhausted;
-            return .{ .barnard = .{ .one = one.complete, .two = two.complete } };
+            const pooled = (m.counts[0] + m.counts[2]) / (m.counts[0] + m.counts[1] + m.counts[2] + m.counts[3]);
+            const se = @sqrt(pooled * (1 - pooled) * (1 / (m.counts[0] + m.counts[1]) + 1 / (m.counts[2] + m.counts[3])));
+            return .{ .barnard = .{ .difference = delta, .se = se, .z = delta / se, .one = one.complete, .two = two.complete } };
         }
         const options = if (f == .riskdiff) c.options.riskdiff else c.options.relrisk;
         const column = options.column orelse if (f == .riskdiff and !c.norisks) parse.Column.both else .first;
@@ -323,4 +333,15 @@ test "exact adapter retains numeric score validity and undefined discordant test
     try t.expectApproxEqAbs(@as(f64, 1), rank.two_sided, 1e-12);
     // SAS degenerate-agreement.sas: missing McNemar, not p=1 or rc2.
     try t.expect((try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 5, 0, 0, 5 } }, .mcnem, .{})) == .not_applicable);
+}
+
+test "Barnard exact test uses the bounded polynomial workspace above the stack cutoff" {
+    const m = tests.CountMatrix{ .rows = 2, .cols = 2, .counts = &.{ 0, 1, 129, 0 } };
+    const result = try run(std.testing.allocator, m, .barnard, .{});
+    // The one-sided event contains only the observed table. Its likelihood is
+    // (1-p)*p^129, with an interior maximum at p=129/130.
+    const one = std.math.pow(f64, 129.0 / 130.0, 129) / 130;
+    try std.testing.expectApproxEqAbs(one, result.barnard.one.upper, 1e-10);
+    try std.testing.expect(result.barnard.two.upper >= one);
+    try std.testing.expect((try run(std.testing.allocator, m, .barnard, .{ .budget = .{ .max_tables = 100 } })) == .exhausted);
 }

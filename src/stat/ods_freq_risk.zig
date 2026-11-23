@@ -65,12 +65,29 @@ fn relativeRisk(a: A, t: *b.Builder, table_name: []const u8, table: risk.Table2x
     }
 }
 
-pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, m: model.CountMatrix, alpha: f64, estimates: report.Report, limits: public.RiskLimits) diag.Error!void {
+pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, m: model.CountMatrix, alpha: f64, style: @import("freq_exact_parse.zig").ProbabilityFormat, estimates: report.Report, limits: public.RiskResults) diag.Error!void {
     if (m.rows != 2 or m.cols != 2) return;
     const nd = tab.dimensions.len;
     const r = tab.dimensions[nd - 2].name;
     const c = tab.dimensions[nd - 1].name;
     const table = if (nd > 2) try std.fmt.allocPrint(a, "Table {d} of {s} * {s}", .{ number, r, c }) else try std.fmt.allocPrint(a, "Table {s} * {s}", .{ r, c });
+    if (capture.wants("BarnardsTest")) if (limits.barnard) |v| {
+        var t = try b.Builder.init(a, source, by, rep);
+        t.ds.label = "Barnard's Exact Test";
+        try t.char("Table", 256);
+        try t.char("Name1", 9);
+        try t.char("Label1", 19);
+        try t.char("cValue1", 8);
+        try t.num("nValue1", "D12.3");
+        const right = v.difference > 0;
+        const names = [_][]const u8{ "_RDIF1_", "E_RDIF1", "Z_RDIF1", if (right) "XPR_RDIF1" else "XPL_RDIF1", "XP2_RDIF1" };
+        const labels = [_][]const u8{ "Risk Difference", "ASE (H0)", "Z", if (right) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", "Two-sided Pr >= |Z|" };
+        for (names, labels, [_]f64{ v.difference, v.se, v.z, v.one.upper, v.two.upper }, 0..) |name, label, value, i| {
+            const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, b.n(value), "8.4"), " ") else try @import("freq_exact_render.zig").probability(a, value, style);
+            try t.row(&.{ b.s(table), b.s(name), b.s(label), b.s(display), b.n(value) });
+        }
+        try capture.publish(a, d, "BarnardsTest", &t.ds);
+    };
     for ([_][]const u8{ "RiskDiffCol1", "RiskDiffCol2" }, [_][]const u8{ "RelRisk1ExactCL", "RelRisk2ExactCL" }, 0..) |rd_name, rr_name, col| {
         if (capture.wants(rd_name)) if (estimates.risk_columns[col]) |column| {
             var t = try b.Builder.init(a, source, by, rep);
@@ -98,11 +115,19 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
     for ([_][]const u8{ "r", "c", "n" }) |name| _ = try ds.addColumn(name, .num);
     for ([_]f64{ 1, 4, 3, 2 }, 0..) |n, i| try ds.appendRow(&.{ b.n(@floatFromInt(1 + i / 2)), b.n(@floatFromInt(1 + i % 2)), b.n(n) });
     try library.put(ds.name, ds);
-    try capture.parse(a, &d, try lex.tokenize(a, "ods output RelRisk1ExactCL=rr1 RelRisk2ExactCL=rr2 RiskDiffCol1=rd1 RiskDiffCol2=rd2;", &d));
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output RelRisk1ExactCL=rr1 RelRisk2ExactCL=rr2 RiskDiffCol1=rd1 RiskDiffCol2=rd2 BarnardsTest=bb;", &d));
     var listing: std.ArrayList(u8) = .empty;
-    try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, "proc freq data=sample;weight n / zeros;tables r*c / relrisk riskdiff alpha=.10;exact relrisk(method=score column=both) riskdiff(method=score column=both);run;", &d));
+    try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, "proc freq data=sample;weight n / zeros;tables r*c / relrisk riskdiff alpha=.10;exact relrisk(method=score column=both) riskdiff(method=score column=both) barnard;run;", &d));
     try capture.finish(&library, &d);
     try std.testing.expect(!d.hasErrors());
+    const barnard = library.find("bb").?;
+    try std.testing.expectEqual(@as(usize, 5), barnard.rowCount());
+    try std.testing.expectEqualStrings("XPL_RDIF1", barnard.row(3)[1].str);
+    try std.testing.expectEqualStrings("One-sided Pr <=  Z", barnard.row(3)[2].str);
+    try std.testing.expectApproxEqAbs(@as(f64, -1.29099443819909), barnard.row(2)[4].num, 1e-12);
+    // For this 5-by-5 design, the two-sided tail is 20u²-100u³+210u⁴-168u⁵,
+    // u=p(1-p). Its maximum at p=1/2 is 11/32; M9 printed .34374999999999.
+    try std.testing.expectApproxEqAbs(@as(f64, 11.0 / 32.0), barnard.row(4)[4].num, 1e-10);
     for ([_][]const u8{ "rd1", "rd2" }, 0..) |name, i| {
         const rs = library.find(name).?;
         try std.testing.expectEqual(@as(usize, 4), rs.rowCount());

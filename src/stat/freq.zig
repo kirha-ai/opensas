@@ -1890,7 +1890,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
                     const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
-                    if (cx.capture) |capture| try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, risk_report, limits);
+                    if (cx.capture) |capture| try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, req.exact.pformat, risk_report, limits);
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {
                         try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));

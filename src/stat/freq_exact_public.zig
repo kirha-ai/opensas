@@ -211,12 +211,13 @@ fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
     try d.report(.warning, 0, "PROC FREQ EXACT {s} cannot be computed when there are noninteger frequencies.", .{@tagName(f)});
 }
 
-pub const RiskLimits = struct {
+pub const RiskResults = struct {
+    barnard: ?exec.Barnard = null,
     relative_risk: [2]?@import("freq_exact.zig").Interval = @splat(null),
     difference: [2]?@import("freq_exact.zig").Interval = @splat(null),
 };
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!RiskLimits {
-    var limits: RiskLimits = .{};
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!RiskResults {
+    var limits: RiskResults = .{};
     if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
     for (scored.matrix.counts) |v| total += v;
@@ -290,7 +291,10 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 if (r.first) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 1)", .{title(f)}), ci, c.alpha);
                 if (r.second) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 2)", .{title(f)}), ci, c.alpha);
             },
-            .barnard => |b| try renderers.testResult(a, out, title(f), .{ .complete = .{ .directional = true, .right_sided = m.counts[0] / (m.counts[0] + m.counts[1]) > m.counts[2] / (m.counts[2] + m.counts[3]), .probabilities = .{ .one_sided = b.one.upper, .two_sided = b.two.upper, .point = 0, .left = 0, .right = 0, .tables = 0 } } }, options),
+            .barnard => |b| {
+                limits.barnard = b;
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .directional = true, .right_sided = b.difference > 0, .probabilities = .{ .one_sided = b.one.upper, .two_sided = b.two.upper, .point = 0, .left = 0, .right = 0, .tables = 0 } } }, options);
+            },
         }
     }
     return limits;
