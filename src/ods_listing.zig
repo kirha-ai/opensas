@@ -164,6 +164,7 @@ const identities = [_]Identity{
     .{ .name = "WinsorizedMeans", .template = "base.univariate.Wins", .label = "Winsorized Means" },
     .{ .name = "RobustScale", .template = "base.univariate.Robustscale", .label = "Robust Measures of Scale" },
     .{ .name = "Quantiles", .template = "base.univariate.Quantiles", .label = "Quantiles" },
+    .{ .name = "MissingValues", .template = "base.univariate.Missings", .label = "Missing Values" },
     .{ .name = "ExtremeObs", .template = "base.univariate.ExtObs", .label = "Extreme Observations" },
     .{ .name = "ExtremeValues", .template = "base.univariate.ExtVal", .label = "Extreme Values" },
     .{ .name = "Frequencies", .template = "base.univariate.Frequency", .label = "Frequencies" },

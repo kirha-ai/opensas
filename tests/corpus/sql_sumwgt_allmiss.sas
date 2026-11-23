@@ -6,7 +6,7 @@
    one row:
      SUMWGT | Sum of weights | CORR, MEANS or SUMMARY, REPORT, SQL, TABULATE,
                                UNIVARIATE
-   PROC UNIVARIATE already printed `Sum Weights 0` beside `N 0`; PROC SQL
+   PROC UNIVARIATE computes sum of weights as the nonmissing count; PROC SQL
    returned MISSING, because it computes the statistic independently and its
    "no non-missing values" early-out swallowed SUMWGT along with the statistics
    that genuinely need data.

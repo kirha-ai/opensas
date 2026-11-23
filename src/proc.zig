@@ -4932,7 +4932,18 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Values Rounded to the Nearest Multiple of {d}\n\n", .{extra.round_units[col]}));
     var opts = extra;
     if (opts.listing.selection) |_| opts.listing.prefix = try std.fmt.allocPrint(arena, "{s}.{s}", .{ extra.listing.prefix, vname });
+    const vals = try arena.alloc(f64, k);
+    for (pairs, 0..) |q, j| vals[j] = q.x;
+    if (cx.capture) |capture| if (capture.requests.items.len != 0) {
+        opts.ods = .{ .capture = capture, .diagnostics = cx.diags, .source = ds, .col = col, .by = bycols, .classes = classcols, .measure_format = try @import("stat/ods_univ_formats.zig").measurement(arena, vals) };
+    };
     const first = out.items.len;
+    const missing = @import("stat/univ_missing.zig").Counts.collect(ds, col, wcol);
+    if (k == 0 and missing.missing > 0) {
+        try missing.emit(arena, out, opts.ods, opts.listing);
+        if (out.items.len == first) out.shrinkRetainingCapacity(head);
+        return;
+    }
     var table_start = first;
     try out.appendSlice(arena, (" " ** 27) ++ "Moments\n\n");
     try momentLine(arena, out, "N", nf, "Sum Weights", s.sumw);
@@ -4948,11 +4959,6 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     // Location: Mean/Median/Mode; Variability: Std Dev/Variance/Range/IQR. Mode
     // reuses the MEANS modeOf over the sorted values (most frequent, ties →
     // smallest, all-unique → missing).
-    const vals = try arena.alloc(f64, k);
-    for (pairs, 0..) |q, j| vals[j] = q.x;
-    if (cx.capture) |capture| if (capture.requests.items.len != 0) {
-        opts.ods = .{ .capture = capture, .diagnostics = cx.diags, .source = ds, .col = col, .by = bycols, .classes = classcols, .measure_format = try @import("stat/ods_univ_formats.zig").measurement(arena, vals) };
-    };
     try out.appendSlice(arena, "\n" ++ (" " ** 20) ++ "Basic Statistical Measures\n\n");
     try out.appendSlice(arena, (" " ** 6) ++ "Location" ++ (" " ** 20) ++ "Variability\n\n");
     try momentLine(arena, out, "Mean", s.mean, "Std Deviation", s.std);
@@ -5085,6 +5091,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try univ.renderInference(arena, out, ds, col, wcol, vardef, pctldef, mu0, opts);
 
     try univ.renderExtras(arena, out, ds, col, wcol, pairs, opts, ids);
+    try missing.emit(arena, out, opts.ods, opts.listing);
     if (out.items.len == first) out.shrinkRetainingCapacity(head);
 }
 
