@@ -135,7 +135,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         const nominal = try k.nominal(a, m, options.alpha);
         const poly = if (options.plcorr) try k.polychoric(a, m, options.polychoric) else null;
         if (poly) |result| if (!result.converged) {
-            try d.report(.note, 0, "Polychoric correlation computations did not converge.", .{});
+            try d.report(.note, 0, "{s}", .{render.correlationNonconvergence(m.rows == 2 and m.cols == 2)});
         };
         if (!proc_noprint) {
             try render.measures(a, out, ordinal, nominal, poly, m.rows == 2 and m.cols == 2, options, applicable_tests);

@@ -116,6 +116,9 @@ fn testMeasure(a: A, out: *Out, label: []const u8, m: k.Measure, alpha: f64, pol
         try pair(a, out, "Pr > ChiSq", if (lr) |v| v.p else null, true);
     }
 }
+pub fn correlationNonconvergence(two: bool) []const u8 {
+    return if (two) "Tetrachoric correlation computations did not converge." else "Polychoric correlation computations did not converge.";
+}
 pub fn measures(a: A, out: *Out, ordinal: k.Association, nominal: k.Nominal, poly: ?k.Polychoric, two: bool, opts: parse.Options, tests: parse.Tests) Error!void {
     if (opts.cl) try text(a, out, try std.fmt.allocPrint(a, "\nStatistic                              Value       ASE     {d}% Confidence Limits\n", .{100 * (1 - opts.alpha)})) else try text(a, out, "\nStatistic                              Value       ASE\n");
     try text(a, out, "----------------------------------------------------------------------------\n");
@@ -139,7 +142,11 @@ pub fn measures(a: A, out: *Out, ordinal: k.Association, nominal: k.Nominal, pol
     };
     if (poly) |p| {
         if (tests.polychoric) try testMeasure(a, out, poly_name, p.coefficient, opts.alpha, true, p.likelihood_ratio);
-        if (!p.converged) try text(a, out, "\nPolychoric correlation computations did not converge.\n");
+        if (!p.converged) {
+            try out.append(a, '\n');
+            try text(a, out, correlationNonconvergence(two));
+            try out.append(a, '\n');
+        }
     }
 }
 pub fn risks(a: A, out: *Out, r: k.Risks, alpha: f64) Error!void {

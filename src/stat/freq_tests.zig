@@ -708,7 +708,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     const counts = try a.dupe(f64, input.counts);
     defer a.free(counts);
     m.counts = counts;
-    if (opts.adjust and m.rows == 2 and m.cols == 2 and counts.len == 4) {
+    if (m.rows == 2 and m.cols == 2 and counts.len == 4) {
         var zeros: usize = 0;
         var zero: usize = 0;
         for (counts, 0..) |v, k| if (v == 0) {
@@ -716,6 +716,12 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             zero = k;
         };
         if (zeros == 1) {
+            if (!opts.adjust) {
+                const fit = try @import("corr_polychoric.zig").polychoric(a, m, .{ .alpha = opts.alpha, .converge = opts.converge, .maxiter = opts.maxiter });
+                const se = fit.coefficient.ase orelse std.math.nan(f64);
+                const coefficient = if (fit.coefficient.estimate) |rho| measure(rho, se * se, se * se, opts.alpha) else Measure{};
+                return .{ .coefficient = coefficient, .likelihood_ratio = fit.likelihood_ratio, .converged = fit.converged, .iterations = fit.iterations };
+            }
             counts[zero] += 0.5;
             counts[3 - zero] += 0.5;
             counts[zero ^ 1] -= 0.5;
@@ -744,25 +750,6 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     if (m.rows == 2 and m.cols == 2 and ((counts[1] == 0 and counts[2] == 0) or (counts[0] == 0 and counts[3] == 0))) {
         const r: f64 = if (counts[1] == 0) 1 else -1;
         return .{ .coefficient = measure(r, 0, 0, opts.alpha), .likelihood_ratio = null, .converged = true, .iterations = 0 };
-    }
-    // SAS reports the constrained tetrachoric boundary as +/-0.999 for
-    // exactly one zero cell without ADJUST; the likelihood is saturated.
-    // Oracle boundary.sas: rho=-0.9990, ASE=0, LR=17.2930 for [0,9;11,3].
-    if (m.rows == 2 and m.cols == 2 and !opts.adjust) {
-        var zero_count: usize = 0;
-        var zero_index: usize = 0;
-        for (counts, 0..) |v, i| if (v == 0) {
-            zero_count += 1;
-            zero_index = i;
-        };
-        if (zero_count == 1) {
-            var saturated: f64 = 0;
-            for (counts) |v| if (v > 0) {
-                saturated -= v * @log(v / t.n);
-            };
-            const rho: f64 = if (zero_index == 0 or zero_index == 3) -0.999 else 0.999;
-            return .{ .coefficient = measure(rho, 0, 0, opts.alpha), .likelihood_ratio = chi(2 * (null_ll - saturated), 1), .converged = true, .iterations = 0 };
-        }
     }
     const hessian = try a.alloc(f64, dim * dim);
     defer a.free(hessian);
