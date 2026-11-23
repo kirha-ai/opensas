@@ -1,4 +1,4 @@
-//! Numerical HISTOGRAM statement execution. Plot rendering is a separate scope.
+//! Histogram planning, numerical outputs, fitted tables and optional graph delivery.
 const std = @import("std");
 const proc = @import("../proc.zig");
 const univ = @import("univariate.zig");
@@ -18,8 +18,15 @@ const Dataset = @import("../dataset.zig").Dataset;
 const Value = @import("../value.zig").Value;
 const h = proc.UnivariateHelpers;
 const eq = std.ascii.eqlIgnoreCase;
+const drawing = @import("univ_histogram_svg.zig");
+const ann = @import("univ_graph_annotations.zig");
 pub const Statement = struct {
     variables: [][]const u8,
+    order: usize = 0,
+    noplot: bool = false,
+    title: ann.Title = .default,
+    barlabel: ?kernel.VScale = null,
+    inset: ann.Inset = .{},
     curves: []parse.Curves,
     kernels: []kernel.Request,
     kernel_output: ?[]const u8,
@@ -74,8 +81,10 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     const start = i.*;
     i.* += 1;
     const vars = try plot_variables.parse(a, t, i);
-    if (t[i.*].tag != .slash) return proc.failGap(d, 0, "PROC UNIVARIATE: histogram statement requires supported numerical options and NOPLOT", .{});
-    i.* += 1;
+    if (t[i.*].tag == .slash) i.* += 1 else if (t[i.*].tag != .semicolon and t[i.*].tag != .eof)
+        return d.fail(error.ParseError, 0, "UNIVARIATE: expected histogram variables or slash", .{});
+    var title: ann.Title = .default;
+    var barlabel: ?kernel.VScale = null;
     var curves: std.ArrayList(parse.Curves) = .empty;
     var endpoints: std.ArrayList(f64) = .empty;
     var midpoints: std.ArrayList(f64) = .empty;
@@ -126,9 +135,13 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             output = try outputName(a, d, t, i, &output_options);
         } else if (eq(key, "outkernel")) {
             outkernel = try outputName(a, d, t, i, &kernel_output_options);
-        } else if (eq(key, "vscale")) {
+        } else if (eq(key, "odstitle")) {
+            title = try ann.Title.parse(d, t[i.*]);
+            i.* += 1;
+        } else if (eq(key, "vscale") or eq(key, "barlabel")) {
             const name = t[i.*].text;
-            vscale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid VSCALE", .{});
+            const scale: kernel.VScale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid {s}", .{key});
+            if (eq(key, "vscale")) vscale = scale else barlabel = scale;
             i.* += 1;
         } else if (eq(key, "endpoints") or eq(key, "midpoints")) {
             if (t[i.*].tag == .name) {
@@ -169,7 +182,6 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             if (!(max_sigmas.? > 0)) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXSIGMAS must be positive", .{});
         } else return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported HISTOGRAM option {s}", .{key});
     }
-    if (!noplot) return proc.failGap(d, 0, "PROC UNIVARIATE: histogram graphics are not supported; specify NOPLOT for numerical output", .{});
     if (endpoints.items.len == 1 or midpoints.items.len == 1) return d.fail(error.ParseError, 0, "UNIVARIATE: explicit bin lists need at least two values", .{});
     if (endpoint_labels and midpoints.items.len > 0) try d.warn(0, "UNIVARIATE: ENDPOINTS takes precedence over MIDPOINTS", .{});
     if (!endpoint_labels and midpoints.items.len > 0) {
@@ -181,7 +193,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     if (max_nbin != null and max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (max_nbin != null and max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (endpoints.items.len > 0) _ = try binning.cover(a, d, &.{}, endpoints.items, right);
-    return .{ .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
+    return .{ .order = start, .noplot = noplot, .title = title, .barlabel = barlabel, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
@@ -254,10 +266,14 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                 var output_options = schema;
                 output_options.bin_width = plan.width;
                 output_options.clipped = plan.clipped;
+                const graphics = if (!statement.noplot and cx.univariate_plot_sink != null and cx.univariate_plot_sink.?.enabled) cx.graphics else null;
+                var panels: std.ArrayList(drawing.Panel) = .empty;
                 for (plan.cell_order) |gi| {
                     const x = cells[gi].sorted;
                     if (x.len == 0) continue;
                     const rep = representatives[gi];
+                    const kernel_start = kd.rows.items.len;
+                    var graph_curves: std.ArrayList(drawing.Curve) = .empty;
                     if (statement.kernels.len > 0 or statement.kernel_output != null) {
                         const pairs = try a.alloc(h.XW, x.len);
                         for (x, pairs) |v, *pair| pair.* = .{ .x = v, .w = 1 };
@@ -273,9 +289,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const constant = x[0] == x[x.len - 1];
                     if (statement.curves.len == 0 or constant) {
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
-                        continue;
-                    }
-                    for (statement.curves) |curves| for (curves.requests) |request| {
+                    } else for (statement.curves) |curves| for (curves.requests) |request| {
                         var report: fitting.Report = .{};
                         var trace: fitting.Trace = .{ .allocator = a };
                         var actual_request = request;
@@ -292,12 +306,29 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         };
                         if (request.optprint or (request.itprint and trace.weibull.items.len > 0)) try rendering.renderTrace(a, out, trace, report);
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, curve);
+                        if (graphics != null) try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
                         if (!curves.noprint) {
                             const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, curve);
                             try rendering.render(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, x, def, curve, request, curves, bins, statement.right, !statement.endpoint_labels);
                         }
                     };
+                    if (graphics != null) {
+                        const graph_keys = try a.alloc(@import("univ_plot_data.zig").Key, keys.items.len);
+                        for (graph_keys, keys.items, 0..) |*key, idx, j| {
+                            const display = if (rep[idx] == .str) rep[idx].str else try @import("../format.zig").apply(a, rep[idx], descriptors.columns.items[idx].format orelse "BEST12.");
+                            key.* = .{ .column = descriptors.columns.items[idx], .value = rep[idx], .display = std.mem.trim(u8, display, " "), .class = j >= bcols.len };
+                        }
+                        const pars = try a.alloc(@import("univ_distributions.zig").Distribution, graph_curves.items.len);
+                        for (pars, graph_curves.items) |*p, c| p.* = c.distribution;
+                        try panels.append(a, .{ .keys = graph_keys, .bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null), .curves = graph_curves.items, .kernel_rows = if (statement.kernels.len == 0) &.{} else try a.dupe([]const Value, kd.rows.items[kernel_start..]), .inset = try statement.inset.box(a, cx.diags, x, pars), .n = x.len });
+                    }
                 }
+                if (graphics) |session| if (panels.items.len > 0) {
+                    const column = descriptors.columns.items[ci];
+                    const title = try statement.title.value(a, cx.graph_title, "Distribution", column);
+                    const bytes = try drawing.render(a, panels.items, .{ .variable = column, .title = title, .scale = statement.vscale, .barlabel = statement.barlabel, .endpoint_labels = statement.endpoint_labels, .endpoints = plan.endpoints, .bin_width = plan.width });
+                    try session.queue(statement.order, "histogram", bytes);
+                };
             }
         }
         if (statement.output) |name| {

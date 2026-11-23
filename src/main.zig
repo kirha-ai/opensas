@@ -2851,8 +2851,9 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
         return;
     }
     const proc = toks[1].text;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .univariate_plot_sink = if (native_graphics_session) |graphics| graphics.sink() else null };
-    if (native_graphics_session) |graphics| graphics.pending.clearRetainingCapacity();
+    const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
     // SUMMARY inverts MEANS: it lists (and so prints titles) only when PRINT is
@@ -6844,4 +6845,56 @@ test "native plots use listing GPATH grouped CLASS panels escaped labels and pre
     try std.testing.expect(std.mem.indexOf(u8, svg, "site = B") != null);
     try std.testing.expect(std.mem.indexOf(u8, svg, "A &lt; B &amp; C") != null);
     try std.testing.expectEqualStrings("existing", try dir.dir.readFileAlloc(io_, "opensas-0001-qq.svg", a, .limited(64)));
+}
+
+test "native histogram counts fit panels insets and suppression follow the public procedure" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x @@;datalines;\n0.12 0.23 0.31 0.48 0.52 0.76 0.87 1.03 1.29 1.36 1.70 2.28 2.74 3.52 4.85 6.21\n;run;\n" ++
+        "title 'Breaking Strength';ods graphics on;proc univariate data=d noprint;var x;histogram x / endpoints=0 to 8 by 2 barlabel=count normal(fill noprint) outhistogram=bins;inset n mean='Average' / position=nw;" ++
+        "cdf x / normal odstitle=title;inset normal(mu sigma) /format=6.2;" ++
+        "histogram x / noplot;run;proc print data=bins noobs;run;" ++
+        "ods graphics off;proc univariate data=d noprint;histogram x /outhistogram=still;run;proc print data=still;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, hist, "class=\"bar\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, "data-count=\"11\" data-height=\"68.75\"") != null);
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, hist, "class=\"bar-label\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">Average</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">1.766875</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, hist, "class=\"density-fill\"") != null);
+    const cdf = try dir.dir.readFileAlloc(io_, "opensas-0002-cdf.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, cdf, "Breaking Strength") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cdf, ">1.77</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cdf, ">1.76</text>") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-histogram.svg", .{}));
+}
+
+test "comparative histogram aligns class bars and renders a kernel grid" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input g x @@;datalines;\n0 1 0 2 0 3 0 4 1 5 1 6 1 7 1 8\n;run;ods graphics on;proc univariate data=d noprint;class g;var x;histogram x /kernel(c=.6) vscale=count;inset n mean std /pos=ne;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const hist = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "class=\"kernel\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, "g = 1") != null);
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "data-pos=\"ne\""));
+    try std.testing.expect(std.mem.indexOf(u8, hist, ">Count</text>") != null);
 }

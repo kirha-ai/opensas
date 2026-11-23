@@ -6,7 +6,7 @@ const Token = @import("../lexer.zig").Token;
 const fitting = @import("univ_distribution_fit.zig");
 const dist = @import("univ_distributions.zig");
 const eq = std.ascii.eqlIgnoreCase;
-pub const Curves = struct { requests: []fitting.Request, percents: []const f64, noprint: bool, midpercents: bool, noline: bool = false };
+pub const Curves = struct { requests: []fitting.Request, percents: []const f64, noprint: bool, midpercents: bool, noline: bool = false, fill: bool = false };
 
 pub fn family(name: []const u8) ?dist.Family {
     inline for (std.meta.tags(dist.Family)) |tag| if (eq(name, @tagName(tag))) return tag;
@@ -107,12 +107,17 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
     var noprint = false;
     var midpercents = false;
     var noline = false;
+    var fill = false;
     if (t[i.*].tag == .lparen) {
         i.* += 1;
         while (t[i.*].tag != .rparen) {
             if (t[i.*].tag != .name) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: expected distribution option or closing parenthesis", .{});
             const key = t[i.*].text;
             i.* += 1;
+            if (!plot and eq(key, "fill")) {
+                fill = true;
+                continue;
+            }
             if (plot and eq(key, "noline")) {
                 noline = true;
                 continue;
@@ -245,7 +250,7 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
         };
         try (dist.Distribution{ .family = kind, .p = fixed }).validate(d);
     }
-    return .{ .requests = requests, .noprint = noprint, .midpercents = midpercents, .noline = noline, .percents = if (percents.items.len == 0) &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 } else percents.items };
+    return .{ .requests = requests, .fill = fill, .noprint = noprint, .midpercents = midpercents, .noline = noline, .percents = if (percents.items.len == 0) &.{ 1, 5, 10, 25, 50, 75, 90, 95, 99 } else percents.items };
 }
 
 test "UNIVARIATE distribution parameter lists aliases and captured rejection" {

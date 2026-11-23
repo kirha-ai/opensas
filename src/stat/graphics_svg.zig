@@ -9,6 +9,7 @@ const A = std.mem.Allocator;
 const W = std.Io.Writer;
 const eq = std.ascii.eqlIgnoreCase;
 
+const Artifact = struct { order: usize, kind: []const u8, bytes: []const u8 };
 pub const Session = struct {
     arena: A,
     io: std.Io,
@@ -18,6 +19,14 @@ pub const Session = struct {
     enabled: ?bool = null,
     count: usize = 0,
     pending: std.ArrayList(Plot) = .empty,
+    prepared: std.ArrayList(Artifact) = .empty,
+    pub fn queue(self: *Session, order: usize, kind: []const u8, bytes: []const u8) !void {
+        try self.prepared.append(self.arena, .{ .order = order, .kind = kind, .bytes = bytes });
+    }
+    pub fn clear(self: *Session) void {
+        self.pending.clearRetainingCapacity();
+        self.prepared.clearRetainingCapacity();
+    }
 
     pub fn configure(self: *Session, toks: []const lex.Token) diag.Error!void {
         if (toks.len < 3) return;
@@ -45,7 +54,7 @@ pub const Session = struct {
         try self.pending.append(self.arena, plot);
     }
     pub fn flush(self: *Session) diag.Error!void {
-        defer self.pending.clearRetainingCapacity();
+        defer self.clear();
         const plots = self.pending.items;
         const used = try self.arena.alloc(bool, plots.len);
         @memset(used, false);
@@ -58,8 +67,13 @@ pub const Session = struct {
                 used[j] = true;
             }
             const bytes = try render(self.arena, panels.items);
-            try self.save(@tagName(p.kind), bytes);
+            try self.queue(p.statement_index, @tagName(p.kind), bytes);
         }
+        std.mem.sort(Artifact, self.prepared.items, {}, byOrder);
+        for (self.prepared.items) |g| try self.save(g.kind, g.bytes);
+    }
+    fn byOrder(_: void, a: Artifact, b: Artifact) bool {
+        return a.order < b.order;
     }
     fn save(self: *Session, kind: []const u8, bytes: []const u8) diag.Error!void {
         const path = self.cli_dir orelse self.gpath orelse ".";
@@ -81,40 +95,40 @@ pub const Session = struct {
     }
 };
 
-const Range = struct {
+pub const Range = struct {
     lo: f64 = std.math.inf(f64),
     hi: f64 = -std.math.inf(f64),
-    fn add(r: *Range, x: f64) void {
+    pub fn add(r: *Range, x: f64) void {
         r.lo = @min(r.lo, x);
         r.hi = @max(r.hi, x);
     }
-    fn padded(r: Range) Range {
+    pub fn padded(r: Range) Range {
         const margin = if (r.hi > r.lo) (r.hi - r.lo) * 0.05 else @max(1, @abs(r.lo) * 0.05);
         return .{ .lo = r.lo - margin, .hi = r.hi + margin };
     }
-    fn at(r: Range, t: f64) f64 {
+    pub fn at(r: Range, t: f64) f64 {
         return r.lo * (1 - t) + r.hi * t;
     }
     fn fraction(r: Range, v: f64) f64 {
         return (v - r.lo) / (r.hi - r.lo);
     }
 };
-const Bounds = struct {
+pub const Bounds = struct {
     x: Range,
     y: Range,
     top: f64,
     bottom: f64,
-    const left: f64 = 88;
-    const right: f64 = 660;
-    fn px(b: Bounds, x: f64) f64 {
+    pub const left: f64 = 88;
+    pub const right: f64 = 660;
+    pub fn px(b: Bounds, x: f64) f64 {
         return left + (right - left) * b.x.fraction(x);
     }
-    fn py(b: Bounds, y: f64) f64 {
+    pub fn py(b: Bounds, y: f64) f64 {
         return b.bottom - (b.bottom - b.top) * b.y.fraction(y);
     }
 };
 
-fn escaped(w: *W, value: []const u8) W.Error!void {
+pub fn escaped(w: *W, value: []const u8) W.Error!void {
     for (value) |c| switch (c) {
         '&' => try w.writeAll("&amp;"),
         '<' => try w.writeAll("&lt;"),
@@ -125,7 +139,7 @@ fn escaped(w: *W, value: []const u8) W.Error!void {
         else => try w.writeByte(c),
     };
 }
-fn label(a: A, x: f64) ![]const u8 {
+pub fn label(a: A, x: f64) ![]const u8 {
     if (x == 0) return "0";
     if (@abs(x) < 0.0001 or @abs(x) >= 1e6) return std.fmt.allocPrint(a, "{e:.3}", .{x});
     const s = try std.fmt.allocPrint(a, "{d:.4}", .{x});
@@ -148,7 +162,7 @@ fn probabilityPosition(plot: Plot, p: f64) f64 {
     curve.p.mu = 0;
     return curve.quantile(p);
 }
-fn tick(a: A, w: *W, b: Bounds, horizontal: bool, position: f64, value: f64) !void {
+pub fn tick(a: A, w: *W, b: Bounds, horizontal: bool, position: f64, value: f64) !void {
     const x = if (horizontal) b.px(position) else Bounds.left;
     const y = if (horizontal) b.bottom else b.py(position);
     if (horizontal)
@@ -208,9 +222,9 @@ fn series(w: *W, p: Plot, b: Bounds) !void {
         try w.print("<circle class=\"point\" cx=\"{d:.2}\" cy=\"{d:.2}\" r=\"3.4\" data-x=\"{d}\" data-y=\"{d}\" data-observed=\"{d}\"/>\n", .{ b.px(xy.x), b.py(xy.y), point.x, point.y, point.observed });
     }
 }
-fn keyText(w: *W, p: Plot, class: bool) !void {
+pub fn keyText(w: *W, keys: []const plot_data.Key, class: bool) !void {
     var separator: []const u8 = "";
-    for (p.keys) |key| if (key.class == class) {
+    for (keys) |key| if (key.class == class) {
         try w.writeAll(separator);
         try escaped(w, key.column.label orelse key.column.name);
         try w.writeAll(" = ");
@@ -226,15 +240,16 @@ fn graph(a: A, w: *W, panels: []const Plot) !void {
         .qq => "Q-Q Plot",
         .probability => "Probability Plot",
     };
-    const rowheight: f64 = if (panels.len == 1) 335 else 210;
+    const title = try first.title.value(a, first.global_title, heading, first.variable);
+    const rowheight: f64 = if (first.square) Bounds.right - Bounds.left + 35 else if (panels.len == 1) 335 else 210;
     const height = 118 + rowheight * @as(f64, @floatFromInt(panels.len));
-    try w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"690\" height=\"{d}\" viewBox=\"0 0 690 {d}\" role=\"img\" aria-labelledby=\"title\" data-kind=\"{s}\">\n<title id=\"title\">{s} for ", .{ height, height, @tagName(first.kind), heading });
-    try escaped(w, first.variable.name);
+    try w.print("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"690\" height=\"{d}\" viewBox=\"0 0 690 {d}\" role=\"img\" aria-labelledby=\"title\" data-kind=\"{s}\">\n<title id=\"title\">", .{ height, height, @tagName(first.kind) });
+    try escaped(w, title);
     try w.writeAll("</title>\n<style>text{font-family:system-ui,sans-serif;fill:#1d2935;font-size:12px}.heading{font-size:18px;font-weight:600}.facet{font-weight:600}.axes path{stroke:#75808a;fill:none}.point{stroke:#244f85;fill:white;stroke-width:1.4}.empirical{fill:none;stroke:#244f85;stroke-width:2}.fitted,.reference{fill:none;stroke:#a25032;stroke-width:1.6}</style>\n");
-    try w.print("<rect width=\"690\" height=\"{d}\" fill=\"white\"/><text x=\"345\" y=\"25\" text-anchor=\"middle\" class=\"heading\">{s} for ", .{ height, heading });
-    try escaped(w, first.variable.name);
+    try w.print("<rect width=\"690\" height=\"{d}\" fill=\"white\"/><text x=\"345\" y=\"25\" text-anchor=\"middle\" class=\"heading\">", .{height});
+    try escaped(w, title);
     try w.writeAll("</text>\n<text x=\"88\" y=\"46\">");
-    try keyText(w, first, false);
+    try keyText(w, first.keys, false);
     try w.writeAll("</text>\n");
     var x_range: Range = .{};
     var y_range: Range = .{};
@@ -258,7 +273,7 @@ fn graph(a: A, w: *W, panels: []const Plot) !void {
         const top = 65 + rowheight * @as(f64, @floatFromInt(i));
         const b = Bounds{ .x = x_range, .y = y_range, .top = top, .bottom = top + rowheight - 35 };
         try w.print("<g class=\"panel\" data-panel=\"{d}\"><text class=\"facet\" x=\"88\" y=\"{d}\">", .{ i + 1, top - 4 });
-        try keyText(w, p, true);
+        try keyText(w, p.keys, true);
         try w.writeAll("</text>\n");
         if (p.kind == .pp or p.reference != null or (p.kind == .cdf and p.cdf_overlay)) {
             try w.print("<text class=\"fit-label\" x=\"660\" y=\"{d}\" text-anchor=\"end\">{s}", .{ top - 4, distributions.familyName(p.distribution.family) });
@@ -270,7 +285,9 @@ fn graph(a: A, w: *W, panels: []const Plot) !void {
         try axes(a, w, p, b);
         try w.print("<clipPath id=\"clip{d}\"><rect x=\"{d}\" y=\"{d}\" width=\"{d}\" height=\"{d}\"/></clipPath><g clip-path=\"url(#clip{d})\">\n", .{ i, Bounds.left, top, Bounds.right - Bounds.left, b.bottom - top, i });
         try series(w, p, b);
-        try w.writeAll("</g></g>\n");
+        try w.writeAll("</g>");
+        try drawInset(w, p.inset, b);
+        try w.writeAll("</g>\n");
     }
     const variable = first.variable.label orelse first.variable.name;
     const observed = if (first.weibull2) try std.fmt.allocPrint(a, "Log {s}", .{variable}) else variable;
@@ -297,4 +314,39 @@ pub fn render(a: A, panels: []const Plot) diag.Error![]const u8 {
     var writer: W.Allocating = .init(a);
     graph(a, &writer.writer, panels) catch |e| return if (e == error.InvalidPlot) error.ExecError else error.OutOfMemory;
     return writer.written();
+}
+
+pub fn drawInset(w: *W, box: @import("univ_graph_annotations.zig").Box, b: Bounds) !void {
+    if (box.lines.len == 0) return;
+    var chars: usize = box.header.len;
+    for (box.lines) |l| chars = @max(chars, l.key.len + l.value.len + 3);
+    const width = @min(540, @max(84, 16 + 7 * @as(f64, @floatFromInt(chars))));
+    const height = 11 + 16 * @as(f64, @floatFromInt(box.lines.len + @intFromBool(box.header.len > 0)));
+    const x = switch (box.pos) {
+        .nw, .w, .sw => Bounds.left + 9,
+        .ne, .e, .se => Bounds.right - width - 9,
+        .n, .s => (Bounds.left + Bounds.right - width) / 2,
+    };
+    const y = switch (box.pos) {
+        .nw, .n, .ne => b.top + 8,
+        .sw, .s, .se => b.bottom - height - 8,
+        .w, .e => (b.top + b.bottom - height) / 2,
+    };
+    try w.print("<g class=\"inset\" data-pos=\"{s}\"><rect x=\"{d:.2}\" y=\"{d:.2}\" width=\"{d:.2}\" height=\"{d:.2}\" fill=\"white\" stroke=\"#82909a\"/>", .{ @tagName(box.pos), x, y, width, height });
+    var baseline = y + 16;
+    if (box.header.len > 0) {
+        try w.print("<text x=\"{d:.2}\" y=\"{d:.2}\" font-weight=\"600\">", .{ x + 7, baseline });
+        try escaped(w, box.header);
+        try w.writeAll("</text>");
+        baseline += 16;
+    }
+    for (box.lines) |l| {
+        try w.print("<text x=\"{d:.2}\" y=\"{d:.2}\">", .{ x + 7, baseline });
+        try escaped(w, l.key);
+        try w.print("</text><text text-anchor=\"end\" x=\"{d:.2}\" y=\"{d:.2}\">", .{ x + width - 7, baseline });
+        try escaped(w, l.value);
+        try w.writeAll("</text>");
+        baseline += 16;
+    }
+    try w.writeAll("</g>\n");
 }

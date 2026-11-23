@@ -49,7 +49,7 @@ pub const ods = @import("ods.zig");
 pub const native_graphics = @import("stat/graphics_svg.zig");
 pub const univariate_plot = @import("stat/univ_plot_data.zig");
 pub const univariate_edf = @import("stat/univ_edf_inference.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, graphics: ?*native_graphics.Session = null, graph_title: ?[]const u8 = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4475,6 +4475,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var mu0: f64 = 0; // MU0= reference for Tests for Location (F1); default 0
     var extra: univ.Options = .{};
     var outputs: std.ArrayList(univ.Output) = .empty;
+    var last_graph: ?enum { histogram, distribution } = null;
     var histograms: std.ArrayList(univ_distributions.Statement) = .empty;
     var distribution_plots: std.ArrayList(univ_plots.Statement) = .empty;
     var ids: std.ArrayList([]const u8) = .empty;
@@ -4582,14 +4583,20 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
                 if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &ids);
         } else if (tkKw(toks[i], "histogram")) {
-            try histograms.append(arena, try univ_distributions.parseStatement(arena, diags, toks, &i));
-        } else if (tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
+            const statement = try univ_distributions.parseStatement(arena, diags, toks, &i);
+            if (!statement.noplot and cx.graphics == null) return failGap(diags, 0, "PROC UNIVARIATE: histogram graphics require a plot consumer; specify NOPLOT for numerical output", .{});
+            try histograms.append(arena, statement);
+            last_graph = .histogram;
+        } else if (tkKw(toks[i], "cdf") or tkKw(toks[i], "cdfplot") or tkKw(toks[i], "qqplot") or tkKw(toks[i], "ppplot") or tkKw(toks[i], "probplot")) {
             try distribution_plots.append(arena, try univ_plots.parse(arena, diags, toks, &i));
+            last_graph = .distribution;
         } else if (tkKw(toks[i], "inset")) {
-            // INSET is a valid SAS 9.4 PROC UNIVARIATE statement (the Syntax
-            // block's own list, Statistical Procedures printed p. 298,
-            // === pdf 301 ===) — a gap (rc 2); the catch-all keeps typos at rc 1.
-            return failGap(diags, toks[i].line, "PROC UNIVARIATE: {s} statement is not supported", .{toks[i].text});
+            const preceding = last_graph orelse return failGap(diags, toks[i].line, "PROC UNIVARIATE: {s} requires a preceding plot statement", .{toks[i].text});
+            const inset = try @import("stat/univ_graph_annotations.zig").Inset.parse(arena, diags, toks, &i);
+            switch (preceding) {
+                .histogram => histograms.items[histograms.items.len - 1].inset = inset,
+                .distribution => distribution_plots.items[distribution_plots.items.len - 1].inset = inset,
+            }
         } else if (tkKw(toks[i], "where")) {
             // WHERE is documented WITH UNIVARIATE ("Procedures That Support
             // the WHERE Statement", printed p. 89, === pdf 138 ===, lists it)

@@ -16,6 +16,10 @@ const h = proc.UnivariateHelpers;
 const eq = std.ascii.eqlIgnoreCase;
 pub const Statement = struct {
     kind: data.Kind,
+    title: @import("univ_graph_annotations.zig").Title = .default,
+    inset: @import("univ_graph_annotations.zig").Inset = .{},
+    square: bool = false,
+    order: usize = 0,
     variables: [][]const u8,
     curves: parameters.Curves,
     weibull2: bool = false,
@@ -28,10 +32,11 @@ pub const Statement = struct {
 
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Statement {
     const key = t[i.*].text;
-    const kind: data.Kind = if (eq(key, "cdfplot")) .cdf else if (eq(key, "ppplot")) .pp else if (eq(key, "qqplot")) .qq else if (eq(key, "probplot")) .probability else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid plot statement", .{});
+    const order = i.*;
+    const kind: data.Kind = if (eq(key, "cdfplot") or eq(key, "cdf")) .cdf else if (eq(key, "ppplot")) .pp else if (eq(key, "qqplot")) .qq else if (eq(key, "probplot")) .probability else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid plot statement", .{});
     i.* += 1;
     const names = try variables.parse(a, t, i);
-    var statement: Statement = .{ .kind = kind, .variables = names, .curves = .{ .requests = &.{}, .percents = &.{}, .noprint = true, .midpercents = false }, .probability_scale = if (kind == .cdf or kind == .probability) 100 else 1 };
+    var statement: Statement = .{ .kind = kind, .order = order, .variables = names, .curves = .{ .requests = &.{}, .percents = &.{}, .noprint = true, .midpercents = false }, .probability_scale = if (kind == .cdf or kind == .probability) 100 else 1 };
     if (t[i.*].tag == .slash) i.* += 1 else if (t[i.*].tag != .semicolon and t[i.*].tag != .eof) return d.fail(error.ParseError, 0, "UNIVARIATE: expected plot variable list or slash", .{});
     while (t[i.*].tag != .semicolon and t[i.*].tag != .eof) {
         const option = t[i.*].text;
@@ -44,6 +49,10 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
             continue;
         }
         i.* += 1;
+        if (eq(option, "square") and kind != .cdf) {
+            statement.square = true;
+            continue;
+        }
         if (eq(option, "rotate") and (kind == .qq or kind == .probability)) {
             statement.rotated = true;
             continue;
@@ -53,6 +62,9 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
         if ((eq(option, "rankadj") or eq(option, "nadj")) and (kind == .qq or kind == .probability)) {
             const number = try parameters.numeric(d, t, i);
             if (eq(option, "rankadj")) statement.rankadj = number else statement.nadj = number;
+        } else if (eq(option, "odstitle")) {
+            statement.title = try @import("univ_graph_annotations.zig").Title.parse(d, t[i.*]);
+            i.* += 1;
         } else if (eq(option, "vscale") and kind == .cdf) {
             if (eq(t[i.*].text, "percent")) statement.probability_scale = 100 else if (eq(t[i.*].text, "proportion")) statement.probability_scale = 1 else return d.fail(error.ParseError, 0, "UNIVARIATE: CDFPLOT VSCALE requires PERCENT or PROPORTION", .{});
             i.* += 1;
@@ -271,7 +283,7 @@ test "UNIVARIATE public QQ Weibull ITPRINT reaches listing and consumer" {
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
-    for (statements, 0..) |statement, statement_index| {
+    for (statements) |statement| {
         if (wc != null) return cx.diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
         const source = opt.source orelse ds;
         const cols = try variables.resolve(a, cx.diags, source, acols, statement.variables, has_var);
@@ -320,7 +332,11 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                             return err;
                         };
                         if (request.itprint and trace.weibull.items.len > 0) try @import("univ_distribution_render.zig").renderTrace(a, out, trace, report);
-                        plot.statement_index = statement_index;
+                        plot.statement_index = statement.order;
+                        plot.square = statement.square;
+                        plot.title = statement.title;
+                        plot.global_title = cx.graph_title;
+                        plot.inset = try statement.inset.box(a, cx.diags, x.items, &.{plot.distribution});
                         plot.by_index = by_index;
                         plot.curve_index = curve_index;
                         try sink.emit(sink.context, plot);
