@@ -254,7 +254,15 @@ pub fn estimate(hits: u64, n: u64, alpha: f64) Error!Estimate {
     };
 }
 pub const MonteCarlo = union(enum) { complete: struct { point: Estimate, left: Estimate, right: Estimate, two_sided: Estimate, one_sided: Estimate, samples: u64, final_seed: u64, right_sided: bool }, exhausted };
-pub const Simulation = struct { samples: u64 = 10_000, seed: u64, alpha: f64 = 0.01, max_observations: u32 = 1_000_000 };
+pub const Simulation = struct {
+    samples: u64 = 10_000,
+    seed: u64,
+    alpha: f64 = 0.01,
+    max_observations: u32 = 1_000_000,
+    // The trend test codes the first binary response as 1 and the second
+    // as 0. Sorted response codes therefore visit that margin in reverse.
+    binary_response: enum { none, rows, columns } = .none,
+};
 
 /// Uniformly shuffle column labels into fixed row slots: every table has its
 /// conditional hypergeometric probability. M9 reinitializes the sorted column
@@ -271,13 +279,15 @@ pub fn monteCarlo(a: std.mem.Allocator, m: Matrix, statistic: Statistic, options
     const labels = try a.alloc(u8, shape.total);
     defer a.free(labels);
     var pos: usize = 0;
-    for (shape.cols, 0..) |v, j| {
-        @memset(labels[pos..][0..v], @intCast(j));
-        pos += v;
+    for (0..m.cols) |position| {
+        const j = if (options.binary_response == .columns) m.cols - position - 1 else position;
+        const count = shape.cols[j];
+        @memset(labels[pos..][0..count], @intCast(j));
+        pos += count;
     }
     const shuffled = try a.alloc(u8, shape.total);
     defer a.free(shuffled);
-    var context = FixedSampler{ .labels = labels, .shuffled = shuffled, .rows = shape.rows, .cols = m.cols };
+    var context = FixedSampler{ .labels = labels, .shuffled = shuffled, .rows = shape.rows, .cols = m.cols, .reverse_rows = options.binary_response == .rows };
     return simulate(a, m, statistic, options, budget, .{ .context = &context, .draw = FixedSampler.draw });
 }
 
@@ -298,6 +308,7 @@ pub const Generator = struct {
 pub const FixedSampler = struct {
     labels: []const u8,
     shuffled: []u8,
+    reverse_rows: bool = false,
     rows: []const u32,
     cols: usize,
     pub fn draw(raw: ?*anyopaque, random: *Generator, cells: []u32, budget: Budget) Error!bool {
@@ -305,8 +316,9 @@ pub const FixedSampler = struct {
         @memcpy(self.shuffled, self.labels);
         @memset(cells, 0);
         var pos: usize = 0;
-        for (self.rows, 0..) |count, row| {
-            for (0..count) |_| {
+        for (0..self.rows.len) |position| {
+            const row = if (self.reverse_rows) self.rows.len - position - 1 else position;
+            for (0..self.rows[row]) |_| {
                 if (pos % 1024 == 0 and budget.stopped()) return false;
                 const remaining = self.shuffled.len - pos;
                 const offset: usize = @intCast((random.next() * remaining) / Generator.modulus);

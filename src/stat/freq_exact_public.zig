@@ -305,13 +305,16 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                     try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
                     try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, family_seed, options);
                 } else {
-                    try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = family_seed });
+                    // M9 displays the last RNG state in the weighted-kappa
+                    // table even when it is the only requested statistic.
+                    const displayed_seed = if (f == .wtkappa) r.complete.final_seed else family_seed;
+                    try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = displayed_seed });
                     if (!concordance or concordance_seed == null) {
                         next_seed = r.complete.final_seed;
                         if (concordance) concordance_seed = family_seed;
                     }
-                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, family_seed, options);
-                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, family_seed, options);
+                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, displayed_seed, options);
+                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, displayed_seed, options);
                 }
             },
             .binomial => |b| {
@@ -659,4 +662,17 @@ test "2x3 Fisher probabilities and seeded simulation agree with all 70 labeled a
     const exact = try h.run("proc freq data=d; weight w / zeros; tables r*c; exact fisher / point midp; run;", &d);
     for ([_][]const u8{ "0.0429", "0.1714", "0.2286", "0.1429" }) |value|
         try std.testing.expect(std.mem.indexOf(u8, exact, value) != null);
+}
+
+test "weighted kappa reports its completed stream state for standalone and combined MC" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var h = try Harness.init(arena.allocator(), &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, 3);
+    var diagnostics = diag.Diagnostics.init(arena.allocator());
+    for ([_][]const u8{ "wtkappa", "kappa wtkappa" }, [_][]const u8{ "624296548", "1006970956" }, [_][]const u8{ "0.0766", "0.0812" }) |families, reported_seed, one_sided| {
+        const source = try std.fmt.allocPrint(arena.allocator(), "proc freq data=d;weight w / zeros;tables r*c;exact {s} / mc n=431 seed=51;run;", .{families});
+        const listing = try h.run(source, &diagnostics);
+        for ([_][]const u8{ reported_seed, one_sided, "0.0951" }) |native| try std.testing.expect(std.mem.indexOf(u8, listing, native) != null);
+    }
+    try std.testing.expect(!diagnostics.hasErrors());
 }

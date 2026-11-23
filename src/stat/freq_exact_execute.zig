@@ -207,7 +207,12 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         sc = try adapters.Context.init(sm, family, weights, c.null_ratio);
         callback = adapters.Adapters(dist).statistic(&sc);
     } else if (f == .fisher) callback = .{ .evaluate = dist.fisherStatistic };
-    const simulation = dist.Simulation{ .seed = c.effective_seed, .samples = c.options.samples, .alpha = c.options.alpha };
+    const simulation = dist.Simulation{
+        .seed = c.effective_seed,
+        .samples = c.options.samples,
+        .alpha = c.options.alpha,
+        .binary_response = if (f != .trend) .none else if (m.cols == 2) .columns else .rows,
+    };
     const mc = c.options.mc and parse.supportsMonteCarlo(f, m.rows, m.cols);
     if (m.rows == 1) {
         var total: f64 = 0;
@@ -376,5 +381,18 @@ test "Barnard reported score respects equal risks and signed near-null row/colum
     for ([_]f64{ 0, -0.002897613511751, 0.002897613511751 }, [_]f64{ 0, -0.00289760297503, 0.00289760297503 }) |z, native| {
         const r: Barnard = .{ .difference = z, .se = 1, .z = z, .one = undefined, .two = undefined };
         try std.testing.expectApproxEqAbs(native, r.reportedZ(), 1e-14);
+    }
+}
+
+test "trend simulation sorts the binary response in either table dimension" {
+    const a = std.testing.allocator;
+    const config = Config{ .effective_seed = 51, .options = .{ .mc = true, .samples = 431 } };
+    for ([_]tests.CountMatrix{
+        .{ .rows = 2, .cols = 3, .counts = &.{ 1, 2, 0, 2, 1, 4 } },
+        .{ .rows = 3, .cols = 2, .counts = &.{ 1, 2, 2, 1, 0, 4 } },
+    }, [_]u64{ 113, 101 }, [_]u64{ 194, 179 }) |m, one, two| {
+        const r = (try run(a, m, .trend, config)).monte_carlo.estimates.complete;
+        try std.testing.expectEqual(@as(f64, @floatFromInt(one)) / 431, r.one_sided.p);
+        try std.testing.expectEqual(@as(f64, @floatFromInt(two)) / 431, r.two_sided.p);
     }
 }
