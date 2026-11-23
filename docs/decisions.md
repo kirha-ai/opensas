@@ -103,8 +103,10 @@ these caused real regressions (see D-001).
   these stop reading as debt forever). Two separate rulings, one entry:
   (a) **INERTNESS, SETTLED, NOT DEBT.** `X 'command';` parses and does NOT run
   the OS command, and an `ODS <destination>` statement is accepted as a listing
-  no-op (opensas renders ONE output stream; ODS SELECT/EXCLUDE/TRACE stay LOUD
-  by name). ODS OUTPUT is typed capture whose allowlist lives in `src/ods.zig`
+  no-op for alternate destinations (opensas renders ONE output stream).
+  ODS LISTING can be closed and reopened. Overall and LISTING-specific SELECT
+  and EXCLUDE lists route implemented, named procedure objects. ODS OUTPUT
+  is typed capture whose allowlist lives in `src/ods.zig`
   — not in this decision — and grows with landed, SAS-aligned producers; unknown
   names stay loud. This does not change destination rendering or claim
   FEAT-base-stat-results. Neither inert form is an unimplemented gap waiting

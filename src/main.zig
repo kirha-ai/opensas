@@ -191,6 +191,7 @@ pub fn interpret(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag
     // reinstalls its own this run) — plus format.zig's other run-scoped globals
     // (BUG-fmterrorneverreset: g_fmt_error, g_nofmterr; see resetPerRun there).
     ods_capture = .{};
+    ods_listing = .{};
     sas.format.resetPerRun();
     sas.functions.resetPerRun(); // drop prior-run prx/dsfns/hashing handles (taste #12)
     sas.diag.resetGap(); // clear the per-run opensas-gap flag (D-009 exit code)
@@ -1413,6 +1414,7 @@ fn stepEnd(toks: []const Token, from: usize) usize {
 /// top-level handler (GAP-titleinsql). The numbered-line/cancel semantics and the
 /// stamp order (titles atop a listing, footnotes below) live on the type there.
 const Globals = sas.sql.Titles;
+var ods_listing: sas.proc.OdsListing = .{};
 var ods_capture: sas.proc.ods.Capture = .{};
 var native_graphics_session: ?*sas.proc.native_graphics.Session = null;
 
@@ -2053,10 +2055,11 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
     if (eqi(kw, "ods") and toks.len >= 2 and toks[1].tag == .name) {
         const sub = toks[1].text;
         if (native_graphics_session) |graphics| try graphics.configure(toks);
+        if (try ods_listing.parse(a, diags, toks)) return;
         if (eqi(sub, "output")) {
             return ods_capture.parse(a, diags, toks);
         }
-        if (eqi(sub, "select") or eqi(sub, "exclude") or eqi(sub, "trace")) {
+        if (eqi(sub, "trace")) {
             sas.diag.markGap(); // §5d — same shape as OUTPUT above
             return diags.fail(error.ParseError, toks[1].line, "ODS {s} is not supported yet", .{sub});
         }
@@ -2845,14 +2848,19 @@ fn sortInPlaceTarget(toks: []const Token) ?[]const u8 {
 
 /// Dispatch a `proc <name> …; … run;` step by name. Each proc hand-parses its
 /// own tokens (parser.zig is A2's) — SORT lives in proc.zig; PRINT is below.
-fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
+fn runProc(a: std.mem.Allocator, listing_out: *std.ArrayList(u8), lib: *sas.exec.Library, diags: *sas.diag.Diagnostics, toks: []const Token, g: *Globals) sas.diag.Error!void {
     if (toks.len < 2 or toks[1].tag != .name) {
         failLoud("PROC name missing or unrecognized", .{});
         return;
     }
     const proc = toks[1].text;
+    defer ods_listing.endProc();
+    var discard: std.ArrayList(u8) = .empty;
+    const routed = eqi(proc, "univariate");
+    const visible = if (routed) ods_listing.open else ods_listing.accepts(proc);
+    const out = if (visible) listing_out else &discard;
     const graph_sink = if (native_graphics_session) |graphics| graphics.sink() else null;
-    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
+    const pcx: sas.proc.ProcCtx = .{ .arena = a, .lib = lib, .diags = diags, .capture = &ods_capture, .listing = &ods_listing, .univariate_plot_sink = graph_sink, .graphics = if (graph_sink != null) native_graphics_session else null, .graph_title = g.titles[0] };
     if (native_graphics_session) |graphics| graphics.clear();
     // TITLE/FOOTNOTE print with the report procs (a listing), not with SORT or
     // TRANSPOSE (which produce a dataset, no page). Titles atop, footnotes below.
@@ -2866,7 +2874,9 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
     // per BY group, so PROC PRINT then owns its title/footnote emission
     // (substituted per group in printTable); otherwise titles stamp once here.
     const print_bysubst = eqi(proc, "print") and g.hasBySubst();
+    const titles_start = out.items.len;
     if (listing and !print_bysubst) try g.emitTitles(a, out);
+    const titles_end = out.items.len;
 
     if (eqi(proc, "sort")) {
         // GH#15: PROC SORT with no OUT= (or OUT= the source) sorts the source
@@ -2934,7 +2944,9 @@ fn runProc(a: std.mem.Allocator, out: *std.ArrayList(u8), lib: *sas.exec.Library
 
     if (native_graphics_session) |graphics| try graphics.flush();
     try ods_capture.finish(lib, diags);
-    if (listing and !print_bysubst) try g.emitFootnotes(a, out);
+    if (ods_listing.filtered() and out.items.len == titles_end) {
+        out.shrinkRetainingCapacity(titles_start);
+    } else if (listing and !print_bysubst) try g.emitFootnotes(a, out);
 }
 
 const PrintOpts = struct {
@@ -5411,8 +5423,8 @@ test "GAP-odsbatch: ODS destinations accepted-as-listing; SELECT/EXCLUDE/TRACE a
     // Group B: captured diagnostics (D-003 — no spawned abort), each naming
     // its own sub-statement.
     inline for (.{
-        .{ "ods select MyTable;\n", "ODS select is not supported yet" },
-        .{ "ods exclude MyTable;\n", "ODS exclude is not supported yet" },
+        .{ "ods select MyTable;\n", "ODS: unsupported selection object" },
+        .{ "ods exclude MyTable;\n", "ODS: unsupported selection object" },
         .{ "ods output Summary=s;\n", "ODS OUTPUT: unsupported table" },
         .{ "ods trace on;\n", "ODS trace is not supported yet" },
     }) |case| {
@@ -6961,4 +6973,26 @@ test "CORR partial residual coordinates and degenerate, missing and suppressed p
     try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-scatter.svg", .{}));
     try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-matrix.svg", .{}));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Scatter plots with more than 3 points have been suppressed") != null);
+}
+
+test "ODS listing selections expire while NONE persists and captured tables survive exclusion" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try interpret(a, &out, &d,
+        "data sample;input x;datalines;\n1\n3\n5\n;\nrun;\n" ++
+        "ods select Moments;proc univariate data=sample;var x;run;\n" ++
+        "ods listing exclude Moments;ods output Moments=captured;proc univariate data=sample;var x;run;\n" ++
+        "ods select none;proc print data=sample;run;proc print data=sample;run;\n" ++
+        "ods select all;proc print data=captured noobs;var Label1;run;\n" ++
+        "ods listing close;proc print data=sample;run;ods listing;\n" ++
+        "proc univariate data=sample;var x;run;\n", null);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Moments\n"));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Basic Statistical Measures"));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out.items, "The UNIVARIATE Procedure"));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Label1") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Obs   x") == null);
 }

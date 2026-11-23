@@ -24,12 +24,13 @@ fn normalRow(a: A, out: *std.ArrayList(u8), name: []const u8, symbol: []const u8
     const qualifier: []const u8 = if (bound > 0 and p == bound) ">" else if (bound > 0 and p == (if (bound == 0.15) @as(f64, 0.01) else 0.005)) "<" else if (bound == 0 and p < 0.0001) "<" else " ";
     try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}  {s}  {d:.6}  {s}{d:.4}\n", .{ name, symbol, stat, qualifier, if (bound == 0) @max(p, 0.0001) else p }));
 }
-pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0: f64, opt: Options) !void {
+pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0: f64, opt: Options, listing: @import("../ods_listing.zig").Tables) !void {
     if (!opt.normal and !opt.robustscale and !opt.loccount and opt.basic == null and opt.df == null and opt.normal_ci == null and opt.trim.len == 0 and opt.winsor.len == 0) return;
     const x = try a.alloc(f64, z.pairs.len);
     defer a.free(x);
     for (z.pairs, 0..) |v, j| x[j] = v.x;
     if (opt.basic) |ci| {
+        const start = out.items.len;
         try heading(a, out, "Basic Confidence Limits Assuming Normality", ci, opt.alpha);
         try out.appendSlice(a, "Parameter  Estimate  Lower  Upper\n");
         const n: f64 = @floatFromInt(z.s.n);
@@ -38,8 +39,10 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
         try row(a, out, "Mean", &.{ z.s.mean, mean.lower, mean.upper });
         try row(a, out, "Std Deviation", &.{ z.s.std, @sqrt(variance.lower), @sqrt(variance.upper) });
         try row(a, out, "Variance", &.{ z.s.std * z.s.std, variance.lower, variance.upper });
+        try listing.finish(a, out, start, "BasicIntervals");
     }
     if (opt.loccount) {
+        const start = out.items.len;
         var positive: f64 = 0;
         var negative: f64 = 0;
         for (x) |v| {
@@ -50,8 +53,10 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
         try row(a, out, "Num Obs > Mu0", &.{positive});
         try row(a, out, "Num Obs ^= Mu0", &.{positive + negative});
         try row(a, out, "Num Obs < Mu0", &.{negative});
+        try listing.finish(a, out, start, "LocationCounts");
     }
     if (opt.normal) {
+        const start = out.items.len;
         try out.appendSlice(a, "\nTests for Normality\nTest  Statistic  p Value\n");
         if (try k.normalTests(a, x)) |tests| {
             if (tests.primary.method == .shapiro_wilk) try normalRow(a, out, "Shapiro-Wilk", "W", tests.primary.statistic, tests.primary.p, 0);
@@ -62,8 +67,10 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
             if (x.len <= 2000) try out.appendSlice(a, "Shapiro-Wilk  W  .  .\n");
             try out.appendSlice(a, "Kolmogorov-Smirnov  D  .  .\nCramer-von Mises  W-Sq  .  .\nAnderson-Darling  A-Sq  .  .\n");
         }
+        try listing.finish(a, out, start, "TestsForNormality");
     }
     for ([_]bool{ false, true }) |winsor| {
+        const start = out.items.len;
         const values = if (winsor) opt.winsor else opt.trim;
         const ci = if (winsor) opt.winsor_ci else opt.trim_ci;
         if (values.len == 0) continue;
@@ -81,12 +88,16 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
                 if (df) try row(a, out, "", &.{ pct, @round(count), missing, missing, missing, missing, missing, missing, missing }) else try row(a, out, "", &.{ pct, @round(count), missing });
             }
         }
+        try listing.finish(a, out, start, if (winsor) "WinsorizedMeans" else "TrimmedMeans");
     }
     if (opt.robustscale) {
+        const start = out.items.len;
         try out.appendSlice(a, "\nRobust Measures of Scale\nMeasure  Value  Estimate of Sigma\n");
         for ([_][]const u8{ "Interquartile Range", "Gini's Mean Difference", "MAD", "Sn", "Qn" }, [_][]const u8{ "qrange", "gini", "mad", "sn", "qn" }, [_][]const u8{ "std_qrange", "std_gini", "std_mad", "std_sn", "std_qn" }) |name, key, sigma| try row(a, out, name, &.{ z.value(key, def, .df, mu0), z.value(sigma, def, .df, mu0) });
+        try listing.finish(a, out, start, "RobustScale");
     }
     for ([_]bool{ false, true }) |distribution_free| {
+        const start = out.items.len;
         const ci = (if (distribution_free) opt.df else opt.normal_ci) orelse continue;
         try heading(a, out, if (distribution_free) "Quantile Confidence Limits Distribution Free" else "Quantile Confidence Limits Assuming Normality", ci, opt.alpha);
         try out.appendSlice(a, if (distribution_free) "Percentile  Lower  Upper  LCL Rank  UCL Rank  Coverage\n" else "Percentile  Lower  Upper\n");
@@ -94,5 +105,6 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
             const interval = if (distribution_free) k.distributionFree(x, p / 100, ci, opt.alpha) else k.normalQuantileCI(z.s.mean, z.s.std, z.s.n, p / 100, ci, opt.alpha);
             if (distribution_free) try row(a, out, "", &.{ p, interval.lower, interval.upper, if (interval.lower_rank == 0) std.math.nan(f64) else @floatFromInt(interval.lower_rank), if (interval.upper_rank == 0) std.math.nan(f64) else @floatFromInt(interval.upper_rank), 100 * interval.coverage }) else try row(a, out, "", &.{ p, interval.lower, interval.upper });
         }
+        try listing.finish(a, out, start, "Quantiles");
     }
 }

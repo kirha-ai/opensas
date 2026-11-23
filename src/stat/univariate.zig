@@ -68,6 +68,7 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     return list.toOwnedSlice(a);
 }
 pub const Options = struct {
+    listing: @import("../ods_listing.zig").Tables = .{},
     key_levels: []const []const u8 = &.{},
     key_move: bool = true,
     inference: inference_parse.Options = .{},
@@ -764,6 +765,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
 }
 pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, pairs: []const h.XW, opt: Options, ids: []const usize) !void {
     if (opt.nextrobs > 0) {
+        const start = out.items.len;
         // Deduplicate FREQ copies by physical identity in expected O(N), then
         // retain the SAS low/high tie orders with O(U log U) sorting.
         var seen: std.AutoHashMapUnmanaged(usize, void) = .empty;
@@ -810,6 +812,7 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
             if (opt.freqcol) |ci| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {d} / {d}", .{ @floor(h.toNum(sourceRow(ds, opt, low.obs)[ci])), @floor(h.toNum(sourceRow(ds, opt, high.obs)[ci])) }));
             try out.append(a, '\n');
         }
+        try opt.listing.finish(a, out, start, "ExtremeObs");
     }
     const Run = struct { x: f64, count: usize, w: f64 };
     var runs: std.ArrayList(Run) = .empty;
@@ -824,20 +827,25 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
         best = @max(best, runs.items[runs.items.len - 1].count);
     }
     if (opt.modes) {
+        const start = out.items.len;
         try out.appendSlice(a, "\nModes\nMode    Count\n");
         if (best < 2 and runs.items.len != 1) try out.appendSlice(a, ".       .\n") else for (runs.items) |r| {
             if (r.count == best) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}    {d}\n", .{ try h.uNum(a, r.x), r.count }));
         }
+        try opt.listing.finish(a, out, start, "Modes");
     }
     if (opt.nextrval > 0) {
+        const start = out.items.len;
         try out.appendSlice(a, "\nExtreme Values\nLowest Value Frequency    Highest Value Frequency\n");
         for (0..@min(opt.nextrval, runs.items.len)) |j| {
             const l = runs.items[j];
             const r = runs.items[runs.items.len - @min(opt.nextrval, runs.items.len) + j];
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d}    {s} {d}\n", .{ try h.uNum(a, l.x), l.count, try h.uNum(a, r.x), r.count }));
         }
+        try opt.listing.finish(a, out, start, "ExtremeValues");
     }
     if (opt.freq) {
+        const start = out.items.len;
         try out.appendSlice(a, if (wc == null) "\nFrequency Counts\nValue Count Cell Cum\n" else "\nWeighted Frequency Counts\nValue Count Weighted Count Cell Cum\n");
         var cum: f64 = 0;
         for (runs.items) |r| {
@@ -847,6 +855,7 @@ pub fn renderExtras(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: us
             if (wc != null) try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} ", .{try h.uNum(a, r.w)}));
             try out.appendSlice(a, if (total > 0) try std.fmt.allocPrint(a, "{d:.1} {d:.1}\n", .{ pct, cum }) else ". .\n");
         }
+        try opt.listing.finish(a, out, start, "Frequencies");
     }
     _ = col;
 }
@@ -1817,7 +1826,7 @@ pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col:
     const inf = opt.inference;
     if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
     const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
-    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference);
+    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference, opt.listing);
 }
 
 // Numerical distribution tests stay independent of rendering/ODS integration.

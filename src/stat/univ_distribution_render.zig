@@ -120,7 +120,12 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     const name = familyName(curve.family);
     const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
     const variable = source.columns.items[col].name;
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nThe UNIVARIATE Procedure\nFitted {s} Distribution for {s}\n\nParameters for {s} Distribution\nParameter Symbol Estimate\n", .{ name, variable, name }));
+    const tables: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = name };
+    const head = out.items.len;
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nThe UNIVARIATE Procedure\nFitted {s} Distribution for {s}\n", .{ name, variable }));
+    const first = out.items.len;
+    var start = first;
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nParameters for {s} Distribution\nParameter Symbol Estimate\n", .{name}));
     var parameter_table = try context.createTable();
     parameter_table.ds.label = "Parameters";
     try parameter_table.char("Parameter", 9);
@@ -134,6 +139,8 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}\n", .{ p.name, p.symbol, try h.uNum(a, p.value) }));
     }
     try context.publish("ParameterEstimates", &parameter_table);
+    try tables.finish(a, out, start, "ParameterEstimates");
+    start = out.items.len;
     // The inference helper owns parameter- and sample-dependent availability;
     // a blanket small-gamma guard would suppress valid all-known D/W2 tests.
     if (curve.family != .sb and curve.family != .su) {
@@ -165,6 +172,8 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         }
         if (table.ds.rows.items.len > 0) try context.publish("GoodnessOfFit", &table);
     }
+    try tables.finish(a, out, start, "GoodnessOfFit");
+    start = out.items.len;
     var quantiles = try context.createTable();
     quantiles.ds.label = "Quantiles";
     try quantiles.num("Percent", "4.1");
@@ -182,6 +191,8 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
         try out.appendSlice(a, try std.fmt.allocPrint(a, "{d:.1} {d:.5} {d:.5}\n", .{ percent, observed, estimated }));
     }
     try context.publish("FitQuantiles", &quantiles);
+    try tables.finish(a, out, start, "FitQuantiles");
+    start = out.items.len;
     if (options.midpercents) {
         var table = try context.createTable();
         table.ds.label = "Histogram Bin Percentages";
@@ -199,5 +210,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
             try out.appendSlice(a, try std.fmt.allocPrint(a, "{d} {d:.3} {d:.3}\n", .{ point, bin.observed_percent, bin.expected_percent.? }));
         }
         try context.publish("Bins", &table);
+        try tables.finish(a, out, start, "Bins");
     }
+    if (out.items.len == first) out.shrinkRetainingCapacity(head);
 }

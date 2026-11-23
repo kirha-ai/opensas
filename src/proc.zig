@@ -46,10 +46,11 @@ const freq_stat = @import("stat/freq.zig");
 /// an explicit param on the listing PROCs — its presence self-documents "this
 /// PROC emits listing text".
 pub const ods = @import("ods.zig");
+pub const OdsListing = @import("ods_listing.zig").Listing;
 pub const native_graphics = @import("stat/graphics_svg.zig");
 pub const univariate_plot = @import("stat/univ_plot_data.zig");
 pub const univariate_edf = @import("stat/univ_edf_inference.zig");
-pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, univariate_plot_sink: ?univariate_plot.Sink = null, graphics: ?*native_graphics.Session = null, graph_title: ?[]const u8 = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
+pub const ProcCtx = struct { arena: std.mem.Allocator, lib: *Library, diags: *diag.Diagnostics, capture: ?*ods.Capture = null, listing: ?*const OdsListing = null, univariate_plot_sink: ?univariate_plot.Sink = null, graphics: ?*native_graphics.Session = null, graph_title: ?[]const u8 = null, univariate_edf_sampler: ?univariate_edf.AccountedSimulator = null };
 
 const SortKey = struct { idx: usize, desc: bool };
 
@@ -4758,13 +4759,20 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
         return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
     }
+    const filtered = if (cx.listing) |listing| listing.filtered() else false;
+    const header_start = out.items.len;
     try out.appendSlice(arena, (" " ** 33) ++ "The UNIVARIATE Procedure\n");
+    const header_end = out.items.len;
     // One block set PER BY GROUP (BUG-univignoresby: BY was parsed and then
     // ignored — the listing printed ONE pooled Moments block over ALL obs, the
     // number formatted exactly like the per-group answer asked for). bySlices
     // yields one null-rep slice without BY, so the pooled path is byte-identical.
-    for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra)) |bs| {
+    for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra), 1..) |bs, by_number| {
+        extra.listing = .{ .selection = cx.listing, .prefix = if (bs.rep != null and filtered) try std.fmt.allocPrint(arena, "Univariate.ByGroup{d}", .{by_number}) else "Univariate" };
+        const by_start = out.items.len;
         if (bs.rep) |r| try appendByLine(arena, out, ds, r, obcols.items);
+        const by_end = out.items.len;
+        defer if (filtered and out.items.len == by_end) out.shrinkRetainingCapacity(by_start);
         // Shallow per-group view (columns shared, rows = the slice's) — the same
         // idiom the CLASS arm uses per level below.
         const bd = try arena.create(Dataset);
@@ -4790,8 +4798,11 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                     const lv = if (col.format) |spec| try format.apply(arena, g.rep[ci], spec) else try classCell(arena, g.rep[ci]);
                     try hdr.appendSlice(arena, try std.fmt.allocPrint(arena, "{s}={s}", .{ col.name, lv }));
                 }
+                const class_start = out.items.len;
                 try out.append(arena, '\n');
                 try out.appendSlice(arena, hdr.items);
+                const class_end = out.items.len;
+                defer if (filtered and out.items.len == class_end) out.shrinkRetainingCapacity(class_start);
                 // shallow per-level view (columns shared, rows = the group's)
                 const gd = try arena.create(Dataset);
                 gd.* = Dataset.init(arena, bd.name);
@@ -4803,6 +4814,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             }
         }
     }
+    if (filtered and out.items.len == header_end) out.shrinkRetainingCapacity(header_start);
     try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
 }
 
@@ -4891,6 +4903,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     const med = univPercentile(pairs, 50, edef);
     const q3 = univPercentile(pairs, 75, edef);
 
+    const head = out.items.len;
     try out.append(arena, '\n');
     // A LABELLED analysis variable carries its label in parentheses after the name:
     // "Variable: Score (Exam Score)" (Output 4.2.1, printed p.473) and "Variable:
@@ -4915,6 +4928,10 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         try std.fmt.allocPrint(arena, "Variable:  {s}\n\n", .{vname}));
     if (col < extra.round_units.len and extra.round_units[col] > 0)
         try out.appendSlice(arena, try std.fmt.allocPrint(arena, "Values Rounded to the Nearest Multiple of {d}\n\n", .{extra.round_units[col]}));
+    var opts = extra;
+    if (opts.listing.selection) |_| opts.listing.prefix = try std.fmt.allocPrint(arena, "{s}.{s}", .{ extra.listing.prefix, vname });
+    const first = out.items.len;
+    var table_start = first;
     try out.appendSlice(arena, (" " ** 27) ++ "Moments\n\n");
     try momentLine(arena, out, "N", nf, "Sum Weights", s.sumw);
     try momentLine(arena, out, "Mean", s.mean, "Sum Observations", s.sum);
@@ -4923,6 +4940,8 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "Uncorrected SS", s.uss, "Corrected SS", s.css);
     try momentLine(arena, out, "Coeff Variation", cv, "Std Error Mean", sem);
 
+    try opts.listing.finish(arena, out, table_start, "Moments");
+    table_start = out.items.len;
     // ── Basic Statistical Measures (BUG-univreport) ──────────────────────────
     // Location: Mean/Median/Mode; Variability: Std Dev/Variance/Range/IQR. Mode
     // reuses the MEANS modeOf over the sorted values (most frequent, ties →
@@ -4960,6 +4979,8 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
             .{ mi.nmodes, mi.count },
         ));
 
+    try opts.listing.finish(arena, out, table_start, "BasicMeasures");
+    table_start = out.items.len;
     // ── Tests for Location: Mu0=0 (BUG-univreport) ───────────────────────────
     // Student's t = mean/(std/√Σw), df = n−1 — the MEANS T/PROBT convention.
     // Sign & Wilcoxon signed-rank are count/rank tests SAS does not compute
@@ -5033,6 +5054,8 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         try testLine(arena, out, "Signed Rank", "S", sstat, "Pr >= |S|", sp);
     }
 
+    try opts.listing.finish(arena, out, table_start, "TestsForLocation");
+    table_start = out.items.len;
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\n" ++ (" " ** 20) ++ "Quantiles (Definition {d})\n\n", .{edef}));
     try quantLine(arena, out, "100% Max", s.max);
     try quantLine(arena, out, "99%", p99);
@@ -5045,9 +5068,11 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try quantLine(arena, out, "5%", p5);
     try quantLine(arena, out, "1%", p1);
     try quantLine(arena, out, "0% Min", s.min);
-    try univ.renderInference(arena, out, ds, col, wcol, vardef, pctldef, mu0, extra);
+    try opts.listing.finish(arena, out, table_start, "Quantiles");
+    try univ.renderInference(arena, out, ds, col, wcol, vardef, pctldef, mu0, opts);
 
-    try univ.renderExtras(arena, out, ds, col, wcol, pairs, extra, ids);
+    try univ.renderExtras(arena, out, ds, col, wcol, pairs, opts, ids);
+    if (out.items.len == first) out.shrinkRetainingCapacity(head);
 }
 
 /// A value paired with its analysis weight, for weighted quantiles (WEIGHT-uni-impl)

@@ -881,6 +881,11 @@ corr_fisher_option = "ALPHA" "=" number | "RHO0" "=" [ "+" | "-" ] number
 corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
                  | "NGROUPS" "=" ( "ALL" | integer ) ; (* opensas *)
 
+(* Named listing selections expire after the procedure. ALL and NONE persist. *)
+ods_listing_select = "ODS" [ "LISTING" ] ( "SELECT" | "EXCLUDE" )
+                     ( "ALL" | "NONE" | ods_object { ods_object } ) ";" ; (* opensas *)
+ods_object = name { "." name } ; (* opensas *)
+
 (* UNIVARIATE HISTOGRAM fitted distribution parameters (pp.330-341).
    The longest positional parameter list gives the number of curves. Shorter
    lists repeat their last entry. PERCENT(S)= selects the quantiles of each
