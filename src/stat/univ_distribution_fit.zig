@@ -608,9 +608,13 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
         }
         if (r.family == .su) {
             p.delta = 2 * z / std.math.acosh((m + n) / (2 * middle));
-            p.gamma = p.delta * std.math.atanh((n - m) / (2 * middle * std.math.sinh(2 * z / p.delta)));
-            p.sigma = middle / (2 * std.math.cosh(p.gamma / p.delta) * std.math.sinh(z / p.delta));
-            p.theta = (b + c) / 2 + p.sigma * std.math.sinh(p.gamma / p.delta) * std.math.cosh(z / p.delta);
+            // The sample spacings determine GAMMA/DELTA. A fixed DELTA
+            // rescales the estimated GAMMA while preserving the percentile
+            // estimates of the location and scale.
+            const gamma_over_delta = std.math.atanh((n - m) / (2 * middle * std.math.sinh(2 * z / p.delta)));
+            p.gamma = (r.delta orelse p.delta) * gamma_over_delta;
+            p.sigma = middle / (2 * std.math.cosh(gamma_over_delta) * std.math.sinh(z / p.delta));
+            p.theta = (b + c) / 2 + p.sigma * std.math.sinh(gamma_over_delta) * std.math.cosh(z / p.delta);
         } else {
             if (n == 0 or m == 0) {
                 try d.report(.err, 0, "Floating Point Zero Divide.", .{});
@@ -697,6 +701,11 @@ test "UNIVARIATE Johnson percentile fitting SAS M9 fixed and estimated endpoints
     try std.testing.expectApproxEqAbs(@as(f64, 1.837628), su.p.sigma, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 1.118261), su.p.delta, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.357627), su.p.gamma, 5e-7);
+    const su_fixed_delta = try fit(&d, &u, .{ .family = .su, .theta = null, .delta = 0.8 });
+    try std.testing.expectEqual(su.p.theta, su_fixed_delta.p.theta);
+    try std.testing.expectEqual(su.p.sigma, su_fixed_delta.p.sigma);
+    try std.testing.expectEqual(@as(f64, 0.8), su_fixed_delta.p.delta);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.2558447461011039), su_fixed_delta.p.gamma, 3e-12);
     const sb = try fit(&d, &b, .{ .family = .sb, .theta = null });
     try std.testing.expectApproxEqAbs(@as(f64, -0.0390644103866), sb.p.theta, 1e-10);
     try std.testing.expectApproxEqAbs(@as(f64, 1.118077), sb.p.sigma, 5e-7);
