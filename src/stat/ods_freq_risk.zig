@@ -90,7 +90,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         const names = [_][]const u8{ "_RDIF1_", "E_RDIF1", "Z_RDIF1", if (right) "XPR_RDIF1" else "XPL_RDIF1", "XP2_RDIF1" };
         const labels = [_][]const u8{ "Risk Difference", "ASE (H0)", "Z", if (right) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", "Two-sided Pr >= |Z|" };
         for (names, labels, [_]?f64{ v.difference, v.se, v.reportedZ(), v.oneSided(), v.twoSided() }, 0..) |name, label, value, i| {
-            const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, numeric(value), "8.4"), " ") else try @import("freq_exact_render.zig").probability(a, value, style);
+            const display = if (i < 3) std.mem.trim(u8, try fmt.apply(a, numeric(value), "8.4"), " ") else try @import("freq_exact_render.zig").barnardProbability(a, value, style);
             try t.row(&.{ b.s(table), b.s(name), b.s(label), b.s(display), numeric(value) });
         }
         try capture.publish(a, d, "BarnardsTest", &t.ds);
@@ -139,6 +139,7 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
     // For this 5-by-5 design, the two-sided tail is 20u²-100u³+210u⁴-168u⁵,
     // u=p(1-p). Its maximum at p=1/2 is 11/32; M9 printed .34374999999999.
     try std.testing.expectApproxEqAbs(@as(f64, 11.0 / 32.0), barnard.row(4)[4].num, 1e-10);
+    try std.testing.expectEqualStrings("0.3437", barnard.row(4)[3].str);
     for ([_][]const u8{ "rd1", "rd2" }, 0..) |name, i| {
         const rs = library.find(name).?;
         try std.testing.expectEqual(@as(usize, 4), rs.rowCount());

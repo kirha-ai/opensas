@@ -31,6 +31,17 @@ pub fn probability(a: A, value: ?f64, style: parse.ProbabilityFormat) Error![]co
         },
     };
 }
+/// Barnard's default PVALUE column distinguishes a representable value below
+/// a four-decimal half tie from the tie itself. Explicit PFORMAT uses the
+/// same named number formats as other EXACT tables.
+pub fn barnardProbability(a: A, value: ?f64, style: parse.ProbabilityFormat) Error![]const u8 {
+    const p = value orelse return ".";
+    if (style != .default or p < 0.0001 or !std.math.isFinite(p)) return probability(a, p, style);
+    const whole = @floor(p * 10000);
+    const digit = if (@mulAdd(f64, p, 10000, -whole) >= 0.5) whole + 1 else whole;
+    return std.fmt.allocPrint(a, "{d:.4}", .{digit / 10000});
+}
+
 fn line(a: A, out: *Out, label: []const u8, value: []const u8) Error!void {
     try out.appendSlice(a, label);
     try out.appendNTimes(a, ' ', @max(1, 34 -| label.len));
@@ -78,8 +89,8 @@ pub fn barnard(a: A, out: *Out, r: @import("freq_exact_execute.zig").Barnard, op
     try nLine(a, out, "Risk Difference", r.difference);
     try nLine(a, out, "ASE (H0)", r.se);
     try nLine(a, out, "Z", r.reportedZ());
-    try pLine(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", r.oneSided(), options);
-    try pLine(a, out, "Two-sided Pr >= |Z|", r.twoSided(), options);
+    try line(a, out, if (r.difference > 0) "One-sided Pr >=  Z" else "One-sided Pr <=  Z", try barnardProbability(a, r.oneSided(), options.pformat));
+    try line(a, out, "Two-sided Pr >= |Z|", try barnardProbability(a, r.twoSided(), options.pformat));
 }
 
 pub const Fisher = struct { first_cell: ?f64 = null, table_probability: f64, left: ?f64 = null, right: ?f64 = null, p: f64, point: f64 };

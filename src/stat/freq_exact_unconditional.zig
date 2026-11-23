@@ -148,7 +148,7 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     const p1lo = if (family == .difference) p2lo + null_value else p2lo * null_value;
     const p1hi = if (family == .difference) p2hi + null_value else p2hi * null_value;
     const observed = try statistic(c, family, method, null_value);
-    if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, work);
+    if (n1wide + n2wide > stack_degree) return allocatedTail(n1, n2, family, method, null_value, side, observed, .{ .lower = p1lo, .upper = p1hi }, .{ .lower = p2lo, .upper = p2hi }, null, work);
     const n = n1 + n2;
     var sum: [stack_degree + 1]f64 = @splat(0);
     for (0..n1 + 1) |xx| for (0..n2 + 1) |yy| {
@@ -179,7 +179,9 @@ fn polynomialTick(context: ?*anyopaque) bool {
     const work: *Work = @ptrCast(@alignCast(context.?));
     return work.tick();
 }
-fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f64, side: Side, observed: f64, p1: polynomial.Range, p2: polynomial.Range, work: *Work) Error!TailResult {
+const GridValue = struct { index: u32, reported: f64 };
+
+fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f64, side: Side, observed: f64, p1: polynomial.Range, p2: polynomial.Range, grid: ?*GridValue, work: *Work) Error!TailResult {
     const rows = std.math.add(usize, n1, 1) catch return .exhausted;
     const cols = std.math.add(usize, n2, 1) catch return .exhausted;
     const count = std.math.mul(usize, rows, cols) catch return .exhausted;
@@ -201,11 +203,44 @@ fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f
     const built = try polynomial.build(a, n1, n2, events, p1, p2, control);
     if (built == .exhausted) return .exhausted;
     defer built.complete.deinit(a);
-    const maximum = try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
-    return switch (maximum) {
-        .exhausted => .exhausted,
-        .complete => |bounds| .{ .complete = .{ .lower = bounds.lower, .upper = bounds.upper } },
-    };
+    const maximum = if (grid != null)
+        try polynomial.maximizeGrid(a, built.complete.coefficients, nuisance_divisions, control)
+    else
+        try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
+    if (maximum == .exhausted) return .exhausted;
+    const bounds = maximum.complete;
+    if (grid) |point| {
+        point.index = bounds.grid_index.?;
+        point.reported = bounds.lower;
+        if (point.index > 1 and point.index < nuisance_divisions - 1 and 1 - bounds.lower != 1) {
+            const q = @as(f64, @floatFromInt(point.index)) / @as(f64, @floatFromInt(nuisance_divisions));
+            point.reported = (try barnardComplement(a, n1, n2, events, q, bounds.lower, work)) orelse return .exhausted;
+        }
+    }
+    return .{ .complete = .{ .lower = bounds.lower, .upper = bounds.upper } };
+}
+
+/// M9's raw small-tail probabilities are multiples of the spacing produced
+/// by subtracting the probability of the omitted tables from one.
+/// Retain the separately computed stable probability for a subtraction
+/// outside the supplied numerical tolerance or outside the probability domain.
+fn barnardComplement(a: std.mem.Allocator, n1: u32, n2: u32, events: []const bool, q: f64, stable: f64, work: *Work) Error!?f64 {
+    const columns = try a.alloc(f64, @as(usize, n2) + 1);
+    defer a.free(columns);
+    for (columns, 0..) |*mass, y| {
+        if (!work.tick()) return null;
+        mass.* = @exp(exact.binomialLogPoint(@intCast(y), n2, q));
+    }
+    var inside: f64 = 0;
+    for (0..@as(usize, n1) + 1) |x| {
+        if (!work.tick()) return null;
+        const row = @exp(exact.binomialLogPoint(@intCast(x), n1, q));
+        for (columns, 0..) |mass, y| {
+            if (!events[x * columns.len + y]) inside += row * mass;
+        }
+    }
+    const p = 1 - inside;
+    return if (p > 0 and p <= 1 and @abs(p - stable) <= work.options.tolerance) p else stable;
 }
 
 pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, method: Method, null_value: f64, side: Side, options: Options) Error!TailResult {
@@ -213,6 +248,7 @@ pub fn riskTail(table: risk.Table2x2, column: risk.Column, family: Family, metho
     return tail(try canonical(table, column), family, method, null_value, side, &work);
 }
 
+const nuisance_divisions: u32 = 10_000;
 const BarnardProfile = struct { one: f64, two: f64 };
 pub const BarnardTails = union(enum) {
     complete: struct { one: Bounds, two: Bounds, profile: ?BarnardProfile = null },
@@ -238,7 +274,32 @@ pub fn barnardTails(table: risk.Table2x2, side: Side, options: Options) Error!Ba
     if (one == .exhausted) return .exhausted;
     work = .{ .options = options };
     const two = try tail(c, .difference, .score, 0, .two_sided, &work);
-    return if (two == .exhausted) .exhausted else .{ .complete = .{ .one = one.complete, .two = two.complete } };
+    if (two == .exhausted) return .exhausted;
+    var result = BarnardTails{ .complete = .{ .one = one.complete, .two = two.complete } };
+    if (options.allocator == null) return result;
+    const n1 = c[0] + c[1];
+    const n2 = c[2] + c[3];
+    const observed = try statistic(c, .difference, .score, 0);
+    const range = polynomial.Range{ .lower = 0, .upper = 1 };
+    var reported: BarnardProfile = undefined;
+    for ([_]Side{ side, .two_sided }, [_]*f64{ &reported.one, &reported.two }) |tail_side, p| {
+        work = .{ .options = options };
+        var point: GridValue = undefined;
+        const fit = try allocatedTail(n1, n2, .difference, .score, 0, tail_side, observed, range, range, &point, &work);
+        if (fit == .exhausted) {
+            if (options.budget.stopped()) return .exhausted;
+            return result;
+        }
+        const index = point.index;
+        // The first/last interior grid point cannot bracket a peak with
+        // positive mass on both sides. Observed native searches can skip
+        // one of the two reflected maxima in that unresolved boundary cell.
+        if (index == 1 or index == nuisance_divisions - 1 or
+            1 - fit.complete.lower == 1) return result;
+        p.* = point.reported;
+    }
+    result.complete.profile = reported;
+    return result;
 }
 
 fn pointBounds(value: f64) Bounds {
@@ -251,7 +312,7 @@ fn pointBounds(value: f64) Bounds {
 // first cell, M9 can miss an entire reflected tail; retain the continuous
 // bounds for this numerically unresolved profile.
 fn opposingBarnardProfile(a: f64, b: f64, two_mode: f64) ?BarnardProfile {
-    const divisions = 10_000.0;
+    const divisions: f64 = @floatFromInt(nuisance_divisions);
     const one_mode = a / (a + b);
     if (one_mode * divisions < 1) return null;
     var profile: BarnardProfile = undefined;
@@ -809,6 +870,22 @@ test "Barnard opposing limits match elementary polynomial extrema and exhaustive
     const subnormal = (try barnardTails(tableOf(.{ 0, 537, 538, 0 }), .left, .{})).complete;
     try t.expectEqual(std.math.floatTrueMin(f64), subnormal.two.upper);
     try t.expectEqual(std.math.floatTrueMin(f64), subnormal.profile.?.two);
+}
+
+test "M9 Barnard profiles on ordinary tables retain the separate continuous bound" {
+    const t = std.testing;
+    const cases = [_]struct { c: [4]u32, one: f64, two: f64 }{
+        .{ .c = .{ 1, 3, 4, 3 }, .one = 0.21658011851414, .two = 0.41796875 },
+        .{ .c = .{ 1, 1, 5, 2 }, .one = 0.5073778468994397, .two = 0.8384121939729534 },
+        .{ .c = .{ 0, 2, 9, 1 }, .one = 0.01545338756716, .two = 0.01546160858111 },
+    };
+    for (cases) |v| {
+        const r = (try barnardTails(tableOf(v.c), .left, .{ .allocator = t.allocator })).complete;
+        try t.expectApproxEqAbs(v.one, r.profile.?.one, 2e-14);
+        try t.expectApproxEqAbs(v.two, r.profile.?.two, 2e-14);
+        try t.expect(r.one.upper >= r.profile.?.one - 1e-14);
+        try t.expect(r.two.upper >= r.profile.?.two - 1e-14);
+    }
 }
 
 test "directional SCORE orders fully opposing outcomes strictly first and inverts their probability" {
