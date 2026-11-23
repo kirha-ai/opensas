@@ -4819,14 +4819,18 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
 
     var overflow = if (wcol) |wc| try univ.weightOverflow(arena, cds, acols.items, ccols.items, obcols.items, wc, extra) else null;
     if (overflow) |stop| cds.rows.items = cds.rows.items[0..stop.completed_rows];
-    try univ.reportVariableOverflows(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, extra);
+    if (try univ.variableOverflow(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra)) |failure| {
+        overflow = failure;
+        cds.rows.items = cds.rows.items[0 .. failure.completed_rows + failure.failing_rows];
+    }
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint,
-        if (overflow != null and obcols.items.len == 0) &overflow.? else null);
+        if (overflow != null and (overflow.?.reason == .quartile_fence or obcols.items.len == 0)) &overflow.? else null);
     const empty_input = input_view.ds.rows.items.len == 0;
     if (empty_input) try diags.report(.note, 0, "No observations in data set {s}.", .{raw.name});
-    if (noprint or empty_input or (overflow != null and cds.rows.items.len == 0)) {
+    const stopped_before_listing = if (overflow) |failure| failure.completed_rows == 0 and failure.partial_cells == 0 else false;
+    if (noprint or empty_input or stopped_before_listing) {
         try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
         if (overflow) |stop| try stop.report(diags);
         return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
@@ -4839,7 +4843,11 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     // ignored — the listing printed ONE pooled Moments block over ALL obs, the
     // number formatted exactly like the per-group answer asked for). bySlices
     // yields one null-rep slice without BY, so the pooled path is byte-identical.
+    var input_offset: usize = 0;
     for (try univ.bySlices(arena, cds.rows.items, obcols.items, extra), 1..) |bs, by_number| {
+        const partial = if (overflow) |failure| failure.partialAt(input_offset) else null;
+        if (partial != null and partial.? == 0) break;
+        input_offset += bs.rows.len;
         extra.listing = .{ .selection = cx.listing, .prefix = if (bs.rep != null and cx.listing != null and (filtered or cx.listing.?.trace != null)) try std.fmt.allocPrint(arena, "Univariate.ByGroup{d}", .{by_number}) else "Univariate" };
         const by_start = out.items.len;
         if (bs.rep) |r| try by_groups.appendLine(arena, out, formatted_input, r, obcols.items);
@@ -4854,15 +4862,20 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         if (!univ.hasUsableWeight(bd.rows.items, wcol, extra)) continue;
         if (ccols.items.len == 0) {
             const analysis = try univ.analysisView(arena, bd, acols.items, wcol, extra);
-            for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
+            for (acols.items[0 .. partial orelse acols.items.len], 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
         } else {
             // CLASS: one Moments/Quantiles block per level (BUG-univclass), headed by
             // `classvar=formatted-level` as SAS does — levels collected WITHIN the
             // BY group.
-            const groups = try collectGroups(arena, bd, ccols.items);
-            univ.orderGroups(groups, ccols.items, extra);
-            for (groups) |g| {
-                if (!univ.hasUsableWeight(g.rows, wcol, extra)) continue;
+            const groups = try univ.analysisGroups(arena, bd, ccols.items, wcol, extra);
+            // A procedure stopped partway retains a variable-major prefix of the
+            // CLASS summaries, including those in previously completed BY groups.
+            const stopped_at_summary = overflow != null and overflow.?.reason == .quartile_fence;
+            const count = if (stopped_at_summary) partial orelse groups.len * acols.items.len else groups.len;
+            for (0..count) |block| {
+                const g = groups[if (stopped_at_summary) block % groups.len else block];
+                const first_var = if (stopped_at_summary) block / groups.len else 0;
+                const end_var = if (stopped_at_summary) first_var + 1 else acols.items.len;
                 var hdr: std.ArrayList(u8) = .empty;
                 for (ccols.items, 0..) |ci, k| {
                     if (k > 0) try hdr.appendSlice(arena, " ");
@@ -4880,9 +4893,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
                 gd.* = Dataset.init(arena, bd.name);
                 for (bd.columns.items) |c| try gd.columns.append(arena, c);
                 for (g.rows) |r| try gd.rows.append(arena, r);
-                if (!univ.hasUsableWeight(gd.rows.items, wcol, extra)) continue;
                 const analysis = try univ.analysisView(arena, gd, acols.items, wcol, extra);
-                for (acols.items, 0..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
+                for (acols.items[first_var..end_var], first_var..) |ix, vi| try emitUnivariate(arena, out, analysis.ds, ix, analysis.weight, vardef, pctldef, extra.inference.mu(vi, mu0), extra, icols.items, cx, obcols.items, ccols.items);
             }
         }
     }

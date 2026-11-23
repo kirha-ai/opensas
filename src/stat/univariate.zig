@@ -668,7 +668,7 @@ fn reportByNote(cx: proc.ProcCtx, ds: *Dataset, by: []const usize, group: ?[]con
     try cx.diags.report(.note, 0, "The above message was for the following BY group:\n      {s}", .{keys.items});
 }
 
-pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool, incomplete: ?*WeightOverflow) diag.Error!void {
+pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool, incomplete: ?*CalculationFailure) diag.Error!void {
     const a = cx.arena;
     var specs: std.ArrayList(Output) = .empty;
     try specs.appendSlice(a, outputs);
@@ -788,16 +788,21 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             }
             od.label = if (has_pct and wc != null) "Selected Summary Statistics (Percentile Definition=Weighted)" else if (has_pct) try std.fmt.allocPrint(a, "Selected Summary Statistics (Percentile Definition={d})", .{def}) else "Selected Summary Statistics";
         }
+        var input_offset: usize = 0;
         for (try bySlices(a, ds.rows.items, bcols, opt)) |bs| {
+            const partial = if (incomplete) |failure| failure.partialAt(input_offset) else null;
+            if (partial != null and (!table or partial.? == 0)) break;
+            input_offset += bs.rows.len;
             const first_row = od.rows.items.len;
             var bd = Dataset.init(a, ds.name);
             bd.columns = ds.columns;
             try bd.rows.appendSlice(a, bs.rows);
-            const groups = try h.collectGroups(a, &bd, ccols);
-            orderGroups(groups, ccols, opt);
-            // collectGroups emits a pooled group even for an empty, unclassified input.
-            for (groups) |g| {
-                if (!hasUsableWeight(g.rows, wc, opt)) continue;
+            const groups = try analysisGroups(a, &bd, ccols, wc, opt);
+            for (groups, 0..) |g, gi| {
+                // OUTPUT finishes a whole BY group at once. OUTTABLE can retain a
+                // prefix of the analysis-variable-major CLASS summaries within it.
+                const nvars = if (partial) |cells| cells / groups.len + @intFromBool(gi < cells % groups.len) else acols.len;
+                if (partial != null and nvars == 0) continue;
 
                 var gd = Dataset.init(a, ds.name);
                 gd.columns = ds.columns;
@@ -809,7 +814,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
                     robust = true;
                 };
-                for (acols, 0..) |ci, j| {
+                for (acols[0..nvars], 0..) |ci, j| {
                     summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt);
                     if (summaries[j].s.small_range and noprint and oi == 0)
                         try warnSmallRange(cx, ds, ci, bcols, bs.rep, opt);
@@ -821,7 +826,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                     if (table and !opt.inference.forcesn and wc == null and summaries[j].pairs.len > 1_000_000)
                         try cx.diags.warn(0, "UNIVARIATE: Sn is not computed by default above 1000000 nonmissing observations for {s}", .{ds.columns.items[ci].name});
                 }
-                const nrows = if (table) acols.len else 1;
+                const nrows = if (table) nvars else 1;
                 for (0..nrows) |vi| {
                     const row = try a.alloc(Value, od.columns.items.len);
                     for (row) |*v| v.* = .{ .num = nan };
@@ -854,22 +859,25 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
             }
             // OUTTABLE is BY-major, then analysis-variable-major, then CLASS.
             // OUTPUT remains one row per CLASS combination within each BY group.
-            if (table and acols.len > 1) {
+            if (table and acols.len > 1 and groups.len > 1) {
                 const rows = od.rows.items[first_row..];
-                const groups_count = rows.len / acols.len;
                 const original = try a.dupe([]const Value, rows);
-                for (0..acols.len) |vi| for (0..groups_count) |gi| {
-                    rows[vi * groups_count + gi] = original[gi * acols.len + vi];
-                };
+                const full_vars = rows.len / groups.len;
+                const extra_groups = rows.len % groups.len;
+                for (rows, 0..) |*row, i| {
+                    const gi = i % groups.len;
+                    row.* = original[gi * full_vars + @min(gi, extra_groups) + i / groups.len];
+                }
             }
         }
         if (incomplete == null) try cx.lib.put(name, od);
         try h.applyOutOptions(a, od, if (table) toks else spec.tokens, cx.diags, if (table) "outtable" else "out");
         if (incomplete) |failure| {
             const old = cx.lib.find(name) != null;
-            const info: WeightOverflow.OutputInfo = .{
+            const info: CalculationFailure.OutputInfo = .{
                 .name = try @import("variable_lists.zig").datasetName(a, od),
                 .variables = od.columns.items.len,
+                .observations = od.rows.items.len,
                 .preserved = old,
             };
             // M9 reports the OUTTABLE first, then the OUTPUT statements in source order.
@@ -1416,8 +1424,8 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
 
 /// M9 reports each affected CLASS cell and variable on its first overflowing
 /// observation. One BY note follows all warnings from the same BY group.
-pub fn reportVariableOverflows(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, opt: Options) !void {
-    if (ds.rows.items.len == 0) return;
+pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options) !?CalculationFailure {
+    if (ds.rows.items.len == 0) return null;
     const source = opt.source.?;
     var max_weight: f64 = 1;
     if (wc) |ci| for (source.rows.items) |row| {
@@ -1431,7 +1439,7 @@ pub fn reportVariableOverflows(cx: proc.ProcCtx, ds: *Dataset, acols: []const us
         for (source.rows.items) |row| for (acols) |ci| {
             if (@abs(h.toNum(row[ci])) >= limit) break :possible;
         };
-        return;
+        return null;
     }
 
     const Event = struct {
@@ -1442,18 +1450,33 @@ pub fn reportVariableOverflows(cx: proc.ProcCtx, ds: *Dataset, acols: []const us
             return if (lhs.observation == rhs.observation) lhs.variable < rhs.variable else lhs.observation < rhs.observation;
         }
     };
+    var completed: usize = 0;
     for (try bySlices(cx.arena, ds.rows.items, bcols, opt)) |by| {
         var events: std.ArrayList(Event) = .empty;
         var chunk = Dataset.init(cx.arena, ds.name);
         chunk.columns = ds.columns;
         try chunk.rows.appendSlice(cx.arena, by.rows);
-        for (try h.collectGroups(cx.arena, &chunk, ccols)) |class_group| {
+        const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt);
+        var first_fence: ?usize = null;
+        for (groups, 0..) |class_group, gi| {
             var group = Dataset.init(cx.arena, ds.name);
             group.columns = ds.columns;
             try group.rows.appendSlice(cx.arena, class_group.rows);
             const view = try analysisView(cx.arena, &group, acols, wc, opt);
             for (acols, 0..) |ci, vi| {
                 const stat = h.computeUnivStats(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
+                // Tukey's inner fences cannot exceed four times the largest
+                // absolute value. Sort only samples close enough to floatMax.
+                if (@max(@abs(stat.min), @abs(stat.max)) >= std.math.floatMax(f64) / 4) {
+                    const pairs = try pairsFor(cx.arena, view.ds, ci, view.weight);
+                    const q1 = quantile(pairs, 25, def);
+                    const q3 = quantile(pairs, 75, def);
+                    const radius = 1.5 * (q3 - q1);
+                    if (std.math.isInf(q1 - radius) or std.math.isInf(q3 + radius)) {
+                        const rank = vi * groups.len + gi;
+                        first_fence = @min(first_fence orelse rank, rank);
+                    }
+                }
                 if (stat.overflow_at) |at| {
                     try events.append(cx.arena, .{ .observation = @intFromFloat(h.toNum(class_group.rows[at][opt.obscol.?])), .variable = vi });
                 }
@@ -1463,26 +1486,40 @@ pub fn reportVariableOverflows(cx: proc.ProcCtx, ds: *Dataset, acols: []const us
         for (events.items) |event| {
             try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
         }
+        if (first_fence) |partial| return .{ .completed_rows = completed, .reason = .quartile_fence, .failing_rows = by.rows.len, .partial_cells = partial };
         if (events.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt);
+        completed += by.rows.len;
     }
+    return null;
 }
 
-pub const WeightOverflow = struct {
+pub const CalculationFailure = struct {
     completed_rows: usize,
-    missing_values: bool,
+    reason: enum { weight_statistic, missing_weight, quartile_fence },
+    failing_rows: usize = 0,
+    partial_cells: usize = 0,
     outputs: std.ArrayList(OutputInfo) = .empty,
 
-    const OutputInfo = struct { name: []const u8, variables: usize, preserved: bool };
+    const OutputInfo = struct { name: []const u8, variables: usize, observations: usize, preserved: bool };
 
-    pub fn report(self: WeightOverflow, d: *diag.Diagnostics) !void {
-        if (self.missing_values) {
-            try d.report(.err, 0, "A WEIGHT*FREQ value is too large.", .{});
-        } else {
-            try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
-            try d.report(.err, 0, "Overflow in statistic calculation.", .{});
+    pub fn partialAt(self: CalculationFailure, offset: usize) ?usize {
+        return if (self.reason == .quartile_fence and offset == self.completed_rows) self.partial_cells else null;
+    }
+
+    pub fn report(self: CalculationFailure, d: *diag.Diagnostics) !void {
+        switch (self.reason) {
+            .missing_weight => try d.report(.err, 0, "A WEIGHT*FREQ value is too large.", .{}),
+            .weight_statistic => {
+                try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
+                try d.report(.err, 0, "Overflow in statistic calculation.", .{});
+            },
+            .quartile_fence => {
+                try d.report(.err, 0, "Floating Point Overflow.", .{});
+                try d.report(.err, 0, "Termination due to Floating Point Exception", .{});
+            },
         }
         for (self.outputs.items) |out| {
-            try d.warn(0, "The data set {s} may be incomplete.  When this step was stopped there were 0 observations and {d} variables.", .{ out.name, out.variables });
+            try d.warn(0, "The data set {s} may be incomplete.  When this step was stopped there were {d} observations and {d} variables.", .{ out.name, out.observations, out.variables });
             if (out.preserved) try d.warn(0, "Data set {s} was not replaced because this step was stopped.", .{out.name});
         }
     }
@@ -1491,7 +1528,7 @@ pub const WeightOverflow = struct {
 /// M9 accumulates squared weights separately for each analysis variable's
 /// missing and nonmissing values within a CLASS cell. A failure discards
 /// the entire current BY group, including its other CLASS cells.
-pub fn weightOverflow(a: Allocator, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: usize, opt: Options) !?WeightOverflow {
+pub fn weightOverflow(a: Allocator, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: usize, opt: Options) !?CalculationFailure {
     if (ds.rows.items.len == 0) return null;
     const source = opt.source.?;
     // The expanded row count bounds every sum of squares, including FREQ.
@@ -1520,15 +1557,28 @@ pub fn weightOverflow(a: Allocator, ds: *Dataset, acols: []const usize, ccols: [
                 const sum = &count[@intFromBool(missing)];
                 sum.* += w * w;
                 if (!std.math.isFinite(sum.*)) {
-                    if (!missing) return .{ .completed_rows = completed, .missing_values = false };
+                    if (!missing) return .{ .completed_rows = completed, .reason = .weight_statistic };
                     missing_overflow = true;
                 }
             }
-            if (missing_overflow) return .{ .completed_rows = completed, .missing_values = true };
+            if (missing_overflow) return .{ .completed_rows = completed, .reason = .missing_weight };
         }
         completed += by.rows.len;
     }
     return null;
+}
+
+pub fn analysisGroups(a: Allocator, ds: *Dataset, ccols: []const usize, wc: ?usize, opt: Options) ![]h.MeansGroup {
+    const groups = try h.collectGroups(a, ds, ccols);
+    orderGroups(groups, ccols, opt);
+    if (wc == null) return groups;
+    var count: usize = 0;
+    for (groups) |group| {
+        if (!hasUsableWeight(group.rows, wc, opt)) continue;
+        groups[count] = group;
+        count += 1;
+    }
+    return groups[0..count];
 }
 
 pub fn hasUsableWeight(rows: []const []const Value, wc: ?usize, opt: Options) bool {
