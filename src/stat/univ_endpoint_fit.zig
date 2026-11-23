@@ -121,9 +121,90 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
                 const p: Parameters = .{ .theta = theta, .sigma = sigma, .alpha = alpha };
                 if (paretoNewton(x, p, .shape, controls)) |curve| return .{ .converged = curve };
             }
-        } else return paretoProfile(x, fixed.theta.?, controls);
+        } else {
+            if (paretoJoint(x, fixed.theta.?, controls)) |curve| return .{ .converged = curve };
+            return paretoProfile(x, fixed.theta.?, controls);
+        }
     }
     return optimize(family, x, fixed, controls);
+}
+
+const ParetoVector = @Vector(2, f64);
+
+fn paretoDot(left: ParetoVector, right: ParetoVector) f64 {
+    return @reduce(.Add, left * right);
+}
+
+fn paretoGradient(x: []const f64, point: Parameters) ParetoVector {
+    return .{ paretoScore(x, point, .log_scale), paretoScore(x, point, .shape) };
+}
+
+/// The joint M9 iteration uses the moment estimates, sample variance with
+/// divisor n-1, and a BFGS update in (log sigma, alpha) coordinates.
+fn paretoJoint(x: []const f64, theta: f64, controls: Controls) ?Curve {
+    var mean: f64 = 0;
+    var squares: f64 = 0;
+    for (x, 1..) |value, count| {
+        const excess = value - theta;
+        const delta = excess - mean;
+        mean += delta / @as(f64, @floatFromInt(count));
+        squares += delta * (excess - mean);
+    }
+    if (!(squares > 0 and mean > 0)) return null;
+    const variance = squares / @as(f64, @floatFromInt(x.len - 1));
+    const alpha = (mean * mean / variance - 1) / 2;
+    const floor = alpha * (x[x.len - 1] - theta);
+    const moment_scale = mean * (1 + alpha);
+    const scale = if (moment_scale > floor) moment_scale else floor + 1e-6;
+    if (!(scale > 0) or alpha >= 1) return null;
+    var coordinates: ParetoVector = .{ @log(scale), alpha };
+    var point: Parameters = .{ .theta = theta, .sigma = scale, .alpha = alpha };
+    var ll = logLikelihood(.pareto, x, point);
+    if (!std.math.isFinite(ll)) return null;
+    var gradient = paretoGradient(x, point);
+    // M9 limits the largest component of the initial ascent direction to five.
+    const diagonal = @min(100, 5 / @reduce(.Max, @abs(gradient)));
+    var inverse: [2]ParetoVector = .{ .{ diagonal, 0 }, .{ 0, diagonal } };
+    var gain: f64 = 0;
+    for (0..@min(controls.maxiter, 100)) |iteration| {
+        if (@reduce(.Max, @abs(gradient)) <= 1e-5)
+            return if (point.alpha < 1) .{ .parameters = point, .log_likelihood = ll, .iterations = iteration } else null;
+        const direction: ParetoVector = .{ paretoDot(inverse[0], gradient), paretoDot(inverse[1], gradient) };
+        const slope = paretoDot(direction, gradient);
+        if (!(slope > 0) or !std.math.isFinite(slope)) return null;
+        var step: f64 = if (iteration == 0) 1 else std.math.clamp(2.5 * gain / slope, 0.1, 1);
+        var next: Parameters = undefined;
+        var next_ll: f64 = undefined;
+        var move: ParetoVector = undefined;
+        for (0..64) |_| {
+            move = @as(ParetoVector, @splat(step)) * direction;
+            const proposed = coordinates + move;
+            next = .{ .theta = theta, .sigma = @exp(proposed[0]), .alpha = proposed[1] };
+            next_ll = logLikelihood(.pareto, x, next);
+            gain = next_ll - ll;
+            if (std.math.isFinite(next_ll) and gain >= 0.1 * step * slope) break;
+            const quadratic = step * step * slope / (2 * (step * slope - gain));
+            step = if (std.math.isFinite(quadratic)) std.math.clamp(quadratic, 0.1 * step, 0.9 * step) else 0.1 * step;
+        } else return null;
+        if (slope <= 1e-8 * @max(1, @abs(next_ll)))
+            return if (next.alpha < 1) .{ .parameters = next, .log_likelihood = next_ll, .iterations = iteration + 1 } else null;
+        const next_gradient = paretoGradient(x, next);
+        const difference = gradient - next_gradient;
+        const curvature = paretoDot(move, difference);
+        if (!(curvature > 0) or !std.math.isFinite(curvature)) return null;
+        const product: ParetoVector = .{ paretoDot(inverse[0], difference), paretoDot(inverse[1], difference) };
+        const coefficient = (1 + paretoDot(difference, product) / curvature) / curvature;
+        inline for (0..2) |row| {
+            inverse[row] += @as(ParetoVector, @splat(coefficient * move[row])) * move -
+                (@as(ParetoVector, @splat(move[row])) * product + @as(ParetoVector, @splat(product[row])) * move) /
+                    @as(ParetoVector, @splat(curvature));
+        }
+        coordinates += move;
+        point = next;
+        ll = next_ll;
+        gradient = next_gradient;
+    }
+    return null;
 }
 
 const ParetoAxis = enum { log_scale, shape };
@@ -1065,6 +1146,34 @@ test "beta free scale and first shape retain the fitted lower scale bound" {
     const interior = fit(.beta, &x, .{ .theta = 0, .beta = 1.1 }, .{});
     try std.testing.expect(interior == .converged);
     try std.testing.expectApproxEqAbs(@as(f64, 0.097583568), interior.converged.parameters.sigma, 5e-8);
+}
+
+test "M9 joint Pareto estimates and conditional fit presence on seeded draws" {
+    const observed = [_]f64{ 0.12, 0.23, 0.31, 0.48, 0.52, 0.76, 0.87, 1.03, 1.29, 1.36, 1.70, 2.28, 2.74, 3.52, 4.85, 6.21 };
+    const native: Parameters = .{ .sigma = 1.8684768733855683, .alpha = 0.056857224936872064 };
+    try check(native, fit(.pareto, &observed, .{}, .{}), 1e-10);
+
+    // M9 ParameterEstimates from separate PROC fits to RANUNI(817) draws
+    // of this fitted distribution. The near-endpoint fit in draw 128 is
+    // retained even though the profile root search alone rejected it.
+    var state: u64 = 817;
+    for (1..129) |rep| {
+        var x: [observed.len]f64 = undefined;
+        for (&x) |*value| {
+            state = (397204094 * state) % 2147483647;
+            const uniform = @as(f64, @floatFromInt(state)) / 2147483647;
+            value.* = native.sigma * (1 - std.math.pow(f64, uniform, native.alpha)) / native.alpha;
+        }
+        if (rep != 6 and rep != 7 and rep != 128) continue;
+        std.mem.sort(f64, &x, {}, std.sort.asc(f64));
+        const fitted = fit(.pareto, &x, .{}, .{});
+        switch (rep) {
+            6 => try check(.{ .sigma = 1.1329569111780897, .alpha = -0.1650242896286304 }, fitted, 1e-10),
+            7 => try std.testing.expect(fitted == .nonconverged and fitted.nonconverged.best == null),
+            128 => try std.testing.expect(fitted == .converged),
+            else => unreachable,
+        }
+    }
 }
 
 test "Pareto profile isolates the supported local maximum between two adjacent roots" {
