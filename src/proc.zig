@@ -2038,6 +2038,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     // the larger magnitude. This also applies to nearly constant groups
     // with small absolute observations.
     const relative_tolerance = 500 * std.math.floatEps(f64);
+    const minimum_weight = 1000 * @sqrt(std.math.floatMin(f64));
     var at: usize = 0;
     while (at < rows.len) {
         const start = at;
@@ -2061,8 +2062,12 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         if (native_univariate and previous_weight > 0 and w > 0) {
             const updated_mean = sumwx / sumw;
             const delta = x - updated_mean;
-            if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean)))
-                running_css += delta * delta * (w * sumw / previous_weight);
+            if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean))) {
+                // Below the M9 minimum weight, the previous total is the
+                // CSS multiplier. Avoid multiplying two tiny weights here.
+                const multiplier = if (previous_weight <= minimum_weight) previous_weight else w * sumw / previous_weight;
+                running_css += delta * delta * multiplier;
+            }
         }
         if (x < lo) lo = x;
         if (x > hi) hi = x;
@@ -2078,7 +2083,8 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     // least one nonmissing observation" — and SUMWGT is in neither list
     // (NOTE-univallmiss).
     if (n == 0) return .{ .n = 0, .sumw = 0, .mean = nan, .std = nan, .min = nan, .max = nan, .sum = nan, .median = nan, .q1 = nan, .q3 = nan };
-    const mean = sumwx / sumw;
+    const usable_weight = !native_univariate or sumw > minimum_weight;
+    const mean = if (usable_weight) sumwx / sumw else nan;
     var css: f64 = running_css;
     var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄)³ (skewness input)
     var m4: f64 = 0; // Σ wᵢ²(xᵢ−x̄)⁴    (kurtosis input)
@@ -2106,7 +2112,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         .wgt => sumw,
         .wdf => sumw - 1,
     };
-    var sd = if (divisor > 0 and (!native_univariate or sumw > 0)) @sqrt(css / divisor) else nan;
+    var sd = if (divisor > 0 and usable_weight) @sqrt(css / divisor) else nan;
     const small_range = native_univariate and sd > 0 and sd <= relative_tolerance * @abs(mean);
     if (small_range) {
         css = 0;

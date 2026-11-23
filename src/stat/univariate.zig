@@ -1187,6 +1187,28 @@ test "UNIVARIATE corrected sums respect original FREQ observations and small-ran
     }
 }
 
+test "UNIVARIATE minimum weight distinguishes the previous and final weight totals" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]f64{ 500, 501, 1000, 1001 }) |multiplier| {
+        ds.rows.clearRetainingCapacity();
+        const w = multiplier * @sqrt(std.math.floatMin(f64));
+        for ([_]f64{ 1, 2 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = x }, .{ .num = w }, .{ .num = 1 }, .{ .num = 1 } });
+        try testRun(a, lib, "proc univariate data=d noprint vardef=weight;var x;weight w;output out=o mean=m css=c var=v;run;");
+        const out = lib.find("o").?;
+        try std.testing.expectEqual(if (multiplier == 1001) @as(f64, 0.5) else 0.25, testCell(out, 0, "c") / w);
+        if (multiplier == 500) {
+            try std.testing.expect(std.math.isNan(testCell(out, 0, "m")));
+            try std.testing.expect(std.math.isNan(testCell(out, 0, "v")));
+        } else {
+            try std.testing.expectEqual(@as(f64, 1.5), testCell(out, 0, "m"));
+        }
+    }
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
