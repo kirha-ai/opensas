@@ -38,7 +38,7 @@ Phi Coefficient                         0.3000
 Contingency Coefficient                 0.2873
 Cramer's V                              0.2121
 
-WARNING: More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+WARNING: 100% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
 
 Statistic                              Value       ASE     95% Confidence Limits
 ----------------------------------------------------------------------------
@@ -252,7 +252,7 @@ Phi Coefficient                        -0.7676
 Contingency Coefficient                 0.6089
 Cramer's V                             -0.7676
 
-WARNING: More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
+WARNING: 50% of the cells have expected counts less than 5. Chi-Square may not be a valid test.
 
 Fisher's Exact Test
 ----------------------------------
