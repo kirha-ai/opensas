@@ -125,28 +125,55 @@ pub const OddsDistribution = struct {
         const nf: f64 = @floatFromInt(self.total);
         return choose(cf, xf) + choose(nf - cf, rf - xf) + @as(f64, @floatFromInt(x - self.lo)) * log_odds;
     }
+    // Ratio of adjacent noncentral hypergeometric weights. All four counts
+    // are positive here, including when the lower support is nonzero.
+    fn logStep(self: OddsDistribution, x: u32, log_odds: f64) f64 {
+        const right_top: f64 = @floatFromInt(self.row - x);
+        const left_bottom: f64 = @floatFromInt(self.col - x);
+        const left_top: f64 = @floatFromInt(@as(u64, x) + 1);
+        const right_bottom: f64 = @floatFromInt((self.total - self.col) - (self.row - x) + 1);
+        return @log((right_top / left_top) * (left_bottom / right_bottom)) + log_odds;
+    }
     pub fn tails(self: OddsDistribution, log_odds: f64, max_support: u64) Error!Tails {
         return (try self.tailsControlled(log_odds, max_support, .{})).?;
     }
     pub fn tailsControlled(self: OddsDistribution, log_odds: f64, max_support: u64, control: Control) Error!?Tails {
         if (!std.math.isFinite(log_odds) or @as(u64, self.hi) - self.lo + 1 > max_support) return error.ExecError;
-        // Normalize with log-sum-exp, retaining precision at extreme odds.
-        var peak: f64 = -std.math.inf(f64);
-        var x: u64 = self.lo;
-        while (x <= self.hi) : (x += 1) {
-            if (control.stopped()) return null;
-            peak = @max(peak, self.logWeight(@intCast(x), log_odds));
+        if (control.stopped()) return null;
+        // Starting at a mode keeps every relative weight at most one and
+        // avoids cancellation between log-gamma values of large margins.
+        var lo = self.lo;
+        var hi = self.hi;
+        while (lo < hi) {
+            const x = lo + (hi - lo) / 2;
+            if (self.logStep(x, log_odds) > 0) lo = x + 1 else hi = x;
         }
+        const mode = lo;
         var total: f64 = 0;
         var out = Tails{ .point = 0, .left = 0, .right = 0 };
-        x = self.lo;
-        while (x <= self.hi) : (x += 1) {
-            if (control.stopped()) return null;
-            const w = @exp(self.logWeight(@intCast(x), log_odds) - peak);
-            total += w;
-            if (x == self.observed) out.point = w;
-            if (x <= self.observed) out.left += w;
-            if (x >= self.observed) out.right += w;
+        for ([_]bool{ true, false }) |right| {
+            var x = mode;
+            var log_weight: f64 = 0;
+            while (true) {
+                if (control.stopped()) return null;
+                const w = @exp(log_weight);
+                if (w == 0) break;
+                if (right or x != mode) {
+                    total += w;
+                    if (x == self.observed) out.point = w;
+                    if (x <= self.observed) out.left += w;
+                    if (x >= self.observed) out.right += w;
+                }
+                if (right) {
+                    if (x == self.hi) break;
+                    log_weight += self.logStep(x, log_odds);
+                    x += 1;
+                } else {
+                    if (x == self.lo) break;
+                    x -= 1;
+                    log_weight -= self.logStep(x, log_odds);
+                }
+            }
         }
         out.point /= total;
         out.left /= total;
@@ -174,12 +201,24 @@ pub fn oddsRatioControlled(cells: [4]u32, alpha: f64, midp: bool, max_support: u
 }
 
 fn oddsLimit(d: OddsDistribution, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
-    // u32 counts imply finite nonstructural roots well inside exp(±128).
-    var lo: f64 = -128;
-    var hi: f64 = 128;
+    var lo: f64 = -1;
+    var hi: f64 = 1;
+    // The confidence level also determines the bracket. A table with two
+    // feasible outcomes alone can have a finite upper limit of 1/alpha - 1.
+    for ([_]bool{ false, true }) |right| {
+        const edge = if (right) &hi else &lo;
+        while (true) {
+            const t = (try d.tailsControlled(edge.*, budget, control)) orelse return null;
+            const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
+            if (((tail < target) == lower) != right) break;
+            if (right and std.math.isInf(@exp(edge.*))) return std.math.inf(f64);
+            if (!right and @exp(edge.*) == 0) return 0;
+            edge.* *= 2;
+        }
+    }
     for (0..80) |_| {
-        if (control.stopped()) return null;
         const m = (lo + hi) / 2;
+        if (m == lo or m == hi) break;
         const t = (try d.tailsControlled(m, budget, control)) orelse return null;
         const tail = (if (lower) t.right else t.left) - (if (midp) t.point / 2 else 0);
         if ((tail < target) == lower) lo = m else hi = m;
@@ -236,6 +275,34 @@ test "conditional odds tails, reciprocal intervals, zero cells and resource budg
     try t.expectApproxEqAbs(@as(f64, 0.05), (try zd.tails(@log(zero.upper), 100)).left, 1e-12);
     try t.expect((try oddsRatio(.{ 1, 9, 11, 3 }, 0.05, false, 5)) == .exhausted);
     try t.expectError(error.ExecError, OddsDistribution.init(.{ 0, 0, 1, 2 }));
+}
+
+test "conditional odds limits retain sparse wide margins and extreme confidence levels" {
+    const t = std.testing;
+    // The four possible weights at odds theta are
+    // C(A+1,x) C(3,3-x) theta^x for A=2e9 and x=0,1,2,3.
+    // Independently invert those four integer coefficients at 95-digit precision.
+    const wide = [4]u32{ 1, 2, 2_000_000_000, 1 };
+    const reversed = [4]u32{ 2, 1, 1, 2_000_000_000 };
+    for ([_]bool{ false, true }, [_]Interval{
+        .{ .lower = 4.2553788979219666e-12, .upper = 1.1283469174905303e-8 },
+        .{ .lower = 8.619148326189801e-12, .upper = 7.469988112533252e-9 },
+    }) |midp, reference| {
+        const interval = (try oddsRatio(wide, 0.05, midp, 4)).complete;
+        const flipped = (try oddsRatio(reversed, 0.05, midp, 4)).complete;
+        try t.expectApproxEqRel(reference.lower, interval.lower, 2e-14);
+        try t.expectApproxEqRel(reference.upper, interval.upper, 2e-14);
+        try t.expectApproxEqRel(1 / reference.upper, flipped.lower, 2e-14);
+        try t.expectApproxEqRel(1 / reference.lower, flipped.upper, 2e-14);
+        // For a support of two with equal central weights, the upper tail at
+        // the lower boundary is 1/(1+theta), or half that when using mid-p.
+        const alpha = 1e-100;
+        const extreme = (try oddsRatio(.{ 0, 1, 1, 0 }, alpha, midp, 2)).complete;
+        const reciprocal = (try oddsRatio(.{ 1, 0, 0, 1 }, alpha, midp, 2)).complete;
+        const upper = (if (midp) @as(f64, 0.5) else 1) / alpha - 1;
+        try t.expectApproxEqRel(upper, extreme.upper, 8e-14);
+        try t.expectApproxEqRel(1 / upper, reciprocal.lower, 8e-14);
+    }
 }
 
 test "exact public count conversion never truncates or overflows" {
