@@ -511,6 +511,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         if (solveInformation(hessian, gradient) == null) break;
         var scale: f64 = 1;
         var accepted = false;
+        var projected = false;
         var base_gap: ?LikelihoodGap = null;
         for (0..30) |_| {
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
@@ -518,7 +519,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             // rather than halving all coordinates solely to force |rho|<1.
             // Successive overshoots on the supported boundaries refine this distance
             // by one decimal place (positive and negative M9 MAXITER traces).
-            const projected = @abs(candidate[dim - 1]) >= 1;
+            projected = @abs(candidate[dim - 1]) >= 1;
             if (projected) {
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
@@ -551,8 +552,9 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         // across .01; equality retains relative scaling (stopping-fix evidence).
         for (params, candidate, gradient) |p, c, step| {
             // Projecting rho shortens its apparent move. M9 tests the
-            // scoring increment before this projection on the supported boundaries.
-            const delta = if (projected_boundary) scale * step else c - p;
+            // scoring increment before projection, including when all cells
+            // are occupied and the solution is interior.
+            const delta = if (projected_boundary or projected) scale * step else c - p;
             change = @max(change, @abs(delta) / (if (@abs(c) < 0.01) 1 else @abs(c)));
         }
         @memcpy(params, candidate);
@@ -625,6 +627,19 @@ test "CORR limits tiny occupied probabilities in the independence likelihood" {
         try std.testing.expectApproxEqAbs(case.rho, fit.coefficient.estimate.?, 1e-9);
         try std.testing.expectApproxEqAbs(case.lr, fit.likelihood_ratio.?.statistic, 5e-9);
     }
+}
+
+test "CORR checks a projected scoring step before declaring convergence on an interior table" {
+    const counts = [_]f64{ 1, 1, 1, 8000000 };
+    const m: CountMatrix = .{ .rows = 2, .cols = 2, .counts = &counts };
+    const first = try polychoric(std.testing.allocator, m, .{ .converge = 0.99, .maxiter = 1 });
+    try std.testing.expect(!first.converged and !first.information_unresolved);
+    try std.testing.expectEqual(@as(usize, 1), first.iterations);
+    const fit = try polychoric(std.testing.allocator, m, .{ .converge = 0.99 });
+    try std.testing.expect(fit.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9901885526706987), fit.coefficient.estimate.?, 5e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.003272224080075647), fit.coefficient.ase.?, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 22.0305722324334), fit.likelihood_ratio.?.statistic, 5e-8);
 }
 
 test "CORR single-zero tetrachoric tables use the requested iteration limit" {
