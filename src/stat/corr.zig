@@ -219,7 +219,6 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         const value = try numericOption(cx, toks, &i);
                         if (eq(key.text, "converge")) {
                             if (value < 0 or value > 1) return cx.diags.fail(error.ParseError, key.line, "The parameter value {d} is not within the required range of 0 and 1.", .{value});
-                            if (value == 0 and serial) return fail(cx, key);
                             opt.converge = value;
                         } else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
                             opt.maxiter = @intFromFloat(value);
@@ -1353,6 +1352,8 @@ fn overGroupLimit(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: a
 }
 fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanced.PolyOptions, serial: bool) ![]const PolyPair {
     var results: std.ArrayList(PolyPair) = .empty;
+    var constant_columns: std.ArrayList(usize) = .empty;
+    defer constant_columns.deinit(cx.arena);
     const rowcols = if (s.with.len > 0) s.with else s.vars;
     const excluded = try overGroupLimit(cx, s, rows, opt, serial);
     defer cx.arena.free(excluded);
@@ -1375,12 +1376,28 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
         }
         // A rejected polyserial pair has no fit sample. Polychoric still
         // reports the pairwise count when either ordinal variable is excluded.
-        const estimate = if (skip) advanced.Poly{ .n = if (serial) 0 else n } else if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
+        const estimate = if (skip)
+            advanced.Poly{ .n = if (serial) 0 else n }
+        else if (serial)
+            advanced.polyserial(cx.arena, data.items, opt) catch |err| switch (err) {
+                error.SerialZeroDivide => {
+                    try cx.diags.report(.err, 0, "Floating Point Zero Divide.", .{});
+                    return cx.diags.fail(error.ExecError, 0, "Termination due to Floating Point Exception", .{});
+                },
+                else => |e| return e,
+            }
+        else
+            try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
             return cx.diags.fail(error.ParseError, 0, "PROC CORR: {s} boundary information is unresolved at the requested tolerance.", .{if (serial) @as([]const u8, "polyserial") else "polychoric"});
         }
-        if (!skip and !estimate.converged) try cx.diags.warn(0, "The algorithm for {s} correlation between {s} and {s} did not converge.", .{
+        if (estimate.constant_continuous) {
+            if (!contains(constant_columns.items, x_column)) {
+                try constant_columns.append(cx.arena, x_column);
+                try cx.diags.warn(0, "The standard error for variable {s} is either zero or missing. The affected polyserial correlation are set to missing.", .{s.ds.columns.items[x_column].name});
+            }
+        } else if (!skip and !estimate.converged) try cx.diags.warn(0, "The algorithm for {s} correlation between {s} and {s} did not converge.", .{
             if (serial) @as([]const u8, "polyserial") else "polychoric",
             s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) c else r].name,
             s.ds.columns.items[if (s.with.len == 0 or (serial and opt.ordinal_var)) r else c].name,
@@ -1408,6 +1425,35 @@ test "CORR ordinal SAS joint MLE and convergence options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.9375), s.lr, 0.00005);
     const fail_result = (try Testing.analyze(a, ds, "proc corr polychoric(maxiter=1); var x y; freq f; run;")).groups[0].polychoric[0].estimate;
     try std.testing.expect(!fail_result.converged and std.math.isNan(fail_result.r));
+}
+
+test "CORR polyserial checks usable pairs and constant inputs before zero tolerance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const overlapping = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 3, 1 }, &.{ 2, 2 }, &.{ 4, 2 } });
+    const no_pair = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ nan, 1 }, &.{ 1, nan } });
+    const constant = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 1, 2 }, &.{ 1, 3 } });
+    for ([_]*Dataset{ overlapping, no_pair, no_pair, constant }, [_][]const u8{ "0", "0", "1e-4", "0" }) |ds, tol| {
+        var lib = @import("../exec.zig").Library.init(a);
+        try lib.put("d", ds);
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        const src = try std.fmt.allocPrint(a, "proc corr polyserial(converge={s});var x;with g;run;", .{tol});
+        const spec = try parse(cx, try lex.tokenize(a, src, &d));
+        if (ds == constant) {
+            const fit = (try compute(cx, spec)).groups[0].polyserial[0].estimate;
+            try std.testing.expectEqual(@as(f64, 3), fit.n);
+            try std.testing.expect(std.math.isNan(fit.r) and std.math.isNan(fit.se));
+            try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+            try std.testing.expectEqualStrings("The standard error for variable x is either zero or missing. The affected polyserial correlation are set to missing.", d.list.items[0].message);
+        } else {
+            try std.testing.expectError(error.ExecError, compute(cx, spec));
+            try std.testing.expectEqual(@as(usize, 2), d.list.items.len);
+            try std.testing.expectEqualStrings("Floating Point Zero Divide.", d.list.items[0].message);
+            try std.testing.expectEqualStrings("Termination due to Floating Point Exception", d.list.items[1].message);
+        }
+    }
 }
 
 test "CORR zero tolerance requires an unchanged polychoric scoring iterate" {

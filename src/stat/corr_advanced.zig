@@ -146,7 +146,7 @@ pub fn alpha(a: std.mem.Allocator, covariance: []const f64, correlations: []cons
 }
 
 pub const PolyOptions = struct { converge: f64 = 0.0001, maxiter: usize = 200, ngroups: usize = 20, ordinal_var: bool = false };
-pub const Poly = struct { r: f64 = nan, se: f64 = nan, wald: f64 = nan, p: f64 = nan, lr: f64 = nan, lr_p: f64 = nan, n: f64 = 0, converged: bool = false, unsupported_boundary: bool = false };
+pub const Poly = struct { r: f64 = nan, se: f64 = nan, wald: f64 = nan, p: f64 = nan, lr: f64 = nan, lr_p: f64 = nan, n: f64 = 0, converged: bool = false, unsupported_boundary: bool = false, constant_continuous: bool = false };
 fn levels(a: std.mem.Allocator, data: []const Observation, x: bool) ![]f64 {
     var list: std.ArrayList(f64) = .empty;
     for (data) |d| {
@@ -412,15 +412,22 @@ fn serialFallback(result: Poly, ctx: Serial, values: []f64) Poly {
 
 pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOptions) !Poly {
     var result: Poly = .{};
+    if (data.len == 0) return error.SerialZeroDivide;
     const cats = try levels(a, data, false);
     defer a.free(cats);
     if (cats.len > opt.ngroups) return result;
     var sum: f64 = 0;
+    var constant_x = true;
     for (data) |d| {
         result.n += d.f;
         sum += d.f * d.x;
+        constant_x = constant_x and d.x == data[0].x;
     }
-    if (cats.len < 2 or result.n < 2) return result;
+    if (result.n < 2 or constant_x) {
+        result.constant_continuous = true;
+        return result;
+    }
+    if (cats.len < 2) return result;
     const mean = sum / result.n;
     var css: f64 = 0;
     var y_sum: f64 = 0;
@@ -437,7 +444,11 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         yy += d.f * dy * dy;
         xy += d.f * (d.x - mean) * dy;
     }
-    if (!(css > 0)) return result;
+    if (!(css > 0)) {
+        result.constant_continuous = true;
+        return result;
+    }
+    if (opt.converge == 0) return error.SerialZeroDivide;
     const ctx: Serial = .{ .data = data, .categories = cats, .mean = mean, .sd = @sqrt(css / result.n) };
     const start_r = xy / @sqrt(css * yy);
     const dim = cats.len;
