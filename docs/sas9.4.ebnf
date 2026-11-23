@@ -182,8 +182,10 @@ missing_stmt   = "MISSING" letter { letter } ";" ;
 options_stmt   = "OPTIONS" { name [ "=" value ] } ";" ;           (* opensas *)
                  (* honored: FMERR/NOFMERR, NOTES/NONOTES, YEARCUTOFF=, OBS=/FIRSTOBS=
                    (global read bound — fixture global_obs_firstobs, BUG-globalobs),
-                   MISSING=, LINESIZE=/PAGESIZE= (LS=/PS=), DKRICOND=/DKROCOND=,
-                   BYLINE/NOBYLINE, VALIDVARNAME=; a ~70-name allowlist of genuinely
+                   MISSING=, DKRICOND=/DKROCOND=,
+                   BYLINE/NOBYLINE, VALIDVARNAME=; numeric LINESIZE=/PAGESIZE=
+                   (LS=/PS=) and PAGESIZE=MIN/MAX are captured for unpaginated
+                   listings; a ~70-name allowlist of genuinely
                    unobservable display/log/session options is accepted inert
                    (main.zig isInertOption, BUG-optionsstmtswallow); MINOPERATOR/
                    MINDELIMITER= act at macro scan time (BUG-minoperatoropt, fixture

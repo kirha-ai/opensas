@@ -1534,10 +1534,12 @@ fn handleGlobal(a: std.mem.Allocator, g: *Globals, diags: *sas.diag.Diagnostics,
                 // and validated; listing procs do NOT wrap/paginate to them yet
                 // (accepted, not an error). Fail LOUD on garbage like OBS=.
                 const is_ls = eqi(t.text, "linesize") or eqi(t.text, "ls");
-                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq and toks[i + 2].tag == .number)
-                    std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null
-                else
-                    null;
+                const v: ?usize = if (i + 2 < toks.len and toks[i + 1].tag == .eq) switch (toks[i + 2].tag) {
+                    .number => std.fmt.parseInt(usize, toks[i + 2].text, 10) catch null,
+                    // SAS 9.4 System Options: Reference, PAGESIZE=.
+                    .name => if (!is_ls and eqi(toks[i + 2].text, "max")) 32767 else if (!is_ls and eqi(toks[i + 2].text, "min")) 15 else null,
+                    else => null,
+                } else null;
                 if (v) |n| {
                     if (is_ls) sas.io.global_linesize = n else sas.io.global_pagesize = n;
                     i += 3;
@@ -5550,6 +5552,11 @@ test "GAP-listingwidth: LINESIZE=/PAGESIZE= captured (inert), garbage fails loud
     );
     try std.testing.expectEqual(@as(usize, 40), sas.io.global_linesize);
     try std.testing.expectEqual(@as(usize, 10), sas.io.global_pagesize);
+    try expectRun("options nodate nonumber linesize=120 pagesize=max nostimer nofullstimer;\ndata _null_; put 'ready'; run;\n", "ready\n");
+    try std.testing.expectEqual(@as(usize, 120), sas.io.global_linesize);
+    try std.testing.expectEqual(@as(usize, 32767), sas.io.global_pagesize);
+    try expectRun("options ps=MiN;\ndata _null_; put 'ready'; run;\n", "ready\n");
+    try std.testing.expectEqual(@as(usize, 15), sas.io.global_pagesize);
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
