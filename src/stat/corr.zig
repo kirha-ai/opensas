@@ -1351,6 +1351,11 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
     for (rowcols, 0..) |r, i| for (s.vars, 0..) |c, j| {
         if (s.with.len == 0 and i >= j) continue;
         const skip = if (serial) contains(excluded, if (opt.ordinal_var) c else r) else contains(excluded, r) or contains(excluded, c);
+        // The first VAR is the first polychoric score in a square request,
+        // as it is in the equivalent VAR/WITH request.
+        const first_is_row = if (serial) opt.ordinal_var else s.with.len == 0;
+        const x_column = if (first_is_row) r else c;
+        const y_column = if (first_is_row) c else r;
         var n: f64 = 0;
         var data: std.ArrayList(advanced.Observation) = .empty;
         defer data.deinit(cx.arena);
@@ -1358,7 +1363,7 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
             const m = mass(s, row) orelse continue;
             if (row[c].isMissing() or row[r].isMissing()) continue;
             n += m.f;
-            if (!skip) try data.append(cx.arena, .{ .x = row[if (serial and opt.ordinal_var) r else c].num, .y = row[if (serial and opt.ordinal_var) c else r].num, .f = m.f });
+            if (!skip) try data.append(cx.arena, .{ .x = row[x_column].num, .y = row[y_column].num, .f = m.f });
         }
         // A rejected polyserial pair has no fit sample. Polychoric still
         // reports the pairwise count when either ordinal variable is excluded.
@@ -1754,7 +1759,7 @@ test "CORR sparse polychoric SAS scoring initialization covariance and iteration
     try std.testing.expectApproxEqAbs(@as(f64, 0.21987585371233), checked.se, 5e-6);
 }
 
-test "CORR polychoric first step preserves large power-of-two score scales" {
+test "CORR polychoric first step preserves native score scaling and variable order" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -1762,22 +1767,26 @@ test "CORR polychoric first step preserves large power-of-two score scales" {
         .{ 0, 0, 3500 },   .{ 11, 0, 2500 },  .{ 12, 0, 1800 },  .{ 23, 0, 1500 },
         .{ 23, 19, 3300 }, .{ 23, 23, 3100 }, .{ 23, 27, 1400 },
     };
-    // SAS 9.4 M9 reports the same coefficient, ASE, and likelihood ratio
-    // bit for bit at each scale, for both the original scores and their reflection.
-    const native = [_][3]f64{
-        .{ 0.9460017945521846, 0.0055509154975335, 14570.35682193622 },
-        .{ -0.9460017945521834, 0.005550915497533486, 14570.356821936199 },
+    // These scale pairs share all three first-step fields in SAS 9.4 M9.
+    // The unequal integer scales distinguish the order of the two reciprocal roots.
+    const cases = [_]struct { scales: [2][2]f64, expected: [3]f64 }{
+        .{ .scales = .{ .{ 1, 1 }, .{ 0x1p300, 0x1p300 } }, .expected = .{ 0.9460017945521846, 0.0055509154975335, 14570.35682193622 } },
+        .{ .scales = .{ .{ -1, 1 }, .{ -0x1p300, 0x1p300 } }, .expected = .{ -0.9460017945521834, 0.005550915497533486, 14570.356821936199 } },
+        .{ .scales = .{ .{ 2, 3 }, .{ 3, 5 } }, .expected = .{ 0.9460017945521842, 0.005550915497533494, 14570.356821936213 } },
     };
-    for ([_]f64{ 1, -1 }, native) |sign, expected| {
-        var original: [3]f64 = undefined;
-        for ([_]f64{ 1, 0x1p300 }, 0..) |scale, i| {
+    for (cases) |case| {
+        var first: ?[3]f64 = null;
+        for (case.scales) |scale| {
             const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{});
-            for (rows) |row| try ds.appendRow(&.{ .{ .num = sign * scale * row[0] }, .{ .num = scale * row[1] }, .{ .num = row[2] } });
-            const result = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
-            try std.testing.expect(result.converged);
-            const values = [3]f64{ result.r, result.se, result.lr };
-            for (values, expected) |actual, target| try std.testing.expectApproxEqRel(target, actual, 1e-13);
-            if (i == 0) original = values else try std.testing.expectEqual(original, values);
+            for (rows) |row| try ds.appendRow(&.{ .{ .num = scale[0] * row[0] }, .{ .num = scale[1] * row[1] }, .{ .num = row[2] } });
+            for ([_][]const u8{ "var x;with y;", "var x y;" }) |vars| {
+                const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge=.99 maxiter=1);{s}freq f;run;", .{vars});
+                const result = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+                try std.testing.expect(result.converged);
+                const values = [3]f64{ result.r, result.se, result.lr };
+                for (values, case.expected) |actual, target| try std.testing.expectApproxEqRel(target, actual, 1e-13);
+                if (first) |original| try std.testing.expectEqual(original, values) else first = values;
+            }
         }
     }
 }

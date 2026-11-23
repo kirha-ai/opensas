@@ -98,6 +98,14 @@ fn erfccheb(z: f64) f64 {
     return tc * @exp(-z * z + 0.5 * (cof[0] + ty * d) - dd);
 }
 
+fn conditionalVariance(rho: f64) f64 {
+    return @mulAdd(f64, -rho, rho, 1);
+}
+
+fn conditionalCut(bound: f64, given: f64, rho: f64, sd: f64) f64 {
+    return @mulAdd(f64, -rho, given, bound) / sd;
+}
+
 // Positive conditional-normal integration avoids subtracting four nearly equal
 // bivariate CDFs. Split at every conditional transition before adaptive quadrature.
 const Rectangle = struct {
@@ -106,7 +114,7 @@ const Rectangle = struct {
     rho: f64,
     sd: f64,
     fn value(self: @This(), x: f64) f64 {
-        return normalPdf(x) * normalInterval((self.yl - self.rho * x) / self.sd, (self.yu - self.rho * x) / self.sd);
+        return normalPdf(x) * normalInterval(conditionalCut(self.yl, x, self.rho, self.sd), conditionalCut(self.yu, x, self.rho, self.sd));
     }
 };
 fn normalInterval(lo: f64, hi: f64) f64 {
@@ -177,7 +185,7 @@ fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
 }
 pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     if (rho == 0) return normalInterval(xl, xu) * normalInterval(yl, yu);
-    const f: Rectangle = .{ .yl = yl, .yu = yu, .rho = rho, .sd = @sqrt((1 - rho) * (1 + rho)) };
+    const f: Rectangle = .{ .yl = yl, .yu = yu, .rho = rho, .sd = @sqrt(conditionalVariance(rho)) };
     var cuts: [23]f64 = undefined;
     cuts[0] = xl;
     cuts[1] = xu;
@@ -213,21 +221,23 @@ fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize) f64 
     return rectangleProbability(xl, xu, yl, yu, params[params.len - 1]);
 }
 fn bivariateDensity(x: f64, y: f64, rho: f64) f64 {
-    const variance = (1 - rho) * (1 + rho);
-    return @exp(-((x - rho * y) * (x - rho * y) / variance + y * y) / 2) / (2 * std.math.pi * @sqrt(variance));
+    const variance = conditionalVariance(rho);
+    const dx = @mulAdd(f64, -rho, y, x);
+    const exponent = @mulAdd(f64, dx / variance, dx, y * y);
+    return @exp(-exponent / 2) / (2 * std.math.pi * @sqrt(variance));
 }
 fn cellGradient(m: CountMatrix, params: []const f64, i: usize, j: usize, out: []f64) void {
     @memset(out, 0);
     const rho = params[params.len - 1];
-    const sd = @sqrt((1 - rho) * (1 + rho));
+    const sd = @sqrt(conditionalVariance(rho));
     const xl = if (i == 0) -40 else params[i - 1];
     const xu = if (i + 1 == m.rows) 40 else params[i];
     const yl = if (j == 0) -40 else params[m.rows + j - 2];
     const yu = if (j + 1 == m.cols) 40 else params[m.rows + j - 1];
-    if (i > 0) out[i - 1] = -normalPdf(xl) * normalInterval((yl - rho * xl) / sd, (yu - rho * xl) / sd);
-    if (i + 1 < m.rows) out[i] = normalPdf(xu) * normalInterval((yl - rho * xu) / sd, (yu - rho * xu) / sd);
-    if (j > 0) out[m.rows + j - 2] = -normalPdf(yl) * normalInterval((xl - rho * yl) / sd, (xu - rho * yl) / sd);
-    if (j + 1 < m.cols) out[m.rows + j - 1] = normalPdf(yu) * normalInterval((xl - rho * yu) / sd, (xu - rho * yu) / sd);
+    if (i > 0) out[i - 1] = -normalPdf(xl) * normalInterval(conditionalCut(yl, xl, rho, sd), conditionalCut(yu, xl, rho, sd));
+    if (i + 1 < m.rows) out[i] = normalPdf(xu) * normalInterval(conditionalCut(yl, xu, rho, sd), conditionalCut(yu, xu, rho, sd));
+    if (j > 0) out[m.rows + j - 2] = -normalPdf(yl) * normalInterval(conditionalCut(xl, yl, rho, sd), conditionalCut(xu, yl, rho, sd));
+    if (j + 1 < m.cols) out[m.rows + j - 1] = normalPdf(yu) * normalInterval(conditionalCut(xl, yu, rho, sd), conditionalCut(xu, yu, rho, sd));
     out[params.len - 1] = bivariateDensity(xu, yu, rho) - bivariateDensity(xl, yu, rho) - bivariateDensity(xu, yl, rho) + bivariateDensity(xl, yl, rho);
 }
 fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
@@ -323,13 +333,13 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     defer a.free(params);
     var cum: f64 = 0;
     for (t.row[0 .. m.rows - 1], 0..) |v, i| {
-        cum += v / t.n;
-        params[i] = fns.distQuantile(.normal, cum, &.{}).?;
+        cum += v;
+        params[i] = fns.distQuantile(.normal, cum / t.n, &.{}).?;
     }
     cum = 0;
     for (t.col[0 .. m.cols - 1], 0..) |v, j| {
-        cum += v / t.n;
-        params[m.rows + j - 1] = fns.distQuantile(.normal, cum, &.{}).?;
+        cum += v;
+        params[m.rows + j - 1] = fns.distQuantile(.normal, cum / t.n, &.{}).?;
     }
     params[dim - 1] = 0;
     const null_ll = negativeLogLikelihood(m, params);
@@ -359,7 +369,11 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         yy += n * y * y;
         xy += n * x * y;
     }
-    params[dim - 1] = (xy - sx * sy / t.n) / @sqrt((xx - sx * sx / t.n) * (yy - sy * sy / t.n));
+    const x_sd = @sqrt(xx - sx * sx / t.n);
+    const y_sd = @sqrt(yy - sy * sy / t.n);
+    // CORR takes the reciprocal column deviation first. The two divisions
+    // preserve the ordering observed in native VAR and WITH first-step fits.
+    params[dim - 1] = (xy - sx * sy / t.n) * ((1 / y_sd) / x_sd);
     const hessian = try a.alloc(f64, dim * dim);
     defer a.free(hessian);
     const gradient = try a.alloc(f64, dim);
