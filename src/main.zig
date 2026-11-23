@@ -6898,3 +6898,67 @@ test "comparative histogram aligns class bars and renders a kernel grid" {
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, hist, "data-pos=\"ne\""));
     try std.testing.expect(std.mem.indexOf(u8, hist, ">Count</text>") != null);
 }
+
+test "CORR native geometry reproduces M9 ellipses and matrix cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x y z @@;datalines;\n1 8 4 2 6 1 2 6 5 3 2 2 4 5 6 5 3 2 6 1 5 8 4 8 9 1 3\n;run;ods graphics on;" ++
+        "proc corr data=d plots=(scatter(ellipse=confidence alpha=.1) scatter(ellipse=prediction alpha=.1));var x;with y;run;" ++
+        "proc corr data=d plots=matrix(nvar=2 nwith=1);var x z; with y z;run;" ++
+        "proc corr data=d plots=matrix(hist);var x y z;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const ci = try dir.dir.readFileAlloc(io_, "opensas-0001-scatter.svg", a, .limited(1 << 20));
+    const pred = try dir.dir.readFileAlloc(io_, "opensas-0002-scatter.svg", a, .limited(1 << 20));
+    // F(2,7) gives first transformed vertices (502.77,320.76) and
+    // (859.29,470.96). The prediction contour is clipped by the frame.
+    try std.testing.expect(std.mem.indexOf(u8, ci, "data-factor=\"0.82728687011844") != null);
+    try std.testing.expect(std.mem.indexOf(u8, ci, "M502.77 320.76") != null);
+    try std.testing.expect(std.mem.indexOf(u8, pred, "M859.29 470.96") != null);
+    try std.testing.expectEqual(@as(usize, 9), std.mem.count(u8, ci, "class=\"point\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, ci, "data-x=\"2\" data-y=\"6\""));
+    const rect = try dir.dir.readFileAlloc(io_, "opensas-0003-matrix.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, rect, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 18), std.mem.count(u8, rect, "class=\"point\""));
+    try std.testing.expect(std.mem.indexOf(u8, rect, "data-x-variable=\"z\" data-y-variable=\"y\"") != null);
+    const mat = try dir.dir.readFileAlloc(io_, "opensas-0004-matrix.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 9), std.mem.count(u8, mat, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 54), std.mem.count(u8, mat, "class=\"point\""));
+    try std.testing.expect(std.mem.count(u8, mat, "class=\"bin\"") >= 3);
+}
+
+test "CORR partial residual coordinates and degenerate, missing and suppressed plots" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "data d;input x y k k2 flat @@;datalines;\n9 10 -1 -2 4 7 6 -1 -2 4 13 0 1 2 4 11 4 1 2 4 . 12 3 6 4 12 . 0 0 4\n;run;ods graphics on;" ++
+        "proc corr data=d plots=scatter(ellipse=none);var x y;partial k k2;run;" ++
+        "proc corr data=d plots=scatter;var flat;with y;run;" ++
+        "proc corr data=d plots(maxpoints=3)=scatter;var x y;run;proc corr data=d plots=none;var x y;run;" ++
+        "proc corr data=d;var x y;run;proc corr data=d noprint plots=matrix;var x y;run;" ++
+        "ods graphics off;proc corr data=d plots=scatter;var x y;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const partial = try dir.dir.readFileAlloc(io_, "opensas-0001-scatter.svg", a, .limited(1 << 20));
+    for ([_][]const u8{ "data-x=\"1\" data-y=\"2\"", "data-x=\"-1\" data-y=\"-2\"", "data-x=\"1\" data-y=\"-2\"", "data-x=\"-1\" data-y=\"2\"", "x residual" }) |part| try std.testing.expect(std.mem.indexOf(u8, partial, part) != null);
+    const flat = try dir.dir.readFileAlloc(io_, "opensas-0002-scatter.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 5), std.mem.count(u8, flat, "class=\"point\""));
+    try std.testing.expect(std.mem.indexOf(u8, flat, "class=\"ellipse\"") == null);
+    try std.testing.expect(std.mem.indexOf(u8, flat, "class=\"legend\"") == null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-scatter.svg", .{}));
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-matrix.svg", .{}));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Scatter plots with more than 3 points have been suppressed") != null);
+}

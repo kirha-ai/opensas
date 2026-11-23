@@ -14,7 +14,9 @@ const output = @import("corr_output.zig");
 const advanced = @import("corr_advanced.zig");
 
 pub const VarDef = enum { df, n, wdf, weight };
+const graphics = @import("corr_plots.zig");
 pub const Options = struct {
+    plots: graphics.Options = .{},
     pearson: bool = false,
     spearman: bool = false,
     kendall: bool = false,
@@ -88,6 +90,7 @@ pub const Pair = struct {
     controls: usize = 0,
 };
 pub const Group = struct {
+    rows: []const []const Value = &.{},
     n: f64 = 0,
     sum_weights: f64 = 0,
     by_values: ?[]const Value,
@@ -193,6 +196,9 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             name = toks[i + 2].text;
             i += 3;
             if (at(toks, i, .lparen)) i = proc.skipParen(toks, i);
+        } else if (kw(toks, i, "plots")) {
+            opts.plots = try graphics.parse(cx, toks, &i);
+            if (opts.plots.requests.len > 0) opts.pearson = true;
         } else if (output.kindOf(toks[i].text)) |kind| {
             if (!at(toks, i + 1, .eq) or !at(toks, i + 2, .name)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: expected an output dataset name", .{});
             var dest: output.Spec = .{ .kind = kind, .name = toks[i + 2].text };
@@ -372,7 +378,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
 }
 
 const Mass = struct { f: f64, w: f64 };
-fn mass(s: Spec, row: []const Value) ?Mass {
+pub fn mass(s: Spec, row: []const Value) ?Mass {
     const f = if (s.freq) |c| @trunc(row[c].num) else 1;
     const w = if (s.weight) |c| row[c].num else 1;
     if (!std.math.isFinite(f) or f < 1 or !std.math.isFinite(w) or (s.options.exclnpwgt and w <= 0)) return null;
@@ -576,7 +582,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                 }
             }
         }
-        try groups.append(cx.arena, .{ .n = total_n, .sum_weights = included_weight, .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
+        try groups.append(cx.arena, .{ .rows = bs.rows, .n = total_n, .sum_weights = included_weight, .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
     }
     return .{ .spec = s, .groups = groups.items };
 }
@@ -678,6 +684,7 @@ pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) d
     const result = try compute(cx, s);
     try output.write(cx, result);
     if (cx.capture) |capture| try @import("ods_corr.zig").publish(cx.arena, cx.diags, capture, result);
+    try graphics.execute(cx, result);
     try render(cx.arena, out, result);
 }
 

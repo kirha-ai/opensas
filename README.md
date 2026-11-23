@@ -83,7 +83,9 @@ sample summaries and fitted parameters. CLASS levels share axes in a single
 figure for each BY group, variable and requested curve. ODS GRAPHICS OFF
 suppresses new figures. With ODS GRAPHICS ON, LISTING GPATH supplies the
 directory and defaults to the current directory. A CLI directory takes precedence.
-Existing files are preserved.
+Existing files are preserved. PROC CORR produces scatter plots, confidence or
+prediction ellipses, partial residual plots and scatter matrices through the same
+directory. PLOTS=NONE and the PLOTS(MAXPOINTS=) cutoff suppress output.
 
 [`tests/programs/dm`](tests/programs/dm) is a complete example: a raw
 demographics dataset mapped to the SDTM DM domain, with the expected output.
