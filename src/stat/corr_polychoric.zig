@@ -372,6 +372,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     const accumulated_roundoff = ku / (1 - ku);
     var boundary_distance: f64 = 0.001;
     var converged = false;
+    var unresolved_projection = false;
     var iterations: usize = 0;
     while (iterations < opts.maxiter) {
         iterations += 1;
@@ -409,7 +410,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
                 // Once the likelihood is indistinguishable from its saturated
                 // lower bound, the comparison cannot resolve another retraction.
                 if (four_by_four_boundary and base - saturated <= accumulated_roundoff * (base + saturated))
-                    return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
+                    unresolved_projection = true;
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 candidate[dim - 1] = rho;
@@ -444,7 +445,16 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             break;
         }
     }
-    if (!converged) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
+    // When the specified limit is reached before convergence, CORR reports
+    // ordinary nonconvergence. An unresolved likelihood retraction prevents
+    // publishing an estimate or diagnosing an earlier numerical failure.
+    if (!converged or unresolved_projection) return .{
+        .coefficient = .{},
+        .likelihood_ratio = null,
+        .converged = false,
+        .iterations = iterations,
+        .information_unresolved = unresolved_projection and (converged or iterations < opts.maxiter),
+    };
     // SAS uses the information matrix from the final scoring linearization.
     // Re-evaluating at the updated rho materially changes sparse-boundary SEs.
     @memcpy(hessian, saved_information);

@@ -1711,6 +1711,12 @@ test "CORR four-level staircase keeps a captured diagnostic for its unresolved b
     try lib.put("d", ds);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const capped = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6 maxiter=24); var x; with y; freq f; run;", &d));
+    const fit = (try compute(cx, capped)).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 17100), fit.n);
+    try std.testing.expect(!fit.converged and std.math.isNan(fit.r) and std.math.isNan(fit.se) and std.math.isNan(fit.lr));
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqualStrings("The algorithm for polychoric correlation between y and x did not converge.", d.list.items[0].message);
     const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6); var x y; freq f; run;", &d));
     try std.testing.expectError(error.ParseError, compute(cx, s));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
