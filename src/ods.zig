@@ -28,6 +28,7 @@ pub const Capture = struct {
             if (table.tag != .name) return d.fail(error.ParseError, table.line, "ODS OUTPUT: expected a supported table name", .{});
             var known = false;
             for (names) |name| known = known or eq(name, table.text);
+            for (@import("stat/ods_univariate.zig").inference_names) |name| known = known or eq(name, table.text);
             if (!known and @import("ods_documented.zig").contains(table.text)) {
                 diag.markGap();
                 return d.fail(error.ParseError, table.line, "ODS OUTPUT: unsupported table {s}", .{table.text});

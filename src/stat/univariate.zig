@@ -68,6 +68,7 @@ fn names(a: Allocator, t: []const Token, i: *usize) ![][]const u8 {
     return list.toOwnedSlice(a);
 }
 pub const Options = struct {
+    ods: ?@import("ods_univariate.zig").Context = null,
     listing: @import("../ods_listing.zig").Tables = .{},
     key_levels: []const []const u8 = &.{},
     key_move: bool = true,
@@ -1826,7 +1827,7 @@ pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col:
     const inf = opt.inference;
     if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
     const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
-    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference, opt.listing);
+    try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference, opt.listing, opt.ods);
 }
 
 // Numerical distribution tests stay independent of rendering/ODS integration.

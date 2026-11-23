@@ -4,6 +4,7 @@ const k = @import("univ_inference.zig");
 const Options = @import("univ_inference_parse.zig").Options;
 const Summary = @import("univariate.zig").Summary;
 const h = @import("../proc.zig").UnivariateHelpers;
+const typed = @import("ods_univ_tests.zig");
 const A = std.mem.Allocator;
 fn num(a: A, x: f64) ![]const u8 {
     return if (std.math.isNan(x)) "." else std.fmt.allocPrint(a, "{d:.6}", .{x});
@@ -24,7 +25,7 @@ fn normalRow(a: A, out: *std.ArrayList(u8), name: []const u8, symbol: []const u8
     const qualifier: []const u8 = if (bound > 0 and p == bound) ">" else if (bound > 0 and p == (if (bound == 0.15) @as(f64, 0.01) else 0.005)) "<" else if (bound == 0 and p < 0.0001) "<" else " ";
     try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}  {s}  {d:.6}  {s}{d:.4}\n", .{ name, symbol, stat, qualifier, if (bound == 0) @max(p, 0.0001) else p }));
 }
-pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0: f64, opt: Options, listing: @import("../ods_listing.zig").Tables) !void {
+pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0: f64, opt: Options, listing: @import("../ods_listing.zig").Tables, ods: ?@import("ods_univariate.zig").Context) !void {
     if (!opt.normal and !opt.robustscale and !opt.loccount and opt.basic == null and opt.df == null and opt.normal_ci == null and opt.trim.len == 0 and opt.winsor.len == 0) return;
     const x = try a.alloc(f64, z.pairs.len);
     defer a.free(x);
@@ -39,6 +40,7 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
         try row(a, out, "Mean", &.{ z.s.mean, mean.lower, mean.upper });
         try row(a, out, "Std Deviation", &.{ z.s.std, @sqrt(variance.lower), @sqrt(variance.upper) });
         try row(a, out, "Variance", &.{ z.s.std * z.s.std, variance.lower, variance.upper });
+        try typed.basic(ods, z.s.mean, z.s.std, mean, variance, ci, opt.alpha);
         try listing.finish(a, out, start, "BasicIntervals");
     }
     if (opt.loccount) {
@@ -53,20 +55,27 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
         try row(a, out, "Num Obs > Mu0", &.{positive});
         try row(a, out, "Num Obs ^= Mu0", &.{positive + negative});
         try row(a, out, "Num Obs < Mu0", &.{negative});
+        try typed.counts(ods, positive, negative);
         try listing.finish(a, out, start, "LocationCounts");
     }
     if (opt.normal) {
         const start = out.items.len;
         try out.appendSlice(a, "\nTests for Normality\nTest  Statistic  p Value\n");
-        if (try k.normalTests(a, x)) |tests| {
-            if (tests.primary.method == .shapiro_wilk) try normalRow(a, out, "Shapiro-Wilk", "W", tests.primary.statistic, tests.primary.p, 0);
-            try normalRow(a, out, "Kolmogorov-Smirnov", "D", tests.d, tests.pd, 0.15);
-            try normalRow(a, out, "Cramer-von Mises", "W-Sq", tests.w2, tests.pw2, 0.25);
-            try normalRow(a, out, "Anderson-Darling", "A-Sq", tests.a2, tests.pa2, 0.25);
-        } else {
-            if (x.len <= 2000) try out.appendSlice(a, "Shapiro-Wilk  W  .  .\n");
-            try out.appendSlice(a, "Kolmogorov-Smirnov  D  .  .\nCramer-von Mises  W-Sq  .  .\nAnderson-Darling  A-Sq  .  .\n");
+        const tests = try k.normalTests(a, x);
+        const missing = std.math.nan(f64);
+        const rows = [_]typed.NormalRow{
+            .{ .name = "Shapiro-Wilk", .symbol = "W", .statistic = if (tests) |t| t.primary.statistic else missing, .p = if (tests) |t| t.primary.p else missing, .upper = 0 },
+            .{ .name = "Kolmogorov-Smirnov", .symbol = "D", .statistic = if (tests) |t| t.d else missing, .p = if (tests) |t| t.pd else missing, .upper = 0.15 },
+            .{ .name = "Cramer-von Mises", .symbol = "W-Sq", .statistic = if (tests) |t| t.w2 else missing, .p = if (tests) |t| t.pw2 else missing, .upper = 0.25 },
+            .{ .name = "Anderson-Darling", .symbol = "A-Sq", .statistic = if (tests) |t| t.a2 else missing, .p = if (tests) |t| t.pa2 else missing, .upper = 0.25 },
+        };
+        const active = rows[@intFromBool(x.len > 2000)..];
+        for (active) |r| {
+            if (tests == null) {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}  {s}  .  .\n", .{ r.name, r.symbol }));
+            } else try normalRow(a, out, r.name, r.symbol, r.statistic, r.p, r.upper);
         }
+        try typed.normal(ods, active);
         try listing.finish(a, out, start, "TestsForNormality");
     }
     for ([_]bool{ false, true }) |winsor| {
@@ -93,7 +102,14 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
     if (opt.robustscale) {
         const start = out.items.len;
         try out.appendSlice(a, "\nRobust Measures of Scale\nMeasure  Value  Estimate of Sigma\n");
-        for ([_][]const u8{ "Interquartile Range", "Gini's Mean Difference", "MAD", "Sn", "Qn" }, [_][]const u8{ "qrange", "gini", "mad", "sn", "qn" }, [_][]const u8{ "std_qrange", "std_gini", "std_mad", "std_sn", "std_qn" }) |name, key, sigma| try row(a, out, name, &.{ z.value(key, def, .df, mu0), z.value(sigma, def, .df, mu0) });
+        var estimates: [5]f64 = undefined;
+        var sigmas: [5]f64 = undefined;
+        for (typed.scale_names, [_][]const u8{ "qrange", "gini", "mad", "sn", "qn" }, [_][]const u8{ "std_qrange", "std_gini", "std_mad", "std_sn", "std_qn" }, 0..) |name, key, sigma, i| {
+            estimates[i] = z.value(key, def, .df, mu0);
+            sigmas[i] = z.value(sigma, def, .df, mu0);
+            try row(a, out, name, &.{ estimates[i], sigmas[i] });
+        }
+        try typed.robust(ods, estimates, sigmas);
         try listing.finish(a, out, start, "RobustScale");
     }
     for ([_]bool{ false, true }) |distribution_free| {

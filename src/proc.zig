@@ -4950,6 +4950,9 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     // smallest, all-unique → missing).
     const vals = try arena.alloc(f64, k);
     for (pairs, 0..) |q, j| vals[j] = q.x;
+    if (cx.capture) |capture| if (capture.requests.items.len != 0) {
+        opts.ods = .{ .capture = capture, .diagnostics = cx.diags, .source = ds, .col = col, .by = bycols, .classes = classcols, .measure_format = try @import("stat/ods_univ_formats.zig").measurement(arena, vals) };
+    };
     try out.appendSlice(arena, "\n" ++ (" " ** 20) ++ "Basic Statistical Measures\n\n");
     try out.appendSlice(arena, (" " ** 6) ++ "Location" ++ (" " ** 20) ++ "Variability\n\n");
     try momentLine(arena, out, "Mean", s.mean, "Std Deviation", s.std);
@@ -4996,6 +4999,9 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\n" ++ (" " ** 20) ++ "Tests for Location: Mu0={d}\n\n", .{mu0}));
     try out.appendSlice(arena, "Test           -Statistic-    -----p Value------\n\n");
     try testLine(arena, out, "Student's t", "t", tstat, "Pr > |t|", tp);
+    const univ_ods = @import("stat/ods_univariate.zig");
+    var location = try univ_ods.locationTable(opts.ods);
+    if (location) |*tbl| try univ_ods.locationRow(tbl, "Student's t", "t", tstat, "Pr > |t|", tp, mu0);
     if (wcol == null) {
         // Observations equal to Mu0 are dropped (SAS); the sign of (x−Mu0) feeds
         // the sign test, average ranks of |x−Mu0| the signed-rank test (F1).
@@ -5054,8 +5060,13 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         const sp = if (nstar == 0) nan else try signedRankP(arena, dranks, 2 * dpos - dsum, tiecorr);
         try testLine(arena, out, "Sign", "M", mstat, "Pr >= |M|", mp);
         try testLine(arena, out, "Signed Rank", "S", sstat, "Pr >= |S|", sp);
+        if (location) |*tbl| {
+            try univ_ods.locationRow(tbl, "Sign", "M", mstat, "Pr >= |M|", mp, mu0);
+            try univ_ods.locationRow(tbl, "Signed Rank", "S", sstat, "Pr >= |S|", sp, mu0);
+        }
     }
 
+    if (location) |*tbl| try tbl.finish();
     try opts.listing.finish(arena, out, table_start, "TestsForLocation");
     table_start = out.items.len;
     try out.appendSlice(arena, try std.fmt.allocPrint(arena, "\n" ++ (" " ** 20) ++ "Quantiles (Definition {d})\n\n", .{edef}));
