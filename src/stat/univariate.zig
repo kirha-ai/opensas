@@ -82,6 +82,7 @@ const ClassLevel = struct {
 const ClassLevels = std.HashMapUnmanaged([]const Value, ClassLevel, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
 
 pub const Options = struct {
+    precision_reported: bool = false,
     ods: ?@import("ods_univariate.zig").Context = null,
     listing: @import("../ods_listing.zig").Tables = .{},
     key_levels: []const []const u8 = &.{},
@@ -452,6 +453,7 @@ pub const Summary = struct {
         if (eq(key, "qrange")) return h.univPercentile(self.pairs, 75, def) - h.univPercentile(self.pairs, 25, def);
         if (eq(key, "nmiss")) return @floatFromInt(self.nmiss);
         if (eq(key, "nobs")) return @floatFromInt(self.nobs);
+        if (eq(key, "cv") and self.s.mean == 0) return nan;
         if (eq(key, "geomean")) return self.geo;
         if (eq(key, "harmean")) return self.harm;
         inline for (.{ "msign", "probm", "signrank", "probs", "normaltest", "probn", "gini", "mad", "sn", "qn", "std_sn", "std_qn" }) |f| if (eq(key, f)) return @field(self, f);
@@ -659,11 +661,13 @@ fn label(k: []const u8) []const u8 {
     return k;
 }
 
-/// M9 reports a warning only when a positive computed standard deviation
-/// is suppressed. A group that already accumulated zero CSS stays quiet.
-pub fn warnSmallRange(cx: proc.ProcCtx, ds: *Dataset, col: usize, by: []const usize, group: ?[]const Value, opt: Options) !void {
-    try cx.diags.warn(0, "The range of variable {s} is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.", .{ds.columns.items[col].name});
-    try reportByNote(cx, ds, by, group, opt);
+pub fn warnPrecision(cx: proc.ProcCtx, ds: *Dataset, col: usize, small_mean: bool) !void {
+    const name = ds.columns.items[col].name;
+    if (small_mean) {
+        try cx.diags.warn(0, "The mean of variable {s} is too small relative to its range, numerical inaccuracies may occur. Recode if possible.", .{name});
+    } else {
+        try cx.diags.warn(0, "The range of variable {s} is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.", .{name});
+    }
 }
 
 fn reportByNote(cx: proc.ProcCtx, ds: *Dataset, by: []const usize, group: ?[]const Value, opt: Options) !void {
@@ -828,8 +832,8 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 };
                 for (acols[0..nvars], 0..) |ci, j| {
                     summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt);
-                    if (summaries[j].s.small_range and noprint and oi == 0)
-                        try warnSmallRange(cx, ds, ci, bcols, bs.rep, opt);
+                    if (!opt.precision_reported and noprint and oi == 0 and (summaries[j].s.small_range or summaries[j].s.small_mean))
+                        try warnPrecision(cx, ds, ci, summaries[j].s.small_mean);
                     // CLASS counts weight-eligible observations, including missing
                     // analysis values. Keep pooled/BY pre-exclusion totals separate.
                     summaries[j].nobs = if (ccols.len > 0) summaries[j].s.n + summaries[j].nmiss else nobs;
@@ -1455,7 +1459,7 @@ fn summaryOverflows(a: Allocator, view: Analysis, ci: usize, stat: h.Stats, def:
 
 /// M9 reports each affected CLASS cell and variable on its first overflowing
 /// observation. One BY note follows all warnings from the same BY group.
-pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options, outputs: []const Output) !?CalculationFailure {
+pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: *Options, outputs: []const Output, noprint: bool) !?CalculationFailure {
     if (ds.rows.items.len == 0) return null;
     const source = opt.source.?;
     var max_weight: f64 = 1;
@@ -1471,6 +1475,9 @@ pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, 
     const check_weight_squares = wc != null and max_weight > 0.5 * @sqrt(std.math.floatMax(f64) / count);
     const check_weight_ratio = wc != null and max_weight >= @sqrt(std.math.floatMax(f64) * h.minWeight) / count;
     possible: {
+        // Grouped diagnostics follow variable-major CLASS order and share one
+        // BY note. NOPRINT also diagnoses precision without any result table.
+        if (bcols.len > 0 or ccols.len > 0 or (noprint and outputs.len == 0 and opt.outtable == null)) break :possible;
         if (check_weight_squares or check_weight_ratio) break :possible;
         for (source.rows.items) |row| for (acols) |ci| {
             if (@abs(h.toNum(row[ci])) >= limit) break :possible;
@@ -1478,6 +1485,7 @@ pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, 
         return null;
     }
 
+    opt.precision_reported = true;
     const robust = try cx.arena.alloc(bool, acols.len);
     @memset(robust, wc == null and (opt.inference.robustscale or opt.outtable != null));
     if (wc == null) {
@@ -1494,25 +1502,35 @@ pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, 
             return if (lhs.observation == rhs.observation) lhs.variable < rhs.variable else lhs.observation < rhs.observation;
         }
     };
+    const Precision = struct {
+        rank: usize,
+        small_mean: bool,
+
+        fn before(_: void, left: @This(), right: @This()) bool {
+            return left.rank < right.rank;
+        }
+    };
     var completed: usize = 0;
-    for (try bySlices(cx.arena, ds.rows.items, bcols, opt)) |by| {
+    for (try bySlices(cx.arena, ds.rows.items, bcols, opt.*)) |by| {
         var events: std.ArrayList(Event) = .empty;
+        var precision: std.ArrayList(Precision) = .empty;
         var chunk = Dataset.init(cx.arena, ds.name);
         chunk.columns = ds.columns;
         try chunk.rows.appendSlice(cx.arena, by.rows);
-        const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt);
+        const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt.*);
         var first_failure: ?usize = null;
         var input_failure: ?WeightFailure = null;
         for (groups, 0..) |class_group, gi| {
             var group = Dataset.init(cx.arena, ds.name);
             group.columns = ds.columns;
             try group.rows.appendSlice(cx.arena, class_group.rows);
-            const view = try analysisView(cx.arena, &group, acols, wc, opt);
+            const view = try analysisView(cx.arena, &group, acols, wc, opt.*);
             const disabled = if (check_weight_squares) try cx.arena.alloc(?usize, acols.len) else null;
             for (acols, 0..) |ci, vi| {
-                const stat = h.computeUnivStats(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
+                const stat = h.computeUnivMomentFlags(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
+                const rank = vi * groups.len + gi;
+                if (stat.small_mean or stat.small_range) try precision.append(cx.arena, .{ .rank = rank, .small_mean = stat.small_mean });
                 if (try summaryOverflows(cx.arena, view, ci, stat, def, robust[vi])) {
-                    const rank = vi * groups.len + gi;
                     first_failure = @min(first_failure orelse rank, rank);
                 }
                 if (disabled) |starts| starts[vi] = stat.overflow_at;
@@ -1530,8 +1548,13 @@ pub fn calculationFailure(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, 
             try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
         }
         if (input_failure) |failure| return .{ .completed_rows = completed, .reason = if (failure.missing_only) .missing_weight else .weight_statistic, .warn_weight = failure.unnamed_warning };
+        std.mem.sort(Precision, precision.items, {}, Precision.before);
+        for (precision.items) |item| {
+            if (first_failure) |stop| if (item.rank >= stop) break;
+            try warnPrecision(cx, ds, acols[item.rank / groups.len], item.small_mean);
+        }
         if (first_failure) |partial| return .{ .completed_rows = completed, .reason = .floating_point, .failing_rows = by.rows.len, .partial_cells = partial };
-        if (events.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt);
+        if (events.items.len > 0 or precision.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt.*);
         completed += by.rows.len;
     }
     return null;

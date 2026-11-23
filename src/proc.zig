@@ -696,6 +696,7 @@ const Stats = struct {
     mode: f64 = std.math.nan(f64),
     css: f64 = std.math.nan(f64),
     small_range: bool = false,
+    small_mean: bool = false,
     overflow_at: ?usize = null,
     uss: f64 = std.math.nan(f64),
     // GAP-meansskewkurt: SAS g1/g2 sample moments (VARDEF=DF forms only).
@@ -2039,11 +2040,15 @@ fn computeStats(rows: []const []const Value, col: usize, wcol: ?usize) Stats {
 }
 
 fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef) Stats {
-    return computeMoments(false, rows, col, wcol, vardef, null);
+    return computeMoments(false, false, rows, col, wcol, vardef, null);
 }
 
 fn computeUnivStats(rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
-    return computeMoments(true, rows, col, wcol, vardef, frequency_obs);
+    return computeMoments(true, false, rows, col, wcol, vardef, frequency_obs);
+}
+
+fn computeUnivMomentFlags(rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
+    return computeMoments(true, true, rows, col, wcol, vardef, frequency_obs);
 }
 
 const univ_min_weight = 1000 * @sqrt(std.math.floatMin(f64));
@@ -2055,7 +2060,7 @@ fn univNormalSquare(value: f64) f64 {
     return if (value < std.math.floatMin(f64)) 0 else value;
 }
 
-fn computeMoments(comptime native_univariate: bool, rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
+fn computeMoments(comptime native_univariate: bool, comptime flags_only: bool, rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
     if (rows.len > 0) assert(col < rows[0].len); // analysis column aligns with the row schema
     // WEIGHT column too — a bad weight index reads a wrong cell per row and every
     // weighted Mean/Sum/Std comes out silently wrong (TASTE-asserts).
@@ -2147,7 +2152,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         if (@abs(sumwx) / @sqrt(sumw) <= sum_tolerance * @sqrt(uss)) sumwx = 0;
     }
     const usable_weight = !native_univariate or sumw > univ_min_weight;
-    const mean = if (usable_weight) sumwx / sumw else nan;
+    var mean = if (usable_weight) sumwx / sumw else nan;
     var css: f64 = running_css;
     var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄)³ (skewness input)
     var m4: f64 = 0; // Σ wᵢ²(xᵢ−x̄)⁴    (kurtosis input)
@@ -2186,6 +2191,14 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         css = 0;
         sd = 0;
     }
+    // M9 suppresses an already computed nonzero mean at this relative
+    // precision, while retaining the weighted sum and standard deviation.
+    const small_mean = native_univariate and mean != 0 and std.math.isFinite(sd) and @abs(mean) <= 1.110223024625157e-13 * sd;
+    if (small_mean) mean = 0;
+    if (flags_only) return .{
+        .n = n, .mean = mean, .std = sd, .min = lo, .max = hi, .sum = sumwx,
+        .median = nan, .q1 = nan, .q3 = nan, .small_range = small_range, .small_mean = small_mean, .overflow_at = overflow_at,
+    };
     const sk = if (native_univariate)
         univShape(rows, col, wcol, vardef, n, mean, sd)
     else if (vardef == .df)
@@ -2227,7 +2240,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         .n = n,      .sumw = sumw, .mean = mean, .std = sd,  .min = lo,     .max = hi,     .sum = sumwx,
         .median = median, .q1 = q1, .q3 = q3, .p1 = pc[0],   .p5 = pc[1],   .p10 = pc[2],
         .p20 = pc[3],  .p30 = pc[4],  .p40 = pc[5], .p60 = pc[6],  .p70 = pc[7],   .p80 = pc[8],
-        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss, .small_range = small_range, .overflow_at = overflow_at,
+        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss, .small_range = small_range, .small_mean = small_mean, .overflow_at = overflow_at,
         .skew = sk.skew, .kurt = sk.kurt,
     };
 }
@@ -4823,7 +4836,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         diags.warn(toks[0].line, "PROC UNIVARIATE: PCTLDEF= is ignored with a WEIGHT statement — weighted percentiles use Definition 5", .{}) catch {};
 
 
-    var overflow = try univ.calculationFailure(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra, outputs.items);
+    var overflow = try univ.calculationFailure(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, &extra, outputs.items, noprint);
     if (overflow) |failure| cds.rows.items = cds.rows.items[0 .. failure.completed_rows + failure.failing_rows];
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
@@ -4918,7 +4931,7 @@ fn isQuantileStat(k: StatKind) bool {
 /// (WEIGHT-uni-impl); null → every obs weighs 1 (identical to the unweighted case).
 fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize, cx: ProcCtx, bycols: []const usize, classcols: []const usize) !void {
     const s = computeUnivStats(ds.rows.items, col, wcol, vardef, if (extra.freqcol != null) extra.obscol else null);
-    if (s.small_range) try univ.warnSmallRange(cx, ds, col, bycols, if (ds.rows.items.len > 0) ds.rows.items[0] else null, extra);
+    if (!extra.precision_reported and (s.small_range or s.small_mean)) try univ.warnPrecision(cx, ds, col, s.small_mean);
     const nf: f64 = @floatFromInt(s.n);
     const nan = std.math.nan(f64);
 
@@ -17335,6 +17348,7 @@ pub const UnivariateHelpers = struct {
     pub const compareValue = @import("proc.zig").cmpValue;
     pub const computeStatsV = @import("proc.zig").computeStatsV;
     pub const computeUnivStats = @import("proc.zig").computeUnivStats;
+    pub const computeUnivMomentFlags = @import("proc.zig").computeUnivMomentFlags;
     pub const statFromKw = @import("proc.zig").statFromKw;
     pub const statValue = @import("proc.zig").statValue;
     pub const univariateRejectsStatKw = @import("proc.zig").univariateRejectsStatKw;
