@@ -81,9 +81,11 @@ pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.p - r.point / 2), options);
 }
 
-pub fn monteCarlo(a: A, out: *Out, title: []const u8, estimate: ?dist.Estimate, samples: u64, seed: u64, options: parse.Options) Error!void {
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nMonte Carlo Estimate for the Exact Test\n\n", .{title}));
-    try pLine(a, out, "Estimated p-Value", if (estimate) |v| v.p else null, options);
+pub fn monteCarlo(a: A, out: *Out, title: []const u8, table_probability: ?f64, estimate: ?dist.Estimate, samples: u64, seed: u64, options: parse.Options) Error!void {
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n", .{title}));
+    if (table_probability) |p| try pLine(a, out, "Table Probability (P)", p, options);
+    try out.appendSlice(a, "Monte Carlo Estimate for the Exact Test\n\n");
+    try pLine(a, out, if (table_probability != null) "Pr <= P" else "Estimated p-Value", if (estimate) |v| v.p else null, options);
     const level = (1 - options.alpha) * 100;
     try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Lower Conf Limit", .{level}), if (estimate) |v| v.lower else null, options);
     try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Upper Conf Limit", .{level}), if (estimate) |v| v.upper else null, options);

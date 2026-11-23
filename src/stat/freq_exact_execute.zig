@@ -28,7 +28,7 @@ pub const Config = struct {
 pub const Result = union(enum) {
     exact_test: dist.Probabilities,
     fisher: struct { table_probability: f64, first_cell: ?u32, cell_tails: ?exact.Tails, probabilities: dist.Probabilities },
-    monte_carlo: dist.MonteCarlo,
+    monte_carlo: struct { estimates: dist.MonteCarlo, table_probability: ?f64 = null },
     binomial: exact.Binomial,
     interval: exact.Interval,
     risk_intervals: struct { first: ?exact.Interval = null, second: ?exact.Interval = null },
@@ -202,14 +202,17 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
             .equal => 1 / @as(f64, @floatFromInt(m.cols)),
             .proportions, .frequencies => |v| v[i] * factor / total,
         };
-        if (mc) return .{ .monte_carlo = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) };
+        if (mc) return .{ .monte_carlo = .{ .estimates = try reference.multinomialMonteCarlo(a, integers.cells, probabilities, callback, simulation, c.budget) } };
         return finish(try reference.multinomial(a, integers.cells, probabilities, callback, c.budget));
     }
     if (f == .symmetry or f == .mcnem) {
-        if (mc) return .{ .monte_carlo = try reference.symmetryMonteCarlo(a, integers, callback, simulation, c.budget) };
+        if (mc) return .{ .monte_carlo = .{ .estimates = try reference.symmetryMonteCarlo(a, integers, callback, simulation, c.budget) } };
         return finish(try reference.symmetry(a, integers, if (f == .mcnem) c.null_ratio else 1, callback, c.budget));
     }
-    if (mc) return .{ .monte_carlo = try dist.monteCarlo(a, integers, callback, simulation, c.budget) };
+    if (mc) return .{ .monte_carlo = .{
+        .estimates = try dist.monteCarlo(a, integers, callback, simulation, c.budget),
+        .table_probability = if (f == .fisher) try dist.tableProbability(integers) else null,
+    } };
     const enumerated = try dist.enumerate(a, integers, callback, c.budget);
     if (f == .fisher) {
         if (enumerated == .exhausted) return .exhausted;

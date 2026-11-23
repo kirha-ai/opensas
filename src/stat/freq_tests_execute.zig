@@ -120,7 +120,7 @@ pub fn execute(a: std.mem.Allocator, d: *diag.Diagnostics, out: *std.ArrayList(u
         report.chi_square = chisq;
         if (options.warn.output) report.warning = chisq.sparse;
         try warn(d, chisq.sparse, options, proc_noprint);
-        if (m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
+        if (!table.suppress_fisher and m.rows == 2 and m.cols == 2 and chisq.fisher == null) try d.report(.note, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
         if (!proc_noprint) {
             var displayed = chisq;
             if (table.suppress_fisher) displayed.fisher = null;

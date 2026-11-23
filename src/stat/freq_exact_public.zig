@@ -193,6 +193,23 @@ fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").R
         try interval(a, out, "Binomial Proportion", limits.complete, 2 * c.alpha);
     }
 }
+// An exact reference set uses integer cell frequencies. A fractional table is
+// still valid for the frequency listing and its asymptotic statistics.
+fn fractionalCounts(counts: []const f64) bool {
+    var fractional = false;
+    var total: f64 = 0;
+    for (counts) |count| {
+        if (!std.math.isFinite(count) or count < 0) return false;
+        total += count;
+        if (count != @floor(count)) fractional = true;
+    }
+    return fractional and total <= std.math.maxInt(u32);
+}
+fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
+    if (f == .fisher) return d.report(.warning, 0, "Fisher's exact test cannot be computed when there are noninteger frequencies.", .{});
+    try d.report(.warning, 0, "PROC FREQ EXACT {s} cannot be computed when there are noninteger frequencies.", .{@tagName(f)});
+}
+
 pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!void {
     if (req.exact.families.count() == 0) return;
     var total: f64 = 0;
@@ -226,6 +243,10 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
         }
         const result = exec.run(a, m, f, c) catch |err| {
             if (err == error.OutOfMemory) return err;
+            if (fractionalCounts(m.counts)) {
+                try warnFractional(d, f);
+                continue;
+            }
             return d.fail(error.ExecError, 0, "PROC FREQ EXACT {s}: invalid counts, scores, or reference distribution", .{@tagName(f)});
         };
         var options = req.exact;
@@ -242,13 +263,14 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .exact_test => |p| try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options),
             .fisher => |r| try renderers.fisher(a, out, .{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point }, options),
-            .monte_carlo => |r| {
+            .monte_carlo => |simulation| {
+                const r = simulation.estimates;
                 if (r == .exhausted) {
                     try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
-                    try renderers.monteCarlo(a, out, title(f), null, 0, seed, options);
+                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, seed, options);
                 } else {
-                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), r.complete.one_sided, r.complete.samples, seed, options);
-                    try renderers.monteCarlo(a, out, title(f), r.complete.two_sided, r.complete.samples, seed, options);
+                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, seed, options);
+                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, seed, options);
                 }
             },
             .binomial => |b| {
@@ -295,7 +317,12 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
         const result = exec.runStrata(a, strata.items, f, config(req, seed, &deadline)) catch |err| {
             if (err == error.OutOfMemory) return err;
-            return d.fail(error.ExecError, 0, "PROC FREQ EXACT: invalid stratified reference distribution", .{});
+            const fractional = for (strata.items) |m| {
+                if (fractionalCounts(m.counts)) break true;
+            } else false;
+            if (!fractional) return d.fail(error.ExecError, 0, "PROC FREQ EXACT: invalid stratified reference distribution", .{});
+            try warnFractional(d, f);
+            continue;
         };
         switch (result) {
             .common_odds => |r| try renderers.commonOdds(a, out, r, req.statistics.alpha, req.exact),
@@ -401,7 +428,7 @@ test "public EXACT one-way binomial and multinomial use distinct tails" {
     try std.testing.expect(!d.hasErrors());
 }
 
-test "public EXACT zero margins retain agreement and fractional counts fail with diagnostics" {
+test "public EXACT zero margins retain agreement and fractional frequencies retain asymptotic statistics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -414,10 +441,15 @@ test "public EXACT zero margins retain agreement and fractional counts fail with
     const weighted = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact wtkappa; run;", &d);
     try std.testing.expect(std.mem.indexOf(u8, weighted, "Simple Kappa Coefficient") != null);
     try std.testing.expect(std.mem.indexOf(u8, weighted, "Weighted Kappa Coefficient") == null);
-    var fractional = try Harness.init(a, &.{ 1, 2.5, 3, 4 }, 2);
-    var errors = diag.Diagnostics.init(a);
-    try std.testing.expectError(error.ExecError, fractional.run("proc freq data=d; weight w; tables r*c / noprint; exact fisher; run;", &errors));
-    try std.testing.expect(errors.hasErrors());
+    var fractional = try Harness.init(a, &.{ 1.4, 2, 3, 1.6 }, 2);
+    var warnings = diag.Diagnostics.init(a);
+    const listing = try fractional.run("proc freq data=d; weight w / zeros; tables r*c; exact fisher; run;", &warnings);
+    try std.testing.expectEqual(@as(usize, 1), warnings.list.items.len);
+    try std.testing.expectEqual(diag.Severity.warning, warnings.list.items[0].severity);
+    try std.testing.expectEqualStrings("Fisher's exact test cannot be computed when there are noninteger frequencies.", warnings.list.items[0].message);
+    for ([_][]const u8{ "Frequency", "1.4", "1.6", "0.4565", "0.4992", "Sample Size = 8" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing, "Fisher's Exact Test") == null);
 }
 
 test "public EXACT stratified COMOR and EQOR retain conditioning and missing control policy" {
@@ -523,4 +555,54 @@ test "public BINOMIAL Blaker limits match SAS interior boundaries and fractional
         try std.testing.expectError(error.ParseError, h.run(source, &errors));
         try std.testing.expect(errors.hasErrors());
     }
+}
+
+test "2x3 Fisher probabilities and seeded simulation agree with all 70 labeled allocations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const counts = [_]f64{ 3, 1, 0, 0, 2, 2 };
+    // Each four-person subset of the eight labeled observations is equally
+    // likely. The first two column counts determine the third.
+    var multiplicities = [_][4]usize{@splat(0)} ** 4;
+    var allocations: usize = 0;
+    for (0..256) |mask| {
+        const subset: u8 = @intCast(mask);
+        if (@popCount(subset) != 4) continue;
+        multiplicities[@popCount(subset & 0b111)][@popCount(subset & 0b111000)] += 1;
+        allocations += 1;
+    }
+    const observed = multiplicities[3][1];
+    var tied: usize = 0;
+    var tail: usize = 0;
+    for (multiplicities) |row| for (row) |n| {
+        if (n == observed) tied += n;
+        if (n <= observed) tail += n;
+    };
+    try std.testing.expectEqual([4]usize{ 70, 3, 12, 16 }, [4]usize{ allocations, observed, tied, tail });
+    const m = tests.CountMatrix{ .rows = 2, .cols = 3, .counts = &counts };
+    const denominator: f64 = @floatFromInt(allocations);
+    const p = @as(f64, @floatFromInt(tail)) / denominator;
+    const fisher = (try exec.run(a, m, .fisher, .{})).fisher;
+    try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(observed)) / denominator, fisher.table_probability, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, @floatFromInt(tied)) / denominator, fisher.probabilities.point, 1e-13);
+    try std.testing.expectApproxEqAbs(p, fisher.probabilities.two_sided, 1e-13);
+
+    const config_ = exec.Config{ .effective_seed = 713, .options = .{ .mc = true, .samples = 2000, .alpha = 0.05 } };
+    const simulation = (try exec.run(a, m, .fisher, config_)).monte_carlo;
+    try std.testing.expectEqual(fisher.table_probability, simulation.table_probability.?);
+    const estimate = simulation.estimates.complete;
+    try std.testing.expectEqual(@as(u64, 2000), estimate.samples);
+    try std.testing.expectApproxEqAbs(p, estimate.two_sided.p, 4 * @sqrt(p * (1 - p) / 2000));
+    try std.testing.expect(estimate.two_sided.lower < estimate.two_sided.p and estimate.two_sided.p < estimate.two_sided.upper);
+    var h = try Harness.init(a, &counts, 3);
+    var d = diag.Diagnostics.init(a);
+    const request = "proc freq data=d; weight w / zeros; tables r*c; exact fisher / mc seed=713 n=2000 alpha=.05; run;";
+    const listing = try h.run(request, &d);
+    try std.testing.expectEqualStrings(listing, try h.run(request, &d));
+    for ([_][]const u8{ "Table Probability (P)", "0.0429", "Pr <= P", "95% Lower Conf Limit", "2000", "713" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
+    const exact = try h.run("proc freq data=d; weight w / zeros; tables r*c; exact fisher / point midp; run;", &d);
+    for ([_][]const u8{ "0.0429", "0.1714", "0.2286", "0.1429" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, exact, value) != null);
 }
