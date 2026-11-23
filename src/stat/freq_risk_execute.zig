@@ -182,14 +182,50 @@ fn ratioMethod(m: p.Method) k.RatioMethod {
         else => unreachable,
     };
 }
+fn validProportion(value: f64) bool {
+    return value > 0 and value < 1;
+}
+
+fn filterBinomialTests(a: A, d: *diag.Diagnostics, request: *p.Request) !void {
+    const m = request.margin orelse [2]f64{ 0.2, 0.2 };
+    const ni = request.p - m[0];
+    const sup = request.p + m[0];
+    const lower = if (request.paired_margin) sup else ni;
+    const upper = request.p + m[1];
+    const bad_ni = request.noninf and !validProportion(ni);
+    const bad_sup = request.sup and !validProportion(sup);
+    const bad_eq = request.equiv and (!validProportion(lower) or !validProportion(upper));
+    if (!bad_ni and !bad_sup and !bad_eq) return;
+    try d.recoverableErr(0, "For binomial noninferiority, superiority, and equivalence tests, the limits determined by the MARGIN and null P values must be between 0 and 1.", .{});
+    const format = @import("../format.zig");
+    if (bad_ni) {
+        try d.recoverableErr(0, "The binomial noninferiority limit is {s}. A noninferiority test cannot be computed.", .{try format.bestNumW(a, ni, 12)});
+        request.noninf = false;
+    }
+    if (bad_sup) {
+        try d.recoverableErr(0, "The binomial superiority limit is {s}. A superiority test cannot be computed.", .{try format.bestNumW(a, sup, 12)});
+        request.sup = false;
+    }
+    if (bad_eq) {
+        try d.recoverableErr(0, "The binomial equivalence limits are {s} and {s}. An equivalence test cannot be computed.", .{ try format.bestNumW(a, lower, 12), try format.bestNumW(a, upper, 12) });
+        request.equiv = false;
+    }
+}
+
 pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alpha: f64) diag.Error!r.Report {
+    var resolved = options;
+    return executeResolved(a, d, table, &resolved, alpha);
+}
+
+/// The one-way caller shares the resolved event and valid tests with EXACT.
+pub fn executeResolved(a: A, d: *diag.Diagnostics, table: Table, options: *p.Options, alpha: f64) diag.Error!r.Report {
     if (!options.any()) return .{};
     var b = Builder{ .a = a, .d = d, .alpha = alpha };
     var risk_columns: [2]?r.RiskColumn = @splat(null);
     var total: f64 = 0;
     for (table.counts) |v| total += v;
     if (table.one_way) {
-        if (options.binomial) |req| {
+        if (options.binomial) |*req| {
             const index: usize = switch (req.level) {
                 .number => |n| if (n > table.row_labels.len) return d.fail(error.ExecError, 0, "PROC FREQ: binomial LEVEL is outside the table", .{}) else n - 1,
                 .value => |v| blk: {
@@ -201,6 +237,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 try d.report(.note, 0, "No statistics are computed for the table of {s} because it contains no observations with positive weights.", .{table.name});
                 return .{};
             }
+            try filterBinomialTests(a, d, req);
             const s = k.Binomial{ .success = table.counts[index], .total = total };
             const estimate = try k.proportion(s, alpha, req.correct);
             const subtitle = try std.fmt.allocPrint(a, "{s} = {s}", .{ table.name, table.row_labels[index] });
@@ -221,7 +258,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 try rows.append(a, ciRow(try methodLabel(a, cl, .binomial, req.correct), try binLimits(&b, s, cl, req.correct)));
             }
             if (rows.items.len > 0) try b.intervals("Confidence Limits for the Binomial Proportion", "", rows.items);
-            var test_req = req;
+            var test_req = req.*;
             for (req.cls) |cl| if (cl.method == .wald and cl.correct) {
                 test_req.correct = true;
             };

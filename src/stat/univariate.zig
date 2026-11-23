@@ -674,14 +674,7 @@ fn reportByNote(cx: proc.ProcCtx, ds: *Dataset, by: []const usize, group: ?[]con
     if (by.len == 0 or group == null) return;
     const row = firstByRow(opt, group.?, by);
     const source = opt.source orelse ds;
-    var keys: std.ArrayList(u8) = .empty;
-    for (by, 0..) |ci, j| {
-        const info = source.columns.items[ci];
-        const text = if (info.format) |fmt| try @import("../format.zig").apply(cx.arena, row[ci], fmt) else try proc.cellText(cx.arena, row[ci]);
-        if (j > 0) try keys.append(cx.arena, ' ');
-        try keys.print(cx.arena, "{s}={s}", .{ info.name, std.mem.trim(u8, text, " ") });
-    }
-    try cx.diags.report(.note, 0, "The above message was for the following BY group:\n      {s}", .{keys.items});
+    try @import("by_groups.zig").reportNote(cx.arena, cx.diags, source, row, by);
 }
 
 pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool, incomplete: ?*CalculationFailure) diag.Error!void {

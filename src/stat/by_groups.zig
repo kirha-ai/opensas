@@ -127,6 +127,17 @@ pub fn checkedSlices(a: A, ds: *const Dataset, cols: []const usize, desc: []cons
     return groups;
 }
 
+pub fn reportNote(a: A, d: *diag.Diagnostics, ds: *const Dataset, row: []const Value, by: []const usize) !void {
+    var keys: std.ArrayList(u8) = .empty;
+    for (by, 0..) |ci, j| {
+        const info = ds.columns.items[ci];
+        const text = if (info.format) |fmt| try format.apply(a, row[ci], fmt) else try proc.cellText(a, row[ci]);
+        if (j > 0) try keys.append(a, ' ');
+        try keys.print(a, "{s}={s}", .{ info.name, std.mem.trim(u8, text, " ") });
+    }
+    try d.report(.note, 0, "The above message was for the following BY group:\n      {s}", .{keys.items});
+}
+
 pub fn appendLine(a: A, out: *std.ArrayList(u8), ds: *Dataset, row: []const Value, cols: []const usize) !void {
     if (!formatted(ds, cols)) return proc.appendByLine(a, out, ds, row, cols);
     const display = try a.dupe(Value, row);

@@ -224,7 +224,7 @@ const Reader = struct {
                 }
             } else if (kw(token, "p") and req.family == .binomial) {
                 req.p = proportionValue(try self.number());
-                if (!(req.p > 0 and req.p < 1)) return self.fail("P must be between 0 and 1 (or percent)");
+                if (!(req.p > 0 and req.p < 1)) return self.d.fail(error.ParseError, 0, "The BINOMIAL P= value must be between 0 and 100.", .{});
             } else if (kw(token, "var") and req.family != .relative_risk) {
                 if (self.is("null")) req.variance = .null_value else if (self.is("sample")) req.variance = .sample else return self.fail("VAR must be NULL or SAMPLE");
                 self.i += 1;
@@ -244,14 +244,22 @@ const Reader = struct {
                     lo = proportionValue(lo);
                     hi = proportionValue(hi);
                 }
-                if ((!req.paired_margin and lo <= 0) or (req.paired_margin and lo >= hi)) return self.fail("invalid risk test margins");
+                if (req.family == .binomial) {
+                    if (req.paired_margin) {
+                        if (@abs(lo) >= 1 or @abs(hi) >= 1) return self.d.fail(error.ParseError, 0, "The BINOMIAL MARGIN= values must be between -100 and 100.", .{});
+                        if (lo >= hi) return self.d.fail(error.ParseError, 0, "The lower BINOMIAL MARGIN= value must be less than the upper value.", .{});
+                    } else {
+                        if (lo <= 0) return self.d.fail(error.ParseError, 0, "The BINOMIAL MARGIN= value must be a positive number.", .{});
+                        if (lo >= 1) return self.d.fail(error.ParseError, 0, "The BINOMIAL MARGIN= value must be between 0 and 100.", .{});
+                    }
+                } else if ((!req.paired_margin and lo <= 0) or (req.paired_margin and lo >= hi)) return self.fail("invalid risk test margins");
                 req.margin = .{ lo, hi };
             } else return self.fail("unknown risk suboption");
         }
         self.i += 1;
         if (req.equal and ((req.family == .relative_risk and req.null_value <= 0) or (req.family == .difference and @abs(req.null_value) >= 1))) return self.fail("invalid equality null value");
         if (req.equal and req.method == .newcombe) return self.fail("Newcombe is not an equality test");
-        if (req.paired_margin and (req.noninf or req.sup)) return self.fail("NI/SUP require a single margin");
+        if (req.family != .binomial and req.paired_margin and (req.noninf or req.sup)) return self.fail("NI/SUP require a single margin");
     }
 };
 fn proportionValue(x: f64) f64 {

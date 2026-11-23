@@ -546,6 +546,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     const stats_writer = if (opts.output) |spec| try stat_output.create(cx, spec, opts.requests.items[opts.requests.items.len - 1], input, bc) else null;
     if (input.rows.items.len == 0) try cx.diags.report(.note, 0, "No observations in data set {s}.", .{input.name});
     for (groups, 1..) |group, by_number| {
+        const messages = cx.diags.count();
         var view = input.*;
         view.rows = .empty;
         for (group.rows) |row| if (weightKeepsRow(row, wc, opts.zeros)) {
@@ -638,6 +639,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 rendered = true;
             }
         }
+        if (bc.len > 0 and cx.diags.errSince(messages)) if (group.rep) |row|
+            try by_groups.reportNote(a, cx.diags, &view, row, bc);
     }
     for (opts.requests.items, 0..) |req, k| if (outputs[k]) |ds| {
         if (req.out_opts.len > 0) try io.applyDatasetOptions(a, ds, req.out_opts, cx.diags, false);
@@ -1899,9 +1902,10 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (writer) |w| try w.append(by_row, tab, 0, tab.total, tab.missing, result, false);
         // SAS skips risk analysis when PROC NOPRINT has no output request.
         // Existing test-family NOPRINT execution remains independent above.
-        const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
+        var active = req;
+        const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.executeResolved(a, cx.diags, try riskTable(a, tab, scored, true, false), &active.risk, req.statistics.alpha);
         if (opts.noprint) return;
-        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, req, simulation_seed);
+        const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, active, simulation_seed);
         if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);
         if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);

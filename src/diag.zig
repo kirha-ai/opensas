@@ -145,7 +145,8 @@ pub const Diagnostics = struct {
         return self.recoverableErr(line, fmt, args);
     }
 
-    fn recoverableErr(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
+    /// Report an error that leaves the step and subsequent processing active.
+    pub fn recoverableErr(self: *Diagnostics, line: usize, comptime fmt: []const u8, args: anytype) error{OutOfMemory}!void {
         const message = try std.fmt.allocPrint(self.arena, fmt, args);
         try self.list.append(self.arena, .{
             .severity = .err,
