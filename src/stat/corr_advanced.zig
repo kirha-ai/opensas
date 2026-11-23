@@ -490,7 +490,9 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
                 for (params, 0..) |v, i| score[i] = v - 0.5 * scale * grad[i];
                 score[dim - 1] = (params[dim - 1] + limit) / 2;
                 if (serialLikelihood(ctx, score[0..dim]) < objective) {
-                    scale /= 2;
+                    // Retracting from a projected endpoint never extends the
+                    // original Newton step, even when its midpoint lies beyond it.
+                    scale = @min(1, scale / 2);
                     continue;
                 }
             }
@@ -766,12 +768,20 @@ test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
     const frequencies = [_]f64{ 4, 1, 5, 2, 1, 5, 2, 1, 5, 2 };
     var data: [xs.len]Observation = undefined;
     for (&data, xs, frequencies, 0..) |*d, x, f, i| d.* = .{ .x = x, .y = if (i < 2) 0 else 1, .f = f };
-    const early = try polyserial(std.testing.allocator, &data, .{ .converge = 0.01, .maxiter = 5 });
-    try std.testing.expect(!early.converged);
-    const fit = try polyserial(std.testing.allocator, &data, .{ .converge = 0.01, .maxiter = 6 });
-    try std.testing.expectApproxEqAbs(@as(f64, 0.995), fit.r, 1e-12);
-    try std.testing.expectEqual(@as(f64, 0), fit.se);
-    try std.testing.expectApproxEqAbs(@as(f64, 21.2736613123838), fit.lr, 1e-11);
+    const Reference = struct { tolerance: f64, first_success: usize, lr: f64 };
+    for ([_]Reference{
+        .{ .tolerance = 0.01, .first_success = 6, .lr = 21.2736613123838 },
+        .{ .tolerance = 0.008, .first_success = 8, .lr = 21.3767589182459 },
+        .{ .tolerance = 0.006, .first_success = 8, .lr = 21.5215656621666 },
+        .{ .tolerance = 0.004, .first_success = 9, .lr = 21.7492337767932 },
+    }) |ref| {
+        const early = try polyserial(std.testing.allocator, &data, .{ .converge = ref.tolerance, .maxiter = ref.first_success - 1 });
+        try std.testing.expect(!early.converged);
+        const fit = try polyserial(std.testing.allocator, &data, .{ .converge = ref.tolerance, .maxiter = ref.first_success });
+        try std.testing.expectApproxEqAbs(1 - ref.tolerance / 2, fit.r, 1e-12);
+        try std.testing.expectEqual(@as(f64, 0), fit.se);
+        try std.testing.expectApproxEqAbs(ref.lr, fit.lr, 1e-11);
+    }
 }
 
 test "CORR polyserial refines multiple thresholds at the correlation limit" {
