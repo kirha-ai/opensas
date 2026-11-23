@@ -1934,7 +1934,13 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             if (!req.missing) try appendFreqMissing(a, out, sl.missing);
         }
     }
-    if (!opts.noprint) try exact_public.renderStrata(a, cx.diags, out, tab, req, opts.exact_seed);
+    if (!opts.noprint) {
+        const exact_strata = try exact_public.renderStrata(a, cx.diags, out, tab, req, opts.exact_seed);
+        if (exact_strata.common != null or exact_strata.zelen != null) if (cx.capture) |capture| {
+            const title = try std.fmt.allocPrint(a, "Summary for {s} * {s}", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name });
+            try @import("ods_freq_exact_strata.zig").publish(a, cx.diags, capture, source, by, by_row, title, stratified, exact_strata, req.statistics.alpha, req.exact);
+        };
+    }
     if (!opts.noprint and hasStratified(req.stratified)) {
         var summary: std.ArrayList(u8) = .empty;
         try strat_exec.renderSummary(a, &summary, stratified, req.stratified, stratScope(req, opts), req.scores);

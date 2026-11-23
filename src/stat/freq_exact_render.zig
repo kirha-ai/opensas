@@ -111,7 +111,7 @@ pub fn commonOdds(a: A, out: *Out, r: strata.Common, alpha: f64, options: parse.
     try nLine(a, out, "Cell (1,1) Sum (S)", @floatFromInt(r.observed));
     try nLine(a, out, "Mean of S under H0", r.expected);
     try pLine(a, out, if (@as(f64, @floatFromInt(r.observed)) > r.expected) "One-sided Pr >= S" else "One-sided Pr <= S", r.one_sided, options);
-    if (options.point) try pLine(a, out, "Point Pr = S", r.point, options);
+    try pLine(a, out, "Point Pr = S", r.point, options);
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.one_sided - r.point / 2), options);
     try out.appendSlice(a, "\nTwo-sided P-values\n");
     try pLine(a, out, "2 * One-sided", r.two_doubled, options);

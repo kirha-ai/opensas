@@ -340,12 +340,13 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
     return limits;
 }
 
-pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, req: anytype, seed: u64) diag.Error!void {
-    if (!req.exact.families.contains(.comor) and !req.exact.families.contains(.eqor)) return;
+pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, req: anytype, seed: u64) diag.Error!@import("ods_freq_exact_strata.zig").Results {
+    var tables: @import("ods_freq_exact_strata.zig").Results = .{};
+    if (!req.exact.families.contains(.comor) and !req.exact.families.contains(.eqor)) return tables;
     const n = tab.dimensions.len;
-    if (n < 3) return;
+    if (n < 3) return tables;
     const size = tab.dimensions[n - 2].levels.len * tab.dimensions[n - 1].levels.len;
-    if (size == 0) return;
+    if (size == 0) return tables;
     var strata: std.ArrayList(tests.CountMatrix) = .empty;
     var previous: ?usize = null;
     for (try tab.keys(a, false, true)) |key| {
@@ -361,10 +362,10 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
         const m = matrix(scored, false);
         // SAS inapplicable.sas suppresses COMOR/EQOR outside h-by-2-by-2;
         // the implied CMH output remains valid for these larger tables.
-        if (m.rows != 2 or m.cols != 2) return;
+        if (m.rows != 2 or m.cols != 2) return tables;
         try strata.append(a, m);
     }
-    if (strata.items.len == 0) return;
+    if (strata.items.len == 0) return tables;
     for ([_]parse.Family{ .comor, .eqor }) |f| {
         if (!req.exact.families.contains(f)) continue;
         const deadline = Deadline{ .end = if (req.exact.max_seconds) |v| seconds() + v else null };
@@ -378,10 +379,14 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
             continue;
         };
         switch (result) {
-            .common_odds => |r| try renderers.commonOdds(a, out, r, req.statistics.alpha, req.exact),
+            .common_odds => |r| {
+                tables.common = r;
+                try renderers.commonOdds(a, out, r, req.statistics.alpha, req.exact);
+            },
             // SAS families.sas: with a fixed extreme sum the conditioned
             // reference set has only one outcome; Zelen is not displayed.
             .zelen => |r| if (r.tables > 1) {
+                tables.zelen = r;
                 try renderers.zelen(a, out, r, req.exact);
             },
             .exhausted => {
@@ -390,6 +395,7 @@ pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, re
             },
         }
     }
+    return tables;
 }
 
 const Harness = struct {

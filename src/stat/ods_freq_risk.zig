@@ -47,32 +47,37 @@ fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64
     }
 }
 
-fn relativeRisk(a: A, t: *b.Builder, table_name: []const u8, table: risk.Table2x2, col: usize, alpha: f64, exact: Interval) !void {
-    const ratio = try risk.ratio(table, if (col == 0) .first else .second, .relative_risk, alpha, .wald, true);
-    t.ds.label = try std.fmt.allocPrint(a, "Exact Confidence Limits for the Relative Risk (Column {d})", .{col + 1});
+pub fn ratioLimits(a: A, t: *b.Builder, table_name: []const u8, statistic: []const u8, asym_suffix: []const u8, exact_suffix: []const u8, alpha: f64, estimate: ?f64, asym: risk.Interval, exact: Interval) !void {
     try t.char("Table", 256);
-    try t.char("Name1", 7);
-    try t.char("Label1", 22);
-    try t.char("cValue1", 10);
-    try t.num("nValue1", "D12.3");
+    var rows = try @import("ods_freq_exact_rows.zig").Rows.init(a, t, table_name, .default, 10);
     const level = try report.confidence(a, alpha);
     const lower = try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{level});
     const upper = try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{level});
-    const names = if (col == 0) [_][]const u8{ "_RRC1_", "", "", "L_RRC1", "U_RRC1", "", "", "XL_RRC1", "XU_RRC1" } else [_][]const u8{ "_RRC2_", "", "", "L_RRC2", "U_RRC2", "", "", "XL_RRC2", "XU_RRC2" };
-    const labels = [_][]const u8{ "Relative Risk", "", "Asymptotic Conf Limits", lower, upper, "", "Exact Conf Limits", lower, upper };
-    const values = [_]?f64{ ratio.estimate, null, null, ratio.limits.lower, ratio.limits.upper, null, null, exact.lower, exact.upper };
+    const names = [_][]const u8{
+        try std.fmt.allocPrint(a, "_{s}_", .{asym_suffix}), "",                                                   "",
+        try std.fmt.allocPrint(a, "L_{s}", .{asym_suffix}), try std.fmt.allocPrint(a, "U_{s}", .{asym_suffix}),   "",
+        "",                                                 try std.fmt.allocPrint(a, "XL_{s}", .{exact_suffix}), try std.fmt.allocPrint(a, "XU_{s}", .{exact_suffix}),
+    };
+    const labels = [_][]const u8{ statistic, "", "Asymptotic Conf Limits", lower, upper, "", "Exact Conf Limits", lower, upper };
+    const values = [_]?f64{ estimate, null, null, asym.lower, asym.upper, null, null, exact.lower, exact.upper };
     for (names, labels, values) |name, label, value| {
         const display = if (name.len == 0) "" else if (value) |x| (if (std.math.isInf(x)) "Infinity" else std.mem.trim(u8, try fmt.apply(a, numeric(x), "10.4"), " ")) else ".";
-        try t.row(&.{ b.s(table_name), b.s(name), b.s(label), b.s(display), numeric(value) });
+        try rows.add(name, label, display, if (value) |x| (if (std.math.isFinite(x)) x else null) else null);
     }
+    rows.finish();
 }
 
 pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, m: model.CountMatrix, alpha: f64, style: @import("freq_exact_parse.zig").ProbabilityFormat, estimates: report.Report, limits: public.Tables) diag.Error!void {
     if (m.rows != 2 or m.cols != 2) return;
-    const nd = tab.dimensions.len;
-    const r = tab.dimensions[nd - 2].name;
-    const c = tab.dimensions[nd - 1].name;
-    const table = if (nd > 2) try std.fmt.allocPrint(a, "Table {d} of {s} * {s}", .{ number, r, c }) else try std.fmt.allocPrint(a, "Table {s} * {s}", .{ r, c });
+    const table = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
+    const cells: risk.Table2x2 = .{ .cells = m.counts[0..4].* };
+    if (capture.wants("OddsRatioExactCL")) if (limits.odds_ratio) |interval| {
+        var t = try b.Builder.init(a, source, by, rep);
+        t.ds.label = "Exact Confidence Limits for the Odds Ratio";
+        const ratio = try risk.ratio(cells, .first, .odds_ratio, alpha, .wald, true);
+        try ratioLimits(a, &t, table, "Odds Ratio", "RROR", "RROR", alpha, ratio.estimate, ratio.limits, interval);
+        try capture.publish(a, d, "OddsRatioExactCL", &t.ds);
+    };
     if (capture.wants("BarnardsTest")) if (limits.barnard) |v| {
         var t = try b.Builder.init(a, source, by, rep);
         t.ds.label = "Barnard's Exact Test";
@@ -98,7 +103,10 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         };
         if (capture.wants(rr_name)) if (limits.relative_risk[col]) |interval| {
             var t = try b.Builder.init(a, source, by, rep);
-            try relativeRisk(a, &t, table, .{ .cells = m.counts[0..4].* }, col, alpha, interval);
+            t.ds.label = try std.fmt.allocPrint(a, "Exact Confidence Limits for the Relative Risk (Column {d})", .{col + 1});
+            const ratio = try risk.ratio(cells, if (col == 0) .first else .second, .relative_risk, alpha, .wald, true);
+            const suffix = if (col == 0) "RRC1" else "RRC2";
+            try ratioLimits(a, &t, table, "Relative Risk", suffix, suffix, alpha, ratio.estimate, ratio.limits, interval);
             try capture.publish(a, d, rr_name, &t.ds);
         };
     }
