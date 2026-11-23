@@ -240,7 +240,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     quantiles.ds.setFormat("EstQuantile", estimated_format);
     const pct = quantiles.ds.indexOf("Percent").?;
     for (quantiles.ds.rows.items) |row| {
-        try out.print(a, "{d:.1} {s} {s}\n", .{ row[pct].num, try displayNumber(a, row[pct + 1], observed_format), try displayNumber(a, row[pct + 2], estimated_format) });
+        try out.print(a, "{d:.1} {s} {s}\n", .{ row[pct].num, try displayQuantile(a, row[pct + 1], observed_format), try displayQuantile(a, row[pct + 2], estimated_format) });
     }
     try context.publish("FitQuantiles", &quantiles);
     try tables.finish(a, out, start, "FitQuantiles");
@@ -279,6 +279,53 @@ fn numberFormat(a: std.mem.Allocator, width: usize, decimals: usize) ![]const u8
 
 fn displayNumber(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
     return std.mem.trim(u8, try fmt.apply(a, value, spec), " ");
+}
+
+/// M9 FitQuantiles uses the COMPATIBLE conversion for its fixed-point fields.
+/// It adds half a decimal unit, rounds the biased magnitude in binary64, then
+/// truncates its decimal digits. Keep the unrounded value in the ODS table.
+fn displayQuantile(a: std.mem.Allocator, value: Value, spec: []const u8) ![]const u8 {
+    const field = fmt.parseSpec(spec);
+    if (value != .num or !std.math.isFinite(value.num) or field.name.len != 0 or field.w > 16 or field.d > 15)
+        return displayNumber(a, value, spec);
+    const negative = value.num < 0;
+    var places = field.d;
+    while (true) : (places -= 1) {
+        const scale = std.math.pow(u64, 10, places);
+        const unit: f64 = @floatFromInt(scale);
+        const biased = (@abs(value.num) + 0.5 / unit) * (1 + std.math.floatEps(f64));
+        const scaled = @as(f128, biased) * @as(f128, unit);
+        if (!(scaled < @as(f128, 1 << 53))) return displayNumber(a, value, spec);
+        const digits: u64 = @intFromFloat(scaled);
+        const sign: []const u8 = if (negative) "-" else "";
+        const text = if (places == 0)
+            try std.fmt.allocPrint(a, "{s}{d}", .{ sign, digits })
+        else
+            try std.fmt.allocPrint(a, "{[s]s}{[whole]d}.{[fraction]d:0>[places]}", .{ .s = sign, .whole = digits / scale, .fraction = digits % scale, .places = places });
+        if (text.len <= field.w) return text;
+        if (places == 0) return displayNumber(a, value, spec);
+    }
+}
+
+test "FitQuantiles fixed fields round both sides of M9 decimal boundaries" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const Case = struct { bits: u64, format: []const u8, printed: []const u8 };
+    for ([_]Case{
+        .{ .bits = 0x3ff0c22bbecaab89, .format = "8.5", .printed = "1.04740" },
+        .{ .bits = 0x3ff0c22bbecaab8a, .format = "8.5", .printed = "1.04741" },
+        .{ .bits = 0x4001800d1b71758e, .format = "8.5", .printed = "2.18753" },
+        .{ .bits = 0x403226324c83664f, .format = "9.5", .printed = "18.14920" },
+        .{ .bits = 0x403226324c836650, .format = "9.5", .printed = "18.14921" },
+        .{ .bits = 0xc03226324c836650, .format = "9.5", .printed = "-18.14921" },
+        .{ .bits = @bitCast(@as(f64, -9.999995)), .format = "8.5", .printed = "-10.0000" },
+        .{ .bits = @bitCast(@as(f64, -0.00000499)), .format = "8.5", .printed = "-0.00000" },
+        .{ .bits = @bitCast(@as(f64, -0.0)), .format = "8.5", .printed = "0.00000" },
+    }) |case| {
+        const v = Value{ .num = @bitCast(case.bits) };
+        try std.testing.expectEqualStrings(case.printed, try displayQuantile(a, v, case.format));
+    }
 }
 
 fn binPoint(bin: values.Bin, right: bool, midpoints: bool) f64 {
