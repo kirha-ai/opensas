@@ -1,6 +1,6 @@
 /* CALL RANNOR/RANEXP/RANCAU/RANTRI/RANPOI/RANBIN/RANGAM/RANTBL: draw one variate
-   into the last arg, seed updated in place. Deterministic under SAS's Lehmer
-   stream (16807). Phase-F-callbatch. */
+   into the last arg, seed updated in place. RANNOR, RANEXP, RANTRI, and RANTBL are pinned to
+   M9. The RANCAU, RANPOI, RANBIN, and RANGAM rows pin the existing approximations. */
 data _null_;
   seed=123; call rannor(seed, xn); put "rannor=" xn 10.6;
   seed=123; call ranexp(seed, xe); put "ranexp=" xe 10.6;

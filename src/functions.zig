@@ -3578,7 +3578,7 @@ fn queueDepth(name: []const u8, prefix: []const u8) ?usize {
 /// is built once, so the same site presents the same pointer every iteration;
 /// a fresh DATA step re-parses (new pointers) and gets a fresh Evaluator.
 /// SAS's classic uniform RNG (Fishman & Moore 1982, prime-modulus multiplicative:
-/// x←16807·x mod 2³¹−1, value = x/(2³¹−1)). One stream per data step, held in
+/// x←397204094·x mod 2³¹−1, value = x/(2³¹−1)). One stream per data step, held in
 /// `ev.lag` under a fixed key: the FIRST positive seed initializes it and every
 /// subsequent random draw (any generator) advances the same stream, so sequential
 /// draws differ and a fixed seed is reproducible — matching SAS's shared-stream model.
@@ -3593,10 +3593,17 @@ pub fn nextUniform(ev: *eval.Evaluator, seed: f64) f64 {
         gop.value_ptr.append(ev.stateArena(), .{ .num = @floatFromInt(s0) }) catch {}; // the shared FIFO holds Value now
     }
     const state = gop.value_ptr;
-    const x: u64 = @intFromFloat(state.items[0].num);
-    const nxt: u64 = (16807 * x) % 2147483647;
-    state.items[0] = .{ .num = @floatFromInt(nxt) };
-    return @as(f64, @floatFromInt(nxt)) / 2147483647.0;
+    var x: u64 = @intFromFloat(state.items[0].num);
+    const u = classicUniform(&x);
+    state.items[0] = .{ .num = @floatFromInt(x) };
+    return u;
+}
+
+/// SAS 9.4 M9 CALL RANUNI(1) returns successive states 397204094,
+/// 2083249653 and 858616159. The implicit legacy stream uses the same update.
+pub fn classicUniform(state: *u64) f64 {
+    state.* = (397204094 * state.*) % 2147483647;
+    return @as(f64, @floatFromInt(state.*)) / 2147483647.0;
 }
 
 // ── MT19937 (Mersenne-Twister) for RAND / CALL STREAMINIT ────────────────────
@@ -7390,18 +7397,18 @@ test "random-variate generators: reproducible stream + distributions (Phase F ba
     }.f;
 
     // RANUNI: the first draw of a fresh stream seeded 1 is the documented
-    // 16807/(2^31−1); UNIFORM is an alias; both draw from the SAME stream.
-    try near((try dispatch(&e, "ranuni", &.{numV(1)})).num, 16807.0 / 2147483647.0, 1e-9);
+    // 397204094/(2^31−1); UNIFORM is an alias; both draw from the SAME stream.
+    try near((try dispatch(&e, "ranuni", &.{numV(1)})).num, 397204094.0 / 2147483647.0, 1e-9);
     // subsequent draws advance the stream (differ from the first)
     const ud = (try dispatch(&e, "uniform", &.{numV(1)})).num;
-    try t.expect(ud != 16807.0 / 2147483647.0 and ud > 0 and ud < 1);
+    try near(ud, 2083249653.0 / 2147483647.0, 1e-14);
 
     // a fresh evaluator re-seeded 1 reproduces the first value (reproducibility)
     var h2 = harness();
     defer h2.deinit();
     h2.prime();
     var e2 = h2.ev();
-    try near((try dispatch(&e2, "ranuni", &.{numV(1)})).num, 16807.0 / 2147483647.0, 1e-12);
+    try near((try dispatch(&e2, "ranuni", &.{numV(1)})).num, 397204094.0 / 2147483647.0, 1e-12);
 
     // uniform mean over many draws ≈ 0.5; all in (0,1)
     var su: f64 = 0;

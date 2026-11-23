@@ -1,4 +1,4 @@
-/* RANUNI reproduces SAS's exact seeded Lehmer/MINSTD sequence (multiplier 16807).
+/* RANUNI reproduces SAS's exact seeded Lehmer sequence (multiplier 397204094).
    Regression guard for BUG-ranseq. */
 data _null_;
   a = ranuni(1);
