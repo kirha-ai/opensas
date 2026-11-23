@@ -264,13 +264,21 @@ pub const BarnardTails = union(enum) {
 pub fn barnardTails(table: risk.Table2x2, side: Side, options: Options) Error!BarnardTails {
     const c = try canonical(table, .first);
     var work = Work{ .options = options };
+    if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
+    if (@as(u64, c[0]) + c[1] > std.math.maxInt(u32) or @as(u64, c[2]) + c[3] > std.math.maxInt(u32)) return .exhausted;
+    // With equal observed risks, every absolute score is at least zero.
+    // Either inclusive directional tail has mass one at nuisance p=0.
+    // Integer cross-products distinguish equality from a one-count
+    // determinant that rounds away when subtracting two row proportions.
+    if (@as(u64, c[0]) * c[3] == @as(u64, c[1]) * c[2]) {
+        if (!work.tick()) return .exhausted;
+        return .{ .complete = .{ .one = pointBounds(1), .two = pointBounds(1) } };
+    }
     const negative = c[0] == 0 and c[3] == 0;
     const positive = c[1] == 0 and c[2] == 0;
     if ((negative and side == .left) or (positive and side == .right)) {
         const n1 = if (negative) c[1] else c[0];
         const n2 = if (negative) c[2] else c[3];
-        if (n1 == 0 or n2 == 0) return error.ExecError;
-        if (!std.math.isFinite(options.tolerance) or options.tolerance <= 0 or options.tolerance >= 1) return error.ExecError;
         return opposingBarnard(@min(n1, n2), @max(n1, n2), &work);
     }
     const one = try tail(c, .difference, .score, 0, side, &work);
@@ -1259,4 +1267,31 @@ test "deadline during second risk endpoint retains only the completed inversion"
             try std.testing.expect(completed.lower == null);
         }
     }
+}
+
+
+test "Barnard equal risks have probability one across unequal row margins" {
+    const t = std.testing;
+    // The first two small count ratios have native M9 raw p=1 for both
+    // tails. The proof also applies when enumeration exceeds its work limit.
+    for ([_][4]u32{
+        .{ 2, 2, 2, 2 }, .{ 2, 3, 4, 6 }, .{ 250, 750, 750, 2250 },
+        .{ 400_000_000, 600_000_000, 1_200_000_000, 1_800_000_000 },
+    }) |cells| {
+        for ([_]Side{ .left, .right, .two_sided }) |side| {
+            const result = try barnardTails(tableOf(cells), side, .{ .budget = .{ .max_tables = 1 } });
+            try t.expectEqual(pointBounds(1), result.complete.one);
+            try t.expectEqual(pointBounds(1), result.complete.two);
+        }
+    }
+    const m = 800_000_000;
+    for ([_][4]u32{ .{ m, m + 1, m + 1, m + 2 }, .{ m + 1, m + 2, m, m + 1 } }) |cells| {
+        const table = tableOf(cells);
+        const rows = table.samples(.first);
+        try t.expectEqual(rows[0].proportion(), rows[1].proportion());
+        try t.expect((try barnardTails(table, .left, .{ .budget = .{ .max_tables = 1 } })) == .exhausted);
+    }
+    const equal = tableOf(.{ 1, 1, 1, 1 });
+    try t.expect((try barnardTails(equal, .left, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+    try t.expectError(error.ExecError, barnardTails(equal, .left, .{ .tolerance = 0 }));
 }
