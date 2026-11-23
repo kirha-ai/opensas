@@ -151,10 +151,10 @@ Proportion                        1.0000      0.0000
 Confidence Limits for the Binomial Proportion
 
 Statistic / Method            95% Lower CL  95% Upper CL
-Wald                                1.0000        1.0000
 Clopper-Pearson (Exact)             0.6915        1.0000
-Logit                                    .        1.0000
 Likelihood Ratio                    0.8252        1.0000
+Logit                                    .        1.0000
+Wald                                1.0000        1.0000
 Wilson                              0.7225        1.0000
 
 Equality Test for the Binomial Proportion
