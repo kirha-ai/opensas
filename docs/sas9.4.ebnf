@@ -875,6 +875,17 @@ corr_fisher_option = "ALPHA" "=" number | "RHO0" "=" [ "+" | "-" ] number
 corr_poly_option = "CONVERGE" "=" number | "MAXITER" "=" integer
                  | "NGROUPS" "=" ( "ALL" | integer ) ; (* opensas *)
 
+(* UNIVARIATE HISTOGRAM fitted distribution parameters (pp.330-341).
+   The longest positional parameter list gives the number of curves. Shorter
+   lists repeat their last entry. PERCENT(S)= selects the quantiles of each
+   curve. Kernel bandwidth and bound lists have their own syntax. *)
+univ_curve_parameter_list = ( "EST" | univ_curve_numeric_range )
+                         { [ "," ] ( "EST" | univ_curve_numeric_range ) } ; (* opensas *)
+univ_curve_percents = ( "PERCENTS" | "PERCENT" ) "=" univ_curve_numeric_range
+                         { [ "," ] univ_curve_numeric_range } ; (* opensas *)
+univ_curve_numeric_range = univ_curve_number [ "TO" univ_curve_number [ "BY" univ_curve_number ] ] ; (* opensas *)
+univ_curve_number = [ "+" | "-" ] number ; (* opensas *)
+
 (* 5.3 PROC MEANS / SUMMARY *)
 proc_means     = "PROC" ( "MEANS" | "SUMMARY" ) [ "DATA" "=" dataset ] (* opensas *)
                  { stat_keyword } [ "NWAY" | "NOPRINT" ] ";"

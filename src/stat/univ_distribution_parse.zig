@@ -52,6 +52,37 @@ pub fn numeric(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!f64
     return value * sign;
 }
 
+const NumericRange = struct {
+    first: f64,
+    step: f64 = 0,
+    count: usize = 1,
+
+    fn at(self: NumericRange, index: usize) f64 {
+        return @mulAdd(f64, self.step, @as(f64, @floatFromInt(index)), self.first);
+    }
+};
+
+/// Expand a single numeric list element. Bound the count before iterating so
+/// floating-point rounding at large offsets cannot prevent termination.
+fn numericRange(d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!NumericRange {
+    const first = try numeric(d, t, i);
+    if (t[i.*].tag != .name or !eq(t[i.*].text, "to")) return .{ .first = first };
+    i.* += 1;
+    const last = try numeric(d, t, i);
+    var step: f64 = 1;
+    if (t[i.*].tag == .name and eq(t[i.*].text, "by")) {
+        i.* += 1;
+        step = try numeric(d, t, i);
+    }
+    const steps = (last - first) / step;
+    if (step == 0 or !std.math.isFinite(steps) or steps < 0 or steps > 100000)
+        return d.fail(error.ParseError, 0, "UNIVARIATE: invalid numeric list range", .{});
+    const count: usize = @intFromFloat(@floor(steps + 4 * std.math.floatEps(f64) * steps));
+    if (count > 0 and (first + step == first or last - step == last))
+        return d.fail(error.ParseError, 0, "UNIVARIATE: range increment is below floating-point resolution", .{});
+    return .{ .first = first, .step = step, .count = count + 1 };
+}
+
 /// i starts at the family keyword; returns immediately after optional (...).
 /// null parameter values mean EST, including explicit EST in position lists.
 pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize) diag.Error!Curves {
@@ -156,9 +187,12 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                         i.* += 1;
                         continue;
                     }
-                    const value = try numeric(d, t, i);
-                    if (value <= 0 or value >= 100) return d.fail(error.ParseError, 0, "UNIVARIATE: PERCENTS must be between 0 and 100", .{});
-                    try percents.append(a, value);
+                    const range = try numericRange(d, t, i);
+                    for (0..range.count) |index| {
+                        const value = range.at(index);
+                        if (value <= 0 or value >= 100) return d.fail(error.ParseError, 0, "UNIVARIATE: PERCENTS must be between 0 and 100", .{});
+                        try percents.append(a, value);
+                    }
                 }
                 if (percents.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty PERCENTS list", .{});
                 continue;
@@ -177,12 +211,15 @@ fn parseOptions(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i:
                             try lists[fi].append(a, null);
                             i.* += 1;
                         } else {
-                            var value = try numeric(d, t, i);
-                            if (slope) {
-                                if (value <= 0) return d.fail(error.ParseError, 0, "UNIVARIATE: SLOPE must be positive", .{});
-                                value = if (kind == .lognormal) @log(value) else 1 / value;
+                            const range = try numericRange(d, t, i);
+                            for (0..range.count) |index| {
+                                var value = range.at(index);
+                                if (slope) {
+                                    if (value <= 0) return d.fail(error.ParseError, 0, "UNIVARIATE: SLOPE must be positive", .{});
+                                    value = if (kind == .lognormal) @log(value) else 1 / value;
+                                }
+                                try lists[fi].append(a, value);
                             }
-                            try lists[fi].append(a, value);
                         }
                     }
                     if (lists[fi].items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty distribution parameter list", .{});
@@ -255,5 +292,51 @@ test "UNIVARIATE documented distribution aliases preserve canonical requests" {
         const plot = try @import("univ_distribution_plots.zig").parse(a, &d, try lex.tokenize(a, source, &d), &i);
         try std.testing.expect(plot.weibull2);
         try std.testing.expectEqual(dist.Family.weibull, plot.curves.requests[0].family);
+    }
+}
+
+test "UNIVARIATE parameter and percentile ranges publish the SAS fitted series" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = @import("../dataset.zig").Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ 1, 2, 3, 4, 6, 8, 10, 15 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const lex = @import("../lexer.zig");
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output ParameterEstimates=p FitQuantiles=q;", &d));
+    var out: std.ArrayList(u8) = .empty;
+    const t = try lex.tokenize(a, "proc univariate data=d; var x; histogram x / normal(mu=0 to 2 by 1 sigma=2 percents=10 to 90 by 40) noplot; run;", &d);
+    try @import("../proc.zig").runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, t);
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const p = lib.find("p").?;
+    const q = lib.find("q").?;
+    try std.testing.expectEqual(@as(usize, 6), p.rows.items.len);
+    try std.testing.expectEqual(@as(usize, 9), q.rows.items.len);
+    for (0..3) |curve| {
+        const mu: f64 = @floatFromInt(curve);
+        try std.testing.expectEqual(mu, p.rows.items[2 * curve][5].num);
+        try std.testing.expectEqual(@as(f64, 2), p.rows.items[2 * curve + 1][5].num);
+        for ([_]f64{ 10, 50, 90 }, [_]f64{ 1, 5, 15 }, [_]f64{ -2.56310, 0, 2.56310 }, 0..) |pct, obs, offset, j| {
+            const row = q.rows.items[curve * 3 + j];
+            try std.testing.expectEqual(pct, row[3].num);
+            try std.testing.expectEqual(obs, row[4].num);
+            try std.testing.expectApproxEqAbs(mu + offset, row[5].num, 5e-6);
+        }
+    }
+    var i: usize = 0;
+    const alternate = try parse(a, &d, try lex.tokenize(a, "normal(mu=est 1 to .4 by -.3 sigma=2)", &d), &i);
+    try std.testing.expectEqual(@as(usize, 4), alternate.requests.len);
+    try std.testing.expectEqual(@as(?f64, null), alternate.requests[0].mu);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.4), alternate.requests[3].mu.?, 1e-15);
+    for ([_][]const u8{ "normal(mu=1 to 2 by 0)", "normal(mu=0 to 1 by -.1)", "normal(mu=0 to 1 by 1e-300)" }) |bad| {
+        var invalid = diag.Diagnostics.init(a);
+        i = 0;
+        try std.testing.expectError(error.ParseError, parse(a, &invalid, try lex.tokenize(a, bad, &invalid), &i));
+        try std.testing.expect(invalid.hasErrors());
     }
 }
