@@ -608,6 +608,9 @@ fn number(a: std.mem.Allocator, x: f64, probability: bool) ![]const u8 {
     if (probability) return if (x < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{x});
     return try std.fmt.allocPrint(a, "{d:.5}", .{x});
 }
+fn sixDecimals(a: std.mem.Allocator, x: f64) ![]const u8 {
+    return if (std.math.isFinite(x)) std.fmt.allocPrint(a, "{d:.6}", .{x}) else ".";
+}
 /// Text is deliberately downstream of Result: output datasets/ODS can consume
 /// the full precision typed cells, never scrape this rounded listing.
 pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !void {
@@ -1224,11 +1227,11 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
     }
     if (g.alpha) |alpha_result| {
         var start = out.items.len;
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try number(a, alpha_result.raw, false), try number(a, alpha_result.standardized, false) }));
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nCronbach Coefficient Alpha\nRaw {s}\nStandardized {s}\n", .{ try sixDecimals(a, alpha_result.raw), try sixDecimals(a, alpha_result.standardized) }));
         try tables.finish(a, out, start, "CronbachAlpha");
         start = out.items.len;
         try out.appendSlice(a, "Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha\n");
-        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try number(a, d.raw_correlation, false), try number(a, d.raw, false), try number(a, d.standardized_correlation, false), try number(a, d.standardized, false) }));
+        for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try sixDecimals(a, d.raw_correlation), try sixDecimals(a, d.raw), try sixDecimals(a, d.standardized_correlation), try sixDecimals(a, d.standardized) }));
         try tables.finish(a, out, start, "CronbachAlphaDel");
     }
     if (s.options.fisher) |opt| {
@@ -1255,7 +1258,7 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 if (opt.biasadj) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.fisher.bias, false), try number(a, p.fisher.estimate, false) }));
                 for ([_]f64{ p.fisher.lower, p.fisher.upper }, 0..) |v, bound| {
                     if ((bound == 0 and opt.kind == .upper) or (bound == 1 and opt.kind == .lower)) continue;
-                    if (std.math.isFinite(v)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.6}", .{v})) else try out.appendSlice(a, " .");
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try sixDecimals(a, v)}));
                 }
                 if (opt.rho0 != 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, opt.rho0, false)}));
                 if (!s.options.noprob) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.fisher.p, true)}));
@@ -1280,6 +1283,10 @@ test "CORR advanced SAS tied ranks partial Fisher and alpha reference" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.976693), g.alpha.?.standardized, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.946398), g.alpha.?.deleted[0].raw_correlation, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.772856), g.pairs[1].fisher.lower, 0.0000005);
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, r);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Raw 0.869050\nStandardized 0.976693") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x 0.946398") != null);
     const p = (try Testing.analyze(a, ds, "proc corr pearson spearman kendall fisher; var x y; partial z; run;")).groups[0];
     try std.testing.expectApproxEqAbs(@as(f64, 0.93350), p.pairs[1].r, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.91539), p.spearman[1].r, 0.000005);
