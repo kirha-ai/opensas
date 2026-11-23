@@ -1820,6 +1820,23 @@ test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
         try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
     }
 }
+test "CORR retracts a projected ordinal step when its likelihood loss is distinguishable" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 262255, -32857, 147 }, &.{ 262160, -32724, 105 }, &.{ 262209, -32724, 126 }, &.{ 262255, -32847, 140 },
+        &.{ 262128, -32724, 252 }, &.{ 262255, -32821, 91 }, &.{ 262255, -32724, 112 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6 maxiter=25);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 973), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.9997288349756279), fit.r, 1e-12);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expect(std.math.isNan(fit.wald));
+    try std.testing.expectApproxEqAbs(@as(f64, 773.2658152221902), fit.lr, 1e-9);
+}
+
 test "CORR rectangular separated margins honor the cap and refine the boundary" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

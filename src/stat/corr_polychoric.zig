@@ -598,18 +598,21 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
                 candidate[dim - 1] = rho;
                 boundary_distance *= 0.1;
             }
-            const improves = negativeLogLikelihood(m, candidate) <= base + 1e-10;
-            if (projected and check_projection_gap and !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated)) {
+            const trial_likelihood = negativeLogLikelihood(m, candidate);
+            var improves = trial_likelihood <= base + 1e-10;
+            const worsened = improves and trial_likelihood > base;
+            const near_saturation = !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated);
+            if (projected and check_projection_gap and (near_saturation or worsened)) {
                 if (base_gap == null) base_gap = projectedLikelihoodGap(m, params, t.n, hessian[0..occupied]);
                 const candidate_gap = projectedLikelihoodGap(m, candidate, t.n, hessian[0..occupied]);
                 if (base_gap != null and candidate_gap != null) {
-                    unresolved_projection = !(if (improves)
-                        candidate_gap.?.upper < base_gap.?.lower
-                    else
-                        candidate_gap.?.lower > base_gap.?.upper);
-                } else {
-                    unresolved_projection = true;
-                }
+                    const better = candidate_gap.?.upper < base_gap.?.lower;
+                    const worse = candidate_gap.?.lower > base_gap.?.upper;
+                    // A small increase in the direct sum may still be large
+                    // compared with the available precision of the two gaps.
+                    if (worsened and worse) improves = false;
+                    if (near_saturation) unresolved_projection = !(if (improves) better else worse);
+                } else if (near_saturation) unresolved_projection = true;
             }
             if (improves) {
                 accepted = true;
