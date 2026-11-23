@@ -157,6 +157,8 @@ fn rectanglePanel(f: Rectangle, a: f64, b: f64) QuadraturePanel {
     return .{ .lo = a, .hi = b, .value = kronrod * half, .err = err };
 }
 
+const rectangle_relative_error = 1e-10;
+const rectangle_absolute_error = 1e-300;
 fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
     var panels: [4096]QuadraturePanel = undefined;
     panels[0] = rectanglePanel(f, a, b);
@@ -173,7 +175,7 @@ fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
         }
         // Recompute the relative budget from the current estimate, rather than
         // permanently dividing a potentially underestimated first-panel budget.
-        if (err <= @max(@abs(value) * 1e-10, 1e-300)) return value;
+        if (err <= @max(@abs(value) * rectangle_relative_error, rectangle_absolute_error)) return value;
         if (len == panels.len) return std.math.nan(f64);
         const previous = panels[worst];
         const middle = (previous.lo + previous.hi) / 2;
@@ -262,6 +264,63 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
         result -= n * @log(p);
     }
     return result;
+}
+fn ulp(value: f64) f64 {
+    const magnitude = @abs(value);
+    return std.math.nextAfter(f64, magnitude, std.math.inf(f64)) - magnitude;
+}
+
+const LikelihoodGap = struct { lower: f64, upper: f64 };
+
+// Near saturation, two large likelihoods may round to the same value.
+// With p = count / N and e = q/p - 1 on occupied cells, the gap is
+// N * sum(q on empty cells) + sum(count * (e - log1p(e))).
+// The remainder lies between 0 and e²/(2*(1-|e|)) for |e| < 1.
+// The computed interval estimates quadrature and binary64 evaluation error.
+// A native four-corner subtraction can round a cell differently from our
+// positive integral. Native endpoint and held-out tests cover this distinction.
+fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64) ?LikelihoodGap {
+    std.debug.assert(m.rows == 4 and m.cols == 4);
+    var terms: [16]f64 = undefined;
+    var used: usize = 0;
+    var empty: f64 = 0;
+    var empty_error: f64 = 0;
+    var remainder: f64 = 0;
+    var rounding: f64 = 0;
+    for (m.counts, 0..) |count, k| {
+        const q = cellProbability(m, params, k / m.cols, k % m.cols);
+        if (!std.math.isFinite(q) or q < 0 or q > 1) return null;
+        if (count == 0) {
+            empty += q;
+            empty_error += q * rectangle_relative_error + rectangle_absolute_error;
+            continue;
+        }
+        if (q == 0) return null;
+        const empirical = count / total;
+        const ratio = q / empirical;
+        const e = @abs((q - empirical) / empirical) + ratio * rectangle_relative_error;
+        if (e < 1) {
+            remainder += count * e * e / (2 * (1 - e));
+        } else {
+            remainder = std.math.inf(f64);
+        }
+        const log_q = -@log(q);
+        const term = count * log_q;
+        terms[used] = term;
+        used += 1;
+        rounding += count * (ulp(log_q) + 0.5 * ulp(q) / q) + 0.5 * ulp(term);
+    }
+    // Largest terms first bound the partial sums in either traversal order.
+    std.mem.sort(f64, terms[0..used], {}, std.sort.desc(f64));
+    var partial = terms[0];
+    for (terms[1..used]) |term| {
+        partial += term;
+        rounding += 0.5 * ulp(partial);
+    }
+    return .{
+        .lower = total * (empty - empty_error) - rounding,
+        .upper = total * (empty + empty_error) + remainder + rounding,
+    };
 }
 /// Rank-aware information solve. The absolute 1e-8 pivot decision is pinned
 /// by native CORR frequency transitions; SINGULAR= governs PARTIAL instead.
@@ -450,23 +509,34 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         if (solveInformation(hessian, gradient) == null) break;
         var scale: f64 = 1;
         var accepted = false;
+        var base_gap: ?LikelihoodGap = null;
         for (0..30) |_| {
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
             // SAS first-step oracle: an overshoot is restarted at +/-0.999,
             // rather than halving all coordinates solely to force |rho|<1.
             // Successive overshoots on the supported boundaries refine this distance
             // by one decimal place (positive and negative M9 MAXITER traces).
-            if (@abs(candidate[dim - 1]) >= 1) {
-                // Once the likelihood is indistinguishable from its saturated
-                // lower bound, the comparison cannot resolve another retraction.
-                if (four_by_four_boundary and base - saturated <= accumulated_roundoff * (base + saturated))
-                    unresolved_projection = true;
+            const projected = @abs(candidate[dim - 1]) >= 1;
+            if (projected) {
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 candidate[dim - 1] = rho;
                 if (projected_boundary) boundary_distance *= 0.1;
             }
-            if (negativeLogLikelihood(m, candidate) <= base + 1e-10) {
+            const improves = negativeLogLikelihood(m, candidate) <= base + 1e-10;
+            if (projected and four_by_four_boundary and !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated)) {
+                if (base_gap == null) base_gap = projectedLikelihoodGap(m, params, t.n);
+                const candidate_gap = projectedLikelihoodGap(m, candidate, t.n);
+                if (base_gap != null and candidate_gap != null) {
+                    unresolved_projection = !(if (improves)
+                        candidate_gap.?.upper < base_gap.?.lower
+                    else
+                        candidate_gap.?.lower > base_gap.?.upper);
+                } else {
+                    unresolved_projection = true;
+                }
+            }
+            if (improves) {
                 accepted = true;
                 break;
             }

@@ -1691,6 +1691,47 @@ test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
         try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
     }
 }
+test "CORR resolves separated four-level projections with distinguishable likelihood gaps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const first = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ -21, 14, 4224 }, &.{ 17, 9, 2432 }, &.{ 17, 12, 3328 }, &.{ 4, 14, 4480 },
+        &.{ 17, 14, 11264 }, &.{ 17, -4, 768 }, &.{ -2, 14, 2688 },
+    });
+    const second = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 14, 6, 2560 }, &.{ -14, 28, 2048 }, &.{ 14, 28, 1920 },  &.{ 14, 2, 6016 },
+        &.{ 1, 28, 3200 }, &.{ 14, 18, 768 },   &.{ -24, 28, 3840 },
+    });
+    for ([_]*Dataset{ first, second }, [_]f64{ 29184, 20352 }, [_]f64{ -0.999, -0.9999 }, [_]f64{ 7635.472308469951, 17791.23558852251 }) |ds, n, r, lr| {
+        const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectEqual(n, fit.n);
+        try std.testing.expectApproxEqAbs(r, fit.r, 1e-14);
+        try std.testing.expectEqual(@as(f64, 0), fit.se);
+        try std.testing.expect(std.math.isNan(fit.wald) and std.math.isNan(fit.p));
+        try std.testing.expectApproxEqAbs(lr, fit.lr, 1e-9);
+    }
+}
+
+test "CORR keeps a separated four-level projection unresolved when likelihood gaps overlap" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 25, 12, 256 },  &.{ 25, -2, 800 },  &.{ -25, 15, 496 }, &.{ 25, 15, 1120 },
+        &.{ -13, 15, 128 }, &.{ 25, -18, 368 }, &.{ 10, 15, 624 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+    const spec = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;", &d));
+    // M9 returns -0.99999. Accepting the first projection would report -0.999.
+    try std.testing.expectError(error.ParseError, compute(cx, spec));
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
+}
+
 test "CORR four-level staircase keeps a captured diagnostic for its unresolved boundary" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
