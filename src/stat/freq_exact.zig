@@ -72,8 +72,11 @@ pub fn poissonDeviance(x: f64, mean: f64, delta: f64) f64 {
     }
 }
 
-fn binomialLogPoint(k: u32, n: u32, p: f64) f64 {
+/// Log probability of k successes for 0 < p < 1, including an empty split.
+pub fn binomialLogPoint(k: u32, n: u32, p: f64) f64 {
     const total: f64 = @floatFromInt(n);
+    if (k == 0) return total * std.math.log1p(-p);
+    if (k == n) return total * @log(p);
     const successes: f64 = @floatFromInt(k);
     const failures: f64 = @floatFromInt(n - k);
     const small = @min(successes, failures);
@@ -95,12 +98,9 @@ pub fn binomialTailsControlled(k: u32, n: u32, p: f64, control: Control) Error!?
     if (p == 0) return .{ .point = if (k == 0) 1 else 0, .left = 1, .right = if (k == 0) 1 else 0 };
     if (p == 1) return .{ .point = if (k == n) 1 else 0, .left = if (k == n) 1 else 0, .right = 1 };
     const total: f64 = @floatFromInt(n);
-    if (k == 0 or k == n) {
-        const point = @exp(total * (if (k == 0) std.math.log1p(-p) else @log(p)));
-        return .{ .point = point, .left = if (k == 0) point else 1, .right = if (k == 0) 1 else point };
-    }
     const log_point = binomialLogPoint(k, n, p);
     const point = @exp(log_point);
+    if (k == 0 or k == n) return .{ .point = point, .left = if (k == 0) point else 1, .right = if (k == 0) 1 else point };
     if (p == 0.5 and k == n - k) {
         const symmetric = (1 + point) / 2;
         return .{ .point = point, .left = symmetric, .right = symmetric };

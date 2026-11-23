@@ -545,6 +545,20 @@ test "public exact McNemar uses the specified odds for rare discordant pairs" {
         try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
 }
 
+test "public Bowker probabilities keep the binomial split mass near the center of wide pairs" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 30_001, 1, 29_999, 1, 0, 0, 0, 1 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact symmetry / point pformat=18.14; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // The size-one pair contributes 1 for either split. The other pair has
+    // POINT = 2*C(60000,30001)/2^60000 and upper tail 1-C(60000,30000)/2^60000.
+    for ([_][]const u8{ "0.99674266349291", "0.00651445586565" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, out, v) != null);
+}
+
 test "public Fisher on a sparse wide table distinguishes unequal point probabilities" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

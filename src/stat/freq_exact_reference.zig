@@ -5,16 +5,12 @@
 //! fixes each n_ij+n_ji and uses independent Binomial(D_ij,1/2) splits.
 //! Diagonals stay observed; neither symmetry law fixes row/column margins.
 const std = @import("std");
-const math = @import("../functions.zig");
 const dist = @import("freq_exact_distribution.zig");
 pub const Error = dist.Error;
 const Matrix = dist.Matrix;
 const Statistic = dist.Statistic;
 const Budget = dist.Budget;
 const Enumeration = dist.Enumeration;
-fn lf(x: u32) f64 {
-    return math.lgammaOf(@as(f64, @floatFromInt(x)) + 1);
-}
 
 const MultinomialSearch = struct {
     counts: []u32,
@@ -134,8 +130,8 @@ const PairSearch = struct {
     cells: []u32,
     dimension: usize,
     pairs: []const Pair,
-    log_p: f64,
-    log_q: f64,
+    rare_p: f64,
+    lower_is_rare: bool,
     statistic: Statistic,
     accumulator: dist.Accumulator,
     budget: Budget,
@@ -164,7 +160,8 @@ const PairSearch = struct {
             const down = pair.total - up;
             self.cells[pair.upper] = up;
             self.cells[pair.lower] = down;
-            const log_mass = lf(pair.total) - lf(up) - lf(down) + @as(f64, @floatFromInt(up)) * self.log_p + @as(f64, @floatFromInt(down)) * self.log_q;
+            const rare = if (self.lower_is_rare) down else up;
+            const log_mass = @import("freq_exact.zig").binomialLogPoint(rare, pair.total, self.rare_p);
             try self.visit(k + 1, log_weight + log_mass);
             if (self.stopped) return;
         }
@@ -192,9 +189,9 @@ pub fn symmetry(a: std.mem.Allocator, observed: Matrix, null_ratio: f64, statist
     if (!std.math.isFinite(value) or !std.math.isFinite(statistic.expected)) return error.ExecError;
     const cells = try a.dupe(u32, observed.cells);
     defer a.free(cells);
-    // Avoid rounding p to 1 for a large but finite discordant odds ratio.
-    const log_p = if (null_ratio < 1) @log(null_ratio) - std.math.log1p(null_ratio) else -std.math.log1p(1 / null_ratio);
-    var search = PairSearch{ .cells = cells, .dimension = observed.rows, .pairs = pairs, .log_p = log_p, .log_q = -std.math.log1p(null_ratio), .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
+    // The less likely split always has representable probability <= 1/2.
+    const odds = if (null_ratio <= 1) null_ratio else 1 / null_ratio;
+    var search = PairSearch{ .cells = cells, .dimension = observed.rows, .pairs = pairs, .rare_p = odds / (1 + odds), .lower_is_rare = null_ratio > 1, .statistic = statistic, .accumulator = .{ .statistic = statistic, .observed = value }, .budget = budget };
     try search.visit(0, 0);
     if (search.stopped) return .exhausted;
     return .{ .complete = try search.accumulator.result(search.count) };
