@@ -47,17 +47,18 @@ Student's t    t         .    Pr > |t|       .
 
            ----Lowest----        ---Highest---
 
-           Value      Obs        Value      Obs  id (Low/High)  Freq (Low/High)
+           Value  id  Freq  Obs        Value  id  Freq  Obs
 
-                  20    2               20    2  B / B  3 / 3
+           20  B  3  2        20  B  3  2
 
 Modes
 Mode    Count
 20    3
 
 Extreme Values
-Lowest Value Frequency    Highest Value Frequency
-20 3    20 3
+Lowest                 Highest
+Order Value Freq    Order Value Freq
+1 20 3    1 20 3
 
 Weighted Frequency Counts
 Value Count Weighted Count Cell Cum
@@ -110,17 +111,18 @@ Student's t    t         .    Pr > |t|       .
 
            ----Lowest----        ---Highest---
 
-           Value      Obs        Value      Obs  id (Low/High)  Freq (Low/High)
+           Value  id  Freq  Obs        Value  id  Freq  Obs
 
-                  40    5               40    5  E / E  1 / 1
+           40  E  1  5        40  E  1  5
 
 Modes
 Mode    Count
 40    1
 
 Extreme Values
-Lowest Value Frequency    Highest Value Frequency
-40 1    40 1
+Lowest                 Highest
+Order Value Freq    Order Value Freq
+1 40 1    1 40 1
 
 Weighted Frequency Counts
 Value Count Weighted Count Cell Cum
