@@ -1,8 +1,8 @@
-rannor=  1.604976
-ranexp=  6.945827
+rannor= -0.326593
+ranexp=  0.287154
 rancau= -330.6613
-rantri=  0.021939
+rantri=  0.646727
 ranpoi=0
 ranbin=34
 rangam=  4.715939
-rantbl=1
+rantbl=3
