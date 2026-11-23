@@ -121,11 +121,17 @@ pub fn tabulated(d: *diag.Diagnostics, r: Request, s: Statistics, n: usize) diag
     if (r.family == .normal or (r.family == .lognormal and !e.theta)) {
         const location = if (r.family == .normal) e.mu else e.zeta;
         if (location and e.sigma) {
-            const levels = [_]f64{ 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005 };
+            // The log transform preserves the EDF statistics. SAS reports the
+            // median knot for the fitted lognormal W² and A² tables, whereas
+            // the fitted normal table starts at its upper quartile.
+            const levels = [_]f64{ 0.50, 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005 };
+            const w2 = [_]f64{ 0.051, 0.074, 0.091, 0.104, 0.126, 0.148, 0.178, 0.201 };
+            const a2 = [_]f64{ 0.341, 0.470, 0.561, 0.631, 0.752, 0.873, 1.035, 1.159 };
+            const first: usize = if (r.family == .lognormal) 0 else 1;
             return .{
                 .d = interpolate(s.d * (@sqrt(nf) - 0.01 + 0.85 / @sqrt(nf)), &.{ 0.775, 0.819, 0.895, 0.955, 1.035 }, &.{ 0.15, 0.10, 0.05, 0.025, 0.01 }),
-                .w2 = interpolate(s.w2 * (1 + 0.5 / nf), &.{ 0.074, 0.091, 0.104, 0.126, 0.148, 0.178, 0.201 }, &levels),
-                .a2 = interpolate(s.a2 * (1 + 0.75 / nf + 2.25 / (nf * nf)), &.{ 0.470, 0.561, 0.631, 0.752, 0.873, 1.035, 1.159 }, &levels),
+                .w2 = interpolate(s.w2 * (1 + 0.5 / nf), w2[first..], levels[first..]),
+                .a2 = interpolate(s.a2 * (1 + 0.75 / nf + 2.25 / (nf * nf)), a2[first..], levels[first..]),
             };
         }
         const levels = [_]f64{ 0.25, 0.15, 0.10, 0.05, 0.025, 0.01, 0.005, 0.0025 };
@@ -2116,4 +2122,29 @@ test "dev5 EDF accounted seeded replay and all-valid strict compatibility" {
     try std.testing.expectEqual(a.samples, a.valid + a.failed);
     const c = try simulateAccounted(&d, .{ .family = .pareto }, observed, 40, .{ .seed = 24680, .samples = 997 }, callback);
     try std.testing.expect(!std.meta.eql(a.exceedances, c.exceedances));
+}
+
+test "fixed threshold lognormal fitted EDF uses the median knots on both sides" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const r: Request = .{ .family = .lognormal, .estimated = .{ .zeta = true, .sigma = true } };
+    const normal: Request = .{ .family = .normal, .estimated = .{ .mu = true, .sigma = true } };
+    var lines = std.mem.tokenizeScalar(u8, @embedFile("testdata/univ_edf_lognormal_fixed_threshold.txt"), '\n');
+    while (lines.next()) |line| {
+        if (line[0] == '#') continue;
+        var parts = std.mem.splitScalar(u8, line, '|');
+        const n = try std.fmt.parseInt(usize, parts.next().?, 10);
+        const is_w2 = std.mem.eql(u8, parts.next().?, "1");
+        for ([_]Sign{ .greater, .exact }) |sign| {
+            const value = try std.fmt.parseFloat(f64, parts.next().?);
+            const stats: Statistics = .{ .d = 0.1, .w2 = value, .a2 = value };
+            const log_p = try tabulated(&d, r, stats, n);
+            const p = if (is_w2) log_p.w2.? else log_p.a2.?;
+            try std.testing.expectEqual(sign, p.sign);
+            try std.testing.expectApproxEqAbs(@as(f64, 0.5), p.value, 1e-9);
+            const normal_p = try tabulated(&d, normal, stats, n);
+            try std.testing.expectEqual(Probability{ .value = 0.25, .sign = .greater }, if (is_w2) normal_p.w2.? else normal_p.a2.?);
+        }
+    }
 }
