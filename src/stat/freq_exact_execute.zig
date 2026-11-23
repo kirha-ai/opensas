@@ -147,6 +147,54 @@ const Ordinal = struct {
         return @floatFromInt(score(raw, m));
     }
 };
+
+/// The trend statistic has fixed variance in its permutation distribution.
+/// For integral explanatory scores the centered numerator can be ordered
+/// exactly, including when the scores all share a large offset.
+const IntegralTrend = struct {
+    scores: [256]i128 = undefined,
+    total: i128 = 0,
+    successes: i128 = 0,
+    marginal_score: i128 = 0,
+
+    fn init(m: dist.Matrix, scores: ?[]const f64) ?IntegralTrend {
+        const by_row = m.cols == 2;
+        const len = if (by_row) m.rows else m.cols;
+        var self = IntegralTrend{};
+        for (m.cells) |x| self.total += x;
+        // Both terms in N*sum(x*s) - D*sum(margin*s) are bounded by
+        // N squared times the largest translated absolute score.
+        const bound = @divTrunc(std.math.maxInt(i128), 2 * self.total * self.total);
+        var origin: i128 = 0;
+        for (0..len) |i| {
+            const supplied = if (scores) |s| s[i] else @as(f64, @floatFromInt(i + 1));
+            if (supplied != @trunc(supplied) or @abs(supplied) >= 0x1p127) return null;
+            const value: i128 = @intFromFloat(supplied);
+            if (i == 0) origin = value;
+            const translated = std.math.sub(i128, value, origin) catch return null;
+            if (@abs(translated) > @as(u128, @intCast(bound))) return null;
+            self.scores[i] = translated;
+            const x = if (by_row) m.cells[i * 2] else m.cells[i];
+            const y = if (by_row) m.cells[i * 2 + 1] else m.cells[m.cols + i];
+            self.successes += x;
+            self.marginal_score += (@as(i128, x) + y) * translated;
+        }
+        return self;
+    }
+
+    fn score(raw: ?*const anyopaque, m: dist.Matrix) i128 {
+        const self: *const IntegralTrend = @ptrCast(@alignCast(raw.?));
+        const by_row = m.cols == 2;
+        const len = if (by_row) m.rows else m.cols;
+        var weighted: i128 = 0;
+        for (self.scores[0..len], 0..) |s, i| weighted += s * @as(i128, if (by_row) m.cells[i * 2] else m.cells[i]);
+        return self.total * weighted - self.successes * self.marginal_score;
+    }
+
+    fn asFloat(raw: ?*const anyopaque, m: dist.Matrix) Error!f64 {
+        return @floatFromInt(score(raw, m));
+    }
+};
 fn finish(result: dist.Enumeration) Result {
     return switch (result) {
         .complete => |p| .{ .exact_test = p },
@@ -247,6 +295,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     } };
     var sc: adapters.Context = undefined;
     var ordinal: Ordinal = undefined;
+    var trend_order: ?IntegralTrend = null;
     var weights: ?[]f64 = null;
     defer if (weights) |w| a.free(w);
     const sf: ?adapters.Family = switch (f) {
@@ -262,6 +311,10 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
         if (f == .wtkappa) weights = try stratified.kappaWeights(a, sm, c.kappa_weight);
         sc = try adapters.Context.init(sm, family, weights, c.null_ratio);
         callback = adapters.Adapters(dist).statistic(&sc);
+        if (f == .trend) {
+            trend_order = IntegralTrend.init(integers, if (m.cols == 2) m.row_scores else m.col_scores);
+            if (trend_order) |*order| callback = .{ .context = order, .evaluate = IntegralTrend.asFloat, .directional = true, .centered_integer = .{ .observed = IntegralTrend.score(order, integers), .score = IntegralTrend.score } };
+        }
     } else switch (f) {
         .fisher => callback = .{ .evaluate = dist.fisherStatistic },
         .jt, .kentb, .stutc, .smdcr, .smdrc, .scorr => {

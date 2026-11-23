@@ -469,6 +469,27 @@ test "public rank exact tests preserve distinct integer effects on wide tied mar
         try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, out, value));
 }
 
+test "public exact trend compares integral table scores independently of their shared offset" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{}, 2);
+    const ds = h.lib.sets.items[0];
+    ds.setFormat("r", "best32.");
+    ds.setFormat("c", "best32.");
+    const rows = [_]f64{ 1e15 + 1, 1e15 + 4, 1e15 + 9 };
+    const cols = [_]f64{ -1e14 + 1, -1e14 + 5 };
+    const counts = [_]f64{ 1, 5, 3, 2, 2, 4 };
+    for (counts, 0..) |v, k| try ds.appendRow(&.{ .{ .num = rows[k / 2] }, .{ .num = cols[k % 2] }, .{ .num = v } });
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact trend / point pformat=16.12; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    // M9 score-table-m9.sas, SCORECASE 2-3. Exhaustive labeled allocations
+    // of six successes among seventeen row slots give the same three tails.
+    for ([_][]const u8{ "0.385180995475", "0.072721396251", "0.770846800259" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
 test "public exact McNemar uses the specified odds for rare discordant pairs" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
