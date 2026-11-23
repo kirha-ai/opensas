@@ -39,10 +39,10 @@ pub fn compute(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribu
 pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: dist.Distribution, request: fitting.Request, sampler: ?inference.AccountedSimulator) diag.Error!Result {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF tests require observations", .{});
     if (distribution.family != request.family) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF distribution and parameter request disagree", .{});
-    // Fit on every original observation. M9 removes all fitted exponential
-    // threshold equalities only from EDF, including supplied-threshold cases.
+    // The fit uses every observation. For EDF, M9 excludes exponential
+    // offsets no greater than unit roundoff, measured in original data units.
     var boundary_count: usize = 0;
-    if (request.family == .exponential) while (boundary_count < x.len and x[boundary_count] == distribution.p.theta) : (boundary_count += 1) {};
+    if (request.family == .exponential) while (boundary_count < x.len and x[boundary_count] - distribution.p.theta <= std.math.floatEps(f64) / 2) : (boundary_count += 1) {};
     if (boundary_count == x.len) return .{ .statistics = .{ .d = std.math.nan(f64), .w2 = std.math.nan(f64), .a2 = std.math.nan(f64) }, .d = null, .w2 = null, .a2 = null };
     const raw = dist.edf(distribution, x[boundary_count..]).?;
     const stats: inference.Statistics = .{ .d = raw.d, .w2 = raw.w2, .a2 = raw.a2 };
@@ -504,4 +504,22 @@ test "UNIVARIATE seeded EDF reproduces M9 family-specific sampling and refitting
     const curve = try fitting.fit(&d, &y, request);
     const result = try compute(&d, &y, curve, request);
     try std.testing.expectEqual([3]usize{ 25, 13, 13 }, result.simulation.?.exceedances);
+}
+
+test "UNIVARIATE exponential EDF excludes unit roundoff in original observation units" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const tiny = std.math.floatEps(f64) / 2;
+    for ([_]f64{ 0.1, 1, 10 }) |sigma| {
+        const request: fitting.Request = .{ .family = .exponential, .theta = 0, .sigma = sigma };
+        const curve: dist.Distribution = .{ .family = .exponential, .p = .{ .sigma = sigma } };
+        const cutoff = try compute(&d, &.{ tiny, 0.25, 0.5, 0.75, 1, 1.25 }, curve, request);
+        const equal = try compute(&d, &.{ 0, 0.25, 0.5, 0.75, 1, 1.25 }, curve, request);
+        try std.testing.expectEqualDeep(equal, cutoff);
+        const above = [_]f64{ std.math.nextAfter(f64, tiny, 1), 0.25, 0.5, 0.75, 1, 1.25 };
+        const included = try compute(&d, &above, curve, request);
+        try std.testing.expectEqualDeep(dist.edf(curve, &above).?, included.statistics);
+        try std.testing.expect(included.statistics.a2 != cutoff.statistics.a2);
+    }
 }
