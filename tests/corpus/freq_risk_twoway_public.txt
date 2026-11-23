@@ -84,7 +84,7 @@ Wald                                2.0189       27.8616
 Wald Modified                       1.9182       24.2350
 Score                               2.0479       27.3817
 Likelihood Ratio                    2.1287       30.3010
-Exact Mid-p                         1.9651       29.1837
+Mid-p                               1.9651       29.1837
 
 Risk Estimates
 Column 1 (c = 1)
