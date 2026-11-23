@@ -965,6 +965,40 @@ test "public EXACT stratified COMOR and EQOR retain conditioning and missing con
     try std.testing.expect(std.mem.indexOf(u8, larger, "Exact Confidence Limits") == null);
 }
 
+test "public COMOR selects the M9 tied tail and the joint overflow recurrence" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try a.create(@import("../dataset.zig").Dataset);
+    ds.* = @import("../dataset.zig").Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try ds.addColumn(name, .num);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var h = Harness{ .a = a, .lib = lib };
+    const Case = struct { cells: []const f64, tail: []const u8 };
+    // M9 CommonOddsRatioTest, archived as center-a and overflow-bound-twopart.
+    for ([_]Case{
+        .{ .cells = &.{ 7, 12, 1, 1, 1, 15, 0, 5 }, .tail = "0.7170" },
+        .{ .cells = &.{ 0, 1, 1, 0, 1, 798, 0, 1, 1, 247, 0, 266, 0, 257, 1, 267 }, .tail = "0.5143" },
+    }) |case| {
+        ds.rows.clearRetainingCapacity();
+        for (case.cells, 0..) |weight, i| try ds.appendRow(&.{
+            .{ .num = @floatFromInt(i / 4 + 1) }, .{ .num = @floatFromInt(i / 2 % 2 + 1) },
+            .{ .num = @floatFromInt(i % 2 + 1) }, .{ .num = weight },
+        });
+        var d = diag.Diagnostics.init(a);
+        const out = try h.run("proc freq data=d; weight w / zeros; tables g*r*c / noprint; exact comor / point midp; run;", &d);
+        var lines = std.mem.splitScalar(u8, out, '\n');
+        while (lines.next()) |line| {
+            if (std.mem.startsWith(u8, line, "One-sided Pr <= S")) {
+                try std.testing.expect(std.mem.endsWith(u8, line, case.tail));
+                break;
+            }
+        } else return error.TestExpectedEqual;
+        try std.testing.expect(!d.hasErrors());
+    }
+}
+
 test "public EXACT interval families and Barnard retain columns methods and probability formats" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
