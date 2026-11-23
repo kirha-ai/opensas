@@ -323,9 +323,10 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
                         var report: kernel_output.Report = .{};
                         const automatic = statement.endpoints.len == 0;
-                        // Retained translated negative-data controls expose an unresolved
-                        // automatic endpoint phase. Explicit lattices remain available.
-                        if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1]) return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel phase for negative nonconstant data is not verified; supply explicit endpoints", .{});
+                        // M9 resolves exact lattice ties differently at different scales.
+                        if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
+                            (plan.endpoint_phase_ambiguous or statement.target_count != null))
+                            return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
                         try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
                     }
@@ -355,7 +356,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, curve);
                         const tests = if (graphics != null and statement.inset.needsTests(curve.family) and curve.family != .sb and curve.family != .su)
                             try @import("univ_distribution_gof.zig").computeWithSampler(cx.diags, x, curve, request, cx.univariate_edf_sampler)
-                        else null;
+                        else
+                            null;
                         if (graphics != null) {
                             try graph_curves.append(a, .{ .distribution = curve, .fill = curves.fill });
                             try inset_fits.append(a, .{ .curve = curve, .tests = tests });
@@ -1002,14 +1004,6 @@ test "UNIVARIATE public endpoint axes heldouts cover shifted data and compact ke
                 const text = try std.fmt.allocPrint(a, "proc univariate data=d noprint;histogram x / noplot endpoints kernel(k={s} c={s}) outkernel=k;run;", .{ kind, c });
                 const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
                 var out: std.ArrayList(u8) = .empty;
-                if (std.mem.eql(u8, name, "negative")) {
-                    diag.resetGap();
-                    defer diag.resetGap();
-                    try std.testing.expectError(error.ParseError, proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens));
-                    try std.testing.expect(diag.gapHit());
-                    try std.testing.expect(std.mem.indexOf(u8, d.list.items[d.list.items.len - 1].message, "negative nonconstant") != null);
-                    continue;
-                }
                 try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
                 const rows = lib.find("k").?.rows.items;
                 const key = try std.fmt.allocPrint(a, "{s}_{s}_{s}", .{ name, kind, c });

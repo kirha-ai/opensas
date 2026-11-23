@@ -27,6 +27,7 @@ pub const Plan = struct {
     width: f64,
     mode: Mode,
     empty_key_fallback: bool = false,
+    endpoint_phase_ambiguous: bool = false,
     constant: ?f64 = null,
     clipped: bool = false,
     cell_order: []const usize = &.{},
@@ -85,6 +86,7 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     if (!(width > 0) or !std.math.isFinite(width)) return d.fail(error.ParseError, 0, "UNIVARIATE: automatic bin width is not representable", .{});
     var first: f64 = undefined;
     var last: f64 = undefined;
+    var endpoint_phase_ambiguous = false;
     if (explicit) {
         first = request.initial_endpoints[0];
         last = request.initial_endpoints[request.initial_endpoints.len - 1];
@@ -92,8 +94,11 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         first = if (!request.endpoints) lo - width / 2 else if (request.right) lo - width else lo;
         last = first + width;
     } else if (request.endpoints) {
-        first = if (request.right) (ceilNear(lo / width) - 1) * width else floorNear(lo / width) * width;
-        last = if (request.right) ceilNear(hi / width) * width else (floorNear(hi / width) + 1) * width;
+        const alignment = if (target == null) endpointAlignment(lo / width, hi / width) else EndpointAlignment{};
+        const shift = alignment.shift;
+        endpoint_phase_ambiguous = alignment.ambiguous;
+        first = (if (request.right) ceilNear(lo / width - shift) - 1 + shift else floorNear(lo / width - shift) + shift) * width;
+        last = (if (request.right) ceilNear(hi / width - shift) + shift else floorNear(hi / width - shift) + 1 + shift) * width;
     } else if (target != null) {
         first = floorNear(lo / width) * width - width / 2;
         last = ceilNear(hi / width) * width + width / 2;
@@ -171,7 +176,21 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         at += 1;
     }
     if (explicit and (first != request.initial_endpoints[0] or last != request.initial_endpoints[request.initial_endpoints.len - 1])) try d.warn(0, "The {s}= list was extended to accommodate the data.", .{if (request.endpoints) "ENDPOINTS" else "MIDPOINTS"});
-    return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
+    return .{ .cell_order = order, .endpoints = try lattice(a, d, first, last, width, request.max_intervals), .width = width, .mode = if (pooled) .uniform else .key, .empty_key_fallback = request.mode == .key and key.len == 0 and target == null, .endpoint_phase_ambiguous = endpoint_phase_ambiguous, .clipped = (request.max_nbin != null or request.max_sigmas != null) and (minimum < first or maximum > last or (request.right and minimum == first) or (!request.right and maximum == last)), .constant = if (minimum == maximum) minimum else null };
+}
+
+const EndpointAlignment = struct { shift: f64 = 0, ambiguous: bool = false };
+
+/// SAS compares the zero- and half-width lattices. It first minimizes occupied
+/// labels, then the extrema's total distance from their nearest lattice ticks.
+fn endpointAlignment(lo: f64, hi: f64) EndpointAlignment {
+    const zero_span = floorNear(hi) - floorNear(lo);
+    const half_span = floorNear(hi - 0.5) - floorNear(lo - 0.5);
+    if (half_span != zero_span) return .{ .shift = if (half_span < zero_span) 0.5 else 0 };
+    const distance = @abs(lo - @round(lo)) + @abs(hi - @round(hi));
+    const tolerance = 16 * std.math.floatEps(f64) * @max(1, @abs(lo), @abs(hi));
+    if (@abs(distance - 0.5) <= tolerance) return .{ .ambiguous = true };
+    return .{ .shift = if (distance > 0.5) 0.5 else 0 };
 }
 
 fn floorNear(value: f64) f64 {
@@ -294,4 +313,13 @@ test "dev3 constant and shared bin plans preserve KEY UNIFORM counts and windows
     try std.testing.expectError(error.ParseError, determine(a, &d, &cells, .{ .max_nbin = 0 }));
     try std.testing.expectError(error.ParseError, determine(a, &d, &.{.{ .sorted = &.{ 2, 1 } }}, .{}));
     try std.testing.expectError(error.ParseError, cover(a, &d, &first, &.{ 0, 5, 12 }, false));
+}
+
+test "automatic endpoints distinguish occupied span, tick proximity and exact ties" {
+    // SAS phases across independent positive and negative translations.
+    try std.testing.expectEqual(@as(f64, 0.5), endpointAlignment(-16.25 / 4.0, -2.25 / 4.0).shift);
+    try std.testing.expectEqual(@as(f64, 0), endpointAlignment(-13.0 / 6.0, 5.0 / 6.0).shift);
+    try std.testing.expectEqual(@as(f64, 0.5), endpointAlignment(2.0 / 4.0, 16.0 / 4.0).shift);
+    // At this tie M9 changes phase when the same data are rescaled by 0.01.
+    try std.testing.expect(endpointAlignment(-875.0 / 150.0, 50.0 / 150.0).ambiguous);
 }
