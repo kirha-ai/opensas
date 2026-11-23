@@ -180,7 +180,8 @@ fn interval(a: A, out: *Out, name: []const u8, ci: @import("freq_exact.zig").Int
 fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").Request, k: u32, n: u32, c: exec.Config) diag.Error!void {
     if (!request.noninf and !request.sup and !request.equiv) return;
     const exact = @import("freq_exact.zig");
-    const limits = try exact.binomialOneSidedLimits(k, n, c.alpha, .{ .context = c.budget.context, .expired = c.budget.expired });
+    const control = exact.Control{ .context = c.budget.context, .expired = c.budget.expired };
+    const limits = try exact.binomialOneSidedLimits(k, n, c.alpha, control);
     if (limits == .exhausted) {
         try renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
         return;
@@ -189,15 +190,20 @@ fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").R
     for ([_]bool{ false, true }) |superiority| {
         if (if (superiority) !request.sup else !request.noninf) continue;
         const p0 = request.p + (if (superiority) margin[0] else -margin[0]);
-        const p = (try exact.binomialTails(k, n, p0)).right;
-        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact {s} Analysis\nPr >= P  {s}\n", .{ if (superiority) "Superiority" else "Noninferiority", try renderers.probability(a, p, c.options.pformat) }));
+        const tails = (try exact.binomialTailsControlled(k, n, p0, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact {s} Analysis\nPr >= P  {s}\n", .{ if (superiority) "Superiority" else "Noninferiority", try renderers.probability(a, tails.right, c.options.pformat) }));
         try interval(a, out, "Binomial Proportion", limits.complete, 2 * c.alpha);
     }
     if (request.equiv) {
         const lower = request.p + (if (request.paired_margin) margin[0] else -margin[0]);
         const upper = request.p + margin[1];
-        const left = (try exact.binomialTails(k, n, lower)).right;
-        const right = (try exact.binomialTails(k, n, upper)).left;
+        const lower_tails = (try exact.binomialTailsControlled(k, n, lower, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        const upper_tails = (try exact.binomialTailsControlled(k, n, upper, control)) orelse
+            return renderers.testResult(a, out, "Exact Binomial Hypothesis Tests", .exhausted, c.options);
+        const left = lower_tails.right;
+        const right = upper_tails.left;
         try out.appendSlice(a, try std.fmt.allocPrint(a, "\nExact Equivalence Analysis\nLower Margin Pr >= P  {s}\nUpper Margin Pr <= P  {s}\nOverall P-Value  {s}\n", .{ try renderers.probability(a, left, c.options.pformat), try renderers.probability(a, right, c.options.pformat), try renderers.probability(a, @max(left, right), c.options.pformat) }));
         try interval(a, out, "Binomial Proportion", limits.complete, 2 * c.alpha);
     }
@@ -465,6 +471,39 @@ test "public one-way exact likelihood ratio orders the two neighbors of a noncen
     // The LR point is the mass of X=25,001 alone.
     for ([_][]const u8{ "0.996431769609", "0.003568087668" }) |value|
         try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "binomial hypothesis tail calculations respect the deadline after computing limits" {
+    const exact = @import("freq_exact.zig");
+    const Request = @import("freq_risk_parse.zig").Request;
+    const Timer = struct {
+        polls: usize = 0,
+        limit: usize = std.math.maxInt(usize),
+        fn stopped(raw: ?*const anyopaque) bool {
+            const self: *@This() = @ptrCast(@alignCast(@constCast(raw.?)));
+            self.polls += 1;
+            return self.polls > self.limit;
+        }
+    };
+    var timer = Timer{};
+    const config_with_clock = exec.Config{ .budget = .{ .context = &timer, .expired = Timer.stopped } };
+    const ci = try exact.binomialOneSidedLimits(8, 8, config_with_clock.alpha, .{ .context = &timer, .expired = Timer.stopped });
+    try std.testing.expect(ci == .complete);
+    const limit_polls = timer.polls;
+    for ([_]Request{
+        .{ .family = .binomial, .noninf = true },
+        .{ .family = .binomial, .sup = true },
+        .{ .family = .binomial, .equiv = true },
+    }) |request| {
+        // Allow the first equivalence tail to complete, then stop the second.
+        timer = .{ .limit = limit_polls + @intFromBool(request.equiv) };
+        var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+        defer arena.deinit();
+        var out: Out = .empty;
+        try binomialHypotheses(arena.allocator(), &out, request, 8, 8, config_with_clock);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, "resource limit") != null);
+        try std.testing.expect(std.mem.indexOf(u8, out.items, " Analysis") == null);
+    }
 }
 
 test "exact binomial labels its smaller inclusive tail and resolves equal tails to the right" {
