@@ -37,6 +37,11 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
                     if (t[i.*].tag == .comma) i.* += 1;
                 }
                 if (kinds.items.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty kernel list", .{});
+            } else if (eq(key, "l")) {
+                // L= selects SAS/GRAPH line types. The ODS renderer uses its
+                // style palette; this list never changes a bandwidth or estimate.
+                const lines = try @import("univ_distribution_parse.zig").numberList(a, d, t, i);
+                for (lines) |line| if (line < 1 or line != @floor(line)) return d.fail(error.ParseError, 0, "UNIVARIATE: KERNEL L requires positive line type numbers", .{});
             } else if (eq(key, "c")) {
                 if (bandwidths.items.len > 0) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated KERNEL C option", .{});
                 while (t[i.*].tag == .number or t[i.*].tag == .plus or t[i.*].tag == .minus or listName(t, i.*)) {
@@ -87,7 +92,7 @@ test "UNIVARIATE kernel lists repeat last bandwidth and bounds" {
     defer arena.deinit();
     const a = arena.allocator();
     var d = diag.Diagnostics.init(a);
-    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t noprint c=.5 mise lower=. 0 upper=20);", &d);
+    const t = try @import("../lexer.zig").tokenize(a, "kernel(k=n q t noprint c=.5 mise l=1 20 2 lower=. 0 upper=20);", &d);
     var i: usize = 0;
     const requests = try parse(a, &d, t, &i);
     try std.testing.expectEqual(@as(usize, 3), requests.len);
