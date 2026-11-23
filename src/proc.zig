@@ -15870,8 +15870,8 @@ test "BUG-weightvarcheck/univplotnoop/univvarnosuch: WEIGHT/VAR/plot validation 
     // an unknown VAR errors naming it.
     const bad = [_]Case{
         .{ .src = "proc means data=d; weight nosuchw; var x; run;", .needle = "nosuchw", .run = runMeans },
-        .{ .src = "proc freq data=d; tables x; weight nosuchw; run;", .needle = "nosuchw", .run = runFreq },
-        .{ .src = "proc univariate data=d; weight nosuchw; var x; run;", .needle = "nosuchw", .run = runUnivariate },
+        .{ .src = "proc freq data=d; tables x; weight nosuchw; run;", .needle = "Variable NOSUCHW not found.", .run = runFreq },
+        .{ .src = "proc univariate data=d; weight nosuchw; var x; run;", .needle = "Variable NOSUCHW not found.", .run = runUnivariate },
         .{ .src = "proc univariate data=d; var x; histogram x / normal; run;", .needle = "histogram", .run = runUnivariate },
         .{ .src = "proc univariate data=d; var x nosuchvar; run;", .needle = "nosuchvar", .run = runUnivariate },
     };
