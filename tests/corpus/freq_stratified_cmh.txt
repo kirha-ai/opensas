@@ -217,7 +217,8 @@ Sample Size = 72
               Total           8       20       28
                           28.57    71.43   100.00
 
-Statistics for Table of b by c
+Statistics for Table 1 of b by c
+Controlling for a=1
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -254,7 +255,8 @@ Sample Size = 28
               Total           8       10       18
                           44.44    55.56   100.00
 
-Statistics for Table of b by c
+Statistics for Table 2 of b by c
+Controlling for a=2
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq

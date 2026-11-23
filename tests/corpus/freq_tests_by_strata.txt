@@ -25,7 +25,8 @@
               Total          16       22       38
                           42.11    57.89   100.00
 
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Scores for Table of r by c
 Score Type = RANK
@@ -141,7 +142,8 @@ Sample Size = 38
               Total           9        9       18
                           50.00    50.00   100.00
 
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Scores for Table of r by c
 Score Type = RANK
@@ -260,7 +262,8 @@ Sample Size = 18
               Total           6        3        9
                           66.67    33.33   100.00
 
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Scores for Table of r by c
 Score Type = RANK
@@ -378,9 +381,10 @@ Sample Size = 9
               Total           0        0        0
                               .        .        .
 
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
-Row or column sum zero. No statistics computed for this table.
+Table is empty. No statistics are computed.
 
 Sample Size = 0
 
@@ -403,11 +407,8 @@ Sample Size = 0
                                        b=1
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Statistic                     DF       Value      Prob
 ------------------------------------------------------
@@ -429,13 +430,9 @@ Two-sided Pr <= P           0.0026
 
 Sample Size = 38
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Statistic                     DF       Value      Prob
 ------------------------------------------------------
@@ -460,11 +457,8 @@ Sample Size = 18
                                        b=2
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Statistic                     DF       Value      Prob
 ------------------------------------------------------
@@ -486,15 +480,11 @@ Two-sided Pr <= P           0.5000
 
 Sample Size = 9
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
+Statistics for Table 2 of r by c
+Controlling for s=2
 
-
-Statistics for Table of r by c
-
-Row or column sum zero. No statistics computed for this table.
+Table is empty. No statistics are computed.
 
 Sample Size = 0
 

@@ -1,10 +1,7 @@
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -26,13 +23,9 @@ B_N Measure                    0.4831
 
 Sample Size = 80
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -83,11 +76,8 @@ Chi-Square        DF    Pr > ChiSq
 Total Sample Size = 119
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -103,13 +93,9 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 80
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -154,11 +140,8 @@ Chi-Square        DF    Pr > ChiSq
 Total Sample Size = 119
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -174,13 +157,9 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 80
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 Symmetry Test
 Chi-Square        DF    Pr > ChiSq
@@ -225,11 +204,8 @@ Chi-Square        DF    Pr > ChiSq
 Total Sample Size = 119
                         The FREQ Procedure
 
-                        Table 1 of r by c
-                        Controlling for s=1
-
-
-Statistics for Table of r by c
+Statistics for Table 1 of r by c
+Controlling for s=1
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
@@ -242,13 +218,9 @@ Estimate       Standard Error    95% Confidence Limits
 
 Sample Size = 15
 
-                        The FREQ Procedure
 
-                        Table 2 of r by c
-                        Controlling for s=2
-
-
-Statistics for Table of r by c
+Statistics for Table 2 of r by c
+Controlling for s=2
 
 McNemar's Test
 Chi-Square        DF    Pr > ChiSq
