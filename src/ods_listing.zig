@@ -46,6 +46,13 @@ pub const Listing = struct {
         return self.open and self.overall.accepts(path) and self.destination.accepts(path);
     }
 
+    pub fn traceObject(self: Listing, a: std.mem.Allocator, name: []const u8, label: ?[]const u8, template: ?[]const u8, path: []const u8) !void {
+        const d = self.trace orelse return;
+        const label_line = if (label) |v| try std.fmt.allocPrint(a, "Label:      {s}\n", .{v}) else "";
+        const template_line = if (template) |v| try std.fmt.allocPrint(a, "Template:   {s}\n", .{v}) else "";
+        try d.plainLine(try std.fmt.allocPrint(a, "Output Added:\n-------------\nName:       {s}\n{s}{s}Path:       {s}\n-------------", .{ name, label_line, template_line, path }));
+    }
+
     pub fn filtered(self: Listing) bool {
         return !self.open or self.overall != .all or self.destination != .all;
     }
@@ -91,14 +98,14 @@ pub const Listing = struct {
         var names: std.ArrayList([]const u8) = .empty;
         while (i < t.len and t[i].tag != .semicolon and t[i].tag != .eof) {
             if (t[i].tag != .name) return d.fail(error.ParseError, t[i].line, "ODS: expected output object name or path", .{});
-            var path = t[i].text;
-            var name = path;
+            var name = t[i].text;
+            var path = try pathPart(a, name);
             i += 1;
             while (i < t.len and t[i].tag == .dot) {
                 i += 1;
                 if (i >= t.len or t[i].tag != .name) return d.fail(error.ParseError, 0, "ODS: expected object name after dot", .{});
                 name = t[i].text;
-                path = try std.fmt.allocPrint(a, "{s}.{s}", .{ path, name });
+                path = try std.fmt.allocPrint(a, "{s}.{s}", .{ path, try pathPart(a, name) });
                 i += 1;
             }
             if (!known(name)) {
@@ -111,6 +118,15 @@ pub const Listing = struct {
         return true;
     }
 };
+
+/// ODS paths put a name-literal suffix on identifiers with spaces or punctuation.
+pub fn pathPart(a: std.mem.Allocator, name: []const u8) ![]const u8 {
+    for (name) |ch| if (!std.ascii.isAlphanumeric(ch) and ch != '_') {
+        const escaped = try std.mem.replaceOwned(u8, a, name, "'", "''");
+        return std.fmt.allocPrint(a, "'{s}'n", .{escaped});
+    };
+    return name;
+}
 
 const Identity = struct {
     name: []const u8,
@@ -164,7 +180,7 @@ fn identity(name: []const u8) ?Identity {
     return null;
 }
 fn known(name: []const u8) bool {
-    return identity(name) != null;
+    return identity(name) != null or @import("stat/graph_ods.zig").known(name);
 }
 
 /// A table's listing text can be suppressed after its numerical and typed ODS
@@ -186,10 +202,9 @@ pub const Tables = struct {
             out.shrinkRetainingCapacity(start);
             return;
         }
-        if (first) if (selection.trace) |d| {
+        if (first and selection.trace != null) {
             const obj = identity(name) orelse return;
-            const label = if (obj.label) |l| try std.fmt.allocPrint(a, "Label:      {s}\n", .{l}) else "";
-            try d.plainLine(try std.fmt.allocPrint(a, "Output Added:\n-------------\nName:       {s}\n{s}Template:   {s}\nPath:       {s}\n-------------", .{ obj.name, label, obj.template, path }));
-        };
+            try selection.traceObject(a, obj.name, obj.label, obj.template, path);
+        }
     }
 };

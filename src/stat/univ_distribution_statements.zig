@@ -327,7 +327,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const column = descriptors.columns.items[ci];
                     const title = try statement.title.value(a, cx.graph_title, "Distribution", column);
                     const bytes = try drawing.render(a, panels.items, .{ .variable = column, .title = title, .scale = statement.vscale, .barlabel = statement.barlabel, .endpoint_labels = statement.endpoint_labels, .endpoints = plan.endpoints, .bin_width = plan.width });
-                    try session.queue(statement.order, "histogram", bytes);
+                    const object = try @import("graph_ods.zig").univariate(a, .Histogram, if (bcols.len > 0) by_number else null, column.name, 1);
+                    try session.queue(statement.order, "histogram", bytes, object);
                 };
             }
         }

@@ -176,7 +176,7 @@ fn userErr(diags: *sas.diag.Diagnostics, comptime fmt: []const u8, args: anytype
 /// Native CLI graphics sessions are scoped to one interpretation. The existing
 /// in-memory/wasm entry point keeps its explicit numerical-consumer contract.
 fn interpretNative(a: std.mem.Allocator, out: *std.ArrayList(u8), diags: *sas.diag.Diagnostics, src: []const u8, io: Io, graphics_dir: ?[]const u8) !void {
-    var graphics = sas.proc.native_graphics.Session{ .arena = a, .io = io, .diags = diags, .cli_dir = graphics_dir };
+    var graphics = sas.proc.native_graphics.Session{ .arena = a, .io = io, .diags = diags, .cli_dir = graphics_dir, .listing = &ods_listing };
     native_graphics_session = &graphics;
     defer native_graphics_session = null;
     try interpret(a, out, diags, src, io);
@@ -7120,4 +7120,31 @@ test "QQPLOT percentile axes use theoretical quantiles, reference units and rota
     try std.testing.expect(std.mem.indexOf(u8, normal, "rotate(90)\">Normal percentile</text>") != null);
     const prob = try dir.dir.readFileAlloc(io_, "opensas-0003-probability.svg", a, .limited(1 << 20));
     try std.testing.expect(std.mem.indexOf(u8, prob, "class=\"href\" data-value=\"95\" data-position=\"2.2760166085") != null);
+}
+
+test "ODS graph selection routes qualified M9 paths and keeps QQ point capture independent" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input g x y @@;datalines;\n1 1 2 1 2 3 1 3 1 2 2 3 2 3 1 2 1 2\n;run;ods graphics on;ods trace on;" ++
+        "ods select Histogram;ods output QQPlot=points;proc univariate data=t noprint;var x;histogram;qqplot;run;ods output close;" ++
+        "ods select Corr.ByGroup2.'Scatter Plots'n.ScatterPlot;proc corr data=t plots=(matrix scatter);by g;var x y;run;" ++
+        "ods select Freq.ByGroup1.Table2.MosaicPlot;proc freq data=t;by g;tables x /plots=freqplot;tables x*y /plots=mosaicplot;run;" ++
+        "ods trace off;ods listing close;proc univariate data=t noprint;var x; histogram;run;ods listing;proc print data=points;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const log = try d.render();
+    for ([_][]const u8{ "Univariate.x.Histogram.Histogram", "Corr.ByGroup2.'Scatter Plots'n.ScatterPlot", "Freq.ByGroup1.Table2.MosaicPlot", "Template:   base.univariate.Graphics.Histogram", "Label:      y by x", "Template:   Base.Freq.Graphics.MosaicPlot" }) |part|
+        try std.testing.expect(std.mem.indexOf(u8, log, part) != null);
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, log, "Output Added:"));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Quantile") != null);
+    for ([_][]const u8{ "opensas-0001-histogram.svg", "opensas-0002-scatter.svg", "opensas-0003-mosaicplot.svg" }) |file|
+        try dir.dir.access(io_, file, .{});
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-histogram.svg", .{}));
 }

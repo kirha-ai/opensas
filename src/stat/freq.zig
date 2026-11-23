@@ -591,7 +591,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     @memset(outputs, null);
     const stats_writer = if (opts.output) |spec| try stat_output.create(cx, spec, opts.requests.items[opts.requests.items.len - 1], input, bc) else null;
     if (input.rows.items.len == 0) try cx.diags.report(.note, 0, "No observations in data set {s}.", .{input.name});
-    for (groups) |group| {
+    for (groups, 1..) |group, by_number| {
         var view = input.*;
         view.rows = .empty;
         for (group.rows) |row| if (weightKeepsRow(row, wc, opts.zeros)) {
@@ -670,7 +670,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             if (!opts.noprint and (cx.graphics != null or req.plots.plots.len != 0)) {
                 var by_text: std.ArrayList(u8) = .empty;
                 if (bc.len > 0) if (group.rep) |row| try formattedByLine(a, &by_text, &view, row, bc);
-                try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"));
+                try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"), if (bc.len > 0) by_number else null, k + 1);
             }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
             if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {

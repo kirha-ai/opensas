@@ -5,6 +5,7 @@ const plot_data = @import("univ_plot_data.zig");
 const lex = @import("../lexer.zig");
 const distributions = @import("univ_distribution_render.zig");
 const Plot = plot_data.Plot;
+pub const graph_ods = @import("graph_ods.zig");
 const A = std.mem.Allocator;
 const W = std.Io.Writer;
 const eq = std.ascii.eqlIgnoreCase;
@@ -17,10 +18,15 @@ pub const Session = struct {
     cli_dir: ?[]const u8 = null,
     gpath: ?[]const u8 = null,
     enabled: ?bool = null,
+    listing: ?*const @import("../ods_listing.zig").Listing = null,
     count: usize = 0,
     pending: std.ArrayList(Plot) = .empty,
     prepared: std.ArrayList(Artifact) = .empty,
-    pub fn queue(self: *Session, order: usize, kind: []const u8, bytes: []const u8) !void {
+    pub fn queue(self: *Session, order: usize, kind: []const u8, bytes: []const u8, object: graph_ods.Object) !void {
+        if (self.listing) |dest| {
+            if (!dest.accepts(object.path)) return;
+            try dest.traceObject(self.arena, @tagName(object.name), object.label, object.template, object.path);
+        }
         try self.prepared.append(self.arena, .{ .order = order, .kind = kind, .bytes = bytes });
     }
     pub fn clear(self: *Session) void {
@@ -67,7 +73,17 @@ pub const Session = struct {
                 used[j] = true;
             }
             const bytes = try render(self.arena, panels.items);
-            try self.queue(p.statement_index, @tagName(p.kind), bytes);
+            const has_by = for (p.keys) |key| {
+                if (!key.class) break true;
+            } else false;
+            const name: graph_ods.Name = switch (p.kind) {
+                .cdf => .CDFPlot,
+                .pp => .PPPlot,
+                .qq => .QQPlot,
+                .probability => .ProbPlot,
+            };
+            const object = try graph_ods.univariate(self.arena, name, if (has_by) p.by_index + 1 else null, p.variable.name, 1);
+            try self.queue(p.statement_index, @tagName(p.kind), bytes, object);
         }
         std.mem.sort(Artifact, self.prepared.items, {}, byOrder);
         for (self.prepared.items) |g| try self.save(g.kind, g.bytes);

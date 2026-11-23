@@ -420,7 +420,7 @@ fn applicable(kind: Kind, req: freq.Request, n: usize) bool {
         .agreeplot => n >= 2 and req.stratified.agreement.enabled,
     };
 }
-pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const u8) diag.Error!void {
+pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const u8, by_number: ?usize, table_number: usize) diag.Error!void {
     const opt = req.plots;
     const n = tab.dimensions.len;
     const session = cx.graphics orelse {
@@ -457,10 +457,18 @@ pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const 
         const sub = subheading(a, by, tab, id) catch return error.OutOfMemory;
         for (requested.items) |p| {
             if (!applicable(p.kind, req, n)) continue;
+            const name: svg.graph_ods.Name = switch (p.kind) {
+                .freqplot => .FreqPlot,
+                .cumfreqplot => .CumFreqPlot,
+                .mosaicplot => .MosaicPlot,
+                .agreeplot => .AgreePlot,
+                .deviationplot => .DeviationPlot,
+            };
+            const object = try svg.graph_ods.freq(a, name, by_number, table_number, n == 1, p.dot, p.layout == .cluster or p.layout == .stacked);
             if (n == 1) {
                 if (p.scale == .grouppercent) return cx.diags.fail(error.ParseError, 0, "PROC FREQ: GROUPPERCENT requires a two-way table", .{});
                 const bytes = one(a, tab, req, p, sc, sub) catch |e| return if (e == error.ExecError) error.ExecError else error.OutOfMemory;
-                try session.queue(0, @tagName(p.kind), bytes);
+                try session.queue(0, @tagName(p.kind), bytes, object);
                 continue;
             }
             const row = tab.dimensions[n - 2];
@@ -474,12 +482,12 @@ pub fn execute(cx: proc.ProcCtx, tab: *tm.Table, req: freq.Request, by: []const 
                     var first: usize = 0;
                     while (first < facets) : (first += per_page) {
                         const bytes = twoFrequency(a, p, g, row, col, sub, first, @min(per_page, facets - first)) catch return error.OutOfMemory;
-                        try session.queue(0, kind, bytes);
+                        try session.queue(0, kind, bytes, object);
                     }
                 },
-                .mosaicplot => try session.queue(0, kind, mosaic(a, p, g, row, col, sub) catch return error.OutOfMemory),
+                .mosaicplot => try session.queue(0, kind, mosaic(a, p, g, row, col, sub) catch return error.OutOfMemory, object),
                 .agreeplot => if (g.rows.len == g.cols.len) {
-                    try session.queue(0, kind, agreement(a, p, g, row, col, sub) catch return error.OutOfMemory);
+                    try session.queue(0, kind, agreement(a, p, g, row, col, sub) catch return error.OutOfMemory, object);
                 },
                 else => {},
             }

@@ -366,7 +366,8 @@ pub fn execute(cx: proc.ProcCtx, r: corr.Result) diag.Error!void {
     const session = cx.graphics orelse return proc.failGap(cx.diags, 0, "PROC CORR: PLOTS requires a graphics consumer", .{});
     if (session.enabled == false) return;
     var warned = false;
-    for (r.groups) |g| for (opt.requests) |req| {
+    for (r.groups, 1..) |g, by_number| for (opt.requests) |req| {
+        const by = if (s.by.len > 0) by_number else null;
         if (g.rows.len > opt.max_points) {
             if (!warned) try cx.diags.warn(0, "Scatter plots with more than {d} points have been suppressed. Use the PLOTS(MAXPOINTS= ) option in the PROC CORR statement to change or override the cutoff.", .{opt.max_points});
             warned = true;
@@ -375,7 +376,7 @@ pub fn execute(cx: proc.ProcCtx, r: corr.Result) diag.Error!void {
         if (req.kind == .matrix) {
             if (s.vars.len == 0) continue;
             const bytes = matrix(cx.arena, cx.diags, s, g, req) catch |e| return if (e == error.ParseError) error.ParseError else error.OutOfMemory;
-            try session.queue(0, "matrix", bytes);
+            try session.queue(0, "matrix", bytes, try svg.graph_ods.corr(cx.arena, .MatrixPlot, by, "Scatter Plot Matrix"));
         } else {
             const nr = if (s.with.len > 0) @min(s.with.len, req.nwith) else @min(s.vars.len, req.nvar);
             for (0..nr) |y| for (0..@min(s.vars.len, req.nvar)) |x| {
@@ -383,7 +384,8 @@ pub fn execute(cx: proc.ProcCtx, r: corr.Result) diag.Error!void {
                 const c = try cell(cx.arena, s, g, x, y);
                 if (c.points.len == 0) continue;
                 const bytes = scatter(cx.arena, s, g, c, req) catch return error.OutOfMemory;
-                try session.queue(0, "scatter", bytes);
+                const label = try std.fmt.allocPrint(cx.arena, "{s} by {s}", .{ s.ds.columns.items[c.pair.row].name, s.ds.columns.items[c.pair.column].name });
+                try session.queue(0, "scatter", bytes, try svg.graph_ods.corr(cx.arena, .ScatterPlot, by, label));
             };
         }
     };

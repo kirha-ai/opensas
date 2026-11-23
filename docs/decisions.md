@@ -116,7 +116,10 @@ these caused real regressions (see D-001).
   Native statistical graphics are a separate file output. The CLI writes SVG
   for supported plot requests when a graphics directory or ODS Graphics is
   explicitly enabled. ODS GRAPHICS OFF suppresses that output. An explicit
-  CLI directory takes precedence over LISTING GPATH. Embedded interpreters
+  CLI directory takes precedence over LISTING GPATH. Native graphs honor the
+  listing selection and emit their own TRACE identities, including BY and table
+  paths. Numerical ODS OUTPUT capture stays independent of graph selection.
+  Embedded interpreters
   supply their own plot consumer. Destination rendering and SAS/GRAPH GRSEG
   catalogs are separate facilities.
   (b) **BUT INERT MUST NOT MEAN SILENT.** `isInertGlobalKw`'s doc-comment
