@@ -196,7 +196,10 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
         const cell = independenceCell(o, t.row[k / m.cols], t.col[k % m.cols], t.n);
         if (cell.mean == 0) continue;
         p += sq(cell.delta) / cell.mean;
-        cc += sq(@max(0, @abs(cell.delta) - 0.5)) / cell.mean;
+        // M9 subtracts the rounded expected count before Yates' half-cell
+        // adjustment. The uncompensated difference also determines exact
+        // half-way listing values such as 0.09375 for [[2,2],[2,0]].
+        cc += sq(@max(0, @abs(o - cell.mean) - 0.5)) / cell.mean;
         lr += 2 * @import("freq_exact.zig").poissonDeviance(o, cell.mean, cell.delta);
         if (cell.mean < 5) small += 1;
     }
