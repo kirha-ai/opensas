@@ -5,7 +5,8 @@ const std = @import("std");
 const f = @import("../functions.zig");
 const diag = @import("../diag.zig");
 const inf = std.math.inf(f64);
-pub const Family = enum { normal, lognormal, exponential, gamma, weibull, beta, power, rayleigh, pareto, gumbel, igauss, sb, su };
+/// Family order used in HISTOGRAM tables and output datasets.
+pub const Family = enum { normal, lognormal, exponential, weibull, gamma, beta, sb, su, rayleigh, pareto, gumbel, power, igauss };
 
 pub const Parameters = struct {
     theta: f64 = 0,

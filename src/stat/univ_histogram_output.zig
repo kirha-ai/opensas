@@ -10,6 +10,7 @@ pub const Options = struct {
     endpoint_labels: bool = false,
     right: bool = false,
     curve_columns: bool = false,
+    curve_number: usize = 1,
     variable_length: usize = 8,
     bin_width: ?f64 = null,
     /// Window controls omit outside observations without renormalizing N.
@@ -101,6 +102,10 @@ pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []
     if (output.columns.items.len != keys.len + (if (options.curve_columns) @as(usize, 6) else 4)) return d.fail(error.ParseError, 0, "UNIVARIATE: histogram output schema does not match request", .{});
     const intervals = try bins(output.arena, d, x, endpoints, options, curve);
     const fitted = if (x.len > 0 and x[0] == x[x.len - 1]) null else curve;
+    const curve_label = if (fitted) |c| label: {
+        const base = curveName(c.family);
+        break :label if (options.curve_number == 1) base else try std.fmt.allocPrint(output.arena, "{s}{d}", .{ base, options.curve_number });
+    } else "";
     for (intervals) |b| {
         const row = try output.arena.alloc(Value, output.columns.items.len);
         @memset(row, Value.missing);
@@ -111,7 +116,7 @@ pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []
         row[at + 2] = .{ .num = b.observed_percent };
         row[at + 3] = .{ .num = @floatFromInt(b.count) };
         if (options.curve_columns) {
-            row[at + 4] = .{ .str = if (fitted) |c| curveName(c.family) else "" };
+            row[at + 4] = .{ .str = curve_label };
             if (b.expected_percent) |v| row[at + 5] = .{ .num = v };
         }
         try output.appendRow(row);

@@ -52,6 +52,14 @@ pub fn familyName(family: dist.Family) []const u8 {
     };
 }
 
+fn odsFamilyName(family: dist.Family) []const u8 {
+    return switch (family) {
+        .power => "PowerFunction",
+        .igauss => "InverseGaussian",
+        else => familyName(family),
+    };
+}
+
 pub fn parameters(a: std.mem.Allocator, curve: dist.Distribution) ![]Parameter {
     var rows: std.ArrayList(Parameter) = .empty;
     const p = curve.p;
@@ -89,7 +97,7 @@ const Context = struct {
     by: []const usize,
     classes: []const usize,
     histogram: usize,
-    distribution: ?[]const u8,
+    distribution: ?dist.Family,
     fn listingTables(self: Context, by_number: usize) !listing.Tables {
         const a = self.cx.arena;
         const variable = try listing.pathPart(a, self.source.columns.items[self.col].name);
@@ -98,12 +106,7 @@ const Context = struct {
         if (self.by.len != 0) try path.print(a, "ByGroup{d}.", .{by_number});
         try path.print(a, "{s}.Histogram", .{variable});
         for (self.classes) |ci| try path.print(a, ".{s}", .{try listing.pathPart(a, try self.classValue(ci))});
-        if (self.distribution) |name| {
-            try path.append(a, '.');
-            for (name) |ch| if (ch != ' ') {
-                try path.append(a, ch);
-            };
-        }
+        if (self.distribution) |family| try path.print(a, ".{s}", .{odsFamilyName(family)});
         return .{ .selection = self.cx.listing, .prefix = path.items };
     }
     fn classHeading(self: Context, out: *std.ArrayList(u8)) !void {
@@ -114,7 +117,7 @@ const Context = struct {
         try table.char("VarName", self.source.columns.items[self.col].name.len);
         try table.num("Histogram", null);
         for (self.classes) |ci| try table.char(self.source.columns.items[ci].name, (try self.classValue(ci)).len);
-        if (self.distribution) |name| try table.char("Distribution", name.len);
+        if (self.distribution) |family| try table.char("Distribution", odsFamilyName(family).len);
         return table;
     }
     fn classValue(self: Context, ci: usize) ![]const u8 {
@@ -128,7 +131,7 @@ const Context = struct {
         try values_.append(self.cx.arena, b.s(self.source.columns.items[self.col].name));
         try values_.append(self.cx.arena, b.n(@floatFromInt(self.histogram)));
         for (self.classes) |ci| try values_.append(self.cx.arena, b.s(try self.classValue(ci)));
-        if (self.distribution) |name| try values_.append(self.cx.arena, b.s(name));
+        if (self.distribution) |family| try values_.append(self.cx.arena, b.s(odsFamilyName(family)));
         try values_.appendSlice(self.cx.arena, cells);
         try table.row(values_.items);
     }
@@ -142,7 +145,7 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     const a = cx.arena;
     const name = familyName(curve.family);
     if (options.invalid_percents) try cx.diags.warn(0, "The list of percents specified for the {s} density must be greater than 0 and less than 100.", .{name});
-    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
+    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = curve.family };
     const variable = source.columns.items[col].name;
     const tables = try context.listingTables(by_number);
     const head = out.items.len;
@@ -327,8 +330,8 @@ fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bi
         table.ds.setLabel("EstPercent", "Estimated Percent");
     }
     const bin_label = if (midpoints) "Bin Midpoint" else if (right) "Bin Maximum Point" else "Bin Minimum Point";
-    if (context.distribution) |name| {
-        try out.print(a, "\nHistogram Bin Percents for {s} Distribution\n{s}  Observed Percent  Estimated Percent\n", .{ name, bin_label });
+    if (context.distribution) |family| {
+        try out.print(a, "\nHistogram Bin Percents for {s} Distribution\n{s}  Observed Percent  Estimated Percent\n", .{ familyName(family), bin_label });
     } else try out.print(a, "{s}  Observed Percent\n", .{bin_label});
     for (bins) |bin| {
         const point = binPoint(bin, right, midpoints);

@@ -88,7 +88,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     var title: ann.Title = .default;
     var barlabel: ?kernel.VScale = null;
     var layout = drawing.Layout{};
-    var curves: std.ArrayList(parse.Curves) = .empty;
+    var curve_families = std.EnumArray(@import("univ_distributions.zig").Family, ?parse.Curves).initFill(null);
     var endpoints: std.ArrayList(f64) = .empty;
     var midpoints: std.ArrayList(f64) = .empty;
     var endpoint_labels = false;
@@ -114,10 +114,9 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             kernels = try kernel_parse.parse(a, d, t, i);
             continue;
         }
-        if (parse.family(key) != null) {
-            const c = try parse.parse(a, d, t, i);
-            for (curves.items) |old| if (old.requests[0].family == c.requests[0].family) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated distribution family {s}", .{key});
-            try curves.append(a, c);
+        if (parse.family(key)) |family| {
+            if (curve_families.get(family) != null) return d.fail(error.ParseError, 0, "UNIVARIATE: repeated distribution family {s}", .{key});
+            curve_families.set(family, try parse.parse(a, d, t, i));
             continue;
         }
         i.* += 1;
@@ -233,6 +232,8 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     if (max_nbin != null and max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (max_nbin != null and max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (endpoints.items.len > 0) _ = try binning.cover(a, d, &.{}, endpoints.items, right);
+    var curves: std.ArrayList(parse.Curves) = .empty;
+    for (curve_families.values) |entry| if (entry) |curve| try curves.append(a, curve);
     return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .layout = layout, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
 }
 
@@ -336,7 +337,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     const constant = x[0] == x[x.len - 1];
                     if (statement.curves.len == 0 or constant) {
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
-                    } else for (statement.curves) |curves| for (curves.requests) |request| {
+                    } else for (statement.curves) |curves| for (curves.requests, 1..) |request, curve_number| {
+                        output_options.curve_number = curve_number;
                         var report: fitting.Report = .{};
                         var trace: fitting.Trace = .{ .allocator = a };
                         var actual_request = request;
@@ -1236,4 +1238,37 @@ test "UNIVARIATE invalid fitted percent list warns per printed curve and restore
     const expected = [_]f64{ 1, 5, 10, 25, 50, 75, 90, 95, 99, 1, 5, 10, 25, 50, 75, 90, 95, 99, 30, 30 };
     try std.testing.expectEqual(expected.len, q.rowCount());
     for (expected, q.rows.items) |value, row| try std.testing.expectEqual(value, row[p].num);
+}
+
+test "UNIVARIATE orders fitted ODS families and numbers curves in OUTHISTOGRAM" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var data = Dataset.init(a, "d");
+    _ = try data.addColumn("x", .num);
+    for ([_]f64{ 0.1, 0.2, 0.23, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9 }) |x| try data.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &data);
+    const lex = @import("../lexer.zig");
+    var d = diag.Diagnostics.init(a);
+    var capture: @import("../ods.zig").Capture = .{};
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output FitQuantiles=q;", &d));
+    const program = "proc univariate data=d noprint; histogram x / igauss(mu=1 lambda=1 edfnsamples=1 percents=50) " ++
+        "power(theta=0 sigma=1 alpha=2 percents=50) normal(mu=.3 .6 sigma=.2 percents=50) outhistogram=h noplot;run;";
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, program, &d));
+    try capture.finish(&lib, &d);
+    try std.testing.expect(!d.hasErrors());
+    const q = lib.find("q").?;
+    const family = q.indexOf("Distribution").?;
+    const expected = [_][]const u8{ "Normal", "Normal", "PowerFunction", "InverseGaussian" };
+    try std.testing.expectEqual(expected.len, q.rowCount());
+    try std.testing.expectEqual(@as(usize, "InverseGaussian".len), q.columns.items[family].len.?);
+    for (expected, q.rows.items) |name, row| try std.testing.expectEqualStrings(name, row[family].str);
+    const histogram = lib.find("h").?;
+    const name_col = histogram.indexOf("_CURVE_").?;
+    const names = [_][]const u8{ "NORMAL", "NORMAL2", "POWER", "IGAUSS" };
+    const bins_per_curve = histogram.rowCount() / names.len;
+    try std.testing.expect(bins_per_curve > 0);
+    for (histogram.rows.items, 0..) |row, index| try std.testing.expectEqualStrings(names[index / bins_per_curve], row[name_col].str);
 }
