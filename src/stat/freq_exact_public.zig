@@ -157,12 +157,6 @@ fn runFamily(a: A, m: tests.CountMatrix, family: parse.Family, config_: exec.Con
     }
     return .{ .risk_intervals = results };
 }
-fn directional(f: parse.Family) bool {
-    return switch (f) {
-        .pcorr, .scorr, .kentb, .stutc, .smdcr, .smdrc, .jt, .trend, .kappa, .wtkappa => true,
-        else => false,
-    };
-}
 fn title(f: parse.Family) []const u8 {
     return switch (f) {
         .pchi => "Pearson Chi-Square Test",
@@ -330,7 +324,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                     else => unreachable,
                 };
                 try d.report(.warning, 0, "For the following exact computation, absolute value of non-zero row/column scores cannot be smaller than 1.05E-08: {s}.", .{name});
-                try renderers.testResult(a, out, title(f), .{ .not_defined = if (directional(f)) right else null }, options);
+                try renderers.testResult(a, out, title(f), .{ .not_defined = if (parse.directionalSymbol(f) != null) right else null }, options);
             },
             .exhausted => {
                 try d.report(.warning, 0, "PROC FREQ EXACT {s}: resource limit reached; no partial p-value is reported", .{@tagName(f)});
@@ -338,7 +332,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .exact_test => |p| {
                 limits.exact_tests.set(f, p);
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.right_sided } }, options);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = parse.directionalSymbol(f) != null, .right_sided = p.right_sided } }, options);
             },
             .fisher => |r| {
                 const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
@@ -350,7 +344,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 const r = simulation.estimates;
                 if (r == .exhausted) {
                     try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
-                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, family_seed, options);
+                    try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, null, family_seed, options, req.stratified.agreement.restore);
                 } else {
                     // M9 displays the last RNG state in the weighted-kappa
                     // table even when it is the only requested statistic.
@@ -360,8 +354,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                         simulation_seed.* = r.complete.final_seed;
                         if (concordance) concordance_seed = family_seed;
                     }
-                    if (directional(f)) try renderers.monteCarlo(a, out, try std.fmt.allocPrint(a, "{s} (One-sided)", .{title(f)}), null, r.complete.one_sided, r.complete.samples, displayed_seed, options);
-                    try renderers.monteCarlo(a, out, title(f), simulation.table_probability, r.complete.two_sided, r.complete.samples, displayed_seed, options);
+                    try renderers.monteCarlo(a, out, f, title(f), simulation.table_probability, r.complete, displayed_seed, options, req.stratified.agreement.restore);
                 }
             },
             .binomial => |b| {
@@ -643,11 +636,51 @@ test "public exact score warnings preserve the ordinary tests and missing tail r
     // M9 score-floor-m9.sas, mclow. The score restriction does not apply
     // to simulation. The correlation and trend consume successive streams.
     const mc = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact trend pcorr mhchi / mc n=31 seed=71; run;", &d);
-    const corr = std.mem.indexOf(u8, mc, "Pearson Correlation Coefficient (One-sided)") orelse return error.TestExpectedEqual;
-    const trend = std.mem.indexOf(u8, mc, "Cochran-Armitage Trend Test (One-sided)") orelse return error.TestExpectedEqual;
+    const corr = std.mem.indexOf(u8, mc, "Pearson Correlation Coefficient") orelse return error.TestExpectedEqual;
+    const trend = std.mem.indexOf(u8, mc, "Cochran-Armitage Trend Test") orelse return error.TestExpectedEqual;
     try std.testing.expect(corr < trend);
     for ([_][]const u8{ "136544451", "0.6452" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[corr..trend], v) != null);
     for ([_][]const u8{ "2005373960", "0.6129" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[trend..], v) != null);
+}
+
+test "Monte Carlo listing identifies both trend tails with one sample and seed" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 1, 2, 0, 2, 1, 4 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; tables r*c; weight w / zeros; exact trend / mc n=431 seed=51; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    const heading = "Monte Carlo Estimates for the Exact Test";
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, listing, heading));
+    const block = listing[std.mem.indexOf(u8, listing, heading).?..];
+    const split = std.mem.indexOf(u8, block, "Two-sided Pr >= |Z|") orelse return error.TestExpectedEqual;
+    // M9's fixed stream yielded 113 one-sided vs 194 two-sided hits in 431 draws.
+    for ([_][]const u8{ "One-sided Pr <=  Z", "0.2622", "0.2075", "0.3168" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[0..split], v) != null);
+    for ([_][]const u8{ "0.4501", "0.3883", "0.5119" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[split..], v) != null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "Number of Samples"));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "Initial Seed"));
+}
+
+test "Monte Carlo agreement listing includes one seed beside the two probability rows" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 2, 1, 0, 1, 2, 3, 1, 0, 3 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const listing = try h.run("proc freq data=d; tables r*c; weight w / zeros; exact wtkappa / mc n=431 seed=51; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    const at = std.mem.indexOf(u8, listing, "Monte Carlo Exact Weighted Kappa Test") orelse return error.TestExpectedEqual;
+    const block = listing[at..];
+    const right = std.mem.indexOf(u8, block, "Pr >=  K") orelse return error.TestExpectedEqual;
+    const both = std.mem.indexOf(u8, block, "Pr >= |K|") orelse return error.TestExpectedEqual;
+    for ([_][]const u8{ "0.0766", "0.0435", "0.1096", "431", "624296548" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[right..both], v) != null);
+    for ([_][]const u8{ "0.0951", "0.0587", "0.1316" }) |v|
+        try std.testing.expect(std.mem.indexOf(u8, block[both..], v) != null);
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, block, "624296548"));
 }
 
 test "public exact McNemar uses the specified odds for rare discordant pairs" {

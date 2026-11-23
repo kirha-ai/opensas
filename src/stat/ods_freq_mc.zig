@@ -16,23 +16,23 @@ pub const Simulation = struct {
     seed: u64,
 };
 
-const Definition = struct { object: []const u8, suffix: []const u8, symbol: ?[]const u8 = null };
+const Definition = struct { object: []const u8, suffix: []const u8 };
 fn definition(f: parse.Family, one: bool) ?Definition {
     return switch (f) {
         .pchi => .{ .object = if (one) "OneWayChiSqMC" else "PearsonChiSqMC", .suffix = "PCHI" },
         .lrchi => .{ .object = if (one) "OneWayLRChiSqMC" else "LRChiSqMC", .suffix = "LRCHI" },
         .mhchi => .{ .object = "MHChiSqMC", .suffix = "MHCHI" },
         .fisher => .{ .object = "FishersExactMC", .suffix = "FISH" },
-        .jt => .{ .object = "JTTestMC", .suffix = "JT", .symbol = "JT" },
-        .trend => .{ .object = "TrendTestMC", .suffix = "TREND", .symbol = "Z" },
-        .pcorr => .{ .object = "PearsonCorrMC", .suffix = "PCORR", .symbol = "r" },
-        .scorr => .{ .object = "SpearmanCorrMC", .suffix = "SCORR", .symbol = "r" },
-        .kentb => .{ .object = "TauBMC", .suffix = "KENTB", .symbol = "t" },
-        .stutc => .{ .object = "TauCMC", .suffix = "STUTC", .symbol = "t" },
-        .smdcr => .{ .object = "SomersDCRMC", .suffix = "SMDCR", .symbol = "D" },
-        .smdrc => .{ .object = "SomersDRCMC", .suffix = "SMDRC", .symbol = "D" },
-        .kappa => .{ .object = "KappaMC", .suffix = "KAPPA", .symbol = "K" },
-        .wtkappa => .{ .object = "WtKappaMC", .suffix = "WTKAP", .symbol = "K" },
+        .jt => .{ .object = "JTTestMC", .suffix = "JT" },
+        .trend => .{ .object = "TrendTestMC", .suffix = "TREND" },
+        .pcorr => .{ .object = "PearsonCorrMC", .suffix = "PCORR" },
+        .scorr => .{ .object = "SpearmanCorrMC", .suffix = "SCORR" },
+        .kentb => .{ .object = "TauBMC", .suffix = "KENTB" },
+        .stutc => .{ .object = "TauCMC", .suffix = "STUTC" },
+        .smdcr => .{ .object = "SomersDCRMC", .suffix = "SMDCR" },
+        .smdrc => .{ .object = "SomersDRCMC", .suffix = "SMDRC" },
+        .kappa => .{ .object = "KappaMC", .suffix = "KAPPA" },
+        .wtkappa => .{ .object = "WtKappaMC", .suffix = "WTKAP" },
         .symmetry => .{ .object = "SymmetryMC", .suffix = "TSYMM" },
         else => null,
     };
@@ -49,7 +49,7 @@ fn interval(rows: *Rows, prefix: []const u8, suffix: []const u8, label: []const 
 
 fn longTable(a: A, t: *b.Builder, title: []const u8, def: Definition, sim: Simulation, opt: parse.Options, level: []const u8) !void {
     var rows = try Rows.init(a, t, title, opt.pformat, 1);
-    if (def.symbol) |symbol| {
+    if (parse.directionalSymbol(sim.family)) |symbol| {
         const right = sim.sample.right_sided;
         const label = try std.fmt.allocPrint(a, "One-sided Pr {s}  {s}", .{ if (right) ">=" else "<=", symbol });
         try rows.add("", label, "", null);

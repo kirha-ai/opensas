@@ -107,17 +107,57 @@ pub fn fisher(a: A, out: *Out, r: Fisher, options: parse.Options) Error!void {
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, r.p - r.point / 2), options);
 }
 
-pub fn monteCarlo(a: A, out: *Out, title: []const u8, table_probability: ?f64, estimate: ?dist.Estimate, samples: u64, seed: u64, options: parse.Options) Error!void {
+const Sample = @FieldType(dist.MonteCarlo, "complete");
+
+fn simulationInterval(a: A, out: *Out, label: []const u8, est: ?dist.Estimate, level: []const u8, opt: parse.Options) Error!void {
+    try pLine(a, out, label, if (est) |v| v.p else null, opt);
+    try pLine(a, out, try std.fmt.allocPrint(a, "{s}% Lower Conf Limit", .{level}), if (est) |v| v.lower else null, opt);
+    try pLine(a, out, try std.fmt.allocPrint(a, "{s}% Upper Conf Limit", .{level}), if (est) |v| v.upper else null, opt);
+}
+
+fn agreementSimulation(a: A, out: *Out, family: parse.Family, sample: Sample, seed: u64, level: []const u8, opt: parse.Options) Error!void {
+    const symmetry = family == .symmetry;
+    const name = switch (family) {
+        .kappa => "Kappa",
+        .wtkappa => "Weighted Kappa",
+        .symmetry => "Symmetry",
+        else => unreachable,
+    };
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nMonte Carlo Exact {s} Test\n\nProbability    Estimate    {s}% Confidence Limits     Samples          Seed\n\n", .{ name, level }));
+    for ([_]dist.Estimate{ sample.one_sided, sample.two_sided }, 0..) |est, i| {
+        if (symmetry and i == 0) continue;
+        const label = if (symmetry) "Pr >= ChiSq" else if (i == 1) "Pr >= |K|" else if (sample.right_sided) "Pr >=  K" else "Pr <=  K";
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "{s:<12} {s:>10} {s:>10} {s:>14}", .{ label, try probability(a, est.p, opt.pformat), try probability(a, est.lower, opt.pformat), try probability(a, est.upper, opt.pformat) }));
+        if (symmetry or i == 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:>11} {d:>13}", .{ sample.samples, seed }));
+        try out.append(a, '\n');
+    }
+}
+
+pub fn monteCarlo(a: A, out: *Out, family: parse.Family, title: []const u8, table_probability: ?f64, sample: ?Sample, seed: u64, opt: parse.Options, restore: bool) Error!void {
+    const level = try @import("freq_risk_render.zig").confidence(a, opt.alpha);
+    if (sample) |s| {
+        if (!restore and (family == .kappa or family == .wtkappa or family == .symmetry))
+            return agreementSimulation(a, out, family, s, seed, level, opt);
+    }
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\n", .{title}));
-    if (table_probability) |p| try pLine(a, out, "Table Probability (P)", p, options);
-    try out.appendSlice(a, "Monte Carlo Estimate for the Exact Test\n\n");
-    try pLine(a, out, if (table_probability != null) "Pr <= P" else "Estimated p-Value", if (estimate) |v| v.p else null, options);
-    const level = (1 - options.alpha) * 100;
-    try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Lower Conf Limit", .{level}), if (estimate) |v| v.lower else null, options);
-    try pLine(a, out, try std.fmt.allocPrint(a, "{d}% Upper Conf Limit", .{level}), if (estimate) |v| v.upper else null, options);
-    try line(a, out, "Number of Samples", try std.fmt.allocPrint(a, "{d}", .{samples}));
+    if (table_probability) |p| try pLine(a, out, "Table Probability (P)", p, opt);
+    const symbol_for_sample = if (sample != null) parse.directionalSymbol(family) else null;
+    if (symbol_for_sample) |symbol| {
+        const completed = sample.?;
+        try out.appendSlice(a, "Monte Carlo Estimates for the Exact Test\n\n");
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "One-sided Pr {s}  {s}\n", .{ if (completed.right_sided) ">=" else "<=", symbol }));
+        try simulationInterval(a, out, "Estimate", completed.one_sided, level, opt);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, "\nTwo-sided Pr >= |{s}|\n", .{symbol}));
+        try simulationInterval(a, out, "Estimate", completed.two_sided, level, opt);
+    } else {
+        try out.appendSlice(a, "Monte Carlo Estimate for the Exact Test\n\n");
+        const label = if (sample == null) "Estimated p-Value" else if (family == .fisher) "Pr <= P" else if (family == .symmetry) "Pr >= S" else "Pr >= ChiSq";
+        try simulationInterval(a, out, label, if (sample) |s| s.two_sided else null, level, opt);
+    }
+    try out.append(a, '\n');
+    try line(a, out, "Number of Samples", try std.fmt.allocPrint(a, "{d}", .{if (sample) |s| s.samples else 0}));
     try line(a, out, "Initial Seed", try std.fmt.allocPrint(a, "{d}", .{seed}));
-    if (estimate == null) try out.appendSlice(a, "NOTE: Monte Carlo computation did not complete within the resource limit.\n");
+    if (sample == null) try out.appendSlice(a, "NOTE: Monte Carlo computation did not complete within the resource limit.\n");
 }
 
 pub fn commonOdds(a: A, out: *Out, r: strata.Common, alpha: f64, options: parse.Options) Error!void {
