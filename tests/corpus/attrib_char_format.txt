@@ -31,7 +31,7 @@ Variables      1
 
 #  Variable  Type  Len  Format  Informat  Label
 1  g         Char   15          $15.
-x=    3.50
+x=3.50
                           The CONTENTS Procedure
 
 Data Set Name  n
