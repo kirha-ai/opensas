@@ -4755,7 +4755,9 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
-    if (noprint) {
+    const empty_input = input_view.ds.rows.items.len == 0;
+    if (empty_input) try diags.report(.note, 0, "No observations in data set {s}.", .{raw.name});
+    if (noprint or empty_input) {
         try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
         return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
     }
