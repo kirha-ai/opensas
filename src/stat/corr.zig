@@ -1650,16 +1650,34 @@ test "CORR group limits name each ordinal variable once and MAXITER names its pa
     try std.testing.expectEqual(@as(usize, 3), d.list.items.len);
     try std.testing.expectEqualStrings("The algorithm for polychoric correlation between c and r did not converge.", d.list.items[2].message);
 }
-test "CORR sparse polychoric boundary fails through captured diagnostics instead of spurious Wald inference" {
+test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
     const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 1, 1, 10 }, &.{ 1, 2, 4 }, &.{ 2, 2, 8 }, &.{ 2, 3, 2 }, &.{ 3, 3, 7 } });
+    for ([_][]const u8{ "1e-5", "1e-6" }) |tol| {
+        const source = try std.fmt.allocPrint(a, "proc corr polychoric(converge={s}); var x y; freq f; run;", .{tol});
+        const fit = (try Testing.analyze(a, ds, source)).groups[0].polychoric[0].estimate;
+        try std.testing.expect(fit.converged);
+        try std.testing.expectApproxEqAbs(@as(f64, 0.99985326007584), fit.r, 5e-8);
+        try std.testing.expectEqual(@as(f64, 0), fit.se);
+        try std.testing.expect(std.math.isNan(fit.wald) and std.math.isNan(fit.p));
+        try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
+    }
+}
+test "CORR four-level staircase keeps a captured diagnostic for its unresolved boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 0, 0, 3500 },   &.{ 11, 0, 2500 },  &.{ 12, 0, 1800 },  &.{ 23, 0, 1500 },
+        &.{ 23, 19, 3300 }, &.{ 23, 23, 3100 }, &.{ 23, 27, 1400 },
+    });
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("d", ds);
     var d = diag.Diagnostics.init(a);
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
-    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-5); var x y; freq f; run;", &d));
+    const s = try parse(cx, try lex.tokenize(a, "proc corr polychoric(converge=1e-6); var x y; freq f; run;", &d));
     try std.testing.expectError(error.ParseError, compute(cx, s));
     try std.testing.expect(std.mem.indexOf(u8, try d.render(), "boundary information is unresolved") != null);
 }

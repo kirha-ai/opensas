@@ -381,9 +381,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
     }
     const boundary = !(concordant and discordant);
-    // A binary margin has a single latent cut. On a monotone table the
-    // scoring step can repeatedly project across the same correlation bound.
-    const binary_boundary = boundary and (m.rows == 2 or m.cols == 2);
+    // Repeated projections and the unprojected increment reproduce the
+    // retained monotone binary-margin and three-by-three fits. The higher-
+    // dimensional boundary still needs a consistent line-search rule.
+    const projected_boundary = boundary and (m.rows == 2 or m.cols == 2 or (m.rows == 3 and m.cols == 3));
     var boundary_distance: f64 = 0.001;
     var converged = false;
     var iterations: usize = 0;
@@ -417,13 +418,13 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
             // SAS first-step oracle: an overshoot is restarted at +/-0.999,
             // rather than halving all coordinates solely to force |rho|<1.
-            // With a binary margin, successive overshoots refine this distance
+            // Successive overshoots on the supported boundaries refine this distance
             // by one decimal place (positive and negative M9 MAXITER traces).
             if (@abs(candidate[dim - 1]) >= 1) {
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 candidate[dim - 1] = rho;
-                if (binary_boundary) boundary_distance *= 0.1;
+                if (projected_boundary) boundary_distance *= 0.1;
             }
             if (negativeLogLikelihood(m, candidate) <= base + 1e-10) {
                 accepted = true;
@@ -438,12 +439,12 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         // across .01; equality retains relative scaling (stopping-fix evidence).
         for (params, candidate, gradient) |p, c, step| {
             // Projecting rho shortens its apparent move. M9 tests the
-            // scoring increment before this projection on the binary boundary.
-            const delta = if (binary_boundary) scale * step else c - p;
+            // scoring increment before this projection on the supported boundaries.
+            const delta = if (projected_boundary) scale * step else c - p;
             change = @max(change, @abs(delta) / (if (@abs(c) < 0.01) 1 else @abs(c)));
         }
         @memcpy(params, candidate);
-        if (boundary and !binary_boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
+        if (boundary and !projected_boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
             // The likelihood gap is below the quadrature error budget. A
             // validated rank decision alone does not establish the remaining
             // SAS boundary-step convention, so preserve this public guard.
