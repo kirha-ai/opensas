@@ -651,6 +651,10 @@ fn label(k: []const u8) []const u8 {
 /// is suppressed. A group that already accumulated zero CSS stays quiet.
 pub fn warnSmallRange(cx: proc.ProcCtx, ds: *Dataset, col: usize, by: []const usize, group: ?[]const Value, opt: Options) !void {
     try cx.diags.warn(0, "The range of variable {s} is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.", .{ds.columns.items[col].name});
+    try reportByNote(cx, ds, by, group, opt);
+}
+
+fn reportByNote(cx: proc.ProcCtx, ds: *Dataset, by: []const usize, group: ?[]const Value, opt: Options) !void {
     if (by.len == 0 or group == null) return;
     const row = firstByRow(opt, group.?, by);
     const source = opt.source orelse ds;
@@ -1288,6 +1292,23 @@ test "UNIVARIATE treats underflow of corrected and uncorrected squares independe
     try std.testing.expectApproxEqAbs(@as(f64, 2.041875), testCell(out, 0, "c") / unit / unit, 1e-13);
 }
 
+test "UNIVARIATE overflowing square sums are missing to subsequent DATA steps" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    for ([_]f64{ 1e155, -1e155, 3, 4 }) |x| {
+        try ds.appendRow(&.{ .{ .num = x }, .{ .num = 0 }, .{ .num = 1e-140 }, .{ .num = 1 }, .{ .num = 1 } });
+    }
+    try testRun(a, lib, "proc univariate data=d noprint;var x;weight w;output out=q sum=s mean=m css=c uss=u std=d;run;");
+    const out = lib.find("q").?;
+    for ([_][]const u8{ "c", "u", "d" }) |col| try std.testing.expect(std.math.isNan(testCell(out, 0, col)));
+    try std.testing.expectApproxEqAbs(@as(f64, 7), testCell(out, 0, "s") / 1e-140, 1e-12);
+    try std.testing.expectEqual(@as(f64, 1.75), testCell(out, 0, "m"));
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1395,6 +1416,59 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
     d.rows.items[0] = r;
     try testRun(a, lib, "proc univariate data=d noprint idout; by g notsorted; freq f; id y; var x; output out=o mean=m; run;");
     try std.testing.expectEqual(@as(f64, 100), testCell(lib.find("o").?, 0, "y"));
+}
+
+/// M9 reports each affected CLASS cell and variable on its first overflowing
+/// observation. One BY note follows all warnings from the same BY group.
+pub fn reportVariableOverflows(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, opt: Options) !void {
+    if (ds.rows.items.len == 0) return;
+    const source = opt.source.?;
+    var max_weight: f64 = 1;
+    if (wc) |ci| for (source.rows.items) |row| {
+        max_weight = @max(max_weight, h.toNum(row[ci]));
+    };
+    // Bound a squared range by four times the squared maximum magnitude.
+    // Ordinary data cannot overflow and need no extra grouping or sorting.
+    const count: f64 = @floatFromInt(ds.rows.items.len);
+    const limit = 0.5 * @sqrt(std.math.floatMax(f64) / count) / @sqrt(max_weight);
+    possible: {
+        for (source.rows.items) |row| for (acols) |ci| {
+            if (@abs(h.toNum(row[ci])) >= limit) break :possible;
+        };
+        return;
+    }
+
+    const Event = struct {
+        observation: usize,
+        variable: usize,
+
+        fn before(_: void, lhs: @This(), rhs: @This()) bool {
+            return if (lhs.observation == rhs.observation) lhs.variable < rhs.variable else lhs.observation < rhs.observation;
+        }
+    };
+    for (try bySlices(cx.arena, ds.rows.items, bcols, opt)) |by| {
+        var events: std.ArrayList(Event) = .empty;
+        var chunk = Dataset.init(cx.arena, ds.name);
+        chunk.columns = ds.columns;
+        try chunk.rows.appendSlice(cx.arena, by.rows);
+        for (try h.collectGroups(cx.arena, &chunk, ccols)) |class_group| {
+            var group = Dataset.init(cx.arena, ds.name);
+            group.columns = ds.columns;
+            try group.rows.appendSlice(cx.arena, class_group.rows);
+            const view = try analysisView(cx.arena, &group, acols, wc, opt);
+            for (acols, 0..) |ci, vi| {
+                const stat = h.computeUnivStats(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
+                if (stat.overflow_at) |at| {
+                    try events.append(cx.arena, .{ .observation = @intFromFloat(h.toNum(class_group.rows[at][opt.obscol.?])), .variable = vi });
+                }
+            }
+        }
+        std.mem.sort(Event, events.items, {}, Event.before);
+        for (events.items) |event| {
+            try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
+        }
+        if (events.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt);
+    }
 }
 
 pub const WeightOverflow = struct {

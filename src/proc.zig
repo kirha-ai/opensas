@@ -696,6 +696,7 @@ const Stats = struct {
     mode: f64 = std.math.nan(f64),
     css: f64 = std.math.nan(f64),
     small_range: bool = false,
+    overflow_at: ?usize = null,
     uss: f64 = std.math.nan(f64),
     // GAP-meansskewkurt: SAS g1/g2 sample moments (VARDEF=DF forms only).
     skew: f64 = std.math.nan(f64),
@@ -2065,6 +2066,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     var lo: f64 = std.math.inf(f64);
     var hi: f64 = -std.math.inf(f64);
     var running_css: f64 = 0;
+    var overflow_at: ?usize = null;
     // SAS UNIVARIATE compares a residual with 500 machine epsilons of
     // the larger magnitude. This also applies to nearly constant groups
     // with small absolute observations.
@@ -2101,6 +2103,9 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
                 running_css = univNormalSquare(@mulAdd(f64, univNormalSquare(delta * delta), multiplier, running_css));
             }
         }
+        if (native_univariate and overflow_at == null and
+            (!std.math.isFinite(uss) or !std.math.isFinite(running_css) or !std.math.isFinite(sumwx)))
+            overflow_at = start;
         if (x < lo) lo = x;
         if (x > hi) hi = x;
     }
@@ -2115,6 +2120,21 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     // least one nonmissing observation" — and SUMWGT is in neither list
     // (NOTE-univallmiss).
     if (n == 0) return .{ .n = 0, .sumw = 0, .mean = nan, .std = nan, .min = nan, .max = nan, .sum = nan, .median = nan, .q1 = nan, .q3 = nan };
+    // M9 invalidates the uncorrected square sum as well when CSS
+    // overflows. A nonfinite weighted sum also invalidates both square
+    // sums. Unaffected results remain available to later DATA steps.
+    if (native_univariate and overflow_at != null) {
+        if (!std.math.isFinite(sumwx)) {
+            sumwx = nan;
+            running_css = nan;
+        }
+        if (!std.math.isFinite(running_css)) {
+            running_css = nan;
+            uss = nan;
+        } else if (!std.math.isFinite(uss)) {
+            uss = nan;
+        }
+    }
     // M9 sets a final signed sum close to zero relative to the weighted
     // root mean square to exactly zero. Keep the unsuppressed running
     // sums for all CSS updates and subsequent observations.
@@ -2201,7 +2221,7 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         .n = n,      .sumw = sumw, .mean = mean, .std = sd,  .min = lo,     .max = hi,     .sum = sumwx,
         .median = median, .q1 = q1, .q3 = q3, .p1 = pc[0],   .p5 = pc[1],   .p10 = pc[2],
         .p20 = pc[3],  .p30 = pc[4],  .p40 = pc[5], .p60 = pc[6],  .p70 = pc[7],   .p80 = pc[8],
-        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss, .small_range = small_range,
+        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss, .small_range = small_range, .overflow_at = overflow_at,
         .skew = sk.skew, .kurt = sk.kurt,
     };
 }
@@ -4799,6 +4819,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
 
     var overflow = if (wcol) |wc| try univ.weightOverflow(arena, cds, acols.items, ccols.items, obcols.items, wc, extra) else null;
     if (overflow) |stop| cds.rows.items = cds.rows.items[0..stop.completed_rows];
+    try univ.reportVariableOverflows(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, extra);
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint,
