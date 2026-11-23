@@ -4715,7 +4715,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     if (excluded.items.len > 0) ds = try dropMissingClass(arena, ds, excluded.items);
     var fmt_levels: std.ArrayList(FmtLevels) = .empty;
     if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, .univariate);
-    const cds = ds;
+    var completed = ds.*;
+    const cds = &completed;
     try extra.indexClassLevels(arena, cds, obcols.items, ccols.items, wcol);
 
     // the VAR list, else every numeric column (as MEANS does) — but never a CLASS
@@ -4758,13 +4759,17 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         diags.warn(toks[0].line, "PROC UNIVARIATE: PCTLDEF= is ignored with a WEIGHT statement — weighted percentiles use Definition 5", .{}) catch {};
 
 
+    var overflow = if (wcol) |wc| try univ.weightOverflow(arena, cds, acols.items, ccols.items, obcols.items, wc, extra) else null;
+    if (overflow) |stop| cds.rows.items = cds.rows.items[0..stop.completed_rows];
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
-        wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint);
+        wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint,
+        if (overflow != null and obcols.items.len == 0) &overflow.? else null);
     const empty_input = input_view.ds.rows.items.len == 0;
     if (empty_input) try diags.report(.note, 0, "No observations in data set {s}.", .{raw.name});
-    if (noprint or empty_input) {
+    if (noprint or empty_input or (overflow != null and cds.rows.items.len == 0)) {
         try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
+        if (overflow) |stop| try stop.report(diags);
         return; // PROC NOPRINT suppresses summaries, not fitted-curve tables.
     }
     const filtered = if (cx.listing) |listing| listing.filtered() else false;
@@ -4824,6 +4829,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     }
     if (filtered and out.items.len == header_end) out.shrinkRetainingCapacity(header_start);
     try univ_distributions.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, pctldef, extra, fmt_levels.items, histograms.items, vars.items.len > 0);
+    if (overflow) |stop| try stop.report(diags);
 }
 
 /// A percentile-family statistic whose value the shared MEANS output builder

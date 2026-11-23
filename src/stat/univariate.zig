@@ -675,7 +675,7 @@ pub fn warnSmallRange(cx: proc.ProcCtx, ds: *Dataset, col: usize, by: []const us
     try cx.diags.report(.note, 0, "The above message was for the following BY group:\n      {s}", .{keys.items});
 }
 
-pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool) diag.Error!void {
+pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool, incomplete: ?*WeightOverflow) diag.Error!void {
     const a = cx.arena;
     var specs: std.ArrayList(Output) = .empty;
     try specs.appendSlice(a, outputs);
@@ -870,8 +870,19 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 };
             }
         }
-        try cx.lib.put(name, od);
+        if (incomplete == null) try cx.lib.put(name, od);
         try h.applyOutOptions(a, od, if (table) toks else spec.tokens, cx.diags, if (table) "outtable" else "out");
+        if (incomplete) |failure| {
+            const old = cx.lib.find(name) != null;
+            const info: WeightOverflow.OutputInfo = .{
+                .name = try @import("variable_lists.zig").datasetName(a, od),
+                .variables = od.columns.items.len,
+                .preserved = old,
+            };
+            // M9 reports the OUTTABLE first, then the OUTPUT statements in source order.
+            if (table) try failure.outputs.insert(a, 0, info) else try failure.outputs.append(a, info);
+            if (!old) try cx.lib.put(name, od);
+        }
     }
 }
 const ext = @import("ods_univ_extremes.zig");
@@ -1228,6 +1239,30 @@ test "UNIVARIATE suppresses a cancelled sum only after the last observation" {
     }
 }
 
+test "UNIVARIATE weight overflow retains completed BY groups and discards the current CLASS group" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    ds.rows.clearRetainingCapacity();
+    const weight = std.math.ldexp(@as(f64, 1), 511);
+    for ([_]f64{ 0.1, 1, 0.1 }, [_]f64{ 1, 4, 1 }, 1..) |raw, f, by| {
+        try ds.appendRow(&.{ .{ .num = 0 }, .{ .num = 1 }, .{ .num = raw * weight }, .{ .num = f }, .{ .num = @floatFromInt(by) } });
+    }
+    for ([_][]const u8{ "by", "class", "class" }, [_][]const u8{ "first", "empty", "first" }, [_]usize{ 1, 0, 1 }) |role, name, expected| {
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;{s} g;var x;weight w;freq f;output out={s} n=n;run;", .{ role, name });
+        var d = diag.Diagnostics.init(a);
+        var listing: std.ArrayList(u8) = .empty;
+        const tokens = try @import("../lexer.zig").tokenize(a, source, &d);
+        try proc.runUnivariate(.{ .arena = a, .lib = lib, .diags = &d }, &listing, tokens);
+        try std.testing.expect(d.hasErrors());
+        const out = lib.find(name).?;
+        try std.testing.expectEqual(expected, out.rows.items.len);
+        if (expected > 0) try std.testing.expectEqual(@as(f64, 1), testCell(out, 0, "g"));
+    }
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1335,6 +1370,70 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
     d.rows.items[0] = r;
     try testRun(a, lib, "proc univariate data=d noprint idout; by g notsorted; freq f; id y; var x; output out=o mean=m; run;");
     try std.testing.expectEqual(@as(f64, 100), testCell(lib.find("o").?, 0, "y"));
+}
+
+pub const WeightOverflow = struct {
+    completed_rows: usize,
+    missing_values: bool,
+    outputs: std.ArrayList(OutputInfo) = .empty,
+
+    const OutputInfo = struct { name: []const u8, variables: usize, preserved: bool };
+
+    pub fn report(self: WeightOverflow, d: *diag.Diagnostics) !void {
+        if (self.missing_values) {
+            try d.report(.err, 0, "A WEIGHT*FREQ value is too large.", .{});
+        } else {
+            try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
+            try d.report(.err, 0, "Overflow in statistic calculation.", .{});
+        }
+        for (self.outputs.items) |out| {
+            try d.warn(0, "The data set {s} may be incomplete.  When this step was stopped there were 0 observations and {d} variables.", .{ out.name, out.variables });
+            if (out.preserved) try d.warn(0, "Data set {s} was not replaced because this step was stopped.", .{out.name});
+        }
+    }
+};
+
+/// M9 accumulates squared weights separately for each analysis variable's
+/// missing and nonmissing values within a CLASS cell. A failure discards
+/// the entire current BY group, including its other CLASS cells.
+pub fn weightOverflow(a: Allocator, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: usize, opt: Options) !?WeightOverflow {
+    if (ds.rows.items.len == 0) return null;
+    const source = opt.source.?;
+    // The expanded row count bounds every sum of squares, including FREQ.
+    // Ordinary weights never need a second grouping pass.
+    const safe_weight = 0.5 * @sqrt(std.math.floatMax(f64) / @as(f64, @floatFromInt(ds.rows.items.len)));
+    for (source.rows.items) |row| {
+        if (h.toNum(row[wc]) > safe_weight) break;
+    } else return null;
+
+    const Totals = std.HashMapUnmanaged([]const Value, [][2]f64, h.GroupKeyCtx, std.hash_map.default_max_load_percentage);
+    var completed: usize = 0;
+    for (try bySlices(a, ds.rows.items, bcols, opt)) |by| {
+        var totals: Totals = .empty;
+        for (by.rows) |row| {
+            const raw = sourceRow(source, opt, @intFromFloat(h.toNum(row[opt.obscol.?])));
+            const w = h.toNum(raw[wc]);
+            if (!(w > 0)) continue;
+            const entry = try totals.getOrPutContext(a, row, .{ .ccols = ccols });
+            if (!entry.found_existing) {
+                entry.value_ptr.* = try a.alloc([2]f64, acols.len);
+                @memset(entry.value_ptr.*, .{ 0, 0 });
+            }
+            var missing_overflow = false;
+            for (acols, entry.value_ptr.*) |ci, *count| {
+                const missing = std.math.isNan(h.toNum(raw[ci]));
+                const sum = &count[@intFromBool(missing)];
+                sum.* += w * w;
+                if (!std.math.isFinite(sum.*)) {
+                    if (!missing) return .{ .completed_rows = completed, .missing_values = false };
+                    missing_overflow = true;
+                }
+            }
+            if (missing_overflow) return .{ .completed_rows = completed, .missing_values = true };
+        }
+        completed += by.rows.len;
+    }
+    return null;
 }
 
 pub fn hasUsableWeight(rows: []const []const Value, wc: ?usize, opt: Options) bool {
