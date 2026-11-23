@@ -146,6 +146,20 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
     if (n1 == 0 or n2 == 0) return error.ExecError;
     if (!std.math.isFinite(null_value) or (family == .difference and @abs(null_value) > 1) or (family == .relative_risk and null_value <= 0)) return error.ExecError;
     if (!std.math.isFinite(work.options.tolerance) or work.options.tolerance <= 0 or work.options.tolerance >= 1) return error.ExecError;
+    if (family == .relative_risk and method == .score2 and side == .two_sided) {
+        // At (0,n2) and r <= 1/(2*n1), p2=1 puts all mass on (x,n2).
+        // For each such x the constrained MLE is min(1,(x+n2)/(r*N))=1.
+        // The score denominator is common, and |x/n1-r| >= r for every x.
+        // Interchanging rows gives the reciprocal plateau at the other corner.
+        // The wider product compares a binary64 null with the rational cutoff
+        // exactly, including immediately adjacent representable null values.
+        const zero_first = c[0] == 0 and c[3] == 0 and @as(f128, null_value) * @as(f128, @floatFromInt(2 * n1wide)) <= 1;
+        const zero_second = c[1] == 0 and c[2] == 0 and null_value >= @as(f64, @floatFromInt(2 * n2wide));
+        if (zero_first or zero_second) {
+            if (!work.tick()) return .exhausted;
+            return .{ .complete = pointBounds(1) };
+        }
+    }
     const p2lo = if (family == .difference) @max(0, -null_value) else 0;
     const p2hi = if (family == .difference) @min(1, 1 - null_value) else @min(1, 1 / null_value);
     const p1lo = if (family == .difference) p2lo + null_value else p2lo * null_value;
@@ -1294,4 +1308,28 @@ test "Barnard equal risks have probability one across unequal row margins" {
     const equal = tableOf(.{ 1, 1, 1, 1 });
     try t.expect((try barnardTails(equal, .left, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
     try t.expectError(error.ExecError, barnardTails(equal, .left, .{ .tolerance = 0 }));
+}
+
+
+test "opposing SCORE2 relative-risk plateau includes the rational cutoff in either direction" {
+    const t = std.testing;
+    const minimal = Options{ .budget = .{ .max_tables = 1 } };
+    for ([_]u32{ 1, 2, 3, 17, 1_000_003 }) |a| {
+        const b: u32 = 2_000_003;
+        const fraction = 1 / @as(f64, @floatFromInt(2 * a));
+        const cutoff = if (@as(f128, fraction) * @as(f128, @floatFromInt(2 * a)) > 1)
+            std.math.nextAfter(f64, fraction, 0)
+        else
+            fraction;
+        const first = tableOf(.{ 0, a, b, 0 });
+        const second = tableOf(.{ b, 0, 0, a });
+        try t.expectEqual(pointBounds(1), (try riskTail(first, .first, .relative_risk, .score2, cutoff, .two_sided, minimal)).complete);
+        try t.expect((try riskTail(first, .first, .relative_risk, .score2, std.math.nextAfter(f64, cutoff, 1), .two_sided, minimal)) == .exhausted);
+        const reciprocal: f64 = @floatFromInt(2 * a);
+        try t.expectEqual(pointBounds(1), (try riskTail(second, .first, .relative_risk, .score2, reciprocal, .two_sided, minimal)).complete);
+        try t.expect((try riskTail(second, .first, .relative_risk, .score2, std.math.nextAfter(f64, reciprocal, 0), .two_sided, minimal)) == .exhausted);
+    }
+    const table = tableOf(.{ 0, 3, 7, 0 });
+    try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .two_sided, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
+    try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .left, minimal)) == .exhausted);
 }
