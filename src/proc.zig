@@ -2083,6 +2083,13 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     // least one nonmissing observation" — and SUMWGT is in neither list
     // (NOTE-univallmiss).
     if (n == 0) return .{ .n = 0, .sumw = 0, .mean = nan, .std = nan, .min = nan, .max = nan, .sum = nan, .median = nan, .q1 = nan, .q3 = nan };
+    // M9 sets a final signed sum close to zero relative to the weighted
+    // root mean square to exactly zero. Keep the unsuppressed running
+    // sums for all CSS updates and subsequent observations.
+    if (native_univariate and sumw > 0 and uss > 0 and std.math.isFinite(uss)) {
+        const sum_tolerance = 50000 * std.math.floatEps(f64);
+        if (@abs(sumwx) / @sqrt(sumw) <= sum_tolerance * @sqrt(uss)) sumwx = 0;
+    }
     const usable_weight = !native_univariate or sumw > minimum_weight;
     const mean = if (usable_weight) sumwx / sumw else nan;
     var css: f64 = running_css;

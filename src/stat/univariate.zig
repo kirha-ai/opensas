@@ -1209,6 +1209,25 @@ test "UNIVARIATE minimum weight distinguishes the previous and final weight tota
     }
 }
 
+test "UNIVARIATE suppresses a cancelled sum only after the last observation" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    const large: f64 = 4503599627370496;
+    for ([_]f64{ 1, 2 }) |repeats| {
+        ds.rows.clearRetainingCapacity();
+        for ([_]f64{ large, -large, 100000 }, [_]f64{ 1, 1, repeats }) |x, f|
+            try ds.appendRow(&.{ .{ .num = x }, .{ .num = x }, .{ .num = 1 }, .{ .num = f }, .{ .num = 1 } });
+        try testRun(a, lib, "proc univariate data=d noprint;var x;freq f;output out=o sum=s mean=m;run;");
+        const out = lib.find("o").?;
+        const expected: f64 = if (repeats == 1) 0 else 200000;
+        try std.testing.expectEqual(expected, testCell(out, 0, "s"));
+        try std.testing.expectEqual(expected / (2 + repeats), testCell(out, 0, "m"));
+    }
+}
+
 test "UNIVARIATE all PCTLDEF surfaces and weighted definition five" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
