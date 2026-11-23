@@ -695,6 +695,7 @@ const Stats = struct {
     p99: f64 = std.math.nan(f64),
     mode: f64 = std.math.nan(f64),
     css: f64 = std.math.nan(f64),
+    small_range: bool = false,
     uss: f64 = std.math.nan(f64),
     // GAP-meansskewkurt: SAS g1/g2 sample moments (VARDEF=DF forms only).
     skew: f64 = std.math.nan(f64),
@@ -2012,6 +2013,14 @@ fn computeStats(rows: []const []const Value, col: usize, wcol: ?usize) Stats {
 }
 
 fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef) Stats {
+    return computeMoments(false, rows, col, wcol, vardef, null);
+}
+
+fn computeUnivStats(rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
+    return computeMoments(true, rows, col, wcol, vardef, frequency_obs);
+}
+
+fn computeMoments(comptime native_univariate: bool, rows: []const []const Value, col: usize, wcol: ?usize, vardef: VarDef, frequency_obs: ?usize) Stats {
     if (rows.len > 0) assert(col < rows[0].len); // analysis column aligns with the row schema
     // WEIGHT column too — a bad weight index reads a wrong cell per row and every
     // weighted Mean/Sum/Std comes out silently wrong (TASTE-asserts).
@@ -2024,14 +2033,37 @@ fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: 
     var uss: f64 = 0; // Σ wᵢ xᵢ²  (uncorrected sum of squares, BUG-meanspctlmore)
     var lo: f64 = std.math.inf(f64);
     var hi: f64 = -std.math.inf(f64);
-    for (rows) |r| {
+    var running_css: f64 = 0;
+    // SAS UNIVARIATE compares a residual with 500 machine epsilons of
+    // the larger magnitude. This also applies to nearly constant groups
+    // with small absolute observations.
+    const relative_tolerance = 500 * std.math.floatEps(f64);
+    var at: usize = 0;
+    while (at < rows.len) {
+        const start = at;
+        const r = rows[start];
+        at += 1;
+        // FREQ contributes one weighted update per original observation.
+        // Repeated observations with equal analysis values remain separate.
+        if (native_univariate) if (frequency_obs) |oi| {
+            while (at < rows.len and rows[at][oi].num == r[oi].num) at += 1;
+        };
         const x = toNum(r[col]);
         if (std.math.isNan(x)) continue;
-        const w = weightOf(r, wcol) orelse continue;
-        n += 1;
+        const unit_weight = weightOf(r, wcol) orelse continue;
+        const copies = at - start;
+        const w = if (native_univariate) unit_weight * @as(f64, @floatFromInt(copies)) else unit_weight;
+        n += copies;
+        const previous_weight = sumw;
         sumwx += w * x;
         sumw += w;
         uss += w * x * x;
+        if (native_univariate and previous_weight > 0 and w > 0) {
+            const updated_mean = sumwx / sumw;
+            const delta = x - updated_mean;
+            if (@abs(delta) > relative_tolerance * @max(@abs(x), @abs(updated_mean)))
+                running_css += delta * delta * (w * sumw / previous_weight);
+        }
         if (x < lo) lo = x;
         if (x > hi) hi = x;
     }
@@ -2047,7 +2079,7 @@ fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: 
     // (NOTE-univallmiss).
     if (n == 0) return .{ .n = 0, .sumw = 0, .mean = nan, .std = nan, .min = nan, .max = nan, .sum = nan, .median = nan, .q1 = nan, .q3 = nan };
     const mean = sumwx / sumw;
-    var css: f64 = 0;
+    var css: f64 = running_css;
     var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄)³ (skewness input)
     var m4: f64 = 0; // Σ wᵢ²(xᵢ−x̄)⁴    (kurtosis input)
     for (rows) |r| {
@@ -2056,7 +2088,7 @@ fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: 
         const w = weightOf(r, wcol) orelse continue;
         const dv = x - mean;
         const d2 = dv * dv;
-        css += w * d2;
+        if (!native_univariate) css += w * d2;
         if (wcol == null) { // unweighted: w-factors are 1, skip the pow
             m3 += d2 * dv;
             m4 += d2 * d2;
@@ -2074,7 +2106,12 @@ fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: 
         .wgt => sumw,
         .wdf => sumw - 1,
     };
-    const sd = if (divisor > 0) @sqrt(css / divisor) else nan;
+    var sd = if (divisor > 0 and (!native_univariate or sumw > 0)) @sqrt(css / divisor) else nan;
+    const small_range = native_univariate and sd > 0 and sd <= relative_tolerance * @abs(mean);
+    if (small_range) {
+        css = 0;
+        sd = 0;
+    }
     // GAP-meansskewkurt: skew/kurt are the VARDEF=DF forms only (SAS uses other
     // coefficients per divisor) → missing under another VARDEF, as UNIVARIATE does.
     const sk = if (vardef == .df) skewKurtDf(n, sd, m3, m4) else SkewKurt{ .skew = nan, .kurt = nan };
@@ -2113,7 +2150,7 @@ fn computeStatsV(rows: []const []const Value, col: usize, wcol: ?usize, vardef: 
         .n = n,      .sumw = sumw, .mean = mean, .std = sd,  .min = lo,     .max = hi,     .sum = sumwx,
         .median = median, .q1 = q1, .q3 = q3, .p1 = pc[0],   .p5 = pc[1],   .p10 = pc[2],
         .p20 = pc[3],  .p30 = pc[4],  .p40 = pc[5], .p60 = pc[6],  .p70 = pc[7],   .p80 = pc[8],
-        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss,
+        .p90 = pc[9], .p95 = pc[10], .p99 = pc[11], .mode = mode, .css = css,  .uss = uss, .small_range = small_range,
         .skew = sk.skew, .kurt = sk.kurt,
     };
 }
@@ -4710,7 +4747,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
 
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
-        wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks);
+        wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint);
     const empty_input = input_view.ds.rows.items.len == 0;
     if (empty_input) try diags.report(.note, 0, "No observations in data set {s}.", .{raw.name});
     if (noprint or empty_input) {
@@ -4788,11 +4825,8 @@ fn isQuantileStat(k: StatKind) bool {
 /// One variable's Moments + Quantiles block. `wcol` names a WEIGHT column
 /// (WEIGHT-uni-impl); null → every obs weighs 1 (identical to the unweighted case).
 fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wcol: ?usize, vardef: VarDef, pctldef: u8, mu0: f64, extra: univ.Options, ids: []const usize, cx: ProcCtx, bycols: []const usize, classcols: []const usize) !void {
-    // computeStatsV already carries the weighted N / Sum Weights (Σwᵢ) / weighted
-    // Mean (Σwᵢxᵢ/Σwᵢ) / weighted Std (CSS over the VARDEF divisor, BUG-statvardef)
-    // / weighted CSS (Σwᵢ(xᵢ−x̄w)²) / weighted USS (Σwᵢxᵢ²) / weighted Sum (Σwᵢxᵢ).
-    var s = computeStatsV(ds.rows.items, col, wcol, vardef);
-    if (s.n > 0 and s.sumw == 0) s.css = 0;
+    const s = computeUnivStats(ds.rows.items, col, wcol, vardef, if (extra.freqcol != null) extra.obscol else null);
+    if (s.small_range) try univ.warnSmallRange(cx, ds, col, bycols, if (ds.rows.items.len > 0) ds.rows.items[0] else null, extra);
     const nf: f64 = @floatFromInt(s.n);
     const nan = std.math.nan(f64);
 
@@ -17227,6 +17261,7 @@ pub const UnivariateHelpers = struct {
     pub const MeansGroup = @import("proc.zig").MeansGroup;
     pub const compareValue = @import("proc.zig").cmpValue;
     pub const computeStatsV = @import("proc.zig").computeStatsV;
+    pub const computeUnivStats = @import("proc.zig").computeUnivStats;
     pub const statFromKw = @import("proc.zig").statFromKw;
     pub const statValue = @import("proc.zig").statValue;
     pub const univariateRejectsStatKw = @import("proc.zig").univariateRejectsStatKw;

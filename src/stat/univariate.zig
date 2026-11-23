@@ -468,16 +468,16 @@ pub const Summary = struct {
         return nan;
     }
 };
-fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool, inf: inference_parse.Options) !Summary {
+fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, mu0: f64, robust: bool, opt: Options) !Summary {
+    const inf = opt.inference;
     // SAS 9.4 pp.398,408: missing weights exclude observations from NMISS.
     // Zero/negative weights still count unless EXCLNPWGT already removed them.
     var nmiss: usize = 0;
     for (ds.rows.items) |row| {
         if (std.math.isNan(h.toNum(row[col])) and h.weightAt(row, wc) != null) nmiss += 1;
     }
-    var z: Summary = .{ .s = h.computeStatsV(ds.rows.items, col, wc, vd), .pairs = try pairsFor(a, ds, col, wc), .nmiss = nmiss, .nobs = ds.rows.items.len };
+    var z: Summary = .{ .s = h.computeUnivStats(ds.rows.items, col, wc, vd, if (opt.freqcol != null) opt.obscol else null), .pairs = try pairsFor(a, ds, col, wc), .nmiss = nmiss, .nobs = ds.rows.items.len };
     if (z.pairs.len == 1) z.s.mode = z.pairs[0].x;
-    if (z.s.n > 0 and z.s.sumw == 0) z.s.css = 0;
     var logs: f64 = 0;
     var recip: f64 = 0;
     var negative = false;
@@ -658,7 +658,24 @@ fn label(k: []const u8) []const u8 {
     return k;
 }
 
-pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token) diag.Error!void {
+/// M9 reports a warning only when a positive computed standard deviation
+/// is suppressed. A group that already accumulated zero CSS stays quiet.
+pub fn warnSmallRange(cx: proc.ProcCtx, ds: *Dataset, col: usize, by: []const usize, group: ?[]const Value, opt: Options) !void {
+    try cx.diags.warn(0, "The range of variable {s} is too small relative to its mean, numerical inaccuracies may occur. Recode if possible.", .{ds.columns.items[col].name});
+    if (by.len == 0 or group == null) return;
+    const row = firstByRow(opt, group.?, by);
+    const source = opt.source orelse ds;
+    var keys: std.ArrayList(u8) = .empty;
+    for (by, 0..) |ci, j| {
+        const info = source.columns.items[ci];
+        const text = if (info.format) |fmt| try @import("../format.zig").apply(cx.arena, row[ci], fmt) else try proc.cellText(cx.arena, row[ci]);
+        if (j > 0) try keys.append(cx.arena, ' ');
+        try keys.print(cx.arena, "{s}={s}", .{ info.name, std.mem.trim(u8, text, " ") });
+    }
+    try cx.diags.report(.note, 0, "The above message was for the following BY group:\n      {s}", .{keys.items});
+}
+
+pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, ids: []const usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options, outputs: []Output, levels: []const h.FmtLevels, toks: []const Token, noprint: bool) diag.Error!void {
     const a = cx.arena;
     var specs: std.ArrayList(Output) = .empty;
     try specs.appendSlice(a, outputs);
@@ -800,7 +817,9 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                     robust = true;
                 };
                 for (acols, 0..) |ci, j| {
-                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt.inference);
+                    summaries[j] = try summarize(a, analysis.ds, ci, analysis.weight, vd, opt.inference.mu(j, mu0), robust, opt);
+                    if (summaries[j].s.small_range and noprint and oi == 0)
+                        try warnSmallRange(cx, ds, ci, bcols, bs.rep, opt);
                     // CLASS counts weight-eligible observations, including missing
                     // analysis values. Keep pooled/BY pre-exclusion totals separate.
                     summaries[j].nobs = if (ccols.len > 0) summaries[j].s.n + summaries[j].nmiss else nobs;
@@ -1139,6 +1158,32 @@ test "UNIVARIATE default BEST12 CLASS groups retain numeric observations and for
         try std.testing.expectEqual(values[0], testCell(o, 0, "x"));
         try std.testing.expectEqual(@as(f64, if (j == 2) 1 else 3), testCell(o, 0, "n"));
         try std.testing.expectApproxEqAbs(if (j == 2) values[0] else values[0] + values[1] + values[2], testCell(o, 0, "s"), 1e-15);
+    }
+}
+
+test "UNIVARIATE corrected sums respect original FREQ observations and small-range precision" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]f64{ 1099511627776, 70368744177664 }, 0..) |offset, scale| {
+        ds.rows.clearRetainingCapacity();
+        const obs = [_]f64{ 0, 1, 2, 4, 5, 7, 11, 11, 20 };
+        const weights = [_]f64{ 1, 0.25, 2, 3, 0, nan, 1.5, 4, 2 };
+        const frequencies = [_]f64{ 2, 1, 1, 1, 3, 4, 1, 2, 1 };
+        for (obs, weights, frequencies) |x, w, f|
+            try ds.appendRow(&.{ .{ .num = offset + x }, .{ .num = x }, .{ .num = w }, .{ .num = f }, .{ .num = 1 } });
+        for ([_][]const u8{ "", "weight w;", "freq f;" }, [_]f64{ 323.554920431262, 530.427987773906, 391.931629454631 }, [_]f64{ 9, 8, 16 }) |role, ordinary_css, n| {
+            try testRun(a, lib, try std.fmt.allocPrint(a, "proc univariate data=d noprint;var x;{s}output out=o n=n css=c skewness=sk kurtosis=ku;run;", .{role}));
+            const out = lib.find("o").?;
+            try std.testing.expectEqual(n, testCell(out, 0, "n"));
+            try std.testing.expectApproxEqAbs(if (scale == 0) ordinary_css else 0, testCell(out, 0, "c"), 1e-11);
+            if (scale == 1) {
+                try std.testing.expect(std.math.isNan(testCell(out, 0, "sk")));
+                try std.testing.expect(std.math.isNan(testCell(out, 0, "ku")));
+            }
+        }
     }
 }
 
@@ -1985,7 +2030,7 @@ fn confidenceValue(a: Allocator, z: Summary, p: f64, ci: inference_parse.OutputC
 pub fn renderInference(a: Allocator, out: *std.ArrayList(u8), ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, def: u8, mu0: f64, opt: Options) !void {
     const inf = opt.inference;
     if (!inf.normal and !inf.robustscale and !inf.loccount and inf.basic == null and inf.df == null and inf.normal_ci == null and inf.trim.len == 0 and inf.winsor.len == 0) return;
-    const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt.inference);
+    const z = try summarize(a, ds, col, wc, vd, mu0, opt.inference.robustscale, opt);
     try inference_render.render(a, out, z, vd == .df, def, mu0, opt.inference, opt.listing, opt.ods);
 }
 
