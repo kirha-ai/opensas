@@ -41,8 +41,15 @@ fn factorialRemainder(n: u32) f64 {
     return (1.0 / 12.0 - u * (1.0 / 360.0 - u * (1.0 / 1260.0 - u * (1.0 / 1680.0 - u * (1.0 / 1188.0 - u * (691.0 / 360360.0)))))) / x;
 }
 
+/// log(n!) - n*log(n) + n, with 0*log(0) defined by continuity.
+pub fn logFactorialCorrection(n: u32) f64 {
+    if (n == 0) return 0;
+    return 0.5 * @log(@as(f64, 2 * std.math.pi) * @as(f64, @floatFromInt(n))) + factorialRemainder(n);
+}
+
 /// x*log(x/mean) - (x-mean), with its even-power expansion near the mean.
-fn poissonDeviance(x: f64, mean: f64, delta: f64) f64 {
+pub fn poissonDeviance(x: f64, mean: f64, delta: f64) f64 {
+    if (x == 0) return mean;
     const v = delta / (x + mean);
     if (@abs(v) > 0.125) {
         const ratio = x / mean;

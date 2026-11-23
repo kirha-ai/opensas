@@ -452,6 +452,18 @@ test "public exact McNemar uses the specified odds for rare discordant pairs" {
         try std.testing.expect(std.mem.indexOf(u8, listing, value) != null);
 }
 
+test "public Fisher on a sparse wide table distinguishes unequal point probabilities" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var h = try Harness.init(a, &.{ 2, 0, 0, 999_999_998, 1_000_000_002, 3 }, 3);
+    var d = diag.Diagnostics.init(a);
+    const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / noprint; exact fisher / point midp pformat=16.10; run;", &d);
+    try std.testing.expect(!d.hasErrors());
+    for ([_][]const u8{ "0.2499999986", "0.2500000016", "0.1250000023" }) |value|
+        try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
 test "explicit 2x2 Fisher stops under MAXTIME without an automatic support scan" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
