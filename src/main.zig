@@ -7148,3 +7148,29 @@ test "ODS graph selection routes qualified M9 paths and keeps QQ point capture i
         try dir.dir.access(io_, file, .{});
     try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-histogram.svg", .{}));
 }
+
+test "comparative histograms paginate class cells, align levels and retain total proportions across pages" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const src = "data t;input machine $ year x @@;datalines;\nA 2002 1 A 2003 2 A 2003 4 B 2002 5 B 2002 9 B 2003 10 C 2002 3 C 2002 5\n;run;" ++
+        "ods graphics on;proc univariate data=t noprint;class machine year /keylevel=('A' '2003');var x;histogram /nrows=2 ncols=2 vaxis=0 35 70 100 cprop intertile=1;run;";
+    try interpretNative(a, &out, &d, src, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const grid = try dir.dir.readFileAlloc(io_, "opensas-0001-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, grid, "class=\"panel\""));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, grid, ">35</text>"));
+    try std.testing.expect(std.mem.indexOf(u8, grid, "data-row=\"1\" data-column=\"1\" transform=\"translate(0 0)\"><text class=\"facet\" x=\"88\" y=\"61\">machine = A   year = 2003") != null);
+    try std.testing.expect(std.mem.indexOf(u8, grid, "data-row=\"2\" data-column=\"1\" transform=\"translate(0 0)\"><text class=\"facet\" x=\"88\" y=\"281\">machine = B   year = 2003") != null);
+    const last_page = try dir.dir.readFileAlloc(io_, "opensas-0002-histogram.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 1), std.mem.count(u8, last_page, "class=\"panel\""));
+    try std.testing.expect(std.mem.indexOf(u8, last_page, "data-row=\"1\" data-column=\"2\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, last_page, "data-proportion=\"0.25\"") != null);
+
+}

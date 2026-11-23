@@ -27,6 +27,7 @@ pub const Statement = struct {
     midpercents: bool = false,
     title: ann.Title = .default,
     barlabel: ?kernel.VScale = null,
+    layout: drawing.Layout = .{},
     inset: ann.Inset = .{},
     curves: []parse.Curves,
     kernels: []kernel.Request,
@@ -86,6 +87,7 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
         return d.fail(error.ParseError, 0, "UNIVARIATE: expected histogram variables or slash", .{});
     var title: ann.Title = .default;
     var barlabel: ?kernel.VScale = null;
+    var layout = drawing.Layout{};
     var curves: std.ArrayList(parse.Curves) = .empty;
     var endpoints: std.ArrayList(f64) = .empty;
     var midpoints: std.ArrayList(f64) = .empty;
@@ -127,6 +129,10 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
             midpercents = true;
             continue;
         }
+        if (eq(key, "cprop") and t[i.*].tag != .eq) {
+            layout.proportions = true;
+            continue;
+        }
         if (eq(key, "rtinclude")) {
             right = true;
             continue;
@@ -144,6 +150,20 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
         } else if (eq(key, "odstitle")) {
             title = try ann.Title.parse(d, t[i.*]);
             i.* += 1;
+        } else if (eq(key, "nrows") or eq(key, "nrow") or eq(key, "ncols") or eq(key, "ncol")) {
+            const n = try parse.numeric(d, t, i);
+            if (n < 1 or n >= @as(f64, @floatFromInt(std.math.maxInt(usize))) or n != @floor(n)) return d.fail(error.ParseError, 0, "UNIVARIATE: {s} requires a positive integer", .{key});
+            if (eq(key, "nrows") or eq(key, "nrow")) layout.rows = @intFromFloat(n) else layout.columns = @intFromFloat(n);
+        } else if (eq(key, "vaxis")) {
+            if (t[i.*].tag == .name) return proc.failGap(d, 0, "UNIVARIATE: named AXIS statements are unsupported", .{});
+            layout.ticks = try parse.numberList(a, d, t, i);
+            for (layout.ticks, 0..) |tick, j| if (j > 0 and tick <= layout.ticks[j - 1]) return d.fail(error.ParseError, 0, "UNIVARIATE: VAXIS ticks must increase", .{});
+            if (layout.ticks.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: VAXIS needs at least two tick values", .{});
+        } else if (eq(key, "intertile")) {
+            // The common-options dictionary marks INTERTILE as traditional graphics only.
+            const n = try parse.numeric(d, t, i);
+            if (n < 0) return d.fail(error.ParseError, 0, "UNIVARIATE: INTERTILE cannot be negative", .{});
+            layout.traditional_spacing = n;
         } else if (eq(key, "vscale") or eq(key, "barlabel")) {
             const name = t[i.*].text;
             const scale: kernel.VScale = if (eq(name, "percent")) .percent else if (eq(name, "proportion")) .proportion else if (eq(name, "count")) .count else return d.fail(error.ParseError, 0, "UNIVARIATE: invalid {s}", .{key});
@@ -199,13 +219,15 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     if (max_nbin != null and max_sigmas != null) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN and MAXSIGMAS are alternatives", .{});
     if (max_nbin != null and max_nbin.? == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: MAXNBIN must be positive", .{});
     if (endpoints.items.len > 0) _ = try binning.cover(a, d, &.{}, endpoints.items, right);
-    return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
+    return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .layout = layout, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
 }
 
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
     for (statements, 1..) |statement, histogram| {
         if (wc != null) return cx.diags.fail(error.ParseError, 0, "A WEIGHT variable cannot be used together with a CDFPLOT, HISTOGRAM, PPPLOT, PROBPLOT, or QQPLOT statement.", .{});
+        if (ccols.len == 0 and (statement.layout.rows != null or statement.layout.columns != null or statement.layout.proportions or statement.layout.traditional_spacing != null))
+            return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: comparative histogram layout options require CLASS", .{});
         if (ccols.len == 0 and (statement.max_nbin != null or statement.max_sigmas != null)) return cx.diags.fail(error.ParseError, 0, "UNIVARIATE: histogram window controls require CLASS", .{});
         const cols = try plot_variables.resolve(a, cx.diags, opt.source orelse ds, acols, statement.variables, has_var);
         var keys: std.ArrayList(usize) = .empty;
@@ -336,9 +358,14 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                 if (graphics) |session| if (panels.items.len > 0) {
                     const column = descriptors.columns.items[ci];
                     const title = try statement.title.value(a, cx.graph_title, "Distribution", column);
-                    const bytes = try drawing.render(a, panels.items, .{ .variable = column, .title = title, .scale = statement.vscale, .barlabel = statement.barlabel, .endpoint_labels = statement.endpoint_labels, .endpoints = plan.endpoints, .bin_width = plan.width });
-                    const object = try @import("graph_ods.zig").univariate(a, .Histogram, if (bcols.len > 0) by_number else null, column.name, 1);
-                    try session.queue(statement.order, "histogram", bytes, object);
+                    const pages = try drawing.paginate(a, panels.items, ccols.len, statement.layout);
+                    const drawing_options: drawing.Options = .{ .variable = column, .title = title, .scale = statement.vscale, .barlabel = statement.barlabel, .endpoint_labels = statement.endpoint_labels, .endpoints = plan.endpoints, .bin_width = plan.width, .layout = statement.layout };
+                    const axes = drawing.measure(panels.items, drawing_options);
+                    for (pages, 1..) |page, number_| {
+                        const bytes = try drawing.render(a, panels.items, page, drawing_options, axes);
+                        const object = try @import("graph_ods.zig").univariate(a, .Histogram, if (bcols.len > 0) by_number else null, column.name, number_);
+                        try session.queue(statement.order, "histogram", bytes, object);
+                    }
                 };
             }
         }
