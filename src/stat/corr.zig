@@ -1699,7 +1699,7 @@ test "CORR public Hoeffding small N fractional FREQ exclusions and NOPROB" {
     try Testing.near(0, complete_pair.r);
     try std.testing.expectApproxEqAbs(@as(f64, 0.36426667551153), complete_pair.p, 5e-13);
 }
-test "CORR public Hoeffding preserves ODS advanced capture rejection" {
+test "CORR public Hoeffding captures median SimpleStats and expires unmatched PearsonCorr" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();
@@ -1711,9 +1711,15 @@ test "CORR public Hoeffding preserves ODS advanced capture rejection" {
     try capture.parse(a, &diagnostics, try lex.tokenize(a, "ods output PearsonCorr=p SimpleStats=s;", &diagnostics));
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics, .capture = &capture };
     var listing: std.ArrayList(u8) = .empty;
-    try std.testing.expectError(error.ParseError, run(cx, &listing, try lex.tokenize(a, "proc corr hoeffding;var x y;run;", &diagnostics)));
-    try std.testing.expect(diagnostics.hasErrors());
-    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "ODS OUTPUT") != null);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr hoeffding;var x y;run;", &diagnostics));
+    try capture.finish(&lib, &diagnostics);
+    try std.testing.expect(!diagnostics.hasErrors());
+    try std.testing.expect(lib.find("p") == null);
+    const stats = lib.find("s").?;
+    try std.testing.expectEqual(@as(usize, 2), stats.rowCount());
+    try std.testing.expectEqual(@as(f64, 3.5), stats.row(0)[stats.indexOf("Median").?].num);
+    try std.testing.expect(stats.indexOf("Sum") == null);
+    try std.testing.expect(std.mem.indexOf(u8, try diagnostics.render(), "Output 'PearsonCorr' was not created") != null);
 }
 
 test "CORR rectangle quadrature preserves partition mass and likelihood descent" {
