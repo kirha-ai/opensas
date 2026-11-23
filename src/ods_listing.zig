@@ -119,13 +119,11 @@ pub const Listing = struct {
     }
 };
 
-/// ODS paths put a name-literal suffix on identifiers with spaces or punctuation.
+/// ODS trace quotes class levels and variable names that require a SAS name literal.
 pub fn pathPart(a: std.mem.Allocator, name: []const u8) ![]const u8 {
-    for (name) |ch| if (!std.ascii.isAlphanumeric(ch) and ch != '_') {
-        const escaped = try std.mem.replaceOwned(u8, a, name, "'", "''");
-        return std.fmt.allocPrint(a, "'{s}'n", .{escaped});
-    };
-    return name;
+    if (@import("functions.zig").isValidName(name)) return name;
+    const escaped = try std.mem.replaceOwned(u8, a, name, "'", "''");
+    return std.fmt.allocPrint(a, "'{s}'n", .{escaped});
 }
 
 const Identity = struct {
@@ -171,6 +169,7 @@ const identities = [_]Identity{
     .{ .name = "Frequencies", .template = "base.univariate.Frequency", .label = "Frequencies" },
     .{ .name = "ParameterEstimates", .template = "base.univariate.FitParms", .label = "Parameter Estimates" },
     .{ .name = "GoodnessOfFit", .template = "base.univariate.FitGood", .label = "Goodness of Fit" },
+    .{ .name = "HistogramBins", .template = "base.univariate.Bins", .label = "Bin Midpoints" },
     .{ .name = "Bins", .template = "base.univariate.BinPercents", .label = "Histogram Bins" },
     .{ .name = "FitQuantiles", .template = "base.univariate.FitQuant", .label = "Quantiles" },
 };

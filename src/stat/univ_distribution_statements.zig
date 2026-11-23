@@ -294,7 +294,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     }
                     if (statement.midpercents) {
                         const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null);
-                        try rendering.histogramBins(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, bins, statement.right, !statement.endpoint_labels);
+                        try rendering.histogramBins(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, bins, statement.right, !statement.endpoint_labels, by_number);
                     }
                     const constant = x[0] == x[x.len - 1];
                     if (statement.curves.len == 0 or constant) {
@@ -1086,9 +1086,9 @@ test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two 
     var lib = @import("../exec.zig").Library.init(a);
     var source = Dataset.init(a, "sample");
     _ = try source.addColumn("g", .char);
-    source.setLen("g", 6);
+    source.setLen("g", 12);
     _ = try source.addColumn("x", .num);
-    for ([_][]const u8{ "Red", "Blue" }, 1..) |label, group| {
+    for ([_][]const u8{ "Red", "Blue team" }, 1..) |label, group| {
         try source.appendRow(&.{ .{ .str = label }, Value.missing });
         for (1..7) |i| try source.appendRow(&.{ .{ .str = label }, .{ .num = @floatFromInt(i + group) } });
     }
@@ -1098,9 +1098,15 @@ test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two 
     var capture: @import("../ods.zig").Capture = .{};
     try capture.parse(a, &d, try lex.tokenize(a, "ods output GoodnessOfFit=gof FitQuantiles=q Bins=fitbins HistogramBins=h;", &d));
     var out: std.ArrayList(u8) = .empty;
+    var listing: @import("../ods_listing.zig").Listing = .{ .trace = &d };
+    _ = try listing.parse(a, &d, try lex.tokenize(a, "ods select 'Blue team'n.HistogramBins;", &d));
     const program = "proc univariate data=sample noprint;class g;var x;" ++
         "histogram x / midpercents normal(midpercents percents=10 50 90) noplot;run;";
-    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture }, &out, try lex.tokenize(a, program, &d));
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d, .capture = &capture, .listing = &listing }, &out, try lex.tokenize(a, program, &d));
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Histogram Bins for x") != null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "g = Red") == null);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "Distribution") == null);
+    try std.testing.expect(std.mem.indexOf(u8, try d.render(), "Template:   base.univariate.Bins\nPath:       Univariate.x.Histogram.'Blue team'n.HistogramBins") != null);
     try capture.finish(&lib, &d);
     try std.testing.expect(!d.hasErrors());
     const gof = lib.find("gof").?;
@@ -1109,8 +1115,8 @@ test "UNIVARIATE distribution ODS tables preserve CLASS and distinguish the two 
     const q = lib.find("q").?;
     try std.testing.expectEqualStrings("Histogram", q.columns.items[1].name);
     try std.testing.expectEqualStrings("g", q.columns.items[2].name);
-    try std.testing.expectEqual(@as(?usize, 4), q.columns.items[2].len);
-    try std.testing.expectEqualStrings("Blue", q.row(0)[2].str);
+    try std.testing.expectEqual(@as(?usize, 9), q.columns.items[2].len);
+    try std.testing.expectEqualStrings("Blue team", q.row(0)[2].str);
     try std.testing.expectEqual(@as(usize, 6), q.rowCount());
     try std.testing.expectEqual(@as(f64, 5.5), q.row(1)[q.indexOf("ObsQuantile").?].num);
     const bins = lib.find("fitbins").?;

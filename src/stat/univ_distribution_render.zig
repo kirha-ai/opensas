@@ -12,6 +12,7 @@ const moments = @import("univ_distribution_moments.zig");
 const gof = @import("univ_distribution_gof.zig");
 const b = @import("ods_table.zig");
 const h = proc.UnivariateHelpers;
+const listing = @import("../ods_listing.zig");
 const Parameter = struct { name: []const u8, symbol: []const u8, value: f64 };
 
 pub fn renderTrace(a: std.mem.Allocator, out: *std.ArrayList(u8), trace: fitting.Trace, report: fitting.Report) !void {
@@ -88,6 +89,25 @@ const Context = struct {
     classes: []const usize,
     histogram: usize,
     distribution: ?[]const u8,
+    fn listingTables(self: Context, by_number: usize) !listing.Tables {
+        const a = self.cx.arena;
+        const variable = try listing.pathPart(a, self.source.columns.items[self.col].name);
+        var path: std.ArrayList(u8) = .empty;
+        try path.appendSlice(a, "Univariate.");
+        if (self.by.len != 0) try path.print(a, "ByGroup{d}.", .{by_number});
+        try path.print(a, "{s}.Histogram", .{variable});
+        for (self.classes) |ci| try path.print(a, ".{s}", .{try listing.pathPart(a, try self.classValue(ci))});
+        if (self.distribution) |name| {
+            try path.append(a, '.');
+            for (name) |ch| if (ch != ' ') {
+                try path.append(a, ch);
+            };
+        }
+        return .{ .selection = self.cx.listing, .prefix = path.items };
+    }
+    fn classHeading(self: Context, out: *std.ArrayList(u8)) !void {
+        for (self.classes) |ci| try out.print(self.cx.arena, "{s} = {s}\n", .{ self.source.columns.items[ci].name, try self.classValue(ci) });
+    }
     fn createTable(self: Context) !b.Builder {
         var table = try b.Builder.init(self.cx.arena, self.source, self.by, self.source.rows.items[0]);
         try table.char("VarName", self.source.columns.items[self.col].name.len);
@@ -122,10 +142,11 @@ pub fn render(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: 
     const name = familyName(curve.family);
     const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = name };
     const variable = source.columns.items[col].name;
-    const prefix = if (by.len > 0) try std.fmt.allocPrint(a, "Univariate.ByGroup{d}.{s}.Histogram.{s}", .{ by_number, variable, name }) else try std.fmt.allocPrint(a, "Univariate.{s}.Histogram.{s}", .{ variable, name });
-    const tables: @import("../ods_listing.zig").Tables = .{ .selection = cx.listing, .prefix = prefix };
+    const tables = try context.listingTables(by_number);
     const head = out.items.len;
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\nThe UNIVARIATE Procedure\nFitted {s} Distribution for {s}\n", .{ name, variable }));
+    try out.appendSlice(a, "\nThe UNIVARIATE Procedure\n");
+    try context.classHeading(out);
+    try out.print(a, "Fitted {s} Distribution for {s}\n", .{ name, variable });
     const first = out.items.len;
     var start = first;
     try out.appendSlice(a, try std.fmt.allocPrint(a, "\nParameters for {s} Distribution\nParameter Symbol Estimate\n", .{name}));
@@ -266,8 +287,15 @@ fn pointFormat(a: std.mem.Allocator, bins: []const values.Bin, right: bool, midp
     return numberFormat(a, 1 + decimalDigits(largest) + precision + @intFromBool(precision != 0), precision);
 }
 
-pub fn histogramBins(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, bins: []const values.Bin, right: bool, midpoints: bool) !void {
-    try renderBins(.{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = null }, out, bins, right, midpoints);
+pub fn histogramBins(cx: proc.ProcCtx, out: *std.ArrayList(u8), source: *Dataset, col: usize, by: []const usize, classes: []const usize, histogram: usize, bins: []const values.Bin, right: bool, midpoints: bool, by_number: usize) !void {
+    const context: Context = .{ .cx = cx, .source = source, .col = col, .by = by, .classes = classes, .histogram = histogram, .distribution = null };
+    const tables = try context.listingTables(by_number);
+    const start = out.items.len;
+    try out.appendSlice(cx.arena, "\nThe UNIVARIATE Procedure\n");
+    try context.classHeading(out);
+    try out.print(cx.arena, "\nHistogram Bins for {s}\n", .{source.columns.items[col].name});
+    try renderBins(context, out, bins, right, midpoints);
+    try tables.finish(cx.arena, out, start, "HistogramBins");
 }
 
 fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bin, right: bool, midpoints: bool) !void {
@@ -284,7 +312,7 @@ fn renderBins(context: Context, out: *std.ArrayList(u8), bins: []const values.Bi
         try table.num("EstPercent", "6.3");
         table.ds.setLabel("EstPercent", "Estimated Percent");
     }
-    try out.appendSlice(a, if (fitted) "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n" else "\nHistogram Bin Percentages\nEndpoint Observed\n");
+    try out.appendSlice(a, if (fitted) "\nHistogram Bin Percentages\nEndpoint Observed Estimated\n" else if (midpoints) "Bin Midpoint  Observed Percent\n" else if (right) "Bin Maximum Point  Observed Percent\n" else "Bin Minimum Point  Observed Percent\n");
     for (bins) |bin| {
         const point = binPoint(bin, right, midpoints);
         // Standalone MIDPERCENTS includes the group's missing analysis values
