@@ -547,17 +547,29 @@ fn median(x: []f64) f64 {
     std.mem.sort(f64, x, {}, std.sort.asc(f64));
     return if (x.len % 2 == 1) x[x.len / 2] else (x[x.len / 2 - 1] + x[x.len / 2]) / 2;
 }
+fn robustScaleKeyword(key: []const u8) bool {
+    return eq(key, "gini") or eq(key, "mad") or eq(key, "sn") or eq(key, "qn") or std.ascii.startsWithIgnoreCase(key, "std_");
+}
+
+/// Each gap between adjacent ordered observations contributes to i*(n-i)
+/// pairs. Accumulating differences keeps the sum independent of location.
+fn pairDifferenceSum(pairs: []const h.XW) f64 {
+    var total: f64 = 0;
+    for (1..pairs.len) |i| {
+        const lower: f64 = @floatFromInt(i);
+        const upper: f64 = @floatFromInt(pairs.len - i);
+        total += (pairs[i].x - pairs[i - 1].x) * (lower * upper);
+    }
+    return total;
+}
+
 fn robustStats(a: Allocator, z: *Summary, forceqn: bool, forcesn: bool) !void {
     const n = z.pairs.len;
     if (n == 0) return;
     const nf: f64 = @floatFromInt(n);
     const med = h.univPercentile(z.pairs, 50, 5);
     const dev = try a.alloc(f64, n);
-    var total: f64 = 0;
-    for (z.pairs, 0..) |p, j| {
-        dev[j] = @abs(p.x - med);
-        total += (2 * @as(f64, @floatFromInt(j)) + 1 - nf) * p.x;
-    }
+    for (z.pairs, dev) |p, *d| d.* = @abs(p.x - med);
     z.mad = median(dev);
     if (n < 2) {
         z.gini = 0;
@@ -567,7 +579,7 @@ fn robustStats(a: Allocator, z: *Summary, forceqn: bool, forcesn: bool) !void {
         z.std_qn = 0;
         return;
     }
-    z.gini = 2 * total / (nf * (nf - 1));
+    z.gini = pairDifferenceSum(z.pairs) / ((nf / 2) * (nf - 1));
     // SAS default limits (printed p.301); FORCEQN/FORCESN are separate options.
     if (forcesn or n <= 1_000_000) {
         const inner = try a.alloc(f64, n);
@@ -811,7 +823,7 @@ pub fn buildOutputs(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols:
                 const nobs = outputNobs(g.rows, bcols, opt);
                 const summaries = try a.alloc(Summary, acols.len);
                 var robust = table;
-                for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or eq(r.key, "gini") or eq(r.key, "mad") or eq(r.key, "sn") or eq(r.key, "qn") or std.ascii.startsWithIgnoreCase(r.key, "std_")) {
+                for (spec.req.items) |r| if (eq(r.key, "normaltest") or eq(r.key, "probn") or robustScaleKeyword(r.key)) {
                     robust = true;
                 };
                 for (acols[0..nvars], 0..) |ci, j| {
@@ -1422,9 +1434,27 @@ test "UNIVARIATE IDOUT retains excluded first source observation" {
     try std.testing.expectEqual(@as(f64, 100), testCell(lib.find("o").?, 0, "y"));
 }
 
+fn summaryOverflows(a: Allocator, view: Analysis, ci: usize, stat: h.Stats, def: u8, robust: bool) !bool {
+    const magnitude = @max(@abs(stat.min), @abs(stat.max));
+    // Bound the quartile fences by 4*max(abs(x)) and the sum of pairwise
+    // distances by n*(n-1)*max(abs(x)). Ordinary groups need no re-sort.
+    const check_fences = magnitude >= std.math.floatMax(f64) / 4;
+    const n: f64 = @floatFromInt(stat.n);
+    const check_distances = robust and n > 1 and magnitude >= std.math.floatMax(f64) / n / (n - 1);
+    if (!check_fences and !check_distances) return false;
+    const pairs = try pairsFor(a, view.ds, ci, view.weight);
+    if (check_fences) {
+        const q1 = quantile(pairs, 25, def);
+        const q3 = quantile(pairs, 75, def);
+        const radius = 1.5 * (q3 - q1);
+        if (std.math.isInf(q1 - radius) or std.math.isInf(q3 + radius)) return true;
+    }
+    return check_distances and std.math.isInf(pairDifferenceSum(pairs));
+}
+
 /// M9 reports each affected CLASS cell and variable on its first overflowing
 /// observation. One BY note follows all warnings from the same BY group.
-pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options) !?CalculationFailure {
+pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, vd: h.VarDef, def: u8, opt: Options, outputs: []const Output) !?CalculationFailure {
     if (ds.rows.items.len == 0) return null;
     const source = opt.source.?;
     var max_weight: f64 = 1;
@@ -1442,6 +1472,14 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
         return null;
     }
 
+    const robust = try cx.arena.alloc(bool, acols.len);
+    @memset(robust, wc == null and (opt.inference.robustscale or opt.outtable != null));
+    if (wc == null) {
+        for (outputs) |output| for (output.req.items) |request| {
+            if (request.var_index < robust.len and robustScaleKeyword(request.key)) robust[request.var_index] = true;
+        };
+    }
+
     const Event = struct {
         observation: usize,
         variable: usize,
@@ -1457,7 +1495,7 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
         chunk.columns = ds.columns;
         try chunk.rows.appendSlice(cx.arena, by.rows);
         const groups = try analysisGroups(cx.arena, &chunk, ccols, wc, opt);
-        var first_fence: ?usize = null;
+        var first_failure: ?usize = null;
         for (groups, 0..) |class_group, gi| {
             var group = Dataset.init(cx.arena, ds.name);
             group.columns = ds.columns;
@@ -1465,17 +1503,9 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
             const view = try analysisView(cx.arena, &group, acols, wc, opt);
             for (acols, 0..) |ci, vi| {
                 const stat = h.computeUnivStats(view.ds.rows.items, ci, view.weight, vd, if (opt.freqcol != null) opt.obscol else null);
-                // Tukey's inner fences cannot exceed four times the largest
-                // absolute value. Sort only samples close enough to floatMax.
-                if (@max(@abs(stat.min), @abs(stat.max)) >= std.math.floatMax(f64) / 4) {
-                    const pairs = try pairsFor(cx.arena, view.ds, ci, view.weight);
-                    const q1 = quantile(pairs, 25, def);
-                    const q3 = quantile(pairs, 75, def);
-                    const radius = 1.5 * (q3 - q1);
-                    if (std.math.isInf(q1 - radius) or std.math.isInf(q3 + radius)) {
-                        const rank = vi * groups.len + gi;
-                        first_fence = @min(first_fence orelse rank, rank);
-                    }
+                if (try summaryOverflows(cx.arena, view, ci, stat, def, robust[vi])) {
+                    const rank = vi * groups.len + gi;
+                    first_failure = @min(first_failure orelse rank, rank);
                 }
                 if (stat.overflow_at) |at| {
                     try events.append(cx.arena, .{ .observation = @intFromFloat(h.toNum(class_group.rows[at][opt.obscol.?])), .variable = vi });
@@ -1486,7 +1516,7 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
         for (events.items) |event| {
             try cx.diags.warn(0, "Overflow in statistic calculation for variable {s}. The affected statistics will be set to missing.", .{ds.columns.items[acols[event.variable]].name});
         }
-        if (first_fence) |partial| return .{ .completed_rows = completed, .reason = .quartile_fence, .failing_rows = by.rows.len, .partial_cells = partial };
+        if (first_failure) |partial| return .{ .completed_rows = completed, .reason = .floating_point, .failing_rows = by.rows.len, .partial_cells = partial };
         if (events.items.len > 0) try reportByNote(cx, ds, bcols, by.rep, opt);
         completed += by.rows.len;
     }
@@ -1495,7 +1525,7 @@ pub fn variableOverflow(cx: proc.ProcCtx, ds: *Dataset, acols: []const usize, cc
 
 pub const CalculationFailure = struct {
     completed_rows: usize,
-    reason: enum { weight_statistic, missing_weight, quartile_fence },
+    reason: enum { weight_statistic, missing_weight, floating_point },
     failing_rows: usize = 0,
     partial_cells: usize = 0,
     outputs: std.ArrayList(OutputInfo) = .empty,
@@ -1503,7 +1533,7 @@ pub const CalculationFailure = struct {
     const OutputInfo = struct { name: []const u8, variables: usize, observations: usize, preserved: bool };
 
     pub fn partialAt(self: CalculationFailure, offset: usize) ?usize {
-        return if (self.reason == .quartile_fence and offset == self.completed_rows) self.partial_cells else null;
+        return if (self.reason == .floating_point and offset == self.completed_rows) self.partial_cells else null;
     }
 
     pub fn report(self: CalculationFailure, d: *diag.Diagnostics) !void {
@@ -1513,7 +1543,7 @@ pub const CalculationFailure = struct {
                 try d.warn(0, "Overflow in statistic calculation for variable . The affected statistics will be set to missing.", .{});
                 try d.report(.err, 0, "Overflow in statistic calculation.", .{});
             },
-            .quartile_fence => {
+            .floating_point => {
                 try d.report(.err, 0, "Floating Point Overflow.", .{});
                 try d.report(.err, 0, "Termination due to Floating Point Exception", .{});
             },

@@ -4819,14 +4819,14 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
 
     var overflow = if (wcol) |wc| try univ.weightOverflow(arena, cds, acols.items, ccols.items, obcols.items, wc, extra) else null;
     if (overflow) |stop| cds.rows.items = cds.rows.items[0..stop.completed_rows];
-    if (try univ.variableOverflow(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra)) |failure| {
+    if (try univ.variableOverflow(cx, cds, acols.items, ccols.items, obcols.items, wcol, vardef, if (wcol == null) pctldef else 5, extra, outputs.items)) |failure| {
         overflow = failure;
         cds.rows.items = cds.rows.items[0 .. failure.completed_rows + failure.failing_rows];
     }
     try univ_plots.execute(cx, out, cds, acols.items, ccols.items, obcols.items, wcol, extra, fmt_levels.items, distribution_plots.items, vars.items.len > 0);
     try univ.buildOutputs(cx, cds, acols.items, ccols.items, obcols.items, icols.items,
         wcol, vardef, pctldef, mu0, extra, outputs.items, fmt_levels.items, toks, noprint,
-        if (overflow != null and (overflow.?.reason == .quartile_fence or obcols.items.len == 0)) &overflow.? else null);
+        if (overflow != null and (overflow.?.reason == .floating_point or obcols.items.len == 0)) &overflow.? else null);
     const empty_input = input_view.ds.rows.items.len == 0;
     if (empty_input) try diags.report(.note, 0, "No observations in data set {s}.", .{raw.name});
     const stopped_before_listing = if (overflow) |failure| failure.completed_rows == 0 and failure.partial_cells == 0 else false;
@@ -4870,7 +4870,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             const groups = try univ.analysisGroups(arena, bd, ccols.items, wcol, extra);
             // A procedure stopped partway retains a variable-major prefix of the
             // CLASS summaries, including those in previously completed BY groups.
-            const stopped_at_summary = overflow != null and overflow.?.reason == .quartile_fence;
+            const stopped_at_summary = overflow != null and overflow.?.reason == .floating_point;
             const count = if (stopped_at_summary) partial orelse groups.len * acols.items.len else groups.len;
             for (0..count) |block| {
                 const g = groups[if (stopped_at_summary) block % groups.len else block];
