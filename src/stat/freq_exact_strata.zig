@@ -27,12 +27,16 @@ const Polynomial = struct {
     logs: []f64,
     lower: u64,
     observed: u64,
-    fn tails(self: Polynomial, theta: f64) exact.Tails {
+    pub fn tailsControlled(self: Polynomial, theta: f64, _: u64, control: exact.Control) Error!?exact.Tails {
         var peak: f64 = -std.math.inf(f64);
-        for (self.logs, 0..) |v, i| peak = @max(peak, v + @as(f64, @floatFromInt(i)) * theta);
+        for (self.logs, 0..) |v, i| {
+            if (control.stopped()) return null;
+            peak = @max(peak, v + @as(f64, @floatFromInt(i)) * theta);
+        }
         var total: f64 = 0;
         var t = exact.Tails{ .point = 0, .left = 0, .right = 0 };
         for (self.logs, 0..) |v, i| {
+            if (control.stopped()) return null;
             const w = @exp(v + @as(f64, @floatFromInt(i)) * theta - peak);
             total += w;
             const x = self.lower + i;
@@ -44,16 +48,6 @@ const Polynomial = struct {
         t.right /= total;
         t.point /= total;
         return t;
-    }
-    fn limit(self: Polynomial, target: f64, lower: bool) f64 {
-        var lo: f64 = -128;
-        var hi: f64 = 128;
-        for (0..80) |_| {
-            const m = (lo + hi) / 2;
-            const t = self.tails(m);
-            if (((if (lower) t.right else t.left) < target) == lower) lo = m else hi = m;
-        }
-        return @exp((lo + hi) / 2);
     }
 };
 const Build = union(enum) { complete: Polynomial, exhausted };
@@ -72,21 +66,27 @@ fn polynomial(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Erro
             a.free(logs);
             return .exhausted;
         }
-        const next = try a.alloc(f64, logs.len + @as(usize, @intCast(width)) - 1);
+        const weights = try a.alloc(f64, @intCast(width));
+        defer a.free(weights);
+        if (!d.centralLogWeights(d.lo, weights, d.mode(0), .{ .context = budget.context, .expired = budget.expired })) {
+            a.free(logs);
+            return .exhausted;
+        }
+        const next = try a.alloc(f64, logs.len + weights.len - 1);
         @memset(next, -std.math.inf(f64));
-        for (logs, 0..) |v, i| {
-            var x: u64 = d.lo;
-            while (x <= d.hi) : (x += 1) {
+        for (weights, 0..) |relative_log, j| {
+            for (logs, 0..) |v, i| {
                 if (work == budget.max_tables or budget.stopped()) {
                     a.free(next);
                     a.free(logs);
                     return .exhausted;
                 }
                 work += 1;
-                const j = i + @as(usize, @intCast(x - d.lo));
-                next[j] = logAdd(next[j], v + d.logWeight(@intCast(x), 0));
+                next[i + j] = logAdd(next[i + j], v + relative_log);
             }
         }
+        const peak = next[std.mem.findMax(f64, next)];
+        for (next) |*v| v.* -= peak;
         a.free(logs);
         logs = next;
         lower += d.lo;
@@ -107,21 +107,23 @@ pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budg
     for (p.logs, 0..) |v, i| {
         const w = @exp(v - peak);
         total += w;
-        mean += w * @as(f64, @floatFromInt(p.lower + i));
+        mean += w * @as(f64, @floatFromInt(i));
     }
     mean /= total;
-    const t = p.tails(0);
+    const control = exact.Control{ .context = budget.context, .expired = budget.expired };
+    const t = (try p.tailsControlled(0, budget.max_tables, control)) orelse return .exhausted;
+    const observed_offset: f64 = @floatFromInt(p.observed - p.lower);
     const observed_log = p.logs[@intCast(p.observed - p.lower)];
     var probability: f64 = 0;
     var distance: f64 = 0;
-    const observed_distance = @abs(@as(f64, @floatFromInt(p.observed)) - mean);
+    const observed_distance = @abs(observed_offset - mean);
     for (p.logs, 0..) |v, i| {
         const w = @exp(v - peak) / total;
         const tolerance = 64 * std.math.floatEps(f64) * @max(1, @abs(observed_log));
         if (v <= observed_log + tolerance) probability += w;
-        if (@abs(@as(f64, @floatFromInt(p.lower + i)) - mean) >= observed_distance - 64 * std.math.floatEps(f64) * @max(1, observed_distance)) distance += w;
+        if (@abs(@as(f64, @floatFromInt(i)) - mean) >= observed_distance - 64 * std.math.floatEps(f64) * @max(1, observed_distance)) distance += w;
     }
-    const one = if (@as(f64, @floatFromInt(p.observed)) > mean) t.right else t.left;
+    const one = if (observed_offset > mean) t.right else t.left;
     const upper = p.lower + p.logs.len - 1;
     const target = if (p.observed == p.lower or p.observed == upper) alpha else alpha / 2;
     if (budget.stopped()) return .exhausted;
@@ -129,33 +131,27 @@ pub fn commonOdds(a: std.mem.Allocator, strata: []const [4]u32, alpha: f64, budg
     var limits = exact.Interval{ .lower = 0, .upper = std.math.inf(f64) };
     inline for (.{ true, false }) |lower| {
         if (if (lower) p.observed != p.lower else p.observed != upper) {
-            var lo: f64 = -128;
-            var hi: f64 = 128;
-            for (0..80) |_| {
-                if (budget.stopped()) return .exhausted;
-                const m = (lo + hi) / 2;
-                const tt = p.tails(m);
-                if (((if (lower) tt.right else tt.left) < target) == lower) lo = m else hi = m;
-            }
-            if (lower) limits.lower = @exp((lo + hi) / 2) else limits.upper = @exp((lo + hi) / 2);
+            const endpoint = (try exact.invertOddsTail(p, target, false, lower, budget.max_tables, control)) orelse return .exhausted;
+            if (lower) limits.lower = endpoint else limits.upper = endpoint;
         }
     }
-    return .{ .complete = .{ .observed = p.observed, .expected = mean, .point = t.point, .one_sided = one, .two_doubled = @min(1, 2 * one), .two_probability = @min(1, probability), .two_distance = @min(1, distance), .limits = limits } };
+    return .{ .complete = .{ .observed = p.observed, .expected = @as(f64, @floatFromInt(p.lower)) + mean, .point = t.point, .one_sided = one, .two_doubled = @min(1, 2 * one), .two_probability = @min(1, probability), .two_distance = @min(1, distance), .limits = limits } };
 }
 
 pub const Zelen = struct { point: f64, p: f64, tables: u64 };
 pub const ZelenResult = union(enum) { complete: Zelen, exhausted };
+const Weights = struct { lo: u64, values: []f64 };
 const ZelenSearch = struct {
     distributions: []const exact.OddsDistribution,
+    log_weights: []const Weights,
     remaining_lo: []const u64,
     remaining_hi: []const u64,
-    observed_log: f64,
     budget: Budget,
     count: u64 = 0,
     stopped: bool = false,
     total: f64 = -std.math.inf(f64),
     tail: f64 = -std.math.inf(f64),
-    fn visit(self: *ZelenSearch, k: usize, remaining: u64, weight: f64) Error!void {
+    fn visit(self: *ZelenSearch, k: usize, remaining: u64, weight: f64, magnitude: f64) Error!void {
         if (self.stopped) return;
         if (self.budget.stopped()) {
             self.stopped = true;
@@ -169,7 +165,7 @@ const ZelenSearch = struct {
             }
             self.count += 1;
             self.total = logAdd(self.total, weight);
-            if (weight <= self.observed_log + 64 * std.math.floatEps(f64) * @max(1, @abs(self.observed_log))) self.tail = logAdd(self.tail, weight);
+            if (weight <= 64 * std.math.floatEps(f64) * @max(1, magnitude)) self.tail = logAdd(self.tail, weight);
             return;
         }
         const d = self.distributions[k];
@@ -178,7 +174,8 @@ const ZelenSearch = struct {
         const hi = @min(@as(u64, d.hi), remaining - self.remaining_lo[k + 1]);
         var x = lo;
         while (x <= hi) : (x += 1) {
-            try self.visit(k + 1, remaining - x, weight + d.logWeight(@intCast(x), 0));
+            const factor = self.log_weights[k].values[@intCast(x - self.log_weights[k].lo)];
+            try self.visit(k + 1, remaining - x, weight + factor, magnitude + @abs(factor));
             if (self.stopped) return;
         }
     }
@@ -193,11 +190,9 @@ pub fn zelen(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error
     const hi = try a.alloc(u64, strata.len + 1);
     defer a.free(hi);
     var observed: u64 = 0;
-    var weight: f64 = 0;
     for (strata, ds) |cells, *d| {
         d.* = try exact.OddsDistribution.initStratum(cells);
         observed += d.observed;
-        weight += d.logWeight(d.observed, 0);
     }
     lo[strata.len] = 0;
     hi[strata.len] = 0;
@@ -207,10 +202,25 @@ pub fn zelen(a: std.mem.Allocator, strata: []const [4]u32, budget: Budget) Error
         lo[i] = lo[i + 1] + ds[i].lo;
         hi[i] = hi[i + 1] + ds[i].hi;
     }
-    var search = ZelenSearch{ .distributions = ds, .remaining_lo = lo, .remaining_hi = hi, .observed_log = weight, .budget = budget };
-    try search.visit(0, observed, 0);
+    const weights = try a.alloc(Weights, strata.len);
+    defer a.free(weights);
+    var allocated: usize = 0;
+    defer for (weights[0..allocated]) |w| a.free(w.values);
+    for (ds, weights) |d, *w| {
+        // Fixing the sum can leave a single feasible count in a stratum
+        // whose marginal support is huge. Build only that feasible range.
+        w.lo = @max(@as(u64, d.lo), observed -| (hi[0] - d.hi));
+        const last = @min(@as(u64, d.hi), observed - (lo[0] - d.lo));
+        const width = last - w.lo + 1;
+        if (width > budget.max_tables or budget.stopped()) return .exhausted;
+        w.values = try a.alloc(f64, @intCast(width));
+        allocated += 1;
+        if (!d.centralLogWeights(@intCast(w.lo), w.values, d.observed, .{ .context = budget.context, .expired = budget.expired })) return .exhausted;
+    }
+    var search = ZelenSearch{ .distributions = ds, .log_weights = weights, .remaining_lo = lo, .remaining_hi = hi, .budget = budget };
+    try search.visit(0, observed, 0, 0);
     if (search.stopped) return .exhausted;
-    return .{ .complete = .{ .point = @exp(weight - search.total), .p = @min(1, @exp(search.tail - search.total)), .tables = search.count } };
+    return .{ .complete = .{ .point = @exp(-search.total), .p = @min(1, @exp(search.tail - search.total)), .tables = search.count } };
 }
 
 // SAS generators.sas: COMOR POINT=.5, one-sided=.75; convolving
@@ -262,4 +272,36 @@ test "COMOR and Zelen preserve degenerate stratum factors" {
         try t.expectApproxEqAbs(reference_z.point, z.point, 1e-12);
     }
     try t.expectError(error.ExecError, exact.OddsDistribution.init(.{ 0, 0, 1, 1 }));
+}
+
+test "stratified conditional weights retain sparse wide margins and level-dependent limits" {
+    const t = std.testing;
+    // Independently convolve C(A+1,x) C(3,3-x) with [1,4,1] at A=2e9.
+    // For Zelen retain only x+y=2, and evaluate the conditional mass and
+    // probability ordering from the same integer coefficients.
+    const intervals = [_]exact.Interval{
+        .{ .lower = 7.8622258440045604e-11, .upper = 1.7649517346936823e-7 },
+        .{ .lower = 5665877.317452853, .upper = 12719044451.801937 },
+    };
+    for ([_][4]u32{ .{ 1, 2, 2_000_000_000, 1 }, .{ 2, 1, 1, 2_000_000_000 } }, intervals) |row, reference| {
+        const strata = [_][4]u32{ row, .{ 1, 1, 1, 1 } };
+        const common = (try commonOdds(t.allocator, &strata, 0.05, .{})).complete;
+        try t.expectApproxEqRel(reference.lower, common.limits.lower, 3e-14);
+        try t.expectApproxEqRel(reference.upper, common.limits.upper, 3e-14);
+        try t.expectApproxEqRel(@as(f64, 7.5e-10), common.point, 3e-14);
+        const equal = (try zelen(t.allocator, &strata, .{})).complete;
+        try t.expectApproxEqRel(@as(f64, 3.9999999840000001e-9), equal.point, 3e-14);
+        try t.expectApproxEqRel(@as(f64, 3.9999999841666667e-9), equal.p, 3e-14);
+    }
+    const edge = [_][4]u32{ .{ 0, 1, 1, 0 }, .{ 0, 1, 1, 0 } };
+    const interval = (try commonOdds(t.allocator, &edge, 1e-220, .{})).complete.limits;
+    // The probability of the observed sum is 1/(1+theta)^2.
+    try t.expectApproxEqRel(@as(f64, 1e110), interval.upper, 8e-14);
+    // Conditioning the sum to zero retains one configuration, even with a
+    // marginal support of over two billion. Its exact probability is one.
+    const fixed = [_][4]u32{ .{ 0, 2_147_483_647, 2_147_483_647, 0 }, .{ 0, 1, 1, 0 } };
+    const only = (try zelen(t.allocator, &fixed, .{ .max_tables = 1 })).complete;
+    try t.expectEqual(@as(u64, 1), only.tables);
+    try t.expectEqual(@as(f64, 1), only.point);
+    try t.expectEqual(@as(f64, 1), only.p);
 }

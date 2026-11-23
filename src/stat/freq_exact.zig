@@ -118,13 +118,6 @@ pub const OddsDistribution = struct {
         if (@min(row, col) > std.math.maxInt(u32)) return error.ExecError;
         return .{ .lo = @intCast((row + col) -| total), .hi = @intCast(@min(row, col)), .observed = cells[0], .row = row, .col = col, .total = total };
     }
-    pub fn logWeight(self: OddsDistribution, x: u32, log_odds: f64) f64 {
-        const xf: f64 = @floatFromInt(x);
-        const rf: f64 = @floatFromInt(self.row);
-        const cf: f64 = @floatFromInt(self.col);
-        const nf: f64 = @floatFromInt(self.total);
-        return choose(cf, xf) + choose(nf - cf, rf - xf) + @as(f64, @floatFromInt(x - self.lo)) * log_odds;
-    }
     // Ratio of adjacent noncentral hypergeometric weights. All four counts
     // are positive here, including when the lower support is nonzero.
     fn logStep(self: OddsDistribution, x: u32, log_odds: f64) f64 {
@@ -134,6 +127,32 @@ pub const OddsDistribution = struct {
         const right_bottom: f64 = @floatFromInt((self.total - self.col) - (self.row - x) + 1);
         return @log((right_top / left_top) * (left_bottom / right_bottom)) + log_odds;
     }
+    pub fn mode(self: OddsDistribution, log_odds: f64) u32 {
+        var lo = self.lo;
+        var hi = self.hi;
+        while (lo < hi) {
+            const x = lo + (hi - lo) / 2;
+            if (self.logStep(x, log_odds) > 0) lo = x + 1 else hi = x;
+        }
+        return lo;
+    }
+    /// Compute central log masses on a contiguous support relative to pivot.
+    /// Each stratum's constant factor cancels in both COMOR and Zelen.
+    pub fn centralLogWeights(self: OddsDistribution, lower: u32, values: []f64, pivot: u32, control: Control) bool {
+        const center: usize = pivot - lower;
+        values[center] = 0;
+        for (center + 1..values.len) |i| {
+            if (control.stopped()) return false;
+            values[i] = values[i - 1] + self.logStep(lower + @as(u32, @intCast(i - 1)), 0);
+        }
+        var i = center;
+        while (i > 0) {
+            if (control.stopped()) return false;
+            i -= 1;
+            values[i] = values[i + 1] - self.logStep(lower + @as(u32, @intCast(i)), 0);
+        }
+        return true;
+    }
     pub fn tails(self: OddsDistribution, log_odds: f64, max_support: u64) Error!Tails {
         return (try self.tailsControlled(log_odds, max_support, .{})).?;
     }
@@ -142,23 +161,17 @@ pub const OddsDistribution = struct {
         if (control.stopped()) return null;
         // Starting at a mode keeps every relative weight at most one and
         // avoids cancellation between log-gamma values of large margins.
-        var lo = self.lo;
-        var hi = self.hi;
-        while (lo < hi) {
-            const x = lo + (hi - lo) / 2;
-            if (self.logStep(x, log_odds) > 0) lo = x + 1 else hi = x;
-        }
-        const mode = lo;
+        const pivot = self.mode(log_odds);
         var total: f64 = 0;
         var out = Tails{ .point = 0, .left = 0, .right = 0 };
         for ([_]bool{ true, false }) |right| {
-            var x = mode;
+            var x = pivot;
             var log_weight: f64 = 0;
             while (true) {
                 if (control.stopped()) return null;
                 const w = @exp(log_weight);
                 if (w == 0) break;
-                if (right or x != mode) {
+                if (right or x != pivot) {
                     total += w;
                     if (x == self.observed) out.point = w;
                     if (x <= self.observed) out.left += w;
@@ -195,12 +208,12 @@ pub fn oddsRatioControlled(cells: [4]u32, alpha: f64, midp: bool, max_support: u
     const boundary = d.observed == d.lo or d.observed == d.hi;
     const target = if (boundary) alpha else alpha / 2;
     var limits = Interval{ .lower = 0, .upper = std.math.inf(f64) };
-    if (d.observed != d.lo) limits.lower = (try oddsLimit(d, target, midp, true, max_support, control)) orelse return .exhausted;
-    if (d.observed != d.hi) limits.upper = (try oddsLimit(d, target, midp, false, max_support, control)) orelse return .exhausted;
+    if (d.observed != d.lo) limits.lower = (try invertOddsTail(d, target, midp, true, max_support, control)) orelse return .exhausted;
+    if (d.observed != d.hi) limits.upper = (try invertOddsTail(d, target, midp, false, max_support, control)) orelse return .exhausted;
     return .{ .complete = limits };
 }
 
-fn oddsLimit(d: OddsDistribution, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
+pub fn invertOddsTail(d: anytype, target: f64, midp: bool, lower: bool, budget: u64, control: Control) Error!?f64 {
     var lo: f64 = -1;
     var hi: f64 = 1;
     // The confidence level also determines the bracket. A table with two
