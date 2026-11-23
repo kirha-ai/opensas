@@ -238,6 +238,34 @@ pub fn parseStatement(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Tok
     return .{ .order = start, .noplot = noplot, .midpercents = midpercents, .title = title, .barlabel = barlabel, .layout = layout, .variables = vars, .curves = curves.items, .kernels = kernels, .kernel_output = outkernel, .vscale = vscale, .endpoints = endpoints.items, .endpoint_labels = endpoint_labels, .right = right, .output = output, .output_options = output_options, .kernel_output_options = kernel_output_options, .tokens = t[start..i.*], .mode = if (endpoint_labels) mode else midpoint_mode, .target_count = target_count, .max_nbin = max_nbin, .max_sigmas = max_sigmas };
 }
 
+// UNIVARIATE accumulates frequency-weighted moments in input order. It
+// drops residuals at the precision of the updated mean, then applies the
+// same relative tolerance to the final standard deviation before fitting.
+const FittedSampleSpread = struct {
+    const tolerance = 500 * std.math.floatEps(f64);
+    count: f64 = 0,
+    mean: f64 = 0,
+    css: f64 = 0,
+
+    fn add(self: *FittedSampleSpread, x: f64, frequency: usize) void {
+        const weight: f64 = @floatFromInt(frequency);
+        self.count += weight;
+        if (self.count == weight) {
+            self.mean = x;
+            return;
+        }
+        const difference = x - self.mean;
+        self.mean += weight / self.count * difference;
+        const residual = x - self.mean;
+        if (@abs(residual) > tolerance * @abs(self.mean))
+            self.css += weight * difference * residual;
+    }
+
+    fn canFit(self: FittedSampleSpread) bool {
+        return self.count > 1 and @sqrt(self.css / (self.count - 1)) > tolerance * @abs(self.mean);
+    }
+};
+
 pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: []const usize, ccols: []const usize, bcols: []const usize, wc: ?usize, def: u8, opt: univ.Options, levels: []const h.FmtLevels, statements: []const Statement, has_var: bool) diag.Error!void {
     const a = cx.arena;
     for (statements, 1..) |statement, histogram| {
@@ -287,13 +315,26 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
             // cells share one bin plan, including empty-key resolution.
             for (cols) |ci| {
                 const cells = try a.alloc(binning.Cell, groups.len);
+                const can_fit = try a.alloc(bool, groups.len);
                 var pooled: std.ArrayList(f64) = .empty;
-                for (analyses, cells) |analysis, *cell| {
+                for (analyses, cells, can_fit) |analysis, *cell, *fit_available| {
                     var x: std.ArrayList(f64) = .empty;
-                    for (analysis.ds.rows.items) |row| {
-                        const value = h.toNum(row[ci]);
-                        if (!std.math.isNan(value)) try x.append(a, value);
+                    var spread: FittedSampleSpread = .{};
+                    const rows = analysis.ds.rows.items;
+                    var first: usize = 0;
+                    while (first < rows.len) {
+                        var next = first + 1;
+                        if (opt.freqcol != null) if (opt.obscol) |obs| {
+                            while (next < rows.len and rows[next][obs].num == rows[first][obs].num) next += 1;
+                        };
+                        const value = h.toNum(rows[first][ci]);
+                        if (!std.math.isNan(value)) {
+                            spread.add(value, next - first);
+                            try x.appendNTimes(a, value, next - first);
+                        }
+                        first = next;
                     }
+                    fit_available.* = spread.canFit();
                     std.mem.sort(f64, x.items, {}, std.sort.asc(f64));
                     cell.* = .{ .sorted = x.items };
                     try pooled.appendSlice(a, x.items);
@@ -335,8 +376,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         const bins = try histogram_output.bins(a, cx.diags, x, plan.endpoints, output_options, null);
                         try rendering.histogramBins(cx, out, analyses[gi].ds, ci, bcols, ccols, histogram, bins, statement.right, !statement.endpoint_labels, by_number);
                     }
-                    const constant = x[0] == x[x.len - 1];
-                    if (statement.curves.len == 0 or constant) {
+                    if (statement.curves.len == 0 or !can_fit[gi]) {
                         try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
                     } else for (statement.curves) |curves| for (curves.requests, 1..) |request, curve_number| {
                         output_options.curve_number = curve_number;
@@ -811,6 +851,43 @@ test "UNIVARIATE shared KEY and UNIFORM bins are variable-first and honor NOKEYM
         }
     }
     try std.testing.expect(!d.hasErrors());
+}
+
+test "histogram fit follows near-constant variance in source order and original FREQ groups" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "x", "f" }) |name| _ = try ds.addColumn(name, .num);
+
+    // M9 preserves the fit for four individual copies after the first
+    // observation, and suppresses it for the same value entered with FREQ=4.
+    for ([_]f64{ 0, 1 }) |group| {
+        try ds.appendRow(&.{ .{ .num = group }, .{ .num = -0.9999999999996209 }, .{ .num = 1 } });
+        const copies: usize = if (group == 0) 1 else 4;
+        for (0..copies) |_| try ds.appendRow(&.{ .{ .num = group }, .{ .num = -1 }, .{ .num = 4 / @as(f64, @floatFromInt(copies)) } });
+    }
+    // Reversing these nine unit-frequency observations also changes the fit.
+    const low: f64 = 0.9999999999998943;
+    const high: f64 = 1.0000000000001057;
+    for ([_]f64{ 2, 3 }) |group| for (0..9) |i| {
+        const first = if (group == 2) i < 4 else i >= 5;
+        try ds.appendRow(&.{ .{ .num = group }, .{ .num = if (first) low else high }, .{ .num = 1 } });
+    };
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; by g; freq f; var x; histogram x / noplot endpoints=-2 to 2 by 1 normal(mu=0 sigma=1) outhistogram=h; run;", &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    const hist = lib.find("h").?;
+    var seen: [4]bool = @splat(false);
+    for (hist.rows.items) |row| {
+        const group: usize = @intFromFloat(row[hist.indexOf("g").?].num);
+        seen[group] = true;
+        try std.testing.expectEqualStrings(if (group % 2 == 1) "NORMAL" else "", row[hist.indexOf("_CURVE_").?].str);
+    }
+    try std.testing.expectEqual([_]bool{ true, true, true, true }, seen);
 }
 
 test "UNIVARIATE constant curves are suppressed and OUTKERNEL alone computes default estimate" {
