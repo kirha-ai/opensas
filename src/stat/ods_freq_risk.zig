@@ -67,7 +67,7 @@ fn relativeRisk(a: A, t: *b.Builder, table_name: []const u8, table: risk.Table2x
     }
 }
 
-pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, m: model.CountMatrix, alpha: f64, style: @import("freq_exact_parse.zig").ProbabilityFormat, estimates: report.Report, limits: public.RiskResults) diag.Error!void {
+pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, m: model.CountMatrix, alpha: f64, style: @import("freq_exact_parse.zig").ProbabilityFormat, estimates: report.Report, limits: public.Tables) diag.Error!void {
     if (m.rows != 2 or m.cols != 2) return;
     const nd = tab.dimensions.len;
     const r = tab.dimensions[nd - 2].name;

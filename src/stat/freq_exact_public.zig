@@ -211,13 +211,18 @@ fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
     try d.report(.warning, 0, "PROC FREQ EXACT {s} cannot be computed when there are noninteger frequencies.", .{@tagName(f)});
 }
 
-pub const RiskResults = struct {
+pub const Tables = struct {
+    exact_tests: std.EnumArray(parse.Family, ?@import("freq_exact_distribution.zig").Probabilities) = .initFill(null),
+    fisher: ?renderers.Fisher = null,
+    fisher_table_probability: ?f64 = null,
+    odds_ratio: ?@import("freq_exact.zig").Interval = null,
+    simulations: std.ArrayList(@import("ods_freq_mc.zig").Simulation) = .empty,
     barnard: ?exec.Barnard = null,
     relative_risk: [2]?@import("freq_exact.zig").Interval = @splat(null),
     difference: [2]?@import("freq_exact.zig").Interval = @splat(null),
 };
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!RiskResults {
-    var limits: RiskResults = .{};
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!Tables {
+    var limits: Tables = .{};
     if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
     for (scored.matrix.counts) |v| total += v;
@@ -284,14 +289,23 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 try d.report(.warning, 0, "PROC FREQ EXACT {s}: resource limit reached; no partial p-value is reported", .{@tagName(f)});
                 try renderers.testResult(a, out, title(f), .exhausted, options);
             },
-            .exact_test => |p| try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options),
-            .fisher => |r| try renderers.fisher(a, out, .{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point }, options),
+            .exact_test => |p| {
+                limits.exact_tests.set(f, p);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options);
+            },
+            .fisher => |r| {
+                const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
+                limits.fisher = fisher;
+                try renderers.fisher(a, out, fisher, options);
+            },
             .monte_carlo => |simulation| {
+                if (simulation.table_probability) |p| limits.fisher_table_probability = p;
                 const r = simulation.estimates;
                 if (r == .exhausted) {
                     try d.report(.warning, 0, "PROC FREQ EXACT: Monte Carlo resource limit reached", .{});
                     try renderers.monteCarlo(a, out, title(f), simulation.table_probability, null, 0, family_seed, options);
                 } else {
+                    try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = family_seed });
                     if (!concordance or concordance_seed == null) {
                         next_seed = r.complete.final_seed;
                         if (concordance) concordance_seed = family_seed;
@@ -304,7 +318,10 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right and b.tails.left != b.tails.right } }, options);
                 if (req.risk.binomial) |request| try binomialHypotheses(a, out, request, try @import("freq_exact.zig").integerCount(m.counts[c.event_index]), try @import("freq_exact.zig").integerCount(total), c);
             },
-            .interval => |ci| try interval(a, out, title(f), ci, c.alpha),
+            .interval => |ci| {
+                limits.odds_ratio = ci;
+                try interval(a, out, title(f), ci, c.alpha);
+            },
             .risk_intervals => |r| {
                 const columns = if (f == .relrisk) &limits.relative_risk else &limits.difference;
                 columns.* = .{ r.first, r.second };
