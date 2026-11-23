@@ -63,12 +63,25 @@ pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: di
             var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request, .uniforms = .init(seed) };
             const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = seed, .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
             const probabilities = result.probabilities orelse inference.Result{};
-            return .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result };
+            return checkAndersonDarling(d, .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result });
         },
         else => {},
     }
     const result = try inference.tabulated(d, r, stats, x.len);
-    return .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 };
+    return checkAndersonDarling(d, .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 });
+}
+
+fn checkAndersonDarling(d: *diag.Diagnostics, calculated: Result) !Result {
+    if (std.math.isFinite(calculated.statistics.a2) or (calculated.d == null and calculated.w2 == null and calculated.a2 == null)) return calculated;
+    try d.warn(0, "Overflow or underflow occurred computing the Anderson-Darling statistic.  The Anderson-Darling EDF statistic and p-value will be set to missing.", .{});
+    var result = calculated;
+    result.statistics.a2 = std.math.nan(f64);
+    result.a2 = null;
+    if (result.simulation) |*simulation| {
+        if (simulation.probabilities) |*probabilities| probabilities.a2 = null;
+        if (simulation.standard_errors) |*errors| errors[2] = std.math.nan(f64);
+    }
+    return result;
 }
 
 const Uniforms = @import("freq_exact_distribution.zig").Generator;
@@ -522,4 +535,33 @@ test "UNIVARIATE exponential EDF excludes unit roundoff in original observation 
         try std.testing.expectEqualDeep(dist.edf(curve, &above).?, included.statistics);
         try std.testing.expect(included.statistics.a2 != cutoff.statistics.a2);
     }
+}
+
+test "UNIVARIATE Anderson-Darling overflow omits only its own statistic and probability" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const tiny = 1e-18;
+    for ([_]fitting.Request{
+        .{ .family = .rayleigh, .sigma = 1, .edfseed = 12, .edfnsamples = 3 },
+        .{ .family = .pareto, .sigma = 1, .alpha = 0.1, .edfseed = 12, .edfnsamples = 3 },
+        .{ .family = .igauss, .mu = 1, .lambda = 1, .edfseed = 12, .edfnsamples = 3 },
+    }) |request| {
+        var d = diag.Diagnostics.init(a);
+        const curve: dist.Distribution = .{ .family = request.family, .p = .{ .mu = 1, .alpha = 0.1 } };
+        const result = try compute(&d, &.{ tiny, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7 }, curve, request);
+        try std.testing.expect(result.d != null and result.w2 != null and result.a2 == null);
+        try std.testing.expect(std.math.isNan(result.statistics.a2) and result.simulation.?.probabilities.?.a2 == null);
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "Overflow or underflow occurred computing the Anderson-Darling statistic") != null);
+    }
+    var d = diag.Diagnostics.init(a);
+    const beta: dist.Distribution = .{ .family = .beta, .p = .{ .alpha = 2, .beta = 3 } };
+    const suppressed = try compute(&d, &.{ 1e-300, 0.2, 0.4, 0.6, 0.8 }, beta, .{ .family = .beta, .sigma = 1, .alpha = null, .beta = 3 });
+    try std.testing.expect(suppressed.d == null and suppressed.w2 == null and suppressed.a2 == null);
+    try std.testing.expectEqual(@as(usize, 0), d.list.items.len);
+    const weibull: dist.Distribution = .{ .family = .weibull, .p = .{ .c = 2 } };
+    const stable = try compute(&d, &.{ 1e-306, 0.15, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95 }, weibull, .{ .family = .weibull, .sigma = 1, .c = 2 });
+    try std.testing.expect(stable.a2 != null);
+    try std.testing.expectApproxEqAbs(@as(f64, 144.41676874796798), stable.statistics.a2, 1e-10);
 }
