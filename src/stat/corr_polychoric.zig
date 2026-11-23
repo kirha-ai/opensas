@@ -341,15 +341,18 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     const dim = m.rows + m.cols - 1;
     const params = try a.alloc(f64, dim);
     defer a.free(params);
+    // Both margins use the same reciprocal of the total frequency. Apply it
+    // after summing counts so small rounding errors do not build up by level.
+    const inverse_n = 1 / t.n;
     var cum: f64 = 0;
     for (t.row[0 .. m.rows - 1], 0..) |v, i| {
         cum += v;
-        params[i] = fns.distQuantile(.normal, cum / t.n, &.{}).?;
+        params[i] = fns.distQuantile(.normal, cum * inverse_n, &.{}).?;
     }
     cum = 0;
     for (t.col[0 .. m.cols - 1], 0..) |v, j| {
         cum += v;
-        params[m.rows + j - 1] = fns.distQuantile(.normal, cum / t.n, &.{}).?;
+        params[m.rows + j - 1] = fns.distQuantile(.normal, cum * inverse_n, &.{}).?;
     }
     params[dim - 1] = 0;
     const null_ll = negativeLogLikelihood(m, params);
@@ -574,6 +577,29 @@ test "CORR four-level ordinal boundaries with a distinguishable projected step" 
         try std.testing.expectApproxEqAbs(@as(f64, 0.9999), fit.coefficient.estimate.?, 1e-12);
         try std.testing.expectEqual(@as(f64, 0), fit.coefficient.ase.?);
         try std.testing.expectApproxEqAbs(c.lr, fit.likelihood_ratio.?.statistic, 1e-7);
+    }
+}
+
+test "CORR normalizes cumulative polychoric margins using a shared reciprocal" {
+    // On these independent tables, SAS 9.4 M9's first-step SE changes in
+    // opposite directions after removing the theoretical 1/sqrt(FREQ) factor.
+    const cases = [_]struct { counts: [4]f64, scale: f64, native_se: [2]f64 }{
+        .{ .counts = .{ 3250, 350, 1820, 196 }, .scale = 43, .native_se = .{ 0.029514289368863387, 0.0045008869331344585 } },
+        .{ .counts = .{ 10260, 972, 7695, 729 }, .scale = 5, .native_se = .{ 0.016030816097741426, 0.007169198905869558 } },
+    };
+    for (cases) |case| {
+        var normalized: [2]f64 = undefined;
+        for ([_]f64{ 1, case.scale }, 0..) |scale, i| {
+            var counts = case.counts;
+            for (&counts) |*n| n.* *= scale;
+            const fit = try polychoric(std.testing.allocator, .{ .rows = 2, .cols = 2, .counts = &counts }, .{ .converge = 0.99, .maxiter = 1 });
+            try std.testing.expect(fit.converged);
+            const se = fit.coefficient.ase.?;
+            try std.testing.expectApproxEqAbs(case.native_se[i], se, 5e-17);
+            normalized[i] = se * @sqrt(scale);
+        }
+        const expected = std.math.order(case.native_se[0], case.native_se[1] * @sqrt(case.scale));
+        try std.testing.expectEqual(expected, std.math.order(normalized[0], normalized[1]));
     }
 }
 
