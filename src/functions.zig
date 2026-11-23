@@ -1905,7 +1905,7 @@ pub fn compgedCost(ev: *eval.Evaluator, out: []const u8, inp: []const u8, icase:
 
 /// Trigamma ψ′(x) = Σ 1/(x+k)²: recurrence up to x≥6, then the asymptotic series.
 /// ponytail: accurate for x>0 (the distribution helpers never call it below).
-fn trigammaOf(x_in: f64) f64 {
+pub fn trigammaOf(x_in: f64) f64 {
     var x = x_in;
     var r: f64 = 0;
     while (x < 6) : (x += 1) r += 1.0 / (x * x);

@@ -682,6 +682,8 @@ fn fitEndpoint(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist
             if (r.report) |report| report.* = .{ .converged = false, .no_fit = failure.best == null, .reason = @tagName(failure.reason) };
             if ((r.family == .power or r.family == .beta) and failure.best != null and failure.reason == .nonstationary_candidate) {
                 try d.note(0, "UNIVARIATE: {s} fit retained the finite fallback curve ({s}).", .{ @tagName(r.family), @tagName(failure.reason) });
+            } else if (r.family == .beta and failure.best == null) {
+                try d.warn(0, "One or more parameters for the beta distribution cannot be estimated.", .{});
             } else try d.warn(0, "UNIVARIATE: {s} fit did not converge ({s}); {s}", .{ @tagName(r.family), @tagName(failure.reason), if (failure.best != null) "retaining the finite fallback curve" else "no fitted curve is available" });
             break :blk failure.best orelse return error.ParseError;
         },

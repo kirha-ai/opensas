@@ -2,6 +2,7 @@
 //! SAS convention: Pareto alpha is minus the usual extreme-value shape xi.
 const std = @import("std");
 const f = @import("../functions.zig");
+const beta_solver = @import("univ_beta_fit.zig");
 pub const Family = enum { beta, power, pareto };
 pub const Parameters = struct { theta: f64 = 0, sigma: f64 = 1, alpha: f64 = 1, beta: f64 = 1 };
 /// Null requests estimation. Caller applies SAS defaults before entering.
@@ -88,13 +89,19 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     if (family == .beta and fixed.theta != null and fixed.sigma == null and fixed.alpha == null and fixed.beta != null) {
         const theta = fixed.theta.?;
         const beta = fixed.beta.?;
-        const floor = powerScaleStart(x, theta, true);
+        const moments = scaleMoments(x);
+        const floor = if (moments) |m| m.admissibleWidth(x, theta, true) else null;
         if (beta < 1) return betaAtScaleFloor(x, theta, floor orelse return fail(.initialization_failed), beta, controls);
         const fitted = optimize(family, x, fixed, controls);
+        if (fitted != .converged) return fitted;
+        const p = fitted.converged.parameters;
         if (floor) |sigma| {
-            if (fitted == .converged and fitted.converged.parameters.sigma < sigma)
-                return betaAtScaleFloor(x, theta, sigma, beta, controls);
+            if (p.sigma < sigma) return betaAtScaleFloor(x, theta, sigma, beta, controls);
         }
+        const m = moments orelse return fitted;
+        const pilot = m.pilot orelse return fitted;
+        if (p.sigma > m.floor and !beta_solver.verifyInterior(x, theta, beta, pilot, m.floor, .{ .sigma = p.sigma, .alpha = p.alpha }, controls.maxiter))
+            return fail(.iteration_limit);
         return fitted;
     }
     if (family == .pareto and fixed.alpha != null and fixed.sigma == null and (fixed.alpha.? == 0 or fixed.alpha.? == 1)) {
@@ -176,7 +183,29 @@ fn powerLocation(x: []const f64, sigma: f64, alpha: f64) Result {
 /// shapes/n, fixed alpha, affine changes and inadmissible moment regions.
 /// Samples are normalized before forming central moments to avoid overflow
 /// and loss of precision from translating observations far from zero.
-fn powerScaleStart(x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
+const ScaleMoments = struct {
+    mean: f64,
+    variance: f64,
+    floor: f64,
+    pilot: ?beta_solver.Point = null,
+
+    fn admissibleWidth(self: ScaleMoments, x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
+        if (estimate_alpha and self.pilot == null) return null;
+        const span = x[x.len - 1] - x[0];
+        const sigma = self.floor;
+        if (!(sigma > x[x.len - 1] - theta) or !std.math.isFinite(sigma)) return null;
+        if (estimate_alpha) {
+            // The shape start must also be admissible for the actual fixed
+            // endpoints, not just for the four-moment distribution's endpoints.
+            const ymean = (x[0] - theta) / sigma + (span / sigma) * self.mean;
+            const yvariance = self.variance * (span / sigma) * (span / sigma);
+            if (!(ymean * (1 - ymean) > yvariance)) return null;
+        }
+        return sigma;
+    }
+};
+
+fn scaleMoments(x: []const f64) ?ScaleMoments {
     if (x.len < 4) return null;
     const span = x[x.len - 1] - x[0];
     if (!(span > 0) or !std.math.isFinite(span)) return null;
@@ -197,30 +226,21 @@ fn powerScaleStart(x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
     const kurt = n * (n + 1) * ss4 / ((n - 1) * (n - 2) * (n - 3) * variance * variance) - 3 * (n - 1) * (n - 1) / ((n - 2) * (n - 3));
     const denominator = 1.5 * skew * skew - kurt;
     const total = (6 + 3 * kurt - 3 * skew * skew) / denominator;
-    var sigma = span + 0.002;
+    var moments: ScaleMoments = .{ .mean = mean, .variance = variance, .floor = span + 0.002 };
     if (denominator > 0 and total > 0 and std.math.isFinite(total)) {
         const imbalance2 = skew * skew * (total + 2) * (total + 2) / (16 * (total + 1) + skew * skew * (total + 2) * (total + 2));
         if (!(imbalance2 >= 0 and imbalance2 < 1)) return null;
         const width = 2 * span * @sqrt(variance * (total + 1) / (1 - imbalance2));
         if (!std.math.isFinite(width)) return null;
-        sigma = span + @min(@as(f64, 0.002), 0.1 * (width - span));
-    } else if (estimate_alpha) {
-        // ponytail: free-alpha initialization outside this moment region
-        // is not reproduced yet. M9 returns some such curves; region failure
-        // does not prove the conditional shape equation has no solution.
-        // See fallback-start-discriminator.md for prospective counterexamples.
-        // With alpha supplied, M9 can use its finite range+.002 width.
-        return null;
+        moments.floor = span + @min(@as(f64, 0.002), 0.1 * (width - span));
+        moments.pilot = .{ .sigma = width, .alpha = 0.5 * (1 - std.math.copysign(@sqrt(imbalance2), skew)) * total };
     }
-    if (!(sigma > x[x.len - 1] - theta) or !std.math.isFinite(sigma)) return null;
-    if (estimate_alpha) {
-        // The shape start must also be admissible for the actual fixed
-        // endpoints, not just for the four-moment distribution's endpoints.
-        const ymean = (x[0] - theta) / sigma + (span / sigma) * mean;
-        const yvariance = variance * (span / sigma) * (span / sigma);
-        if (!(ymean * (1 - ymean) > yvariance)) return null;
-    }
-    return sigma;
+    return moments;
+}
+
+fn powerScaleStart(x: []const f64, theta: f64, estimate_alpha: bool) ?f64 {
+    const moments = scaleMoments(x) orelse return null;
+    return moments.admissibleWidth(x, theta, estimate_alpha);
 }
 
 const Problem = struct {
@@ -920,4 +940,33 @@ test "beta scale bound is active for a fixed second shape above one" {
         try std.testing.expectApproxEqAbs(@as(f64, 0.05155409052906523), p.sigma, 1e-10);
         try std.testing.expectApproxEqAbs(alpha, p.alpha, 1.6e-5);
     }
+}
+
+test "joint beta scale and shape require convergence in the data units" {
+    var x: [31]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const q = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 31.25;
+        v.* = 0.01 * f.distQuantile(.beta, q, &.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = 2 }, .{ .num = 3 } }).?;
+    }
+    // M9 suppresses the joint fit but returns the conditional scale on these
+    // same observations. At ten times the scale the joint fit also succeeds.
+    const absent = fit(.beta, &x, .{ .beta = 1.5 }, .{});
+    try std.testing.expect(absent == .nonconverged and absent.nonconverged.best == null);
+    const conditional = fit(.beta, &x, .{ .alpha = 1.5, .beta = 1.5 }, .{});
+    try std.testing.expect(conditional == .converged);
+    for (&x) |*v| v.* *= 10;
+    const ordinary = fit(.beta, &x, .{ .beta = 1.5 }, .{});
+    try std.testing.expect(ordinary == .converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.0837191503604), ordinary.converged.parameters.sigma, 1e-6);
+}
+
+test "a higher-curvature beta fit can return after one ridge step" {
+    // M9 suppresses the first solution and retains the second. Both have the
+    // same normalized observations and the same initial raw scale score (+3).
+    var x = [_]f64{ 0.00024324621448663513, 0.0023203177327168786, 0.0037588317287499738, 0.005759822400300694, 0.0066628209350688026, 0.0072065854535222924, 0.0073427548989732439, 0.0085233617709824915, 0.0090611158144312722, 0.010443118349569997, 0.010499253131446321, 0.010548226292403842, 0.010766689567083914, 0.010798034966839622, 0.011086561189288548, 0.011485969022098605, 0.012877047325498145, 0.013909314438639268, 0.015937431860890038 };
+    const absent = fit(.beta, &x, .{ .theta = -0.025688868104032762, .beta = 4.4415865084545372 }, .{});
+    try std.testing.expect(absent == .nonconverged and absent.nonconverged.best == null);
+    for (&x) |*v| v.* *= @sqrt(@as(f64, 1.25 / 8.0));
+    const retained = fit(.beta, &x, .{ .theta = -0.010154416715049353, .beta = 4.4406851454131342 }, .{});
+    try std.testing.expect(retained == .converged);
 }
