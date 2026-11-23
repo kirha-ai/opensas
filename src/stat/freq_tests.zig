@@ -16,7 +16,7 @@ pub const CountMatrix = struct {
 };
 pub const Test = struct { statistic: f64, df: f64, p: f64 };
 pub const Expected = union(enum) { equal, proportions: []const f64, frequencies: []const f64 };
-pub const GoodnessOfFit = struct { pearson: Test, likelihood_ratio: Test, sparse: bool, total: f64 };
+pub const GoodnessOfFit = struct { pearson: Test, likelihood_ratio: Test, sparse: bool, small_percent: ?u8, total: f64 };
 pub const Fisher = struct { probability: f64, left: f64, right: f64, two_sided: f64 };
 pub const ChiSquare = struct {
     pearson: Test,
@@ -28,6 +28,7 @@ pub const ChiSquare = struct {
     contingency: f64,
     cramer_v: f64,
     sparse: bool,
+    small_percent: u8,
     total: f64,
 };
 
@@ -76,6 +77,10 @@ pub fn expectedFactor(level_count: usize, n: f64, expected: Expected) Error!f64 
     return factor;
 }
 
+fn smallPercentage(small: usize, cells: usize) u8 {
+    return @intFromFloat(@round(100 * @as(f64, @floatFromInt(small)) / @as(f64, @floatFromInt(cells))));
+}
+
 pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64) Error!GoodnessOfFit {
     if (counts.len == 0 or !countValid(counts)) return error.ExecError;
     const n = sum(counts);
@@ -95,7 +100,7 @@ pub fn goodnessOfFit(counts: []const f64, expected: Expected, df_override: ?f64)
         if (o > 0) lr += 2 * o * @log(o / e);
         if (e < 5) small += 1;
     }
-    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = df > 0 and small * 5 > counts.len, .total = n };
+    return .{ .pearson = chi(pearson, df), .likelihood_ratio = chi(lr, df), .sparse = df > 0 and small * 5 > counts.len, .small_percent = if (expected == .equal) null else smallPercentage(small, counts.len), .total = n };
 }
 
 const Margins = struct { row: []f64, col: []f64, n: f64, nr: usize, nc: usize };
@@ -167,6 +172,7 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
         .contingency = @sqrt(p / (p + t.n)),
         .cramer_v = if (two) phi else @sqrt(p / t.n / @as(f64, @floatFromInt(@min(t.nr, t.nc) - 1))),
         .sparse = small * 5 > t.nr * t.nc,
+        .small_percent = smallPercentage(small, t.nr * t.nc),
         .total = t.n,
     };
 }

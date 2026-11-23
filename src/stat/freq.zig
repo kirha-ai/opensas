@@ -582,6 +582,14 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     if (opts.by_seen and pb.names.len == 0) return parser.fail("BY requires at least one variable");
     const bc = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |bn, k| bc[k] = input.indexOf(bn) orelse return cx.diags.fail(error.ParseError, 0, "PROC FREQ: BY variable {s} not in {s}", .{ bn, input.name });
+    if (opts.noprint and opts.output == null) {
+        for (opts.requests.items) |req| {
+            if (req.out_name != null) break;
+        } else {
+            try cx.diags.report(.note, 0, "Processing will terminate because there are no valid requests for displayed output or output data sets.", .{});
+            return;
+        }
+    }
     if (!pb.notsorted) for (1..@max(1, input.rows.items.len)) |i| {
         if (byOrderViolation(input.rows.items[i], input.rows.items[i - 1], bc, pb.desc, input.sortseq_linguistic orelse io.global_sortseq_linguistic)) |j| return cx.diags.fail(error.ParseError, 0, "Data set {s} is not sorted in {s} sequence.", .{ input.name, if (pb.desc[j]) "descending" else "ascending" });
     };
@@ -673,6 +681,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"), if (bc.len > 0) by_number else null, k + 1);
             }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
+            if (opts.noprint and writer == null) continue;
             if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
@@ -1255,6 +1264,21 @@ fn statText(a: std.mem.Allocator, v: f64, s: CellStat, req: Request, cross: bool
         else => pctText(a, v),
     };
     return std.mem.trim(u8, text, " ");
+}
+fn warningLocation(a: std.mem.Allocator, sl: table_model.Slice, number: usize) ![]const u8 {
+    const dims = sl.table.dimensions;
+    const n = dims.len;
+    const r = dims[n - 2].name;
+    const c = dims[n - 1].name;
+    if (n == 2) return std.fmt.allocPrint(a, " for the table of {s} by {s}", .{ r, c });
+    var location: std.ArrayList(u8) = .empty;
+    try location.appendSlice(a, try std.fmt.allocPrint(a, " for Table {d} of {s} by {s}, controlling for", .{ number, r, c }));
+    const offset = sl.stratum * sl.rows().len * sl.cols().len;
+    for (dims[0 .. n - 2], 0..) |dim, i| {
+        const value = try cellText(a, sl.table.level(offset, i).value);
+        try location.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dim.name, value }));
+    }
+    return location.items;
 }
 fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, number: usize, cross: bool) !void {
     const dims = sl.table.dimensions;
@@ -1898,6 +1922,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             if (scored.matrix.rows > 0 and scored.matrix.cols > 0) {
                 const result = try stat_exec.execute(a, cx.diags, &body, .{
                     .suppress_fisher = req.exact.families.contains(.fisher),
+                    .warning_location = if (opts.noprint and req.statistics.chisq and req.statistics.warn.log) try warningLocation(a, sl, number) else "",
                     .matrix = inferenceMatrix(scored.matrix),
                     .numeric_table_scores_valid = scored.numeric_table_scores_valid,
                     .score_display = if (req.scorout) try scoreDisplay(a, tab, scored) else null,

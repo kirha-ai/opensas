@@ -26,6 +26,16 @@ fn pair(a: A, out: *Out, label: []const u8, value: ?f64, p: bool) Error!void {
     try pad(a, out, rendered, 9, true);
     try text(a, out, "\n");
 }
+pub fn sparseWarning(a: A, percent: ?u8, location: []const u8) Error![]const u8 {
+    const subject = if (percent) |v| try std.fmt.allocPrint(a, "{d}% of the cells", .{v}) else "The table cells";
+    return std.fmt.allocPrint(a, "{s} have expected counts less than 5{s}. Chi-Square may not be a valid test.", .{ subject, location });
+}
+fn warningFootnote(a: A, out: *Out, percent: ?u8) Error!void {
+    try text(a, out, "\nWARNING: ");
+    try text(a, out, try sparseWarning(a, percent, ""));
+    try out.append(a, '\n');
+}
+
 pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Options) Error!void {
     const hypothesis: []const u8 = switch (opts.expected) {
         .equal => "Equal Proportions",
@@ -42,7 +52,7 @@ pub fn goodnessOfFit(a: A, out: *Out, result: k.GoodnessOfFit, opts: parse.Optio
         try pair(a, out, "DF", result.likelihood_ratio.df, false);
         try pair(a, out, "Pr > ChiSq", result.likelihood_ratio.p, true);
     }
-    if (result.sparse and opts.warn.display) try text(a, out, "\nWARNING: More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.\n");
+    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent);
 }
 fn chiRow(a: A, out: *Out, label: []const u8, result: k.Test) Error!void {
     try pad(a, out, label, 30, false);
@@ -70,7 +80,7 @@ pub fn contingency(a: A, out: *Out, result: k.ChiSquare, opts: parse.Options, fi
     try coefficient(a, out, "Phi Coefficient", result.phi);
     try coefficient(a, out, "Contingency Coefficient", result.contingency);
     try coefficient(a, out, "Cramer's V", result.cramer_v);
-    if (result.sparse and opts.warn.display) try text(a, out, "\nWARNING: More than 20% of the cells have expected counts less than 5. Chi-Square may not be a valid test.\n");
+    if (result.sparse and opts.warn.display) try warningFootnote(a, out, result.small_percent);
     if (result.fisher) |f| {
         try text(a, out, "\nFisher's Exact Test\n----------------------------------\n");
         try pair(a, out, "Cell (1,1) Frequency (F)", first_cell, false);
