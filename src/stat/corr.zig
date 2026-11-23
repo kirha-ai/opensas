@@ -219,7 +219,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         const value = try numericOption(cx, toks, &i);
                         if (eq(key.text, "converge")) {
                             if (value < 0 or value > 1) return cx.diags.fail(error.ParseError, key.line, "The parameter value {d} is not within the required range of 0 and 1.", .{value});
-                            if (value == 0) return fail(cx, key);
+                            if (value == 0 and serial) return fail(cx, key);
                             opt.converge = value;
                         } else if (eq(key.text, "maxiter") and value >= 1 and value < @as(f64, @floatFromInt(std.math.maxInt(usize))) and @trunc(value) == value) {
                             opt.maxiter = @intFromFloat(value);
@@ -1410,6 +1410,23 @@ test "CORR ordinal SAS joint MLE and convergence options" {
     try std.testing.expect(!fail_result.converged and std.math.isNan(fail_result.r));
 }
 
+test "CORR zero tolerance requires an unchanged polychoric scoring iterate" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const rows = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 3 }, &.{ 0, 1, 2 }, &.{ 1, 0, 2 }, &.{ 1, 1, 3 } });
+    const limited = (try Testing.analyze(a, rows, "proc corr polychoric(converge=0 maxiter=6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(!limited.converged and std.math.isNan(limited.r));
+    const fit = (try Testing.analyze(a, rows, "proc corr polychoric(converge=0 maxiter=12);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expectEqual(@as(f64, 0x1.3c6ef372fe94dp-2), fit.r);
+    try std.testing.expectEqual(@as(f64, 0x1.d9fb5f1991926p-2), fit.se);
+    const independent = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{ &.{ 0, 0, 5 }, &.{ 0, 1, 5 }, &.{ 1, 0, 5 }, &.{ 1, 1, 5 } });
+    const first = (try Testing.analyze(a, independent, "proc corr polychoric(converge=0 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectEqual(@as(f64, 0), first.r);
+    try std.testing.expectEqual(@as(f64, 0), first.lr);
+}
+
 test "CORR ordinal convergence accepts one and diagnoses values outside the unit interval" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1579,7 +1596,7 @@ test "CORR advanced invalid combinations and options fail through captured diagn
     const ds = try Testing.dataset(a, &.{ "x", "y", "w" }, &.{ &.{ 1, 2, 1 }, &.{ 2, 4, 1 } });
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("d", ds);
-    for ([_][]const u8{ "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=0); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
+    for ([_][]const u8{ "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=2); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
         var d = diag.Diagnostics.init(a);
         const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
         try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));

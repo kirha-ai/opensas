@@ -376,8 +376,78 @@ fn scoreScale(scores: ?[]const f64) f64 {
     return std.math.ldexp(@as(f64, 1), std.math.frexp(largest).exponent - 1);
 }
 
+// When both binary margins are balanced the thresholds remain zero by
+// symmetry. Each diagonal has probability 1/4 + asin(rho)/(2*pi).
+fn quadrantProbability(rho: f64) f64 {
+    const angle: f64 = @floatCast(std.math.asin(@as(f128, rho)));
+    return @mulAdd(f64, angle, 0.5 / std.math.pi, 0.25);
+}
+
+fn balancedLogLikelihood(counts: []const f64, diagonal: f64, null_model: bool) f64 {
+    const off = 0.5 - diagonal;
+    var ll: f64 = 0;
+    for (counts, [_]f64{ diagonal, off, off, diagonal }) |n, p| {
+        const log_p = @log(@max(p, minimum_cell_probability));
+        ll = if (null_model) @mulAdd(f64, n, log_p, ll) else ll + n * log_p;
+    }
+    return ll;
+}
+
+fn balancedPolychoric(counts: []const f64, total: f64, initial: f64, opts: PolychoricOptions) Polychoric {
+    const null_ll = balancedLogLikelihood(counts, 0.25, true);
+    var rho = initial;
+    var diagonal = quadrantProbability(rho);
+    var ll = balancedLogLikelihood(counts, diagonal, false);
+    var iterations: usize = 0;
+    var retraction: f64 = 0.001;
+    while (iterations < opts.maxiter) {
+        iterations += 1;
+        const off = 0.5 - diagonal;
+        const d = 1 / (2 * std.math.pi * @sqrt(conditionalVariance(rho)));
+        var score: f64 = 0;
+        var information: f64 = 0;
+        for (counts, [_]f64{ diagonal, off, off, diagonal }, [_]f64{ d, -d, -d, d }) |n, probability, derivative| {
+            const ratio = derivative / @max(probability, minimum_cell_probability);
+            score += n * ratio;
+            information += ratio * derivative;
+        }
+        const variance = 1 / (total * information);
+        const step = variance * score;
+        var scale: f64 = 1;
+        var candidate = rho;
+        var projected = false;
+        const accepted = for (0..30) |_| {
+            candidate = rho + scale * step;
+            projected = @abs(candidate) >= 1;
+            if (projected) {
+                candidate = std.math.copysign(1 - retraction, candidate);
+                retraction *= 0.1;
+                if (@abs(candidate) == 1) break false;
+            }
+            diagonal = quadrantProbability(candidate);
+            const trial = balancedLogLikelihood(counts, diagonal, false);
+            if (trial >= ll) {
+                ll = trial;
+                break true;
+            }
+            scale /= 2;
+        } else false;
+        if (!accepted) break;
+        const delta = if (projected) scale * step else candidate - rho;
+        const change = @abs(delta) / (if (@abs(candidate) < 0.01) 1 else @abs(candidate));
+        rho = candidate;
+        if (change == 0 or change < opts.converge) return .{
+            .coefficient = measure(rho, variance, variance, opts.alpha),
+            .likelihood_ratio = chi(2 * (ll - null_ll), 1),
+            .converged = true,
+            .iterations = iterations,
+        };
+    }
+    return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
+}
+
 pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOptions) Error!Polychoric {
-    if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge <= 0 or opts.maxiter == 0) return error.ExecError;
+    if (!(opts.alpha > 0 and opts.alpha < 1) or !std.math.isFinite(opts.converge) or opts.converge < 0 or opts.maxiter == 0) return error.ExecError;
     var m = input;
     const counts = try a.dupe(f64, input.counts);
     defer a.free(counts);
@@ -449,6 +519,8 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
     // CORR takes the reciprocal column deviation first. The two divisions
     // preserve the ordering observed in native VAR and WITH first-step fits.
     params[dim - 1] = (xy - sx * sy / t.n) * ((1 / y_sd) / x_sd);
+    if (m.rows == 2 and m.cols == 2 and counts[0] == counts[3] and counts[1] == counts[2] and @abs(params[dim - 1]) < 1)
+        return balancedPolychoric(counts, t.n, params[dim - 1], opts);
     const hessian = try a.alloc(f64, dim * dim);
     defer a.free(hessian);
     const gradient = try a.alloc(f64, dim);
@@ -564,7 +636,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             // SAS boundary-step convention, so preserve this public guard.
             return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
         }
-        if (change < opts.converge) {
+        if (change == 0 or change < opts.converge) {
             converged = true;
             break;
         }
