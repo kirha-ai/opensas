@@ -1820,6 +1820,23 @@ test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
         try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
     }
 }
+test "CORR refines repeated polychoric projections with occupied crossing cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 111, -2, 2871 }, &.{ -78, -79, 4257 }, &.{ 111, -79, 792 }, &.{ -78, 58, 99 },
+        &.{ -19, -79, 7227 }, &.{ 111, -67, 6633 }, &.{ 111, 58, 2772 }, &.{ 105, -79, 2574 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 27225), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.99999), fit.r, 1e-14);
+    try std.testing.expectEqual(@as(f64, 0), fit.se);
+    try std.testing.expect(std.math.isNan(fit.wald));
+    try std.testing.expectApproxEqAbs(@as(f64, 26726.787288762935), fit.lr, 1e-7);
+}
+
 test "CORR resolves separated four-level projections with distinguishable likelihood gaps" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

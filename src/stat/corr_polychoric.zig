@@ -589,14 +589,14 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             for (params, 0..) |p, i| candidate[i] = p - scale * gradient[i];
             // SAS first-step oracle: an overshoot is restarted at +/-0.999,
             // rather than halving all coordinates solely to force |rho|<1.
-            // Successive overshoots on the supported boundaries refine this distance
-            // by one decimal place (positive and negative M9 MAXITER traces).
+            // Each further overshoot moves the projection one decimal place
+            // closer to the boundary, including for interior contingency tables.
             projected = @abs(candidate[dim - 1]) >= 1;
             if (projected) {
                 const rho = std.math.copysign(1 - boundary_distance, candidate[dim - 1]);
                 if (@abs(rho) == 1) return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
                 candidate[dim - 1] = rho;
-                if (projected_boundary) boundary_distance *= 0.1;
+                boundary_distance *= 0.1;
             }
             const improves = negativeLogLikelihood(m, candidate) <= base + 1e-10;
             if (projected and four_by_four_boundary and !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated)) {
