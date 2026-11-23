@@ -68,3 +68,50 @@ pub fn basic(ctx: ?u.Context, mean: f64, deviation: f64, mean_ci: inference.Inte
     }
     try t.finish();
 }
+
+pub const TailRow = struct {
+    percent: f64,
+    count: f64,
+    mean: f64,
+    se: f64,
+    lower: f64,
+    upper: f64,
+    df: f64,
+    t: f64,
+    p: f64,
+};
+fn tailFormat(a: std.mem.Allocator, rows: []const TailRow, comptime field: []const u8) ![]const u8 {
+    const values = try a.alloc(f64, rows.len);
+    for (rows, values) |r, *v| v.* = @field(r, field);
+    return fmt.statistic(a, values);
+}
+pub fn tailMeans(ctx: ?u.Context, winsor: bool, df: bool, ci: inference.CI, alpha: f64, rows: []const TailRow) !void {
+    if (rows.len == 0) return;
+    const kind = if (winsor) @as([]const u8, "Winsorized") else "Trimmed";
+    var t = (try u.Context.start(ctx, if (winsor) "WinsorizedMeans" else "TrimmedMeans", if (winsor) "Winsorized Means" else "Trimmed Means")) orelse return;
+    const a = t.builder.ds.arena;
+    const level = 100 * (1 - (ci.alpha orelse alpha));
+    try t.num("HalfP", "6.2", try std.fmt.allocPrint(a, "Percent {s} in Tail", .{kind}));
+    try t.num("HalfN", "6.", try std.fmt.allocPrint(a, "Number {s} in Tail", .{kind}));
+    try t.num("Mean", try tailFormat(a, rows, "mean"), try std.fmt.allocPrint(a, "{s} Mean", .{kind}));
+    if (df) {
+        try t.num("StdMean", try tailFormat(a, rows, "se"), try std.fmt.allocPrint(a, "Std Error of {s} Mean", .{kind}));
+        if (ci.side != .upper) try t.num("LCLMean", try tailFormat(a, rows, "lower"), try std.fmt.allocPrint(a, "Lower {d}% Confidence Limit for Mean", .{level}));
+        if (ci.side != .lower) try t.num("UCLMean", try tailFormat(a, rows, "upper"), try std.fmt.allocPrint(a, "Upper {d}% Confidence Limit for Mean", .{level}));
+        try t.num("DF", "6.", "Degrees of Freedom");
+        try t.num("tValue", try tailFormat(a, rows, "t"), "t Value");
+        try t.num("Probt", "PVALUE6.4", "Pr > |t|");
+    }
+    for (rows) |r| {
+        var cells: std.ArrayList(@import("../value.zig").Value) = .empty;
+        try cells.appendSlice(a, &.{ b.n(r.percent), b.n(r.count), b.n(r.mean) });
+        if (df) {
+            try cells.append(a, b.n(r.se));
+            if (ci.side != .upper) try cells.append(a, b.n(r.lower));
+            if (ci.side != .lower) try cells.append(a, b.n(r.upper));
+            try cells.appendSlice(a, &.{ b.n(r.df), b.n(r.t), b.n(r.p) });
+        }
+        try t.row(cells.items);
+    }
+    try t.finish();
+}

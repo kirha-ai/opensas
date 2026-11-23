@@ -9,9 +9,12 @@ const A = std.mem.Allocator;
 fn num(a: A, x: f64) ![]const u8 {
     return if (std.math.isNan(x)) "." else std.fmt.allocPrint(a, "{d:.6}", .{x});
 }
-fn row(a: A, out: *std.ArrayList(u8), name: []const u8, values: []const f64) !void {
+fn cells(a: A, out: *std.ArrayList(u8), name: []const u8, values: []const f64) !void {
     try out.appendSlice(a, name);
     for (values) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}", .{try num(a, v)}));
+}
+fn row(a: A, out: *std.ArrayList(u8), name: []const u8, values: []const f64) !void {
+    try cells(a, out, name, values);
     try out.append(a, '\n');
 }
 fn heading(a: A, out: *std.ArrayList(u8), text: []const u8, ci: k.CI, alpha: f64) !void {
@@ -85,18 +88,22 @@ pub fn render(a: A, out: *std.ArrayList(u8), z: Summary, df: bool, def: u8, mu0:
         if (values.len == 0) continue;
         if (df) try heading(a, out, if (winsor) "Winsorized Means" else "Trimmed Means", ci, opt.alpha) else try out.appendSlice(a, if (winsor) "\nWinsorized Means\n" else "\nTrimmed Means\n");
         try out.appendSlice(a, if (df) "Percent in Tail  Number in Tail  Mean  Std Error  Lower  Upper  DF  t  Pr > |t|\n" else "Percent in Tail  Number in Tail  Mean\n");
+        var captured: std.ArrayList(typed.TailRow) = .empty;
         for (values) |amount| {
-            if (amount == 0) continue; // SAS omits zero trimming requests.
+            if (amount == 0) continue;
             const n: f64 = @floatFromInt(x.len);
             const count = if (amount < 1) @ceil(amount * n) else amount;
             const pct = 100 * count / n;
-            if (k.trimmed(x, amount, winsor, mu0, df, ci, opt.alpha)) |r| {
-                if (df) try row(a, out, "", &.{ pct, @round(count), r.mean, r.se, r.limits.lower, r.limits.upper, r.df, r.t, r.p }) else try row(a, out, "", &.{ pct, @round(count), r.mean });
-            } else {
-                const missing = std.math.nan(f64);
-                if (df) try row(a, out, "", &.{ pct, @round(count), missing, missing, missing, missing, missing, missing, missing }) else try row(a, out, "", &.{ pct, @round(count), missing });
-            }
+            const missing = std.math.nan(f64);
+            const r = k.trimmed(x, amount, winsor, mu0, df, ci, opt.alpha) orelse k.Trim{ .k = 0, .mean = missing, .df = missing };
+            if (df) {
+                try cells(a, out, "", &.{ pct, count, r.mean, r.se, r.limits.lower, r.limits.upper, r.df, r.t });
+                const pv = if (std.math.isNan(r.p)) "." else if (r.p < 0.0001) "<.0001" else try std.fmt.allocPrint(a, "{d:.4}", .{r.p});
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}\n", .{pv}));
+            } else try row(a, out, "", &.{ pct, count, r.mean });
+            if (ods != null) try captured.append(a, .{ .percent = pct, .count = count, .mean = r.mean, .se = r.se, .lower = r.limits.lower, .upper = r.limits.upper, .df = r.df, .t = r.t, .p = r.p });
         }
+        try typed.tailMeans(ods, winsor, df, ci, opt.alpha, captured.items);
         try listing.finish(a, out, start, if (winsor) "WinsorizedMeans" else "TrimmedMeans");
     }
     if (opt.robustscale) {
