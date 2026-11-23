@@ -504,8 +504,7 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         const to_limit = if (dr == 0) 0 else (limit - params[dim - 1]) / dr;
         // A nearby endpoint and its midpoint bracket the ordinary Newton
         // trial. The endpoint can be selected even when it extends the step.
-        const projection_limit: f64 = if (kind == .ridged) 10 else 2;
-        const project = to_limit > 0 and to_limit < projection_limit;
+        const project = to_limit > 0 and to_limit < 10;
         var scale: f64 = if (project) to_limit else 1;
         var accepted = false;
         for (0..30) |trial| {
@@ -720,6 +719,19 @@ test "CORR polyserial shortens both thresholds and correlation on a rejected ste
     try std.testing.expectApproxEqAbs(@as(f64, 101.129366689651), second.lr, 1e-10);
     const tight = try polyserial(std.testing.allocator, &data, .{ .converge = 1e-10 });
     try std.testing.expectApproxEqAbs(@as(f64, 0.82922750554063), tight.r, 1e-12);
+}
+
+test "CORR polyserial brackets ordinary Newton projections within ten step lengths" {
+    const data = [_]Observation{ .{ .x = -3, .y = 0, .f = 1 }, .{ .x = 4, .y = 1, .f = 8 } };
+    const ordinary = try polyserial(std.testing.allocator, &data, .{ .converge = 0.009517266510937922, .maxiter = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.9545241361744531), ordinary.r, 1e-13);
+    try std.testing.expectApproxEqAbs(@as(f64, 3.574229996859781), ordinary.se, 1e-11);
+    try std.testing.expectApproxEqAbs(@as(f64, 6.27897563242086), ordinary.lr, 1e-12);
+    // A slightly nearer endpoint changes the first trial. Its projected
+    // displacement exceeds the tolerance, so this cap takes the fallback.
+    const limited = try polyserial(std.testing.allocator, &data, .{ .converge = 0.009517286510937922, .maxiter = 1 });
+    try std.testing.expectEqual(@as(f64, 1), limited.r);
+    try std.testing.expect(std.math.isNan(limited.se) and std.math.isNan(limited.lr));
 }
 
 test "CORR separated binary polyserial threshold, reflected units, and information rank" {
