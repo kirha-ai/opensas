@@ -38,7 +38,9 @@ fn riskDifference(a: A, t: *b.Builder, table: []const u8, col: usize, alpha: f64
         try row.appendSlice(a, &.{ b.s(table), b.s(label), numeric(e.estimate), numeric(e.se), numeric(e.limits.lower), numeric(e.limits.upper) });
         if (has_exact) {
             const ci: risk.Interval = if (i < 3) estimates.binomial_limits[i] orelse .{} else if (difference) |v| .{ .lower = v.lower, .upper = v.upper } else .{};
-            try row.appendSlice(a, &.{ numeric(ci.lower), numeric(ci.upper) });
+            if (i == 3 and difference == null) {
+                try row.appendSlice(a, &.{ Value.specialMissing('_'), Value.specialMissing('_') });
+            } else try row.appendSlice(a, &.{ numeric(ci.lower), numeric(ci.upper) });
         }
         try row.append(a, b.s(if (i == 3) "1" else ""));
         try t.row(row.items);
@@ -166,5 +168,12 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
         try std.testing.expectApproxEqAbs(if (i == 0) @as(f64, 1.63307915458703) else 5.29231468841894, rs.row(4)[4].num, 1e-12);
         // The ODS value is unrounded. Full M9 SCORE endpoint parity is open.
         try std.testing.expect(rs.row(8)[4].num != try std.fmt.parseFloat(f64, rs.row(8)[3].str));
+    }
+    try capture.parse(a, &d, try lex.tokenize(a, "ods output RiskDiffCol1=r1 RiskDiffCol2=r2;", &d));
+    try @import("freq.zig").runFreq(.{ .arena = a, .diags = &d, .lib = &library, .capture = &capture }, &listing, try lex.tokenize(a, "proc freq data=sample;weight n;tables r*c / riskdiff(column=both cl=wald);run;", &d));
+    try capture.finish(&library, &d);
+    for ([_][]const u8{ "r1", "r2" }) |name| {
+        const row = library.find(name).?.row(3);
+        for (row[6..8]) |limit| try std.testing.expectEqual(Value.missingRank(Value.specialMissing('_').num), Value.missingRank(limit.num));
     }
 }
