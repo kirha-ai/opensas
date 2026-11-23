@@ -47,12 +47,12 @@ z y 0.94356 0.0016 8
 z z 1.00000 . 8
 
 Cronbach Coefficient Alpha
-Raw 0.86905
-Standardized 0.97669
+Raw 0.869050
+Standardized 0.976693
 Deleted Variable RawCorrelation RawAlpha StandardizedCorrelation StandardizedAlpha
-x 0.94640 0.72328 0.92567 0.98202
-y 0.99376 0.88889 0.99551 0.93212
-z 0.94220 0.86731 0.92762 0.98065
+x 0.946398 0.723278 0.925669 0.982017
+y 0.993763 0.888889 0.995514 0.932121
+z 0.942201 0.867310 0.927615 0.980653
 
 Pearson Fisher Correlation Statistics
 Variable WithVariable N Correlation Z Bias Estimate Lower Upper P
