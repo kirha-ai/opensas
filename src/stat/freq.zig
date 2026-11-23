@@ -1865,7 +1865,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
         const exact_tables = try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
-        if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact);
+        if (cx.capture) |capture| try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 1, exact_tables.simulations.items, req.exact, req.stratified.agreement.restore);
         if (cx.capture) |capture| try @import("ods_freq_tests.zig").publish(a, cx.diags, capture, source, by, by_row, tab, 0, req, result);
         try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
@@ -1911,10 +1911,14 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                         const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
                         try @import("ods_freq_exact_tests.zig").publish(a, cx.diags, capture, source, by, by_row, table_name, scored.matrix, result.chi_square, limits, req.exact);
                         try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, req.exact.pformat, risk_report, limits);
-                        try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, limits.simulations.items, req.exact);
+                        try @import("ods_freq_mc.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, limits.simulations.items, req.exact, req.stratified.agreement.restore);
                     }
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {
+                        if (cx.capture) |capture| {
+                            const table_name = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
+                            try @import("ods_freq_agreement.zig").publish(a, cx.diags, capture, source, by, by_row, table_name, s, req.stratified, stratScope(req, opts), req.exact, limits);
+                        }
                         try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));
                         break;
                     };

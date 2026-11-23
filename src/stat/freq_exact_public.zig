@@ -108,6 +108,14 @@ pub fn asymptoticTests(req: anytype, requested: @import("freq_tests_parse.zig").
 }
 
 pub fn validateClRequests(req: anytype, d: *diag.Diagnostics) diag.Error!void {
+    var conflict = false;
+    for ([_]parse.Family{ .kappa, .wtkappa }, [_]?f64{ req.stratified.agreement.null_kappa, req.stratified.agreement.null_weighted }, [_][]const u8{ "NULLKAPPA", "NULLWTKAPPA" }, [_][]const u8{ "KAPPA", "WTKAPPA" }) |f, null_value, option, family| {
+        if (null_value != null and req.exact.families.contains(f)) {
+            try d.report(.err, 0, "The AGREE {s}= option is not available with the {s} option in the EXACT statement.", .{ option, family });
+            conflict = true;
+        }
+    }
+    if (conflict) return error.ParseError;
     const risks = [_]?@import("freq_risk_parse.zig").Request{ req.risk.difference, req.risk.relative_risk, req.risk.odds_ratio };
     for (risks, [_]parse.Family{ .riskdiff, .relrisk, .oddsratio }) |maybe, family| if (maybe) |r| {
         var wants_exact = false;
@@ -307,7 +315,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 } else {
                     // M9 displays the last RNG state in the weighted-kappa
                     // table even when it is the only requested statistic.
-                    const displayed_seed = if (f == .wtkappa) r.complete.final_seed else family_seed;
+                    const displayed_seed = if (f == .wtkappa and !req.stratified.agreement.restore) r.complete.final_seed else family_seed;
                     try limits.simulations.append(a, .{ .family = f, .sample = r.complete, .seed = displayed_seed });
                     if (!concordance or concordance_seed == null) {
                         next_seed = r.complete.final_seed;

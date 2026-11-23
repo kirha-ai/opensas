@@ -31,9 +31,9 @@ fn definition(f: parse.Family, one: bool) ?Definition {
         .stutc => .{ .object = "TauCMC", .suffix = "STUTC", .symbol = "t" },
         .smdcr => .{ .object = "SomersDCRMC", .suffix = "SMDCR", .symbol = "D" },
         .smdrc => .{ .object = "SomersDRCMC", .suffix = "SMDRC", .symbol = "D" },
-        .kappa => .{ .object = "KappaMC", .suffix = "KAPPA" },
-        .wtkappa => .{ .object = "WtKappaMC", .suffix = "WTKAP" },
-        .symmetry => .{ .object = "SymmetryMC", .suffix = "SYM" },
+        .kappa => .{ .object = "KappaMC", .suffix = "KAPPA", .symbol = "K" },
+        .wtkappa => .{ .object = "WtKappaMC", .suffix = "WTKAP", .symbol = "K" },
+        .symmetry => .{ .object = "SymmetryMC", .suffix = "TSYMM" },
         else => null,
     };
 }
@@ -56,16 +56,17 @@ fn longTable(a: A, t: *b.Builder, title: []const u8, def: Definition, sim: Simul
         try interval(&rows, if (right) "MCPR" else "MCPL", def.suffix, "Estimate", sim.sample.one_sided, level);
         try rows.add("", try std.fmt.allocPrint(a, "Two-sided Pr >= |{s}|", .{symbol}), "", null);
         try interval(&rows, "MCP2", def.suffix, "Estimate", sim.sample.two_sided, level);
-    } else try interval(&rows, "MCP", def.suffix, if (sim.family == .fisher) "Pr <= P" else "Pr >= ChiSq", sim.sample.two_sided, level);
+    } else try interval(&rows, "MCP", def.suffix, if (sim.family == .fisher) "Pr <= P" else if (sim.family == .symmetry) "Pr >= S" else "Pr >= ChiSq", sim.sample.two_sided, level);
     try rows.integer(try std.fmt.allocPrint(a, "N_MC_{s}", .{def.suffix}), "Number of Samples", sim.sample.samples);
     try rows.integer(try std.fmt.allocPrint(a, "SEED_MC_{s}", .{def.suffix}), "Initial Seed", sim.seed);
     rows.finish();
 }
-fn agreement(a: A, t: *b.Builder, title: []const u8, sim: Simulation, level: []const u8) !void {
+fn agreement(a: A, t: *b.Builder, title: []const u8, sim: Simulation, level: []const u8, opt: parse.Options) !void {
     const symmetry = sim.family == .symmetry;
     try t.char("Label", if (symmetry) 11 else 9);
     t.ds.setLabel("Label", "Probability");
-    for ([_][]const u8{ "Estimate", "LowerCL", "UpperCL" }) |name| try t.num(name, "PVALUE6.4");
+    const format = try @import("ods_freq_exact_rows.zig").probabilityFormat(a, opt.pformat);
+    for ([_][]const u8{ "Estimate", "LowerCL", "UpperCL" }) |name| try t.num(name, format);
     t.ds.setLabel("LowerCL", try std.fmt.allocPrint(a, "{s}% Lower Confidence Limit", .{level}));
     t.ds.setLabel("UpperCL", try std.fmt.allocPrint(a, "{s}% Upper Confidence Limit", .{level}));
     try t.num("Samples", "8.");
@@ -79,7 +80,7 @@ fn agreement(a: A, t: *b.Builder, title: []const u8, sim: Simulation, level: []c
     }
 }
 
-pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, simulations: []const Simulation, opt: parse.Options) diag.Error!void {
+pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const Dataset, by: []const usize, rep: ?[]const Value, tab: *model.Table, number: usize, simulations: []const Simulation, opt: parse.Options, restore: bool) diag.Error!void {
     const nd = tab.dimensions.len;
     for (simulations) |sim| {
         const def = definition(sim.family, nd == 1) orelse continue;
@@ -89,7 +90,7 @@ pub fn publish(a: A, d: *diag.Diagnostics, capture: *ods.Capture, source: *const
         const title = try @import("ods_freq_exact_rows.zig").tableName(a, tab, number);
         const level = try @import("freq_risk_render.zig").confidence(a, opt.alpha);
         switch (sim.family) {
-            .kappa, .wtkappa, .symmetry => try agreement(a, &t, title, sim, level),
+            .kappa, .wtkappa, .symmetry => if (restore) try longTable(a, &t, title, def, sim, opt, level) else try agreement(a, &t, title, sim, level, opt),
             else => try longTable(a, &t, title, def, sim, opt, level),
         }
         try capture.publish(a, d, def.object, &t.ds);

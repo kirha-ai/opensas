@@ -5,6 +5,13 @@ const Value = @import("../value.zig").Value;
 const b = @import("ods_table.zig");
 const parse = @import("freq_exact_parse.zig");
 const fmt = @import("../format.zig");
+pub fn probabilityFormat(a: std.mem.Allocator, style: parse.ProbabilityFormat) ![]const u8 {
+    return switch (style) {
+        .default, .exact => "PVALUE6.4",
+        .named => |name| if (fmt.parseSpec(name).name.len == 0) try std.fmt.allocPrint(a, "F{s}", .{name}) else try std.ascii.allocUpperString(a, name),
+    };
+}
+
 pub fn tableName(a: std.mem.Allocator, tab: *const @import("freq_table.zig").Table, number: usize) ![]const u8 {
     const dimensions = tab.dimensions;
     const last = dimensions[dimensions.len - 1].name;
