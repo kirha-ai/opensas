@@ -40,6 +40,50 @@ pub const Plan = struct {
     sample_max: f64,
 };
 
+/// M9 emits the Fourier lattice in groups of four. Rounding affects whether a
+/// regular point exactly on a histogram boundary produces an extra output row.
+/// Odd sample sizes have two leading points and a shorter final vector group.
+fn outputLattice(points: []f64, lo: f64, hi: f64, odd_count: bool) void {
+    const span = hi - lo;
+    const extra = if (points.len == 512) span else 0;
+    const first = (lo - span / 2) - extra;
+    const limit = (hi + span / 2) + extra;
+    const step = (limit - first) / @as(f64, @floatFromInt(points.len));
+    const four_steps: @Vector(4, f64) = @splat(4 * step);
+    const eight_steps: @Vector(4, f64) = @splat(8 * step);
+    const offsets: @Vector(4, f64) = .{ 0, step, 2 * step, 3 * step };
+    const preceding = first - step;
+    var at: usize = 0;
+    var scalar = preceding;
+    if (odd_count) {
+        points[0] = first;
+        points[1] = first + step;
+        scalar = ((preceding + step) + step) + step;
+        at = 2;
+    }
+    const start = if (odd_count) @mulAdd(f64, 3, step, preceding) else first;
+    var lanes = @as(@Vector(4, f64), @splat(start)) + offsets;
+    while (at + 16 <= points.len) {
+        for (0..2) |_| {
+            points[at..][0..4].* = lanes;
+            points[at + 4 ..][0..4].* = lanes + four_steps;
+            lanes += eight_steps;
+            at += 8;
+        }
+        scalar += 16 * step;
+    }
+    if (!odd_count) return;
+    const tail = @mulAdd(f64, @as(f64, @floatFromInt(at + 1)), step, preceding);
+    lanes = @as(@Vector(4, f64), @splat(tail)) + offsets;
+    while (at + 4 <= points.len) : (at += 4) {
+        points[at..][0..4].* = lanes;
+        lanes += four_steps;
+        scalar += 4 * step;
+    }
+    points[at] = scalar;
+    points[at + 1] = scalar + step;
+}
+
 pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate: kernel.Estimate, endpoints: []const f64, options: Options) diag.Error!Plan {
     if (x.len == 0 or endpoints.len < 2) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sample and histogram boundaries", .{});
     for (x, 0..) |v, i| if (!std.math.isFinite(v) or (i > 0 and v < x[i - 1])) return d.fail(error.ParseError, 0, "UNIVARIATE: OUTKERNEL requires sorted finite observations", .{});
@@ -62,8 +106,10 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     } else if (fft_pad <= (if (constant) range else range / 2)) 256 else 512;
     if (own.fft > 1.5 * range) try d.warn(0, "UNIVARIATE: kernel bandwidth produces wrap-around at the finite output grid ends", .{});
     const origin = lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
-    const grid_last = origin + @as(f64, @floatFromInt(length - 1)) * step;
-    if (!std.math.isFinite(origin) or !std.math.isFinite(grid_last) or !std.math.isFinite(@as(f64, @floatFromInt(length)) * step) or !(origin + step > origin)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel lattice exceeds floating-point resolution", .{});
+    var storage: [512]f64 = undefined;
+    const lattice = storage[0..length];
+    outputLattice(lattice, lo, hi, x.len % 2 == 1);
+    if (!std.math.isFinite(origin) or !std.math.isFinite(lattice[0]) or !std.math.isFinite(lattice[length - 1]) or !std.math.isFinite(@as(f64, @floatFromInt(length)) * step) or !(origin + step > origin)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel lattice exceeds floating-point resolution", .{});
     var first = endpoints[0];
     var last = endpoints[endpoints.len - 1];
     // Supplied endpoints are lattice values; an observation on the open side
@@ -113,12 +159,11 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     if (!std.math.isFinite(first) or !std.math.isFinite(last) or !(last > first)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid kernel output extent", .{});
     var points: std.ArrayList(f64) = .empty;
     // SAS retains requested boundaries even when they duplicate a lattice row.
-    if (first >= origin and first <= grid_last) try points.append(a, first);
-    for (0..length) |i| {
-        const point = origin + @as(f64, @floatFromInt(i)) * step;
+    if (first >= lattice[0] and first <= lattice[length - 1]) try points.append(a, first);
+    for (lattice) |point| {
         if (point >= first and point <= last) try points.append(a, point);
     }
-    if (last >= origin and last <= grid_last) try points.append(a, last);
+    if (last >= lattice[0] and last <= lattice[length - 1]) try points.append(a, last);
     if (options.report) |report| {
         report.point_count += points.items.len;
     }
@@ -234,4 +279,20 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
         }
     }
     return .{ .plan = plan, .estimate = estimate, .ordinates = ordinates };
+}
+
+test "UNIVARIATE native Fourier coordinate rounding covers both sample parities and grid lengths" {
+    // M9 OUTKERNEL _VALUE_ HEX16. on [-2.5, 0.8] with 8 or 9 observations.
+    const cases = [_]struct { length: usize, odd: bool, bits: [6]u64 }{
+        .{ .length = 256, .odd = true, .bits = .{ 0xc01064cccccccccd, 0xbfeb33333333333f, 0x4000b66666666668, 0x4002fb3333333334, 0x40032fffffffffff, 0x400364cccccccccc } },
+        .{ .length = 512, .odd = true, .bits = .{ 0xc01d980000000000, 0xbfeb333333333357, 0x40158e6666666666, 0x4016b0cccccccccd, 0x4016cb3333333330, 0x4016e59999999996 } },
+        .{ .length = 256, .odd = false, .bits = .{ 0xc01064cccccccccd, 0xbfeb333333333344, 0x4000b66666666663, 0x4002fb333333332e, 0x40032ffffffffffc, 0x400364ccccccccc8 } },
+        .{ .length = 512, .odd = false, .bits = .{ 0xc01d980000000000, 0xbfeb33333333335c, 0x40158e666666665f, 0x4016b0ccccccccc5, 0x4016cb333333332c, 0x4016e59999999992 } },
+    };
+    var grid: [512]f64 = undefined;
+    for (cases) |case| {
+        const n = case.length;
+        outputLattice(grid[0..n], -2.5, 0.8, case.odd);
+        for ([_]usize{ 2, n / 2, n - 14, n - 3, n - 2, n - 1 }, case.bits) |i, expected| try std.testing.expectEqual(expected, @as(u64, @bitCast(grid[i])));
+    }
 }

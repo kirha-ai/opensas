@@ -323,9 +323,8 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         const iqr = h.univPercentile(pairs, 75, def) - h.univPercentile(pairs, 25, def);
                         var report: kernel_output.Report = .{};
                         const automatic = statement.endpoints.len == 0;
-                        // M9 resolves exact lattice ties differently at different scales.
                         if (automatic and statement.endpoint_labels and x[0] < 0 and x[0] != x[x.len - 1] and
-                            (plan.endpoint_phase_ambiguous or statement.target_count != null))
+                            plan.endpoint_phase_ambiguous)
                             return proc.failGap(cx.diags, 0, "UNIVARIATE: automatic endpoint kernel alignment for these data is unresolved; supply explicit endpoints", .{});
                         try kernel_output.appendBatch(cx.diags, kd, ds, keys.items, rep, ci, x, iqr, statement.kernels, plan.endpoints, statement.vscale, .{ .automatic = automatic, .endpoint_labels = statement.endpoint_labels, .windowed = plan.clipped, .bin_width = plan.width, .right = statement.right, .clip_lower = automatic, .clip_upper = automatic, .report = &report });
                         if (report.compact_cutoff_unverified) return proc.failGap(cx.diags, 0, "UNIVARIATE: compact-kernel cutoff has not been verified", .{});
@@ -1189,4 +1188,26 @@ test "UNIVARIATE fitted quantiles retain small measured values in the listing" {
     const t = try @import("../lexer.zig").tokenize(a, program, &d);
     try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
     try std.testing.expect(std.mem.indexOf(u8, out.items, "1.0 0.000001 -0.0000031\n") != null);
+}
+
+test "UNIVARIATE two-endpoint kernel keeps a regular row immediately above its lower boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    for ([_]f64{ -0.28, -0.09, 0.14, 0.24, 0.41, 1 }) |x| try ds.appendRow(&.{.{ .num = x }});
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    const text = "proc univariate data=d noprint; histogram x / nendpoints=2 rtinclude kernel(k=n c=.7) outkernel=k noplot; run;";
+    const tokens = try @import("../lexer.zig").tokenize(a, text, &d);
+    var out: std.ArrayList(u8) = .empty;
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+    const rows = lib.find("k").?.rows.items;
+    try std.testing.expectEqual(@as(usize, 202), rows.len);
+    try std.testing.expectEqual(@as(f64, -1), rows[0][3].num);
+    try std.testing.expectEqual(@as(f64, -0.9999999999999992), rows[1][3].num);
+    try std.testing.expectEqual(@as(f64, 1), rows[201][3].num);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.8607353479640445), rows[101][5].num, 1e-12);
 }
