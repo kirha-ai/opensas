@@ -1535,6 +1535,30 @@ test "UNIVARIATE OUTTABLE honors the SAS default Qn sample-size limit" {
     try std.testing.expectApproxEqAbs(@as(f64, 19537.441543), z.std_sn, 1e-6);
 }
 
+test "UNIVARIATE Sn at the million-observation cutoff and with FORCESN" {
+    const a = std.testing.allocator;
+    const pairs = try a.alloc(h.XW, 1_000_001);
+    defer a.free(pairs);
+    // Three nearly equal groups at 0, 1 and 2 have median distance 1 from
+    // every observation. Sn is therefore 1.1926 (SAS, printed pp. 301, 420).
+    for (pairs, 0..) |*p, i| p.* = .{ .x = @floatFromInt(i / 333_334), .w = 1 };
+    for ([_]usize{ 1_000_000, 1_000_001, 1_000_001 }, [_]bool{ false, false, true }) |n, force| {
+        var arena = std.heap.ArenaAllocator.init(a);
+        defer arena.deinit();
+        var z: Summary = .{ .s = h.computeStatsV(&.{}, 0, null, .df), .pairs = pairs[0..n], .nmiss = 0, .nobs = n };
+        try robustStats(arena.allocator(), &z, false, force);
+        try std.testing.expect(std.math.isNan(z.qn));
+        if (n == 1_000_000 or force) {
+            try std.testing.expectEqual(@as(f64, 1.1926), z.sn);
+            const sigma: f64 = if (n == 1_000_000) 1.1926 else 1.1926 * 1_000_001.0 / 1_000_000.1;
+            try std.testing.expectApproxEqAbs(sigma, z.std_sn, 1e-12);
+        } else {
+            try std.testing.expect(std.math.isNan(z.sn));
+            try std.testing.expect(std.math.isNan(z.std_sn));
+        }
+    }
+}
+
 test "BUG-univnobsexcl pooled NOBS preserves excluded observations without changing N" {
     // SAS 9.4 Table 4.36 p.460; repro.sas and freqones.sas in
     // /tmp/opensas-review-fixes/BUG-univnobsexcl both give 2,1,7,2.5.
