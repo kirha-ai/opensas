@@ -1147,21 +1147,22 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
             try tables.finish(a, out, start, object);
         }
     }
-    inline for (.{ "polychoric", "polyserial" }) |kind| {
+    inline for (.{ "polyserial", "polychoric" }) |kind| {
         const estimates = @field(g, kind);
         if (estimates.len > 0) {
             const start = out.items.len;
             const polychoric = eq(kind, "polychoric");
             const hide_probs = s.options.noprob and !polychoric;
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s}", .{ kind, if (hide_probs) @as([]const u8, "Row Column N Correlation StdError WaldChiSquare LRChiSquare\n") else "Row Column N Correlation StdError WaldChiSquare WaldP LRChiSquare LRP\n" }));
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Correlations\n{s} N Correlation StdError WaldChiSquare", .{ kind, if (polychoric) @as([]const u8, "Row Column") else "ContinuousVariable OrdinalVariable" }));
+            try out.appendSlice(a, if (hide_probs) " LRChiSquare\n" else " WaldP LRChiSquare LRP\n");
             for (estimates) |entry| {
                 const e = entry.estimate;
-                const var_first = polychoric and s.with.len != 0;
+                const var_first = if (polychoric) s.with.len != 0 else !s.options.polyserial.?.ordinal_var;
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[if (var_first) entry.column else entry.row].name, s.ds.columns.items[if (var_first) entry.row else entry.column].name, e.n }));
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
                     if (hide_probs and (i == 3 or i == 5)) continue;
                     // Keep a small positive SE distinguishable from the rank-deficient zero.
-                    const value = if (i == 1 and v > 0 and v < 0.000005) try std.fmt.allocPrint(a, "{e:.5}", .{v}) else try number(a, v, i == 3 or i == 5);
+                    const value = if (i == 1 and v > 0 and v < 0.000005) try std.fmt.allocPrint(a, "{e:.5}", .{v}) else if (!polychoric and (i == 2 or i == 4) and std.math.isFinite(v)) try std.fmt.allocPrint(a, "{d:.4}", .{v}) else try number(a, v, i == 3 or i == 5);
                     try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{value}));
                 }
                 try out.append(a, '\n');
@@ -1515,6 +1516,21 @@ test "CORR ordinal boundaries and ORDINAL NGROUPS options" {
     try std.testing.expectApproxEqAbs(@as(f64, 17.2930), z.lr, 0.00005);
 }
 
+test "CORR polyserial listing always shows the continuous variable first" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "g" }, &.{
+        &.{ 1, 1 }, &.{ 3, 1 }, &.{ 5, 1 }, &.{ 2, 2 }, &.{ 4, 2 }, &.{ 6, 2 }, &.{ 3, 3 }, &.{ 5, 3 }, &.{ 8, 3 },
+    });
+    for ([_][]const u8{ "proc corr polyserial;var x;with g;run;", "proc corr polyserial(ordinal=var);var g;with x;run;" }) |source| {
+        const g = try Testing.analyze(a, ds, source);
+        var listing: std.ArrayList(u8) = .empty;
+        try render(a, &listing, g);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "ContinuousVariable OrdinalVariable") != null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "x g 9 0.53480 0.27980 3.6534 0.0560 2.2910 0.1301") != null);
+    }
+}
 test "CORR group limits name each ordinal variable once and MAXITER names its pair" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
