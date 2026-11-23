@@ -57,13 +57,19 @@ pub fn parse(a: std.mem.Allocator, d: *diag.Diagnostics, t: []const Token, i: *u
     }
     const count = @max(1, @max(kinds.items.len, bandwidths.items.len));
     const result = try a.alloc(kernel.Request, count);
+    var normal_substituted = false;
     for (result, 0..) |*request, j| {
         request.* = .{};
         if (kinds.items.len > 0) request.kind = kinds.items[@min(j, kinds.items.len - 1)];
         if (bandwidths.items.len > 0) request.bandwidth = bandwidths.items[@min(j, bandwidths.items.len - 1)];
+        if (request.bandwidth == .sjpi and request.kind != .normal) {
+            request.kind = .normal;
+            normal_substituted = true;
+        }
         if (lower.items.len > 0) request.lower = lower.items[@min(j, lower.items.len - 1)];
         if (upper.items.len > 0) request.upper = upper.items[@min(j, upper.items.len - 1)];
     }
+    if (normal_substituted) try d.warn(0, "The Sheather-Jones plug-in method uses the normal kernel for all SJPI estimates.", .{});
     return result;
 }
 

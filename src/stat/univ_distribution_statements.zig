@@ -242,7 +242,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                     cell.* = .{ .sorted = x.items };
                     try pooled.appendSlice(a, x.items);
                 }
-                if (pooled.items.len == 0) continue;
+                if (pooled.items.len == 0) {
+                    for (statement.kernels) |request| if (request.bandwidth == .sjpi) {
+                        _ = try kernel.fitSjpi(cx.diags, &.{}, 0, request);
+                        break;
+                    };
+                    continue;
+                }
                 std.mem.sort(f64, pooled.items, {}, std.sort.asc(f64));
                 const plan = try binning.determine(a, cx.diags, cells, .{ .endpoints = statement.endpoint_labels, .right = statement.right, .mode = statement.mode, .key_index = resolved.key_index, .key_move = opt.key_move, .target_count = statement.target_count, .max_nbin = statement.max_nbin, .max_sigmas = statement.max_sigmas, .initial_endpoints = statement.endpoints });
                 var output_options = schema;
@@ -854,7 +860,6 @@ test "UNIVARIATE public endpoint axes match every SAS M9 coordinate and density"
     }
 }
 
-
 test "UNIVARIATE public supplied lattices preserve budgets clipped rows and percentages" {
     for ([_][]const u8{ "endpoints", "midpoints" }) |kind| {
         for ([_][]const u8{ "maxnbin=2", "maxnbin=6", "maxnbin=10", "maxsigmas=1", "maxsigmas=3" }) |control| {
@@ -996,4 +1001,38 @@ test "UNIVARIATE public power location publishes only oracle curves with nonstat
     }
     try std.testing.expectEqual(@as(usize, 93), curves);
     try std.testing.expectEqual(@as(usize, 41), absent);
+}
+
+test "UNIVARIATE public SJPI uses the normal kernel and omits a constant curve" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    _ = try ds.addColumn("y", .num);
+    for ([_]f64{ 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 4, 10 }) |x| try ds.appendRow(&.{ .{ .num = x }, .{ .num = 2.75 } });
+    try lib.put("d", &ds);
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const t = try @import("../lexer.zig").tokenize(a, "proc univariate data=d noprint; " ++
+        "histogram x / kernel(k=q c=sjpi) outkernel=k noplot; " ++
+        "histogram y / kernel(c=sjpi) outkernel=empty noplot; run;", &d);
+    try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, t);
+    try std.testing.expect(!d.hasErrors());
+    try std.testing.expectEqual(@as(usize, 0), lib.find("empty").?.rows.items.len);
+    const k = lib.find("k").?;
+    try std.testing.expectEqual(@as(usize, 249), k.rows.items.len);
+    // M9 kde_sjpi_ties: first, center and last grid ordinates.
+    for ([_]usize{ 0, 124, 248 }, [_]f64{ -3, 5.7109375, 14.4296875 }, [_]f64{ 0.00246106157244, 2.34204123863303, 0.00022758796908 }, [_]f64{ 8.20353857482e-6, 0.00780680412878, 7.58626563587e-7 }) |i, point, percent, density| {
+        const row = k.rows.items[i];
+        try std.testing.expectEqualStrings("Normal", row[1].str);
+        try std.testing.expectApproxEqAbs(@as(f64, 1.0053107939231), row[2].num, 1e-12);
+        try std.testing.expectEqual(point, row[3].num);
+        try std.testing.expectApproxEqAbs(percent, row[4].num, 1e-11);
+        try std.testing.expectApproxEqAbs(density, row[5].num, 1e-13);
+    }
+    const messages = try d.render();
+    try std.testing.expect(std.mem.indexOf(u8, messages, "normal kernel") != null);
+    try std.testing.expect(std.mem.indexOf(u8, messages, "no estimate") != null);
 }

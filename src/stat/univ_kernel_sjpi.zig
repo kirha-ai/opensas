@@ -1,7 +1,6 @@
 //! SJPI raw assignment and solve-the-equation core on a 201-point histogram.
 //! Raw sorted/FREQ-expanded samples use the oracle-validated stored cell edge.
 //! See docs/findings/univ-sjpi-dev3/cell-edge for frozen and prospective evidence.
-//! Public statement dispatch remains a separate integration responsibility.
 //! Independently implemented from the Gaussian derivative identities and the
 //! retained SAS M9 oracle; no third-party implementation is incorporated.
 const std = @import("std");
@@ -94,8 +93,7 @@ fn cellIndex(d: *diag.Diagnostics, x: f64, lower: f64, upper: f64, points: usize
 }
 
 /// Select a normal-kernel bandwidth from caller-supplied bin counts. This API
-/// deliberately makes no raw-observation nearest-bin decisions. It is not a
-/// replacement for univ_kernel.fit or a claim of complete C=SJPI acceptance.
+/// operates on bin counts independently of raw-observation assignment.
 pub fn fromBins(d: *diag.Diagnostics, sample: BinnedSample) diag.Error!Result {
     if (!positiveFinite(sample.step) or !positiveFinite(sample.sample_stddev) or !positiveFinite(sample.iqr))
         return d.fail(error.ParseError, 0, "UNIVARIATE SJPI: bin spacing, sample standard deviation and IQR must be finite and positive", .{});

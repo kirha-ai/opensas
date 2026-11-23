@@ -48,6 +48,7 @@ pub fn append(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []
 /// Keep this separate from the mathematical estimator's stricter input API.
 pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: kernel.Request) diag.Error!kernel.Estimate {
     if (x.len == 0) return d.fail(error.ParseError, 0, "UNIVARIATE: empty kernel output sample", .{});
+    if (request.bandwidth == .sjpi) return kernel.fit(d, x, iqr, request);
     const range = x[x.len - 1] - x[0];
     const effective = if (iqr > 0) iqr else if (range > 0) range else 1;
     var estimate = if (x.len > 1) try kernel.fit(d, x, effective, request) else try kernel.fit(d, &.{ x[0], x[0] }, effective, request);
@@ -72,9 +73,15 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
 pub fn appendBatch(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const usize, representative: []const Value, ci: usize, x: []const f64, iqr: f64, requests: []const kernel.Request, endpoints: []const f64, scale: kernel.VScale, options: Options) diag.Error!void {
     if (options.report) |report| report.* = .{};
     const effective_requests: []const kernel.Request = if (requests.len == 0) &.{.{}} else requests;
-    const estimates = try output.arena.alloc(kernel.Estimate, effective_requests.len);
-    for (effective_requests, estimates) |request, *estimate| estimate.* = try fitForOutput(d, x, iqr, request);
-    return appendEstimates(d, output, source, keys, representative, ci, x, estimates, endpoints, scale, options);
+    var estimates: std.ArrayList(kernel.Estimate) = .empty;
+    for (effective_requests) |request| {
+        const estimate = if (request.bandwidth == .sjpi)
+            try kernel.fitSjpi(d, x, iqr, request) orelse continue
+        else
+            try fitForOutput(d, x, iqr, request);
+        try estimates.append(output.arena, estimate);
+    }
+    if (estimates.items.len > 0) try appendEstimates(d, output, source, keys, representative, ci, x, estimates.items, endpoints, scale, options);
 }
 
 /// Allows another owned estimator (for example SJPI) to supply its fitted
