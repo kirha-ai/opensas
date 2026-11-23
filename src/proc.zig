@@ -4551,6 +4551,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1)
                 if (toks[i].tag == .name) try appendVarListName(arena, toks, &i, &vars); // GAP-varcolonprefix-procs: keep `pfx:`
         } else if (tkKw(toks[i], "by")) {
+            bys.clearRetainingCapacity();
             try parseProcBy(arena, diags, toks, &i, &bys);
         } else if (tkKw(toks[i], "weight")) {
             i += 1; // `weight w;` — the (single) weight variable (WEIGHT-uni-impl)
