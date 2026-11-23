@@ -67,10 +67,13 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
         return if (std.math.isFinite(ll)) .{ .converged = .{ .parameters = p, .log_likelihood = ll } } else fail(.outside_support);
     }
     if (x[0] == x[x.len - 1]) return fail(.invalid_sample);
-    if (family == .power and fixed.theta == null and fixed.sigma != null and
+    // Beta(alpha,1) is the power distribution. Paired M9 fits share the
+    // initialization, including absence of a curve, for these endpoint masks.
+    const power_curve = family == .power or (family == .beta and fixed.beta == 1);
+    if (power_curve and fixed.theta == null and fixed.sigma != null and
         fixed.alpha != null and fixed.alpha.? > 0 and fixed.alpha.? < 1)
         return powerLocation(x, fixed.sigma.?, fixed.alpha.?);
-    if (family == .power and fixed.theta != null) {
+    if (power_curve and fixed.theta != null) {
         const sigma = fixed.sigma orelse (powerScaleStart(x, fixed.theta.?, fixed.alpha == null) orelse return fail(.initialization_failed));
         if (!std.math.isFinite(sigma) or !(sigma > x[x.len - 1] - fixed.theta.?)) return fail(.initialization_failed);
         var sum: f64 = 0;
@@ -595,6 +598,31 @@ test "endpoint power and beta second shape one share the same likelihood includi
     // The likelihood's one-sided boundary extension is not a relaxation of
     // SAS validation for an explicitly supplied endpoint equal to the data.
     try std.testing.expectEqual(Reason.outside_support, fit(.beta, &x, .{ .sigma = 1, .alpha = 2, .beta = 1 }, .{}).nonconverged.reason);
+}
+
+test "beta with fixed second shape one reproduces SAS power endpoint fits" {
+    // M9 likelihood-equivalence: same observations in original and shifted
+    // units. A feasible fixed threshold alone does not ensure a scale estimate.
+    for ([_]f64{ 0, 5 }, [_]f64{ 1, 10 }, [_]f64{ 0.00010101010101, 5.00129568411386 }) |offset, width, theta| {
+        var x: [41]f64 = undefined;
+        for (&x, 1..) |*v, i| {
+            const q = (@as(f64, @floatFromInt(i)) - 0.375) / 41.25;
+            v.* = offset + width * q * q;
+        }
+        const location = fit(.beta, &x, .{ .theta = null, .sigma = width, .alpha = 0.5, .beta = 1 }, .{});
+        try std.testing.expectEqual(Reason.nonstationary_candidate, location.nonconverged.reason);
+        try std.testing.expectApproxEqAbs(theta, location.nonconverged.best.?.parameters.theta, 1e-12);
+        const scale = fit(.beta, &x, .{ .theta = offset, .sigma = null, .beta = 1 }, .{});
+        if (offset == 0) {
+            try std.testing.expectEqual(Reason.nonstationary_candidate, scale.nonconverged.reason);
+            const fitted = scale.nonconverged.best.?.parameters;
+            try std.testing.expectApproxEqAbs(@as(f64, 0.97169696969696), fitted.sigma, 1e-12);
+            try std.testing.expectApproxEqAbs(@as(f64, 0.51716509792299), fitted.alpha, 1e-6);
+        } else {
+            try std.testing.expectEqual(Reason.initialization_failed, scale.nonconverged.reason);
+            try std.testing.expect(scale.nonconverged.best == null);
+        }
+    }
 }
 
 test "endpoint positive Pareto is a reflected power likelihood with analytic scores" {
