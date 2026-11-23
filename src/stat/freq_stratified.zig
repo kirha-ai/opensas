@@ -15,6 +15,14 @@ fn normal(statistic: f64, z: f64) Normal {
     const p = @exp(fns.logStdNormTail(@abs(z)));
     return .{ .statistic = statistic, .z = z, .p_one = p, .p_two = 2 * p };
 }
+test "ordered-test normal tails remain defined at zero and accurate near a zero effect" {
+    try std.testing.expectEqual(@as(f64, 0.5), normal(0, 0).p_one);
+    // Direct normal integral at the standardized kappa in the paired-table M9 probe.
+    for ([_]f64{ -0.03713736020982, 0.03713736020982 }) |z| {
+        try std.testing.expectApproxEqAbs(@as(f64, 0.4851877417118), normal(0, z).p_one, 1e-14);
+    }
+}
+
 fn chi(x: f64, df: f64) Chi {
     return .{ .statistic = x, .df = df, .p = chiTail(x, df) };
 }

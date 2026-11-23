@@ -2352,13 +2352,13 @@ pub fn distPdf(d: Dist, x: f64, args: []const Value) ?f64 {
     };
 }
 
-/// log Q(z) = log(1−Φ(z)) for z deep in the upper tail, via the Mills-ratio
-/// continued fraction Q(z) = φ(z)·r(z), r(z) = 1/(z + 1/(z + 2/(z + 3/(z+⋯)))).
-/// BUG-logxdftail (doc LOGCDF p.1169: the log family exists for tail accuracy):
-/// the direct CDF underflows f64 at |z|≳38 (and our gammaP Φ collapses to 0/1
-/// near |z|≈8 — OBS-probnormtail), so callers reach here only with |z| large;
-/// the CF converges fast there. Modified Lentz (Numerical Recipes §5.2).
+/// Log of the standard normal upper tail. Near zero use the direct erfc
+/// approximation. In the upper tail the Mills continued fraction converges
+/// quickly and keeps the result in log space even after the CDF underflows.
 pub fn logStdNormTail(z: f64) f64 {
+    if (z == 0) return -@log(@as(f64, 2));
+    if (z < 0) return std.math.log1p(-0.5 * erfcOf(-z / @sqrt(@as(f64, 2))));
+    if (z < 8) return @log(0.5 * erfcOf(z / @sqrt(@as(f64, 2))));
     const tiny = 1e-300;
     var f = z; // evaluates B = z + 1/(z + 2/(z + 3/(z+⋯))); r = 1/B
     var c = z;
