@@ -38,6 +38,9 @@ const Work = struct {
     options: Options,
     used: u64 = 0,
     stopped: bool = false,
+    /// Used only for inversion decisions. Public p-values retain their
+    /// full absolute error bounds.
+    test_size: ?f64 = null,
     fn tick(self: *Work) bool {
         if (self.stopped) return false;
         if (self.used == self.options.budget.max_tables or self.options.budget.stopped()) {
@@ -114,6 +117,10 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
     var upper: f64 = 0;
     for (coeff) |v| upper = @max(upper, v);
     best.* = @max(best.*, @max(coeff[0], coeff[coeff.len - 1]));
+    if (work.test_size) |size| {
+        if (best.* > size) return 1;
+        if (upper <= size) return upper;
+    }
     if (upper - best.* <= work.options.tolerance) return upper;
     if (depth == 64) {
         work.stopped = true;
@@ -133,6 +140,7 @@ fn maximize(coeff: []const f64, best: *f64, work: *Work, depth: usize) f64 {
     best.* = @max(best.*, left[coeff.len - 1]);
     const lu = maximize(left[0..coeff.len], best, work, depth + 1);
     if (work.stopped) return 1;
+    if (work.test_size) |size| if (best.* > size) return 1;
     const ru = maximize(right[0..coeff.len], best, work, depth + 1);
     return @max(lu, ru);
 }
@@ -186,6 +194,10 @@ fn tail(c: [4]u32, family: Family, method: Method, null_value: f64, side: Side, 
             d += 1;
         }
         for (0..n + 1) |i| sum[i] += coeff[i];
+        if (work.test_size) |size| {
+            const mass = @min(1, @max(sum[0], sum[n]));
+            if (mass > size) return .{ .complete = .{ .lower = mass, .upper = 1 } };
+        }
     };
     var best: f64 = 0;
     const upper = maximize(sum[0 .. n + 1], &best, work, 0);
@@ -222,6 +234,8 @@ fn allocatedTail(n1: u32, n2: u32, family: Family, method: Method, null_value: f
     defer built.complete.deinit(a);
     const maximum = if (grid != null)
         try polynomial.maximizeGrid(a, built.complete.coefficients, nuisance_divisions, control)
+    else if (work.test_size) |size|
+        try polynomial.maximumForTest(a, built.complete.coefficients, work.options.tolerance, size, control)
     else
         try polynomial.maximize(a, built.complete.coefficients, work.options.tolerance, control);
     if (maximum == .exhausted) return .exhausted;
@@ -469,7 +483,7 @@ pub fn riskLimits(table: risk.Table2x2, column: risk.Column, family: Family, met
     }
     const target = if (method == .score2) alpha else alpha / 2;
     var out = exact.Interval{ .lower = if (family == .difference) -1 else 0, .upper = if (family == .difference) 1 else std.math.inf(f64) };
-    var work = Work{ .options = options };
+    var work = Work{ .options = options, .test_size = target };
     for ([_]bool{ true, false }) |lower| {
         // RR structural endpoints; all-zero event rows require their own
         // modified-statistic inversion and are not silently declared [0,inf].
@@ -1332,4 +1346,31 @@ test "opposing SCORE2 relative-risk plateau includes the rational cutoff in eith
     const table = tableOf(.{ 0, 3, 7, 0 });
     try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .two_sided, .{ .budget = .{ .max_tables = 0 } })) == .exhausted);
     try t.expect((try riskTail(table, .first, .relative_risk, .score2, 0.1, .left, minimal)) == .exhausted);
+}
+
+test "a single attained nuisance probability certifies confidence-interval acceptance" {
+    const t = std.testing;
+    const c = [4]u32{ 2, 3, 4, 1 };
+    // The observed RD is negative. At null RD=0 and nuisance probability
+    // zero, the all-failure allocation has score zero and is in the right tail.
+    var work = Work{ .options = .{ .budget = .{ .max_tables = 1 } }, .test_size = 0.05 };
+    const decision = try tail(c, .difference, .score, 0, .right, &work);
+    try t.expectEqual(pointBounds(1), decision.complete);
+    try t.expectEqual(@as(u64, 1), work.used);
+    const precise = try riskTail(tableOf(c), .first, .difference, .score, 0, .right, .{});
+    try t.expectEqual(pointBounds(1), precise.complete);
+    try t.expect((try riskTail(tableOf(c), .first, .difference, .score, 0, .right, work.options)) == .exhausted);
+}
+
+test "resolved SCORE2 risk inversion fits the default budget for 1 by 2450 row totals" {
+    const t = std.testing;
+    const table = tableOf(.{ 0, 1, 2450, 0 });
+    // The plateau through r=1/2 has probability one. Just above it, through
+    // r=.6, (X=1,Y=n2) is less extreme than observed and no (X=0,Y<n2)
+    // can be as extreme. The tail is bounded by p*(1-q^n2)+(1-p)*q^n2,
+    // with p=r*q. For q>=1/4 both p and 1-p are <=7/8. Otherwise the
+    // bound is at most p+q^n2<.4. This certifies the local .95 crossing.
+    const ci = (try riskLimitsSas(table, .first, .relative_risk, .score2, 0.95, .{ .allocator = t.allocator })).complete;
+    try t.expectEqual(@as(f64, 0), ci.lower);
+    try t.expectApproxEqAbs(@as(f64, 0.5), ci.upper, 2e-11);
 }

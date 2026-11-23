@@ -193,7 +193,15 @@ fn largest(coeff: []const f64) f64 {
 /// allocator failures are the resource limits. No partial p-value on exhaustion.
 pub fn maximize(a: A, coefficients: []const f64, tolerance: f64, control: Control) Error!MaximumResult {
     if (!(tolerance > 0 and tolerance < 1)) return error.ExecError;
-    return maximum(a, coefficients, tolerance, 0, control);
+    return maximum(a, coefficients, tolerance, 0, null, control);
+}
+
+/// Bound the same supremum for a confidence-interval inversion. An attained
+/// lower bound above the test size or a global upper bound at or below it
+/// certifies the decision without requiring a more precise p-value.
+pub fn maximumForTest(a: A, coefficients: []const f64, tolerance: f64, size: f64, control: Control) Error!MaximumResult {
+    if (!(tolerance > 0 and tolerance < 1) or !(size >= 0 and size <= 1)) return error.ExecError;
+    return maximum(a, coefficients, tolerance, 0, size, control);
 }
 
 /// Certified maximum over q=i/divisions. Split at an actual grid point and
@@ -201,10 +209,10 @@ pub fn maximize(a: A, coefficients: []const f64, tolerance: f64, control: Contro
 /// only bound the search and never become the reported value.
 pub fn maximizeGrid(a: A, coefficients: []const f64, divisions: u32, control: Control) Error!MaximumResult {
     if (divisions == 0) return error.ExecError;
-    return maximum(a, coefficients, 0, divisions, control);
+    return maximum(a, coefficients, 0, divisions, null, control);
 }
 
-fn maximum(a: A, coefficients: []const f64, tolerance: f64, divisions: u32, control: Control) Error!MaximumResult {
+fn maximum(a: A, coefficients: []const f64, tolerance: f64, divisions: u32, test_size: ?f64, control: Control) Error!MaximumResult {
     if (coefficients.len == 0) return error.ExecError;
     for (coefficients) |c| if (!std.math.isFinite(c) or c < 0 or c > 1) return error.ExecError;
     if (!control.take()) return .exhausted;
@@ -226,7 +234,8 @@ fn maximum(a: A, coefficients: []const f64, tolerance: f64, divisions: u32, cont
         if (!control.take()) return .exhausted;
         const node = pop(&heap);
         defer a.free(node.coefficients);
-        if (node.upper - best <= tolerance) return .{ .complete = .{ .lower = best, .upper = @max(best, node.upper), .grid_index = grid_index } };
+        const decided = if (test_size) |size| best > size or node.upper <= size else false;
+        if (decided or node.upper - best <= tolerance) return .{ .complete = .{ .lower = best, .upper = @max(best, node.upper), .grid_index = grid_index } };
         if (divisions != 0 and node.last - node.first <= 1) continue;
         const mid = node.first + (node.last - node.first) / 2;
         const fraction = if (divisions == 0) 0.5 else real(mid - node.first) / real(node.last - node.first);
@@ -473,4 +482,20 @@ test "discrete nuisance maximization searches only actual grid nodes" {
         try std.testing.expectEqual(result.lower, result.upper);
         try std.testing.expectApproxEqAbs(expected, try evaluate(a, c, real(result.grid_index.?) / real(n)), 3e-15);
     };
+}
+
+test "inversion stops once Bernstein bounds decide the test at its stated size" {
+    const t = std.testing;
+    // f(q)=0.2+q-0.8q^2 reaches 0.5125 at q=5/8.
+    const coeff = [_]f64{ 0.2, 0.7, 0.4 };
+    const peak = 0.5125;
+    for ([_]f64{ 0, 0.15, 0.4, 0.50, 0.513, 0.55, 0.8, 1 }) |size| {
+        const bounds = (try maximumForTest(t.allocator, &coeff, 1e-13, size, .{})).complete;
+        try t.expect(bounds.lower <= peak + 1e-14 and bounds.upper >= peak - 1e-14);
+        if (peak > size) try t.expect(bounds.lower > size) else try t.expect(bounds.upper <= size);
+    }
+    const early = (try maximumForTest(t.allocator, &coeff, 1e-13, 0.15, .{})).complete;
+    try t.expect(early.upper - early.lower > 0.1);
+    const precise = (try maximize(t.allocator, &coeff, 1e-13, .{})).complete;
+    try t.expect(precise.upper - precise.lower <= 1e-13);
 }
