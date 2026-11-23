@@ -22,3 +22,6 @@ web/opensas.wasm
 /tests/corpus/includes/fmid_old.txt
 /tests/corpus/includes/fmid_new.txt
 /tests/corpus/includes/fmid2.txt
+
+# Imported modules in the statistical acceptance runner
+/tests/statistical-acceptance/__pycache__/
