@@ -54,7 +54,7 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
     const effective = if (iqr > 0) iqr else if (range > 0) range else 1;
     var estimate = if (x.len > 1) try kernel.fit(d, x, effective, request) else try kernel.fit(d, &.{ x[0], x[0] }, effective, request);
     if (x.len == 1) {
-        estimate.bandwidth *= std.math.pow(f64, 2, 0.2);
+        estimate.bandwidth = estimate.c * effective;
         estimate.amise *= std.math.pow(f64, 2, 0.8);
     }
     if (request.bandwidth == .mise) {
@@ -62,7 +62,7 @@ pub fn fitForOutput(d: *diag.Diagnostics, x: []const f64, iqr: f64, request: ker
         // both the output descriptor and the evaluated kernel bandwidth.
         const factor = std.math.pow(f64, 10, 7 - @floor(@log10(estimate.c)));
         const c = @round(estimate.c * factor) / factor;
-        const h = c * effective * std.math.pow(f64, @as(f64, @floatFromInt(x.len)), -0.2);
+        const h = c * kernel.bandwidthScale(effective, @floatFromInt(x.len));
         const ratio = h / estimate.bandwidth;
         estimate.amise *= (std.math.pow(f64, ratio, 4) + 4 / ratio) / 5;
         estimate.c = c;
@@ -164,6 +164,33 @@ fn row(d: *diag.Diagnostics, output: *Dataset, source: *Dataset, keys: []const u
     values[at + 4] = .{ .num = kernel.scaleDensity(density, width, x.len, scale) };
     values[at + 5] = .{ .num = density };
     try output.appendRow(values);
+}
+
+test "OUTKERNEL bandwidths reproduce M9 INSET HEX16 values" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const Case = struct { n: usize, iqr: f64, c: f64, bits: u64, mise_bits: ?u64 = null };
+    for ([_]Case{
+        .{ .n = 1, .iqr = 0, .c = 0.47, .bits = 0x3fde147ae147ae14, .mise_bits = 0x3fe9206321e354a4 },
+        .{ .n = 7, .iqr = 0, .c = 0.39, .bits = 0x3fd0e9c5677731f4, .mise_bits = 0x3fe106a7e1de3969 },
+        .{ .n = 137, .iqr = 1, .c = 0.76, .bits = 0x3fd22eacf3924098, .mise_bits = 0x3fd2c9095113f357 },
+        .{ .n = 240, .iqr = 1, .c = 0.64, .bits = 0x3fcb5fe56d79283c },
+        .{ .n = 6, .iqr = 0.345, .c = 1.1037, .bits = 0x3fd107bb7a6e5f2b },
+        .{ .n = 444, .iqr = 9.073, .c = 3.1, .bits = 0x40209f10120cfb41 },
+    }) |case| {
+        const sample = try a.alloc(f64, case.n);
+        @memset(sample[0 .. case.n / 2], 0);
+        @memset(sample[case.n / 2 ..], case.iqr);
+        const estimate = try fitForOutput(&d, sample, case.iqr, .{ .bandwidth = .{ .numeric = case.c } });
+        try std.testing.expectEqual(case.c, estimate.c);
+        try std.testing.expectEqual(case.bits, @as(u64, @bitCast(estimate.bandwidth)));
+        if (case.mise_bits) |bits| {
+            const mise = try fitForOutput(&d, sample, case.iqr, .{});
+            try std.testing.expectEqual(bits, @as(u64, @bitCast(mise.bandwidth)));
+        }
+    }
 }
 
 test "dev3 OUTKERNEL grids and compact cutoff oracle comparisons" {
