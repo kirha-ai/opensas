@@ -20,9 +20,7 @@ const parseProcFormat = p.parseProcFormat;
 const groupFormats = p.groupFormats;
 const FmtLevels = p.FmtLevels;
 const fmtLevelsFor = p.fmtLevelsFor;
-const fmtRank = p.fmtRank;
 const fmtRawFor = p.fmtRawFor;
-const valStr = p.valStr;
 const pctText = p.pctText;
 const line = p.line;
 const putLeft = p.putLeft;
@@ -652,9 +650,6 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     }
 }
 
-/// One-pass weighted level aggregation reused by table construction and NLEVELS.
-const LevelCount = struct { v: Value, w: f64 };
-
 /// Hash/eql on a single FREQ cell, kept consistent with `cmpValue == .eq`:
 /// chars hash right-trimmed (cmpStr blank-pads), numerics canonicalize -0/+0
 /// and hash a NaN by its missingRank (._ < . < .A < … groups like cmpNum).
@@ -680,51 +675,95 @@ const LevelValueCtx = struct {
     }
 };
 
-/// PERF-freqoneway: ONE pass over the rows — each kept cell is hashed once, a
-/// new level appended on first sight, its weighted count accumulated (the sum
-/// catWeight used to rescan the whole table for). The old distinctSorted
-/// (linear dedup scan per row) + per-level catWeight (full rescan per level)
-/// was O(N·L) — measured 5.2× time per 2× N. The count for a level adds the
-/// same row weights in the same row order as catWeight did, and the sorts are
-/// the old comparators verbatim, so output (totals/cumulatives included) is
-/// byte-identical.
-fn oneWayLevels(arena: std.mem.Allocator, ds: *Dataset, col: usize, keep_missing: bool, order: FreqOrder, wcol: ?usize, zeros: bool, fl: ?FmtLevels) ![]LevelCount {
-    var list: std.ArrayList(LevelCount) = .empty;
-    var idx: std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage) = .empty;
-    for (ds.rows.items) |r| {
-        const v = r[col];
-        if (!keep_missing and freqLevelMissing(v, fl)) continue; // missing is not a category (unless `/ missing`)
-        if (!weightKeepsRow(r, wcol, zeros)) continue; // zero-weight obs form no level by default (BUG-freqweightorder F2)
-        const gop = try idx.getOrPut(arena, v);
-        if (!gop.found_existing) {
-            gop.value_ptr.* = list.items.len;
-            try list.append(arena, .{ .v = v, .w = 0 });
+const LevelIndex = std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage);
+
+const CountedLevel = struct {
+    level: table_model.Level,
+    display: Value,
+    original_index: usize,
+
+    fn less(order: FreqOrder, left: CountedLevel, right: CountedLevel) bool {
+        const l = left.level;
+        const r = right.level;
+        if (l.missing != r.missing) return l.missing;
+        if (l.missing) {
+            if (l.value == .num and r.value == .num)
+                return Value.missingChar(l.value.num) < Value.missingChar(r.value.num);
+            return cmpValue(l.value, r.value) == .lt;
         }
-        list.items[gop.value_ptr.*].w += rowWeight(r, wcol);
+        return switch (order) {
+            .data => left.original_index < right.original_index,
+            .internal => cmpValue(l.raw, r.raw) == .lt,
+            .formatted => cmpValue(left.display, right.display) == .lt,
+            .freq => if (l.frequency != r.frequency) l.frequency > r.frequency else cmpValue(left.display, right.display) == .lt,
+        };
     }
-    const cats = list.items;
-    switch (order) {
-        .data => {}, // keep first-appearance order — no sort
-        .internal, .formatted => std.mem.sort(LevelCount, cats, {}, struct {
-            fn less(_: void, l: LevelCount, r: LevelCount) bool {
-                return cmpValue(l.v, r.v) == .lt;
+};
+
+const ColumnLevels = struct {
+    levels: []table_model.Level,
+    by_value: LevelIndex,
+};
+
+fn needsDefaultLevelFormat(ds: *Dataset, col: usize, order: FreqOrder) bool {
+    if (ds.columns.items[col].type != .num) return false;
+    if (order == .formatted or order == .freq) return true;
+    // Small whole numbers have distinct BEST12. fields. Internal and input
+    // order need no formatted keys when the entire column has this property.
+    for (ds.rows.items) |row| {
+        const x = row[col].num;
+        if (!std.math.isNan(x) and (x != @trunc(x) or @abs(x) >= 1e11)) return true;
+    }
+    return false;
+}
+
+/// Accumulate weights in input order. A numerical column with no assigned
+/// format uses BEST12. for level identity and displayed order in SAS 9.4M9.
+/// Keep the lowest observed raw value for scores and output. Cache every raw
+/// key so repeated observations need neither formatting nor another scan.
+fn columnLevels(a: std.mem.Allocator, ds: *Dataset, col: usize, order: FreqOrder, wc: ?usize, zeros: bool, fl: ?FmtLevels) !ColumnLevels {
+    var counts: std.ArrayList(CountedLevel) = .empty;
+    var by_value: LevelIndex = .empty;
+    var by_default_display: std.StringHashMapUnmanaged(usize) = .empty;
+    const default_format = needsDefaultLevelFormat(ds, col, order);
+    for (ds.rows.items) |row| {
+        if (!weightKeepsRow(row, wc, zeros)) continue;
+        const value = row[col];
+        const entry = try by_value.getOrPut(a, value);
+        if (!entry.found_existing) {
+            const raw = if (fl) |f| fmtRawFor(f, value.str) orelse value else value;
+            var display = value;
+            var index = counts.items.len;
+            if (default_format and !isMissing(value)) {
+                display = .{ .str = try format.apply(a, value, "BEST12.") };
+                const formatted = try by_default_display.getOrPut(a, display.str);
+                if (formatted.found_existing) {
+                    index = formatted.value_ptr.*;
+                    if (cmpValue(raw, counts.items[index].level.raw) == .lt) {
+                        counts.items[index].level.value = value;
+                        counts.items[index].level.raw = raw;
+                    }
+                } else formatted.value_ptr.* = index;
             }
-        }.less),
-        .freq => {
-            // descending weighted count; ties break by ascending value (SAS), or
-            // by raw-value rank for a VALUE.-format group (BUG-freqfmtorderfreqtie).
-            const FreqCtx = struct {
-                fl: ?FmtLevels,
-                fn less(self: @This(), l: LevelCount, r: LevelCount) bool {
-                    if (l.w != r.w) return l.w > r.w;
-                    if (self.fl) |f| return fmtRank(f, valStr(l.v)) < fmtRank(f, valStr(r.v));
-                    return cmpValue(l.v, r.v) == .lt;
-                }
-            };
-            std.mem.sort(LevelCount, cats, FreqCtx{ .fl = fl }, FreqCtx.less);
-        },
+            if (index == counts.items.len) try counts.append(a, .{
+                .level = .{ .value = value, .raw = raw, .missing = isMissing(raw), .frequency = 0 },
+                .display = display,
+                .original_index = index,
+            });
+            entry.value_ptr.* = index;
+        }
+        counts.items[entry.value_ptr.*].level.frequency += rowWeight(row, wc);
     }
-    return cats;
+    std.mem.sort(CountedLevel, counts.items, order, CountedLevel.less);
+    const levels = try a.alloc(table_model.Level, counts.items.len);
+    const sorted_index = try a.alloc(usize, counts.items.len);
+    for (counts.items, 0..) |counted, i| {
+        levels[i] = counted.level;
+        sorted_index[counted.original_index] = i;
+    }
+    var iter = by_value.valueIterator();
+    while (iter.next()) |index| index.* = sorted_index[index.*];
+    return .{ .levels = levels, .by_value = by_value };
 }
 
 /// Signed FREQ weight; missing weights are removed before counting.
@@ -757,22 +796,7 @@ fn appendFreqMissing(arena: std.mem.Allocator, out: *std.ArrayList(u8), miss: f6
 
 // ── freq helpers ────────────────────────────────────────────────────────────
 
-fn freqLevelMissing(v: Value, fl: ?FmtLevels) bool {
-    if (fl) |f| if (v == .str) {
-        return isMissing(fmtRawFor(f, v.str) orelse v);
-    };
-    return isMissing(v);
-}
-
-/// PROC FREQ level ordering (ORDER= option). INTERNAL → ascending value (the
-/// default); FORMATTED → ascending FORMATTED (decode) value — for a
-/// format-grouped col the cells already hold the label text, so the ascending
-/// sort IS the label order (BUG-freqweightorder F1); FREQ → descending count;
-/// DATA → first-appearance order.
-/// ponytail: FORMATTED on an ungrouped (no-format) numeric col sorts by value,
-/// not by right-justified BEST12 text — differs from SAS only for negative or
-/// fractional values with no format; switch the comparator if a golden needs
-/// the text sort.
+/// ORDER=FREQ uses descending weighted counts and formatted values for ties.
 pub const FreqOrder = enum { internal, freq, data, formatted };
 
 /// FREQ level membership under a WEIGHT: SAS drops an obs whose weight is
@@ -789,38 +813,13 @@ fn weightKeepsRow(r: []const Value, wcol: ?usize, zeros: bool) bool {
 // ── Table computation and output datasets ───────────────────────────────────
 pub fn computeTable(a: std.mem.Allocator, ds: *Dataset, cols: []const usize, wc: ?usize, zeros: bool, missing: bool, order: FreqOrder, formats: []const FmtLevels) !Table {
     const dims = try a.alloc(table_model.Dimension, cols.len);
-    const maps = try a.alloc(std.HashMapUnmanaged(Value, usize, LevelValueCtx, std.hash_map.default_max_load_percentage), cols.len);
+    const maps = try a.alloc(LevelIndex, cols.len);
     @memset(maps, .empty);
     for (cols, 0..) |ci, d| {
         const fl = fmtLevelsFor(formats, ci);
-        const cats = try oneWayLevels(a, ds, ci, true, order, wc, zeros, fl);
-        const Ctx = struct {
-            order: FreqOrder,
-            fl: ?FmtLevels,
-            fn less(c: @This(), l: LevelCount, r: LevelCount) bool {
-                const lm = freqLevelMissing(l.v, c.fl);
-                const rm = freqLevelMissing(r.v, c.fl);
-                if (lm != rm) return lm;
-                const lv = if (c.fl) |f| fmtRawFor(f, l.v.str) orelse l.v else l.v;
-                const rv = if (c.fl) |f| fmtRawFor(f, r.v.str) orelse r.v else r.v;
-                // FREQ orders missing levels first by their displayed values
-                // for every ORDER=. With no format the symbols sort . A..Z _.
-                if (lm) {
-                    if (l.v == .num and r.v == .num) return Value.missingChar(l.v.num) < Value.missingChar(r.v.num);
-                    return cmpValue(l.v, r.v) == .lt;
-                }
-                if (c.order == .data) return false;
-                if (c.order == .freq and l.w != r.w) return l.w > r.w;
-                return cmpValue(if (c.order == .formatted) l.v else lv, if (c.order == .formatted) r.v else rv) == .lt;
-            }
-        };
-        std.mem.sort(LevelCount, cats, Ctx{ .order = order, .fl = fl }, Ctx.less);
-        const levels = try a.alloc(table_model.Level, cats.len);
-        for (cats, 0..) |cat, k| {
-            levels[k] = .{ .value = cat.v, .raw = if (fl) |f| fmtRawFor(f, cat.v.str) orelse cat.v else cat.v, .missing = freqLevelMissing(cat.v, fl), .frequency = cat.w };
-            try maps[d].put(a, cat.v, k);
-        }
-        dims[d] = .{ .name = ds.columns.items[ci].name, .label = ds.columns.items[ci].label, .levels = levels };
+        const counted = try columnLevels(a, ds, ci, order, wc, zeros, fl);
+        maps[d] = counted.by_value;
+        dims[d] = .{ .name = ds.columns.items[ci].name, .label = ds.columns.items[ci].label, .levels = counted.levels };
     }
     var tab = try Table.init(a, dims, missing);
     for (ds.rows.items) |row| {
@@ -930,9 +929,9 @@ fn renderLevels(cx: ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, vars: []cons
         if (seen) continue;
         const ci = ds.indexOf(vn).?;
         const fl = fmtLevelsFor(formats, ci);
-        const levels = try oneWayLevels(a, ds, ci, true, order, wc, zeros, fl);
+        const levels = (try columnLevels(a, ds, ci, order, wc, zeros, fl)).levels;
         var nmiss: usize = 0;
-        for (levels) |level_| if (freqLevelMissing(level_.v, fl)) {
+        for (levels) |level| if (level.missing) {
             nmiss += 1;
         };
         try names.append(a, vn);
@@ -1496,6 +1495,32 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     try flush(a, out, total);
     try flush(a, out, rule);
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+}
+
+test "FREQ default BEST12 levels combine raw values and break frequency ties by display" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("x", .num);
+    const minimum = 0.123456789012345;
+    for ([_]f64{ 0.123456789045678, -10, 2, 12, minimum, -2, 0.123456789012355 }) |raw| {
+        try ds.appendRow(&.{.{ .num = raw }});
+    }
+    const orders = [_]struct { mode: FreqOrder, values: [5]f64 }{
+        .{ .mode = .data, .values = .{ minimum, -10, 2, 12, -2 } },
+        .{ .mode = .internal, .values = .{ -10, -2, minimum, 2, 12 } },
+        .{ .mode = .formatted, .values = .{ 2, -2, 12, -10, minimum } },
+        .{ .mode = .freq, .values = .{ minimum, 2, -2, 12, -10 } },
+    };
+    for (orders) |order| {
+        const table = try computeTable(a, &ds, &.{0}, null, false, false, order.mode, &.{});
+        try std.testing.expectEqual(order.values.len, table.dimensions[0].levels.len);
+        for (table.dimensions[0].levels, order.values, 0..) |level, expected, i| {
+            try std.testing.expectEqual(expected, level.raw.num);
+            try std.testing.expectEqual(@as(f64, if (expected == minimum) 3 else 1), table.count(i));
+        }
+    }
 }
 
 test "FREQ table puts missing levels in display order for every sort mode" {

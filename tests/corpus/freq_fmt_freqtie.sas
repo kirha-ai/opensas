@@ -1,10 +1,5 @@
-/* BUG-freqfmtorderfreqtie: PROC FREQ ORDER=FREQ breaks frequency TIES among
-   VALUE.-format levels by the raw internal value, NOT the formatted label text
-   (sibling of BUG-freqfmtorder, which fixed the ORDER=INTERNAL default). Format
-   lf 1='Zzz' 2='Aaa' 3='Mmm' with all three levels at EQUAL frequency: SAS
-   emits Zzz/Aaa/Mmm (raw 1/2/3 tie-break), never the label-text Aaa/Mmm/Zzz.
-   The second table shows a DIFFERENT-frequency case — ORDER=FREQ still sorts by
-   descending frequency there (raw tie-break only applies WITHIN equal freq). */
+/* SAS 9.4M9 orders tied counts by the displayed VALUE labels:
+   Aaa, Mmm, Zzz. The second table orders unequal counts from high to low. */
 data d;
   input x @@;
   datalines;
