@@ -92,7 +92,11 @@ test "common odds and Zelen ODS expose distinct conditional distributions under 
     try std.testing.expectApproxEqAbs(@as(f64, 0.39664502164502), common.row(5)[4].num, 1e-12);
     const limits = library.find("limits").?;
     try std.testing.expectEqualStrings("XU_COMOR", limits.row(8)[1].str);
-    try std.testing.expectApproxEqAbs(@as(f64, 6.54996520953192), limits.row(8)[4].num, 1e-10);
+    // Independent convolution of the two hypergeometric weights gives
+    // [60,760,3360,6300,5460,2160,360,20]. Its left-tail .025 root is
+    // 6.5499652083319966; the finite-precision M9 root is 6.54996520953192.
+    try std.testing.expectApproxEqAbs(@as(f64, 6.5499652083319966), limits.row(8)[4].num, 1e-13);
+    try std.testing.expectEqualStrings("6.5500", limits.row(8)[3].str);
     const zelen = library.find("zelen").?;
     try std.testing.expectEqualStrings("XP_EQOR", zelen.row(5)[1].str);
     try std.testing.expectApproxEqAbs(@as(f64, 3.0 / 7.0), zelen.row(5)[4].num, 1e-12);
