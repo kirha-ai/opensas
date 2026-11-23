@@ -129,7 +129,7 @@ fn betaAtScaleFloor(x: []const f64, theta: f64, sigma: f64, beta: f64, controls:
 
 /// Verified M9 slice: estimated theta, supplied sigma and 0<alpha<1.
 /// SAS's retained point is not a stationary MLE. Its public adapter must carry
-/// the nonstationary_candidate warning/status even when parameters match.
+/// the nonstationary_candidate status even when parameters match.
 fn powerLocation(x: []const f64, sigma: f64, alpha: f64) Result {
     @setFloatMode(.strict); // IEEE rounding order is part of the oracle contract.
     const lo = x[0];

@@ -98,6 +98,11 @@ test "UNIVARIATE endpoint adapter reports finite power candidates and warns on f
     try std.testing.expect(d.list.items[0].severity == .note);
     try std.testing.expect(std.mem.indexOf(u8, d.list.items[0].message, "retained the finite fallback curve") != null);
 
+    var beta_diag = diagnostics.Diagnostics.init(arena.allocator());
+    _ = try adapter.fit(&beta_diag, &x, .{ .family = .beta, .theta = 0, .sigma = null, .beta = 0.9, .report = &report });
+    try std.testing.expect(!report.converged and !report.no_fit);
+    try std.testing.expectEqual(diagnostics.Severity.note, beta_diag.list.items[0].severity);
+
     var failed = diagnostics.Diagnostics.init(arena.allocator());
     try std.testing.expectError(error.ParseError, adapter.fit(&failed, &.{ 0.1, 0.2, 0.8 }, .{ .family = .power, .theta = 0, .sigma = null, .report = &report }));
     try std.testing.expect(!report.converged and report.no_fit);
@@ -596,8 +601,8 @@ fn fitEndpoint(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist
                 else => {},
             }
             if (r.report) |report| report.* = .{ .converged = false, .no_fit = failure.best == null, .reason = @tagName(failure.reason) };
-            if (r.family == .power and failure.best != null and failure.reason == .nonstationary_candidate) {
-                try d.note(0, "UNIVARIATE: power fit retained the finite fallback curve ({s}).", .{@tagName(failure.reason)});
+            if ((r.family == .power or r.family == .beta) and failure.best != null and failure.reason == .nonstationary_candidate) {
+                try d.note(0, "UNIVARIATE: {s} fit retained the finite fallback curve ({s}).", .{ @tagName(r.family), @tagName(failure.reason) });
             } else try d.warn(0, "UNIVARIATE: {s} fit did not converge ({s}); {s}", .{ @tagName(r.family), @tagName(failure.reason), if (failure.best != null) "retaining the finite fallback curve" else "no fitted curve is available" });
             break :blk failure.best orelse return error.ParseError;
         },
