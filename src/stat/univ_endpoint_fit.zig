@@ -85,9 +85,17 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
         // explicit for the adapter even when all parameters match the oracle.
         return if (fixed.sigma == null) .{ .nonconverged = .{ .reason = .nonstationary_candidate, .best = curve } } else .{ .converged = curve };
     }
-    if (family == .beta and fixed.theta != null and fixed.sigma == null and fixed.alpha == null and fixed.beta != null and fixed.beta.? < 1) {
-        const sigma = powerScaleStart(x, fixed.theta.?, true) orelse return fail(.initialization_failed);
-        return betaAtScaleFloor(x, fixed.theta.?, sigma, fixed.beta.?, controls);
+    if (family == .beta and fixed.theta != null and fixed.sigma == null and fixed.alpha == null and fixed.beta != null) {
+        const theta = fixed.theta.?;
+        const beta = fixed.beta.?;
+        const floor = powerScaleStart(x, theta, true);
+        if (beta < 1) return betaAtScaleFloor(x, theta, floor orelse return fail(.initialization_failed), beta, controls);
+        const fitted = optimize(family, x, fixed, controls);
+        if (floor) |sigma| {
+            if (fitted == .converged and fitted.converged.parameters.sigma < sigma)
+                return betaAtScaleFloor(x, theta, sigma, beta, controls);
+        }
+        return fitted;
     }
     if (family == .pareto and fixed.alpha != null and fixed.sigma == null and (fixed.alpha.? == 0 or fixed.alpha.? == 1)) {
         var scale: f64 = 0;
@@ -100,9 +108,10 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     return optimize(family, x, fixed, controls);
 }
 
-/// For 0 < beta < 1, sigma times the scale score per observation is
-/// -alpha + (beta-1)*mean((x-theta)/(sigma+theta-x)), strictly negative.
-/// SAS retains the moment-based scale bound and fits alpha conditional on it.
+/// M9 retains the moment-based width when it bounds the fitted scale.
+/// For beta < 1 the scale score is always negative. For beta > 1 the
+/// width can also exceed an interior likelihood maximizer. Fit alpha
+/// conditional on the retained width.
 fn betaAtScaleFloor(x: []const f64, theta: f64, sigma: f64, beta: f64, controls: Controls) Result {
     const n: f64 = @floatFromInt(x.len);
     var mean_log: f64 = 0;
@@ -892,4 +901,23 @@ test "Pareto profile isolates the supported local maximum between two adjacent r
     // M9 returned sigma=1.81161316, alpha=0.88998287 for this 16-value sample.
     const x = [_]f64{ 0.17945781591940654, 0.22410221645861458, 0.23281313583046595, 0.29019361215709338, 0.36933287331190595, 0.38257567475311544, 0.40989061974203794, 0.51096190575725786, 0.64809332516627816, 1.0198637278475928, 1.1847242109320089, 1.2059546430497177, 1.2689145725502562, 1.7441018133009203, 1.8494279942521605, 2.0165321863387438 };
     try check(.{ .theta = 0, .sigma = 1.8116131558896376, .alpha = 0.8899828665921032 }, fit(.pareto, &x, .{}, .{}), 3e-5);
+}
+
+test "beta scale bound is active for a fixed second shape above one" {
+    // SAS M9, n=29 beta(.55,3.2) plotting positions on shifted support.
+    // The same scale bound applies to both shapes, with different fitted alpha.
+    const theta = -3.75;
+    var x: [29]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const u = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 29.25;
+        v.* = theta + 0.082 * f.distQuantile(.beta, u, &.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = 0.55 }, .{ .num = 3.2 } }).?;
+    }
+    for ([_]f64{ 1.03, 1.35 }, [_]f64{ 0.41969434818877055, 0.471445076666332 }) |beta, alpha| {
+        const result = fit(.beta, &x, .{ .theta = theta, .beta = beta }, .{});
+        try std.testing.expect(result == .nonconverged);
+        try std.testing.expectEqual(Reason.nonstationary_candidate, result.nonconverged.reason);
+        const p = result.nonconverged.best.?.parameters;
+        try std.testing.expectApproxEqAbs(@as(f64, 0.05155409052906523), p.sigma, 1e-10);
+        try std.testing.expectApproxEqAbs(alpha, p.alpha, 1.6e-5);
+    }
 }
