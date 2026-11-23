@@ -311,7 +311,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .exact_test => |p| {
                 limits.exact_tests.set(f, p);
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.one_sided == p.right and p.left != p.right } }, options);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = p, .directional = directional(f), .right_sided = p.right_sided } }, options);
             },
             .fisher => |r| {
                 const fisher = renderers.Fisher{ .first_cell = r.first_cell, .table_probability = r.table_probability, .left = if (r.cell_tails) |t| t.left else null, .right = if (r.cell_tails) |t| t.right else null, .p = r.probabilities.two_sided, .point = r.probabilities.point };
@@ -488,6 +488,31 @@ test "exact binomial labels its smaller inclusive tail and resolves equal tails 
         try std.testing.expectEqualStrings(c.value, std.mem.trim(u8, value, " "));
     }
     try std.testing.expect(!d.hasErrors());
+}
+
+test "directional exact tests retain the sign of the statistic when inclusive tails coincide" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    // SAS/STAT FREQ, Definition of p-Values, p. 232. Draw one of three
+    // scores with equal probability. The middle score has both tails 2/3,
+    // but can lie above or below its null expectation.
+    for ([_][3]f64{ .{ 1, 5, 6 }, .{ 1, 2, 9 } }, [_]bool{ true, false }) |scores, above| {
+        var h = try Harness.init(a, &.{}, 3);
+        const ds = h.lib.sets.items[0];
+        for ([_]f64{ 0, 1, 0, 1, 0, 1 }, 0..) |count, i| {
+            try ds.appendRow(&.{ .{ .num = @floatFromInt(i / 3 + 1) }, .{ .num = scores[i % 3] }, .{ .num = count } });
+        }
+        var d = diag.Diagnostics.init(a);
+        const out = try h.run("proc freq data=d; weight w / zeros; tables r*c / scores=table noprint; exact pcorr trend / point; run;", &d);
+        try std.testing.expect(!d.hasErrors());
+        for ([_][]const u8{ "Cochran-Armitage Trend Test", "Pearson Correlation Coefficient" }, [_]bool{ above, !above }) |title_text, right| {
+            const label = try std.fmt.allocPrint(a, "{s}\n\nOne-sided Pr {s}= Statistic", .{ title_text, if (right) ">" else "<" });
+            const offset = std.mem.indexOf(u8, out, label) orelse return error.TestExpectedEqual;
+            const value = std.mem.sliceTo(out[offset + label.len ..], '\n');
+            try std.testing.expectEqualStrings("0.6667", std.mem.trim(u8, value, " "));
+        }
+    }
 }
 
 test "public rank exact tests preserve distinct integer effects on wide tied margins" {

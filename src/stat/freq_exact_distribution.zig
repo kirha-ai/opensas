@@ -66,6 +66,9 @@ pub const Probabilities = struct {
     right: f64,
     two_sided: f64,
     one_sided: f64,
+    /// Chosen from the observed statistic and its null expectation, including
+    /// when both inclusive tails have the same mass.
+    right_sided: bool = false,
     tables: u64,
 };
 /// A resource stop never returns a renormalized partial p-value.
@@ -155,7 +158,8 @@ pub const Accumulator = struct {
     pub fn result(self: Accumulator, count: u64) Error!Probabilities {
         const s = self.sums;
         if (s[0] <= 0) return error.ExecError;
-        return .{ .point = s[1] / s[0], .left = s[2] / s[0], .right = s[3] / s[0], .two_sided = s[4] / s[0], .one_sided = (if (self.statistic.directional and self.observed <= self.statistic.expected) s[2] else s[3]) / s[0], .tables = count };
+        const right = self.observed > self.statistic.expected;
+        return .{ .point = s[1] / s[0], .left = s[2] / s[0], .right = s[3] / s[0], .two_sided = s[4] / s[0], .one_sided = (if (self.statistic.directional and !right) s[2] else s[3]) / s[0], .right_sided = right, .tables = count };
     }
 };
 
