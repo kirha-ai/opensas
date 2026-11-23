@@ -409,7 +409,7 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         const curve = fitting.fit(cx.diags, x, actual_request) catch |err| {
                             if (request.itprint and trace.weibull.items.len > 0) try rendering.renderTrace(a, out, trace, report);
                             if (report.no_fit) {
-                                if ((request.family == .sb or request.family == .su) and request.fitmethod == .percentiles)
+                                if (request.family == .sb or request.family == .su)
                                     try cx.diags.note(0, "{s}{s} {s} curve was not drawn because estimates could not be computed for all parameters.", .{ prefix, if (prefix.len == 0) "The" else "the", if (request.family == .su) "SU" else "SB" });
                                 if (request.optprint) try rendering.renderTrace(a, out, trace, report);
                                 try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);

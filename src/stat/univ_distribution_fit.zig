@@ -528,14 +528,45 @@ fn samplePercentile(x: []const f64, probability: f64) f64 {
 }
 
 fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.Distribution {
+    if (r.family == .sb and r.theta != null) {
+        const theta = r.theta.?;
+        if (x[0] <= theta) {
+            try d.report(.err, 0, "The smallest value of {s} is less than or equal to the threshold parameter (THETA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB threshold parameter (THETA) must be less than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[0])});
+            return r.rejectCurve("outside_support");
+        }
+        if (r.sigma) |sigma| if (x[x.len - 1] >= theta + sigma) {
+            try d.report(.err, 0, "The largest value of {s} is greater than or equal to the upper threshold (THETA + SIGMA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB scale parameter (SIGMA) must be greater than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[x.len - 1] - theta)});
+            return r.rejectCurve("outside_support");
+        };
+    }
+    const fixed: johnson.Fixed = .{ .theta = r.theta, .lambda = r.sigma, .delta = r.delta, .gamma = r.gamma };
+    if (r.family == .sb and !fixed.supportedSbCombination()) {
+        try d.warn(0, "Estimation for this parameter combination is not supported.", .{});
+        return r.rejectCurve("unsupported_combination");
+    }
     if (r.fitmethod != .percentiles) {
-        const result = johnson.fit(if (r.family == .sb) .sb else .su, if (r.fitmethod == .moments) .moments else .mle, x, .{ .theta = r.theta, .lambda = r.sigma, .delta = r.delta, .gamma = r.gamma }, .{ .optmaxiter = r.optmaxiter, .optmaxstarts = r.optmaxstarts, .optboundrange = r.optboundrange, .opttolerance = r.opttolerance, .optseed = try resolveSeed(d, r.optseed), .trace_context = r.trace, .trace = if (r.trace != null) Trace.record else null });
+        const result = johnson.fit(if (r.family == .sb) .sb else .su, if (r.fitmethod == .moments) .moments else .mle, x, fixed, .{ .optmaxiter = r.optmaxiter, .optmaxstarts = r.optmaxstarts, .optboundrange = r.optboundrange, .opttolerance = r.opttolerance, .optseed = try resolveSeed(d, r.optseed), .trace_context = r.trace, .trace = if (r.trace != null) Trace.record else null });
         if (r.trace) |trace| if (trace.failed) return error.OutOfMemory;
         const success = switch (result) {
             .converged => |success| success,
             .nonconverged => |failure| blk: {
                 switch (failure.reason) {
-                    .invalid_parameters, .invalid_controls, .unsupported_combination, .outside_support => return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson fit: {s}", .{@tagName(failure.reason)}),
+                    .unsupported_combination => {
+                        if (r.family == .su) {
+                            try d.warn(0, "Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all parameters are estimated.", .{});
+                        } else {
+                            const free_parameters: usize = if (r.theta == null) 4 else 3;
+                            try d.warn(0, "Maximum likelihood estimation is not available for {d}-parameter SB fits.", .{free_parameters});
+                        }
+                        return r.rejectCurve(@tagName(failure.reason));
+                    },
+                    .no_moment_solution => {
+                        try d.warn(0, "Unable to solve moments equations.", .{});
+                        return r.rejectCurve(@tagName(failure.reason));
+                    },
+                    .invalid_parameters, .invalid_controls, .outside_support => return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson fit: {s}", .{@tagName(failure.reason)}),
                     else => {},
                 }
                 if (r.report) |report| report.* = .{ .converged = false, .no_fit = failure.best == null, .reason = @tagName(failure.reason) };
@@ -551,19 +582,6 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
         const fitted: dist.Distribution = .{ .family = r.family, .p = .{ .theta = p.theta, .sigma = p.lambda, .delta = p.delta, .gamma = p.gamma } };
         try fitted.validate(d);
         return fitted;
-    }
-    if (r.family == .sb and r.theta != null) {
-        const theta = r.theta.?;
-        if (x[0] <= theta) {
-            try d.report(.err, 0, "The smallest value of {s} is less than or equal to the threshold parameter (THETA) for the SB fit.", .{r.variable});
-            try d.note(0, "The SB threshold parameter (THETA) must be less than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[0])});
-            return r.rejectCurve("outside_support");
-        }
-        if (r.sigma) |sigma| if (x[x.len - 1] >= theta + sigma) {
-            try d.report(.err, 0, "The largest value of {s} is greater than or equal to the upper threshold (THETA + SIGMA) for the SB fit.", .{r.variable});
-            try d.note(0, "The SB scale parameter (SIGMA) must be greater than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[x.len - 1] - theta)});
-            return r.rejectCurve("outside_support");
-        };
     }
     var p: dist.Parameters = .{};
     if (r.theta == null or r.sigma == null or r.delta == null or r.gamma == null) {
@@ -687,6 +705,42 @@ test "UNIVARIATE Johnson percentile fitting SAS M9 fixed and estimated endpoints
     try std.testing.expectEqual(@as(f64, 1), fixed.p.sigma);
     try std.testing.expectApproxEqAbs(@as(f64, 1.35412), fixed.p.delta, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.502458), fixed.p.gamma, 5e-7);
+}
+
+test "Johnson public fit enforces native fixed-parameter combinations across methods" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var x: [101]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const z = functions.distQuantile(.normal, (@as(f64, @floatFromInt(i + 1)) - 0.375) / 101.25, &.{}).?;
+        v.* = 1 / (1 + @exp((0.4 - z) / 1.2));
+    }
+    for ([_]JohnsonMethod{ .percentiles, .moments, .mle }) |method| {
+        for (0..16) |mask| {
+            var d = diag.Diagnostics.init(arena.allocator());
+            var report: Report = .{};
+            const request: Request = .{ .family = .sb, .fitmethod = method, .theta = if (mask & 1 != 0) 0 else null, .sigma = if (mask & 2 != 0) 1 else null, .delta = if (mask & 4 != 0) 0.8 else null, .gamma = if (mask & 8 != 0) 1.2 else null, .report = &report };
+            const expected_warning: ?[]const u8 = switch (mask) {
+                0 => if (method == .mle) "Maximum likelihood estimation is not available for 4-parameter SB fits." else null,
+                1 => if (method == .mle) "Maximum likelihood estimation is not available for 3-parameter SB fits." else null,
+                3, 15 => null,
+                else => "Estimation for this parameter combination is not supported.",
+            };
+            if (expected_warning) |warning| {
+                try std.testing.expectError(error.ParseError, fit(&d, &x, request));
+                try std.testing.expect(!d.hasErrors() and report.no_fit);
+                try std.testing.expectEqualStrings(warning, d.list.items[0].message);
+            } else {
+                _ = try fit(&d, &x, request);
+                try std.testing.expect(!d.hasErrors() and report.converged);
+            }
+        }
+    }
+    var d = diag.Diagnostics.init(arena.allocator());
+    var report: Report = .{};
+    try std.testing.expectError(error.ParseError, fit(&d, &x, .{ .family = .su, .theta = 0, .fitmethod = .moments, .report = &report }));
+    try std.testing.expect(!d.hasErrors() and report.no_fit);
+    try std.testing.expectEqualStrings("Parameter estimation for the Johnson SU distribution using the method of moments is supported only when all parameters are estimated.", d.list.items[0].message);
 }
 
 test "Johnson method of percentiles checks central spacing at the native binary boundary" {
