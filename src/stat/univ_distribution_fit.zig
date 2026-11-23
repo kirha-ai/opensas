@@ -573,8 +573,7 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
     return result;
 }
 
-/// Resolve the omitted clock-derived seed once per fit/simulation. Explicit
-/// seeds repeat this implementation's stream, not SAS's proprietary sequence.
+/// Resolve an omitted or zero seed once per fit or simulation.
 pub fn resolveSeed(d: *diag.Diagnostics, seed: ?f64) diag.Error!u64 {
     if (seed) |value| if (value != 0) {
         if (!std.math.isFinite(value) or value < 0 or value != @floor(value) or value >= @as(f64, @floatFromInt(std.math.maxInt(u64)))) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid random seed", .{});

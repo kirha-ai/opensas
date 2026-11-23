@@ -59,8 +59,9 @@ pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: di
         .gumbel, .igauss, .pareto, .rayleigh => {
             const sample = try d.arena.alloc(f64, x.len);
             defer d.arena.free(sample);
-            var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request };
-            const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = try fitting.resolveSeed(d, request.edfseed), .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
+            const seed = try fitting.resolveSeed(d, request.edfseed);
+            var bootstrap: Bootstrap = .{ .sample = sample, .distribution = distribution, .request = request, .uniforms = .init(seed) };
+            const result = try inference.simulateAccounted(d, r, stats, x.len, .{ .seed = seed, .samples = request.edfnsamples }, sampler orelse .{ .context = &bootstrap, .draw = Bootstrap.drawAccounted });
             const probabilities = result.probabilities orelse inference.Result{};
             return .{ .statistics = raw, .d = probabilities.d, .w2 = probabilities.w2, .a2 = probabilities.a2, .simulation = result };
         },
@@ -70,10 +71,33 @@ pub fn computeWithSampler(d: *diag.Diagnostics, x: []const f64, distribution: di
     return .{ .statistics = raw, .d = result.d, .w2 = result.w2, .a2 = result.a2 };
 }
 
+const Uniforms = @import("freq_exact_distribution.zig").Generator;
+
+/// Native EDF resampling uses the SAS RANUNI stream. The inverse Gaussian
+/// uses the Michael–Schucany–Haas normal-mixture generator.
+fn sampleDistribution(distribution: dist.Distribution, stream: *Uniforms) f64 {
+    const u = stream.uniform();
+    return switch (distribution.family) {
+        .gumbel => distribution.quantile(u),
+        .rayleigh, .pareto => distribution.quantile(1 - u),
+        .igauss => blk: {
+            const mu = distribution.p.mu;
+            const lambda = distribution.p.lambda;
+            const z = @sqrt(-2 * @log(u)) * @cos(2 * std.math.pi * stream.uniform());
+            const t = mu * z * z / (2 * lambda);
+            const ratio = 1 / (1 + t + @sqrt(t * (2 + t)));
+            break :blk if (stream.uniform() <= 1 / (1 + ratio)) mu * ratio else mu / ratio;
+        },
+        else => unreachable,
+    };
+}
+
 const Bootstrap = struct {
     sample: []f64,
     distribution: dist.Distribution,
     request: fitting.Request,
+    // Direct callback tests can supply their own stream, including degenerate draws.
+    uniforms: ?Uniforms = null,
     const Attempt = union(enum) {
         statistics: inference.Statistics,
         numerical_fit_failure: struct { reason: []const u8, retained_candidate: bool },
@@ -104,9 +128,10 @@ const Bootstrap = struct {
     fn attempt(self: *Bootstrap, random: std.Random, n: usize, d: *diag.Diagnostics) diag.Error!Attempt {
         std.debug.assert(self.sample.len == n);
         for (self.sample) |*value| {
-            // Open (0,1), with exactly representable half-unit endpoints.
-            const u = (@as(f64, @floatFromInt(random.int(u64) >> 12)) + 0.5) / 4503599627370496.0;
-            value.* = self.distribution.quantile(u);
+            value.* = if (self.uniforms) |*stream| sampleDistribution(self.distribution, stream) else blk: {
+                const u = (@as(f64, @floatFromInt(random.int(u64) >> 12)) + 0.5) / 4503599627370496.0;
+                break :blk self.distribution.quantile(u);
+            };
             if (!std.math.isFinite(value.*)) return d.fail(error.ParseError, 0, "UNIVARIATE: EDF generation failed; no replication was discarded", .{});
         }
         std.mem.sort(f64, self.sample, {}, std.sort.asc(f64));
@@ -459,4 +484,24 @@ test "UNIVARIATE accounted adapter reports controlled exclusions and zero valid 
     var fatal_diag = diag.Diagnostics.init(arena.allocator());
     try std.testing.expectError(error.ExecError, computeWithSampler(&fatal_diag, &.{ 0.5, 1, 2, 3 }, .{ .family = .rayleigh, .p = .{} }, request, .{ .context = &sampler, .draw = Controlled.draw }));
     try std.testing.expectEqual(@as(usize, 2), sampler.calls);
+}
+
+test "UNIVARIATE seeded EDF reproduces M9 family-specific sampling and refitting" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    var d = diag.Diagnostics.init(arena.allocator());
+    const x = [_]f64{ 0.12, 0.23, 0.31, 0.48, 0.52, 0.76, 0.87, 1.03, 1.29, 1.36, 1.70, 2.28, 2.74, 3.52, 4.85, 6.21 };
+    for ([_]dist.Family{ .gumbel, .igauss, .rayleigh }, [_][3]usize{ .{ 116, 57, 39 }, .{ 194, 158, 173 }, .{ 0, 0, 0 } }) |family, native| {
+        const request: fitting.Request = .{ .family = family, .edfseed = 817, .edfnsamples = 250 };
+        const curve = try fitting.fit(&d, &x, request);
+        const result = try compute(&d, &x, curve, request);
+        try std.testing.expectEqual(@as(usize, 250), result.simulation.?.valid);
+        try std.testing.expectEqual(native, result.simulation.?.exceedances);
+    }
+    var y: [16]f64 = undefined;
+    for (&y, 0..) |*v, i| v.* = std.math.pow(f64, (@as(f64, @floatFromInt(i)) + 0.5) / 16, 1.37);
+    const request: fitting.Request = .{ .family = .pareto, .theta = 0, .sigma = 1, .alpha = 1, .edfseed = 17, .edfnsamples = 32 };
+    const curve = try fitting.fit(&d, &y, request);
+    const result = try compute(&d, &y, curve, request);
+    try std.testing.expectEqual([3]usize{ 25, 13, 13 }, result.simulation.?.exceedances);
 }
