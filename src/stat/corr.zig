@@ -1217,7 +1217,12 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
                     if (hide_probs and (i == 3 or i == 5)) continue;
                     // Keep a small positive SE distinguishable from the rank-deficient zero.
-                    const value = if (i == 1 and v > 0 and v < 0.000005) try std.fmt.allocPrint(a, "{e:.5}", .{v}) else if (!polychoric and (i == 2 or i == 4) and std.math.isFinite(v)) try std.fmt.allocPrint(a, "{d:.4}", .{v}) else try number(a, v, i == 3 or i == 5);
+                    const value = if (i == 1 and v > 0 and v < 0.000005)
+                        try @import("../format.zig").bestNumW(a, v, 10)
+                    else if ((i == 2 or i == 4) and std.math.isFinite(v))
+                        std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = v }, "10.4"), " ")
+                    else
+                        try number(a, v, i == 3 or i == 5);
                     try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{value}));
                 }
                 try out.append(a, '\n');
@@ -2031,4 +2036,15 @@ test "CORR BEST selects absolute correlations and RANK preserves source matrices
     try std.testing.expectEqual(@as(usize, 1), spec.options.best);
     try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
     try std.testing.expectEqual(.warning, d.list.items[0].severity);
+}
+
+test "CORR nested ordinal listing respects native chi-square field width" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "r", "c", "f" }, &.{ &.{ 0, 0, 7 }, &.{ 0, 1, 11 }, &.{ 1, 3, 17 } });
+    const g = try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-8);var r c;freq f;run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, g);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "8.96292E-8 1.2448E14 <.0001 48.4914") != null);
 }
