@@ -1723,7 +1723,7 @@ pub fn comb2(n: f64, r_in: f64) f64 {
 /// The digamma function ψ(x): raise the argument with ψ(x)=ψ(x+1)−1/x until it's
 /// large enough for the asymptotic series. ponytail: accurate for x>0; no negative
 /// reflection (integer poles are rejected by the caller).
-fn digammaOf(x_in: f64) f64 {
+pub fn digammaOf(x_in: f64) f64 {
     var x = x_in;
     var result: f64 = 0;
     while (x < 10) : (x += 1) result -= 1.0 / x;

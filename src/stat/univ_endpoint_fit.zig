@@ -85,6 +85,10 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
         // explicit for the adapter even when all parameters match the oracle.
         return if (fixed.sigma == null) .{ .nonconverged = .{ .reason = .nonstationary_candidate, .best = curve } } else .{ .converged = curve };
     }
+    if (family == .beta and fixed.theta != null and fixed.sigma == null and fixed.alpha == null and fixed.beta != null and fixed.beta.? < 1) {
+        const sigma = powerScaleStart(x, fixed.theta.?, true) orelse return fail(.initialization_failed);
+        return betaAtScaleFloor(x, fixed.theta.?, sigma, fixed.beta.?, controls);
+    }
     if (family == .pareto and fixed.alpha != null and fixed.sigma == null and (fixed.alpha.? == 0 or fixed.alpha.? == 1)) {
         var scale: f64 = 0;
         for (x) |v| scale += (v - fixed.theta.?) / @as(f64, @floatFromInt(x.len));
@@ -94,6 +98,33 @@ pub fn fit(family: Family, x: []const f64, fixed: Fixed, controls: Controls) Res
     }
     if (family == .pareto and fixed.alpha == null and fixed.sigma == null) return paretoProfile(x, fixed.theta.?, controls);
     return optimize(family, x, fixed, controls);
+}
+
+/// For 0 < beta < 1, sigma times the scale score per observation is
+/// -alpha + (beta-1)*mean((x-theta)/(sigma+theta-x)), strictly negative.
+/// SAS retains the moment-based scale bound and fits alpha conditional on it.
+fn betaAtScaleFloor(x: []const f64, theta: f64, sigma: f64, beta: f64, controls: Controls) Result {
+    const n: f64 = @floatFromInt(x.len);
+    var mean_log: f64 = 0;
+    for (x) |v| mean_log += @log((v - theta) / sigma) / n;
+    // The conditional alpha score decreases strictly from +infinity to the
+    // sample mean of log(y/sigma), so its root is unique.
+    var lower: f64 = 0;
+    var upper: f64 = 1;
+    while (f.digammaOf(upper + beta) - f.digammaOf(upper) + mean_log > 0) {
+        upper *= 2;
+        if (!std.math.isFinite(upper)) return fail(.no_local_maximum);
+    }
+    for (0..@min(controls.maxiter, 100)) |iter| {
+        const alpha = lower + (upper - lower) / 2;
+        if (alpha == lower or alpha == upper) {
+            const p: Parameters = .{ .theta = theta, .sigma = sigma, .alpha = alpha, .beta = beta };
+            const curve: Curve = .{ .parameters = p, .log_likelihood = logLikelihood(.beta, x, p), .iterations = iter };
+            return .{ .nonconverged = .{ .reason = .nonstationary_candidate, .best = curve } };
+        }
+        if (f.digammaOf(alpha + beta) - f.digammaOf(alpha) + mean_log > 0) lower = alpha else upper = alpha;
+    }
+    return fail(.iteration_limit);
 }
 
 /// Verified M9 slice: estimated theta, supplied sigma and 0<alpha<1.
@@ -790,4 +821,32 @@ test "endpoint dev5 power location preserves validation and nonstationary status
     try std.testing.expectEqual(Reason.invalid_parameters, fit(.power, &x, .{ .theta = null, .sigma = 2, .alpha = 0 }, .{}).nonconverged.reason);
     try std.testing.expectEqual(Reason.invalid_controls, fit(.power, &x, fixed, .{ .maxiter = 0 }).nonconverged.reason);
     try std.testing.expectEqual(Reason.unsupported_method, fit(.power, &x, fixed, .{ .method = .epm }).nonconverged.reason);
+}
+
+test "beta free scale and first shape retain the fitted lower scale bound" {
+    // Retained SAS M9 controlled-grid with the second shape supplied.
+    var x: [41]f64 = undefined;
+    for (&x, 0..) |*v, i| {
+        const q = (@as(f64, @floatFromInt(i + 1)) - 0.375) / 41.25;
+        v.* = 0.1 * q * q;
+    }
+    for ([_]f64{ 0.9, 0.99 }, [_]f64{ 0.4914333926, 0.5140115130 }) |beta, alpha| {
+        const result = fit(.beta, &x, .{ .theta = 0, .beta = beta }, .{});
+        try std.testing.expect(result == .nonconverged);
+        try std.testing.expectEqual(Reason.nonstationary_candidate, result.nonconverged.reason);
+        const p = result.nonconverged.best.?.parameters;
+        try std.testing.expectApproxEqAbs(@as(f64, 0.097421574461495), p.sigma, 2e-15);
+        try std.testing.expectApproxEqAbs(alpha, p.alpha, 4e-6);
+    }
+    // Independent M9 probe: n=9 beta(1.7,2.3), .015-wide support.
+    var narrow: [9]f64 = undefined;
+    for (&narrow, 0..) |*v, i| {
+        const q = (@as(f64, @floatFromInt(i + 1)) - 0.29) / 9.42;
+        v.* = 0.015 * f.distQuantile(.beta, q, &.{ .{ .num = 0 }, .{ .num = 0 }, .{ .num = 1.7 }, .{ .num = 2.3 } }).?;
+    }
+    const failed = fit(.beta, &narrow, .{ .theta = 0, .beta = 0.65 }, .{});
+    try std.testing.expect(failed == .nonconverged and failed.nonconverged.best == null);
+    const interior = fit(.beta, &x, .{ .theta = 0, .beta = 1.1 }, .{});
+    try std.testing.expect(interior == .converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.097583568), interior.converged.parameters.sigma, 5e-8);
 }
