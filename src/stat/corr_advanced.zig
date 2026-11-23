@@ -272,6 +272,86 @@ fn derivatives(ctx: Serial, params: []f64, hess: []f64, gradient: []f64) void {
         }
     }
 }
+// Under reflection of the continuous scores and exchange of the binary levels,
+// the fitted cut is zero for every rho. Check the frequency distribution so
+// compressed, duplicate and unsorted observations give the same answer.
+fn reflectedBinary(a: std.mem.Allocator, data: []const Observation) !bool {
+    const ordered = try a.dupe(Observation, data);
+    defer a.free(ordered);
+    std.mem.sort(Observation, ordered, {}, struct {
+        fn less(_: void, x: Observation, y: Observation) bool {
+            return x.x < y.x;
+        }
+    }.less);
+    var left: usize = 0;
+    var right = ordered.len - 1;
+    var left_mass = ordered[left].f;
+    var right_mass = ordered[right].f;
+    const origin = ordered[0].x;
+    const span = ordered[right].x - origin;
+    while (left < right) {
+        const low = ordered[left];
+        const high = ordered[right];
+        if (low.y == high.y or @abs((low.x - origin) - (ordered[ordered.len - 1].x - high.x)) > 8 * std.math.floatEps(f64) * span) return false;
+        const used = @min(left_mass, right_mass);
+        left_mass -= used;
+        right_mass -= used;
+        if (left_mass == 0) {
+            left += 1;
+            left_mass = ordered[left].f;
+        }
+        if (right_mass == 0) {
+            right -= 1;
+            right_mass = ordered[right].f;
+        }
+    }
+    return left > right;
+}
+
+// For this symmetric likelihood the cut and marginal location are orthogonal
+// to rho. The remaining observed information block includes the marginal SD.
+// With a positive standardized distance z, log P = log Phi(r*z/sqrt(1-r²)).
+fn separatedBinary(a: std.mem.Allocator, ctx: Serial, n: f64, direction: f64, opt: PolyOptions) !Poly {
+    var fit: Poly = .{ .n = n };
+    if (opt.maxiter < 2) return fit;
+    if (!try reflectedBinary(a, ctx.data)) {
+        fit.unsupported_boundary = true;
+        return fit;
+    }
+    const rho = 1 - opt.converge / 2;
+    const residual = @sqrt((1 - rho) * (1 + rho));
+    if (!(residual > 0)) return fit;
+    var information = [4]f64{ 0, 0, 0, 2 * n };
+    var ll: f64 = 0;
+    for (ctx.data) |d| {
+        const z = @abs((d.x - ctx.mean) / ctx.sd);
+        const q = rho * z / residual;
+        const probability_at_cut = normal(q);
+        const mills = @exp(-q * q / 2) / (@sqrt(2 * std.math.pi) * probability_at_cut);
+        const curvature = mills * (q + mills);
+        const dr = z / (residual * residual * residual);
+        const weight = d.f;
+        information[0] += weight * (curvature * dr * dr - mills * 3 * rho * dr / (residual * residual));
+        information[1] += weight * (mills - curvature * q) * dr;
+        information[3] += weight * (curvature * q * q - 2 * mills * q);
+        ll += weight * @log(probability_at_cut);
+    }
+    if (!(information[0] > 0)) return fit;
+    information[2] = information[1];
+    var inverse = [2]f64{ 1, 0 };
+    if (@import("corr_polychoric.zig").solveInformation(&information, &inverse) == null or inverse[0] < 0) return fit;
+    fit.r = direction * rho;
+    fit.se = @sqrt(inverse[0]);
+    fit.converged = true;
+    if (fit.se > 0) {
+        fit.wald = (fit.r / fit.se) * (fit.r / fit.se);
+        fit.p = 2 * normal(-@abs(fit.r / fit.se));
+    }
+    fit.lr = 2 * (ll + n * @log(@as(f64, 2)));
+    fit.lr_p = 2 * normal(-@sqrt(fit.lr));
+    return fit;
+}
+
 pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOptions) !Poly {
     var result: Poly = .{};
     const cats = try levels(a, data, false);
@@ -307,12 +387,24 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
             decreasing = decreasing and d.x > e.x;
         }
     };
+    const ctx: Serial = .{ .data = data, .categories = cats, .mean = mean, .sd = @sqrt(css / result.n) };
     if (increasing or decreasing) {
-        result.r = if (increasing) 1 else -1;
+        const sign: f64 = if (increasing) 1 else -1;
+        if (cats.len == 2) {
+            // With no within-level variation the continuous and ordinal scores
+            // are affine, and the marginal Pearson correlation is exactly ±1.
+            var level_values = [2]?f64{ null, null };
+            for (data) |d| {
+                const j = @intFromBool(d.y == cats[1]);
+                if (level_values[j]) |previous| {
+                    if (d.x != previous) return separatedBinary(a, ctx, result.n, sign, opt);
+                } else level_values[j] = d.x;
+            }
+        }
+        result.r = sign;
         result.converged = true;
         return result;
     }
-    const ctx: Serial = .{ .data = data, .categories = cats, .mean = mean, .sd = @sqrt(css / result.n) };
     const dim = cats.len;
     const params = try a.alloc(f64, dim);
     defer a.free(params);
@@ -450,4 +542,37 @@ test "CORR polyserial Fitness1 RunTime and Oxygen from SAS example 2.5" {
     try std.testing.expectApproxEqAbs(@as(f64, 0.04071), fit.se, 0.000005);
     try std.testing.expectApproxEqAbs(@as(f64, 500.0345), fit.wald, 0.00005);
     try std.testing.expectApproxEqAbs(@as(f64, 38.6963), fit.lr, 0.00005);
+}
+
+test "CORR separated binary polyserial threshold, reflected units, and information rank" {
+    const a = std.testing.allocator;
+    var data: [8]Observation = undefined;
+    for ([_]f64{ 1, -16 }) |scale| {
+        for (&data, 0..) |*d, i| d.* = .{ .x = scale * @as(f64, @floatFromInt(i + 1)) + 100, .y = if (i < 4) 0 else 1 };
+        const sign: f64 = if (scale > 0) 1 else -1;
+        for ([_]usize{ 1, 2, 4, 8, 16, 32, 200 }) |cap| {
+            for ([_]f64{ 0.01, 0.0001, 0.000001 }) |tolerance| {
+                const fit = try polyserial(a, &data, .{ .maxiter = cap, .converge = tolerance });
+                if (cap == 1 or tolerance == 0.000001) {
+                    try std.testing.expect(!fit.converged);
+                    try std.testing.expect(std.math.isNan(fit.r) and std.math.isNan(fit.se) and std.math.isNan(fit.lr));
+                } else {
+                    const loose = tolerance == 0.01;
+                    try std.testing.expectApproxEqAbs(sign * (1 - tolerance / 2), fit.r, 1e-13);
+                    try std.testing.expectApproxEqAbs(@as(f64, if (loose) 0.01873725665189 else 0), fit.se, 1e-13);
+                    try std.testing.expectApproxEqAbs(@as(f64, if (loose) 11.0304970502865 else 11.0903548889591), fit.lr, 1e-12);
+                    if (!loose) try std.testing.expect(std.math.isNan(fit.wald));
+                }
+            }
+        }
+    }
+    const tied = [_]Observation{
+        .{ .x = 7, .y = 1, .f = 3 }, .{ .x = 2, .y = 0, .f = 1 },
+        .{ .x = 6, .y = 1, .f = 2 }, .{ .x = 1, .y = 0, .f = 3 },
+        .{ .x = 2, .y = 0, .f = 1 },
+    };
+    try std.testing.expect(try reflectedBinary(a, &tied));
+    for (&data, 0..) |*d, i| d.* = .{ .x = @log(@as(f64, @floatFromInt(i + 2))), .y = if (i < 3) 0 else 1, .f = @floatFromInt((i + 1) % 3 + 1) };
+    const asymmetric = try polyserial(a, &data, .{});
+    try std.testing.expect(asymmetric.unsupported_boundary);
 }

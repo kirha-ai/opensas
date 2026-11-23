@@ -1217,7 +1217,9 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 for ([_]f64{ e.r, e.se, e.wald, e.p, e.lr, e.lr_p }, 0..) |v, i| {
                     if (hide_probs and (i == 3 or i == 5)) continue;
                     // Keep a small positive SE distinguishable from the rank-deficient zero.
-                    const value = if (i == 1 and v > 0 and v < 0.000005)
+                    const value = if (i == 1 and v == 0)
+                        "0"
+                    else if (i == 1 and v > 0 and v < 0.000005)
                         try @import("../format.zig").bestNumW(a, v, 10)
                     else if ((i == 2 or i == 4) and std.math.isFinite(v))
                         std.mem.trim(u8, try @import("../format.zig").apply(a, .{ .num = v }, "10.4"), " ")
@@ -1375,7 +1377,7 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
         const estimate = if (skip) advanced.Poly{ .n = n } else if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
-            return cx.diags.fail(error.ParseError, 0, "PROC CORR: polychoric boundary information is unresolved at the requested tolerance.", .{});
+            return cx.diags.fail(error.ParseError, 0, "PROC CORR: {s} boundary information is unresolved at the requested tolerance.", .{if (serial) @as([]const u8, "polyserial") else "polychoric"});
         }
         if (!skip and !estimate.converged) try cx.diags.warn(0, "The algorithm for {s} correlation between {s} and {s} did not converge.", .{
             if (serial) @as([]const u8, "polyserial") else "polychoric",
