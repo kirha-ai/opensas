@@ -346,7 +346,7 @@ fn sweepIndex(i: usize, categories: usize) usize {
     };
 }
 
-fn correlationVariance(matrix: []f64, rhs: []f64) ?f64 {
+fn correlationVariance(matrix: []f64, rhs: []f64, at_bound: bool) ?f64 {
     const stride = rhs.len;
     const categories = stride - 2;
     const rho = categories - 1;
@@ -364,6 +364,9 @@ fn correlationVariance(matrix: []f64, rhs: []f64) ?f64 {
         const i = sweepIndex(row, categories);
         const pivot = matrix[i * stride + i];
         if (pivot < 1e-8) {
+            // A free correlation needs positive information after removing
+            // the continuous margin. Only a fixed boundary can have zero SE.
+            if (i == rho and !at_bound) return null;
             for (0..stride) |j| {
                 matrix[i * stride + j] = 0;
                 matrix[j * stride + i] = 0;
@@ -522,7 +525,7 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     }
     if (!result.converged) return serialFallback(result, ctx, params);
     serialInformation(ctx, params, information, score, gradient);
-    const variance = correlationVariance(information, gradient);
+    const variance = correlationVariance(information, gradient, @abs(params[dim - 1]) == bound);
     result.se = @sqrt(variance orelse {
         result.converged = false;
         return serialFallback(result, ctx, params);
@@ -782,6 +785,24 @@ test "CORR probes a nearby binary endpoint beyond the ordinary Newton step" {
         try std.testing.expectEqual(@as(f64, 0), fit.se);
         try std.testing.expectApproxEqAbs(ref.lr, fit.lr, 1e-11);
     }
+}
+
+test "CORR rejects an unidentified interior polyserial correlation" {
+    const xs = [_]f64{ -9.5, -3, -2.875, -2.625, -0.5, 1.625, 1.875, 2.375, 6.625, 8.875 };
+    const frequencies = [_]f64{ 4, 1, 5, 2, 1, 5, 2, 1, 5, 2 };
+    var data: [xs.len]Observation = undefined;
+    for (&data, xs, frequencies, 0..) |*d, x, f, i| d.* = .{ .x = x, .y = if (i < 2) 0 else 1, .f = f };
+    const interior = try polyserial(std.testing.allocator, &data, .{ .converge = 0.999, .maxiter = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.85273567684712), interior.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.84641999442579), interior.se, 1e-12);
+    data[9].x = 9.375;
+    const unidentified = try polyserial(std.testing.allocator, &data, .{ .converge = 0.999, .maxiter = 1 });
+    try std.testing.expect(!unidentified.converged);
+    try std.testing.expectEqual(@as(f64, 28), unidentified.n);
+    try std.testing.expect(std.math.isNan(unidentified.r) and std.math.isNan(unidentified.se) and std.math.isNan(unidentified.lr));
+    const later = try polyserial(std.testing.allocator, &data, .{ .converge = 0.1, .maxiter = 2 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.91162567840006), later.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.12697158584352), later.se, 1e-12);
 }
 
 test "CORR polyserial refines multiple thresholds at the correlation limit" {
