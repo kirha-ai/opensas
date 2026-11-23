@@ -356,12 +356,13 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
     var result: Poly = .{};
     const cats = try levels(a, data, false);
     defer a.free(cats);
+    if (cats.len > opt.ngroups) return result;
     var sum: f64 = 0;
     for (data) |d| {
         result.n += d.f;
         sum += d.f * d.x;
     }
-    if (cats.len < 2 or cats.len > opt.ngroups or result.n < 2) return result;
+    if (cats.len < 2 or result.n < 2) return result;
     const mean = sum / result.n;
     var css: f64 = 0;
     var y_sum: f64 = 0;

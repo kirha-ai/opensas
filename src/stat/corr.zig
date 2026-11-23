@@ -1390,7 +1390,9 @@ fn polyPairs(cx: proc.ProcCtx, s: Spec, rows: []const []const Value, opt: advanc
             n += m.f;
             if (!skip) try data.append(cx.arena, .{ .x = row[if (serial and opt.ordinal_var) r else c].num, .y = row[if (serial and opt.ordinal_var) c else r].num, .f = m.f });
         }
-        const estimate = if (skip) advanced.Poly{ .n = n } else if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
+        // A rejected polyserial pair has no fit sample. Polychoric still
+        // reports the pairwise count when either ordinal variable is excluded.
+        const estimate = if (skip) advanced.Poly{ .n = if (serial) 0 else n } else if (serial) try advanced.polyserial(cx.arena, data.items, opt) else try advanced.polychoric(cx.arena, data.items, opt);
         if (estimate.unsupported_boundary) {
             diag.markGap();
             return cx.diags.fail(error.ParseError, 0, "PROC CORR: {s} boundary information is unresolved at the requested tolerance.", .{if (serial) @as([]const u8, "polyserial") else "polychoric"});
@@ -1666,6 +1668,24 @@ test "CORR group limits name each ordinal variable once and MAXITER names its pa
     try std.testing.expectEqual(@as(usize, 3), d.list.items.len);
     try std.testing.expectEqualStrings("The algorithm for polychoric correlation between c and r did not converge.", d.list.items[2].message);
 }
+test "CORR NGROUPS rejects the polyserial fit before counting its observations" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "g", "h", "f" }, &.{
+        &.{ 1, 1, 1, 2 }, &.{ 2, 2, 2, 3 }, &.{ 3, 3, 1, 4 },
+    });
+    for ([_][]const u8{
+        "proc corr polyserial(ngroups=2); var x; with g h; freq f; run;",
+        "proc corr polyserial(ordinal=var ngroups=2); var g h; with x; freq f; run;",
+    }) |source| {
+        const pairs = (try Testing.analyze(a, ds, source)).groups[0].polyserial;
+        try Testing.near(0, pairs[0].estimate.n);
+        try std.testing.expect(std.math.isNan(pairs[0].estimate.r));
+        try Testing.near(9, pairs[1].estimate.n);
+    }
+}
+
 test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
