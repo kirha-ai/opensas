@@ -2214,7 +2214,7 @@ test "FEAT-base-stat-results last FREQ table writes independent PCHI and cell da
 
 test "FREQ native comparative EQUAL methods, request margins and ordered diagnostics" {
     // SAS 9.4 M9 on cells (12,8;5,25). For the public procedure inputs, see
-    // tests/corpus/stat_option_freq_newcombe_equality_*.sas.
+    // tests/corpus/supplemental/stat_option_freq_newcombe_equality_*.sas.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();

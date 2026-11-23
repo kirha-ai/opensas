@@ -23,7 +23,7 @@ what it changes.
 Reference: Base SAS 9.4 Procedures Guide, Statistical Procedures, Sixth Edition;
 page references below use printed page numbers.
 
-Run all passing programs with `zig build corpus`. To reproduce the nine outstanding differences with their M9 expected values, run `zig build install && zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending-statistics`. Append a fixture filename to replay it individually.
+Run the default corpus with `zig build corpus`. The 1,113 supplemental programs in `tests/corpus/supplemental/` and the nine outstanding M9 differences in `tests/corpus/pending/` can be replayed as a suite or individually. [Replay commands](README.md#running-statistical-tests)
 
 - [PARK] EPIC-base-stat-complete (P1) — Inventory every statement, option, statistic, output and example in CORR pp. 3–64, FREQ pp. 65–286 and UNIVARIATE pp. 287–551. 1,499 inventory rows, including 293 EPIC-owned rows. Delivered comparative-risk EQUAL validation and method aliases. Original programs 33/33. Supplementary comparisons pass 985/985 default options and 22/22 published-value examples, with 41/55 full manual examples completing. Seven extended option probes differ, including destination controls and three fit-precision cases. ODS descriptors match 84/149 and deterministic values 66/131. Repeated MARGIN diagnostics remain open. First replay: `zig build install && zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus stat_base_by_groups.sas`.
 

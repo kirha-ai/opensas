@@ -124,12 +124,38 @@ python3 -m http.server -d web    # open http://localhost:8000
 Three suites run in CI on every push and before every release.
 
 - **Unit tests.** `zig build test` runs 1,588 tests across four Zig test suites.
-- **Conformance corpus.** `zig build corpus` runs 3,414 SAS programs. They include 238 individual statistical programs verified against SAS 9.4 M9, plus supplemental cases covering numerical results, diagnostics, output datasets and plots. [Corpus fixtures](tests/corpus)
+- **Conformance corpus.** `zig build corpus` runs the 2,301 SAS programs directly under `tests/corpus/`, including 238 statistical cases verified against SAS 9.4 M9. [Corpus fixtures](tests/corpus)
 - **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
 The `.sas7bdat` and `.xpt` readers and writers are round-tripped against files
 written by SAS® 9.4. Fixtures use invented data or published samples such as the
 CDISC pilot study.
+
+### Running statistical tests
+
+Run these commands from the repository root. Build the CLI once with `zig build install`.
+The corpus runner runs the programs directly in the directory you give it.
+Two statistical suites are available on demand outside the default gate.
+
+```sh
+# Run all 1,113 supplemental programs.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental
+
+# Replay the 9 known differences against their SAS 9.4 M9 expectations.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending
+```
+
+To run one case, append its `.sas` filename to the command for its directory.
+The runner checks the result against the matching `.txt` file.
+
+```sh
+# One default, supplemental, or pending case, respectively.
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus stat_univ_fit_pareto_mle_seeded.sas
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/supplemental stat_stratified_near_closehi.sas
+zig run tests/corpus_runner.zig -- zig-out/bin/opensas tests/corpus/pending stat_freq_rr_antidiagonal_score2.sas
+```
+
+The runner exits with status 1 when a case fails. This is expected when replaying pending cases that still differ from SAS.
 
 ## What's supported
 
