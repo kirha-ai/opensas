@@ -35,6 +35,8 @@ pub const Options = struct {
     nosimple: bool = false,
     noprob: bool = false,
     nocorr: bool = false,
+    ranked: bool = false,
+    best: usize = std.math.maxInt(usize),
     cov: bool = false,
     csscp: bool = false,
     sscp: bool = false,
@@ -288,6 +290,16 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             opts.singular = try numericOption(cx, toks, &i);
             opts.singular_specified = true;
             if (!(opts.singular >= 0 and opts.singular <= 1)) return fail(cx, toks[i - 1]);
+        } else if (kw(toks, i, "rank")) {
+            opts.ranked = true;
+            i += 1;
+        } else if (kw(toks, i, "best") and at(toks, i + 1, .eq)) {
+            opts.ranked = true;
+            i += 2;
+            const v = try numericOption(cx, toks, &i);
+            if (!std.math.isFinite(v) or v != @trunc(v)) return cx.diags.fail(error.ParseError, toks[i - 1].line, "PROC CORR: BEST= requires an integer.", .{});
+            if (v < 1) try cx.diags.warn(toks[i - 1].line, "The number specified in BEST= option is less than 1; BEST=1 will be used.", .{});
+            opts.best = if (v >= @as(f64, @floatFromInt(std.math.maxInt(usize)))) std.math.maxInt(usize) else @intFromFloat(@max(1, v));
         } else if (kw(toks, i, "vardef") and at(toks, i + 1, .eq) and at(toks, i + 2, .name)) {
             const v = toks[i + 2].text;
             opts.vardef = if (eq(v, "df")) .df else if (eq(v, "n")) .n else if (eq(v, "wdf")) .wdf else if (eq(v, "weight") or eq(v, "wgt")) .weight else return fail(cx, toks[i + 2]);
@@ -662,21 +674,25 @@ fn renderListing(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result, 
         if (!s.options.nocorr and s.options.pearson) {
             try out.appendSlice(a, if (s.partial.len > 0) "\nPearson Partial Correlation Coefficients\n" else "\nPearson Correlation Coefficients\n");
             if (!s.options.noprob) try out.appendSlice(a, "Prob > |r| under H0: Rho=0\n");
-            try out.appendSlice(a, "Number of Observations\nVariable");
-            for (s.vars) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
-            try out.append(a, '\n');
-            const rowcols = if (s.with.len > 0) s.with else s.vars;
-            for (rowcols, 0..) |c, j| {
-                const ps = g.pairs[j * s.vars.len ..][0..s.vars.len];
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}", .{s.ds.columns.items[c].name}));
-                for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.r, false)}));
-                if (!s.options.noprob) {
-                    try out.appendSlice(a, "\nP");
-                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (p.row == p.column and p.n > 2 and !std.math.isNan(p.r)) "-" else try number(a, p.p, true)}));
-                }
-                try out.appendSlice(a, "\nN");
-                for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{p.n}));
+            if (s.options.ranked) {
+                try renderRanked(a, out, s, g.pairs, false, !s.options.noprob);
+            } else {
+                try out.appendSlice(a, "Number of Observations\nVariable");
+                for (s.vars) |c| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[c].name}));
                 try out.append(a, '\n');
+                const rowcols = if (s.with.len > 0) s.with else s.vars;
+                for (rowcols, 0..) |c, j| {
+                    const ps = g.pairs[j * s.vars.len ..][0..s.vars.len];
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "{s}", .{s.ds.columns.items[c].name}));
+                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.r, false)}));
+                    if (!s.options.noprob) {
+                        try out.appendSlice(a, "\nP");
+                        for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (p.row == p.column and p.n > 2 and !std.math.isNan(p.r)) "-" else try number(a, p.p, true)}));
+                    }
+                    try out.appendSlice(a, "\nN");
+                    for (ps) |p| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{p.n}));
+                    try out.append(a, '\n');
+                }
             }
         }
         try tables.finish(a, out, start, if (s.partial.len > 0) "PartialPearsonCorr" else "PearsonCorr");
@@ -685,6 +701,37 @@ fn renderListing(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result, 
             out.shrinkRetainingCapacity(header_start);
             continue;
         }
+        try out.append(a, '\n');
+    }
+}
+/// BEST=/RANK change the listing for each response separately. OUTP/OUTS
+/// still consume the complete coefficient matrix in variable order.
+fn renderRanked(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, pairs: []const Pair, hoeffding: bool, probabilities: bool) !void {
+    const row = try a.alloc(Pair, s.vars.len);
+    defer a.free(row);
+    var rows = std.mem.window(Pair, pairs, row.len, row.len);
+    while (rows.next()) |source| {
+        @memcpy(row, source);
+        // SAS orders tied coefficients by reverse VAR position.
+        std.mem.reverse(Pair, row);
+        std.mem.sort(Pair, row, hoeffding, struct {
+            fn greater(raw: bool, l: Pair, r: Pair) bool {
+                if (std.math.isNan(l.r)) return false;
+                if (std.math.isNan(r.r)) return true;
+                return if (raw) l.r > r.r else @abs(l.r) > @abs(r.r);
+            }
+        }.greater);
+        const top = row[0..@min(s.options.best, row.len)];
+        try out.appendSlice(a, s.ds.columns.items[source[0].row].name);
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{s.ds.columns.items[v.column].name}));
+        try out.appendSlice(a, "\nr");
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v.r, false)}));
+        if (probabilities) {
+            try out.appendSlice(a, "\nP");
+            for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{if (v.row == v.column and std.math.isFinite(v.r)) "-" else try number(a, v.p, true)}));
+        }
+        try out.appendSlice(a, "\nN");
+        for (top) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}", .{v.n}));
         try out.append(a, '\n');
     }
 }
@@ -1135,15 +1182,20 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
         const pairs = @field(g, name);
         if (pairs.len > 0) {
             const start = out.items.len;
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\nRow Column Correlation", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
-            if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, " P");
-            try out.appendSlice(a, " N\n");
-            for (pairs) |p| {
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, try number(a, p.r, false) }));
-                if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
-                try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
+            if (s.options.ranked) {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\n", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
+                try renderRanked(a, out, s, pairs, eq(name, "hoeffding"), !s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0));
+            } else {
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Correlation Coefficients\nRow Column Correlation", .{ name, if (s.partial.len > 0) @as([]const u8, " Partial") else "" }));
+                if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, " P");
+                try out.appendSlice(a, " N\n");
+                for (pairs) |p| {
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, try number(a, p.r, false) }));
+                    if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
+                    try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
+                }
+                const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
             }
-            const object = if (eq(name, "spearman")) (if (s.partial.len > 0) "PartialSpearmanCorr" else "SpearmanCorr") else if (eq(name, "kendall")) (if (s.partial.len > 0) "PartialKendallCorr" else "KendallCorr") else "HoeffdingCorr";
             try tables.finish(a, out, start, object);
         }
     }
@@ -1943,4 +1995,33 @@ test "FEAT-base-stat-results SSCP intercept alpha blocks and BY row descriptors"
     try std.testing.expectEqualStrings("y", b.columns.items[3].name);
     try std.testing.expectEqualStrings("B", b.row(9)[0].str);
     try std.testing.expectApproxEqAbs(@as(f64, 0.5), b.row(9)[3].num, 1e-12);
+}
+
+test "CORR BEST selects absolute correlations and RANK preserves source matrices" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{
+        &.{ 1, 8, 4 }, &.{ 2, 6, 1 }, &.{ 2, 6, 5 }, &.{ 3, 2, 2 }, &.{ 4, 5, 6 },
+        &.{ 5, 3, 2 }, &.{ 6, 1, 5 }, &.{ 8, 4, 8 }, &.{ 9, 1, 3 },
+    });
+    const result = try Testing.analyze(a, ds, "proc corr data=d best=2 nosimple; var x y z; run;");
+    var out: std.ArrayList(u8) = .empty;
+    try render(a, &out, result);
+    for ([_][]const u8{ "x x y\nr 1.00000 -0.73193", "y y x\nr 1.00000 -0.73193", "z z x\nr 1.00000 0.34076" }) |line|
+        try std.testing.expect(std.mem.indexOf(u8, out.items, line) != null);
+    try std.testing.expectEqual(@as(usize, 9), result.groups[0].pairs.len);
+
+    out.clearRetainingCapacity();
+    const rectangular = try Testing.analyze(a, ds, "proc corr data=d rank noprob nosimple; with x; var z y; run;");
+    try render(a, &out, rectangular);
+    try std.testing.expect(std.mem.indexOf(u8, out.items, "x y z\nr -0.73193 0.34076\nN 9 9") != null);
+    try std.testing.expectEqual(@as(usize, 2), rectangular.groups[0].pairs[0].column);
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    const spec = try parse(.{ .arena = a, .lib = &lib, .diags = &d }, try lex.tokenize(a, "proc corr data=d best=0; var x y; run;", &d));
+    try std.testing.expectEqual(@as(usize, 1), spec.options.best);
+    try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+    try std.testing.expectEqual(.warning, d.list.items[0].severity);
 }
