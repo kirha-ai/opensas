@@ -665,7 +665,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
                 const stratified = try strat_exec.compute(a, cx.diags, &tab, req.stratified, stratScope(req, opts));
-                try analyzeTable(cx, out, &tab, req, opts, stratified, writer, group.rep);
+                try analyzeTable(cx, out, &tab, req, opts, stratified, writer, &view, bc, group.rep);
                 if (!opts.noprint) rendered = true;
             } else if (!opts.noprint and !req.noprint) {
                 if (rendered) try out.append(a, '\n');
@@ -1830,7 +1830,7 @@ fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     return ids.toOwnedSlice(a);
 }
 
-fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?stat_output.Writer, by_row: ?[]const Value) diag.Error!void {
+fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request, opts: Options, stratified: strat_exec.Report, writer: ?stat_output.Writer, source: *const Dataset, by: []const usize, by_row: ?[]const Value) diag.Error!void {
     const a = cx.arena;
     const requested_tests = exact_public.asymptoticTests(req, opts.tests.requests);
     if (tab.negative) {
@@ -1850,7 +1850,7 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         // Existing test-family NOPRINT execution remains independent above.
         const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, true, false), req.risk, req.statistics.alpha);
         if (opts.noprint) return;
-        try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
+        _ = try exact_public.render(a, cx.diags, &body, scored, true, req, opts.exact_seed);
         try risk_render.render(a, &body, risk_report);
         if (!req.noprint) try renderOne(a, out, tab, req) else if (body.items.len > 0) try out.appendSlice(a, ONEWAY_TITLE);
         try out.appendSlice(a, body.items);
@@ -1889,7 +1889,8 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
                 if (writer) |w| try w.append(by_row, tab, stratum * nr * nc, sl.total, sl.missing, result);
                 const risk_report: risk_render.Report = if (opts.noprint) .{} else try risk_exec.execute(a, cx.diags, try riskTable(a, tab, scored, false, req.statistics.measures and !req.statistics.measures_only_implied), req.risk, req.statistics.alpha);
                 if (!opts.noprint) {
-                    try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
+                    const limits = try exact_public.render(a, cx.diags, &body, scored, false, req, opts.exact_seed);
+                    if (cx.capture) |capture| try @import("ods_freq_risk.zig").publish(a, cx.diags, capture, source, by, by_row, tab, number, scored.matrix, req.statistics.alpha, risk_report, limits);
                     try risk_render.render(a, &body, risk_report);
                     for (stratified.strata) |s| if (s.id == stratum) {
                         try strat_exec.renderStratum(a, &body, s, req.stratified, stratScope(req, opts));

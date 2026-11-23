@@ -166,7 +166,8 @@ fn title(f: parse.Family) []const u8 {
     };
 }
 fn interval(a: A, out: *Out, name: []const u8, ci: @import("freq_exact.zig").Interval, alpha: f64) diag.Error!void {
-    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{d}% Lower Conf Limit  {d:.4}\n{d}% Upper Conf Limit  {d:.4}\n", .{ name, 100 * (1 - alpha), ci.lower, 100 * (1 - alpha), ci.upper }));
+    const level = try @import("freq_risk_render.zig").confidence(a, alpha);
+    try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}\nExact Confidence Limits\n{s}% Lower Conf Limit  {d:.4}\n{s}% Upper Conf Limit  {d:.4}\n", .{ name, level, ci.lower, level, ci.upper }));
 }
 fn binomialHypotheses(a: A, out: *Out, request: @import("freq_risk_parse.zig").Request, k: u32, n: u32, c: exec.Config) diag.Error!void {
     if (!request.noninf and !request.sup and !request.equiv) return;
@@ -210,11 +211,16 @@ fn warnFractional(d: *diag.Diagnostics, f: parse.Family) diag.Error!void {
     try d.report(.warning, 0, "PROC FREQ EXACT {s} cannot be computed when there are noninteger frequencies.", .{@tagName(f)});
 }
 
-pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!void {
-    if (req.exact.families.count() == 0) return;
+pub const RiskLimits = struct {
+    relative_risk: [2]?@import("freq_exact.zig").Interval = @splat(null),
+    difference: [2]?@import("freq_exact.zig").Interval = @splat(null),
+};
+pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix, one: bool, req: anytype, seed: u64) diag.Error!RiskLimits {
+    var limits: RiskLimits = .{};
+    if (req.exact.families.count() == 0) return limits;
     var total: f64 = 0;
     for (scored.matrix.counts) |v| total += v;
-    if (total == 0) return;
+    if (total == 0) return limits;
     const m = matrix(scored, one);
     var it = req.exact.families.iterator();
     while (it.next()) |requested_family| {
@@ -279,12 +285,15 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
             },
             .interval => |ci| try interval(a, out, title(f), ci, c.alpha),
             .risk_intervals => |r| {
+                const columns = if (f == .relrisk) &limits.relative_risk else &limits.difference;
+                columns.* = .{ r.first, r.second };
                 if (r.first) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 1)", .{title(f)}), ci, c.alpha);
                 if (r.second) |ci| try interval(a, out, try std.fmt.allocPrint(a, "{s} (Column 2)", .{title(f)}), ci, c.alpha);
             },
             .barnard => |b| try renderers.testResult(a, out, title(f), .{ .complete = .{ .directional = true, .right_sided = m.counts[0] / (m.counts[0] + m.counts[1]) > m.counts[2] / (m.counts[2] + m.counts[3]), .probabilities = .{ .one_sided = b.one.upper, .two_sided = b.two.upper, .point = 0, .left = 0, .right = 0, .tables = 0 } } }, options),
         }
     }
+    return limits;
 }
 
 pub fn renderStrata(a: A, d: *diag.Diagnostics, out: *Out, tab: *model.Table, req: anytype, seed: u64) diag.Error!void {

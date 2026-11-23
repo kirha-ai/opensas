@@ -6,7 +6,7 @@ const Dataset = @import("dataset.zig").Dataset;
 const Library = @import("exec.zig").Library;
 const Value = @import("value.zig").Value;
 const eq = std.ascii.eqlIgnoreCase;
-pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "PPPlot", "QQPlot" };
+pub const names = [_][]const u8{ "PearsonCorr", "SpearmanCorr", "KendallCorr", "PolychoricCorr", "SimpleStats", "OneWayFreqs", "CrossTabFreqs", "RelRisk1ExactCL", "RelRisk2ExactCL", "RiskDiffCol1", "RiskDiffCol2", "Moments", "Quantiles", "BasicMeasures", "ParameterEstimates", "FitQuantiles", "GoodnessOfFit", "Bins", "PPPlot", "QQPlot" };
 const Request = struct { table: []const u8, target: []const u8, result: ?*Dataset = null };
 pub const Capture = struct {
     requests: std.ArrayList(Request) = .empty,

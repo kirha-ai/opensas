@@ -18,7 +18,7 @@ const Builder = struct {
         try self.sections.append(self.a, .{ .title = title, .subtitle = subtitle, .columns = columns, .rows = try self.a.dupe(r.Row, rows), .note = note });
     }
     fn level(self: *Builder, label: []const u8) diag.Error![]const u8 {
-        return std.fmt.allocPrint(self.a, "{d}% {s}", .{ 100 * (1 - self.alpha), label });
+        return std.fmt.allocPrint(self.a, "{s}% {s}", .{ try r.confidence(self.a, self.alpha), label });
     }
     fn intervals(self: *Builder, title: []const u8, subtitle: []const u8, rows: []const r.Row) diag.Error!void {
         const columns = try self.a.alloc([]const u8, 2);
@@ -184,6 +184,7 @@ fn ratioMethod(m: p.Method) k.RatioMethod {
 pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alpha: f64) diag.Error!r.Report {
     if (!options.any()) return .{};
     var b = Builder{ .a = a, .d = d, .alpha = alpha };
+    var risk_columns: [2]?r.RiskColumn = @splat(null);
     var total: f64 = 0;
     for (table.counts) |v| total += v;
     if (table.one_way) {
@@ -238,12 +239,21 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
                 const s = t.samples(if (col == 0) .first else .second);
                 const all = k.Binomial{ .success = s[0].success + s[1].success, .total = total };
                 const title = try std.fmt.allocPrint(a, "Column {d} Risk Estimates", .{col + 1});
-                try b.estimates(title, "", &.{ estRow("Row 1", try k.proportion(s[0], alpha, req.correct)), estRow("Row 2", try k.proportion(s[1], alpha, req.correct)), estRow("Total", try k.proportion(all, alpha, req.correct)), estRow("Difference", try k.difference(t, if (col == 0) .first else .second, alpha, req.correct)) }, "Difference is (Row 1 - Row 2)");
+                var column = r.RiskColumn{ .estimates = .{
+                    try k.proportion(s[0], alpha, req.correct), try k.proportion(s[1], alpha, req.correct),
+                    try k.proportion(all, alpha, req.correct),  try k.difference(t, if (col == 0) .first else .second, alpha, req.correct),
+                } };
+                try b.estimates(title, "", &.{ estRow("Row 1", column.estimates[0]), estRow("Row 2", column.estimates[1]), estRow("Total", column.estimates[2]), estRow("Difference", column.estimates[3]) }, "Difference is (Row 1 - Row 2)");
                 var exact_counts = true;
                 for (c) |v| if (!integer(v)) {
                     exact_counts = false;
                 };
-                if (exact_counts) try b.intervals(try std.fmt.allocPrint(a, "Column {d} Exact Risk Confidence Limits", .{col + 1}), "", &.{ ciRow("Row 1", try k.binomialLimits(s[0], alpha, .clopper_pearson, false)), ciRow("Row 2", try k.binomialLimits(s[1], alpha, .clopper_pearson, false)), ciRow("Total", try k.binomialLimits(all, alpha, .clopper_pearson, false)) });
+                if (exact_counts) {
+                    for ([_]k.Binomial{ s[0], s[1], all }, &column.binomial_limits) |sample, *limit|
+                        limit.* = try k.binomialLimits(sample, alpha, .clopper_pearson, false);
+                    try b.intervals(try std.fmt.allocPrint(a, "Column {d} Exact Risk Confidence Limits", .{col + 1}), "", &.{ ciRow("Row 1", column.binomial_limits[0].?), ciRow("Row 2", column.binomial_limits[1].?), ciRow("Total", column.binomial_limits[2].?) });
+                }
+                risk_columns[col] = column;
             };
             for (0..@as(usize, if (req.both_columns) 2 else 1)) |col_index| {
                 var current = req;
@@ -319,7 +329,7 @@ pub fn execute(a: A, d: *diag.Diagnostics, table: Table, options: p.Options, alp
         };
     }
     const sample_size: ?f64 = if (b.sections.items.len > 0) total else null;
-    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size };
+    return .{ .sections = try b.sections.toOwnedSlice(a), .sample_size = sample_size, .risk_columns = risk_columns };
 }
 
 test "FEAT-freq-risk public adapter corrected Wald test and fractional exact omission" {

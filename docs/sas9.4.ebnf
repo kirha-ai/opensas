@@ -208,6 +208,7 @@ ods_output_stmt = "ODS" "OUTPUT" ( "CLOSE" | "CLEAR"
                 | ods_table_name "=" ( sas_name | two_level_name )
                   { ods_table_name "=" ( sas_name | two_level_name ) } ) ";" ; (* opensas *)
 ods_table_name  = "PearsonCorr" | "PolychoricCorr" | "SimpleStats" | "OneWayFreqs" | "CrossTabFreqs"
+                | "RelRisk1ExactCL" | "RelRisk2ExactCL" | "RiskDiffCol1" | "RiskDiffCol2"
                 | "Moments" | "Quantiles" | "BasicMeasures" ; (* opensas *)
                  (* Typed capture; default requests expire after next PROC.
                     BY objects concatenate, missing objects warn without creating
