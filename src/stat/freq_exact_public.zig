@@ -239,10 +239,11 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
     const m = matrix(scored, one);
     // M9 advances a single stream between distinct simulated tests. The four
     // concordance coefficients have the same conditional ordering at fixed
-    // margins and reuse one sample. In particular PCORR and SCORR follow it.
+    // margins and reuse one sample. PCORR and SCORR follow it. A combined
+    // MHCHI/PCORR/TREND request visits the correlation before the trend test.
     const mc_order = [_]parse.Family{
-        .pchi,    .lrchi, .mhchi, .fisher, .jt,    .trend,    .mcnem,   .symmetry, .kappa,     .wtkappa,
-        .kentb,   .stutc, .smdcr, .smdrc,  .pcorr, .scorr,    .barnard, .binomial, .oddsratio, .riskdiff,
+        .pchi,    .lrchi, .mhchi, .fisher, .jt,    .mcnem,    .symmetry, .kappa,    .wtkappa,   .kentb,
+        .stutc,   .smdcr, .smdrc, .pcorr,  .scorr, .trend,    .barnard,  .binomial, .oddsratio, .riskdiff,
         .relrisk, .comor, .eqor,  .agree,  .chisq, .measures,
     };
     const order = if (req.exact.mc) &mc_order else std.enums.values(parse.Family);
@@ -522,6 +523,14 @@ test "public exact score warnings preserve the ordinary tests and missing tail r
     try std.testing.expect(std.mem.indexOf(u8, out, "Chi-Square") != null);
     try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, out, "Point Pr = Statistic              .\n"));
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out, "Two-sided Pr >= |Statistic|       .\n"));
+    // M9 score-floor-m9.sas, mclow. The score restriction does not apply
+    // to simulation. The correlation and trend consume successive streams.
+    const mc = try h.run("proc freq data=d; weight w; tables r*c / scores=table noprint; exact trend pcorr mhchi / mc n=31 seed=71; run;", &d);
+    const corr = std.mem.indexOf(u8, mc, "Pearson Correlation Coefficient (One-sided)") orelse return error.TestExpectedEqual;
+    const trend = std.mem.indexOf(u8, mc, "Cochran-Armitage Trend Test (One-sided)") orelse return error.TestExpectedEqual;
+    try std.testing.expect(corr < trend);
+    for ([_][]const u8{ "136544451", "0.6452" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[corr..trend], v) != null);
+    for ([_][]const u8{ "2005373960", "0.6129" }) |v| try std.testing.expect(std.mem.indexOf(u8, mc[trend..], v) != null);
 }
 
 test "public exact McNemar uses the specified odds for rare discordant pairs" {
