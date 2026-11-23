@@ -4536,7 +4536,8 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var var_lists: std.ArrayList([]const Token) = .empty;
     var id_lists: std.ArrayList([]const Token) = .empty;
     var vars: std.ArrayList([]const u8) = .empty;
-    var bys: std.ArrayList([]const u8) = .empty; // BY groups -> one OUTPUT row each (BUG-meansoutputby)
+    const by_groups = @import("stat/by_groups.zig");
+    var bys: by_groups.Statements = .{};
     var classes: std.ArrayList([]const u8) = .empty; // CLASS: per-level stats, not pooled (BUG-univclass)
     var class_missing = false; // `class v / missing` re-includes the missing level
     const var_list = @import("stat/variable_lists.zig");
@@ -4556,8 +4557,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             while (i < toks.len and toks[i].tag != .semicolon and toks[i].tag != .eof) i += 1;
             try list.append(arena, toks[begin..i]);
         } else if (tkKw(toks[i], "by")) {
-            bys.clearRetainingCapacity();
-            try parseProcBy(arena, diags, toks, &i, &bys);
+            try bys.read(arena, toks, &i);
         } else if (tkKw(toks[i], "weight") or tkKw(toks[i], "freq")) {
             const name = try var_list.roleVariable(toks, i + 1, false, diags);
             try roles.append(arena, .{ .name = name, .weight = tkKw(toks[i], "weight") });
@@ -4629,7 +4629,6 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
         return;
     };
     const input_view = try procInputObs(arena, raw, toks, diags);
-    const by_groups = @import("stat/by_groups.zig");
     const formatted_input = try by_groups.withFormats(arena, input_view.ds, fmt_specs.items);
     var ds = try extra.identify(arena, formatted_input, input_view.srcobs); // WHERE stmt / data= options (BUG-procwhere)
     var frequencies: var_list.NumericRole = .{};
@@ -4646,9 +4645,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     if (var_lists.items.len > 0 and vars.items.len == 0) return diags.fail(error.ParseError, 0, "VAR list empty.", .{});
     for (classes.items) |cn| if (ds.indexOf(cn) == null)
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: CLASS variable {s} not found", .{cn});
-    const checked_by = try decodeProcBy(arena, bys.items);
-    for (checked_by.names) |bn| if (ds.indexOf(bn) == null)
-        return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: BY variable {s} not found", .{bn});
+    const checked_by = try bys.resolve(arena, input_view.ds, diags);
     var obcols: std.ArrayList(usize) = .empty;
     for (checked_by.names) |bn| try obcols.append(arena, ds.indexOf(bn).?);
     try extra.markBy(arena, ds, obcols.items, checked_by.desc, checked_by.notsorted, diags);

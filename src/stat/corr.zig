@@ -280,7 +280,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     var vars: ?[]const usize = null;
     var with: []const usize = &.{};
     var partial: []const usize = &.{};
-    var by_names: std.ArrayList([]const u8) = .empty;
+    var by_statements: by_groups.Statements = .{};
     var frequencies: var_lists.NumericRole = .{};
     var weights: var_lists.NumericRole = .{};
     i += 1;
@@ -302,8 +302,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         } else if (kw(toks, i, "format")) {
             try proc.parseProcFormat(cx.arena, toks, &i, &formats);
         } else if (kw(toks, i, "by")) {
-            by_names.clearRetainingCapacity();
-            try proc.parseProcBy(cx.arena, cx.diags, toks, &i, &by_names);
+            try by_statements.read(cx.arena, toks, &i);
         } else if (kw(toks, i, "freq") or kw(toks, i, "weight")) {
             const role = if (kw(toks, i, "freq")) &frequencies else &weights;
             try role.add(cx.arena, ds, try var_lists.roleVariable(toks[0..end], i + 1, false, cx.diags), cx.diags);
@@ -312,7 +311,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     }
     for (formats.items) |spec| _ = try column(cx, ds, spec.name);
     ds = try by_groups.withFormats(cx.arena, ds, formats.items);
-    const by = try proc.decodeProcBy(cx.arena, by_names.items);
+    const by = try by_statements.resolve(cx.arena, ds, cx.diags);
     var bcols: std.ArrayList(usize) = .empty;
     for (by.names) |n| try bcols.append(cx.arena, try column(cx, ds, n));
     if (vars == null) {

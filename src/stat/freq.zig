@@ -31,8 +31,6 @@ const flush = p.flush;
 const skipParen = p.skipParen;
 const tkKw = p.tkKw;
 const atTag = p.atTag;
-const parseProcBy = p.parseProcBy;
-const decodeProcBy = p.decodeProcBy;
 const lastDataset = p.lastDataset;
 const eqi = p.eqi;
 const failGap = p.failGap;
@@ -149,8 +147,7 @@ const Options = struct {
     weights: var_lists.NumericRole = .{},
     zeros: bool = false,
     formchar: [3]u8 = .{ '|', '-', '+' },
-    bys: std.ArrayList([]const u8) = .empty,
-    by_seen: bool = false,
+    bys: by_groups.Statements = .{},
     formats: std.ArrayList(VarSpec) = .empty,
     requests: std.ArrayList(Request) = .empty,
 };
@@ -438,9 +435,7 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
             continue;
         }
         if (parser.kw("by")) {
-            opts.by_seen = true;
-            opts.bys.clearRetainingCapacity();
-            try parseProcBy(a, cx.diags, toks, &parser.i, &opts.bys);
+            try opts.bys.read(a, toks, &parser.i);
         } else if (parser.kw("weight")) {
             parser.i += 1;
             const name = try var_lists.roleVariable(toks, parser.i, true, cx.diags);
@@ -484,11 +479,11 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         if (opts.tables_statement_count == 0) return parser.fail("EXACT requires a TABLES statement.");
         simulation_seed = if (e.seed > 0) @intCast(e.seed) else exact_public.clockSeed();
     }
+    const pb = try opts.bys.resolve(a, input, cx.diags);
     if (opts.requests.items.len == 0) for (input.columns.items, 0..) |col, ci| {
         if (opts.weights.contains(ci)) continue;
-        const bylist = try decodeProcBy(a, opts.bys.items);
         var isby = false;
-        for (bylist.names) |bn| if (eqi(bn, col.name)) {
+        for (pb.names) |bn| if (eqi(bn, col.name)) {
             isby = true;
             break;
         };
@@ -533,8 +528,6 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
         }
     }
     const wc = opts.weights.first();
-    const pb = try decodeProcBy(a, opts.bys.items);
-    if (opts.by_seen and pb.names.len == 0) return parser.fail("BY requires at least one variable");
     const bc = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |bn, k| bc[k] = input.indexOf(bn) orelse return cx.diags.fail(error.ParseError, 0, "PROC FREQ: BY variable {s} not in {s}", .{ bn, input.name });
     if (opts.requests.items.len == 0)

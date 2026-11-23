@@ -7,6 +7,62 @@ const Value = @import("../value.zig").Value;
 const format = @import("../format.zig");
 const io = @import("../io.zig");
 const A = std.mem.Allocator;
+const Token = @import("../lexer.zig").Token;
+const lists = @import("variable_lists.zig");
+
+/// Every statistical BY statement resolves against the input descriptor.
+/// The final statement supplies the grouping keys and directions.
+pub const Statements = struct {
+    lists: std.ArrayList([]const Token) = .empty,
+
+    pub fn read(self: *Statements, a: A, tokens: []const Token, i: *usize) !void {
+        const start = i.* + 1;
+        i.* = start;
+        while (i.* < tokens.len and tokens[i.*].tag != .semicolon and tokens[i.*].tag != .eof) i.* += 1;
+        try self.lists.append(a, tokens[start..i.*]);
+    }
+
+    pub fn resolve(self: Statements, a: A, ds: *const Dataset, d: *diag.Diagnostics) diag.Error!proc.ProcBy {
+        var names: std.ArrayList([]const u8) = .empty;
+        var directions: std.ArrayList(bool) = .empty;
+        var notsorted = false;
+        var seen: std.AutoHashMapUnmanaged(usize, void) = .empty;
+        for (self.lists.items, 0..) |tokens, statement_ix| {
+            names.clearRetainingCapacity();
+            directions.clearRetainingCapacity();
+            notsorted = false;
+            var i: usize = 0;
+            var descending = false;
+            while (i < tokens.len) {
+                if (tokens[i].tag == .name and std.ascii.eqlIgnoreCase(tokens[i].text, "descending")) {
+                    descending = true;
+                    i += 1;
+                    continue;
+                }
+                if (tokens[i].tag == .name and std.ascii.eqlIgnoreCase(tokens[i].text, "notsorted")) {
+                    notsorted = true;
+                    i += 1;
+                    continue;
+                }
+                const line = tokens[i].line;
+                const selected = try lists.next(a, ds, tokens, &i, d);
+                for (selected) |n| {
+                    const ci = ds.indexOf(n) orelse return d.fail(error.ParseError, line, "Variable {s} not found.", .{try std.ascii.allocUpperString(a, n)});
+                    const name = ds.columns.items[ci].name;
+                    if (statement_ix + 1 == self.lists.items.len) {
+                        const entry = try seen.getOrPut(a, ci);
+                        if (entry.found_existing) try d.warn(line, "Duplication of by variable \"{s}\" ignored.", .{name});
+                    }
+                    try names.append(a, name);
+                    try directions.append(a, descending);
+                    descending = false; // DESCENDING qualifies the first variable of a range.
+                }
+            }
+            if (descending) return d.fail(error.ParseError, 0, "BY DESCENDING must be followed by a variable name", .{});
+        }
+        return .{ .names = names.items, .desc = directions.items, .notsorted = notsorted };
+    }
+};
 
 /// Procedure-local FORMAT changes the descriptor without rewriting shared input observations.
 pub fn withFormats(a: A, ds: *Dataset, specs: []const proc.VarSpec) !*Dataset {
@@ -78,4 +134,20 @@ pub fn appendLine(a: A, out: *std.ArrayList(u8), ds: *Dataset, row: []const Valu
         display[ci] = .{ .str = std.mem.trim(u8, try format.apply(a, row[ci], spec), " ") };
     };
     try proc.appendByLine(a, out, ds, display, cols);
+}
+
+test "statistical BY numbered keys resolve in source order with one descending modifier" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "sample");
+    for ([_][]const u8{ "g1", "g3", "g2" }) |name| _ = try ds.addColumn(name, .num);
+    var d = diag.Diagnostics.init(a);
+    const tokens = try @import("../lexer.zig").tokenize(a, "by descending g1-g3;", &d);
+    var by: Statements = .{};
+    var i: usize = 0;
+    try by.read(a, tokens, &i);
+    const resolved = try by.resolve(a, &ds, &d);
+    for (resolved.names, [_][]const u8{ "g1", "g2", "g3" }) |actual, expected| try std.testing.expectEqualStrings(expected, actual);
+    try std.testing.expectEqualSlices(bool, &.{ true, false, false }, resolved.desc);
 }
