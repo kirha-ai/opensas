@@ -196,7 +196,13 @@ pub const FamilyOptions = struct {
             }
             if ((kind == .sb or kind == .su) and (eq(key, "fitinterval") or eq(key, "fittolerance"))) {
                 const value = try numeric(d, t, i);
-                if (eq(key, "fitinterval")) self.common.fitinterval = value else self.common.fittolerance = value;
+                if (eq(key, "fitinterval")) {
+                    if (value <= 0) return d.fail(error.ParseError, 0, "FITINTERVAL= must be positive.", .{});
+                    self.common.fitinterval = value;
+                } else {
+                    if (value <= 0) return d.fail(error.ParseError, 0, "FITTOLERANCE= must be positive.", .{});
+                    self.common.fittolerance = value;
+                }
                 continue;
             }
             if (kind == .su and (eq(key, "optboundrange") or eq(key, "opttolerance") or eq(key, "optseed") or eq(key, "optmaxiter") or eq(key, "optmaxstarts"))) {

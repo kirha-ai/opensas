@@ -404,10 +404,13 @@ pub fn execute(cx: proc.ProcCtx, out: *std.ArrayList(u8), ds: *Dataset, acols: [
                         var trace: fitting.Trace = .{ .allocator = a };
                         var actual_request = request;
                         actual_request.report = &report;
+                        actual_request.variable = ds.columns.items[ci].name;
                         if (request.optprint or request.itprint) actual_request.trace = &trace;
                         const curve = fitting.fit(cx.diags, x, actual_request) catch |err| {
                             if (request.itprint and trace.weibull.items.len > 0) try rendering.renderTrace(a, out, trace, report);
                             if (report.no_fit) {
+                                if ((request.family == .sb or request.family == .su) and request.fitmethod == .percentiles)
+                                    try cx.diags.note(0, "{s}{s} {s} curve was not drawn because estimates could not be computed for all parameters.", .{ prefix, if (prefix.len == 0) "The" else "the", if (request.family == .su) "SU" else "SB" });
                                 if (request.optprint) try rendering.renderTrace(a, out, trace, report);
                                 try histogram_output.append(cx.diags, output, ds, keys.items, rep, ci, x, plan.endpoints, output_options, null);
                                 continue;
@@ -667,6 +670,69 @@ test "UNIVARIATE public Johnson methods endpoint adapter and fallback trace reac
         warned = true;
     };
     try std.testing.expect(warned);
+}
+
+test "Johnson percentile rejection preserves sibling fits and CLASS histogram rows" {
+    @import("../format.zig").resetPerRun();
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("g", .num);
+    _ = try ds.addColumn("x", .num);
+    for (1..4) |g| for (1..32) |i| {
+        const z = @import("../functions.zig").distQuantile(.normal, (@as(f64, @floatFromInt(i)) - 0.5) / 31, &.{}).?;
+        const x = switch (g) {
+            1 => 1 / (1 + @exp(-z)),
+            2 => std.math.sinh(z),
+            else => z,
+        };
+        try ds.appendRow(&.{ .{ .num = @floatFromInt(g) }, .{ .num = x } });
+    };
+    try lib.put("d", &ds);
+    for ([_][]const u8{ "su", "sb" }) |family| {
+        const su = std.mem.eql(u8, family, "su");
+        var d = diag.Diagnostics.init(a);
+        const lex = @import("../lexer.zig");
+        const source = try std.fmt.allocPrint(a, "proc univariate data=d noprint;class g;histogram x / {s}(fitinterval=.68 fittolerance=.95) normal outhistogram=h noplot;run;", .{family});
+        const tokens = try lex.tokenize(a, source, &d);
+        var out: std.ArrayList(u8) = .empty;
+        try proc.runUnivariate(.{ .arena = a, .lib = &lib, .diags = &d }, &out, tokens);
+        const name = if (su) "SU" else "SB";
+        const warning = try std.fmt.allocPrint(a, "Unable to fit {s} distribution based on the ratio criterion.", .{name});
+        const group_note = try std.fmt.allocPrint(a, "For classification level g = 1, the {s} curve was not drawn because estimates could not be computed for all parameters.", .{name});
+        var warnings: usize = 0;
+        var support_errors: usize = 0;
+        var group_notes: usize = 0;
+        for (d.list.items) |message| {
+            if (message.severity == .warning and std.mem.eql(u8, message.message, warning)) warnings += 1;
+            if (message.severity == .err and std.mem.startsWith(u8, message.message, "The smallest value of x")) support_errors += 1;
+            if (message.severity == .note and std.mem.eql(u8, message.message, group_note)) group_notes += 1;
+        }
+        try std.testing.expectEqual(@as(usize, if (su) 2 else 1), warnings);
+        try std.testing.expectEqual(@as(usize, if (su) 0 else 2), support_errors);
+        try std.testing.expectEqual(@as(usize, 1), group_notes);
+        const hdata = lib.find("h").?;
+        var normal_counts = [_]usize{ 0, 0, 0 };
+        var other_counts = [_]usize{ 0, 0, 0 };
+        for (hdata.rows.items) |row| {
+            const gi: usize = @intFromFloat(row[0].num - 1);
+            if (std.mem.eql(u8, row[5].str, "NORMAL")) {
+                normal_counts[gi] += 1;
+            } else {
+                other_counts[gi] += 1;
+                if (su and gi == 1) {
+                    try std.testing.expectEqualStrings("SU", row[5].str);
+                    try std.testing.expect(row[6] == .num);
+                } else {
+                    try std.testing.expectEqualStrings("", row[5].str);
+                    try std.testing.expect(row[6].isMissing());
+                }
+            }
+        }
+        for (normal_counts, other_counts) |normal, other| try std.testing.expect(normal > 0 and normal == other);
+    }
 }
 
 test "UNIVARIATE public Weibull ITPRINT renders actual iteration history" {

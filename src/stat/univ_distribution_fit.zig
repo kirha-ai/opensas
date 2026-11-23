@@ -114,6 +114,7 @@ test "UNIVARIATE endpoint adapter reports finite power candidates and warns on f
 
 pub const Request = struct {
     family: dist.Family,
+    variable: []const u8 = "the analysis variable",
     theta: ?f64 = 0,
     sigma: ?f64 = null,
     mu: ?f64 = null,
@@ -142,6 +143,11 @@ pub const Request = struct {
     report: ?*Report = null,
     trace: ?*Trace = null,
     specified_fields: std.StaticBitSet(std.meta.fields(dist.Parameters).len) = .initEmpty(),
+
+    fn rejectCurve(self: Request, reason: []const u8) diag.Error {
+        if (self.report) |report| report.* = .{ .converged = false, .no_fit = true, .reason = reason };
+        return error.ParseError;
+    }
 
     pub fn specified(self: Request, comptime name: []const u8) bool {
         inline for (std.meta.fields(dist.Parameters), 0..) |field, i| {
@@ -546,11 +552,24 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
         try fitted.validate(d);
         return fitted;
     }
+    if (r.family == .sb and r.theta != null) {
+        const theta = r.theta.?;
+        if (x[0] <= theta) {
+            try d.report(.err, 0, "The smallest value of {s} is less than or equal to the threshold parameter (THETA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB threshold parameter (THETA) must be less than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[0])});
+            return r.rejectCurve("outside_support");
+        }
+        if (r.sigma) |sigma| if (x[x.len - 1] >= theta + sigma) {
+            try d.report(.err, 0, "The largest value of {s} is greater than or equal to the upper threshold (THETA + SIGMA) for the SB fit.", .{r.variable});
+            try d.note(0, "The SB scale parameter (SIGMA) must be greater than {s}.", .{try @import("../format.zig").bestNum(d.arena, x[x.len - 1] - theta)});
+            return r.rejectCurve("outside_support");
+        };
+    }
     var p: dist.Parameters = .{};
     if (r.theta == null or r.sigma == null or r.delta == null or r.gamma == null) {
-        if (r.fitmethod != .percentiles) return d.fail(error.ParseError, 0, "UNIVARIATE: Johnson {s} estimation is not implemented", .{@tagName(r.fitmethod)});
         const z = r.fitinterval;
-        if (!(z > 0) or !std.math.isFinite(z) or !(r.fittolerance >= 0 and r.fittolerance < 1)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid Johnson percentile controls", .{});
+        if (!(z > 0) or !std.math.isFinite(z)) return d.fail(error.ParseError, 0, "FITINTERVAL= must be positive.", .{});
+        if (!(r.fittolerance > 0) or !std.math.isFinite(r.fittolerance)) return d.fail(error.ParseError, 0, "FITTOLERANCE= must be positive.", .{});
         const a = samplePercentile(x, functions.distCdf(.normal, -3 * z, &.{}).?);
         const b = samplePercentile(x, functions.distCdf(.normal, -z, &.{}).?);
         const c = samplePercentile(x, functions.distCdf(.normal, z, &.{}).?);
@@ -558,16 +577,27 @@ fn fitJohnson(d: *diag.Diagnostics, x: []const f64, r: Request) diag.Error!dist.
         const n = b - a;
         const middle = c - b;
         const m = e - c;
-        if (!(n > 0 and middle > 0 and m > 0)) return convergence(d);
+        // M9 compares the central percentile spacing with sqrt(unit roundoff)
+        // before using it as the denominator of the Slifker-Shapiro criterion.
+        if (middle <= @sqrt(std.math.floatEps(f64) / 2)) {
+            try d.warn(0, "Unable to apply the method of percentiles because p is too small.", .{});
+            return r.rejectCurve("percentile_spacing");
+        }
         const ratio = n * m / (middle * middle);
+        if (if (r.family == .su) ratio <= 1 + r.fittolerance else ratio >= 1 - r.fittolerance) {
+            try d.warn(0, "Unable to fit {s} distribution based on the ratio criterion.", .{if (r.family == .su) "SU" else "SB"});
+            return r.rejectCurve("percentile_ratio");
+        }
         if (r.family == .su) {
-            if (ratio <= 1 + r.fittolerance) return d.fail(error.ParseError, 0, "UNIVARIATE: percentile ratio does not select a Johnson SU distribution", .{});
             p.delta = 2 * z / std.math.acosh((m + n) / (2 * middle));
             p.gamma = p.delta * std.math.atanh((n - m) / (2 * middle * std.math.sinh(2 * z / p.delta)));
             p.sigma = middle / (2 * std.math.cosh(p.gamma / p.delta) * std.math.sinh(z / p.delta));
             p.theta = (b + c) / 2 + p.sigma * std.math.sinh(p.gamma / p.delta) * std.math.cosh(z / p.delta);
         } else {
-            if (ratio >= 1 - r.fittolerance) return d.fail(error.ParseError, 0, "UNIVARIATE: percentile ratio does not select a Johnson SB distribution", .{});
+            if (n == 0 or m == 0) {
+                try d.report(.err, 0, "Floating Point Zero Divide.", .{});
+                return d.fail(error.ParseError, 0, "Termination due to Floating Point Exception", .{});
+            }
             // Inverse-logit quantiles are a fractional linear transform of
             // four geometrically spaced odds. Their cross-ratio determines r.
             const cross = (1 + middle / n) * (1 + middle / m);
@@ -657,6 +687,27 @@ test "UNIVARIATE Johnson percentile fitting SAS M9 fixed and estimated endpoints
     try std.testing.expectEqual(@as(f64, 1), fixed.p.sigma);
     try std.testing.expectApproxEqAbs(@as(f64, 1.35412), fixed.p.delta, 5e-7);
     try std.testing.expectApproxEqAbs(@as(f64, 0.502458), fixed.p.gamma, 5e-7);
+}
+
+test "Johnson method of percentiles checks central spacing at the native binary boundary" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const threshold = @sqrt(std.math.floatEps(f64) / 2);
+    for ([_]f64{ std.math.nextAfter(f64, threshold, 0), threshold, std.math.nextAfter(f64, threshold, 1) }) |middle| {
+        var x = [_]f64{ -0.5, -0.25, 0, 0.25, 0.375, 0.5, 1, 1.25, 1.5 };
+        for (&x) |*v| v.* *= middle;
+        var d = diag.Diagnostics.init(arena.allocator());
+        var report: Report = .{};
+        const request: Request = .{ .family = .sb, .theta = null, .report = &report };
+        if (middle <= threshold) {
+            try std.testing.expectError(error.ParseError, fit(&d, &x, request));
+            try std.testing.expect(report.no_fit and !d.hasErrors());
+            try std.testing.expectEqualStrings("Unable to apply the method of percentiles because p is too small.", d.list.items[0].message);
+        } else {
+            const result = try fit(&d, &x, request);
+            try std.testing.expect(result.p.theta < x[0] and result.p.theta + result.p.sigma > x[x.len - 1]);
+        }
+    }
 }
 
 fn support(d: *diag.Diagnostics) diag.Error {
