@@ -1218,12 +1218,16 @@ fn warningLocation(a: std.mem.Allocator, sl: table_model.Slice, number: usize) !
     if (n == 2) return std.fmt.allocPrint(a, " for the table of {s} by {s}", .{ r, c });
     var location: std.ArrayList(u8) = .empty;
     try location.appendSlice(a, try std.fmt.allocPrint(a, " for Table {d} of {s} by {s}, controlling for", .{ number, r, c }));
-    const offset = sl.stratum * sl.rows().len * sl.cols().len;
-    for (dims[0 .. n - 2], 0..) |dim, i| {
-        const value = try cellText(a, sl.table.level(offset, i).value);
-        try location.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dim.name, value }));
-    }
+    try appendControlValues(a, &location, sl);
     return location.items;
+}
+fn appendControlValues(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice) !void {
+    const dims = sl.table.dimensions;
+    const offset = sl.stratum * sl.rows().len * sl.cols().len;
+    for (dims[0 .. dims.len - 2], 0..) |dim, i| {
+        const value = try cellText(a, sl.table.level(offset, i).value);
+        try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dim.name, value }));
+    }
 }
 fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Slice, number: usize, cross: bool) !void {
     const dims = sl.table.dimensions;
@@ -1237,7 +1241,7 @@ fn tableHeading(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.S
     if (n > 2) {
         var control: std.ArrayList(u8) = .empty;
         try control.appendSlice(a, "Controlling for");
-        for (0..n - 2) |d| try control.appendSlice(a, try std.fmt.allocPrint(a, " {s}={s}", .{ dims[d].name, try cellText(a, sl.table.level(sl.stratum * sl.rows().len * sl.cols().len, d).value) }));
+        try appendControlValues(a, &control, sl);
         const cb = try line(a, @max(60, 25 + control.items.len));
         putLeft(cb, 25, control.items);
         try flush(a, out, cb);
@@ -1890,8 +1894,12 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
     const nc = tab.dimensions[n - 1].levels.len;
     if (nr == 0 or nc == 0) return;
     var number: usize = 0;
-    const ids = try analysisStrata(a, tab);
-    for (ids) |stratum| {
+    // Displayed statistics include combinations without input observations.
+    // The output-only path retains its existing sparse stratum enumeration.
+    const observed_ids = if (opts.noprint) try analysisStrata(a, tab) else null;
+    const count = if (observed_ids) |ids| ids.len else tab.cell_count / (nr * nc);
+    for (0..count) |i| {
+        const stratum = if (observed_ids) |ids| ids[i] else i;
         var missing_control = false;
         for (0..n - 2) |d| if (tab.level(stratum * nr * nc, d).missing) {
             missing_control = true;
@@ -1899,7 +1907,8 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
         if (missing_control and !req.missing and !req.missprint) continue;
         number += 1;
         const sl = try tab.slice(a, stratum);
-        const eligible = sl.observed and !(missing_control and !req.missing) and !(sl.total == 0 and sl.missing != 0 and !req.missing);
+        const excluded_control = missing_control and !req.missing;
+        const eligible = sl.observed and !excluded_control and (sl.total != 0 or sl.missing == 0 or req.missing);
         var body: std.ArrayList(u8) = .empty;
         if (eligible) {
             const scored = (try tab.matrix(a, stratum)).?;
@@ -1935,16 +1944,34 @@ fn analyzeTable(cx: ProcCtx, out: *std.ArrayList(u8), tab: *Table, req: Request,
             }
         }
         if (opts.noprint) continue;
+        if (excluded_control or sl.total == 0) {
+            // A missing controlling variable or an empty table replaces every
+            // requested statistic with one explanation for this stratum.
+            body.clearRetainingCapacity();
+            try body.appendSlice(a, if (excluded_control)
+                "\nThese data are missing because one or more control variables are missing.\n"
+            else
+                "\nTable is empty. No statistics are computed.\n");
+        }
         if (number > 1) try out.append(a, '\n');
         if (!req.noprint) {
             if (req.crosslist) try renderCross(a, out, sl, req, number) else try renderGrid(a, out, sl, req, opts.formchar, if (n > 2) number else 0);
         }
         if (body.items.len > 0) {
-            if (req.noprint) try tableHeading(a, out, sl, if (n > 2) number else 0, false);
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ tab.dimensions[n - 2].name, tab.dimensions[n - 1].name }));
+            const row_name = tab.dimensions[n - 2].name;
+            const col_name = tab.dimensions[n - 1].name;
+            if (n > 2) {
+                if (req.noprint and number == 1) try out.appendSlice(a, TWOWAY_TITLE);
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table {d} of {s} by {s}\nControlling for", .{ number, row_name, col_name }));
+                try appendControlValues(a, out, sl);
+                try out.append(a, '\n');
+            } else {
+                if (req.noprint) try tableHeading(a, out, sl, 0, false);
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "\nStatistics for Table of {s} by {s}\n", .{ row_name, col_name }));
+            }
             try out.appendSlice(a, body.items);
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, sl.total)}));
-            if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\nSample Size = {s}\n", .{try freqText(a, if (excluded_control) 0 else sl.total)}));
+            if (!req.missing) try appendFreqMissing(a, out, if (excluded_control) sl.missing + sl.total else sl.missing);
         }
     }
     if (!opts.noprint) {
