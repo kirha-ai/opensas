@@ -107,20 +107,15 @@ pub const Options = struct {
     nextrval: usize = 0,
     round: []const f64 = &.{},
     outtable: ?[]const u8 = null,
-    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize, missing: *bool) diag.Error!void {
+    pub fn classPlotOptions(self: *Options, a: Allocator, d: *diag.Diagnostics, t: []const Token, i: *usize, count: usize) diag.Error!void {
         i.* += 1;
         while (!end(t, i.*)) {
-            if (kw(t[i.*], "missing")) {
-                missing.* = true;
-                i.* += 1;
-                continue;
-            }
             if (kw(t[i.*], "nokeymove")) {
                 self.key_move = false;
                 i.* += 1;
                 continue;
             }
-            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            if (!kw(t[i.*], "keylevel") or !option(t, i.*)) return d.fail(error.ParseError, t[i.*].line, "The option or parameter is not recognized and will be ignored.", .{});
             i.* += 2;
             const tuple = t[i.*].tag == .lparen;
             if (tuple) i.* += 1;
@@ -225,6 +220,7 @@ pub const Options = struct {
 
     pub fn classOptions(self: *Options, d: *diag.Diagnostics, t: []const Token, i: *usize, j: usize) diag.Error!void {
         i.* += 1;
+        if (t[i.*].tag == .rparen) return d.fail(error.ParseError, t[i.*].line, "Expecting a MISSING.", .{});
         while (!end(t, i.*) and t[i.*].tag != .rparen) {
             if (kw(t[i.*], "missing")) {
                 self.class_missing[j] = true;
@@ -232,10 +228,10 @@ pub const Options = struct {
             } else if (kw(t[i.*], "order") and option(t, i.*)) {
                 i.* += 2;
                 const v = t[i.*].text;
-                if (!eq(v, "data") and !eq(v, "freq") and !eq(v, "internal") and !eq(v, "formatted")) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid CLASS ORDER", .{});
+                if (!eq(v, "data") and !eq(v, "freq") and !eq(v, "internal") and !eq(v, "formatted")) return d.fail(error.ParseError, t[i.*].line, "Syntax error, expecting one of the following: DATA, FORMATTED, FREQ, INTERNAL.", .{});
                 self.class_order[j] = v;
                 i.* += 1;
-            } else return d.fail(error.ParseError, 0, "UNIVARIATE: unsupported CLASS option {s}", .{t[i.*].text});
+            } else return d.fail(error.ParseError, t[i.*].line, "Syntax error, expecting one of the following: ), MISSING, ORDER.", .{});
         }
         if (t[i.*].tag != .rparen) return d.fail(error.ParseError, 0, "UNIVARIATE: unclosed CLASS options", .{});
     }
@@ -1210,6 +1206,8 @@ test "UNIVARIATE CLASS parenthesized options and IDOUT metadata" {
     try std.testing.expectEqualStrings("y", o.columns.items[0].name);
     try std.testing.expectEqualStrings("g", o.columns.items[1].name);
     try std.testing.expectEqual(@as(f64, 100), testCell(o, 1, "y"));
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class g / missing;var x;run;"));
+    try std.testing.expectError(error.ParseError, testRun(a, lib, "proc univariate data=d;class g();var x;run;"));
 }
 
 /// IDOUT uses the first source observation in the BY group, including FREQ=0.

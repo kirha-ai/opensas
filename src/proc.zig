@@ -4533,7 +4533,6 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     const by_groups = @import("stat/by_groups.zig");
     var bys: by_groups.Statements = .{};
     var classes: std.ArrayList([]const u8) = .empty; // CLASS: per-level stats, not pooled (BUG-univclass)
-    var class_missing = false; // `class v / missing` re-includes the missing level
     const var_list = @import("stat/variable_lists.zig");
     const Role = struct { name: Token, weight: bool };
     var roles: std.ArrayList(Role) = .empty;
@@ -4565,7 +4564,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             i += 1;
             while (i < toks.len and toks[i].tag != .semicolon) : (i += 1) {
                 if (toks[i].tag == .slash) {
-                    try extra.classPlotOptions(arena, diags, toks, &i, classes.items.len, &class_missing);
+                    try extra.classPlotOptions(arena, diags, toks, &i, classes.items.len);
                     break;
                 }
                 if (toks[i].tag == .lparen) {
@@ -4662,7 +4661,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var ccols: std.ArrayList(usize) = .empty;
     for (classes.items) |cn| try ccols.append(arena, ds.indexOf(cn).?);
     var excluded: std.ArrayList(usize) = .empty;
-    for (ccols.items, 0..) |ci, j| if (!class_missing and !extra.class_missing[j]) try excluded.append(arena, ci);
+    for (ccols.items, 0..) |ci, j| if (!extra.class_missing[j]) try excluded.append(arena, ci);
     if (excluded.items.len > 0) ds = try dropMissingClass(arena, ds, excluded.items);
     var fmt_levels: std.ArrayList(FmtLevels) = .empty;
     if (classes.items.len > 0) ds = try groupFormats(arena, ds, classes.items, fmt_specs.items, &fmt_levels, diags, .univariate);
