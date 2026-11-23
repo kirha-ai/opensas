@@ -410,7 +410,16 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
     if (plan.ignore_bounds) {
         fitted.request.lower = null;
         fitted.request.upper = null;
-    }
+    } else if (fitted.request.lower) |lower| if (fitted.request.upper) |upper| {
+        // A pair of bounds becomes one-sided if a boundary cannot reflect
+        // the sample's kernel tail. M9 checks the lower boundary first.
+        const cutoff: f64 = if (estimate.request.kind == .normal) 3 else 1;
+        if (lower <= @mulAdd(f64, -cutoff, estimate.bandwidth, plan.sample_min)) {
+            fitted.request.lower = null;
+        } else if (upper >= @mulAdd(f64, cutoff, estimate.bandwidth, plan.sample_max)) {
+            fitted.request.upper = null;
+        }
+    };
     return .{ .plan = plan, .estimate = fitted, .ordinates = ordinates };
 }
 
@@ -439,6 +448,31 @@ test "kernel bounds crossing the opposite reflected tail use the ordinary densit
     try std.testing.expect(!valid.ignore_bounds);
     const reflected = try evaluate(a, &d, &x, nearby, valid);
     try std.testing.expectEqual(@as(f64, 0), reflected.at(3.65625));
+}
+
+test "paired kernel bounds at and beyond their reflected clearance" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const x = [_]f64{0.905} ** 9;
+    const Case = struct { lower: ?f64, upper: ?f64, first: f64, last: f64 };
+    // M9 OUTKERNEL on the full Fourier grid. When both clear the tail,
+    // the upper bound remains active. Single bounds also remain active.
+    for ([_]Case{
+        .{ .lower = -0.8116656558994051, .upper = 1.6202773566247521, .first = 0.0002533337802293478, .last = 0 },
+        .{ .lower = -0.8116656558994051, .upper = 2.621665655899405, .first = 0.0002533337802293478, .last = 0 },
+        .{ .lower = -0.5255547132495042, .upper = 1.6202773566247521, .first = 0, .last = 0 },
+        .{ .lower = 0.6188890573500991, .upper = 2.621665655899405, .first = 0, .last = 0.0002900832100986017 },
+        .{ .lower = -0.8116656558994051, .upper = null, .first = 0, .last = 0.0002900832100986017 },
+        .{ .lower = null, .upper = 2.621665655899405, .first = 0.0002533337802293478, .last = 0 },
+    }) |case| {
+        const curve = try kernel.fit(&d, &x, 1, .{ .bandwidth = .{ .numeric = 0.74 }, .lower = case.lower, .upper = case.upper });
+        const plan = try make(a, &d, &x, curve, &.{ -4, 5 }, .{ .bin_width = 1, .clip_lower = false, .clip_upper = false });
+        const result = try evaluate(a, &d, &x, curve, plan);
+        try std.testing.expectApproxEqAbs(case.first, result.at(-1.095), 1e-13);
+        try std.testing.expectApproxEqAbs(case.last, result.at(2.8425000000000002), 1e-13);
+    }
 }
 
 test "interpolated output boundaries retain the final segment of a bounded kernel" {
