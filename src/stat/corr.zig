@@ -10,6 +10,7 @@ const Value = @import("../value.zig").Value;
 const io = @import("../io.zig");
 const nan = std.math.nan(f64);
 const eq = std.ascii.eqlIgnoreCase;
+const output = @import("corr_output.zig");
 const advanced = @import("corr_advanced.zig");
 
 pub const VarDef = enum { df, n, wdf, weight };
@@ -36,6 +37,7 @@ pub const Options = struct {
     sscp: bool = false,
 };
 pub const Spec = struct {
+    outputs: []const output.Spec = &.{},
     ds: *Dataset,
     vars: []const usize,
     with: []const usize,
@@ -85,6 +87,8 @@ pub const Pair = struct {
     controls: usize = 0,
 };
 pub const Group = struct {
+    n: f64 = 0,
+    sum_weights: f64 = 0,
     by_values: ?[]const Value,
     simple: []const Simple,
     /// Row-major: WITH (or VAR if absent) by VAR, with source column indices.
@@ -180,6 +184,7 @@ fn columns(cx: proc.ProcCtx, ds: *Dataset, toks: []const lex.Token) diag.Error![
 
 pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     var opts: Options = .{};
+    var outputs: std.ArrayList(output.Spec) = .empty;
     var name: ?[]const u8 = null;
     var i: usize = 2;
     while (i < toks.len and toks[i].tag != .semicolon) {
@@ -187,6 +192,39 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
             name = toks[i + 2].text;
             i += 3;
             if (at(toks, i, .lparen)) i = proc.skipParen(toks, i);
+        } else if (output.kindOf(toks[i].text)) |kind| {
+            if (!at(toks, i + 1, .eq) or !at(toks, i + 2, .name)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: expected an output dataset name", .{});
+            var dest: output.Spec = .{ .kind = kind, .name = toks[i + 2].text };
+            i += 3;
+            if (at(toks, i, .dot)) {
+                if (!at(toks, i + 1, .name)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: expected a member name", .{});
+                dest.name = try std.fmt.allocPrint(cx.arena, "{s}.{s}", .{ dest.name, toks[i + 1].text });
+                i += 2;
+            }
+            if (at(toks, i, .lparen)) {
+                const end = proc.skipParen(toks, i);
+                if (end <= i + 1 or !at(toks, end - 1, .rparen)) return cx.diags.fail(error.ParseError, toks[i].line, "PROC CORR: unclosed output dataset options", .{});
+                dest.options = toks[i + 1 .. end - 1];
+                i = end;
+            }
+            for (outputs.items) |*old| {
+                if (old.kind == kind) {
+                    old.* = dest;
+                    break;
+                }
+            } else try outputs.append(cx.arena, dest);
+            switch (kind) {
+                .outp => opts.pearson = true,
+                .outs => opts.spearman = true,
+                .outk => opts.kendall = true,
+                .outh => opts.hoeffding = true,
+                .outplc => if (opts.polychoric == null) {
+                    opts.polychoric = .{};
+                },
+                .outpls => if (opts.polyserial == null) {
+                    opts.polyserial = .{};
+                },
+            }
         } else if (kw(toks, i, "polychoric") or kw(toks, i, "polyserial")) {
             const serial = kw(toks, i, "polyserial");
             var opt: advanced.PolyOptions = .{};
@@ -309,7 +347,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     if (opts.singular_specified and partial.len == 0)
         try cx.diags.warn(0, "SINGULAR= option is allowed only when a PARTIAL statement is also specified.", .{});
     if (opts.alpha or opts.cov or opts.csscp or opts.sscp or (!opts.spearman and !opts.kendall and !opts.hoeffding and opts.polychoric == null and opts.polyserial == null)) opts.pearson = true;
-    return .{ .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
+    return .{ .outputs = outputs.items, .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
 }
 
 const Mass = struct { f: f64, w: f64 };
@@ -436,6 +474,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
         var total_weight: f64 = 0;
         var total_freq: f64 = 0;
         var total_n: f64 = 0;
+        var included_weight: f64 = 0;
         for (bs.rows) |row| {
             const f = if (s.freq) |c| @trunc(row[c].num) else 1;
             if (std.math.isFinite(f) and f >= 1) {
@@ -443,7 +482,10 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                 const w = if (s.weight) |c| row[c].num else 1;
                 if (std.math.isFinite(w)) total_weight += @max(0, w) * f;
             }
-            if (mass(s, row)) |m| total_n += m.f;
+            if (mass(s, row)) |m| {
+                total_n += m.f;
+                included_weight += m.w;
+            }
         }
         // A bad BY group must not discard earlier results or prevent later
         // analyses (Statistical Procedures, CORR BY statement, p.16). Keep
@@ -513,7 +555,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
                 }
             }
         }
-        try groups.append(cx.arena, .{ .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
+        try groups.append(cx.arena, .{ .n = total_n, .sum_weights = included_weight, .by_values = bs.rep, .simple = simple.items, .pairs = pairs.items, .unpartial_pairs = unpartial_pairs, .spearman = spearman, .kendall = kendall, .hoeffding = hoeffding, .alpha = reliability, .polychoric = polychoric, .polyserial = polyserial });
     }
     return .{ .spec = s, .groups = groups.items };
 }
@@ -613,6 +655,7 @@ fn renderMoments(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Grou
 pub fn run(cx: proc.ProcCtx, out: *std.ArrayList(u8), toks: []const lex.Token) diag.Error!void {
     const s = try parse(cx, toks);
     const result = try compute(cx, s);
+    try output.write(cx, result);
     if (cx.capture) |capture| try @import("ods_corr.zig").publish(cx.arena, cx.diags, capture, result);
     try render(cx.arena, out, result);
 }
@@ -1570,4 +1613,91 @@ test "CORR SINGULAR without PARTIAL warns rather than implying an information-ra
     const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &diagnostics };
     _ = try parse(cx, try lex.tokenize(a, "proc corr singular=.5;var x y;partial z;run;", &diagnostics));
     try std.testing.expectEqual(@as(usize, 0), diagnostics.count());
+}
+
+test "FEAT-base-stat-results six matrix destinations use their own coefficient and metadata" {
+    // Saved SAS M9 corr_outp, corr_outs, corr_outk, corr_outh, corr_outplc,
+    // corr_outpls_schema. OUT* implies the method even without a display option.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "g", "h" }, &.{ &.{ 1, 2, 0, 0 }, &.{ 2, 5, 0, 1 }, &.{ 3, 5, 0, 0 }, &.{ 4, 9, 0, 1 }, &.{ 5, 8, 1, 0 }, &.{ 6, 13, 1, 1 }, &.{ 7, 12, 1, 0 }, &.{ 8, 17, 1, 1 } });
+    ds.setLabel("x", "Baseline");
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint out=linear outs=s outk=k outh=h; var x y; run;", &d));
+    for ([_][]const u8{ "linear", "s", "k", "h" }, [_]f64{ 0.96204, 0.94612, 0.83650, 0.38839 }) |name, r| {
+        const result = lib.find(name).?;
+        try std.testing.expectEqual(@as(usize, 4), result.columns.items.len);
+        try std.testing.expectEqual(@as(usize, 5), result.rowCount());
+        try std.testing.expectEqual(@as(?usize, 8), result.columns.items[1].len);
+        try std.testing.expectEqualStrings("Baseline", result.columns.items[2].label.?);
+        try std.testing.expectEqualStrings("MEAN", result.row(0)[0].str);
+        try std.testing.expectEqual(@as(f64, 4.5), result.row(0)[2].num);
+        try std.testing.expectApproxEqAbs(@as(f64, 4.94072), result.row(1)[3].num, 0.000005);
+        try std.testing.expectEqualStrings("N", result.row(2)[0].str);
+        try std.testing.expectEqualStrings("x", result.row(3)[1].str);
+        try std.testing.expectEqualStrings("CORR", result.row(4)[0].str);
+        try std.testing.expectApproxEqAbs(r, result.row(3)[3].num, 0.000005);
+        try std.testing.expectApproxEqAbs(r, result.row(4)[2].num, 0.000005);
+    }
+    try std.testing.expectApproxEqAbs(@as(f64, 0.87667), lib.find("h").?.row(4)[3].num, 0.000005);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outplc=p; var g h; run;", &d));
+    try std.testing.expectApproxEqAbs(@as(f64, 0), lib.find("p").?.row(3)[3].num, 0.000005);
+    const serial = try Testing.dataset(a, &.{ "x", "g" }, &.{ &.{ 1, 1 }, &.{ 3, 1 }, &.{ 5, 1 }, &.{ 2, 2 }, &.{ 4, 2 }, &.{ 6, 2 }, &.{ 3, 3 }, &.{ 5, 3 }, &.{ 8, 3 } });
+    try lib.put("d", serial);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outpls=work.serial; var x; with g; run;", &d));
+    const pls = lib.find("serial").?;
+    try std.testing.expectEqual(@as(usize, 4), pls.rowCount());
+    try std.testing.expectEqualStrings("g", pls.row(3)[1].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.53480), pls.row(3)[2].num, 0.000005);
+    try std.testing.expectEqual(@as(usize, 0), listing.items.len);
+}
+
+test "FEAT-base-stat-results SSCP intercept alpha blocks and BY row descriptors" {
+    // SAS M9 corr_outp_matrix_types and corr_outp_by_metadata.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z" }, &.{ &.{ 1, 8, 4 }, &.{ 2, 6, 1 }, &.{ 2, 6, 5 }, &.{ 3, 2, 2 }, &.{ 4, 5, 6 }, &.{ 5, 3, 2 }, &.{ 6, 1, 5 }, &.{ 8, 4, 8 }, &.{ 9, 1, 3 } });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    var d = diag.Diagnostics.init(a);
+    var listing: std.ArrayList(u8) = .empty;
+    const cx = proc.ProcCtx{ .arena = a, .lib = &lib, .diags = &d };
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d cov csscp sscp alpha noprint outp=m;var x y z;run;", &d));
+    const m = lib.find("m").?;
+    try std.testing.expectEqual(@as(usize, 22), m.rowCount());
+    try std.testing.expectEqualStrings("Intercept", m.columns.items[2].name);
+    try std.testing.expectEqualStrings("Intercept", m.row(0)[1].str);
+    try std.testing.expectEqual(@as(f64, 9), m.row(0)[2].num);
+    try std.testing.expectEqual(@as(f64, 40), m.row(0)[3].num);
+    try std.testing.expectEqual(@as(f64, 177), m.row(3)[3].num);
+    try std.testing.expectEqualStrings("CSSCP", m.row(4)[0].str);
+    try std.testing.expect(m.row(4)[2].isMissing());
+    try std.testing.expectApproxEqAbs(@as(f64, 2.125), m.row(7)[5].num, 1e-10);
+    try std.testing.expectEqualStrings("RAWALPHA", m.row(13)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, -0.508), m.row(13)[3].num, 0.0005);
+    try std.testing.expectEqualStrings("STDCTDEL", m.row(18)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.590), m.row(18)[5].num, 0.0005);
+    const by = try a.create(Dataset);
+    by.* = Dataset.init(a, "d");
+    _ = try by.addColumn("site", .char);
+    by.setLen("site", 8);
+    by.setLabel("site", "Study site");
+    for ([_][]const u8{ "x", "y" }) |v| _ = try by.addColumn(v, .num);
+    for ([_][2]f64{ .{ 1, 3 }, .{ 2, 1 }, .{ 5, 4 }, .{ 3, 2 }, .{ 4, 6 }, .{ 7, 5 } }, 0..) |xy, i|
+        try by.appendRow(&.{ .{ .str = if (i < 3) "A" else "B" }, .{ .num = xy[0] }, .{ .num = xy[1] } });
+    try lib.put("d", by);
+    try run(cx, &listing, try lex.tokenize(a, "proc corr data=d noprint outp=b;by site;var y x;run;", &d));
+    const b = lib.find("b").?;
+    try std.testing.expectEqual(@as(usize, 10), b.rowCount());
+    try std.testing.expectEqualStrings("Study site", b.columns.items[0].label.?);
+    try std.testing.expectEqual(@as(?usize, 8), b.columns.items[0].len);
+    try std.testing.expectEqualStrings("y", b.columns.items[3].name);
+    try std.testing.expectEqualStrings("B", b.row(9)[0].str);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.5), b.row(9)[3].num, 1e-12);
 }
