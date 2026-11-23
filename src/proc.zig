@@ -4709,7 +4709,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
     var icols: std.ArrayList(usize) = .empty;
     for (ids.items) |id| try icols.append(arena, ds.indexOf(id) orelse
         return diags.fail(error.ParseError, 0, "PROC UNIVARIATE: ID variable {s} not found", .{id}));
-    try extra.configureRounding(arena, diags, cds, acols.items);
+    try extra.configureRounding(arena, diags, cds, acols.items, vars.items.len > 0);
     // WEIGHT column (WEIGHT-uni-impl): weighted moments/quantiles when set. A
     // named-but-absent weight var errors (BUG-weightvarcheck).
     const wcol: ?usize = try resolveWeightCol(ds, weight_var, diags, toks[0].line);

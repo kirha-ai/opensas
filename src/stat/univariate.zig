@@ -239,12 +239,17 @@ pub const Options = struct {
         }
         return false;
     }
-    pub fn configureRounding(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize) diag.Error!void {
+    pub fn configureRounding(self: *Options, a: Allocator, d: *diag.Diagnostics, ds: *Dataset, cols: []const usize, explicit_var: bool) diag.Error!void {
         if (self.round.len == 0) return;
-        if (self.round.len != 1 and self.round.len != cols.len) return d.fail(error.ParseError, 0, "UNIVARIATE: ROUND list must match VAR list", .{});
+        if (self.round.len > 1 and !explicit_var) return d.fail(error.ParseError, 0, "The VAR statement must be included when specifying more than one roundoff unit.", .{});
         self.round_units = try a.alloc(f64, ds.columns.items.len);
         @memset(self.round_units, 0);
-        for (cols, 0..) |ci, j| self.round_units[ci] = self.round[if (self.round.len == 1) 0 else j];
+        if (self.round.len == 1) {
+            for (cols) |ci| self.round_units[ci] = self.round[0];
+        } else {
+            const count = @min(cols.len, self.round.len);
+            for (cols[0..count], self.round[0..count]) |ci, unit| self.round_units[ci] = unit;
+        }
     }
 };
 fn roundEven(x: f64) f64 {
