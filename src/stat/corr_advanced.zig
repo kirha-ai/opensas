@@ -471,11 +471,22 @@ pub fn polyserial(a: std.mem.Allocator, data: []const Observation, opt: PolyOpti
         }
         var scale: f64 = 1;
         var accepted = false;
-        for (0..30) |_| {
+        for (0..30) |trial| {
             for (params, 0..) |p, i| candidate[i] = p - scale * grad[i];
             if (serialLikelihood(ctx, candidate) <= base + 1e-10) {
                 accepted = true;
                 break;
+            }
+            if (trial == 0 and grad[dim - 1] != 0) {
+                const dr = -grad[dim - 1];
+                const limit = std.math.copysign(@max(0.99, 1 - opt.converge / 2), dr);
+                const halfway = 0.5 * (limit - params[dim - 1]) / dr;
+                if (halfway > 0 and halfway < 1) {
+                    // A shortened correlation move also shortens every cut
+                    // along the same Newton direction.
+                    scale = halfway;
+                    continue;
+                }
             }
             scale /= 2;
         }
@@ -610,6 +621,58 @@ test "CORR polyserial joint likelihood scale controls the final Newton update" {
         const expected: f64 = if (scale == 1) 0.68377458477580 else 0.68377621855765;
         try std.testing.expectApproxEqAbs(expected, fit.r, 1e-12);
     }
+}
+
+test "CORR polyserial shortens both thresholds and correlation on a rejected step" {
+    const data = [_]Observation{
+        .{ .x = 2.612, .y = 2, .f = 4 },
+        .{ .x = -3.36, .y = 1, .f = 6 },
+        .{ .x = -1.262, .y = 1, .f = 5 },
+        .{ .x = -3.008, .y = 1, .f = 6 },
+        .{ .x = 1.25, .y = 1, .f = 1 },
+        .{ .x = -0.568, .y = 0, .f = 1 },
+        .{ .x = 1.829, .y = 2, .f = 3 },
+        .{ .x = 1.45, .y = 1, .f = 5 },
+        .{ .x = -4.449, .y = 0, .f = 4 },
+        .{ .x = -1.326, .y = 1, .f = 3 },
+        .{ .x = -0.953, .y = 1, .f = 1 },
+        .{ .x = 1.687, .y = 2, .f = 6 },
+        .{ .x = 0.484, .y = 1, .f = 5 },
+        .{ .x = 1.668, .y = 2, .f = 1 },
+        .{ .x = -3.812, .y = 1, .f = 6 },
+        .{ .x = -1.221, .y = 0, .f = 4 },
+        .{ .x = 4.922, .y = 2, .f = 5 },
+        .{ .x = 1.8, .y = 1, .f = 2 },
+        .{ .x = 2.963, .y = 2, .f = 3 },
+        .{ .x = 2.91, .y = 2, .f = 1 },
+        .{ .x = 0.799, .y = 2, .f = 6 },
+        .{ .x = 1.977, .y = 1, .f = 1 },
+        .{ .x = 1.76, .y = 2, .f = 1 },
+        .{ .x = 4.85, .y = 2, .f = 6 },
+        .{ .x = -1.913, .y = 1, .f = 6 },
+        .{ .x = 5.31, .y = 2, .f = 5 },
+        .{ .x = -1.538, .y = 2, .f = 1 },
+        .{ .x = -1.137, .y = 1, .f = 2 },
+        .{ .x = 0.921, .y = 2, .f = 2 },
+        .{ .x = -1.94, .y = 0, .f = 2 },
+        .{ .x = 3.764, .y = 2, .f = 2 },
+        .{ .x = -3.78, .y = 0, .f = 2 },
+        .{ .x = -0.956, .y = 2, .f = 1 },
+        .{ .x = 2.754, .y = 2, .f = 5 },
+        .{ .x = -1.512, .y = 0, .f = 6 },
+        .{ .x = 3.864, .y = 2, .f = 3 },
+        .{ .x = 4.187, .y = 2, .f = 1 },
+    };
+    const first = try polyserial(std.testing.allocator, &data, .{ .converge = 0.3, .maxiter = 1 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.86989065214826), first.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.02526779447916), first.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 99.3876369375033), first.lr, 1e-10);
+    const second = try polyserial(std.testing.allocator, &data, .{ .converge = 0.12, .maxiter = 2 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.84206670280242), second.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.03345008464088), second.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 101.129366689651), second.lr, 1e-10);
+    const tight = try polyserial(std.testing.allocator, &data, .{ .converge = 1e-10 });
+    try std.testing.expectApproxEqAbs(@as(f64, 0.82922750554063), tight.r, 1e-12);
 }
 
 test "CORR separated binary polyserial threshold, reflected units, and information rank" {
