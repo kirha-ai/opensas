@@ -283,3 +283,35 @@ test "UNIVARIATE explicit histogram includes near ties relative to the bin index
         }
     }
 }
+
+test "UNIVARIATE centered NENDPOINTS=2 chooses a preferred width and honors RTINCLUDE" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const cases = [_]struct { x: []const f64, width: f64 }{
+        .{ .x = &.{ -1, -0.9, -0.51, -0.35, 0.01, 0.14 }, .width = 2 },
+        .{ .x = &.{ -0.2, -0.04, 0.3, 0.4, 0.8, 2.4 }, .width = 2.5 },
+        .{ .x = &.{ -0.62, 2.000000001 }, .width = 4 },
+        .{ .x = &.{ -0.62, 2.0000001 }, .width = 2.5 },
+    };
+    for (cases, 0..) |case, i| {
+        for ([_]bool{ false, true }) |right| {
+            const plan = try binning.determine(a, &d, &.{.{ .sorted = case.x }}, .{ .endpoints = true, .right = right, .target_count = 2 });
+            try std.testing.expectEqual(case.width, plan.width);
+            if (i >= 2) continue;
+            const rows = try bins(a, &d, case.x, plan.endpoints, .{ .right = right, .endpoint_labels = true, .bin_width = plan.width }, null);
+            if (i == 0) {
+                try std.testing.expectEqual(if (right) @as(usize, 2) else 1, rows.len);
+                try std.testing.expectEqual(@as(f64, -1), if (right) rows[0].upper else rows[0].lower);
+                try std.testing.expectEqual(if (right) @as(usize, 1) else 6, rows[0].count);
+                if (right) try std.testing.expectEqual(@as(usize, 5), rows[1].count);
+            } else {
+                try std.testing.expectEqual(@as(usize, 2), rows.len);
+                try std.testing.expectEqual(@as(f64, -1.25), rows[0].lower);
+                try std.testing.expectEqual(@as(usize, 5), rows[0].count);
+                try std.testing.expectEqual(@as(usize, 1), rows[1].count);
+            }
+        }
+    }
+}

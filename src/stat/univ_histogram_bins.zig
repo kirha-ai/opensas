@@ -72,11 +72,20 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
     const lo = if (pooled) minimum else key[0];
     const hi = if (pooled) maximum else key[key.len - 1];
     const n = if (pooled) total else key.len;
+    const centered_pair = request.endpoints and target == 2 and lo < 0 and hi > 0;
     var width: f64 = undefined;
     if (explicit) {
         width = request.initial_endpoints[1] - request.initial_endpoints[0];
     } else if (lo == hi) {
         width = if (lo == 0) 1 else @abs(lo);
+    } else if (centered_pair) {
+        // A zero-aligned lattice needs three ticks to straddle zero. M9
+        // centers its two-endpoint axis on zero instead. At a preferred
+        // extremum the enclosing interval runs from -width to +width.
+        const magnitude = @max(-lo, hi);
+        const resolution = @sqrt(std.math.floatEps(f64) / 2) * (hi - lo);
+        const tick = preferred(magnitude - resolution, true);
+        width = if (magnitude >= tick) 2 * tick else tick;
     } else if (target) |count| {
         width = try controlledWidth(d, minimum, maximum, count);
     } else {
@@ -94,7 +103,12 @@ pub fn determine(a: std.mem.Allocator, d: *diag.Diagnostics, cells: []const Cell
         first = if (!request.endpoints) lo - width / 2 else if (request.right) lo - width else lo;
         last = first + width;
     } else if (request.endpoints) {
-        const alignment = if (target == null) endpointAlignment(lo / width, hi / width) else EndpointAlignment{};
+        const alignment: EndpointAlignment = if (target == null)
+            endpointAlignment(lo / width, hi / width)
+        else if (centered_pair)
+            .{ .shift = 0.5 }
+        else
+            .{ .ambiguous = true };
         const shift = alignment.shift;
         endpoint_phase_ambiguous = alignment.ambiguous;
         first = (if (request.right) ceilNear(lo / width - shift) - 1 + shift else floorNear(lo / width - shift) + shift) * width;
