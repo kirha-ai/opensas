@@ -1661,6 +1661,21 @@ test "CORR NGROUPS rejects the polyserial fit before counting its observations" 
     }
 }
 
+test "CORR polychoric returns a finite first step for an independent frequency table" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 0, 0, 357280 }, &.{ 0, 1, 263088 }, &.{ 1, 0, 274340 }, &.{ 1, 1, 202014 },
+    });
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectEqual(@as(f64, 1096722), fit.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0), fit.r, 1e-15);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.001517487395931303), fit.se, 1e-16);
+    try std.testing.expectApproxEqAbs(@as(f64, 0), fit.lr, 1e-9);
+}
+
 test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

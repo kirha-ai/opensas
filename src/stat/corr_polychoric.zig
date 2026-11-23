@@ -185,6 +185,16 @@ fn integrateRectangle(f: Rectangle, a: f64, b: f64) f64 {
 }
 pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     if (rho == 0) return normalInterval(xl, xu) * normalInterval(yl, yu);
+    // The derivative of a normal rectangle probability at independence is
+    // the product of the two endpoint density differences (Mehler's expansion).
+    // Retain the linear term when the remaining terms are below roundoff.
+    const x_bound = @max(1, @abs(xl), @abs(xu));
+    const y_bound = @max(1, @abs(yl), @abs(yu));
+    if (@abs(rho) * x_bound * y_bound <= @sqrt(std.math.floatEps(f64))) {
+        const independent = normalInterval(xl, xu) * normalInterval(yl, yu);
+        const derivative = (normalPdf(xl) - normalPdf(xu)) * (normalPdf(yl) - normalPdf(yu));
+        return @max(0, @mulAdd(f64, rho, derivative, independent));
+    }
     const f: Rectangle = .{ .yl = yl, .yu = yu, .rho = rho, .sd = @sqrt(conditionalVariance(rho)) };
     var cuts: [23]f64 = undefined;
     cuts[0] = xl;
