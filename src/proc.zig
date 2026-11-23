@@ -4703,7 +4703,7 @@ pub fn runUnivariate(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) 
             try acols.append(arena, ix);
         }
     }
-    if (acols.items.len == 0) return unsupported("PROC UNIVARIATE: no numeric analysis variable");
+    if (acols.items.len == 0) return diags.fail(error.ParseError, 0, "VAR list empty.", .{});
     for (acols.items) |ci| if (input_view.ds.columns.items[ci].type != .num)
         return diags.fail(error.ParseError, 0, "UNIVARIATE: analysis variable {s} must be numeric", .{ds.columns.items[ci].name});
     if (outputs.items.len > 0 and vars.items.len == 0)

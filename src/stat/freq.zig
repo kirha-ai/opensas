@@ -581,6 +581,8 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
     if (opts.by_seen and pb.names.len == 0) return parser.fail("BY requires at least one variable");
     const bc = try a.alloc(usize, pb.names.len);
     for (pb.names, 0..) |bn, k| bc[k] = input.indexOf(bn) orelse return cx.diags.fail(error.ParseError, 0, "PROC FREQ: BY variable {s} not in {s}", .{ bn, input.name });
+    if (opts.requests.items.len == 0)
+        return cx.diags.fail(error.ParseError, 0, "No variables available for analysis after specification of BY variables and WEIGHT variable.", .{});
     if (opts.noprint and opts.output == null) {
         for (opts.requests.items) |req| {
             if (req.out_name != null) break;

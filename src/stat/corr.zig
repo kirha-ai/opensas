@@ -364,7 +364,7 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
         }
         vars = cs.items;
     }
-    if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: no analysis variables.", .{});
+    if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "Variable list empty.", .{});
     for (vars.?) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: analysis variables cannot also be PARTIAL variables.", .{});
     for (with) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: WITH variables cannot also be PARTIAL variables.", .{});
     if (weight != null and (opts.spearman or opts.kendall or opts.hoeffding)) {
