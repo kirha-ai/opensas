@@ -63,7 +63,11 @@ pub fn testResult(a: A, out: *Out, title: []const u8, result: Result, options: p
     }
     const r = result.complete;
     if (r.statistic) |value| try nLine(a, out, "Statistic", value);
-    if (r.directional) try pLine(a, out, if (r.right_sided) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic", r.probabilities.one_sided, options) else try pLine(a, out, "Exact Pr >= Statistic", r.probabilities.two_sided, options);
+    if (r.two_doubled) {
+        try pLine(a, out, if (r.right_sided) "One-sided Pr >=  P" else "One-sided Pr <=  P", r.probabilities.one_sided, options);
+    } else if (r.directional) {
+        try pLine(a, out, if (r.right_sided) "One-sided Pr >= Statistic" else "One-sided Pr <= Statistic", r.probabilities.one_sided, options);
+    } else try pLine(a, out, "Exact Pr >= Statistic", r.probabilities.two_sided, options);
     if (options.point) try pLine(a, out, "Point Pr = Statistic", r.probabilities.point, options);
     if (options.midp) try pLine(a, out, "Mid p-Value", @max(0, (if (r.directional) r.probabilities.one_sided else r.probabilities.two_sided) - r.probabilities.point / 2), options);
     if (r.directional) try pLine(a, out, if (r.two_doubled) "Two-sided = 2 * One-sided" else "Two-sided Pr >= |Statistic|", r.probabilities.two_sided, options);

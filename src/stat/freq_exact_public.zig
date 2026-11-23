@@ -338,7 +338,7 @@ pub fn render(a: A, d: *diag.Diagnostics, out: *Out, scored: model.ScoredMatrix,
                 }
             },
             .binomial => |b| {
-                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right and b.tails.left != b.tails.right } }, options);
+                try renderers.testResult(a, out, title(f), .{ .complete = .{ .probabilities = .{ .one_sided = b.one_sided, .two_sided = b.two_sided, .point = b.tails.point, .left = b.tails.left, .right = b.tails.right, .tables = 0 }, .directional = true, .two_doubled = true, .right_sided = b.one_sided == b.tails.right } }, options);
                 if (req.risk.binomial) |request| try binomialHypotheses(a, out, request, try @import("freq_exact.zig").integerCount(m.counts[c.event_index]), try @import("freq_exact.zig").integerCount(total), c);
             },
             .interval => |ci| {
@@ -465,6 +465,29 @@ test "public one-way exact likelihood ratio orders the two neighbors of a noncen
     // The LR point is the mass of X=25,001 alone.
     for ([_][]const u8{ "0.996431769609", "0.003568087668" }) |value|
         try std.testing.expect(std.mem.indexOf(u8, out, value) != null);
+}
+
+test "exact binomial labels its smaller inclusive tail and resolves equal tails to the right" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    // SAS 9.4M9 exact_binomial.sas: four of eight at P=.5 gives .6367
+    // on both sides. A null mean need not give equal tails away from P=.5.
+    const Case = struct { counts: [2]f64, p: []const u8, label: []const u8, value: []const u8 };
+    for ([_]Case{
+        .{ .counts = .{ 4, 4 }, .p = ".5", .label = "One-sided Pr >=  P", .value = "0.6367" },
+        .{ .counts = .{ 1, 3 }, .p = ".25", .label = "One-sided Pr >=  P", .value = "0.6836" },
+        .{ .counts = .{ 3, 1 }, .p = ".75", .label = "One-sided Pr <=  P", .value = "0.6836" },
+    }) |c| {
+        var h = try Harness.init(a, &c.counts, 1);
+        const source = try std.fmt.allocPrint(a, "proc freq data=d; weight w; tables r / binomial(p={s}); exact binomial; run;", .{c.p});
+        const out = try h.run(source, &d);
+        const pos = std.mem.indexOf(u8, out, c.label) orelse return error.TestExpectedEqual;
+        const value = std.mem.sliceTo(out[pos + c.label.len ..], '\n');
+        try std.testing.expectEqualStrings(c.value, std.mem.trim(u8, value, " "));
+    }
+    try std.testing.expect(!d.hasErrors());
 }
 
 test "public rank exact tests preserve distinct integer effects on wide tied margins" {
