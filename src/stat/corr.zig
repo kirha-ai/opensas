@@ -1202,7 +1202,10 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
                 try out.appendSlice(a, " N\n");
                 for (pairs) |p| {
                     try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, try number(a, p.r, false) }));
-                    if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.p, true)}));
+                    if (!s.options.noprob and !(eq(name, "kendall") and s.partial.len > 0)) {
+                        const prob = if (eq(name, "hoeffding") and p.row == p.column and p.r == 1) nan else p.p;
+                        try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, prob, true)}));
+                    }
                     try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.0}\n", .{p.n}));
                 }
             }
@@ -2083,4 +2086,20 @@ test "CORR small Fisher bias displays the significant digits from manual example
     try std.testing.expectEqualStrings("0.0007410", try smallEstimate(a, batch1));
     try std.testing.expectEqualStrings("-0.0007410", try smallEstimate(a, -batch1));
     try std.testing.expectEqualStrings("0.00113", try smallEstimate(a, batch2));
+}
+
+test "CORR Hoeffding listing suppresses perfect self-dependence but shows distinct variables and tied diagonals" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "clone", "tied" }, &.{
+        &.{ 1, 1, 2 }, &.{ 2, 2, 5 },  &.{ 3, 3, 5 },  &.{ 4, 4, 9 },
+        &.{ 5, 5, 8 }, &.{ 6, 6, 13 }, &.{ 7, 7, 12 }, &.{ 8, 8, 17 },
+    });
+    const g = try Testing.analyze(a, ds, "proc corr hoeffding;var x clone tied;run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, g);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x x 1.00000 . 8") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "x clone 1.00000 <.0001 8") != null);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "tied tied 0.87667 <.0001 8") != null);
 }
