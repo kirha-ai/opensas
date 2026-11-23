@@ -516,6 +516,20 @@ test "public EXACT families honor single versus multiple TABLES selection and ca
     }
 }
 
+test "public exact binomial retains the central and sparse wide-frequency tails" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var diagnostics = diag.Diagnostics.init(a);
+    var balanced = try Harness.init(a, &.{ 1_000_000_000, 1_000_000_000 }, 1);
+    const center = try balanced.run("proc freq data=d;weight w;tables r /binomial(p=.5);exact binomial /point midp pformat=12.8;run;", &diagnostics);
+    for ([_][]const u8{ "0.50000892", "0.00001784", "0.50000000" }) |v| try std.testing.expect(std.mem.indexOf(u8, center, v) != null);
+    var sparse = try Harness.init(a, &.{ 1, 1_999_999_999 }, 1);
+    const rare = try sparse.run("proc freq data=d;weight w;tables r /binomial(p=5E-10);exact binomial /point midp pformat=12.8;run;", &diagnostics);
+    for ([_][]const u8{ "0.63212056", "0.36787944", "0.44818084" }) |v| try std.testing.expect(std.mem.indexOf(u8, rare, v) != null);
+    try std.testing.expect(!diagnostics.hasErrors());
+}
+
 test "public EXACT one-way binomial and multinomial use distinct tails" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
