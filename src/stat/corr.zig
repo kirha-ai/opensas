@@ -19,6 +19,7 @@ pub const Options = struct {
     spearman: bool = false,
     kendall: bool = false,
     hoeffding: bool = false,
+    simple_median: bool = false,
     alpha: bool = false,
     polychoric: ?advanced.PolyOptions = null,
     polyserial: ?advanced.PolyOptions = null,
@@ -268,7 +269,10 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
                         i += 1;
                     } else {
                         const value = try numericOption(cx, toks, &i);
-                        if (eq(key.text, "alpha") and value > 0 and value < 1) opts.fisher.?.alpha = value else if (eq(key.text, "rho0") and @abs(value) < 1) opts.fisher.?.rho0 = value else return fail(cx, key);
+                        if (eq(key.text, "rho0")) {
+                            if (!(@abs(value) < 1)) return cx.diags.fail(error.ParseError, key.line, "The value of RHO0= must be between -1.0 and 1.0.", .{});
+                            opts.fisher.?.rho0 = value;
+                        } else if (eq(key.text, "alpha") and value > 0 and value < 1) opts.fisher.?.alpha = value else return fail(cx, key);
                     }
                 }
                 i += 1;
@@ -340,13 +344,30 @@ pub fn parse(cx: proc.ProcCtx, toks: []const lex.Token) diag.Error!Spec {
     if (vars.?.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: no analysis variables.", .{});
     for (vars.?) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: analysis variables cannot also be PARTIAL variables.", .{});
     for (with) |c| if (contains(partial, c)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: WITH variables cannot also be PARTIAL variables.", .{});
-    if (weight != null and (opts.spearman or opts.kendall or opts.hoeffding or opts.polychoric != null or opts.polyserial != null)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: rank correlations are invalid with WEIGHT.", .{});
-    if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null or opts.hoeffding)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
+    if (weight != null and (opts.spearman or opts.kendall or opts.hoeffding)) {
+        try cx.diags.warn(0, "Nonparametric options not allowed with WEIGHT statement.", .{});
+        opts.spearman = false;
+        opts.kendall = false;
+        opts.hoeffding = false;
+    }
+    if (weight != null and (opts.polychoric != null or opts.polyserial != null))
+        return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations are invalid with WEIGHT.", .{});
+    if (partial.len > 0 and (opts.polychoric != null or opts.polyserial != null)) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ordinal correlations with PARTIAL are unsupported.", .{});
     if (opts.polyserial != null and with.len == 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: POLYSERIAL requires WITH.", .{});
-    if (opts.alpha and with.len > 0) return cx.diags.fail(error.ParseError, 0, "PROC CORR: ALPHA is invalid with WITH.", .{});
+    // M9 selects the simple-statistics columns and default Pearson table before
+    // dropping HOEFFDING with PARTIAL or ALPHA with WITH.
+    opts.simple_median = opts.spearman or opts.kendall or opts.hoeffding or opts.polychoric != null or opts.polyserial != null;
+    if (opts.alpha or opts.cov or opts.csscp or opts.sscp or !opts.simple_median) opts.pearson = true;
+    if (partial.len > 0 and opts.hoeffding) {
+        try cx.diags.warn(0, "HOEFFDING option not allowed with PARTIAL statement.", .{});
+        opts.hoeffding = false;
+    }
+    if (opts.alpha and with.len > 0) {
+        try cx.diags.warn(0, "ALPHA option not allowed with WITH statement.", .{});
+        opts.alpha = false;
+    }
     if (opts.singular_specified and partial.len == 0)
         try cx.diags.warn(0, "SINGULAR= option is allowed only when a PARTIAL statement is also specified.", .{});
-    if (opts.alpha or opts.cov or opts.csscp or opts.sscp or (!opts.spearman and !opts.kendall and !opts.hoeffding and opts.polychoric == null and opts.polyserial == null)) opts.pearson = true;
     return .{ .outputs = outputs.items, .partial = partial, .ds = ds, .vars = vars.?, .with = with, .by = bcols.items, .by_desc = by.desc, .notsorted = by.notsorted, .freq = freq, .weight = weight, .options = opts };
 }
 
@@ -519,7 +540,7 @@ pub fn compute(cx: proc.ProcCtx, s: Spec) diag.Error!Result {
         const unpartial_pairs = if (s.partial.len > 0) try cx.arena.dupe(Pair, pairs.items) else &.{};
         if (s.partial.len > 0) try partialPairs(cx.arena, s, bs.rows, pairs.items, .pearson);
         for (simple.items) |*v| {
-            if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) v.median = try median(cx.arena, s, bs.rows, v.column);
+            if (s.options.simple_median) v.median = try median(cx.arena, s, bs.rows, v.column);
             if (s.partial.len > 0) for (pairs.items) |p| {
                 if (p.column == v.column) {
                     v.partial_variance = p.variance_x;
@@ -596,10 +617,10 @@ pub fn render(a: std.mem.Allocator, out: *std.ArrayList(u8), result: Result) !vo
             }
         }
         if (!s.options.nosimple) {
-            try out.appendSlice(a, if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) "\nSimple Statistics\nVariable N Mean Std Dev Median Minimum Maximum\n" else "\nSimple Statistics\nVariable N Mean Std Dev Sum Minimum Maximum\n");
+            try out.appendSlice(a, if (s.options.simple_median) "\nSimple Statistics\nVariable N Mean Std Dev Median Minimum Maximum\n" else "\nSimple Statistics\nVariable N Mean Std Dev Sum Minimum Maximum\n");
             for (g.simple) |v| {
                 try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {d:.0}", .{ s.ds.columns.items[v.column].name, v.n }));
-                for ([_]f64{ v.mean, v.stddev, if (s.options.spearman or s.options.kendall or s.options.hoeffding or s.options.polychoric != null or s.options.polyserial != null) v.median else v.sum, v.minimum, v.maximum }) |x| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, x, false)}));
+                for ([_]f64{ v.mean, v.stddev, if (s.options.simple_median) v.median else v.sum, v.minimum, v.maximum }) |x| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, x, false)}));
                 if (s.ds.columns.items[v.column].label) |label| try out.appendSlice(a, try std.fmt.allocPrint(a, "  {s}", .{label}));
                 try out.append(a, '\n');
             }
@@ -1278,6 +1299,36 @@ test "CORR alpha pairwise missing uses Pearson matrix for standardized reliabili
     try std.testing.expectApproxEqAbs(@as(f64, 0.985782), n.raw, 0.0000005);
     try std.testing.expectApproxEqAbs(@as(f64, 0.974036), n.standardized, 0.0000005);
 }
+test "CORR incompatible rank and ALPHA requests retain the SAS M9 listing and warnings" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "z", "n" }, &.{
+        &.{ 1, 8, 4, 1 }, &.{ 2, 6, 1, 2 }, &.{ 2, 6, 5, 1 },
+        &.{ 3, 2, 2, 1 }, &.{ 4, 5, 6, 3 }, &.{ 5, 3, 2, 1 },
+        &.{ 6, 1, 5, 2 }, &.{ 8, 4, 8, 1 }, &.{ 9, 1, 3, 1 },
+    });
+    var lib = @import("../exec.zig").Library.init(a);
+    try lib.put("d", ds);
+    const cases = [_]struct { source: []const u8, warning: []const u8, output: []const u8, pearson: bool }{
+        .{ .source = "proc corr spearman; var x y; weight n;", .warning = "Nonparametric options not allowed with WEIGHT statement.", .output = "-0.75389", .pearson = true },
+        .{ .source = "proc corr hoeffding; var x y; partial z;", .warning = "HOEFFDING option not allowed with PARTIAL statement.", .output = "Median Minimum Maximum", .pearson = false },
+        .{ .source = "proc corr alpha; var x y; with z;", .warning = "ALPHA option not allowed with WITH statement.", .output = "0.34076 0.09129", .pearson = true },
+    };
+    for (cases) |case| {
+        var d = diag.Diagnostics.init(a);
+        const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
+        var listing: std.ArrayList(u8) = .empty;
+        try run(cx, &listing, try lex.tokenize(a, case.source, &d));
+        try std.testing.expectEqual(@as(usize, 1), d.list.items.len);
+        try std.testing.expectEqual(.warning, d.list.items[0].severity);
+        try std.testing.expectEqualStrings(case.warning, d.list.items[0].message);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, case.output) != null);
+        try std.testing.expectEqual(case.pearson, std.mem.indexOf(u8, listing.items, "Pearson") != null);
+        for ([_][]const u8{ "spearman", "hoeffding", "Cronbach" }) |ignored| try std.testing.expect(std.mem.indexOf(u8, listing.items, ignored) == null);
+    }
+}
+
 test "CORR advanced invalid combinations and options fail through captured diagnostics" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
@@ -1285,7 +1336,7 @@ test "CORR advanced invalid combinations and options fail through captured diagn
     const ds = try Testing.dataset(a, &.{ "x", "y", "w" }, &.{ &.{ 1, 2, 1 }, &.{ 2, 4, 1 } });
     var lib = @import("../exec.zig").Library.init(a);
     try lib.put("d", ds);
-    for ([_][]const u8{ "proc corr spearman; var x y; weight w;", "proc corr hoeffding; var x y; partial w;", "proc corr alpha; var x; with y;", "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=0); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
+    for ([_][]const u8{ "proc corr fisher(alpha=0); var x y;", "proc corr fisher(rho0=1); var x y;", "proc corr fisher(biasadj=maybe); var x y;", "proc corr polyserial; var x y;", "proc corr polychoric(ngroups=1); var x y;", "proc corr polychoric(converge=0); var x y;", "proc corr polychoric(maxiter=0); var x y;", "proc corr; var x y; partial x;", "proc corr singular=-.1; var x y; partial w;" }) |source| {
         var d = diag.Diagnostics.init(a);
         const cx: proc.ProcCtx = .{ .arena = a, .lib = &lib, .diags = &d };
         try std.testing.expectError(error.ParseError, parse(cx, try lex.tokenize(a, source, &d)));
