@@ -85,7 +85,10 @@ suppresses new figures. With ODS GRAPHICS ON, LISTING GPATH supplies the
 directory and defaults to the current directory. A CLI directory takes precedence.
 Existing files are preserved. PROC CORR produces scatter plots, confidence or
 prediction ellipses, partial residual plots and scatter matrices through the same
-directory. PLOTS=NONE and the PLOTS(MAXPOINTS=) cutoff suppress output.
+directory. PLOTS=NONE and the PLOTS(MAXPOINTS=) cutoff suppress CORR output.
+PROC FREQ draws frequency, cumulative frequency, relative deviation, mosaic and
+agreement plots from its ordered, weighted tables. PLOTS(ONLY)= limits the graphs
+to the requested kinds.
 
 [`tests/programs/dm`](tests/programs/dm) is a complete example: a raw
 demographics dataset mapped to the SDTM DM domain, with the expected output.

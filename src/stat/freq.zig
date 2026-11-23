@@ -97,7 +97,9 @@ const exact_parse = @import("freq_exact_parse.zig");
 pub const CountMatrix = table_model.CountMatrix;
 pub const Table = table_model.Table;
 pub const Score = table_model.Score;
+const graph = @import("freq_plots.zig");
 pub const Request = struct {
+    plots: graph.Options = .{},
     exact: exact_parse.Options = .{},
     fisher: bool = false,
     statistics: stat_parse.Options = .{},
@@ -337,6 +339,10 @@ const Parser = struct {
                 req.statistics.chisq = true;
                 req.statistics.measures = true;
                 if (req.stratified.cmh == 0) req.stratified.cmh = 3;
+                continue;
+            }
+            if (self.kw("plots")) {
+                req.plots = try graph.parse(self.a, self.diags, self.toks, &self.i);
                 continue;
             }
             if (try risk_parse.consumeTableOption(self.a, self.toks, &self.i, &req.risk, self.diags)) continue;
@@ -661,6 +667,11 @@ pub fn runFreq(cx: ProcCtx, out: *std.ArrayList(u8), toks: []const Token) diag.E
                 }
             }
             if (!any) continue;
+            if (!opts.noprint and (cx.graphics != null or req.plots.plots.len != 0)) {
+                var by_text: std.ArrayList(u8) = .empty;
+                if (bc.len > 0) if (group.rep) |row| try formattedByLine(a, &by_text, &view, row, bc);
+                try graph.execute(cx, &tab, req, std.mem.trim(u8, by_text.items, " \n"));
+            }
             const writer = if (k + 1 == opts.requests.items.len) stats_writer else null;
             if (writer != null or hasStatistics(req.statistics) or req.risk.any() or hasStratified(req.stratified) or req.exact.families.count() > 0) {
                 if (rendered and !opts.noprint) try out.append(a, '\n');
@@ -1819,7 +1830,7 @@ fn stratScope(req: Request, opts: Options) strat_exec.Scope {
     tests.weighted_kappa = tests.weighted_kappa or req.exact.families.contains(.wtkappa);
     return .{ .alpha = req.statistics.alpha, .tests = tests, .inherited_risk_column = if (req.risk.difference != null and req.risk.difference.?.column == 1 and !req.risk.difference.?.both_columns) .second else .first };
 }
-fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
+pub fn analysisStrata(a: std.mem.Allocator, table: *const Table) ![]usize {
     const n = table.dimensions.len;
     const size = table.dimensions[n - 2].levels.len * table.dimensions[n - 1].levels.len;
     var ids: std.ArrayList(usize) = .empty;

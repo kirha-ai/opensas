@@ -7014,3 +7014,79 @@ test "ODS TRACE follows selected CORR object paths independently in each BY grou
     try std.testing.expect(std.mem.indexOf(u8, out.items, "Simple Statistics") == null);
     try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, out.items, "Pearson Correlation Coefficients"));
 }
+
+test "FREQ graph geometry uses ordered weighted counts, test proportions and null cells" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data gce;input r c w @@;datalines;\n1 1 3 1 2 1 1 3 0 2 1 0 2 2 2 2 3 2\n;run;" ++
+        "proc freq data=gce;weight w/zeros;tables r*c/plots(only)=freqplot(twoway=cluster scale=percent);run;" ++
+        "data grades;input label $ n @@;datalines;\nC 3 A 1 B 2\n;run;proc freq data=grades order=data;weight n;tables label/plots(only)=cumfreqplot(type=dotplot scale=percent);run;" ++
+        "data g;input r n @@;datalines;\n1 2 2 7 3 1\n;run;proc freq data=g;weight n / zeros;tables r/chisq(testp=(.2 .3 .5)) plots(only)=deviationplot;run;" ++
+        "ods graphics off;proc freq data=g;weight n;tables r /plots=freqplot;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const cluster = try dir.dir.readFileAlloc(io_, "opensas-0001-freqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, cluster, "class=\"bar\""));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, cluster, "data-count=\"0\" data-value=\"0\""));
+    try std.testing.expect(std.mem.indexOf(u8, cluster, "data-count=\"3\" data-value=\"37.5\"") != null);
+    const cum = try dir.dir.readFileAlloc(io_, "opensas-0002-cumfreqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 3), std.mem.count(u8, cum, "class=\"dot\""));
+    try std.testing.expect(std.mem.indexOf(u8, cum, "cx=\"368.50\" cy=\"320.33\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, cum, "data-count=\"2\" data-value=\"100\"") != null);
+    const dev = try dir.dir.readFileAlloc(io_, "opensas-0003-deviationplot.svg", a, .limited(1 << 20));
+    try std.testing.expect(std.mem.indexOf(u8, dev, "data-count=\"7\" data-value=\"1.333333") != null);
+    try std.testing.expect(std.mem.indexOf(u8, dev, "data-count=\"1\" data-value=\"-0.8\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, dev, "Pr &gt; ChiSq   0.0140") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0004-freqplot.svg", .{}));
+}
+test "FREQ mosaic and agreement geometry preserve margins and diagonal counts" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data g;input r c n @@;datalines;\n1 1 4 1 2 2 2 1 1 2 2 3\n;run;proc freq data=g;weight n;tables r*c /plots(only)=mosaicplot;tables r*c /agree plots(only)=agreeplot;run;" ++
+        "proc freq data=g;weight n;tables r*c /agree plots=none;run;proc freq data=g noprint;weight n;tables r*c /plots=mosaicplot;run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const mosaic = try dir.dir.readFileAlloc(io_, "opensas-0001-mosaicplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 4), std.mem.count(u8, mosaic, "class=\"tile\""));
+    try std.testing.expect(std.mem.indexOf(u8, mosaic, "data-count=\"4\" data-value=\"0.4\"") != null);
+    const agree = try dir.dir.readFileAlloc(io_, "opensas-0002-agreeplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, agree, "class=\"exact\""));
+    try std.testing.expect(std.mem.indexOf(u8, agree, "class=\"exact\" x=\"102.00\" y=\"304.00\" width=\"160.00\" height=\"160.00\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, agree, "class=\"exact\" x=\"382.00\" y=\"64.00\" width=\"120.00\" height=\"120.00\"") != null);
+    try std.testing.expectError(error.FileNotFound, dir.dir.access(io_, "opensas-0003-agreeplot.svg", .{}));
+}
+
+test "FREQ grouped horizontal dots use column facets and row levels in the saved analysis order" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const io_ = std.testing.io;
+    var dir = std.testing.tmpDir(.{});
+    defer dir.cleanup();
+    const path = try dir.dir.realPathFileAlloc(io_, ".", a);
+    var d = sas.diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    const source = "ods graphics on;data d;input r $ c $ n @@;datalines;\nBlue West 2 Green West 3 Blue East 5 Green East 1\n;run;" ++
+        "proc freq data=d order=data;weight n;tables r*c /plots(only)=freqplot(type=dotplot scale=grouppercent);run;";
+    try interpretNative(a, &out, &d, source, io_, path);
+    try std.testing.expect(!d.hasErrors());
+    const plot = try dir.dir.readFileAlloc(io_, "opensas-0001-freqplot.svg", a, .limited(1 << 20));
+    try std.testing.expectEqual(@as(usize, 2), std.mem.count(u8, plot, "class=\"panel\""));
+    try std.testing.expect(std.mem.indexOf(u8, plot, ">c = West</text>") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"2\" data-value=\"40\"") != null);
+    try std.testing.expect(std.mem.indexOf(u8, plot, "data-count=\"5\" data-value=\"83.333333") != null);
+}
