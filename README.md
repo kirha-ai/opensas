@@ -123,9 +123,9 @@ python3 -m http.server -d web    # open http://localhost:8000
 
 Three suites run in CI on every push and before every release.
 
-- **Unit tests.** 1,210 `test` blocks next to the code they cover.
-- **Conformance corpus.** 2,048 one-feature programs in [`tests/corpus/`](tests/corpus). Each program runs and its listing is diffed against the expected output.
-- **End-to-end programs.** Whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
+- **Unit tests.** 1,586 unit tests across the four Zig test suites.
+- **Conformance corpus.** 2,063 one-feature programs in [`tests/corpus/`](tests/corpus). Each program runs and its listing is diffed against the expected output.
+- **End-to-end programs.** 11 whole programs in [`tests/programs/`](tests/programs), datasets in and datasets out. Every output column and value is diffed against the golden dataset.
 
 The `.sas7bdat` and `.xpt` readers and writers are round-tripped against files
 written by SAS® 9.4. Fixtures use invented data or published samples such as the
