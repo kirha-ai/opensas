@@ -45,12 +45,12 @@ pub const Plan = struct {
 /// M9 emits the Fourier lattice in groups of four. Rounding affects whether a
 /// regular point exactly on a histogram boundary produces an extra output row.
 /// Odd sample sizes have two leading points and a shorter final vector group.
-fn outputLattice(points: []f64, lo: f64, hi: f64, odd_count: bool) void {
+fn outputLattice(points: []f64, lo: f64, hi: f64, odd_count: bool, constant_center: ?f64) void {
     const span = hi - lo;
     const extra = if (points.len == 512) span else 0;
-    const first = (lo - span / 2) - extra;
+    const first = if (constant_center) |center| center - @as(f64, @floatFromInt(points.len)) / 256 else (lo - span / 2) - extra;
     const limit = (hi + span / 2) + extra;
-    const step = (limit - first) / @as(f64, @floatFromInt(points.len));
+    const step = if (constant_center != null) @as(f64, 1) / 128 else (limit - first) / @as(f64, @floatFromInt(points.len));
     const four_steps: @Vector(4, f64) = @splat(4 * step);
     const eight_steps: @Vector(4, f64) = @splat(8 * step);
     const offsets: @Vector(4, f64) = .{ 0, step, 2 * step, 3 * step };
@@ -116,7 +116,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     const constant = x[0] == x[x.len - 1];
     const lo = if (constant) x[0] - 0.5 else x[0];
     const hi = if (constant) x[0] + 0.5 else x[x.len - 1];
-    const range = hi - lo;
+    const range = if (constant) @as(f64, 1) else hi - lo;
     const step = range / 128;
     if (!(step > 0) or !std.math.isFinite(step)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel grid range is not representable", .{});
     const own = padding(&.{estimate});
@@ -133,10 +133,10 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     const wrap_limit = if (constant) 2 * range else 1.5 * range;
     const wraps_around = own.fft > wrap_limit;
     try reportEstimate(d, options.note_prefix, estimate, wraps_around);
-    const origin = lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
+    const origin = if (constant) x[0] - @as(f64, @floatFromInt(length)) / 256 else lo - @as(f64, @floatFromInt((length - 128) / 2)) * step;
     var storage: [512]f64 = undefined;
     const lattice = storage[0..length];
-    outputLattice(lattice, lo, hi, x.len % 2 == 1);
+    outputLattice(lattice, lo, hi, x.len % 2 == 1, if (constant) x[0] else null);
     if (!std.math.isFinite(origin) or !std.math.isFinite(lattice[0]) or !std.math.isFinite(lattice[length - 1]) or !std.math.isFinite(@as(f64, @floatFromInt(length)) * step) or !(origin + step > origin)) return d.fail(error.ParseError, 0, "UNIVARIATE: kernel lattice exceeds floating-point resolution", .{});
     var first = endpoints[0];
     var last = endpoints[endpoints.len - 1];
@@ -156,21 +156,21 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
         last = @max(last, endpoints[0] + @round((upper - endpoints[0]) / width) * width);
         if (constant and last <= x[0]) last += width;
     } else if (options.automatic and !options.windowed and constant) {
-        // The constant plot extends its center lattice over a unit range.
-        // Retain iterative endpoint rounding: M9 includes eleven centers for
-        // width .1 but ninety-nine for .01 on the retained heldouts.
-        if (1 / width > @as(f64, @floatFromInt(options.max_axis_steps))) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis exceeds its stepping budget", .{});
+        // Extend centers by the kernel padding on the Fourier lattice. Leave
+        // its last node available for interpolation, then snap to the nearest
+        // whole number of bins. M9 advances each center by one bin width.
+        const padding_limit = @as(f64, @floatFromInt((length - 128) / 2 - 1)) * step;
+        // A tail exactly on the outer edge is already covered.
+        const increments = @ceil(@min(axis_pad, padding_limit) / width - 0.5);
+        if (increments > @as(f64, @floatFromInt(options.max_axis_steps))) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis exceeds its stepping budget", .{});
         var left = x[0];
         var right = x[0];
-        while (left - width >= lo) {
-            const next = left - width;
-            if (!(next < left)) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis cannot advance", .{});
-            left = next;
-        }
-        while (right + width <= hi) {
-            const next = right + width;
-            if (!(next > right)) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis cannot advance", .{});
-            right = next;
+        for (0..@as(usize, @intFromFloat(increments))) |_| {
+            const next_left = left - width;
+            const next_right = right + width;
+            if (!(next_left < left) or !(next_right > right)) return d.fail(error.ParseError, 0, "UNIVARIATE: constant kernel axis cannot advance", .{});
+            left = next_left;
+            right = next_right;
         }
         first = left - width / 2;
         last = right + width / 2;
@@ -187,7 +187,7 @@ pub fn make(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, estimate
     if (!std.math.isFinite(first) or !std.math.isFinite(last) or !(last > first)) return d.fail(error.ParseError, 0, "UNIVARIATE: invalid kernel output extent", .{});
     var points: std.ArrayList(f64) = .empty;
     // SAS retains requested boundaries even when they duplicate a lattice row.
-    if (first >= lattice[0] and first <= lattice[length - 1]) try points.append(a, first);
+    if (first >= lattice[0] and first <= lattice[length - 1] and !(constant and first == lattice[0])) try points.append(a, first);
     for (lattice) |point| {
         if (point >= first and point <= last) try points.append(a, point);
     }
@@ -316,6 +316,30 @@ pub fn evaluate(a: std.mem.Allocator, d: *diag.Diagnostics, x: []const f64, esti
     return .{ .plan = plan, .estimate = fitted, .ordinates = ordinates };
 }
 
+test "constant midpoint kernel limits match M9 at interior and saturated Fourier bounds" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const Case = struct { center: f64, tail: f64, rows: usize, first: f64, last: f64 };
+    for ([_]Case{
+        .{ .center = 1, .tail = 0.3211 * 3, .rows = 131, .first = 0.5, .last = 1.5 },
+        .{ .center = 1, .tail = 0.7225 * 3, .rows = 387, .first = -0.5, .last = 2.5 },
+        .{ .center = 0.01, .tail = 3 * 0.5 * std.math.pow(f64, 3, -0.2), .rows = 313, .first = -1.2050000000000007, .last = 1.2250000000000008 },
+        .{ .center = 2, .tail = 0.24, .rows = 256, .first = 1, .last = 2.9921875 },
+        .{ .center = 0.9, .tail = 2, .rows = 512, .first = -1.1, .last = 2.8921875 },
+        .{ .center = 0.03, .tail = 0.36792797332519894, .rows = 99, .first = -0.3450000000000001, .last = 0.40500000000000014 },
+    }) |case| {
+        const x = [_]f64{case.center} ** 3;
+        const endpoints = [_]f64{ case.center / 2, case.center + case.center / 2 };
+        const fitted: kernel.Estimate = .{ .request = .{ .kind = .quadratic }, .bandwidth = case.tail, .c = 1, .amise = 0 };
+        const plan = try make(a, &d, &x, fitted, &endpoints, .{ .automatic = true, .bin_width = case.center });
+        try std.testing.expectEqual(case.rows, plan.points.len);
+        try std.testing.expectEqual(case.first, plan.points[0]);
+        try std.testing.expectEqual(case.last, plan.points[plan.points.len - 1]);
+    }
+}
+
 test "UNIVARIATE native Fourier coordinate rounding covers both sample parities and grid lengths" {
     // M9 OUTKERNEL _VALUE_ HEX16. on [-2.5, 0.8] with 8 or 9 observations.
     const cases = [_]struct { length: usize, odd: bool, bits: [6]u64 }{
@@ -327,7 +351,7 @@ test "UNIVARIATE native Fourier coordinate rounding covers both sample parities 
     var grid: [512]f64 = undefined;
     for (cases) |case| {
         const n = case.length;
-        outputLattice(grid[0..n], -2.5, 0.8, case.odd);
+        outputLattice(grid[0..n], -2.5, 0.8, case.odd, null);
         for ([_]usize{ 2, n / 2, n - 14, n - 3, n - 2, n - 1 }, case.bits) |i, expected| try std.testing.expectEqual(expected, @as(u64, @bitCast(grid[i])));
     }
 }
