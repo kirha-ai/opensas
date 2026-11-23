@@ -808,7 +808,12 @@ pub fn computeTable(a: std.mem.Allocator, ds: *Dataset, cols: []const usize, wc:
                 if (lm != rm) return lm;
                 const lv = if (c.fl) |f| fmtRawFor(f, l.v.str) orelse l.v else l.v;
                 const rv = if (c.fl) |f| fmtRawFor(f, r.v.str) orelse r.v else r.v;
-                if (lm) return cmpValue(lv, rv) == .lt;
+                // FREQ orders missing levels first by their displayed values
+                // for every ORDER=. With no format the symbols sort . A..Z _.
+                if (lm) {
+                    if (l.v == .num and r.v == .num) return Value.missingChar(l.v.num) < Value.missingChar(r.v.num);
+                    return cmpValue(l.v, r.v) == .lt;
+                }
                 if (c.order == .data) return false;
                 if (c.order == .freq and l.w != r.w) return l.w > r.w;
                 return cmpValue(if (c.order == .formatted) l.v else lv, if (c.order == .formatted) r.v else rv) == .lt;
@@ -1492,6 +1497,21 @@ fn renderCross(a: std.mem.Allocator, out: *std.ArrayList(u8), sl: table_model.Sl
     try flush(a, out, total);
     try flush(a, out, rule);
     if (!req.missing) try appendFreqMissing(a, out, sl.missing);
+}
+
+test "FREQ table puts missing levels in display order for every sort mode" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var ds = Dataset.init(a, "d");
+    _ = try ds.addColumn("g", .num);
+    for ("_AZ.A") |symbol| try ds.appendRow(&.{Value.specialMissing(symbol)});
+    for ([_]FreqOrder{ .data, .internal, .formatted, .freq }) |mode| {
+        const table = try computeTable(a, &ds, &.{0}, null, false, true, mode, &.{});
+        for (table.dimensions[0].levels, ".AZ_") |level, expected| {
+            try std.testing.expectEqual(expected, Value.missingChar(level.raw.num));
+        }
+    }
 }
 
 test "TABLES FORMAT named decimals preserve weighted counts and width boundaries" {
