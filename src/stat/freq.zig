@@ -2211,3 +2211,56 @@ test "FEAT-base-stat-results last FREQ table writes independent PCHI and cell da
     try std.testing.expectEqual(diag.Severity.warning, d.list.items[0].severity);
     try std.testing.expectEqualStrings("No OUTPUT data set is produced because no statistic options are specified in the corresponding TABLES statement.", d.list.items[0].message);
 }
+
+test "FREQ native comparative EQUAL methods, request margins and ordered diagnostics" {
+    // SAS 9.4M9 on cells (12,8;5,25). The displayed reference values and
+    // single-group programs are in tests/statistical-acceptance/freq_risk_cases.py.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var lib = @import("../exec.zig").Library.init(a);
+    const ds = try a.create(Dataset);
+    ds.* = Dataset.init(a, "d");
+    for ([_][]const u8{ "g", "r", "c", "w" }) |name| _ = try ds.addColumn(name, .num);
+    for ([_]f64{ 1, 2 }) |group| {
+        for ([_][3]f64{ .{ 1, 1, 12 }, .{ 1, 2, 8 }, .{ 2, 1, 5 }, .{ 2, 2, 25 } }) |row|
+            try ds.appendRow(&.{ .{ .num = group }, .{ .num = row[0] }, .{ .num = row[1] }, .{ .num = row[2] } });
+    }
+    try lib.put("d", ds);
+    const source = "proc freq data=d;by g;weight w;" ++
+        "tables r*c / noprint riskdiff(equal(null=100)) riskdiff(equal(null=.1) noninf sup equiv method=wilson);" ++
+        "tables r*c / noprint relrisk(equal(null=2) noninf sup equiv method=log margin=(.75,1.4));" ++
+        "tables r*c / noprint riskdiff(equal method=mn);run;";
+    var d = diag.Diagnostics.init(a);
+    var out: std.ArrayList(u8) = .empty;
+    try runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, source, &d));
+    try std.testing.expectEqual(@as(usize, 2), d.count());
+    try std.testing.expect(std.mem.startsWith(u8, d.list.items[0].message, "METHOD=NEWCOMBE is not available for RISKDIFF EQUAL."));
+    try std.testing.expectEqualStrings("The above message was for the following BY group:\n      g=1", d.list.items[1].message);
+    // The equality test stays Wald, while the three Newcombe analyses keep
+    // their native interval and supply no test statistic. MN selects F-M.
+    var values: std.ArrayList(f64) = .empty;
+    var lines = std.mem.tokenizeScalar(u8, out.items, '\n');
+    while (lines.next()) |row_text| {
+        var words = std.mem.tokenizeAny(u8, row_text, " \t");
+        const label = words.next() orelse continue;
+        if (eqi(label, "Z")) try values.append(a, try std.fmt.parseFloat(f64, words.next().?));
+    }
+    const expected = [_]f64{ 2.5849, 1.3143, 3.5075, 3.5075, 3.1688 };
+    try std.testing.expectEqual(2 * expected.len, values.items.len);
+    for (values.items, 0..) |actual, i| try std.testing.expectApproxEqAbs(expected[i % expected.len], actual, 0.00005);
+    for ([_][]const u8{ "0.2052", "0.6115" }) |bound| try std.testing.expectEqual(@as(usize, 6), std.mem.count(u8, out.items, bound));
+
+    const invalid = "proc freq data=d;weight w;tables r*c c*r / relrisk(equal(null=0) equiv margin=1) riskdiff(equal(null=-100));run;";
+    d = diag.Diagnostics.init(a);
+    out.clearRetainingCapacity();
+    try std.testing.expectError(error.ParseError, runFreq(.{ .arena = a, .lib = &lib, .diags = &d }, &out, try @import("../lexer.zig").tokenize(a, invalid, &d)));
+    const errors = [_][]const u8{
+        "The NULL= value for the RISKDIFF EQUAL test must be between -100 and 100.",
+        "The MARGIN= value for the RELRISK EQUIV test must be less than 1 when an upper MARGIN= value is not specified.",
+        "The NULL= value for the RELRISK EQUAL test must be a positive number.",
+    };
+    try std.testing.expectEqual(2 * errors.len, d.count());
+    for (d.list.items, 0..) |entry, i| try std.testing.expectEqualStrings(errors[i % errors.len], entry.message);
+    try std.testing.expectEqual(@as(usize, 0), out.items.len);
+}

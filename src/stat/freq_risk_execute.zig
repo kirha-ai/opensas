@@ -494,3 +494,28 @@ test "FEAT-freq-risk public high alpha preserves SAS reversed confidence limits"
     try std.testing.expectEqual(@as(usize, 2), found);
     try std.testing.expect(!d.hasErrors());
 }
+
+test "FREQ binomial keeps native table-width event and the valid margin tests" {
+    // M9 BINOMIAL LEVEL='cccX' selects the observed ccc on counts 3,7,9.
+    // P=.1 and MARGIN=.2 suppress NI and equivalence; superiority survives.
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    var d = diag.Diagnostics.init(a);
+    const table = Table{ .name = "x", .row_labels = &.{ "a", "bb", "ccc" }, .counts = &.{ 3, 7, 9 }, .one_way = true };
+    var opts = p.Options{ .binomial = .{ .family = .binomial, .level = .{ .value = "cccX" }, .p = 0.1, .margin = .{ 0.2, 0.2 }, .noninf = true, .sup = true, .equiv = true } };
+    const report = try executeResolved(a, &d, table, &opts, 0.05);
+    try std.testing.expectEqual(@as(usize, 3), opts.binomial.?.level.number);
+    try std.testing.expect(!opts.binomial.?.noninf and opts.binomial.?.sup and !opts.binomial.?.equiv);
+    try std.testing.expectEqualStrings("x = ccc", report.sections[0].subtitle);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.4737), report.sections[0].rows[0].values[0].?, 0.00005);
+    try std.testing.expectEqualStrings("Superiority Analysis for the Binomial Proportion", report.sections[report.sections.len - 1].title);
+    try std.testing.expectEqual(@as(usize, 3), d.count());
+    try std.testing.expectEqualStrings("The binomial noninferiority limit is -0.1. A noninferiority test cannot be computed.", d.list.items[1].message);
+
+    opts.binomial.?.level = .{ .value = "long-name" };
+    d = diag.Diagnostics.init(a);
+    const missing = try executeResolved(a, &d, table, &opts, 0.05);
+    try std.testing.expect(opts.binomial == null and missing.sections.len == 0);
+    try std.testing.expectEqualStrings("BINOMIAL LEVEL='lon' is not found for variable x.", d.list.items[0].message);
+}
