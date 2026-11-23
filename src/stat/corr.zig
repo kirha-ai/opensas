@@ -1179,20 +1179,36 @@ fn renderAdvanced(a: std.mem.Allocator, out: *std.ArrayList(u8), s: Spec, g: Gro
         for (alpha_result.deleted, s.vars) |d, c| try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {s} {s} {s}\n", .{ s.ds.columns.items[c].name, try number(a, d.raw_correlation, false), try number(a, d.raw, false), try number(a, d.standardized_correlation, false), try number(a, d.standardized, false) }));
         try tables.finish(a, out, start, "CronbachAlphaDel");
     }
-    if (s.options.fisher != null) {
+    if (s.options.fisher) |opt| {
         for ([_][]const Pair{ if (s.options.pearson) g.pairs else &.{}, g.spearman }, [_][]const u8{ "Pearson", "Spearman" }) |pairs, title| {
             if (pairs.len == 0) continue;
             const start = out.items.len;
-            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s} Fisher Correlation Statistics\nRow Column N Z Bias Estimate Lower Upper", .{title}));
+            const partial = s.partial.len != 0;
+            try out.appendSlice(a, try std.fmt.allocPrint(a, "\n{s}{s} Fisher Correlation Statistics\nVariable WithVariable N", .{ title, if (partial) @as([]const u8, " Partial") else "" }));
+            if (partial) try out.appendSlice(a, " NPartialled");
+            try out.appendSlice(a, " Correlation Z");
+            if (opt.biasadj) try out.appendSlice(a, " Bias Estimate");
+            if (opt.kind != .upper) try out.appendSlice(a, " Lower");
+            if (opt.kind != .lower) try out.appendSlice(a, " Upper");
+            if (opt.rho0 != 0) try out.appendSlice(a, " Rho0");
             if (!s.options.noprob) try out.appendSlice(a, " P");
             try out.append(a, '\n');
-            for (pairs) |p| {
-                if (p.row == p.column or (s.with.len == 0 and p.row < p.column)) continue;
-                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[p.row].name, s.ds.columns.items[p.column].name, p.n }));
-                for ([_]f64{ p.fisher.z, p.fisher.bias, p.fisher.estimate, p.fisher.lower, p.fisher.upper }) |v| try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, v, false)}));
+            const with = if (s.with.len != 0) s.with else s.vars;
+            for (s.vars, 0..) |c, j| for (with, 0..) |r, i| {
+                if (s.with.len == 0 and i <= j) continue;
+                const p = pairs[i * s.vars.len + j];
+                try out.appendSlice(a, try std.fmt.allocPrint(a, "{s} {s} {d:.0}", .{ s.ds.columns.items[c].name, s.ds.columns.items[r].name, p.n }));
+                if (partial) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d}", .{p.controls}));
+                try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.r, false), try number(a, p.fisher.z, false) }));
+                if (opt.biasadj) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s} {s}", .{ try number(a, p.fisher.bias, false), try number(a, p.fisher.estimate, false) }));
+                for ([_]f64{ p.fisher.lower, p.fisher.upper }, 0..) |v, bound| {
+                    if ((bound == 0 and opt.kind == .upper) or (bound == 1 and opt.kind == .lower)) continue;
+                    if (std.math.isFinite(v)) try out.appendSlice(a, try std.fmt.allocPrint(a, " {d:.6}", .{v})) else try out.appendSlice(a, " .");
+                }
+                if (opt.rho0 != 0) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, opt.rho0, false)}));
                 if (!s.options.noprob) try out.appendSlice(a, try std.fmt.allocPrint(a, " {s}", .{try number(a, p.fisher.p, true)}));
                 try out.append(a, '\n');
-            }
+            };
             try tables.finish(a, out, start, @import("ods_corr.zig").fisherTableName(eq(title, "Spearman"), s.partial.len != 0));
         }
     }
@@ -1400,6 +1416,16 @@ test "CORR partial singular warnings identify every affected variable and method
         try std.testing.expectEqualStrings(try std.fmt.allocPrint(a, "The variable {s} is singular in calculating the partial PEARSON correlations.", .{col}), message.message);
     try std.testing.expectEqual(@as(f64, 0), g.simple[2].partial_variance);
     try std.testing.expectEqual(@as(f64, 0), g.simple[3].partial_variance);
+}
+test "CORR Fisher listing uses VAR order and only the requested limits and bias statistics" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y" }, &.{ &.{ 1, 1 }, &.{ 2, 3 }, &.{ 3, 2 } });
+    const r = try Testing.analyze(a, ds, "proc corr fisher(type=lower biasadj=no rho0=-.3); var y x; run;");
+    var listing: std.ArrayList(u8) = .empty;
+    try render(a, &listing, r);
+    try std.testing.expect(std.mem.indexOf(u8, listing.items, "Variable WithVariable N Correlation Z Lower Rho0 P\ny x 3 0.50000 0.54931 . -0.30000 .") != null);
 }
 test "CORR alpha pairwise missing uses Pearson matrix for standardized reliability" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
