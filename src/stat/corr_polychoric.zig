@@ -225,12 +225,30 @@ pub fn rectangleProbability(xl: f64, xu: f64, yl: f64, yu: f64, rho: f64) f64 {
     }
     return @max(0, total);
 }
-fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize) f64 {
+const ProbabilityUse = enum { fit, likelihood_gap };
+fn cellProbability(m: CountMatrix, params: []const f64, i: usize, j: usize, use: ProbabilityUse) f64 {
     const xl = if (i == 0) -40 else params[i - 1];
     const xu = if (i + 1 == m.rows) 40 else params[i];
     const yl = if (j == 0) -40 else params[m.rows + j - 2];
     const yu = if (j + 1 == m.cols) 40 else params[m.rows + j - 1];
-    return rectangleProbability(xl, xu, yl, yu, params[params.len - 1]);
+    const rho = params[params.len - 1];
+    const q = rectangleProbability(xl, xu, yl, yu, rho);
+    if (use == .likelihood_gap or rho == 0 or !(q > 0)) return q;
+
+    // CORR obtains a mixed outer corner by subtracting its bivariate CDF
+    // from a marginal CDF. Reconstruct the CDF from the integrated tail:
+    // when it has the marginal's exponent, their difference rounds the
+    // tail to the marginal's spacing. The gap estimate needs the unrounded mass.
+    const margin = if (i == 0 and j + 1 == m.cols)
+        normalTail(-xu)
+    else if (j == 0 and i + 1 == m.rows)
+        normalTail(-yu)
+    else
+        return q;
+    const complement = margin - q;
+    if (complement > 0 and std.math.frexp(margin).exponent == std.math.frexp(complement).exponent)
+        return margin - complement;
+    return q;
 }
 fn bivariateDensity(x: f64, y: f64, rho: f64) f64 {
     const variance = conditionalVariance(rho);
@@ -261,7 +279,7 @@ fn negativeLogLikelihood(m: CountMatrix, params: []const f64) f64 {
     var result: f64 = 0;
     for (m.counts, 0..) |n, k| {
         if (n == 0) continue;
-        const p = cellProbability(m, params, k / m.cols, k % m.cols);
+        const p = cellProbability(m, params, k / m.cols, k % m.cols, .fit);
         if (!std.math.isFinite(p) or p < 0) return std.math.inf(f64);
         result -= n * @log(@max(p, minimum_cell_probability));
     }
@@ -288,7 +306,7 @@ fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64, terms
     var remainder: f64 = 0;
     var rounding: f64 = 0;
     for (m.counts, 0..) |count, k| {
-        const q = cellProbability(m, params, k / m.cols, k % m.cols);
+        const q = cellProbability(m, params, k / m.cols, k % m.cols, .likelihood_gap);
         if (!std.math.isFinite(q) or q < 0 or q > 1) return null;
         if (count == 0) {
             empty += q;
@@ -566,7 +584,7 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         for (m.counts, 0..) |n, cell| {
             const i = cell / m.cols;
             const j = cell % m.cols;
-            const probability = cellProbability(m, params, i, j);
+            const probability = cellProbability(m, params, i, j, .fit);
             if (!std.math.isFinite(probability) or probability < 0)
                 return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations };
             if (probability == 0 and n == 0) continue;

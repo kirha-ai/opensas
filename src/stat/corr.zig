@@ -1820,6 +1820,26 @@ test "CORR three-level staircase tight tolerance has zero-rank Wald inference" {
         try std.testing.expectApproxEqAbs(@as(f64, 40.9081058800832), fit.lr, 1e-10);
     }
 }
+test "CORR reconstructs a rare occupied mixed corner at marginal precision" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const ds = try Testing.dataset(a, &.{ "x", "y", "f" }, &.{
+        &.{ 117, -67, 128 }, &.{ 117, -129, 46 }, &.{ -40, -129, 74 }, &.{ 117, 102, 86 },
+        &.{ 117, 123, 28 },  &.{ -14, -129, 144 }, &.{ -73, 123, 2 }, &.{ -73, -129, 16 },
+    });
+    const first = (try Testing.analyze(a, ds, "proc corr polychoric(converge=0.99 maxiter=1);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(first.converged);
+    try std.testing.expectEqual(@as(f64, 524), first.n);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.870175704588988), first.r, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.04058518125371422), first.se, 1e-12);
+    try std.testing.expectApproxEqAbs(@as(f64, 317.7604429794285), first.lr, 1e-9);
+    const fit = (try Testing.analyze(a, ds, "proc corr polychoric(converge=1e-6);var x;with y;freq f;run;")).groups[0].polychoric[0].estimate;
+    try std.testing.expect(fit.converged);
+    try std.testing.expectApproxEqAbs(@as(f64, 0.8493614123476747), fit.r, 1e-8);
+    try std.testing.expectApproxEqAbs(@as(f64, 321.12005493364404), fit.lr, 1e-7);
+}
+
 test "CORR retracts a projected ordinal step when its likelihood loss is distinguishable" {
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
