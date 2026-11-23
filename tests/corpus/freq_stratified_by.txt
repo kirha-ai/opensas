@@ -72,8 +72,8 @@ Column 1 (c = 1)
 
 Common Risk Difference Tests
 Method           Risk Difference           Z    Pr > |Z|
-Mantel-Haenszel           0.0000      0.0000           .
-Summary Score             0.0000      0.0000           .
+Mantel-Haenszel           0.0000      0.0000      1.0000
+Summary Score             0.0000      0.0000      1.0000
 
 Column 1 (c = 1)
 
