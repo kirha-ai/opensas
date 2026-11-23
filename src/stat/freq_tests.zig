@@ -167,7 +167,7 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
         .likelihood_ratio = chi(lr, df),
         .mantel_haenszel = if (corr.estimate) |r| chi((t.n - 1) * r * r, 1) else null,
         .continuity = if (two) chi(cc, df) else null,
-        .fisher = if (automatic_fisher and two and integerCounts(m.counts)) try fisherExact(m.counts) else null,
+        .fisher = if (automatic_fisher and two and integerCounts(m.counts)) (try fisherWithAllocator(a, m.counts, .{ .max_tables = std.math.maxInt(u64) })).?.cell else null,
         .phi = phi,
         .contingency = @sqrt(p / (p + t.n)),
         .cramer_v = if (two) phi else @sqrt(p / t.n / @as(f64, @floatFromInt(@min(t.nr, t.nc) - 1))),
@@ -181,6 +181,7 @@ pub fn contingencyWithFisher(a: std.mem.Allocator, m: CountMatrix, df_override: 
 // observed cell into the top left so the lower support is zero. A single row
 // or column reversal interchanges the original left and right cell-count tests.
 const Hypergeometric2x2 = struct {
+    source: [4]u1024,
     row: f64,
     column: f64,
     offset: f64,
@@ -195,18 +196,42 @@ const Hypergeometric2x2 = struct {
         const observed = cells[corner];
         const row = observed + cells[corner ^ 1];
         const column = observed + cells[corner ^ 2];
-        const upper = @min(row, column);
         const total = row + cells[corner ^ 2] + cells[corner ^ 3];
-        if (!std.math.isFinite(total) or upper >= @as(f64, @floatFromInt(std.math.maxInt(u64)))) return error.ExecError;
+        if (!std.math.isFinite(total)) return error.ExecError;
+        const source = [4]u1024{ representedCount(observed), representedCount(cells[corner ^ 1]), representedCount(cells[corner ^ 2]), representedCount(cells[corner ^ 3]) };
+        const support_end = @min(source[0] + source[1], source[0] + source[2]);
+        if (support_end >= std.math.maxInt(u64)) return error.ExecError;
+        const upper: u64 = @intCast(support_end);
+        const mode = @floor((row + 1) / (total + 2) * (column + 1));
         return .{
+            .source = source,
             .row = row,
             .column = column,
             .offset = cells[corner ^ 3] - observed,
             .reversed = corner == 1 or corner == 2,
             .observed = @intFromFloat(observed),
-            .mode = @intFromFloat(@min(upper, @floor((row + 1) / (total + 2) * (column + 1)))),
-            .upper = @intFromFloat(upper),
+            .mode = if (mode >= @as(f64, @floatFromInt(upper))) upper else @intFromFloat(mode),
+            .upper = upper,
         };
+    }
+
+    // All finite, nonnegative integer binary64 values fit in u1024, even
+    // when individual margins exceed u64 but conditional support is small.
+    fn representedCount(value: f64) u1024 {
+        if (value < 0x1p64) return @as(u64, @intFromFloat(value));
+        const parts = std.math.frexp(value);
+        const mantissa: u64 = @intFromFloat(parts.significand * 0x1p53);
+        return @as(u1024, mantissa) << @intCast(parts.exponent - 53);
+    }
+    fn compareMass(self: *const Hypergeometric2x2, a: std.mem.Allocator, x: u64, budget: @import("freq_exact_distribution.zig").Budget) Error!?std.math.Order {
+        if (x == self.observed) return .eq;
+        const d = @max(x, self.observed) - @min(x, self.observed);
+        var sampled = self.source;
+        for (&sampled, 0..) |*v, i| {
+            if ((i == 0 or i == 3) == (x > self.observed)) v.* += d else v.* -= d;
+        }
+        const denominators = (try @import("freq_exact_distribution.zig").fisherFactorialOrder(u1024, 4, a, &sampled, &self.source, budget)) orelse return null;
+        return denominators.invert();
     }
 
     // Ratio of the next mass to the current mass when moving away from a mode.
@@ -219,6 +244,9 @@ const Hypergeometric2x2 = struct {
 
 pub const FisherEnumeration = struct { cell: Fisher, point: f64, more_likely: f64, tables: u64 };
 pub fn fisherControlled(cells: []const f64, budget: @import("freq_exact_distribution.zig").Budget) Error!?FisherEnumeration {
+    return fisherWithAllocator(std.heap.page_allocator, cells, budget);
+}
+pub fn fisherWithAllocator(a: std.mem.Allocator, cells: []const f64, budget: @import("freq_exact_distribution.zig").Budget) Error!?FisherEnumeration {
     const m = try Hypergeometric2x2.init(cells);
     if (budget.stopped() or m.upper >= budget.max_tables) return null;
     var log_observed: f64 = 0;
@@ -247,10 +275,19 @@ pub fn fisherControlled(cells: []const f64, budget: @import("freq_exact_distribu
                 total += weight;
                 if (i <= m.observed) left += weight;
                 if (i >= m.observed) right += weight;
-                const equal = @abs(weight - observed_weight) <= 64 * std.math.floatEps(f64) * @max(weight, observed_weight);
-                if (equal) tied += weight;
-                if (equal or weight < observed_weight) included += weight;
-                if (equal or weight > observed_weight) more_likely += weight;
+                // Log-ratio accumulation can leave both adjacent modes within
+                // roundoff. Classify an overlapping pair by factorial products.
+                const steps = @as(f64, @floatFromInt(@max(m.mode, i) - @min(m.mode, i))) + @as(f64, @floatFromInt(@max(m.mode, m.observed) - @min(m.mode, m.observed)));
+                const tolerance = std.math.floatEps(f64) * (64 + steps) * (1 + @abs(log_weight) + @abs(log_observed));
+                const order = if (observed_weight == 0)
+                    std.math.Order.gt
+                else if (@abs(log_weight - log_observed) <= tolerance)
+                    (try m.compareMass(a, i, budget)) orelse return null
+                else
+                    std.math.order(log_weight, log_observed);
+                if (order == .eq) tied += weight;
+                if (order != .gt) included += weight;
+                if (order != .lt) more_likely += weight;
             }
             if (i == (if (up) m.upper else 0)) break;
             log_weight += @log(m.step(i, up));

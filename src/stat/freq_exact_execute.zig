@@ -128,7 +128,7 @@ pub fn run(a: std.mem.Allocator, m: tests.CountMatrix, f: parse.Family, c: Confi
     if (f == .mcnem and m.counts.len == 4 and m.counts[1] + m.counts[2] == 0) return .not_applicable;
     if (m.counts.len > 256) return .exhausted;
     if (f == .fisher and m.rows == 2 and m.cols == 2 and m.counts.len == 4) {
-        const result = (try tests.fisherControlled(m.counts, c.budget)) orelse return .exhausted;
+        const result = (try tests.fisherWithAllocator(a, m.counts, c.budget)) orelse return .exhausted;
         if (result.tables == 1) return .not_applicable;
         const cell = result.cell;
         return .{ .fisher = .{
@@ -304,6 +304,34 @@ test "wide 2x2 counts retain exact representable tail probabilities independent 
         try std.testing.expectApproxEqRel(tail, if (reversed) f.cell_tails.?.left else f.cell_tails.?.right, 1e-14);
         try std.testing.expectEqual(@as(f64, 1), if (reversed) f.cell_tails.?.right else f.cell_tails.?.left);
         try std.testing.expectEqual(@as(u64, 4), f.probabilities.tables);
+    }
+}
+
+test "two adjacent Fisher modes with unequal labeled multiplicity keep separate point probabilities" {
+    const t = std.testing;
+    // For the first pair (R+1)(C+1) mod (N+2) = 1. The adjacent
+    // probability ratio differs from 1 by only 8.215e-15. Independent
+    // 70-digit hypergeometric recurrence gives each mass and ordered tail.
+    const n: u32 = 2_000_000_001;
+    const r: u32 = 600_000;
+    const c: u32 = 1_770_793_717;
+    for ([_]u32{ 531_238, 531_239 }, [_]f64{ 0.99838292021760708595, 1.0 }, [_]f64{ 0.0016170797823929007618, 0.0016170797823929140463 }) |k, tail, mass| {
+        const counts = [4]f64{ @floatFromInt(k), @floatFromInt(r - k), @floatFromInt(c - k), @floatFromInt(n - r - c + k) };
+        const swapped = [4]f64{ counts[1], counts[0], counts[3], counts[2] };
+        for ([_][]const f64{ &counts, &swapped }) |cells| {
+            const result = (try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = cells }, .fisher, .{})).fisher;
+            try t.expectApproxEqRel(mass, result.probabilities.point, 2e-14);
+            try t.expectApproxEqAbs(tail, result.probabilities.two_sided, 2e-14);
+        }
+    }
+    // Each raw frequency is exactly representable as binary64. A feasible
+    // neighbor moves it by one, far below an ulp of the large counts.
+    for ([_]i32{ 85, 970 }) |exponent| {
+        const m = std.math.ldexp(@as(f64, 1), exponent);
+        const next = std.math.nextAfter(f64, m, std.math.inf(f64));
+        const result = (try run(t.allocator, .{ .rows = 2, .cols = 2, .counts = &.{ 2, 1, m, next } }, .fisher, .{})).fisher;
+        try t.expectApproxEqRel(@as(f64, 0.375), result.probabilities.point, 2e-15);
+        try t.expectApproxEqRel(@as(f64, 0.625), result.probabilities.two_sided, 2e-15);
     }
 }
 

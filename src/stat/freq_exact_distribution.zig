@@ -199,22 +199,23 @@ const BigInt = std.math.big.int.Managed;
 
 /// Product of (lo,hi]. Small intervals fit a machine word. Larger ones use
 /// a balanced product tree, with the procedure deadline checked at each node.
-fn factorialRange(a: std.mem.Allocator, lo: u32, hi: u32, budget: Budget) Error!?BigInt {
+fn factorialRange(comptime Count: type, a: std.mem.Allocator, lo: Count, hi: Count, budget: Budget) Error!?BigInt {
     if (budget.stopped()) return null;
     if (lo == hi) return try BigInt.initSet(a, 1);
+    if (hi - lo == 1) return try BigInt.initSet(a, hi);
     var product: u64 = 1;
     var x = lo;
-    while (x < hi) {
+    while (x < hi and hi <= std.math.maxInt(u64)) {
         x += 1;
-        const next = @mulWithOverflow(product, @as(u64, x));
+        const next = @mulWithOverflow(product, @as(u64, @intCast(x)));
         if (next[1] != 0) break;
         product = next[0];
         if (x == hi) return try BigInt.initSet(a, product);
     }
     const mid = lo + (hi - lo) / 2;
-    var left = (try factorialRange(a, lo, mid, budget)) orelse return null;
+    var left = (try factorialRange(Count, a, lo, mid, budget)) orelse return null;
     defer left.deinit();
-    var right = (try factorialRange(a, mid, hi, budget)) orelse return null;
+    var right = (try factorialRange(Count, a, mid, hi, budget)) orelse return null;
     defer right.deinit();
     var result = try BigInt.init(a);
     errdefer result.deinit();
@@ -225,18 +226,18 @@ fn factorialRange(a: std.mem.Allocator, lo: u32, hi: u32, budget: Budget) Error!
 /// Fixed margins make Fisher ordering an integer comparison of products of
 /// cell factorials. Use it when log probabilities cannot separate two tables.
 /// Sorting cancels common factorials and minimizes the remaining factor count.
-fn fisherTie(a: std.mem.Allocator, sampled: []const u32, observed: []const u32, budget: Budget) Error!?Events {
-    const equal = Events{ .point = true, .left = true, .right = true, .two = true };
-    if (std.mem.eql(u32, sampled, observed)) return equal;
-    var samples: [256]u32 = undefined;
-    var observations: [256]u32 = undefined;
+pub fn fisherFactorialOrder(comptime Count: type, comptime max_cells: usize, a: std.mem.Allocator, sampled: []const Count, observed: []const Count, budget: Budget) Error!?std.math.Order {
+    if (sampled.len != observed.len or sampled.len > max_cells) return error.ExecError;
+    if (std.mem.eql(Count, sampled, observed)) return .eq;
+    var samples: [max_cells]Count = undefined;
+    var observations: [max_cells]Count = undefined;
     const lhs = samples[0..sampled.len];
     const rhs = observations[0..observed.len];
     @memcpy(lhs, sampled);
     @memcpy(rhs, observed);
-    std.mem.sort(u32, lhs, {}, std.sort.asc(u32));
-    std.mem.sort(u32, rhs, {}, std.sort.asc(u32));
-    if (std.mem.eql(u32, lhs, rhs)) return equal;
+    std.mem.sort(Count, lhs, {}, std.sort.asc(Count));
+    std.mem.sort(Count, rhs, {}, std.sort.asc(Count));
+    if (std.mem.eql(Count, lhs, rhs)) return .eq;
 
     var temp = std.heap.stackFallback(2048, a);
     const scratch = temp.get();
@@ -246,12 +247,15 @@ fn fisherTie(a: std.mem.Allocator, sampled: []const u32, observed: []const u32, 
     defer right.deinit();
     for (lhs, rhs) |x, y| {
         if (x == y) continue;
-        var factor = (try factorialRange(scratch, @min(x, y), @max(x, y), budget)) orelse return null;
+        var factor = (try factorialRange(Count, scratch, @min(x, y), @max(x, y), budget)) orelse return null;
         defer factor.deinit();
         const side = if (x > y) &left else &right;
         try side.mul(side, &factor);
     }
-    const order = BigInt.order(left, right);
+    return BigInt.order(left, right);
+}
+fn fisherTie(a: std.mem.Allocator, sampled: []const u32, observed: []const u32, budget: Budget) Error!?Events {
+    const order = (try fisherFactorialOrder(u32, 256, a, sampled, observed, budget)) orelse return null;
     return .{ .point = order == .eq, .left = order != .gt, .right = order != .lt, .two = order != .lt };
 }
 
@@ -580,10 +584,10 @@ test "Freeman-Halton absolute and tied probabilities survive wide table transpos
     }
     const tied = (try fisherTie(t.allocator, &.{ 4, 1, 1, 1 }, &.{ 3, 2, 2, 0 }, .{})).?;
     try t.expect(tied.point and tied.left and tied.right);
-    var hundred = (try factorialRange(t.allocator, 0, 100, .{})).?;
+    var hundred = (try factorialRange(u32, t.allocator, 0, 100, .{})).?;
     defer hundred.deinit();
     try t.expectEqual(@as(usize, 525), hundred.bitCountAbs());
-    try t.expect((try factorialRange(t.allocator, 0, 100, .{ .expired = expired })) == null);
+    try t.expect((try factorialRange(u32, t.allocator, 0, 100, .{ .expired = expired })) == null);
 }
 
 test "fixed-margin Fisher enumeration includes ties, sparse cells and stop status" {
