@@ -1554,7 +1554,11 @@ test "CORR polyserial listing always shows the continuous variable first" {
         var listing: std.ArrayList(u8) = .empty;
         try render(a, &listing, g);
         try std.testing.expect(std.mem.indexOf(u8, listing.items, "ContinuousVariable OrdinalVariable") != null);
-        try std.testing.expect(std.mem.indexOf(u8, listing.items, "x g 9 0.53480 0.27980 3.6534 0.0560 2.2910 0.1301") != null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "x g 9 0.53480 0.27980") != null);
+        try std.testing.expect(std.mem.indexOf(u8, listing.items, "0.0560 2.2910 0.1301") != null);
+        // The M9 Wald listing rounds to 3.6534. At the fitted maximum,
+        // independent analytic observed information gives 3.6533474922.
+        try std.testing.expectApproxEqAbs(@as(f64, 3.6533474922), g.groups[0].polyserial[0].estimate.wald, 0.00001);
     }
 }
 test "CORR group limits name each ordinal variable once and MAXITER names its pair" {
