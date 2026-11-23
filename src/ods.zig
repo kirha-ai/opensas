@@ -72,9 +72,10 @@ pub const Capture = struct {
                 if (dst.indexOf(c.name)) |ci| {
                     if (dst.columns.items[ci].type != c.type) return d.fail(error.ParseError, 0, "ODS OUTPUT: incompatible types for {s}", .{c.name});
                     if (c.len) |n| dst.columns.items[ci].len = @max(dst.columns.items[ci].len orelse 0, n);
-                    if (c.type == .num and (eq(name, "FitQuantiles") or eq(name, "GoodnessOfFit") or eq(name, "Bins") or eq(name, "HistogramBins"))) {
+                    const quantile_estimate = eq(name, "Quantiles") and eq(c.name, "Estimate");
+                    if (c.type == .num and (quantile_estimate or eq(name, "FitQuantiles") or eq(name, "GoodnessOfFit") or eq(name, "Bins") or eq(name, "HistogramBins"))) {
                         if (c.format) |incoming| if (dst.columns.items[ci].format) |prior| {
-                            dst.columns.items[ci].format = try mergeHistogramFormat(a, prior, incoming);
+                            dst.columns.items[ci].format = try mergeNumericDisplayFormat(a, prior, incoming);
                         };
                     }
                 } else {
@@ -108,7 +109,7 @@ pub const Capture = struct {
 };
 // ODS combines compatible w.d displays at the wider width. When the
 // fractional precision differs it switches the column to the D display.
-fn mergeHistogramFormat(a: std.mem.Allocator, left: []const u8, right: []const u8) ![]const u8 {
+fn mergeNumericDisplayFormat(a: std.mem.Allocator, left: []const u8, right: []const u8) ![]const u8 {
     if (eq(left, right)) return left;
     const li = std.mem.indexOfScalar(u8, left, '.') orelse return left;
     const ri = std.mem.indexOfScalar(u8, right, '.') orelse return left;
