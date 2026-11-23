@@ -124,7 +124,10 @@ test "M9 exact risk ODS schemas and column orientation through PROC FREQ" {
     try std.testing.expectEqual(@as(usize, 5), barnard.rowCount());
     try std.testing.expectEqualStrings("XPL_RDIF1", barnard.row(3)[1].str);
     try std.testing.expectEqualStrings("One-sided Pr <=  Z", barnard.row(3)[2].str);
-    try std.testing.expectApproxEqAbs(@as(f64, -1.29099443819909), barnard.row(2)[4].num, 1e-12);
+    // At p=4/10 the analytical null ASE is sqrt(.096). M9 obtains a
+    // numerical constrained fit (Z=-1.29099443819909) with the same display.
+    try std.testing.expectApproxEqAbs(-0.4 / @sqrt(@as(f64, 0.096)), barnard.row(2)[4].num, 1e-12);
+    try std.testing.expectEqualStrings("-1.2910", barnard.row(2)[3].str);
     // For this 5-by-5 design, the two-sided tail is 20u²-100u³+210u⁴-168u⁵,
     // u=p(1-p). Its maximum at p=1/2 is 11/32; M9 printed .34374999999999.
     try std.testing.expectApproxEqAbs(@as(f64, 11.0 / 32.0), barnard.row(4)[4].num, 1e-10);
