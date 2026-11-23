@@ -494,17 +494,6 @@ fn summarize(a: Allocator, ds: *Dataset, col: usize, wc: ?usize, vd: h.VarDef, m
         z.geo = if (negative) nan else if (zero) 0 else @exp(logs / z.s.sumw);
         z.harm = if (zero or recip == 0) nan else z.s.sumw / recip;
     }
-    if (vd == .n and z.s.std > 0) {
-        var m3: f64 = 0;
-        var m4: f64 = 0;
-        for (z.pairs) |p| {
-            const v = @sqrt(p.w) * (p.x - z.s.mean) / z.s.std;
-            m3 += v * v * v;
-            m4 += v * v * v * v;
-        }
-        z.s.skew = m3 / @as(f64, @floatFromInt(z.s.n));
-        z.s.kurt = m4 / @as(f64, @floatFromInt(z.s.n)) - 3;
-    }
     if (wc == null) {
         const NZ = struct { x: f64, pos: bool };
         var nz: std.ArrayList(NZ) = .empty;
@@ -1260,6 +1249,24 @@ test "UNIVARIATE weight overflow retains completed BY groups and discards the cu
         const out = lib.find(name).?;
         try std.testing.expectEqual(expected, out.rows.items.len);
         if (expected > 0) try std.testing.expectEqual(@as(f64, 1), testCell(out, 0, "g"));
+    }
+}
+
+test "UNIVARIATE skewness and kurtosis are invariant across ordinary, large, and small scales" {
+    var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
+    defer arena.deinit();
+    const a = arena.allocator();
+    const lib = try testData(a);
+    const ds = lib.find("d").?;
+    for ([_]i32{ -400, 0, 300, 508 }) |exponent| {
+        ds.rows.clearRetainingCapacity();
+        for ([_]f64{ 1, -3, 5, 6, 10 }) |x| {
+            try ds.appendRow(&.{ .{ .num = std.math.ldexp(x, exponent) }, .{ .num = 0 }, .{ .num = 1 }, .{ .num = 1 }, .{ .num = 1 } });
+        }
+        try testRun(a, lib, "proc univariate data=d noprint;var x;output out=q skewness=s kurtosis=k;run;");
+        const out = lib.find("q").?;
+        try std.testing.expectApproxEqAbs(@as(f64, -0.29081900633708), testCell(out, 0, "s"), 1e-12);
+        try std.testing.expectApproxEqAbs(@as(f64, -0.41354554246094), testCell(out, 0, "k"), 1e-12);
     }
 }
 

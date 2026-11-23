@@ -1990,6 +1990,31 @@ fn skewKurtDf(n: usize, sd: f64, m3: f64, m4: f64) SkewKurt {
     };
 }
 
+/// UNIVARIATE applies its DF or N correction to powers of standardized
+/// residuals. Forming the raw third and fourth powers first can overflow
+/// or underflow even while the mean and standard deviation are finite.
+fn univShape(rows: []const []const Value, col: usize, wc: ?usize, vd: VarDef, n: usize, mean: f64, sd: f64) SkewKurt {
+    const nan = std.math.nan(f64);
+    // M9 accepts 0x209f400000446139 and suppresses its predecessor for
+    // both divisors. The inclusive cutoff differs from the minimum weight.
+    if (!(sd >= 1.491668147e-151) or !std.math.isFinite(sd) or (vd != .df and vd != .n))
+        return .{ .skew = nan, .kurt = nan };
+    var third: f64 = 0;
+    var fourth: f64 = 0;
+    for (rows) |row| {
+        const x = toNum(row[col]);
+        if (std.math.isNan(x)) continue;
+        const w = weightAt(row, wc) orelse continue;
+        const z = (x - mean) / sd * @sqrt(w);
+        const square = z * z;
+        third += square * z;
+        fourth += square * square;
+    }
+    if (vd == .df) return skewKurtDf(n, 1, third, fourth);
+    const count: f64 = @floatFromInt(n);
+    return .{ .skew = third / count, .kurt = fourth / count - 3 };
+}
+
 /// NMISS on the p.408 list-2 BASIS (BUG-univnmissweightbasis): the delivered
 /// rows with a MISSING analysis value — NOT rows.len − s.n. N (list 1) also
 /// excludes a PRESENT value whose WEIGHT is missing; the missing-count basis
@@ -2066,7 +2091,8 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
                 // Below the M9 minimum weight, the previous total is the
                 // CSS multiplier. Avoid multiplying two tiny weights here.
                 const multiplier = if (previous_weight <= minimum_weight) previous_weight else w * sumw / previous_weight;
-                running_css += delta * delta * multiplier;
+                // The fused update preserves the final ULP at the minimum SD for skew and kurtosis.
+                running_css = @mulAdd(f64, delta * delta, multiplier, running_css);
             }
         }
         if (x < lo) lo = x;
@@ -2095,19 +2121,21 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
     var css: f64 = running_css;
     var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄)³ (skewness input)
     var m4: f64 = 0; // Σ wᵢ²(xᵢ−x̄)⁴    (kurtosis input)
-    for (rows) |r| {
-        const x = toNum(r[col]);
-        if (std.math.isNan(x)) continue;
-        const w = weightOf(r, wcol) orelse continue;
-        const dv = x - mean;
-        const d2 = dv * dv;
-        if (!native_univariate) css += w * d2;
-        if (wcol == null) { // unweighted: w-factors are 1, skip the pow
-            m3 += d2 * dv;
-            m4 += d2 * d2;
-        } else {
-            m3 += std.math.pow(f64, w, 1.5) * d2 * dv;
-            m4 += (w * w) * d2 * d2;
+    if (!native_univariate) {
+        for (rows) |r| {
+            const x = toNum(r[col]);
+            if (std.math.isNan(x)) continue;
+            const w = weightOf(r, wcol) orelse continue;
+            const dv = x - mean;
+            const d2 = dv * dv;
+            css += w * d2;
+            if (wcol == null) { // unweighted: w-factors are 1, skip the pow
+                m3 += d2 * dv;
+                m4 += d2 * d2;
+            } else {
+                m3 += std.math.pow(f64, w, 1.5) * d2 * dv;
+                m4 += (w * w) * d2 * d2;
+            }
         }
     }
     // VARDEF divisor (BUG-statvardef): std = √(CSS/d). A non-positive d (DF
@@ -2125,9 +2153,12 @@ fn computeMoments(comptime native_univariate: bool, rows: []const []const Value,
         css = 0;
         sd = 0;
     }
-    // GAP-meansskewkurt: skew/kurt are the VARDEF=DF forms only (SAS uses other
-    // coefficients per divisor) → missing under another VARDEF, as UNIVARIATE does.
-    const sk = if (vardef == .df) skewKurtDf(n, sd, m3, m4) else SkewKurt{ .skew = nan, .kurt = nan };
+    const sk = if (native_univariate)
+        univShape(rows, col, wcol, vardef, n, mean, sd)
+    else if (vardef == .df)
+        skewKurtDf(n, sd, m3, m4)
+    else
+        SkewKurt{ .skew = nan, .kurt = nan };
 
     // median: sort the non-missing values. A stack buffer handles the common
     // (small) group; larger groups spill to a short-lived heap buffer so median/
@@ -4849,15 +4880,6 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     const nf: f64 = @floatFromInt(s.n);
     const nan = std.math.nan(f64);
 
-    // Weighted 3rd/4th central moments for SAS 9.4 skewness/kurtosis. SAS Base
-    // Procedures Guide, "Descriptive Statistics" (VARDEF=DF, n = # nonmissing obs):
-    //   skewness = n/((n−1)(n−2)) · Σ wᵢ^{3/2}·((xᵢ−x̄w)/s)³            (n>2)
-    //   kurtosis = n(n+1)/((n−1)(n−2)(n−3)) · Σ wᵢ²·((xᵢ−x̄w)/s)⁴
-    //              − 3(n−1)²/((n−2)(n−3))                               (n>3)
-    // where x̄w is the weighted mean and s the weighted std. With every wᵢ=1 the
-    // weight factors are 1 and these collapse to the unweighted formulas.
-    var m3: f64 = 0; // Σ wᵢ^{3/2}(xᵢ−x̄w)³
-    var m4: f64 = 0; // Σ wᵢ²(xᵢ−x̄w)⁴
     // Arena-sized to the row count — a fixed [4096] cap silently computed the
     // quantiles over only the first 4096 obs while moments used all of them, so
     // any group >4096 got wrong percentiles/median/Q1/Q3 (BUG-univarpctl4k).
@@ -4867,29 +4889,11 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
         const x = toNum(r[col]);
         if (std.math.isNan(x)) continue;
         const w = weightAt(r, wcol) orelse continue;
-        const d = x - s.mean;
-        m3 += std.math.pow(f64, w, 1.5) * d * d * d;
-        m4 += (w * w) * d * d * d * d;
         xw[k] = .{ .x = x, .w = w, .obs = ri + 1 }; // 1-based obs number (Extreme Obs)
         k += 1;
     }
     const variance = s.std * s.std;
-    const skew = if (s.n >= 3 and s.std > 0)
-        (nf / ((nf - 1) * (nf - 2))) * (m3 / (s.std * s.std * s.std))
-    else
-        nan;
-    const kurt = if (s.n >= 4 and s.std > 0)
-        (nf * (nf + 1) / ((nf - 1) * (nf - 2) * (nf - 3))) * (m4 / (variance * variance)) -
-            3 * (nf - 1) * (nf - 1) / ((nf - 2) * (nf - 3))
-    else
-        nan;
     const cv = if (s.mean != 0) 100 * s.std / s.mean else nan;
-    // The skew/kurt formulas above are the VARDEF=DF forms; SAS uses different
-    // coefficients per divisor, so under another VARDEF our values would not
-    // match SAS — emit missing (warned once in runUnivariate) instead of
-    // silent-wrong stats (BUG-statvardef).
-    const skew_out = if (vardef == .df) skew else if (vardef == .n and s.std > 0) m3 / (nf * s.std * variance) else nan;
-    const kurt_out = if (vardef == .df) kurt else if (vardef == .n and s.std > 0) m4 / (nf * variance * variance) - 3 else nan;
     // SAS weighted std error of the mean = √(s²/Σw): divisor is the sum of weights,
     // matching PROC MEANS (BUG-meanswstderr). Unweighted Σw==n → s/√n.
     const sem = if (vardef == .df and s.sumw > 0) s.std / @sqrt(s.sumw) else nan;
@@ -4958,7 +4962,7 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "N", nf, "Sum Weights", s.sumw);
     try momentLine(arena, out, "Mean", s.mean, "Sum Observations", s.sum);
     try momentLine(arena, out, "Std Deviation", s.std, "Variance", variance);
-    try momentLine(arena, out, "Skewness", skew_out, "Kurtosis", kurt_out);
+    try momentLine(arena, out, "Skewness", s.skew, "Kurtosis", s.kurt);
     try momentLine(arena, out, "Uncorrected SS", s.uss, "Corrected SS", s.css);
     try momentLine(arena, out, "Coeff Variation", cv, "Std Error Mean", sem);
 
@@ -4974,8 +4978,8 @@ fn emitUnivariate(arena: std.mem.Allocator, out: *std.ArrayList(u8), ds: *Datase
     try momentLine(arena, out, "Median", med, "Variance", variance);
     const mi = modeInfo(vals);
     if (cx.capture) |capture| try @import("stat/ods_univariate.zig").publish(arena, cx.diags, capture, ds, col, bycols, classcols,
-        .{ .left = .{ nf, s.mean, s.std, skew_out, s.uss, cv },
-           .right = .{ s.sumw, s.sum, variance, kurt_out, s.css, sem },
+        .{ .left = .{ nf, s.mean, s.std, s.skew, s.uss, cv },
+           .right = .{ s.sumw, s.sum, variance, s.kurt, s.css, sem },
            .quantiles = .{ s.max, p99, p95, p90, q3, med, q1, p10, p5, p1, s.min },
            .mode = if (mi.count < 2 and pairs.len != 1) nan else mi.mode });
     try momentLine(arena, out, "Mode", if (mi.count < 2 and pairs.len != 1) nan else mi.mode, "Range", s.max - s.min);
