@@ -281,9 +281,7 @@ const LikelihoodGap = struct { lower: f64, upper: f64 };
 // The computed interval estimates quadrature and binary64 evaluation error.
 // A native four-corner subtraction can round a cell differently from our
 // positive integral. Native endpoint and held-out tests cover this distinction.
-fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64) ?LikelihoodGap {
-    std.debug.assert(m.rows == 4 and m.cols == 4);
-    var terms: [16]f64 = undefined;
+fn projectedLikelihoodGap(m: CountMatrix, params: []const f64, total: f64, terms: []f64) ?LikelihoodGap {
     var used: usize = 0;
     var empty: f64 = 0;
     var empty_error: f64 = 0;
@@ -548,8 +546,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
         }
     }
     const boundary = !(concordant and discordant);
-    const four_by_four_boundary = boundary and m.rows == 4 and m.cols == 4;
-    const projected_boundary = boundary and (m.rows == 2 or m.cols == 2 or (m.rows == 3 and m.cols == 3) or four_by_four_boundary);
+    // Higher-dimensional separated fits can lose the ordering of successive
+    // projections at saturation. The two-level and 3-by-3 retractions use
+    // the ordinary likelihood comparison throughout.
+    const check_projection_gap = boundary and @min(m.rows, m.cols) >= 3 and @max(m.rows, m.cols) >= 4;
     // Rounding uncertainty in the two sums of occupied-cell log likelihoods.
     // Each term involves a logarithm and multiplication before summation.
     const ku = @as(f64, @floatFromInt(occupied + 2)) * std.math.floatEps(f64) / 2;
@@ -599,9 +599,9 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
                 boundary_distance *= 0.1;
             }
             const improves = negativeLogLikelihood(m, candidate) <= base + 1e-10;
-            if (projected and four_by_four_boundary and !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated)) {
-                if (base_gap == null) base_gap = projectedLikelihoodGap(m, params, t.n);
-                const candidate_gap = projectedLikelihoodGap(m, candidate, t.n);
+            if (projected and check_projection_gap and !unresolved_projection and base - saturated <= accumulated_roundoff * (base + saturated)) {
+                if (base_gap == null) base_gap = projectedLikelihoodGap(m, params, t.n, hessian[0..occupied]);
+                const candidate_gap = projectedLikelihoodGap(m, candidate, t.n, hessian[0..occupied]);
                 if (base_gap != null and candidate_gap != null) {
                     unresolved_projection = !(if (improves)
                         candidate_gap.?.upper < base_gap.?.lower
@@ -626,16 +626,10 @@ pub fn polychoric(a: std.mem.Allocator, input: CountMatrix, opts: PolychoricOpti
             // Projecting rho shortens its apparent move. M9 tests the
             // scoring increment before projection, including when all cells
             // are occupied and the solution is interior.
-            const delta = if (projected_boundary or projected) scale * step else c - p;
+            const delta = if (boundary or projected) scale * step else c - p;
             change = @max(change, @abs(delta) / (if (@abs(c) < 0.01) 1 else @abs(c)));
         }
         @memcpy(params, candidate);
-        if (boundary and !projected_boundary and negativeLogLikelihood(m, params) - saturated <= t.n * 1e-10) {
-            // The likelihood gap is below the quadrature error budget. A
-            // validated rank decision alone does not establish the remaining
-            // SAS boundary-step convention, so preserve this public guard.
-            return .{ .coefficient = .{}, .likelihood_ratio = null, .converged = false, .iterations = iterations, .information_unresolved = true };
-        }
         if (change == 0 or change < opts.converge) {
             converged = true;
             break;
