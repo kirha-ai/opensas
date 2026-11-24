@@ -165,10 +165,7 @@ pub fn relativeRisk(table: risk.Table2x2, column: risk.Column, h: Hypothesis, me
     return assemble(h, tests, estimate.limits);
 }
 
-// SAS/STAT pp179-183,190-194,206-209. Independent oracle command:
-// /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/tests.sas
-// -f text -o /tmp/opensas-stat-batch2/FEAT-freq-risk/tests.txt
-// -l /tmp/opensas-stat-batch2/FEAT-freq-risk/tests.log
+// SAS/STAT pp179-183,190-194,206-209. SAS 9.4 reference:
 // Printed values have four decimals; tolerate only half of the last digit.
 fn near(expected: f64, actual: ?f64) !void {
     try std.testing.expectApproxEqAbs(expected, actual.?, 0.00005);
@@ -229,10 +226,7 @@ test "FEAT-freq-risk SAS relative risk TOST four methods" {
 }
 
 test "FEAT-freq-risk SAS equality alpha and sample CI independent of null variance" {
-    // SAS/STAT pp176,179-180,185-186,190,203,206. Independent command:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.sas
-    // -f text -o /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.txt
-    // -l /tmp/opensas-stat-batch2/FEAT-freq-risk/equality-alpha.log
+    // SAS/STAT pp176,179-180,185-186,190,203,206. SAS 9.4 reference:
     // Zero errors/warnings: ALPHA=.6 is valid for equality (40% CI).
     // P=.2 distinguishes test SE=.0894 from sample CI SE=.1067.
     const sample = risk.Binomial{ .success = 7, .total = 20 };
@@ -269,9 +263,7 @@ test "FEAT-freq-risk SAS equality alpha and sample CI independent of null varian
 }
 
 test "FEAT-freq-risk SAS NI TOST full ALPHA range preserves reversed and missing intervals" {
-    // SAS/STAT pp180-183,191-194,207-209, independently probed using:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/alpha-nonsymmetric.sas
-    // -f text -o sibling.txt -l sibling.log; likewise alpha-more.sas.
+    // SAS/STAT pp180-183,191-194,207-209, SAS 9.4 reference:
     // Both probes have zero SAS errors/warnings. No widening of .00005.
     const sample = risk.Binomial{ .success = 7, .total = 20 };
     const table = risk.Table2x2{ .cells = .{ 12, 8, 5, 25 } };

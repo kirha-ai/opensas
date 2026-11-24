@@ -620,8 +620,7 @@ fn mixtureTail(q: f64, n: usize) f64 {
 }
 
 test "stratified asymmetric SAS trend JT symmetry and kappa" {
-    // SAS/STAT pp.209–217. Independent oracle: kernels.sas, command:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/kernels.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/kernels.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/kernels.log
+    // SAS/STAT pp.209–217. SAS 9.4 reference: kernels.sas.
     // SAS prints four decimals; tolerance is half a printed unit, not fitted.
     const a = std.testing.allocator;
     const m: Matrix = .{ .rows = 3, .cols = 3, .counts = &.{ 18, 3, 1, 7, 12, 4, 2, 9, 24 } };
@@ -995,8 +994,7 @@ test "stratified sparse Cochran patterns preserve all binary dimensions" {
 }
 
 test "stratified pooled kappa excludes zero variance according to SAS" {
-    // pooled_edges.sas and kappa_zero.sas, SAS/STAT pp218–219. Independent:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/kappa_zero.log
+    // pooled_edges.sas and kappa_zero.sas, SAS/STAT pp218–219. SAS 9.4 reference.
     const a = std.testing.allocator;
     const perfect = (try kappa(a, .{ .rows = 2, .cols = 2, .counts = &.{ 9, 0, 0, 6 } }, .simple, 0.05, 0)).?.coefficient;
     const other = (try kappa(a, .{ .rows = 2, .cols = 2, .counts = &.{ 6, 16, 2, 4 } }, .simple, 0.05, 0)).?.coefficient;

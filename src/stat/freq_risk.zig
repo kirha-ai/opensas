@@ -225,10 +225,7 @@ pub fn differenceLimits(table: Table2x2, column: Column, alpha: f64, method: Dif
     }
 }
 
-// Independent oracle: /Users/thomas/sas/bin/sasrun
-// /tmp/opensas-stat-batch2/FEAT-freq-risk/kernels.sas -f text
-// -o /tmp/opensas-stat-batch2/FEAT-freq-risk/kernels.txt
-// -l /tmp/opensas-stat-batch2/FEAT-freq-risk/kernels.log
+// Independent oracle: SAS 9.4.
 // SAS/STAT pp176-179,184-189. 4-decimal listing -> half-unit 0.00005.
 fn expectLimits(actual: Interval, lo: f64, hi: f64) !void {
     try std.testing.expectApproxEqAbs(lo, actual.lower.?, 0.00005);
@@ -363,7 +360,7 @@ pub fn ratio(table: Table2x2, column: Column, kind: RatioKind, alpha: f64, metho
 }
 
 test "FEAT-freq-risk SAS OR and RR four asymptotic CI methods" {
-    // kernels.sas/kernels.txt, same independent sasrun command above;
+    // kernels.sas/kernels.txt, same SAS reference above;
     // SAS/STAT pp199-205. Modified RR row totals add .5, not 1.
     const table = Table2x2{ .cells = .{ 12, 8, 5, 25 } };
     const methods = [_]RatioMethod{ .wald, .wald_modified, .score, .likelihood_ratio };
@@ -396,9 +393,8 @@ test "FEAT-freq-risk SAS zero cell OR RR intervals" {
 }
 
 test "FEAT-freq-risk SAS infinite ratios fractional counts and rare events" {
-    // SAS/STAT pp184-189,199-205. Independent command:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/boundaries-more.sas
-    // -f text -o sibling.txt -l sibling.log. Zero SAS errors/warnings.
+    // SAS/STAT pp184-189,199-205. SAS 9.4 reference:
+    // Zero SAS errors/warnings.
     const full_first = Table2x2{ .cells = .{ 10, 0, 5, 5 } };
     const zero_second = Table2x2{ .cells = .{ 5, 5, 0, 10 } };
     for ([_]Table2x2{ full_first, zero_second }) |table| {

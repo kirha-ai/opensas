@@ -372,9 +372,8 @@ test "exact polynomial supports 260 outcomes above former total N128 ceiling" {
     try std.testing.expectApproxEqAbs(@as(f64, 1.0 / 130.0), polynomial.coefficients[1], 1e-17);
     for (polynomial.coefficients, 0..) |v, i| if (i != 1) try std.testing.expectEqual(@as(f64, 0), v);
     const result = (try maximize(a, polynomial.coefficients, 1e-13, work.control())).complete;
-    // SAS/STAT p194, independent command:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/polynomial/large-tail.sas
-    // -f text -o sibling.txt -l sibling.log. N=130, one/two-sided p=.0028.
+    // SAS/STAT p194, SAS 9.4 reference:
+    // N=130, one/two-sided p=.0028.
     // SAS BEST32 maximization gives .00284077351313, about 1.43e-9 below
     // the analytic supremum; do not weaken the independent bound check.
     try std.testing.expectApproxEqAbs(@as(f64, 0.0028), result.lower, 0.00005);

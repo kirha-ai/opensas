@@ -248,8 +248,7 @@ pub fn gailSimon(a: std.mem.Allocator, tables: []const Table, column: risk.Colum
 }
 
 test "stratified common risk all six interval methods independent SAS" {
-    // common.sas / common.txt, SAS/STAT pp195–199; alpha=0.1. sasrun command
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/common.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/common.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/common.log
+    // common.sas / common.txt, SAS/STAT pp195–199; alpha=0.1.
     const a = std.testing.allocator;
     const tables = [_]Table{ .{ .cells = .{ 16, 11, 5, 20 } }, .{ .cells = .{ 12, 16, 7, 19 } } };
     const methods = [_]Method{ .mantel_haenszel, .klingenberg, .minimum_risk, .summary_score, .newcombe, .newcombe_mr };

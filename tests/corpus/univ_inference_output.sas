@@ -1,5 +1,5 @@
 /* FEAT-univ-inference. SAS Statistical Procedures pp.414-421,444-447.
-   Oracle: sasrun /abs/tests/corpus/univ_inference_output.sas -f text
+   Reference: SAS 9.4.
    Core SW=.97485827830837 p=.93316533637933; n21 signed-rank p=9.1830084743323E-8. */
 options nodate nonumber;
 data d;

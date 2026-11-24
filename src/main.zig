@@ -4020,7 +4020,7 @@ test "BUG-mprintfragnestedmend: nested macro flushes its MPRINT fragment before 
 // BUG-mprintfragownerwrong — MPRINT attributes each line to the macro that
 // GENERATED the text, not to whichever macro happens to be returning when the
 // pending fragment is flushed. Every expectation below is a byte-for-byte copy of
-// a real SAS 9.4 log (`sasrun <probe> -l -`); the probe name is on each test.
+// a real SAS 9.4 log; the probe name is on each test.
 // These pin the OWNER only; see `mprintBoundary` in macro.zig for the break-column
 // divergence that stays accepted.
 
@@ -4202,7 +4202,7 @@ test "BUG-badaritywrongtype: wrong arity aborts the DATA step; a %sysfunc bad ca
     try std.testing.expect(std.mem.indexOf(u8, out.items, "skipped") == null); // BUG-errhalt: post-error step skipped
 
     // %SYSFUNC boundary: the SAME abort must not poison later steps — oracle
-    // (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` then a DATA step → the
+    // (SAS 9.4 reference, 2026-10-31): `%put x=%sysfunc(abs(1,2));` then a DATA step → the
     // step RAN ("stepran y=1"), rc 2. The hard step error dispatch recorded is
     // downgraded to recoverable at the boundary, so the syntax-check gate stays
     // open. The %PUT line itself is suppressed by NOTE-puttevalpartial (its own

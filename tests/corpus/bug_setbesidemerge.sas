@@ -1,5 +1,5 @@
 /* BUG-setbesidemerge: a sequential SET beside a MERGE/UPDATE/MODIFY driver is
-   an executable peer reader, not inert. Oracle: real SAS 9.4 via saspy/ODA. */
+   an executable peer reader, not inert. Oracle: real SAS 9.4. */
 data a; input k v; datalines;
 1 11
 2 21

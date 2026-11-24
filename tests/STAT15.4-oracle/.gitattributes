@@ -1,8 +1,6 @@
 *.sas text eol=lf
 *.rc text eol=lf
-*.json text eol=lf
 *.md text eol=lf
 *.expected.txt -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 *.oracle.log -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
 *.expected.diagnostics.txt -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab
-*.expected.html -text whitespace=-blank-at-eol,-blank-at-eof,-space-before-tab

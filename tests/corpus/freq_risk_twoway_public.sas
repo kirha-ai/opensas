@@ -1,4 +1,4 @@
-/* FEAT-freq-risk public intermediate. Independent sasrun evidence /tmp/opensas-stat-batch2/FEAT-freq-risk/public/; numerical comparisons at printed precision. Full exact/common ticket acceptance remains pending. */
+/* FEAT-freq-risk public intermediate. Numerical comparisons at printed precision. Full exact/common ticket acceptance remains pending. */
 options nodate nonumber; ods graphics off;
 data t; input r c w; datalines;
 1 1 12

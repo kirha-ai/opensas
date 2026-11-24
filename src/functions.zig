@@ -3838,7 +3838,7 @@ pub fn catStr(ev: *eval.Evaluator, v: Value) eval.Error![]const u8 {
 
 /// BUG-badaritywrongtype: a wrong-arity call is a SAS ERROR that aborts the
 /// step, not a NOTE-and-missing. Real SAS 9.4 rejects it at COMPILE time
-/// (oracle, sasrun 2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
+/// (SAS 9.4 reference, 2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
 /// function call has too many arguments."; `x=abs();` → "ERROR 71-185: The ABS
 /// function call does not have enough arguments."; `x=substr('abc');` the
 /// too-few twin — the step never executes ("stopped processing this step
@@ -5181,7 +5181,7 @@ test "BUG-badaritywrongtype: wrong arity is an ERROR that aborts the step — bo
     h.prime();
     var e = h.ev();
 
-    // Oracle (sasrun 2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
+    // SAS 9.4 reference (2026-10-31): `x=abs(1,2);` → "ERROR 72-185: The ABS
     // function call has too many arguments."; `x=abs();` → "ERROR 71-185: The
     // ABS function call does not have enough arguments."; `x=substr('abc');`
     // the too-few twin — all COMPILE-time in SAS, the step never executes,

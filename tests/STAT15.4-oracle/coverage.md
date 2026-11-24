@@ -1,43 +1,43 @@
 # Draft coverage notes
 
-Captured means the program ran on real SAS and its artifacts were stored. It does not mean the ticket is fully tested. This index is based on the authored case notes; statement-token checks are only an aid to review, not a semantic coverage proof.
+These examples do not cover every acceptance criterion. The gaps below need additional cases. Statement-name matches are navigation hints, not proof of coverage.
 
 | Ticket | Draft limitations |
 |---|---|
-| [STAT-GRAPHICS-001](STAT-GRAPHICS-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-002](STAT-GRAPHICS-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-003](STAT-GRAPHICS-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-004](STAT-GRAPHICS-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-005](STAT-GRAPHICS-005/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-006](STAT-GRAPHICS-006/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-007](STAT-GRAPHICS-007/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-008](STAT-GRAPHICS-008/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-009](STAT-GRAPHICS-009/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-010](STAT-GRAPHICS-010/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-011](STAT-GRAPHICS-011/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-012](STAT-GRAPHICS-012/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-013](STAT-GRAPHICS-013/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-014](STAT-GRAPHICS-014/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-015](STAT-GRAPHICS-015/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-GRAPHICS-016](STAT-GRAPHICS-016/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-TEMPLATE-001](STAT-TEMPLATE-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-TEMPLATE-002](STAT-TEMPLATE-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-TEMPLATE-003](STAT-TEMPLATE-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-TEMPLATE-004](STAT-TEMPLATE-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-001](STAT-KM-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-002](STAT-KM-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-003](STAT-KM-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-004](STAT-KM-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-005](STAT-KM-005/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-006](STAT-KM-006/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-007](STAT-KM-007/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-008](STAT-KM-008/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-009](STAT-KM-009/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-010](STAT-KM-010/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-011](STAT-KM-011/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-012](STAT-KM-012/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-013](STAT-KM-013/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
-| [STAT-KM-014](STAT-KM-014/README.md) | Full visual/template behavior requires image or template comparisons beyond text capture. |
+| [STAT-GRAPHICS-001](STAT-GRAPHICS-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-002](STAT-GRAPHICS-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-003](STAT-GRAPHICS-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-004](STAT-GRAPHICS-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-005](STAT-GRAPHICS-005/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-006](STAT-GRAPHICS-006/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-007](STAT-GRAPHICS-007/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-008](STAT-GRAPHICS-008/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-009](STAT-GRAPHICS-009/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-010](STAT-GRAPHICS-010/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-011](STAT-GRAPHICS-011/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-012](STAT-GRAPHICS-012/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-013](STAT-GRAPHICS-013/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-014](STAT-GRAPHICS-014/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-015](STAT-GRAPHICS-015/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-GRAPHICS-016](STAT-GRAPHICS-016/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-TEMPLATE-001](STAT-TEMPLATE-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-TEMPLATE-002](STAT-TEMPLATE-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-TEMPLATE-003](STAT-TEMPLATE-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-TEMPLATE-004](STAT-TEMPLATE-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-001](STAT-KM-001/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-002](STAT-KM-002/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-003](STAT-KM-003/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-004](STAT-KM-004/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-005](STAT-KM-005/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-006](STAT-KM-006/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-007](STAT-KM-007/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-008](STAT-KM-008/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-009](STAT-KM-009/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-010](STAT-KM-010/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-011](STAT-KM-011/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-012](STAT-KM-012/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-013](STAT-KM-013/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
+| [STAT-KM-014](STAT-KM-014/README.md) | Full visual/template behavior requires image or template comparisons beyond text output. |
 | [STAT-APP-001](STAT-APP-001/README.md) | CLI/backend scope only; interactive application behavior requires a UI test. |
 | [STAT-ACECLUS-001](STAT-ACECLUS-001/README.md) | Includes a baseline procedure context; expand ticket-specific variants. Statements still needing a dedicated case: WEIGHT. |
 | [STAT-ACECLUS-003](STAT-ACECLUS-003/README.md) | Includes a baseline procedure context; expand ticket-specific variants. |

@@ -1,8 +1,8 @@
 # Fixture inputs
 
-Inputs are part of each SAS program: explicit DATALINES, seeded synthetic generation, and/or an installed public SASHELP member. The input and analysis run together; expected files are captured from the resulting native SAS execution. No private or customer data is used.
+Inputs are defined in each SAS program using DATALINES, seeded synthetic data, or public SASHELP data sets.
 
-SASHELP members listed below are runtime dependencies, not local CSV copies. An OpenSAS replay must supply the same public member (including types, formats, labels, and missing values), or import a separately exported equivalent before comparing results. Native SASHELP data can differ across releases, so the capture runtime version is recorded.
+The SASHELP data sets below are required inputs. Supply the same data, including variable types, formats, labels, and missing values, when comparing results.
 
 For exact case input, read the referenced program, including data-set options, preprocessing, weights, frequencies, and random seeds. A member name alone does not describe the final analysis rows.
 

@@ -242,7 +242,6 @@ pub fn normalTests(a: std.mem.Allocator, x: []const f64) !?NormalTests {
 }
 
 test "UNIVARIATE inference SAS core and EDF oracles" {
-    // sasrun /tmp/opensas-stat-batch2/FEAT-univ-inference/core.sas -f text
     // Manual pp.417–419; SAS: trim 0.25 SE=1.080123, winsor SE=1.166667.
     const x = [_]f64{ 1, 2, 3, 4, 5, 6, 7, 8 };
     const tr = trimmed(&x, 0.25, false, 0, true, .{}, 0.05).?;

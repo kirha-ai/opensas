@@ -601,7 +601,6 @@ test "stratified CMH score eligibility is per axis independent of SAS ODS suppre
     // confirms ROW_CMH_EXISTS=0 and COLUMN_CMH_EXISTS=0 via FILE PRINT.
     // Numeric recode controls independently give row-mean41.7662/general58.2955;
     // those kinds do not depend on row scores/general scores, respectively.
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.sas -f text -o /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.txt -l /tmp/opensas-stat-batch2/FEAT-freq-stratified/cmh_axes_ods.log
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();
     const a = arena.allocator();

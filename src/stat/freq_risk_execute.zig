@@ -425,10 +425,7 @@ test "FEAT-freq-risk public adapter selects formatted levels and columns" {
 }
 
 test "FEAT-freq-risk SAS remaining NI SUP methods and LR equality reporting" {
-    // SAS/STAT pp190-194,206-209. Independent command:
-    // /Users/thomas/sas/bin/sasrun /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.sas
-    // -f text -o /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.txt
-    // -l /tmp/opensas-stat-batch2/FEAT-freq-risk/acceptance/tests-remaining.log
+    // SAS/STAT pp190-194,206-209. SAS 9.4 reference:
     // SAS prints four decimals; half-last-digit tolerance remains .00005.
     var arena = std.heap.ArenaAllocator.init(std.testing.allocator);
     defer arena.deinit();

@@ -3740,7 +3740,7 @@ fn sysfuncDispatch(a: std.mem.Allocator, fname: []const u8, args: []const []cons
     }
     // BUG-badaritywrongtype: dispatch now aborts the DATA step on a wrong-arity
     // call, but the %SYSFUNC boundary must keep real SAS's macro semantics —
-    // oracle (sasrun 2026-10-31): `%put x=%sysfunc(abs(1,2));` logs "ERROR: The
+    // SAS 9.4 reference (2026-10-31): `%put x=%sysfunc(abs(1,2));` logs "ERROR: The
     // function ABS referenced by the %SYSFUNC or %QSYSFUNC macro function has
     // too many arguments." and STILL runs later steps (`data _null_; put
     // 'stepran';` printed, rc 2). So the swallow stays, but the hard step error
